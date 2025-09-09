@@ -101,28 +101,50 @@ export const UserManagement = () => {
   });
 
   if (isLoading) {
-    return <div>Yükleniyor...</div>;
+    return (
+      <div className="bg-white rounded-lg border">
+        <div className="p-6 border-b">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Kullanıcı Yönetimi</h2>
+            <InviteUserDialog />
+          </div>
+          
+          <UserFilters
+            filter={filter}
+            setFilter={setFilter}
+            roleFilter={roleFilter}
+            setRoleFilter={setRoleFilter}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+          />
+        </div>
+
+        <UserList users={[]} isLoading={true} />
+      </div>
+    );
   }
 
   return (
-    <div className="bg-white rounded-lg border">
-      <div className="p-4 border-b">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Kullanıcı Yönetimi</h2>
-          <InviteUserDialog />
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg border shadow-sm">
+        <div className="p-6 border-b">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-foreground">Kullanıcı Yönetimi</h2>
+            <InviteUserDialog />
+          </div>
+          
+          <UserFilters
+            filter={filter}
+            setFilter={setFilter}
+            roleFilter={roleFilter}
+            setRoleFilter={setRoleFilter}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+          />
         </div>
-        
-        <UserFilters
-          filter={filter}
-          setFilter={setFilter}
-          roleFilter={roleFilter}
-          setRoleFilter={setRoleFilter}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-        />
-      </div>
 
-      <UserList users={filteredUsers || []} />
+        <UserList users={filteredUsers || []} isLoading={false} />
+      </div>
     </div>
   );
 };

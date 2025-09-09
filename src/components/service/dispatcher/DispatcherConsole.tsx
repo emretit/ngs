@@ -12,12 +12,13 @@ import { tr } from 'date-fns/locale';
 
 interface ServiceEvent {
   id: string;
+  title: string;
   serviceRequest: ServiceRequest;
   technician?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: string;
   due_date?: string;
-  title: string;
+  resource?: string;
 }
 
 interface DispatcherConsoleProps {

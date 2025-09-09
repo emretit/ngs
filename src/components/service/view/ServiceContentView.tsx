@@ -2,9 +2,9 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { ServiceRequestTable } from "@/components/service/ServiceRequestTable";
 import { DispatcherConsole } from "@/components/service/dispatcher/DispatcherConsole";
-import { DispatcherGanttConsole } from "@/components/service/dispatcher/DispatcherGanttConsole";
 import { ViewType } from "./ServiceViewToggle";
 import { ServiceRequest, useServiceRequests } from "@/hooks/useServiceRequests";
+import { CalendarEvent } from "@/types/calendar-event";
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import './CalendarView.css';
@@ -30,6 +30,9 @@ moment.locale('tr');
 
 interface ServiceEvent extends CalendarEvent {
   id: string;
+  title: string;
+  start: Date;
+  end: Date;
   serviceRequest: ServiceRequest;
   technician?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -98,7 +101,7 @@ export const ServiceContentView: React.FC<ServiceContentViewProps> = ({
       case "dispatcher":
         return (
           <div className="h-full">
-            <DispatcherGanttConsole onSelectRequest={onSelectRequest} />
+            <DispatcherConsole onSelectRequest={onSelectRequest} />
           </div>
         );
       case "calendar":
@@ -182,7 +185,13 @@ export const ServiceContentView: React.FC<ServiceContentViewProps> = ({
                       {/* Calendar Component */}
                       <div className="flex-1 flex flex-col">
                         <Calendar
-                          onChange={setSelectedDate}
+                          onChange={(value) => {
+                            if (value instanceof Date) {
+                              setSelectedDate(value);
+                            } else if (Array.isArray(value) && value[0] instanceof Date) {
+                              setSelectedDate(value[0]);
+                            }
+                          }}
                           value={selectedDate}
                           className="w-full h-full calendar-loading"
                           locale="tr-TR"

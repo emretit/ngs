@@ -93,8 +93,9 @@ export const UserManagement = () => {
   });
 
   const filteredUsers = users?.filter(user => {
-    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
-    const matchesSearch = fullName.includes(filter.toLowerCase());
+    const fullName = (user.full_name || '').toLowerCase();
+    const matchesSearch = fullName.includes(filter.toLowerCase()) || 
+                         (user.email || '').toLowerCase().includes(filter.toLowerCase());
     const matchesRole = !roleFilter || user.user_roles?.some(r => r.role === roleFilter);
     return matchesSearch && matchesRole;
   });

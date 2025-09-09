@@ -1,0 +1,110 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Container Styles */
+.container {
+  @apply px-4 mx-auto max-w-7xl sm:px-6 lg:px-8;
+}
+
+/* Section Styles */
+.section {
+  @apply py-12 sm:py-16;
+}
+
+/* Card Styles */
+.card {
+  @apply bg-white shadow-sm rounded-lg border border-gray-200 p-6;
+}
+
+/* Typography */
+h1 {
+  @apply text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl;
+}
+
+h2 {
+  @apply text-3xl font-bold tracking-tight text-gray-900;
+}
+
+h3 {
+  @apply text-2xl font-bold text-gray-900;
+}
+
+p {
+  @apply text-base text-gray-500;
+}
+
+/* Form Elements */
+.form-input {
+  @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+/* Button Styles */
+.btn {
+  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm;
+}
+
+.btn-primary {
+  @apply bg-primary text-white hover:bg-primary/90;
+}
+
+.btn-secondary {
+  @apply bg-secondary text-white hover:bg-secondary/90;
+}
+
+/* Animation Classes */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Utilities */
+.responsive-grid {
+  @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+}
+
+.responsive-flex {
+  @apply flex flex-col sm:flex-row items-center gap-4;
+}
+
+/* Layout Utilities */
+.section-padding {
+  @apply px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10;
+}
+
+.card-gradient {
+  @apply bg-gradient-to-br from-white to-gray-50;
+}
+
+.glass {
+  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
+}

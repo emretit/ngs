@@ -1,0 +1,609 @@
+
+/* React Big Calendar CSS */
+@import 'react-big-calendar/lib/css/react-big-calendar.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* React Big Calendar Özelleştirmeleri */
+.rbc-calendar {
+  font-family: inherit !important;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.rbc-event {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  border: none !important;
+  padding: 2px 4px !important;
+}
+
+.rbc-time-view {
+  border: 1px solid #e2e8f0 !important;
+}
+
+.rbc-time-header {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.rbc-time-header-content {
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+.rbc-header {
+  background-color: #f1f5f9 !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  padding: 8px 4px !important;
+}
+
+.rbc-time-slot {
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+.rbc-timeslot-group {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.rbc-event:hover {
+  transform: scale(1.02) !important;
+  transition: transform 0.2s ease !important;
+  z-index: 10 !important;
+}
+
+.rbc-toolbar {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 12px;
+  border-radius: 8px 8px 0 0;
+}
+
+.rbc-btn-group button {
+  border-radius: 6px !important;
+  margin: 0 2px !important;
+  font-size: 14px !important;
+  padding: 6px 12px !important;
+}
+
+.rbc-btn-group button.rbc-active {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+/* React Big Calendar - Modern Görünüm */
+.rbc-calendar {
+  font-family: inherit !important;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+/* Calendar Header */
+.rbc-toolbar {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  padding: 16px 20px;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+}
+
+.rbc-toolbar button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.rbc-toolbar button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.rbc-toolbar button.rbc-active {
+  background: rgba(255, 255, 255, 0.9);
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.rbc-toolbar-label {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+/* Date Headers - Günler */
+.rbc-time-view .rbc-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-right: 1px solid #d1d5db;
+  border-bottom: 2px solid #9ca3af;
+  font-weight: 600;
+  color: #374151;
+  padding: 16px 12px;
+  text-align: center;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Türkçe Gün İsimleri - JavaScript ile çözüldü */
+
+.rbc-time-view .rbc-header:last-child {
+  border-right: none;
+}
+
+/* Time Gutter - Saat Sütunu */
+.rbc-time-view .rbc-time-gutter {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-right: 2px solid #9ca3af;
+  min-width: 80px;
+  max-width: 80px;
+}
+
+.rbc-time-view .rbc-time-gutter .rbc-time-slot {
+  border-right: 1px solid #d1d5db;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 12px 8px;
+  text-align: center;
+  font-weight: 500;
+  background: transparent;
+}
+
+.rbc-time-view .rbc-time-gutter-header {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-bottom: 2px solid #9ca3af;
+  border-right: 2px solid #9ca3af;
+  font-weight: 700;
+  color: white;
+  padding: 16px 8px;
+  text-align: center;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Time Slots - Saat Dilimleri */
+.rbc-time-view .rbc-time-slot {
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #f3f4f6;
+  min-height: 60px;
+  background: white;
+}
+
+.rbc-time-view .rbc-time-slot:nth-child(even) {
+  background: #fafafa;
+}
+
+.rbc-time-view .rbc-timeslot-group {
+  border-bottom: 2px solid #d1d5db;
+}
+
+/* Time Content - Ana Takvim Alanı */
+.rbc-time-view .rbc-time-content {
+  margin-left: 0;
+  border: none;
+}
+
+/* Event Styling - Modern Çubuklar */
+.rbc-event {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  border: none;
+  padding: 6px 12px;
+  margin: 2px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.rbc-event:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+}
+
+.rbc-event:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Event Colors */
+.rbc-event[style*="background-color: rgb(239, 68, 68)"] {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.rbc-event[style*="background-color: rgb(249, 115, 22)"] {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+}
+
+.rbc-event[style*="background-color: rgb(234, 179, 8)"] {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important;
+}
+
+.rbc-event[style*="background-color: rgb(34, 197, 94)"] {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+}
+
+/* Resource Header - Teknisyen Sütunu */
+.rbc-time-view .rbc-resource-header {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-right: 2px solid #1e40af;
+  border-bottom: 2px solid #1e40af;
+  font-weight: 600;
+  color: white;
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 12px;
+  min-width: 120px;
+  max-width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rbc-time-view .rbc-resource-header:last-child {
+  border-right: none;
+}
+
+/* Resource Header Content */
+.rbc-time-view .rbc-resource-header .rbc-resource-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 6px;
+  flex-direction: column;
+}
+
+/* Resource Header Icon */
+.rbc-time-view .rbc-resource-header svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+/* Resource Header Text */
+.rbc-time-view .rbc-resource-header span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+/* Resource Row */
+.rbc-time-view .rbc-resource-row {
+  border-bottom: 1px solid #e5e7eb;
+  min-height: 50px;
+}
+
+/* Resource Cell */
+.rbc-time-view .rbc-resource-cell {
+  border-right: 1px solid #e5e7eb;
+  background: #f8fafc;
+  min-width: 120px;
+  max-width: 150px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  color: #374151;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Month View */
+.rbc-month-view {
+  border: none;
+}
+
+.rbc-month-view .rbc-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-right: 1px solid #d1d5db;
+  border-bottom: 2px solid #9ca3af;
+  font-weight: 600;
+  color: #374151;
+  padding: 16px 8px;
+  text-align: center;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rbc-month-view .rbc-date-cell {
+  padding: 8px;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+}
+
+.rbc-month-view .rbc-date-cell:hover {
+  background: #f8fafc;
+}
+
+.rbc-month-view .rbc-off-range-bg {
+  background: #f9fafb;
+}
+
+.rbc-month-view .rbc-today {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+/* Week View */
+.rbc-time-view .rbc-time-content {
+  border: none;
+}
+
+.rbc-time-view .rbc-time-content > * + * > * {
+  border-left: 1px solid #e5e7eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rbc-toolbar {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .rbc-toolbar button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .rbc-time-view .rbc-time-gutter {
+    min-width: 60px;
+    max-width: 60px;
+  }
+}
+
+/* Event Styling */
+.rbc-event {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  border: none !important;
+  padding: 2px 4px !important;
+  margin: 1px !important;
+}
+
+.rbc-event:hover {
+  transform: scale(1.02) !important;
+  transition: transform 0.2s ease !important;
+  z-index: 10 !important;
+}
+
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 29%; /* #4A4A4A */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 29%; /* #4A4A4A */
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 29%; /* #4A4A4A */
+ 
+    --primary: 0 65% 51%; /* #D32F2F */
+    --primary-foreground: 0 0% 100%; /* white */
+ 
+    --secondary: 0 0% 100%; /* white */
+    --secondary-foreground: 0 0% 29%; /* #4A4A4A */
+ 
+    --muted: 0 0% 96%; /* #F5F5F5 */
+    --muted-foreground: 0 0% 45%; /* lighter gray */
+ 
+    --accent: 0 72% 42%; /* #B71C1C */
+    --accent-foreground: 0 0% 100%; /* white */
+ 
+    --destructive: 0 75% 56%; /* #E53935 */
+    --destructive-foreground: 0 0% 100%; /* white */
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 65% 51%; /* #D32F2F */
+ 
+    --radius: 0.75rem;
+
+    /* Kanban column pastel backgrounds */
+    --kanban-new: 235 79% 96%; /* Very light blue */
+    --kanban-contacted: 140 84% 96%; /* Very light green */
+    --kanban-qualified: 48 100% 96%; /* Very light yellow */
+    --kanban-proposal: 260 100% 96%; /* Very light purple */
+    --kanban-negotiation: 25 95% 96%; /* Very light orange */
+    --kanban-closed: 142 76% 96%; /* Very light emerald */
+    --kanban-lost: 0 84% 96%; /* Very light red */
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+ 
+  .dark {
+    --background: 0 0% 15%;
+    --foreground: 0 0% 95%;
+ 
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 95%;
+ 
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 95%;
+ 
+    --primary: 0 65% 51%;
+    --primary-foreground: 0 0% 100%;
+ 
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 95%;
+ 
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 70%;
+ 
+    --accent: 0 72% 42%;
+    --accent-foreground: 0 0% 100%;
+ 
+    --destructive: 0 75% 56%;
+    --destructive-foreground: 0 0% 100%;
+ 
+    --border: 0 0% 30%;
+    --input: 0 0% 30%;
+    --ring: 0 65% 51%;
+  }
+}
+
+@layer utilities {
+  .section-padding {
+    @apply px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10;
+  }
+
+  .card-gradient {
+    @apply bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800;
+  }
+
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg dark:bg-gray-900/80;
+  }
+
+  .fade-in {
+    @apply animate-[fadeIn_0.3s_ease-in-out];
+  }
+
+  .slide-in {
+    @apply animate-[slideIn_0.3s_ease-in-out];
+  }
+  
+  .ngs-form-input {
+    @apply border-2 border-primary rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50;
+  }
+  
+  .ngs-hover-effect {
+    @apply hover:bg-[#FCE4EC] transition-colors duration-200;
+  }
+
+  /* CRM Dashboard specific gradients */
+  .crm-activities-gradient {
+    @apply bg-gradient-to-br from-blue-50/50 via-card to-blue-50/30 border-blue-200/50;
+  }
+  
+  .crm-opportunities-gradient {
+    @apply bg-gradient-to-br from-emerald-50/50 via-card to-emerald-50/30 border-emerald-200/50;
+  }
+  
+  .crm-proposals-gradient {
+    @apply bg-gradient-to-br from-purple-50/50 via-card to-purple-50/30 border-purple-200/50;
+  }
+  
+  .crm-orders-gradient {
+    @apply bg-gradient-to-br from-orange-50/50 via-card to-orange-50/30 border-orange-200/50;
+  }
+
+  /* Kanban pastel background utilities */
+  .kanban-bg-new { @apply bg-[hsl(var(--kanban-new))]; }
+  .kanban-bg-contacted { @apply bg-[hsl(var(--kanban-contacted))]; }
+  .kanban-bg-qualified { @apply bg-[hsl(var(--kanban-qualified))]; }
+  .kanban-bg-proposal { @apply bg-[hsl(var(--kanban-proposal))]; }
+  .kanban-bg-negotiation { @apply bg-[hsl(var(--kanban-negotiation))]; }
+  .kanban-bg-closed { @apply bg-[hsl(var(--kanban-closed))]; }
+  .kanban-bg-lost { @apply bg-[hsl(var(--kanban-lost))]; }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  label {
+    @apply font-semibold text-foreground text-sm;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Animations for tab transitions */
+.tab-transition {
+  transition: all 0.3s ease;
+}
+
+.tab-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.tab-enter-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.tab-exit {
+  opacity: 1;
+}
+
+.tab-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+

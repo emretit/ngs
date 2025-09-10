@@ -764,93 +764,90 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                   </div>
                   
                   {/* Servis Listesi */}
-                  <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                  <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
                     {/* Atanmamış servisleri filtrele */}
                     {calendarEvents
                       .filter(event => !event.resourceId || event.resourceId === 'unassigned')
                       .map((service, index) => (
                         <div 
                           key={index}
-                          className="bg-white border border-orange-200 rounded-xl p-3 cursor-move shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-102 active:scale-98 hover:border-orange-300 group"
+                          className="bg-white border border-orange-200 rounded-lg p-2 cursor-move shadow-sm hover:shadow-md transition-all duration-200 hover:border-orange-300 group relative"
                           draggable
                           onDragStart={(e) => {
                             e.dataTransfer.setData('text/plain', JSON.stringify(service));
                             e.currentTarget.style.opacity = '0.6';
-                            e.currentTarget.style.transform = 'rotate(2deg) scale(0.95)';
-                            e.currentTarget.classList.add('shadow-xl');
+                            e.currentTarget.style.transform = 'rotate(1deg) scale(0.98)';
+                            e.currentTarget.classList.add('shadow-lg');
                           }}
                           onDragEnd={(e) => {
                             e.currentTarget.style.opacity = '1';
                             e.currentTarget.style.transform = 'rotate(0deg) scale(1)';
-                            e.currentTarget.classList.remove('shadow-xl');
+                            e.currentTarget.classList.remove('shadow-lg');
                           }}
                         >
-                          {/* Üst kısım - Başlık ve Öncelik */}
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 text-sm truncate flex items-center gap-2">
-                                <span 
-                                  className="w-3 h-3 rounded-full border-2 border-white shadow-sm"
-                                  style={{ backgroundColor: service.style?.backgroundColor || '#3b82f6' }}
-                                ></span>
+                          {/* Kompakt Header - Başlık ve Öncelik */}
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              <span 
+                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: service.style?.backgroundColor || '#3b82f6' }}
+                              ></span>
+                              <h4 className="font-medium text-gray-900 text-xs truncate">
                                 {service.title}
                               </h4>
-                              
-                              {/* Öncelik Badge */}
-                              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium mt-1 ${
-                                service.priority === 'urgent' ? 'bg-red-100 text-red-700 border border-red-200' :
-                                service.priority === 'high' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                                service.priority === 'medium' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
-                                'bg-green-100 text-green-700 border border-green-200'
-                              }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${
-                                  service.priority === 'urgent' ? 'bg-red-500' :
-                                  service.priority === 'high' ? 'bg-orange-500' :
-                                  service.priority === 'medium' ? 'bg-yellow-500' :
-                                  'bg-green-500'
-                                }`}></span>
-                                {service.priority === 'urgent' ? 'Acil' :
-                                 service.priority === 'high' ? 'Yüksek' :
-                                 service.priority === 'medium' ? 'Orta' : 'Düşük'}
-                              </div>
                             </div>
                             
-                            {/* Drag Handle */}
-                            <div className="ml-2 opacity-40 group-hover:opacity-70 transition-opacity">
-                              <div className="grid grid-cols-2 gap-0.5">
-                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                              </div>
+                            {/* Kompakt Öncelik Badge */}
+                            <div className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium ${
+                              service.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                              service.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                              service.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              <span className={`w-1 h-1 rounded-full ${
+                                service.priority === 'urgent' ? 'bg-red-500' :
+                                service.priority === 'high' ? 'bg-orange-500' :
+                                service.priority === 'medium' ? 'bg-yellow-500' :
+                                'bg-green-500'
+                              }`}></span>
+                              {service.priority === 'urgent' ? 'Acil' :
+                               service.priority === 'high' ? 'Yüksek' :
+                               service.priority === 'medium' ? 'Orta' : 'Düşük'}
                             </div>
                           </div>
                           
-                          {/* Orta kısım - Lokasyon */}
+                          {/* Kompakt Lokasyon */}
                           {service.location && (
-                            <div className="flex items-center gap-2 text-xs text-gray-600 mb-2 bg-gray-50 rounded-lg p-2">
-                              <MapPin className="h-3 w-3 text-gray-500" />
+                            <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+                              <MapPin className="h-2.5 w-2.5 text-gray-500 flex-shrink-0" />
                               <span className="truncate">{service.location}</span>
                             </div>
                           )}
                           
-                          {/* Alt kısım - Zaman ve Durum */}
+                          {/* Kompakt Alt Bilgi - Zaman ve Durum */}
                           <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2 text-gray-600 bg-blue-50 rounded-lg px-2 py-1">
-                              <Clock className="h-3 w-3 text-blue-500" />
+                            <div className="flex items-center gap-1 text-gray-600">
+                              <Clock className="h-2.5 w-2.5 text-blue-500" />
                               <span className="font-medium">
-                                  {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
-                                </span>
-                              </div>
+                                {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
+                              </span>
+                            </div>
                             
                             <div className="flex items-center gap-1 text-orange-600">
-                              <User className="h-3 w-3" />
+                              <User className="h-2.5 w-2.5" />
                               <span className="font-medium">Atanmamış</span>
                             </div>
-                            </div>
+                          </div>
                           
-                          {/* Hover Effect Overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-orange-100/0 to-orange-100/30 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                          {/* Kompakt Drag Handle */}
+                          <div className="absolute top-1 right-1 opacity-20 group-hover:opacity-40 transition-opacity">
+                            <div className="grid grid-cols-2 gap-0.5">
+                              <div className="w-0.5 h-0.5 bg-gray-400 rounded-full"></div>
+                              <div className="w-0.5 h-0.5 bg-gray-400 rounded-full"></div>
+                              <div className="w-0.5 h-0.5 bg-gray-400 rounded-full"></div>
+                              <div className="w-0.5 h-0.5 bg-gray-400 rounded-full"></div>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     

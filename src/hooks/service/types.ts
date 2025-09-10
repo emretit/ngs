@@ -14,22 +14,22 @@ export type ServiceStatus = 'new' | 'in_progress' | 'completed' | 'cancelled' | 
 export interface ServiceRequest {
   id: string;
   service_number?: string;
-  title: string;
-  description?: string;
-  status: ServiceStatus;
-  priority: ServicePriority;
+  service_title: string;
+  service_request_description?: string;
+  service_status: ServiceStatus;
+  service_priority: ServicePriority;
   service_type: string;
   attachments: ServiceRequestAttachment[];
   notes?: string[];
   created_at?: string;
   updated_at?: string;
-  assigned_to?: string;
+  assigned_technician?: string;
   customer_id?: string;
   equipment_id?: string;
   warranty_info?: Record<string, any>;
-  location?: string;
-  due_date?: string;
-  reported_date?: string;
+  service_location?: string;
+  service_due_date?: string;
+  service_reported_date?: string;
   // Service slip fields
   slip_number?: string;
   issue_date?: string;
@@ -45,16 +45,16 @@ export interface ServiceRequest {
 export interface ServiceRequestFormData {
   id?: string;
   service_number?: string;
-  title: string;
-  description?: string;
-  priority: ServicePriority;
+  service_title: string;
+  service_request_description?: string;
+  service_priority: ServicePriority;
   customer_id?: string;
   service_type: string;
-  location?: string;
-  due_date?: Date;
-  reported_date?: Date;
+  service_location?: string;
+  service_due_date?: Date;
+  service_reported_date?: Date;
   equipment_id?: string;
-  assigned_to?: string;
+  assigned_technician?: string;
 }
 
 export interface ServiceQueriesResult {

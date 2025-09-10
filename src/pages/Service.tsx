@@ -148,15 +148,15 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
     if (serviceRequests && serviceRequests.length > 0) {
       const realEvents = serviceRequests.map(request => ({
         id: `real-${request.id}`,
-        title: request.title || 'Servis Talebi',
-        start: request.due_date ? new Date(request.due_date) : new Date(),
-        end: request.due_date ? new Date(new Date(request.due_date).getTime() + 2 * 60 * 60 * 1000) : new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 saat sonra
-        resourceId: request.assigned_to || 'unassigned',
-        priority: request.priority || 'medium',
-        status: request.status || 'pending',
-        location: request.location || 'Belirtilmemiş',
+        title: request.service_title || 'Servis Talebi',
+        start: request.service_due_date ? new Date(request.service_due_date) : new Date(),
+        end: request.service_due_date ? new Date(new Date(request.service_due_date).getTime() + 2 * 60 * 60 * 1000) : new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 saat sonra
+        resourceId: request.assigned_technician || 'unassigned',
+        priority: request.service_priority || 'medium',
+        status: request.service_status || 'pending',
+        location: request.service_location || 'Belirtilmemiş',
         serviceType: request.service_type || 'Genel',
-        description: request.description || '',
+        description: request.service_request_description || '',
       }));
       allEvents.push(...realEvents);
     }
@@ -264,14 +264,14 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   // Liste görünümü için filtreleme
   const filteredServices = serviceRequests?.filter(request => {
     const matchesSearch = !searchQuery || 
-      request.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      request.service_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.service_location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.service_request_description?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'new' && (request.status === 'new' || request.status === 'assigned')) ||
-      (statusFilter !== 'new' && request.status === statusFilter);
-    const matchesPriority = priorityFilter === 'all' || request.priority === priorityFilter;
+      (statusFilter === 'new' && (request.service_status === 'new' || request.service_status === 'assigned')) ||
+      (statusFilter !== 'new' && request.service_status === statusFilter);
+    const matchesPriority = priorityFilter === 'all' || request.service_priority === priorityFilter;
     
     return matchesSearch && matchesStatus && matchesPriority;
   }) || [];
@@ -281,12 +281,12 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
     let valueA, valueB;
     
     if (sortField === "title") {
-      valueA = (a.title || '').toLowerCase();
-      valueB = (b.title || '').toLowerCase();
+      valueA = (a.service_title || '').toLowerCase();
+      valueB = (b.service_title || '').toLowerCase();
     } else if (sortField === "priority") {
       const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
-      valueA = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
-      valueB = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
+      valueA = priorityOrder[a.service_priority as keyof typeof priorityOrder] || 0;
+      valueB = priorityOrder[b.service_priority as keyof typeof priorityOrder] || 0;
     } else { // created_at
       valueA = new Date(a.created_at || 0).getTime();
       valueB = new Date(b.created_at || 0).getTime();
@@ -311,11 +311,11 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   // İstatistikleri hesapla
   const stats = {
     total: serviceRequests?.length || 0,
-    new: serviceRequests?.filter(r => r.status === 'new').length || 0,
-    inProgress: serviceRequests?.filter(r => r.status === 'in_progress').length || 0,
-    completed: serviceRequests?.filter(r => r.status === 'completed').length || 0,
-    urgent: serviceRequests?.filter(r => r.priority === 'urgent').length || 0,
-    unassigned: serviceRequests?.filter(r => !r.assigned_to).length || 0,
+    new: serviceRequests?.filter(r => r.service_status === 'new').length || 0,
+    inProgress: serviceRequests?.filter(r => r.service_status === 'in_progress').length || 0,
+    completed: serviceRequests?.filter(r => r.service_status === 'completed').length || 0,
+    urgent: serviceRequests?.filter(r => r.service_priority === 'urgent').length || 0,
+    unassigned: serviceRequests?.filter(r => !r.assigned_technician).length || 0,
   };
 
   return (
@@ -813,7 +813,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                         </TableRow>
                       ) : (
                         sortedServices.map((service) => {
-                          const technician = technicians?.find(tech => tech.id === service.assigned_to);
+                          const technician = technicians?.find(tech => tech.id === service.assigned_technician);
                           return (
                             <TableRow 
                               key={service.id} 
@@ -827,10 +827,10 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                               </TableCell>
                               <TableCell className="px-4 py-4">
                                 <div className="space-y-1">
-                                  <p className="font-medium text-foreground">{service.title}</p>
-                                  {service.description && (
+                                  <p className="font-medium text-foreground">{service.service_title}</p>
+                                  {service.service_request_description && (
                                     <p className="text-sm text-muted-foreground line-clamp-2">
-                                      <span className="font-medium">Servis Talebi:</span> {service.description}
+                                      <span className="font-medium">Servis Talebi:</span> {service.service_request_description}
                                     </p>
                                   )}
                                 </div>
@@ -838,62 +838,62 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                               <TableCell className="px-4 py-4">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <MapPin className="h-4 w-4" />
-                                  {service.location || 'Belirtilmemiş'}
+                                  {service.service_location || 'Belirtilmemiş'}
                                 </div>
                               </TableCell>
                               <TableCell className="px-4 py-4">
                                 <Badge 
                                   variant="outline" 
                                   className={`${
-                                    service.priority === 'urgent' ? 'border-red-500 text-red-700 bg-red-50' :
-                                    service.priority === 'high' ? 'border-orange-500 text-orange-700 bg-orange-50' :
-                                    service.priority === 'medium' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
+                                    service.service_priority === 'urgent' ? 'border-red-500 text-red-700 bg-red-50' :
+                                    service.service_priority === 'high' ? 'border-orange-500 text-orange-700 bg-orange-50' :
+                                    service.service_priority === 'medium' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
                                     'border-green-500 text-green-700 bg-green-50'
                                   }`}
                                 >
-                                  {service.priority === 'urgent' ? 'Acil' :
-                                   service.priority === 'high' ? 'Yüksek' :
-                                   service.priority === 'medium' ? 'Orta' : 'Düşük'}
+                                  {service.service_priority === 'urgent' ? 'Acil' :
+                                   service.service_priority === 'high' ? 'Yüksek' :
+                                   service.service_priority === 'medium' ? 'Orta' : 'Düşük'}
                                 </Badge>
                               </TableCell>
                               <TableCell className="px-4 py-4">
                                 <Badge 
                                   variant="outline"
                                   className={`${
-                                    service.status === 'new' ? 'border-blue-500 text-blue-700 bg-blue-50' :
-                                    service.status === 'in_progress' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
-                                    service.status === 'completed' ? 'border-green-500 text-green-700 bg-green-50' :
+                                    service.service_status === 'new' ? 'border-blue-500 text-blue-700 bg-blue-50' :
+                                    service.service_status === 'in_progress' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
+                                    service.service_status === 'completed' ? 'border-green-500 text-green-700 bg-green-50' :
                                     'border-gray-500 text-gray-700 bg-gray-50'
                                   }`}
                                 >
-                                  {service.status === 'new' ? 'Yeni' :
-                                   service.status === 'in_progress' ? 'Devam Ediyor' :
-                                   service.status === 'completed' ? 'Tamamlandı' :
-                                   service.status === 'assigned' ? 'Atanmış' : 'Bilinmeyen'}
+                                  {service.service_status === 'new' ? 'Yeni' :
+                                   service.service_status === 'in_progress' ? 'Devam Ediyor' :
+                                   service.service_status === 'completed' ? 'Tamamlandı' :
+                                   service.service_status === 'assigned' ? 'Atanmış' : 'Bilinmeyen'}
                                 </Badge>
                               </TableCell>
                               <TableCell className="px-4 py-4">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <User className="h-4 w-4" />
                                   {technician ? `${technician.first_name} ${technician.last_name}` : 
-                                   service.assigned_to ? 'Bilinmeyen Teknisyen' : 'Atanmamış'}
+                                   service.assigned_technician ? 'Bilinmeyen Teknisyen' : 'Atanmamış'}
                                 </div>
                               </TableCell>
                               <TableCell className="px-4 py-4">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <Clock className="h-4 w-4" />
-                                  {service.reported_date ? moment(service.reported_date).format('DD.MM.YYYY') : 'Bildirilmedi'}
+                                  {service.service_reported_date ? moment(service.service_reported_date).format('DD.MM.YYYY') : 'Bildirilmedi'}
                                 </div>
                               </TableCell>
                               <TableCell className="px-4 py-4">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <Calendar className="h-4 w-4" />
-                                  {service.due_date ? moment(service.due_date).format('DD.MM.YYYY') : 'Tarih belirtilmemiş'}
+                                  {service.service_due_date ? moment(service.service_due_date).format('DD.MM.YYYY') : 'Tarih belirtilmemiş'}
                                 </div>
                               </TableCell>
                               <TableCell className="px-4 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2">
-                                  {!service.assigned_to ? (
+                                  {!service.assigned_technician ? (
                                     <Button
                                       size="sm"
                                       variant="outline"

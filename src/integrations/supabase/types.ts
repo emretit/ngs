@@ -4559,23 +4559,23 @@ export type Database = {
       }
       service_requests: {
         Row: {
-          assigned_to: string | null
+          assigned_technician: string | null
           attachments: Json | null
           company_id: string | null
           created_at: string | null
           customer_id: string | null
-          description: string | null
-          due_date: string | null
+          service_request_description: string | null
+          service_due_date: string | null
           equipment_id: string | null
           id: string
-          location: string | null
+          service_location: string | null
           notes: string[] | null
-          priority: Database["public"]["Enums"]["service_priority"] | null
-          reported_date: string | null
+          service_priority: Database["public"]["Enums"]["service_priority"] | null
+          service_reported_date: string | null
           service_number: string | null
           service_type: string | null
-          status: Database["public"]["Enums"]["service_status"] | null
-          title: string
+          service_status: Database["public"]["Enums"]["service_status"] | null
+          service_title: string
           updated_at: string | null
           warranty_info: Json | null
           // Service slip fields
@@ -4590,23 +4590,23 @@ export type Database = {
           slip_status: string | null
         }
         Insert: {
-          assigned_to?: string | null
+          assigned_technician?: string | null
           attachments?: Json | null
           company_id?: string | null
           created_at?: string | null
           customer_id?: string | null
-          description?: string | null
-          due_date?: string | null
+          service_request_description?: string | null
+          service_due_date?: string | null
           equipment_id?: string | null
           id?: string
-          location?: string | null
+          service_location?: string | null
           notes?: string[] | null
-          priority?: Database["public"]["Enums"]["service_priority"] | null
-          reported_date?: string | null
+          service_priority?: Database["public"]["Enums"]["service_priority"] | null
+          service_reported_date?: string | null
           service_number?: string | null
           service_type?: string | null
-          status?: Database["public"]["Enums"]["service_status"] | null
-          title: string
+          service_status?: Database["public"]["Enums"]["service_status"] | null
+          service_title: string
           updated_at?: string | null
           warranty_info?: Json | null
           // Service slip fields
@@ -4621,23 +4621,23 @@ export type Database = {
           slip_status?: string | null
         }
         Update: {
-          assigned_to?: string | null
+          assigned_technician?: string | null
           attachments?: Json | null
           company_id?: string | null
           created_at?: string | null
           customer_id?: string | null
-          description?: string | null
-          due_date?: string | null
+          service_request_description?: string | null
+          service_due_date?: string | null
           equipment_id?: string | null
           id?: string
-          location?: string | null
+          service_location?: string | null
           notes?: string[] | null
-          priority?: Database["public"]["Enums"]["service_priority"] | null
-          reported_date?: string | null
+          service_priority?: Database["public"]["Enums"]["service_priority"] | null
+          service_reported_date?: string | null
           service_number?: string | null
           service_type?: string | null
-          status?: Database["public"]["Enums"]["service_status"] | null
-          title?: string
+          service_status?: Database["public"]["Enums"]["service_status"] | null
+          service_title?: string
           updated_at?: string | null
           warranty_info?: Json | null
           // Service slip fields

@@ -33,9 +33,9 @@ export const useServiceCrudMutations = () => {
       const serviceRequestData = {
         ...formData,
         service_number: serviceNumber,
-        due_date: formData.due_date?.toISOString(),
-        reported_date: formData.reported_date?.toISOString(),
-        status: formData.assigned_to && formData.assigned_to !== 'unassigned' ? 'assigned' as const : 'new' as const,
+        service_due_date: formData.service_due_date?.toISOString(),
+        service_reported_date: formData.service_reported_date?.toISOString(),
+        service_status: formData.assigned_technician && formData.assigned_technician !== 'unassigned' ? 'assigned' as const : 'new' as const,
         attachments: [],
       };
 

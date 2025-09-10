@@ -957,54 +957,44 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                                 </div>
                               </TableCell>
                               <TableCell className="px-4 py-4 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                  {/* Ata/Düzenle Butonu */}
+                                <div className="flex justify-end gap-2">
+                                  {/* Düzenle Butonu */}
                                   <Button
-                                    size="sm"
-                                    variant="outline"
+                                    variant="ghost"
+                                    size="icon"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setEditingRequest(service);
                                       setIsEditOpen(true);
                                     }}
-                                    className="flex items-center gap-1"
+                                    title="Düzenle"
                                   >
-                                    {!service.assigned_technician ? (
-                                      <>
-                                        <User className="h-4 w-4" />
-                                        Ata
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Edit className="h-4 w-4" />
-                                        Düzenle
-                                      </>
-                                    )}
+                                    <Edit className="h-4 w-4" />
                                   </Button>
                                   
                                   {/* Detay Butonu */}
                                   <Button
-                                    size="sm"
-                                    variant="outline"
+                                    variant="ghost"
+                                    size="icon"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleSelectRequest(service);
                                     }}
-                                    className="flex items-center gap-1"
+                                    title="Detayları Görüntüle"
                                   >
                                     <Eye className="h-4 w-4" />
-                                    Detay
                                   </Button>
                                   
                                   {/* Silme Butonu */}
                                   <Button
-                                    size="sm"
-                                    variant="outline"
+                                    variant="ghost"
+                                    size="icon"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleDeleteService(service);
                                     }}
-                                    className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                    title="Sil"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>

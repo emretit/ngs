@@ -18,24 +18,29 @@ type FieldProps = {
   form: UseFormReturn<ServiceRequestFormData>;
 };
 
+type TechnicianFieldProps = FieldProps & {
+  technicians?: Array<{ id: string; name: string; department?: string; avatar_url?: string }>;
+  isLoading?: boolean;
+};
+
 export const TitleField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
     name="service_title"
     render={({ field }) => (
       <FormItem>
-        <FormLabel className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-blue-600" />
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <FileText className="h-3 w-3 text-blue-600" />
           Başlık
         </FormLabel>
         <FormControl>
           <Input 
             placeholder="Servis talebi başlığı" 
             {...field}
-            className="transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </FormControl>
-        <FormMessage />
+        <FormMessage className="text-xs" />
       </FormItem>
     )}
   />
@@ -47,19 +52,19 @@ export const DescriptionField: React.FC<FieldProps> = ({ form }) => (
     name="service_request_description"
     render={({ field }) => (
       <FormItem>
-        <FormLabel className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-gray-600" />
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <FileText className="h-3 w-3 text-gray-600" />
           Açıklama
         </FormLabel>
         <FormControl>
           <Textarea
             placeholder="Servis talebi ile ilgili detaylar"
-            className="resize-none transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]"
+            className="resize-none transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[60px] text-sm"
             {...field}
             value={field.value || ""}
           />
         </FormControl>
-        <FormMessage />
+        <FormMessage className="text-xs" />
       </FormItem>
     )}
   />
@@ -71,24 +76,24 @@ export const PriorityField: React.FC<FieldProps> = ({ form }) => (
     name="service_priority"
     render={({ field }) => (
       <FormItem>
-        <FormLabel className="flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-orange-600" />
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <AlertTriangle className="h-3 w-3 text-orange-600" />
           Öncelik
         </FormLabel>
         <Select onValueChange={field.onChange} defaultValue={field.value}>
           <FormControl>
-            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <SelectTrigger className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <SelectValue placeholder="Öncelik seçin" />
             </SelectTrigger>
           </FormControl>
           <SelectContent>
-            <SelectItem value="low" className="text-green-600">🟢 Düşük</SelectItem>
-            <SelectItem value="medium" className="text-yellow-600">🟡 Orta</SelectItem>
-            <SelectItem value="high" className="text-orange-600">🟠 Yüksek</SelectItem>
-            <SelectItem value="urgent" className="text-red-600">🔴 Acil</SelectItem>
+            <SelectItem value="low" className="text-green-600 text-sm">🟢 Düşük</SelectItem>
+            <SelectItem value="medium" className="text-yellow-600 text-sm">🟡 Orta</SelectItem>
+            <SelectItem value="high" className="text-orange-600 text-sm">🟠 Yüksek</SelectItem>
+            <SelectItem value="urgent" className="text-red-600 text-sm">🔴 Acil</SelectItem>
           </SelectContent>
         </Select>
-        <FormMessage />
+        <FormMessage className="text-xs" />
       </FormItem>
     )}
   />
@@ -100,25 +105,25 @@ export const ServiceTypeField: React.FC<FieldProps> = ({ form }) => (
     name="service_type"
     render={({ field }) => (
       <FormItem>
-        <FormLabel className="flex items-center gap-2">
-          <Wrench className="h-4 w-4 text-blue-600" />
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <Wrench className="h-3 w-3 text-blue-600" />
           Servis Türü
         </FormLabel>
         <Select onValueChange={field.onChange} defaultValue={field.value}>
           <FormControl>
-            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <SelectTrigger className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <SelectValue placeholder="Servis türü seçin" />
             </SelectTrigger>
           </FormControl>
           <SelectContent>
-            <SelectItem value="installation">🔧 Kurulum</SelectItem>
-            <SelectItem value="repair">⚡ Onarım</SelectItem>
-            <SelectItem value="maintenance">🔨 Bakım</SelectItem>
-            <SelectItem value="inspection">🔍 Kontrol</SelectItem>
-            <SelectItem value="consultation">💬 Danışmanlık</SelectItem>
+            <SelectItem value="installation" className="text-sm">🔧 Kurulum</SelectItem>
+            <SelectItem value="repair" className="text-sm">⚡ Onarım</SelectItem>
+            <SelectItem value="maintenance" className="text-sm">🔨 Bakım</SelectItem>
+            <SelectItem value="inspection" className="text-sm">🔍 Kontrol</SelectItem>
+            <SelectItem value="consultation" className="text-sm">💬 Danışmanlık</SelectItem>
           </SelectContent>
         </Select>
-        <FormMessage />
+        <FormMessage className="text-xs" />
       </FormItem>
     )}
   />
@@ -130,8 +135,8 @@ export const LocationField: React.FC<FieldProps> = ({ form }) => (
     name="service_location"
     render={({ field }) => (
       <FormItem>
-        <FormLabel className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-red-600" />
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <MapPin className="h-3 w-3 text-red-600" />
           Konum
         </FormLabel>
         <FormControl>
@@ -139,10 +144,10 @@ export const LocationField: React.FC<FieldProps> = ({ form }) => (
             placeholder="Servis konumu" 
             {...field} 
             value={field.value || ""} 
-            className="transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </FormControl>
-        <FormMessage />
+        <FormMessage className="text-xs" />
       </FormItem>
     )}
   />
@@ -154,8 +159,8 @@ export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
     name="service_reported_date"
     render={({ field }) => (
       <FormItem className="flex flex-col">
-        <FormLabel className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-green-600" />
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <Clock className="h-3 w-3 text-green-600" />
           Bildirilme Tarihi
         </FormLabel>
         <Popover>
@@ -164,7 +169,7 @@ export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
               <Button
                 variant={"outline"}
                 className={cn(
-                  "w-full pl-3 text-left font-normal transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  "w-full h-8 pl-3 text-left font-normal text-sm transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
                   !field.value && "text-muted-foreground"
                 )}
               >
@@ -173,7 +178,7 @@ export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
                 ) : (
                   <span>Tarih seçin</span>
                 )}
-                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                <CalendarIcon className="ml-auto h-3 w-3 opacity-50" />
               </Button>
             </FormControl>
           </PopoverTrigger>
@@ -190,7 +195,7 @@ export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
             />
           </PopoverContent>
         </Popover>
-        <FormMessage />
+        <FormMessage className="text-xs" />
       </FormItem>
     )}
   />
@@ -202,8 +207,8 @@ export const DueDateField: React.FC<FieldProps> = ({ form }) => (
     name="service_due_date"
     render={({ field }) => (
       <FormItem className="flex flex-col">
-        <FormLabel className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-purple-600" />
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <CalendarDays className="h-3 w-3 text-purple-600" />
           Son Tarih
         </FormLabel>
         <Popover>
@@ -212,7 +217,7 @@ export const DueDateField: React.FC<FieldProps> = ({ form }) => (
               <Button
                 variant={"outline"}
                 className={cn(
-                  "w-full pl-3 text-left font-normal transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  "w-full h-8 pl-3 text-left font-normal text-sm transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
                   !field.value && "text-muted-foreground"
                 )}
               >
@@ -221,7 +226,7 @@ export const DueDateField: React.FC<FieldProps> = ({ form }) => (
                 ) : (
                   <span>Tarih seçin</span>
                 )}
-                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                <CalendarIcon className="ml-auto h-3 w-3 opacity-50" />
               </Button>
             </FormControl>
           </PopoverTrigger>
@@ -238,7 +243,7 @@ export const DueDateField: React.FC<FieldProps> = ({ form }) => (
             />
           </PopoverContent>
         </Popover>
-        <FormMessage />
+        <FormMessage className="text-xs" />
       </FormItem>
     )}
   />
@@ -250,8 +255,8 @@ export const PlannedDateField: React.FC<FieldProps> = ({ form }) => (
     name="issue_date"
     render={({ field }) => (
       <FormItem className="flex flex-col">
-        <FormLabel className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-blue-600" />
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <CalendarDays className="h-3 w-3 text-blue-600" />
           Planlanan Tarih
         </FormLabel>
         <Popover>
@@ -260,7 +265,7 @@ export const PlannedDateField: React.FC<FieldProps> = ({ form }) => (
               <Button
                 variant={"outline"}
                 className={cn(
-                  "w-full pl-3 text-left font-normal transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  "w-full h-8 pl-3 text-left font-normal text-sm transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
                   !field.value && "text-muted-foreground"
                 )}
               >
@@ -269,7 +274,7 @@ export const PlannedDateField: React.FC<FieldProps> = ({ form }) => (
                 ) : (
                   <span>Tarih seçin</span>
                 )}
-                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                <CalendarIcon className="ml-auto h-3 w-3 opacity-50" />
               </Button>
             </FormControl>
           </PopoverTrigger>
@@ -283,41 +288,45 @@ export const PlannedDateField: React.FC<FieldProps> = ({ form }) => (
             />
           </PopoverContent>
         </Popover>
-        <FormMessage />
+        <FormMessage className="text-xs" />
       </FormItem>
     )}
   />
 );
 
-export const TechnicianField: React.FC<FieldProps> = ({ form }) => (
+export const TechnicianField: React.FC<TechnicianFieldProps> = ({ form, technicians = [], isLoading = false }) => (
   <FormField
     control={form.control}
     name="assigned_technician"
     render={({ field }) => (
       <FormItem>
-        <FormLabel className="flex items-center gap-2">
-          <User className="h-4 w-4 text-indigo-600" />
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <User className="h-3 w-3 text-indigo-600" />
           Teknisyen
         </FormLabel>
         <Select onValueChange={field.onChange} defaultValue={field.value}>
           <FormControl>
-            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <SelectValue placeholder="Teknisyen seçin (opsiyonel)" />
+            <SelectTrigger className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <SelectValue placeholder={isLoading ? "Yükleniyor..." : "Teknisyen seçin (opsiyonel)"} />
             </SelectTrigger>
           </FormControl>
           <SelectContent>
-            <SelectItem value="unassigned" className="text-gray-500">👤 Atanmamış</SelectItem>
-            <SelectItem value="tech1">👨‍🔧 Can Öztürk</SelectItem>
-            <SelectItem value="tech2">👩‍🔧 Zeynep Arslan</SelectItem>
-            <SelectItem value="tech3">👨‍🔧 Ahmet Yılmaz</SelectItem>
-            <SelectItem value="tech4">👨‍🔧 Mehmet Kaya</SelectItem>
-            <SelectItem value="tech5">👨‍🔧 Ali Demir</SelectItem>
-            <SelectItem value="tech6">👩‍🔧 Fatma Özkan</SelectItem>
-            <SelectItem value="tech7">👨‍🔧 Ersin Keskin</SelectItem>
-            <SelectItem value="tech8">👨‍🔧 Talip Elaman</SelectItem>
+            <SelectItem value="unassigned" className="text-gray-500 text-sm">👤 Atanmamış</SelectItem>
+            {technicians.map((tech) => (
+              <SelectItem key={tech.id} value={tech.id} className="text-sm">
+                {tech.avatar_url ? (
+                  <div className="flex items-center gap-2">
+                    <img src={tech.avatar_url} alt={tech.name} className="w-4 h-4 rounded-full" />
+                    {tech.name}
+                  </div>
+                ) : (
+                  `👨‍🔧 ${tech.name}`
+                )}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <FormMessage />
+        <FormMessage className="text-xs" />
       </FormItem>
     )}
   />

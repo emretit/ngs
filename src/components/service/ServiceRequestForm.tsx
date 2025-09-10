@@ -23,6 +23,7 @@ import { ServiceRequestPreview } from "./form/ServiceRequestPreview";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
+import { useTechnicians } from "@/hooks/useTechnicians";
 
 const formSchema = z.object({
   service_title: z.string().min(3, { message: "Başlık en az 3 karakter olmalıdır" }),
@@ -50,6 +51,7 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
   const { createServiceRequest, updateServiceRequest, isCreating, isUpdating } = useServiceRequests();
   const { toast } = useToast();
   const { customers } = useCustomerSelect();
+  const { technicians, isLoading: techniciansLoading } = useTechnicians();
 
   const form = useForm<ServiceRequestFormData>({
     resolver: zodResolver(formSchema),
@@ -111,31 +113,50 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="flex justify-end items-center space-x-2 pb-2 border-b">
-          <Label htmlFor="show-preview" className="text-sm">Önizleme Göster</Label>
-          <Switch 
-            id="show-preview" 
-            checked={showPreview} 
-            onCheckedChange={setShowPreview}
-          />
-        </div>
-        
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         {showPreview ? (
-          <ServiceRequestPreview 
-            formData={form.getValues()} 
-            files={files}
-            customerName={getCustomerName()}
-          />
-        ) : (
-          <div className="space-y-6">
-            {/* Temel Bilgiler */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <h3 className="text-lg font-semibold text-gray-800">Temel Bilgiler</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-1 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                <h3 className="text-sm font-semibold text-gray-800">Önizleme</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="show-preview" className="text-xs">Önizleme</Label>
+                <Switch 
+                  id="show-preview" 
+                  checked={showPreview} 
+                  onCheckedChange={setShowPreview}
+                  className="scale-75"
+                />
+              </div>
+            </div>
+            <ServiceRequestPreview 
+              formData={form.getValues()} 
+              files={files}
+              customerName={getCustomerName()}
+            />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Temel Bilgiler - Kompakt */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-1 border-b border-gray-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                  <h3 className="text-sm font-semibold text-gray-800">Temel Bilgiler</h3>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="show-preview" className="text-xs">Önizleme</Label>
+                  <Switch 
+                    id="show-preview" 
+                    checked={showPreview} 
+                    onCheckedChange={setShowPreview}
+                    className="scale-75"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="md:col-span-2">
                   <TitleField form={form} />
                 </div>
@@ -146,42 +167,32 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
                 <ServiceTypeField form={form} />
                 <CustomerField form={form} />
                 <LocationField form={form} />
-              </div>
-            </div>
-
-            {/* Tarihler */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <h3 className="text-lg font-semibold text-gray-800">Tarihler</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ReportedDateField form={form} />
                 <DueDateField form={form} />
               </div>
             </div>
 
-            {/* Dosyalar */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <h3 className="text-lg font-semibold text-gray-800">Dosyalar</h3>
+            {/* Atama ve Planlama - Kompakt */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 pb-1 border-b border-gray-200">
+                <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
+                <h3 className="text-sm font-semibold text-gray-800">Atama & Planlama</h3>
+                <span className="text-xs text-gray-500 font-normal">(Sonradan da belirlenebilir)</span>
               </div>
-              <div className="space-y-4">
-                <FileUploadField files={files} setFiles={setFiles} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <TechnicianField form={form} technicians={technicians} isLoading={techniciansLoading} />
+                <PlannedDateField form={form} />
               </div>
             </div>
 
-            {/* Opsiyonel Atama ve Planlama */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <h3 className="text-lg font-semibold text-gray-800">Opsiyonel Atama ve Planlama</h3>
-                <span className="text-sm text-gray-500 font-normal">(İsteğe bağlı - sonradan da eklenebilir)</span>
+            {/* Dosyalar - Kompakt */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 pb-1 border-b border-gray-200">
+                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                <h3 className="text-sm font-semibold text-gray-800">Dosyalar</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <TechnicianField form={form} />
-                <PlannedDateField form={form} />
+              <div className="space-y-2">
+                <FileUploadField files={files} setFiles={setFiles} />
               </div>
             </div>
           </div>

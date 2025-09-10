@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { EnhancedCard, SummaryCard } from "@/components/shared";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -404,10 +404,10 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
       <main className={`flex-1 transition-all duration-300 ${isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"}`}>
         <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
           <div className="flex items-center gap-4 mb-8">
-            <PrimaryButton variant="outline" size="sm" onClick={() => navigate("/sales-invoices")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/sales-invoices")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Geri
-            </PrimaryButton>
+            </Button>
             <div>
               <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
                 Yeni Satış Faturası
@@ -420,14 +420,14 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Header Information */}
-            <EnhancedCard>
-              <div>
-                <h3 className="flex items-center gap-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
                   Fatura Bilgileri
-                </h3>
-              </div>
-              <div className="space-y-4">
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="customer">Müşteri *</Label>
@@ -545,21 +545,21 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
                     placeholder="Banka adı, IBAN, hesap bilgileri..."
                   />
                 </div>
-              </div>
-            </EnhancedCard>
+              </CardContent>
+            </Card>
 
             {/* Invoice Items */}
-            <EnhancedCard>
-              <div>
+            <Card>
+              <CardHeader>
                 <div className="flex items-center justify-between">
-                  <h3>Fatura Kalemleri</h3>
-                  <PrimaryButton type="button" onClick={addItem} size="sm">
+                  <CardTitle>Fatura Kalemleri</CardTitle>
+                  <Button type="button" onClick={addItem} size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Kalem Ekle
-                  </PrimaryButton>
+                  </Button>
                 </div>
-              </div>
-              <div>
+              </CardHeader>
+              <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
@@ -643,14 +643,14 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
                           </td>
                           <td className="p-2">
                             {items.length > 1 && (
-                              <PrimaryButton
+                              <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeItem(index)}
                               >
                                 <Trash2 className="h-4 w-4" />
-                              </PrimaryButton>
+                              </Button>
                             )}
                           </td>
                         </tr>
@@ -691,47 +691,47 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
                     </div>
                   </div>
                 </div>
-              </div>
-            </EnhancedCard>
+              </CardContent>
+            </Card>
 
             {/* Actions */}
             <div className="flex justify-end gap-4">
-              <PrimaryButton type="button" variant="outline" onClick={() => navigate("/sales-invoices")}>
+              <Button type="button" variant="outline" onClick={() => navigate("/sales-invoices")}>
                 İptal
-              </PrimaryButton>
-              <PrimaryButton type="submit" disabled={loading}>
+              </Button>
+              <Button type="submit" disabled={loading}>
                 <Save className="h-4 w-4 mr-2" />
                 {loading ? "Kaydediliyor..." : "Faturayı Kaydet"}
-              </PrimaryButton>
+              </Button>
             </div>
 
             {/* E-Invoice Actions */}
             {savedInvoiceId && (
-              <EnhancedCard className="mt-6">
-                <div className="p-6">
+              <Card className="mt-6">
+                <CardContent className="p-6">
                   <h3 className="text-lg font-semibold mb-4">E-Fatura İşlemleri</h3>
                                <p className="text-gray-600 mb-4">
                Faturanız başarıyla kaydedildi. E-fatura olarak göndermek için aşağıdaki butona tıklayın.
              </p>
                   <div className="flex gap-4">
-                                   <PrimaryButton 
+                                   <Button 
                  onClick={handleSendEInvoice}
                  disabled={isSending || !savedInvoiceId}
                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
                >
                  <FileText className="h-4 w-4 mr-2" />
                  {isSending ? "Gönderiliyor..." : "E-Fatura Gönder"}
-               </PrimaryButton>
+               </Button>
                     
-                    <PrimaryButton 
+                    <Button 
                       onClick={() => navigate("/sales-invoices")}
                       variant="outline"
                     >
                       Faturalar Sayfasına Git
-                    </PrimaryButton>
+                    </Button>
                   </div>
-                </div>
-              </EnhancedCard>
+                </CardContent>
+              </Card>
             )}
           </form>
         </div>

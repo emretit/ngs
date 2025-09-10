@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { EnhancedCard, SummaryCard } from "@/components/shared";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CalendarDays, Plus, Trash2, Eye, FileDown, ArrowLeft, Calculator, Check, ChevronsUpDown, Edit } from "lucide-react";
 import { toast } from "sonner";
@@ -443,11 +443,11 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         {/* Top Row - Customer & Proposal Details Combined */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {/* Customer Information */}
-          <EnhancedCard>
-            <div className="pb-3">
-              <h3 className="text-base font-semibold">Müşteri Bilgileri</h3>
-            </div>
-            <div className="space-y-3 pt-0">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold">Müşteri Bilgileri</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-0">
               <div className="grid grid-cols-1 gap-3">
                 <div>
                   <Label htmlFor="customer_company" className="text-sm">Firma Adı *</Label>
@@ -561,15 +561,15 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                   />
                 </div>
               </div>
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
 
           {/* Offer Details */}
-          <EnhancedCard>
-            <div className="pb-3">
-              <h3 className="text-base font-semibold">Teklif Detayları</h3>
-            </div>
-            <div className="space-y-3 pt-0">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold">Teklif Detayları</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <Label htmlFor="offer_date" className="text-sm">Teklif Tarihi</Label>
@@ -663,24 +663,24 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                   />
                 </div>
               </div>
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Products/Services Table - Full Width */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
           <div className="xl:col-span-3">
-            <EnhancedCard>
-              <div className="pb-3">
+            <Card>
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold">Ürün/Hizmet Listesi</h3>
+                  <CardTitle className="text-base font-semibold">Ürün/Hizmet Listesi</CardTitle>
                   <Button onClick={addItem} size="sm" className="gap-2">
                     <Plus className="h-4 w-4" />
                     Satır Ekle
                   </Button>
                 </div>
-              </div>
-              <div className="pt-0">
+              </CardHeader>
+              <CardContent className="pt-0">
                 <div className="space-y-3">
                   {items.map((item, index) => (
                     <div key={item.id} className="border rounded-lg p-3 bg-gray-50/50">
@@ -777,20 +777,20 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                     </div>
                   ))}
                 </div>
-              </div>
-            </EnhancedCard>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Financial Summary - Right Side */}
           <div className="xl:col-span-1">
-            <EnhancedCard className="sticky top-6">
-              <div className="pb-3">
-                <h3 className="text-base font-semibold flex items-center gap-2">
+            <Card className="sticky top-6">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Calculator className="h-4 w-4" />
                   Finansal Özet
-                </h3>
-              </div>
-              <div className="space-y-3 pt-0">
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-0">
                 {/* Always use multi-currency display to show actual currencies used */}
                 <div className="space-y-4">
                   {Object.entries(calculationsByCurrency).map(([currency, totals]) => (
@@ -861,14 +861,14 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                     </div>
                   ))}
                 </div>
-              </div>
-            </EnhancedCard>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
         {/* Terms & Conditions - Full Width */}
-        <EnhancedCard>
-          <div className="p-4">
+        <Card>
+          <CardContent className="p-4">
             <ProposalFormTerms
               paymentTerms={formData.payment_terms}
               deliveryTerms={formData.delivery_terms}
@@ -877,8 +877,8 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
               otherTerms={formData.other_terms}
               onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
             />
-          </div>
-        </EnhancedCard>
+          </CardContent>
+        </Card>
 
         {/* Product Details Modal */}
         <ProductDetailsModal

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EnhancedCard, SummaryCard } from "@/components/shared";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Lock, Mail, User, Home } from "lucide-react";
 import { AlertCircle } from "lucide-react";
@@ -160,15 +160,15 @@ const InviteSetup = () => {
           </div>
         </div>
 
-        {/* Form EnhancedCard */}
-        <EnhancedCard className="border border-border/50 shadow-lg">
-          <div className="space-y-1">
-            <h3 className="text-2xl text-center">Hesap Kurulumu</h3>
-            <EnhancedCardDescription className="text-center">
+        {/* Form Card */}
+        <Card className="border border-border/50 shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Hesap Kurulumu</CardTitle>
+            <CardDescription className="text-center">
               Lütfen bilgilerinizi girin ve şifrenizi oluşturun
-            </EnhancedCardDescription>
-          </div>
-          <div className="space-y-4">
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <form onSubmit={handlePasswordSetup} className="space-y-4">
               {/* Email (Read-only) */}
               <div className="space-y-2">
@@ -264,8 +264,8 @@ const InviteSetup = () => {
                 )}
               </Button>
             </form>
-          </div>
-        </EnhancedCard>
+          </CardContent>
+        </Card>
 
         {/* Security Info */}
         <div className="text-center space-y-4">

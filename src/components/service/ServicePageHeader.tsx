@@ -47,10 +47,14 @@ const ServicePageHeader = ({
       </div>
       
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Plus className="h-4 w-4" />
+              Yeni Servis Talebi
+            </DialogTitle>
+          </DialogHeader>
           <ServiceRequestForm 
-            isEditing={false}
-            showHeader={true}
             onClose={() => setIsFormOpen(false)}
           />
         </DialogContent>

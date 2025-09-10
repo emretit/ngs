@@ -3,8 +3,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
-import { useServiceCrudMutations } from "@/hooks/service/mutations/useServiceCrudMutations";
-import { ServiceRequestFormData } from "@/hooks/service/types";
+import { useServiceRequests, ServiceRequestFormData } from "@/hooks/useServiceRequests";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   TitleField, 
@@ -25,8 +24,6 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useTechnicians } from "@/hooks/useTechnicians";
-import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Edit, Plus } from "lucide-react";
 
 const formSchema = z.object({
   service_title: z.string().min(3, { message: "Başlık en az 3 karakter olmalıdır" }),
@@ -44,15 +41,14 @@ const formSchema = z.object({
 
 export interface ServiceRequestFormProps {
   onClose: () => void;
-  initialData?: ServiceRequestFormData | any; // ServiceRequest tipini de kabul eder
+  initialData?: ServiceRequestFormData;
   isEditing?: boolean;
-  showHeader?: boolean;
 }
 
-export function ServiceRequestForm({ onClose, initialData, isEditing = false, showHeader = false }: ServiceRequestFormProps) {
+export function ServiceRequestForm({ onClose, initialData, isEditing = false }: ServiceRequestFormProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [showPreview, setShowPreview] = useState(false);
-  const { createServiceRequest, updateServiceRequest, isCreating, isUpdating } = useServiceCrudMutations();
+  const { createServiceRequest, updateServiceRequest, isCreating, isUpdating } = useServiceRequests();
   const { toast } = useToast();
   const { customers } = useCustomerSelect();
   const { technicians, isLoading: techniciansLoading } = useTechnicians();
@@ -67,7 +63,6 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false, sh
       service_location: "",
       customer_id: undefined,
       service_reported_date: new Date(),
-      issue_date: undefined, // Planlanan tarih boş bırakılacak
       assigned_technician: undefined,
     },
   });
@@ -87,7 +82,6 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false, sh
     }
   }, [initialData, isEditing, form]);
 
-
   const getCustomerName = () => {
     const customerId = form.watch("customer_id");
     if (!customerId || !customers) return undefined;
@@ -97,128 +91,29 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false, sh
   };
 
   const onSubmit = (data: ServiceRequestFormData) => {
-    console.log('🚀 ServiceRequestForm onSubmit çağrıldı:', {
-      isEditing,
-      initialDataId: initialData?.id,
-      formData: data,
-      filesCount: files.length
-    });
-
     if (isEditing && initialData?.id) {
-      console.log('📝 Güncelleme işlemi başlatılıyor:', {
-        id: initialData.id,
+      updateServiceRequest({ 
+        id: initialData.id, 
         updateData: data,
         newFiles: files
       });
-      
-      try {
-        updateServiceRequest({ 
-          id: initialData.id, 
-          updateData: data,
-          newFiles: files
-        });
-        console.log('✅ updateServiceRequest çağrısı başarılı');
-        
-        toast({
-          title: "Servis Talebi Güncellendi",
-          description: "Servis talebi başarıyla güncellendi",
-        });
-      } catch (error) {
-        console.error('❌ updateServiceRequest hatası:', error);
-        toast({
-          title: "Hata",
-          description: "Servis talebi güncellenirken hata oluştu",
-          variant: "destructive",
-        });
-        return; // Hata durumunda onClose'u çağırma
-      }
-    } else {
-      console.log('➕ Yeni servis talebi oluşturma işlemi başlatılıyor:', {
-        formData: data,
-        filesCount: files.length
+      toast({
+        title: "Servis Talebi Güncellendi",
+        description: "Servis talebi başarıyla güncellendi",
       });
-      
-      try {
-        createServiceRequest({ formData: data, files });
-        console.log('✅ createServiceRequest çağrısı başarılı');
-        
-        toast({
-          title: "Servis Talebi Oluşturuldu",
-          description: "Servis talebi başarıyla oluşturuldu",
-        });
-      } catch (error) {
-        console.error('❌ createServiceRequest hatası:', error);
-        toast({
-          title: "Hata",
-          description: "Servis talebi oluşturulurken hata oluştu",
-          variant: "destructive",
-        });
-        return; // Hata durumunda onClose'u çağırma
-      }
+    } else {
+      createServiceRequest({ formData: data, files });
+      toast({
+        title: "Servis Talebi Oluşturuldu",
+        description: "Servis talebi başarıyla oluşturuldu",
+      });
     }
-    
-    console.log('🎯 Form işlemi tamamlandı, dialog kapatılıyor');
     onClose();
   };
 
-  // Düzenleme modunda manuel kaydetme
-  const handleSave = () => {
-    if (isEditing && initialData?.id) {
-      console.log('💾 Manuel kaydetme başlatılıyor...');
-      const formData = form.getValues();
-      console.log('📋 Form verileri alındı:', formData);
-      
-      try {
-        updateServiceRequest({ 
-          id: initialData.id, 
-          updateData: formData,
-          newFiles: files
-        });
-        console.log('✅ Manuel güncelleme başarılı');
-        
-        toast({
-          title: "Değişiklikler Kaydedildi",
-          description: "Servis talebi başarıyla güncellendi",
-        });
-      } catch (error) {
-        console.error('❌ Manuel güncelleme hatası:', error);
-        toast({
-          title: "Hata",
-          description: "Değişiklikler kaydedilemedi",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
   return (
-    <div className="space-y-4">
-      {showHeader && (
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {isEditing ? (
-              <>
-                <Edit className="h-5 w-5 text-blue-600" />
-                Servis Talebi Düzenle
-              </>
-            ) : (
-              <>
-                <Plus className="h-5 w-5 text-green-600" />
-                Yeni Servis Talebi
-              </>
-            )}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? "Servis talebinin bilgilerini düzenleyebilirsiniz. Değişiklikleri kaydetmeyi unutmayın."
-              : "Yeni bir servis talebi oluşturun. Tüm gerekli alanları doldurun."
-            }
-          </DialogDescription>
-        </DialogHeader>
-      )}
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         {showPreview ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between pb-1 border-b border-gray-200">
@@ -308,11 +203,9 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false, sh
           isSubmitting={isCreating || isUpdating} 
           isEditing={isEditing}
           showPreview={showPreview}
-          setShowPreview={setShowPreview}
-          onSave={isEditing ? handleSave : undefined}
+          setShowPreview={setShowPreview} 
         />
       </form>
     </Form>
-    </div>
   );
 }

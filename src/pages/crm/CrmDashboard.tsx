@@ -2,12 +2,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import DefaultLayout from "@/components/layouts/DefaultLayout";
-import { EnhancedCard, SummaryCard } from "@/components/shared";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ActivitiesSummary from "@/components/crm/ActivitiesSummary";
 import ProposalsSummary from "@/components/crm/ProposalsSummary";
 import OpportunitiesSummary from "@/components/crm/OpportunitiesSummary";
 import OrdersSummary from "@/components/crm/OrdersSummary";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { ChevronRight, Calendar, FileText, BarChart3, ShoppingCart, Plus } from "lucide-react";
 import { useState } from "react";
 import NewActivityDialog from "@/components/activities/NewActivityDialog";
@@ -50,16 +50,16 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
 
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {/* Activities EnhancedCard */}
-          <EnhancedCard className="group relative overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border">
-            <div className="pb-3">
+          {/* Activities Card */}
+          <Card className="group relative overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     <Calendar className="w-5 h-5 text-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold">Aktiviteler</h3>
+                    <CardTitle className="text-base font-semibold">Aktiviteler</CardTitle>
                     <p className="text-xs text-muted-foreground">Günlük işlemler</p>
                   </div>
                 </div>
@@ -72,22 +72,22 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
                   <span className="text-xs font-medium">Yeni Aktivite Ekle</span>
                 </Button>
               </div>
-            </div>
-            <div className="pt-0">
+            </CardHeader>
+            <CardContent className="pt-0">
               <ActivitiesSummary />
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
 
-          {/* Opportunities EnhancedCard */}
-          <EnhancedCard className="group relative overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border">
-            <div className="pb-3">
+          {/* Opportunities Card */}
+          <Card className="group relative overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     <BarChart3 className="w-5 h-5 text-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold">Fırsatlar</h3>
+                    <CardTitle className="text-base font-semibold">Fırsatlar</CardTitle>
                     <p className="text-xs text-muted-foreground">Satış fırsatları</p>
                   </div>
                 </div>
@@ -100,22 +100,22 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
                   <span className="text-xs font-medium">Yeni Fırsat Ekle</span>
                 </Button>
               </div>
-            </div>
-            <div className="pt-0">
+            </CardHeader>
+            <CardContent className="pt-0">
               <OpportunitiesSummary />
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
 
-          {/* Proposals EnhancedCard */}
-          <EnhancedCard className="group relative overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border">
-            <div className="pb-3">
+          {/* Proposals Card */}
+          <Card className="group relative overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     <FileText className="w-5 h-5 text-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold">Teklifler</h3>
+                    <CardTitle className="text-base font-semibold">Teklifler</CardTitle>
                     <p className="text-xs text-muted-foreground">Müşteri teklifleri</p>
                   </div>
                 </div>
@@ -128,22 +128,22 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
                   <span className="text-xs font-medium">Yeni Teklif Ekle</span>
                 </Button>
               </div>
-            </div>
-            <div className="pt-0">
+            </CardHeader>
+            <CardContent className="pt-0">
               <ProposalsSummary />
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
 
-          {/* Orders EnhancedCard */}
-          <EnhancedCard className="group relative overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border">
-            <div className="pb-3">
+          {/* Orders Card */}
+          <Card className="group relative overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     <ShoppingCart className="w-5 h-5 text-foreground" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold">Siparişler</h3>
+                    <CardTitle className="text-base font-semibold">Siparişler</CardTitle>
                     <p className="text-xs text-muted-foreground">Müşteri siparişleri</p>
                   </div>
                 </div>
@@ -156,11 +156,11 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
                   <span className="text-xs font-medium">Yeni Sipariş Ekle</span>
                 </Button>
               </div>
-            </div>
-            <div className="pt-0">
+            </CardHeader>
+            <CardContent className="pt-0">
               <OrdersSummary />
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
         </div>
 
         <NewActivityDialog

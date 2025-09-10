@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DefaultLayout from "@/components/layouts/DefaultLayout";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, Clock, Save, Send, AlertCircle, Loader2, Eye, CheckCircle, ArrowRight } from "lucide-react";
-import { EnhancedCard, SummaryCard } from "@/components/shared";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -363,8 +363,8 @@ const ProposalCreate = ({ isCollapsed, setIsCollapsed }: ProposalCreateProps) =>
 
       {/* Main Content with Enhanced Tabs */}
       <div className="p-6">
-        <EnhancedCard className="shadow-sm border-0 bg-white/50">
-          <div className="p-0">
+        <Card className="shadow-sm border-0 bg-white/50">
+          <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="border-b bg-muted/30 px-6 pt-4">
                 <TabsList className="grid w-full grid-cols-5 bg-transparent h-auto p-0 gap-1">
@@ -497,8 +497,8 @@ const ProposalCreate = ({ isCollapsed, setIsCollapsed }: ProposalCreateProps) =>
                 </TabsContent>
           </div>
             </Tabs>
-          </div>
-        </EnhancedCard>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Preview Dialog */}

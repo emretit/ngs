@@ -2,7 +2,7 @@
 import { useState } from "react";
 import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { Input } from "@/components/ui/input";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { Plus, Search, Filter, User, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProposalTable from "@/components/proposals/ProposalTable";
@@ -110,13 +110,13 @@ const Proposals = ({ isCollapsed, setIsCollapsed }: ProposalsPageProps) => {
               activeView={activeView} 
               setActiveView={setActiveView} 
             />
-            <PrimaryButton 
+            <Button 
               className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300"
               onClick={() => navigate("/proposal/create")}
             >
               <Plus className="mr-2 h-4 w-4" />
               Yeni Teklif
-            </PrimaryButton>
+            </Button>
           </div>
         </div>
 

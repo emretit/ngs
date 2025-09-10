@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { EditableEmployeeDetails } from "@/components/employees/details/form/EditableEmployeeDetails";
 import { Employee } from "@/types/employee";
@@ -60,14 +60,14 @@ const EmployeeForm = ({ isCollapsed, setIsCollapsed }: EmployeeFormProps) => {
       <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-64'}`}>
         <div className="py-6 px-6">
-          <SecondaryButton
+          <Button
             variant="ghost"
             className="mb-4"
             onClick={() => navigate(`/employees/${id}`)}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Çalışan Detaylarına Dön
-          </SecondaryButton>
+          </Button>
 
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Çalışan Düzenle</h1>

@@ -2,9 +2,9 @@
 import React, { useState } from "react";
 import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { useLocation, useNavigate } from "react-router-dom";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft, PackageCheck } from "lucide-react";
-import { EnhancedCard } from "@/components/shared";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrderForm from "@/components/orders/OrderForm";
 import InvoiceView from "@/components/orders/InvoiceView";
@@ -50,7 +50,7 @@ const Orders = ({ isCollapsed, setIsCollapsed }: OrdersProps) => {
         </Button>
       </div>
 
-      <EnhancedCard className="p-4">
+      <Card className="p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="order">Sipariş Bilgileri</TabsTrigger>
@@ -65,7 +65,7 @@ const Orders = ({ isCollapsed, setIsCollapsed }: OrdersProps) => {
             <InvoiceView />
           </TabsContent>
         </Tabs>
-      </EnhancedCard>
+      </Card>
     </DefaultLayout>
   );
 };

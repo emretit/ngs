@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import { TopBar } from "@/components/TopBar";
-import { EnhancedCard, SummaryCard } from "@/components/shared";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,17 +61,17 @@ const IncomeManagement = ({ isCollapsed, setIsCollapsed }: IncomeManagementProps
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Gelir Giriş Formu */}
-            <EnhancedCard>
-              <div>
-                <h3 className="flex items-center gap-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
                   Yeni Gelir Girişi
-                </h3>
-                <EnhancedCardDescription>
+                </CardTitle>
+                <CardDescription>
                   Operasyonel gelirlerinizi kaydedin
-                </EnhancedCardDescription>
-              </div>
-              <div className="space-y-4">
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="year">Yıl</Label>
@@ -134,42 +134,42 @@ const IncomeManagement = ({ isCollapsed, setIsCollapsed }: IncomeManagementProps
                   <Plus className="h-4 w-4 mr-2" />
                   Gelir Ekle
                 </Button>
-              </div>
-            </EnhancedCard>
+              </CardContent>
+            </Card>
 
             {/* Özet Kartları */}
             <div className="space-y-4">
-              <EnhancedCard>
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <h3 className="text-sm font-medium">Bu Ay Toplam Gelir</h3>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Bu Ay Toplam Gelir</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
+                </CardHeader>
+                <CardContent>
                   <div className="text-2xl font-bold">₺125,430</div>
                   <p className="text-xs text-muted-foreground">
                     +12% geçen aya göre
                   </p>
-                </div>
-              </EnhancedCard>
+                </CardContent>
+              </Card>
 
-              <EnhancedCard>
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <h3 className="text-sm font-medium">Yıllık Toplam</h3>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Yıllık Toplam</CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
+                </CardHeader>
+                <CardContent>
                   <div className="text-2xl font-bold">₺1,245,670</div>
                   <p className="text-xs text-muted-foreground">
                     +18% geçen yıla göre
                   </p>
-                </div>
-              </EnhancedCard>
+                </CardContent>
+              </Card>
 
-              <EnhancedCard>
-                <div>
-                  <h3 className="text-sm font-medium">Kategori Dağılımı</h3>
-                </div>
-                <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Kategori Dağılımı</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Ürün Satışları</span>
@@ -184,18 +184,18 @@ const IncomeManagement = ({ isCollapsed, setIsCollapsed }: IncomeManagementProps
                       <span className="font-medium">₺15,000</span>
                     </div>
                   </div>
-                </div>
-              </EnhancedCard>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
           {/* Son Girişler Tablosu */}
-          <EnhancedCard>
-            <div>
-              <h3>Son Gelir Girişleri</h3>
-              <EnhancedCardDescription>En son eklenen gelir kayıtları</EnhancedCardDescription>
-            </div>
-            <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Son Gelir Girişleri</CardTitle>
+              <CardDescription>En son eklenen gelir kayıtları</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -226,8 +226,8 @@ const IncomeManagement = ({ isCollapsed, setIsCollapsed }: IncomeManagementProps
                   </tbody>
                 </table>
               </div>
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

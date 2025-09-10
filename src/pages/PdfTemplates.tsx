@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PrimaryButton, SecondaryButton } from '@/components/shared';
-import { EnhancedCard, SummaryCard } from '@/components/shared';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   DropdownMenu,
@@ -131,18 +131,18 @@ const PdfTemplates: React.FC = () => {
             </p>
           </div>
           
-          <PrimaryButton onClick={handleCreateTemplate} className="flex items-center gap-2">
+          <Button onClick={handleCreateTemplate} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Yeni Şablon
-          </PrimaryButton>
+          </Button>
         </div>
 
 
 
         {/* Templates List */}
         {templates.length === 0 ? (
-          <EnhancedCard>
-            <div className="p-12 text-center">
+          <Card>
+            <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 Henüz şablon bulunmuyor
@@ -150,25 +150,25 @@ const PdfTemplates: React.FC = () => {
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 İlk PDF şablonunuzu oluşturarak belgelerinizi özelleştirmeye başlayın.
               </p>
-              <PrimaryButton onClick={handleCreateTemplate} className="flex items-center gap-2">
+              <Button onClick={handleCreateTemplate} className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 İlk Şablonunuzu Oluşturun
-              </PrimaryButton>
-            </div>
-          </EnhancedCard>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
-          <EnhancedCard>
-            <div>
+          <Card>
+            <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3>Şablon Listesi</h3>
+                  <CardTitle>Şablon Listesi</CardTitle>
                   <p className="text-sm text-muted-foreground">
                     Toplam {templates.length} şablon bulunuyor
                   </p>
                 </div>
               </div>
-            </div>
-            <div>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-2">
                 {templates.map((template) => (
                   <div
@@ -203,20 +203,20 @@ const PdfTemplates: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <PrimaryButton
+                      <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditTemplate(template.id)}
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Düzenle
-                      </PrimaryButton>
+                      </Button>
                       
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <PrimaryButton variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm">
                             <MoreVertical className="h-4 w-4" />
-                          </PrimaryButton>
+                          </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleDuplicateTemplate(template)}>
@@ -249,8 +249,8 @@ const PdfTemplates: React.FC = () => {
                   </div>
                 ))}
               </div>
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

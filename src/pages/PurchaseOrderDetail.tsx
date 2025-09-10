@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from "react";
 import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { useParams, useNavigate } from "react-router-dom";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, Save, Send, Printer, Download, Receipt } from "lucide-react";
-import { EnhancedCard } from "@/components/shared";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePurchaseOrders } from "@/hooks/usePurchaseOrders";
 import { Separator } from "@/components/ui/separator";
@@ -97,13 +97,13 @@ const PurchaseOrderDetail = ({ isCollapsed, setIsCollapsed }: PurchaseOrderDetai
           </Button>
         </div>
         
-        <EnhancedCard className="p-8 text-center">
+        <Card className="p-8 text-center">
           <h2 className="text-xl font-semibold mb-2">Sipariş Bulunamadı</h2>
           <p className="text-muted-foreground mb-4">
             Belirtilen ID ile bir sipariş bulunamadı. Lütfen satın alma siparişleri sayfasına dönün.
           </p>
           <Button onClick={handleBack}>Siparişlere Dön</Button>
-        </EnhancedCard>
+        </Card>
       </DefaultLayout>
     );
   }
@@ -139,7 +139,7 @@ const PurchaseOrderDetail = ({ isCollapsed, setIsCollapsed }: PurchaseOrderDetai
         </div>
       </div>
 
-      <EnhancedCard className="p-4">
+      <Card className="p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="order-details" className="flex items-center">
@@ -187,7 +187,7 @@ const PurchaseOrderDetail = ({ isCollapsed, setIsCollapsed }: PurchaseOrderDetai
             </div>
           </TabsContent>
         </Tabs>
-      </EnhancedCard>
+      </Card>
     </DefaultLayout>
   );
 };

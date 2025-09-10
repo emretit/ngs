@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { TopBar } from "@/components/TopBar";

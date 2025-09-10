@@ -31,15 +31,8 @@ export const useServiceCrudMutations = () => {
   // Create service request
   const createServiceRequestMutation = useMutation({
     mutationFn: async ({ formData, files }: { formData: ServiceRequestFormData, files: File[] }) => {
-      console.log('➕ createServiceRequestMutation başlatıldı:', {
-        formData,
-        filesCount: files.length
-      });
-
       // Generate service number
-      console.log('🔢 Servis numarası oluşturuluyor...');
       const serviceNumber = await generateServiceNumber();
-      console.log('✅ Servis numarası oluşturuldu:', serviceNumber);
       
       // UUID validation function
       const isValidUUID = (str: string) => {
@@ -47,23 +40,14 @@ export const useServiceCrudMutations = () => {
         return uuidRegex.test(str);
       };
 
-      // Tarih alanlarını güvenli şekilde işle
-      const safeToISOString = (date: any) => {
-        if (!date) return null;
-        if (date instanceof Date) return date.toISOString();
-        if (typeof date === 'string') return date; // Zaten string ise olduğu gibi bırak
-        return null;
-      };
-
       const serviceRequestData = {
         ...formData,
         service_number: serviceNumber,
-        service_due_date: safeToISOString(formData.service_due_date),
-        service_reported_date: safeToISOString(formData.service_reported_date),
-        issue_date: safeToISOString(formData.issue_date), // Planlanan tarih
+        service_due_date: formData.service_due_date?.toISOString(),
+        service_reported_date: formData.service_reported_date?.toISOString(),
+        issue_date: formData.issue_date?.toISOString(), // Planlanan tarih
         assigned_technician: formData.assigned_technician && 
           formData.assigned_technician !== 'unassigned' && 
-          formData.assigned_technician !== 'bilinmeyen' &&
           isValidUUID(formData.assigned_technician) ? formData.assigned_technician : null,
         service_status: formData.assigned_technician && 
           formData.assigned_technician !== 'unassigned' && 
@@ -73,19 +57,13 @@ export const useServiceCrudMutations = () => {
       };
 
       // Submit to Supabase
-      console.log('💾 Supabase insert işlemi başlatılıyor:', serviceRequestData);
       const { data, error } = await supabase
         .from('service_requests')
         .insert(serviceRequestData)
         .select()
         .single();
 
-      if (error) {
-        console.error('❌ Supabase insert hatası:', error);
-        throw error;
-      }
-      
-      console.log('✅ Supabase insert başarılı:', data);
+      if (error) throw error;
 
       if (files.length > 0 && data) {
         const uploadedFiles = await uploadFiles(files, data.id);
@@ -109,19 +87,12 @@ export const useServiceCrudMutations = () => {
 
       return data;
     },
-    onSuccess: (data) => {
-      console.log('🎉 createServiceRequestMutation başarılı:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] });
       toast.success("Service request created successfully");
     },
-    onError: (error: any) => {
-      console.error('💥 createServiceRequestMutation hatası:', error);
-      console.error('Hata detayları:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
+    onError: (error) => {
+      console.error('Service request creation error:', error);
       toast.error("Failed to create service request");
     },
   });
@@ -137,20 +108,11 @@ export const useServiceCrudMutations = () => {
       updateData: Partial<ServiceRequestFormData>; 
       newFiles?: File[] 
     }) => {
-      console.log('🔄 updateServiceRequestMutation başlatıldı:', {
-        id,
-        updateData,
-        newFilesCount: newFiles.length
-      });
-
       // Get current service request
-      console.log('📋 Mevcut servis talebi getiriliyor...');
       const currentRequest = await getServiceRequest(id);
       if (!currentRequest) {
-        console.error('❌ Servis talebi bulunamadı:', id);
         throw new Error("Service request not found");
       }
-      console.log('✅ Mevcut servis talebi bulundu:', currentRequest);
 
       let updatedAttachments = [...(currentRequest.attachments || [])];
 
@@ -174,35 +136,20 @@ export const useServiceCrudMutations = () => {
         return uuidRegex.test(str);
       };
 
-      // Tarih alanlarını güvenli şekilde işle
-      const safeToISOString = (date: any) => {
-        if (!date) return null;
-        if (date instanceof Date) return date.toISOString();
-        if (typeof date === 'string') return date; // Zaten string ise olduğu gibi bırak
-        return null;
-      };
-
       const updatePayload = {
         ...updateData,
-        service_due_date: safeToISOString(updateData.service_due_date) || currentRequest.service_due_date,
-        service_reported_date: safeToISOString(updateData.service_reported_date) || currentRequest.service_reported_date,
-        issue_date: safeToISOString(updateData.issue_date) || currentRequest.issue_date, // Planlanan tarih
+        service_due_date: updateData.service_due_date ? updateData.service_due_date.toISOString() : currentRequest.service_due_date,
+        service_reported_date: updateData.service_reported_date ? updateData.service_reported_date.toISOString() : currentRequest.service_reported_date,
+        issue_date: updateData.issue_date ? updateData.issue_date.toISOString() : currentRequest.issue_date, // Planlanan tarih
         assigned_technician: updateData.assigned_technician && 
           updateData.assigned_technician !== 'unassigned' && 
-          updateData.assigned_technician !== 'bilinmeyen' &&
-          isValidUUID(updateData.assigned_technician) ? updateData.assigned_technician : 
-          (updateData.assigned_technician === 'unassigned' || updateData.assigned_technician === 'bilinmeyen' ? null : currentRequest.assigned_technician),
+          isValidUUID(updateData.assigned_technician) ? updateData.assigned_technician : currentRequest.assigned_technician,
         service_status: updateData.assigned_technician && 
           updateData.assigned_technician !== 'unassigned' && 
-          updateData.assigned_technician !== 'bilinmeyen' &&
-          isValidUUID(updateData.assigned_technician) ? 'assigned' as const : 
-          (updateData.assigned_technician === 'unassigned' || updateData.assigned_technician === 'bilinmeyen' ? 'new' as const : currentRequest.service_status),
+          isValidUUID(updateData.assigned_technician) ? 'assigned' as const : currentRequest.service_status,
         attachments: attachmentsForDb
       };
 
-      console.log('📦 Update payload hazırlandı:', updatePayload);
-
-      console.log('💾 Supabase güncelleme işlemi başlatılıyor...');
       const { data, error } = await supabase
         .from('service_requests')
         .update(updatePayload)
@@ -210,27 +157,15 @@ export const useServiceCrudMutations = () => {
         .select()
         .single();
 
-      if (error) {
-        console.error('❌ Supabase güncelleme hatası:', error);
-        throw error;
-      }
-      
-      console.log('✅ Supabase güncelleme başarılı:', data);
+      if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      console.log('🎉 updateServiceRequestMutation başarılı:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] });
       toast.success("Service request updated successfully");
     },
-    onError: (error: any) => {
-      console.error('💥 updateServiceRequestMutation hatası:', error);
-      console.error('Hata detayları:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
+    onError: (error) => {
+      console.error('Service request update error:', error);
       toast.error("Failed to update service request");
     },
   });

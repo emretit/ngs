@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import { TopBar } from "@/components/TopBar";
-import { EnhancedCard, SummaryCard } from "@/components/shared";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -68,17 +68,17 @@ const InvestmentManagement = ({ isCollapsed, setIsCollapsed }: InvestmentManagem
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Yatırım Giriş Formu */}
-            <EnhancedCard>
-              <div>
-                <h3 className="flex items-center gap-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
                   Yeni Yatırım Girişi
-                </h3>
-                <EnhancedCardDescription>
+                </CardTitle>
+                <CardDescription>
                   Yatırım harcamalarınızı kaydedin
-                </EnhancedCardDescription>
-              </div>
-              <div className="space-y-4">
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="year">Yıl</Label>
@@ -151,55 +151,55 @@ const InvestmentManagement = ({ isCollapsed, setIsCollapsed }: InvestmentManagem
                   <Plus className="h-4 w-4 mr-2" />
                   Yatırım Ekle
                 </Button>
-              </div>
-            </EnhancedCard>
+              </CardContent>
+            </Card>
 
             {/* Özet Kartları */}
             <div className="space-y-4">
-              <EnhancedCard>
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <h3 className="text-sm font-medium">Bu Ay Toplam Yatırım</h3>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Bu Ay Toplam Yatırım</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
+                </CardHeader>
+                <CardContent>
                   <div className="text-2xl font-bold text-blue-600">₺45,000</div>
                   <p className="text-xs text-muted-foreground">
                     +25% geçen aya göre
                   </p>
-                </div>
-              </EnhancedCard>
+                </CardContent>
+              </Card>
 
-              <EnhancedCard>
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <h3 className="text-sm font-medium">Demirbaş Yatırımları</h3>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Demirbaş Yatırımları</CardTitle>
                   <Building className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
+                </CardHeader>
+                <CardContent>
                   <div className="text-2xl font-bold">₺25,000</div>
                   <p className="text-xs text-muted-foreground">
                     Toplam yatırımların %56'sı
                   </p>
-                </div>
-              </EnhancedCard>
+                </CardContent>
+              </Card>
 
-              <EnhancedCard>
-                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <h3 className="text-sm font-medium">Teknoloji Yatırımları</h3>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Teknoloji Yatırımları</CardTitle>
                   <Wrench className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
+                </CardHeader>
+                <CardContent>
                   <div className="text-2xl font-bold">₺15,000</div>
                   <p className="text-xs text-muted-foreground">
                     Bilgisayar ve yazılım
                   </p>
-                </div>
-              </EnhancedCard>
+                </CardContent>
+              </Card>
 
-              <EnhancedCard>
-                <div>
-                  <h3 className="text-sm font-medium">Yatırım Dağılımı</h3>
-                </div>
-                <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Yatırım Dağılımı</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Demirbaş Alımları</span>
@@ -214,18 +214,18 @@ const InvestmentManagement = ({ isCollapsed, setIsCollapsed }: InvestmentManagem
                       <span className="font-medium text-blue-600">₺5,000</span>
                     </div>
                   </div>
-                </div>
-              </EnhancedCard>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
           {/* Son Girişler Tablosu */}
-          <EnhancedCard>
-            <div>
-              <h3>Son Yatırım Girişleri</h3>
-              <EnhancedCardDescription>En son eklenen yatırım kayıtları</EnhancedCardDescription>
-            </div>
-            <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Son Yatırım Girişleri</CardTitle>
+              <CardDescription>En son eklenen yatırım kayıtları</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -268,8 +268,8 @@ const InvestmentManagement = ({ isCollapsed, setIsCollapsed }: InvestmentManagem
                   </tbody>
                 </table>
               </div>
-            </div>
-          </EnhancedCard>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

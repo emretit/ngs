@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
@@ -7,11 +7,11 @@ import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import { ServiceRequestDetail } from "@/components/service/ServiceRequestDetail";
 import { ServiceRequestForm } from "@/components/service/ServiceRequestForm";
 import ServicePageHeader from "@/components/service/ServicePageHeader";
-import ServiceStatsEnhancedCards from "@/components/service/ServiceStatsEnhancedCards";
-import { PrimaryButton, SecondaryButton } from "@/components/shared";
-import { EnhancedCard, SummaryCard } from "@/components/shared";
+import ServiceStatsCards from "@/components/service/ServiceStatsCards";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -45,10 +45,9 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   
-  // Düzenleme modali için state'ler
-  const [editingService, setEditingService] = useState<ServiceRequest | null>(null);
+  // Servis düzenleme pop-up'ı için state'ler
   const [isEditOpen, setIsEditOpen] = useState(false);
-  
+  const [editingRequest, setEditingRequest] = useState<ServiceRequest | null>(null);
   
   // Silme onayı için state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -60,17 +59,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   const [showCompletedServices, setShowCompletedServices] = useState(true);
   const [showResourceView, setShowResourceView] = useState(true);
   const [assignedServices, setAssignedServices] = useState<Map<string, string>>(new Map());
-  const [assignedDates, setAssignedDates] = useState<Map<string, string>>(new Map());
   const [activeView, setActiveView] = useState<"calendar" | "list">("calendar");
-  
-  // Onay modalı için state'ler
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingAssignment, setPendingAssignment] = useState<{
-    service: any;
-    technician: any;
-    targetDate: string;
-    isMove: boolean;
-  } | null>(null);
   
   // Liste görünümü için state'ler
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,26 +69,6 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const { data: serviceRequests, isLoading, error, deleteServiceRequest } = useServiceRequests();
-
-  // Mevcut atamaları yükle
-  useEffect(() => {
-    if (serviceRequests) {
-      const assignedServicesMap = new Map<string, string>();
-      const assignedDatesMap = new Map<string, string>();
-      
-      serviceRequests.forEach(service => {
-        if (service.assigned_technician) {
-          assignedServicesMap.set(service.id, service.assigned_technician);
-        }
-        if (service.issue_date) {
-          assignedDatesMap.set(service.id, moment(service.issue_date).format('YYYY-MM-DD'));
-        }
-      });
-      
-      setAssignedServices(assignedServicesMap);
-      setAssignedDates(assignedDatesMap);
-    }
-  }, [serviceRequests]);
 
   // Teknisyenleri getir
   const { data: technicians } = useQuery({
@@ -134,13 +103,6 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
     setIsDetailOpen(true);
   };
 
-  // Düzenleme fonksiyonu
-  const handleEditService = (service: ServiceRequest) => {
-    console.log('✏️ Servis düzenleme başlatılıyor:', service);
-    setEditingService(service);
-    setIsEditOpen(true);
-  };
-
   // Silme fonksiyonu
   const handleDeleteService = (service: ServiceRequest) => {
     setServiceToDelete(service);
@@ -155,6 +117,17 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
     }
   };
 
+  // ServiceRequest'i ServiceRequestFormData'ya dönüştür
+  const convertToFormData = (request: ServiceRequest) => {
+    return {
+      ...request,
+      service_due_date: request.service_due_date ? new Date(request.service_due_date) : undefined,
+      service_reported_date: request.service_reported_date ? new Date(request.service_reported_date) : undefined,
+      issue_date: request.issue_date ? new Date(request.issue_date) : undefined,
+      due_date: request.due_date ? new Date(request.due_date) : undefined,
+      reported_date: request.reported_date ? new Date(request.reported_date) : undefined,
+    };
+  };
 
   // Öncelik renklerini belirle
   const getPriorityColor = (priority: string) => {
@@ -222,7 +195,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
     // Gerçek servis taleplerini de ekle
     if (serviceRequests && serviceRequests.length > 0) {
       const realEvents = serviceRequests.map(request => ({
-        id: request.id,
+        id: `real-${request.id}`,
         title: request.service_title || 'Servis Talebi',
         start: request.issue_date ? new Date(request.issue_date) : (request.service_due_date ? new Date(request.service_due_date) : new Date()),
         end: request.issue_date ? new Date(new Date(request.issue_date).getTime() + 2 * 60 * 60 * 1000) : (request.service_due_date ? new Date(new Date(request.service_due_date).getTime() + 2 * 60 * 60 * 1000) : new Date(Date.now() + 2 * 60 * 60 * 1000)), // 2 saat sonra
@@ -274,32 +247,11 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
         const assignedResourceId = assignedServices.get(event.id);
         const finalResourceId = assignedResourceId || event.resourceId;
         
-        // Eğer bu servis tarihe atanmışsa, assignedDates state'inden tarihi al
-        const assignedDate = assignedDates.get(event.id);
-        let finalStart = new Date(event.start);
-        let finalEnd = new Date(event.end);
-        
-        if (assignedDate) {
-          // Atanan tarihi kullan, saatleri koru
-          const originalStart = moment(event.start);
-          const originalEnd = moment(event.end);
-          const assignedMoment = moment(assignedDate);
-          
-          finalStart = assignedMoment
-            .hour(originalStart.hour())
-            .minute(originalStart.minute())
-            .toDate();
-          finalEnd = assignedMoment
-            .hour(originalEnd.hour())
-            .minute(originalEnd.minute())
-            .toDate();
-        }
-        
         return {
           id: event.id,
           title: event.title,
-          start: finalStart,
-          end: finalEnd,
+          start: new Date(event.start),
+          end: new Date(event.end),
           resourceId: finalResourceId,
           priority: event.priority,
           status: event.status,
@@ -316,7 +268,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
           }
         };
       });
-  }, [showCompletedServices, serviceRequests, assignedServices, assignedDates, searchQuery, statusFilter, priorityFilter]);
+  }, [showCompletedServices, serviceRequests, assignedServices, searchQuery, statusFilter, priorityFilter]);
 
   // Resources'ları oluştur
   const resources = useMemo(() => {
@@ -429,7 +381,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
               }}
             />
 
-            <ServiceStatsEnhancedCards 
+            <ServiceStatsCards 
               stats={stats} 
               viewType={activeView} 
             />
@@ -481,28 +433,28 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <CalendarDays className="h-5 w-5 text-[#8B0000]" />
+                    <CalendarDays className="h-5 w-5 text-blue-600" />
                     Servis Takvimi
                   </h3>
                   
                   <div className="flex items-center gap-2">
-                    <PrimaryButton
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentDate(new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000))}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronLeft className="h-4 w-4" />
-                    </PrimaryButton>
-                    <PrimaryButton
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setCurrentDate(new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000))}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronRight className="h-4 w-4" />
-                    </PrimaryButton>
-                    <PrimaryButton
+                    </Button>
+                    <Button
                       variant="default"
                       size="sm"
                       onClick={() => setCurrentDate(new Date())}
@@ -510,7 +462,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                     >
                       <CalendarDays className="h-4 w-4 mr-1" />
                       Bugün
-                    </PrimaryButton>
+                    </Button>
                   </div>
                 </div>
 
@@ -520,46 +472,46 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-700">Görünüm:</span>
                     <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                      <PrimaryButton
+                      <Button
                         variant={view === Views.DAY ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => setView(Views.DAY)}
                         className="h-8 px-3"
                       >
                         Gün
-                      </PrimaryButton>
-                      <PrimaryButton
+                      </Button>
+                      <Button
                         variant={view === Views.WEEK ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => setView(Views.WEEK)}
                         className="h-8 px-3"
                       >
                         Hafta
-                      </PrimaryButton>
-                      <PrimaryButton
+                      </Button>
+                      <Button
                         variant={view === Views.MONTH ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => setView(Views.MONTH)}
                         className="h-8 px-3"
                       >
                         Ay
-                      </PrimaryButton>
+                      </Button>
                     </div>
                   </div>
 
                   {/* Filtre Kontrolü */}
                   <div className="flex items-center gap-2">
-                    <PrimaryButton
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setShowResourceView(!showResourceView)}
-                      className={`h-8 ${showResourceView ? 'bg-red-50 text-[#8B0000] border-red-200' : ''}`}
+                      className={`h-8 ${showResourceView ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}`}
                     >
                       <Users className="h-4 w-4 mr-1" />
                       Teknisyen Görünümü
-                    </PrimaryButton>
+                    </Button>
                     
-                    <PrimaryButton
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setShowCompletedServices(!showCompletedServices)}
@@ -567,7 +519,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                     >
                       {showCompletedServices ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
                       Tamamlanan
-                    </PrimaryButton>
+                    </Button>
                     
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Users className="h-4 w-4" />
@@ -621,28 +573,28 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                           <div 
                             key={i} 
                             className={`flex-1 p-3 text-center transition-all duration-300 ${
-                              isToday ? 'bg-gradient-to-b from-red-50 to-red-100 border-b-2 border-[#8B0000]' :
+                              isToday ? 'bg-gradient-to-b from-blue-50 to-blue-100 border-b-2 border-blue-400' :
                               isWeekend ? 'bg-gradient-to-b from-orange-50 to-orange-100' : 
                               'bg-gradient-to-b from-gray-50 to-gray-100'
                             } ${i < 6 ? 'border-r border-gray-200/60' : ''} hover:bg-gradient-to-b hover:from-gray-100 hover:to-gray-150`}
                             style={{ flexBasis: 'calc(100% / 7)', maxWidth: 'calc(100% / 7)', boxSizing: 'border-box' }}
                           >
                             <div className={`text-xs font-semibold ${
-                              isToday ? 'text-[#8B0000]' : 
+                              isToday ? 'text-blue-700' : 
                               isWeekend ? 'text-orange-700' : 
                               'text-gray-600'
                             }`}>
                               {turkishDay}
                             </div>
                             <div className={`text-sm font-bold mt-1 ${
-                              isToday ? 'text-[#6B0000]' : 
+                              isToday ? 'text-blue-800' : 
                               isWeekend ? 'text-orange-800' : 
                               'text-gray-800'
                             }`}>
                               {date.format('DD MMM')}
                             </div>
                             {isToday && (
-                              <div className="w-2 h-2 bg-[#8B0000] rounded-full mx-auto mt-1 shadow-sm"></div>
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1 shadow-sm"></div>
                             )}
                           </div>
                         );
@@ -650,11 +602,11 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                       </div>
                     </div>
                     {resources.map((tech, techIndex) => (
-                      <div key={tech.resourceId} className="flex border-b border-gray-200/60 hover:bg-gradient-to-r hover:from-red-50/50 hover:to-transparent transition-all duration-300" style={{ minHeight: '80px' }}>
+                      <div key={tech.resourceId} className="flex border-b border-gray-200/60 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-transparent transition-all duration-300" style={{ minHeight: '80px' }}>
                         {/* Teknisyen İsmi - Header ile Aynı Genişlik */}
                         <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 p-4 flex items-center gap-3 shadow-sm" style={{ minWidth: '160px', maxWidth: '160px', flexShrink: 0, boxSizing: 'border-box' }}>
-                          <div className="w-8 h-8 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center shadow-inner border border-red-200">
-                            <User className="w-4 h-4 text-[#8B0000]" />
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-inner border border-blue-200">
+                            <User className="w-4 h-4 text-blue-700" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">{tech.title}</p>
@@ -683,74 +635,63 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                         <div 
                           key={i} 
                           className={`flex-1 p-3 min-h-20 relative group transition-all duration-300 ${
-                            isToday ? 'bg-red-50/40 border-l border-red-200' :
+                            isToday ? 'bg-blue-50/40 border-l border-blue-200' :
                             isWeekend ? 'bg-orange-50/30' : 
-                            'bg-white hover:bg-red-50/20'
+                            'bg-white hover:bg-blue-50/20'
                           } ${i < 6 ? 'border-r border-gray-200/60' : ''} 
                           hover:shadow-inner cursor-pointer`}
                           style={{ flexBasis: 'calc(100% / 7)', maxWidth: 'calc(100% / 7)', boxSizing: 'border-box' }}
                           onDrop={(e) => {
                             e.preventDefault();
-                            e.currentTarget.classList.remove('bg-red-100', 'border-red-300', 'border-2', 'border-dashed');
+                            e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300', 'border-2', 'border-dashed');
+                            e.currentTarget.classList.add('bg-green-100');
                             
                             const serviceData = e.dataTransfer.getData('text/plain');
                             if (serviceData) {
                               const service = JSON.parse(serviceData);
+                              console.log('✅ Servis atandı:', service.title, '→ Teknisyen:', tech.title, 'Gün:', i);
                               
-                              // Hangi güne atandığını hesapla
-                              const targetDate = moment(currentDate).startOf('week').add(i, 'days');
-                              const targetDateString = targetDate.format('YYYY-MM-DD');
-                              
-                              // Mevcut atama durumunu kontrol et
-                              const currentResourceId = assignedServices.get(service.id);
-                              const currentAssignedDate = assignedDates.get(service.id);
-                              const isMove = !!(currentResourceId && currentAssignedDate);
-                              
-                              console.log('📋 Onay bekleniyor:', service.title, '→ Teknisyen:', tech.title, 'Gün:', i, 'Tarih:', targetDateString, 'Taşıma:', isMove);
-                              
-                              // Onay modalını göster
-                              setPendingAssignment({
-                                service,
-                                technician: tech,
-                                targetDate: targetDateString,
-                                isMove
+                              // State'i güncelle - servisi teknisyene ata
+                              setAssignedServices(prev => {
+                                const newMap = new Map(prev);
+                                newMap.set(service.id, tech.resourceId);
+                                return newMap;
                               });
-                              setShowConfirmModal(true);
+                              
+                              // Animasyonlu başarı mesajı
+                              const successMessage = document.createElement('div');
+                              successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white p-3 rounded-lg shadow-lg z-50 animate-pulse';
+                              successMessage.innerHTML = `✅ ${service.title} başarıyla ${tech.title} teknisyenine atandı!`;
+                              document.body.appendChild(successMessage);
+                              setTimeout(() => successMessage.remove(), 3000);
                               
                               // Hücreyi normal haline döndür
-                              e.currentTarget.classList.remove('bg-green-100');
+                              setTimeout(() => {
+                                e.currentTarget.classList.remove('bg-green-100');
+                              }, 1000);
+                              
+                              // Burada gerçek atama işlemi yapılacak
+                              // TODO: Supabase'e servisi teknisyene atama
                             }
                           }}
                           onDragOver={(e) => {
                             e.preventDefault();
-                            e.currentTarget.classList.add('bg-red-100', 'border-red-300', 'border-2', 'border-dashed');
+                            e.currentTarget.classList.add('bg-blue-100', 'border-blue-300', 'border-2', 'border-dashed');
                           }}
                           onDragLeave={(e) => {
-                            e.currentTarget.classList.remove('bg-red-100', 'border-red-300', 'border-2', 'border-dashed');
+                            e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300', 'border-2', 'border-dashed');
                           }}
                         >
                               {/* Servis Kartları - Responsive Tasarım */}
                               {dayServices.map((service, serviceIndex) => (
                                 <div 
                                   key={serviceIndex}
-                                  className="relative mb-1.5 w-full rounded-md px-2 py-1.5 text-white cursor-move shadow-sm transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md group/service overflow-hidden"
+                                  className="relative mb-1.5 w-full rounded-md px-2 py-1.5 text-white cursor-pointer shadow-sm transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md group/service overflow-hidden"
                                   style={{ 
                                     backgroundColor: service.style?.backgroundColor || '#3b82f6',
                                     fontSize: '9px',
                                     lineHeight: '1.2',
                                     maxWidth: '100%'
-                                  }}
-                                  draggable
-                                  onDragStart={(e) => {
-                                    e.dataTransfer.setData('text/plain', JSON.stringify(service));
-                                    e.currentTarget.style.opacity = '0.6';
-                                    e.currentTarget.style.transform = 'rotate(1deg) scale(0.98)';
-                                    e.currentTarget.classList.add('shadow-lg');
-                                  }}
-                                  onDragEnd={(e) => {
-                                    e.currentTarget.style.opacity = '1';
-                                    e.currentTarget.style.transform = 'rotate(0deg) scale(1)';
-                                    e.currentTarget.classList.remove('shadow-lg');
                                   }}
                                   onClick={() => handleSelectEvent(service)}
                                 >
@@ -886,7 +827,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                           {/* Kompakt Alt Bilgi - Zaman ve Durum */}
                           <div className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-1 text-gray-600">
-                              <Clock className="h-2.5 w-2.5 text-[#8B0000]" />
+                              <Clock className="h-2.5 w-2.5 text-blue-500" />
                               <span className="font-medium">
                                 {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
                               </span>
@@ -940,8 +881,8 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                 <div className="flex items-center justify-between">
                   {/* Sol taraf - Yardım bilgisi */}
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                      <AlertCircle className="h-4 w-4 text-[#8B0000]" />
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <AlertCircle className="h-4 w-4 text-blue-600" />
                   </div>
                     <div className="text-xs text-gray-700">
                       <p className="font-medium">💡 İpucu: Servisleri sürükle & bırak ile atayabilirsiniz</p>
@@ -1065,6 +1006,9 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                           📋 Planlanan
                         </TableHead>
                         <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                          ⏰ Teslim
+                        </TableHead>
+                        <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
                           ⚙️ İşlemler
                         </TableHead>
                       </TableRow>
@@ -1139,7 +1083,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                                 <Badge 
                                   variant="outline"
                                   className={`${
-                                    service.service_status === 'new' ? 'border-[#8B0000] text-[#8B0000] bg-red-50' :
+                                    service.service_status === 'new' ? 'border-blue-500 text-blue-700 bg-blue-50' :
                                     service.service_status === 'in_progress' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
                                     service.service_status === 'completed' ? 'border-green-500 text-green-700 bg-green-50' :
                                     'border-gray-500 text-gray-700 bg-gray-50'
@@ -1170,11 +1114,30 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                                   {service.issue_date ? moment(service.issue_date).format('DD.MM.YYYY') : 'Planlanmamış'}
                                 </div>
                               </TableCell>
+                              <TableCell className="px-4 py-4">
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                  <Calendar className="h-4 w-4" />
+                                  {service.service_due_date ? moment(service.service_due_date).format('DD.MM.YYYY') : 'Tarih belirtilmemiş'}
+                                </div>
+                              </TableCell>
                               <TableCell className="px-4 py-4 text-right">
                                 <div className="flex justify-end gap-2">
+                                  {/* Düzenle Butonu */}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingRequest(service);
+                                      setIsEditOpen(true);
+                                    }}
+                                    title="Düzenle"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
                                   
                                   {/* Detay Butonu */}
-                                  <PrimaryButton
+                                  <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={(e) => {
@@ -1184,24 +1147,10 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                                     title="Detayları Görüntüle"
                                   >
                                     <Eye className="h-4 w-4" />
-                                  </PrimaryButton>
-                                  
-                                  {/* Düzenleme Butonu */}
-                                  <PrimaryButton
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEditService(service);
-                                    }}
-                                    className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                                    title="Düzenle"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </PrimaryButton>
+                                  </Button>
                                   
                                   {/* Silme Butonu */}
-                                  <PrimaryButton
+                                  <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={(e) => {
@@ -1212,7 +1161,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                                     title="Sil"
                                   >
                                     <Trash2 className="h-4 w-4" />
-                                  </PrimaryButton>
+                                  </Button>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -1235,6 +1184,26 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
             }}
           />
 
+          {/* Servis Düzenleme Pop-up'ı */}
+          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Servis Talebini Düzenle</DialogTitle>
+              </DialogHeader>
+              {editingRequest && (
+                <ServiceRequestForm
+                  initialData={convertToFormData(editingRequest)}
+                  isEditing={true}
+                  onClose={() => {
+                    setIsEditOpen(false);
+                    setEditingRequest(null);
+                    // Sayfayı yenile
+                    window.location.reload();
+                  }}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Silme Onay Dialog'u */}
           <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
@@ -1262,153 +1231,21 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                 </p>
               </div>
               <div className="flex justify-end gap-2">
-                <PrimaryButton
+                <Button
                   variant="outline"
                   onClick={() => setDeleteConfirmOpen(false)}
                 >
                   İptal
-                </PrimaryButton>
-                <PrimaryButton
+                </Button>
+                <Button
                   variant="destructive"
                   onClick={confirmDelete}
                   className="bg-red-600 hover:bg-red-700"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Sil
-                </PrimaryButton>
+                </Button>
               </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Onay Modalı - Drag & Drop İçin */}
-          <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                    <div className="w-4 h-4 bg-[#8B0000] rounded-full"></div>
-                  </div>
-                  {pendingAssignment?.isMove ? 'Servis Taşıma Onayı' : 'Servis Atama Onayı'}
-                </DialogTitle>
-                <DialogDescription className="text-base">
-                  {pendingAssignment?.isMove ? (
-                    <>
-                      <strong>{pendingAssignment.service?.title}</strong> servisini{' '}
-                      <strong>{pendingAssignment.technician?.title}</strong> teknisyenine ve{' '}
-                      <strong>{moment(pendingAssignment.targetDate).format('DD MMM YYYY')}</strong> tarihine taşımak istediğinizden emin misiniz?
-                    </>
-                  ) : (
-                    <>
-                      <strong>{pendingAssignment?.service?.title}</strong> servisini{' '}
-                      <strong>{pendingAssignment?.technician?.title}</strong> teknisyenine ve{' '}
-                      <strong>{moment(pendingAssignment?.targetDate).format('DD MMM YYYY')}</strong> tarihine atamak istediğinizden emin misiniz?
-                    </>
-                  )}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex justify-end gap-2 mt-4">
-                <PrimaryButton
-                  variant="outline"
-                  onClick={() => {
-                    setShowConfirmModal(false);
-                    setPendingAssignment(null);
-                  }}
-                >
-                  İptal
-                </PrimaryButton>
-                <PrimaryButton
-                  onClick={async () => {
-                    if (pendingAssignment) {
-                      try {
-                        // Supabase'e kaydet
-                        console.log('Güncellenecek veri:', {
-                          assigned_technician: pendingAssignment.technician.resourceId,
-                          issue_date: new Date(pendingAssignment.targetDate).toISOString(),
-                          service_id: pendingAssignment.service.id
-                        });
-                        
-                        const { error } = await supabase
-                          .from('service_requests')
-                          .update({
-                            assigned_technician: pendingAssignment.technician.resourceId,
-                            issue_date: new Date(pendingAssignment.targetDate).toISOString()
-                          })
-                          .eq('id', pendingAssignment.service.id);
-
-                        if (error) {
-                          console.error('Supabase güncelleme hatası:', error);
-                          console.error('Güncellenen veri:', {
-                            assigned_technician: pendingAssignment.technician.resourceId,
-                            issue_date: pendingAssignment.targetDate,
-                            service_id: pendingAssignment.service.id
-                          });
-                          throw error;
-                        }
-
-                        // State'i güncelle
-                        setAssignedServices(prev => {
-                          const newMap = new Map(prev);
-                          newMap.set(pendingAssignment.service.id, pendingAssignment.technician.resourceId);
-                          return newMap;
-                        });
-                        
-                        setAssignedDates(prev => {
-                          const newMap = new Map(prev);
-                          newMap.set(pendingAssignment.service.id, pendingAssignment.targetDate);
-                          return newMap;
-                        });
-                        
-                        // Başarı mesajı
-                        const successMessage = document.createElement('div');
-                        successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white p-3 rounded-lg shadow-lg z-50 animate-pulse';
-                        successMessage.innerHTML = pendingAssignment.isMove 
-                          ? `🔄 ${pendingAssignment.service.title} ${pendingAssignment.technician.title} teknisyenine ve ${moment(pendingAssignment.targetDate).format('DD MMM')} tarihine taşındı!`
-                          : `✅ ${pendingAssignment.service.title} başarıyla ${pendingAssignment.technician.title} teknisyenine ve ${moment(pendingAssignment.targetDate).format('DD MMM')} tarihine atandı!`;
-                        document.body.appendChild(successMessage);
-                        setTimeout(() => successMessage.remove(), 3000);
-                        
-                        // Modal'ı kapat
-                        setShowConfirmModal(false);
-                        setPendingAssignment(null);
-                      } catch (error) {
-                        console.error('Atama hatası:', error);
-                        console.error('Hata detayları:', {
-                          message: error.message,
-                          code: error.code,
-                          details: error.details,
-                          hint: error.hint
-                        });
-                        // Hata mesajı
-                        const errorMessage = document.createElement('div');
-                        errorMessage.className = 'fixed top-4 right-4 bg-red-500 text-white p-3 rounded-lg shadow-lg z-50 animate-pulse';
-                        errorMessage.innerHTML = `❌ Atama sırasında hata oluştu: ${error.message || 'Bilinmeyen hata'}`;
-                        document.body.appendChild(errorMessage);
-                        setTimeout(() => errorMessage.remove(), 5000);
-                      }
-                    }
-                  }}
-                  className="bg-[#8B0000] hover:bg-[#6B0000]"
-                >
-                  {pendingAssignment?.isMove ? 'Taşı' : 'Ata'}
-                </PrimaryButton>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Düzenleme Modali */}
-          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              {editingService && (
-                <ServiceRequestForm
-                  initialData={editingService as any}
-                  isEditing={true}
-                  showHeader={true}
-                  onClose={() => {
-                    setIsEditOpen(false);
-                    setEditingService(null);
-                  }}
-                />
-              )}
             </DialogContent>
           </Dialog>
 

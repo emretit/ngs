@@ -1,5 +1,5 @@
 
-import { ActionButtonGroup } from "@/components/shared";
+import { Button } from "@/components/ui/button";
 
 interface FormActionsProps {
   onClose: () => void;
@@ -9,15 +9,22 @@ interface FormActionsProps {
 
 const FormActions = ({ onClose, isEditing, isSubmitting }: FormActionsProps) => {
   return (
-    <ActionButtonGroup
-      onCancel={onClose}
-      onSave={undefined} // Form submit kullanıyor
-      saveText={isEditing ? "Güncelle" : "Oluştur"}
-      cancelText="İptal"
-      saveLoading={isSubmitting}
-      saveDisabled={isSubmitting}
-      className="pt-4"
-    />
+    <div className="flex justify-end space-x-2 pt-4">
+      <Button 
+        type="button" 
+        variant="outline" 
+        onClick={onClose} 
+        disabled={isSubmitting}
+      >
+        İptal
+      </Button>
+      <Button 
+        type="submit" 
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? "Kaydediliyor..." : isEditing ? "Güncelle" : "Oluştur"}
+      </Button>
+    </div>
   );
 };
 

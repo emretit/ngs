@@ -1,4 +1,5 @@
 
+import { Card } from "@/components/ui/card";
 import { Customer } from "@/types/customer";
 import { Users, CreditCard, AlertCircle } from "lucide-react";
 import DashboardCard from "@/components/DashboardCard";
@@ -34,22 +35,19 @@ const CustomerSummaryCharts = ({ customers = [] }: CustomerSummaryChartsProps) =
       <DashboardCard
         title="Toplam Müşteri Sayısı"
         value={totalCustomers.toString()}
-        icon={Users}
-        color="blue"
+        icon={<Users className="h-6 w-6" />}
       />
       
       <DashboardCard
         title="Toplam Bakiye"
         value={new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalBalance)}
-        icon={CreditCard}
-        color="green"
+        icon={<CreditCard className="h-6 w-6" />}
       />
       
       <DashboardCard
         title="Vadesi Geçen Bakiye"
         value={new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(overdueBalance)}
-        icon={AlertCircle}
-        color="red"
+        icon={<AlertCircle className="h-6 w-6" />}
       />
     </div>
   );

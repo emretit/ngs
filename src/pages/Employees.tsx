@@ -2,7 +2,7 @@
 import Navbar from "@/components/Navbar";
 import { EmployeeList } from "@/components/employees/EmployeeList";
 import { EmployeeSummaryStats } from "@/components/employees/stats/EmployeeSummaryStats";
-import { SalaryOverviewEnhancedCards } from "@/components/employees/SalaryOverviewEnhancedCards";
+import { SalaryOverviewCards } from "@/components/employees/SalaryOverviewCards";
 import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -38,7 +38,7 @@ const Employees = ({ isCollapsed, setIsCollapsed }: EmployeesPageProps) => {
           
           <EmployeeSummaryStats />
           
-          <SalaryOverviewEnhancedCards />
+          <SalaryOverviewCards />
           
           <EmployeeList />
         </div>

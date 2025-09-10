@@ -531,59 +531,99 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                 </div>
               </div>
 
-              {/* Custom Gantt Style Calendar with Unassigned Services */}
-              <div className="flex" style={{ height: 'calc(100vh - 200px)' }}>
+              {/* Modern Servis Takvimi */}
+              <div className="flex rounded-xl overflow-hidden shadow-lg border border-gray-200" style={{ height: 'calc(100vh - 200px)' }}>
                 {/* Ana Takvim Alanı */}
-                <div className="flex-1 flex flex-col border-r border-gray-300">
-                  {/* Gün Başlıkları */}
-                  <div className="flex border-b border-gray-300">
-                    {/* Sol boş alan - Teknisyen başlığı için */}
-                    <div className="w-36 bg-blue-600 text-white p-2 font-semibold text-sm border-r border-blue-700">
-                      Teknisyenler / Günler
-                    </div>
-                    
-                    {/* Gün sütunları - Tam hafta (Pazartesi-Pazar) */}
-                    {Array.from({ length: 7 }, (_, i) => {
-                      const date = moment(currentDate).startOf('week').add(i, 'days');
-                      const turkishDays = {
-                        'Sunday': 'Pazar',
-                        'Monday': 'Pazartesi', 
-                        'Tuesday': 'Salı',
-                        'Wednesday': 'Çarşamba',
-                        'Thursday': 'Perşembe',
-                        'Friday': 'Cuma',
-                        'Saturday': 'Cumartesi'
-                      };
-                      const dayName = date.format('dddd');
-                      const turkishDay = turkishDays[dayName as keyof typeof turkishDays] || dayName;
-                      
-                      return (
-                        <div key={i} className={`w-32 bg-gray-100 p-2 text-center ${i < 6 ? 'border-r border-gray-300' : ''}`}>
-                          <div className="text-xs font-medium text-gray-700">{turkishDay}</div>
-                          <div className="text-sm font-semibold text-gray-900 mt-1">{date.format('DD MMM')}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Teknisyen Satırları */}
-                  <div className="flex-1 overflow-y-auto">
-                    {resources.map((tech, techIndex) => (
-                      <div key={tech.resourceId} className="flex border-b border-gray-200 hover:bg-gray-50">
-                        {/* Teknisyen İsmi */}
-                        <div className="w-36 bg-gray-50 border-r border-gray-300 p-2 flex items-center gap-2">
-                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                            <User className="w-3 h-3 text-blue-600" />
+                <div className="flex-1 flex flex-col bg-white">
+                  {/* Teknisyen Satırları - Scroll Container'a Header Dahil */}
+                  <div className="flex-1 overflow-y-auto bg-gray-50/30">
+                    {/* Gün Başlıkları - Scroll Container İçinde */}
+                    <div className="flex border-b border-gray-200 bg-gradient-to-r from-slate-50 to-slate-100">
+                      {/* Sol boş alan - Teknisyen başlığı için - Sabit Genişlik */}
+                      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 font-bold text-sm shadow-inner" style={{ minWidth: '160px', maxWidth: '160px', flexShrink: 0, boxSizing: 'border-box' }}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                            <Users className="h-4 w-4" />
                           </div>
-                          <div className="flex-1">
-                            <p className="text-xs font-medium text-gray-900 truncate">{tech.title}</p>
-                            <p className="text-xs text-gray-500">Teknisyen</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-white truncate">Teknisyenler / Günler</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Gün sütunları Container - Teknisyen Satırlarıyla Aynı Yapı */}
+                      <div className="flex flex-1">
+                      {Array.from({ length: 7 }, (_, i) => {
+                        const date = moment(currentDate).startOf('week').add(i, 'days');
+                        const turkishDays = {
+                          'Sunday': 'Pazar    ',      // 5 + 4 boşluk = 9 karakter
+                          'Monday': 'Pazartesi',      // 8 + 1 boşluk = 9 karakter
+                          'Tuesday': 'Salı     ',     // 4 + 5 boşluk = 9 karakter
+                          'Wednesday': 'Çarşamba',     // 8 + 1 boşluk = 9 karakter
+                          'Thursday': 'Perşembe ',     // 8 + 1 boşluk = 9 karakter
+                          'Friday': 'Cuma     ',      // 4 + 5 boşluk = 9 karakter
+                          'Saturday': 'Cumartesi'      // 9 karakter (zaten eşit)
+                        };
+                        const dayName = date.format('dddd');
+                        const turkishDay = turkishDays[dayName as keyof typeof turkishDays] || dayName;
+                        const isToday = date.isSame(moment(), 'day');
+                        const isWeekend = i === 5 || i === 6; // Cumartesi & Pazar
+                        
+                        return (
+                          <div 
+                            key={i} 
+                            className={`flex-1 p-3 text-center transition-all duration-300 ${
+                              isToday ? 'bg-gradient-to-b from-blue-50 to-blue-100 border-b-2 border-blue-400' :
+                              isWeekend ? 'bg-gradient-to-b from-orange-50 to-orange-100' : 
+                              'bg-gradient-to-b from-gray-50 to-gray-100'
+                            } ${i < 6 ? 'border-r border-gray-200/60' : ''} hover:bg-gradient-to-b hover:from-gray-100 hover:to-gray-150`}
+                            style={{ flexBasis: 'calc(100% / 7)', maxWidth: 'calc(100% / 7)', boxSizing: 'border-box' }}
+                          >
+                            <div className={`text-xs font-semibold ${
+                              isToday ? 'text-blue-700' : 
+                              isWeekend ? 'text-orange-700' : 
+                              'text-gray-600'
+                            }`}>
+                              {turkishDay}
+                            </div>
+                            <div className={`text-sm font-bold mt-1 ${
+                              isToday ? 'text-blue-800' : 
+                              isWeekend ? 'text-orange-800' : 
+                              'text-gray-800'
+                            }`}>
+                              {date.format('DD MMM')}
+                            </div>
+                            {isToday && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1 shadow-sm"></div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      </div>
+                    </div>
+                    {resources.map((tech, techIndex) => (
+                      <div key={tech.resourceId} className="flex border-b border-gray-200/60 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-transparent transition-all duration-300" style={{ minHeight: '80px' }}>
+                        {/* Teknisyen İsmi - Header ile Aynı Genişlik */}
+                        <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-r border-gray-200 p-4 flex items-center gap-3 shadow-sm" style={{ minWidth: '160px', maxWidth: '160px', flexShrink: 0, boxSizing: 'border-box' }}>
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-inner border border-blue-200">
+                            <User className="w-4 h-4 text-blue-700" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{tech.title}</p>
+                            <p className="text-xs text-gray-600 flex items-center gap-1">
+                              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                              Teknisyen
+                            </p>
                           </div>
                         </div>
                         
-                        {/* Gün hücreleri - Tam hafta (Pazartesi-Pazar) */}
+                        {/* Gün Hücreleri Container - Eşit Dağılım */}
+                        <div className="flex flex-1">
+                        {/* Gün hücreleri - Modern Drag & Drop */}
                         {Array.from({ length: 7 }, (_, i) => {
                           const date = moment(currentDate).startOf('week').add(i, 'days');
+                          const isToday = date.isSame(moment(), 'day');
+                          const isWeekend = i === 5 || i === 6;
                           
                           // Bu teknisyen ve günde servis var mı kontrol et
                           const dayServices = calendarEvents.filter(event => {
@@ -594,11 +634,17 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                           return (
                         <div 
                           key={i} 
-                          className={`w-32 p-2 min-h-20 relative hover:bg-gray-50 transition-colors ${i < 6 ? 'border-r border-gray-200' : ''}`}
+                          className={`flex-1 p-3 min-h-20 relative group transition-all duration-300 ${
+                            isToday ? 'bg-blue-50/40 border-l border-blue-200' :
+                            isWeekend ? 'bg-orange-50/30' : 
+                            'bg-white hover:bg-blue-50/20'
+                          } ${i < 6 ? 'border-r border-gray-200/60' : ''} 
+                          hover:shadow-inner cursor-pointer`}
+                          style={{ flexBasis: 'calc(100% / 7)', maxWidth: 'calc(100% / 7)', boxSizing: 'border-box' }}
                           onDrop={(e) => {
                             e.preventDefault();
-                            e.currentTarget.style.backgroundColor = '';
-                            e.currentTarget.style.border = '';
+                            e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300', 'border-2', 'border-dashed');
+                            e.currentTarget.classList.add('bg-green-100');
                             
                             const serviceData = e.dataTransfer.getData('text/plain');
                             if (serviceData) {
@@ -612,8 +658,17 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                                 return newMap;
                               });
                               
-                              // Başarı mesajı göster
-                              alert(`✅ ${service.title} servisi ${tech.title} teknisyenine atandı!`);
+                              // Animasyonlu başarı mesajı
+                              const successMessage = document.createElement('div');
+                              successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white p-3 rounded-lg shadow-lg z-50 animate-pulse';
+                              successMessage.innerHTML = `✅ ${service.title} başarıyla ${tech.title} teknisyenine atandı!`;
+                              document.body.appendChild(successMessage);
+                              setTimeout(() => successMessage.remove(), 3000);
+                              
+                              // Hücreyi normal haline döndür
+                              setTimeout(() => {
+                                e.currentTarget.classList.remove('bg-green-100');
+                              }, 1000);
                               
                               // Burada gerçek atama işlemi yapılacak
                               // TODO: Supabase'e servisi teknisyene atama
@@ -621,132 +676,244 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                           }}
                           onDragOver={(e) => {
                             e.preventDefault();
-                            e.currentTarget.style.backgroundColor = '#dbeafe';
-                            e.currentTarget.style.border = '2px dashed #3b82f6';
+                            e.currentTarget.classList.add('bg-blue-100', 'border-blue-300', 'border-2', 'border-dashed');
                           }}
                           onDragLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '';
-                            e.currentTarget.style.border = '';
+                            e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300', 'border-2', 'border-dashed');
                           }}
                         >
+                              {/* Servis Kartları - Responsive Tasarım */}
                               {dayServices.map((service, serviceIndex) => (
                                 <div 
                                   key={serviceIndex}
-                                  className="mb-1 rounded px-2 py-1 text-xs text-white cursor-pointer"
+                                  className="relative mb-1.5 w-full rounded-md px-2 py-1.5 text-white cursor-pointer shadow-sm transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md group/service overflow-hidden"
                                   style={{ 
                                     backgroundColor: service.style?.backgroundColor || '#3b82f6',
                                     fontSize: '9px',
-                                    lineHeight: '1.2'
+                                    lineHeight: '1.2',
+                                    maxWidth: '100%'
                                   }}
                                   onClick={() => handleSelectEvent(service)}
                                 >
-                                  <div className="font-medium truncate text-xs">{service.title}</div>
-                                  <div className="opacity-80 truncate text-xs">{service.location}</div>
-                                  <div className="opacity-70 text-xs">
-                                    {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
+                                  <div className="font-medium truncate text-xs mb-0.5 flex items-center gap-1">
+                                    <span className="w-1 h-1 bg-white/60 rounded-full flex-shrink-0"></span>
+                                    <span className="truncate">{service.title}</span>
                                   </div>
+                                  {service.location && (
+                                    <div className="opacity-90 truncate text-xs flex items-center gap-1 mb-0.5">
+                                      <MapPin className="w-2 h-2 flex-shrink-0" />
+                                      <span className="truncate">{service.location}</span>
+                                    </div>
+                                  )}
+                                  <div className="opacity-80 text-xs flex items-center gap-1">
+                                    <Clock className="w-2 h-2 flex-shrink-0" />
+                                    <span className="truncate">
+                                    {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Hover overlay */}
+                                  <div className="absolute inset-0 bg-white/10 rounded-md opacity-0 group-hover/service:opacity-100 transition-opacity duration-200"></div>
                                 </div>
                               ))}
+                              
+                              {/* Boş gün için placeholder - Responsive */}
+                              {dayServices.length === 0 && (
+                                <div className="opacity-0 group-hover:opacity-30 transition-opacity duration-300 text-center py-3 w-full">
+                                  <div className="w-6 h-6 border-2 border-dashed border-gray-300 rounded-lg mx-auto flex items-center justify-center">
+                                    <Plus className="w-2.5 h-2.5 text-gray-400" />
+                                  </div>
+                                  <p className="text-xs text-gray-400 mt-1 truncate px-1">Sürükleyin</p>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Atanmamış Servisler Sidebar */}
-                <div className="w-80 bg-gray-50 flex flex-col border-l border-gray-300">
-                  <div className="p-3 bg-orange-600 text-white border-b border-orange-700">
-                    <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <XCircle className="h-4 w-4" />
-                      Atanmamış Servisler
-                    </h3>
-                    <p className="text-xs opacity-90 mt-1">Teknisyenlere sürükleyip bırakın</p>
+                {/* Modern Atanmamış Servisler Sidebar */}
+                <div className="w-80 bg-gradient-to-b from-orange-50 to-red-50 flex flex-col border-l border-orange-200 shadow-inner">
+                  {/* Header - Modern Gradient */}
+                  <div className="p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white border-b border-orange-600 shadow-lg">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                        <AlertCircle className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm">Atanmamış Servisler</h3>
+                        <p className="text-xs opacity-90">Teknisyenlere sürükleyip bırakın</p>
+                      </div>
                   </div>
                   
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {/* Count Badge */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="bg-white/20 px-2 py-1 rounded-full font-medium">
+                          {calendarEvents.filter(event => !event.resourceId || event.resourceId === 'unassigned').length} adet
+                        </span>
+                      </div>
+                      <div className="text-xs opacity-80 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Beklemede
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Servis Listesi */}
+                  <div className="flex-1 overflow-y-auto p-3 space-y-3">
                     {/* Atanmamış servisleri filtrele */}
                     {calendarEvents
                       .filter(event => !event.resourceId || event.resourceId === 'unassigned')
                       .map((service, index) => (
                         <div 
                           key={index}
-                          className="bg-white border border-gray-200 rounded-lg p-2 cursor-move hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95"
+                          className="bg-white border border-orange-200 rounded-xl p-3 cursor-move shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-102 active:scale-98 hover:border-orange-300 group"
                           draggable
                           onDragStart={(e) => {
                             e.dataTransfer.setData('text/plain', JSON.stringify(service));
-                            e.currentTarget.style.opacity = '0.5';
-                            e.currentTarget.style.transform = 'rotate(5deg)';
+                            e.currentTarget.style.opacity = '0.6';
+                            e.currentTarget.style.transform = 'rotate(2deg) scale(0.95)';
+                            e.currentTarget.classList.add('shadow-xl');
                           }}
                           onDragEnd={(e) => {
                             e.currentTarget.style.opacity = '1';
-                            e.currentTarget.style.transform = 'rotate(0deg)';
+                            e.currentTarget.style.transform = 'rotate(0deg) scale(1)';
+                            e.currentTarget.classList.remove('shadow-xl');
                           }}
                         >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-900 text-xs truncate">{service.title}</h4>
-                              {service.location && (
-                                <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {service.location}
-                                </p>
-                              )}
-                              <div className="flex items-center gap-2 mt-1">
+                          {/* Üst kısım - Başlık ve Öncelik */}
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-sm truncate flex items-center gap-2">
                                 <span 
-                                  className="w-2 h-2 rounded-full"
+                                  className="w-3 h-3 rounded-full border-2 border-white shadow-sm"
                                   style={{ backgroundColor: service.style?.backgroundColor || '#3b82f6' }}
                                 ></span>
-                                <span className="text-xs text-gray-500">
+                                {service.title}
+                              </h4>
+                              
+                              {/* Öncelik Badge */}
+                              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                                service.priority === 'urgent' ? 'bg-red-100 text-red-700 border border-red-200' :
+                                service.priority === 'high' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                                service.priority === 'medium' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                                'bg-green-100 text-green-700 border border-green-200'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  service.priority === 'urgent' ? 'bg-red-500' :
+                                  service.priority === 'high' ? 'bg-orange-500' :
+                                  service.priority === 'medium' ? 'bg-yellow-500' :
+                                  'bg-green-500'
+                                }`}></span>
+                                {service.priority === 'urgent' ? 'Acil' :
+                                 service.priority === 'high' ? 'Yüksek' :
+                                 service.priority === 'medium' ? 'Orta' : 'Düşük'}
+                              </div>
+                            </div>
+                            
+                            {/* Drag Handle */}
+                            <div className="ml-2 opacity-40 group-hover:opacity-70 transition-opacity">
+                              <div className="grid grid-cols-2 gap-0.5">
+                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Orta kısım - Lokasyon */}
+                          {service.location && (
+                            <div className="flex items-center gap-2 text-xs text-gray-600 mb-2 bg-gray-50 rounded-lg p-2">
+                              <MapPin className="h-3 w-3 text-gray-500" />
+                              <span className="truncate">{service.location}</span>
+                            </div>
+                          )}
+                          
+                          {/* Alt kısım - Zaman ve Durum */}
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 text-gray-600 bg-blue-50 rounded-lg px-2 py-1">
+                              <Clock className="h-3 w-3 text-blue-500" />
+                              <span className="font-medium">
                                   {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
                                 </span>
                               </div>
+                            
+                            <div className="flex items-center gap-1 text-orange-600">
+                              <User className="h-3 w-3" />
+                              <span className="font-medium">Atanmamış</span>
                             </div>
-                            <div className="ml-2">
-                              <User className="h-3 w-3 text-gray-400" />
                             </div>
-                          </div>
+                          
+                          {/* Hover Effect Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-orange-100/0 to-orange-100/30 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                         </div>
                       ))}
                     
-                    {/* Atanmamış servis yoksa */}
+                    {/* Atanmamış servis yoksa - Modern Empty State */}
                     {calendarEvents.filter(event => !event.resourceId || event.resourceId === 'unassigned').length === 0 && (
-                      <div className="text-center py-8">
-                        <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600">Tüm servisler atanmış!</p>
+                      <div className="text-center py-12 px-4">
+                        <div className="relative">
+                          <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
+                            <CheckCircle className="h-8 w-8 text-white" />
+                          </div>
+                          
+                          {/* Success animation rings */}
+                          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-16 border-2 border-green-300 rounded-full animate-ping opacity-20"></div>
+                          <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-14 h-14 border-2 border-green-400 rounded-full animate-ping opacity-30 animation-delay-150"></div>
+                        </div>
+                        
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">Harika İş! 🎉</h3>
+                        <p className="text-sm text-gray-600 mb-4">Tüm servisler teknisyenlere atanmış durumda.</p>
+                        
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-xs text-green-700">
+                          ✨ Servis takiminiz verimli çalışıyor!
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Alt Bilgi Paneli */}
-              <div className="bg-gray-50 border-t border-gray-200 p-2">
-                <div className="flex items-center justify-between text-xs text-gray-600">
-                  <div className="flex items-center gap-4">
-                    <span>Servisleri sürükleyerek farklı teknisyenlere ve zamanlara atayabilirsiniz</span>
+              {/* Modern Alt Bilgi Paneli */}
+              <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-t border-slate-200 p-4 shadow-inner">
+                <div className="flex items-center justify-between">
+                  {/* Sol taraf - Yardım bilgisi */}
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <AlertCircle className="h-4 w-4 text-blue-600" />
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span>Öncelik:</span>
-                      <div className="flex gap-2">
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                          <span>Acil</span>
+                    <div className="text-xs text-gray-700">
+                      <p className="font-medium">💡 İpucu: Servisleri sürükle & bırak ile atayabilirsiniz</p>
+                      <p className="text-gray-500 mt-1">Atanmamış servisleri teknisyenlere ve tarih hücrelerine sürükleyin</p>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                          <span>Yüksek</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                          <span>Orta</span>
+                  
+                  {/* Sağ taraf - Öncelik Legendası */}
+                  <div className="flex items-center gap-6">
+                    <div className="text-xs text-gray-700">
+                      <span className="font-semibold">Öncelik Seviyeleri:</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <span>Düşük</span>
+                    <div className="flex gap-4">
+                      <div className="flex items-center gap-2 px-3 py-1 bg-red-50 border border-red-200 rounded-full">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm"></div>
+                        <span className="text-xs font-medium text-red-700">Acil</span>
                         </div>
+                      <div className="flex items-center gap-2 px-3 py-1 bg-orange-50 border border-orange-200 rounded-full">
+                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-sm"></div>
+                        <span className="text-xs font-medium text-orange-700">Yüksek</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1 bg-yellow-50 border border-yellow-200 rounded-full">
+                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-sm"></div>
+                        <span className="text-xs font-medium text-yellow-700">Orta</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full">
+                        <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm"></div>
+                        <span className="text-xs font-medium text-green-700">Düşük</span>
                       </div>
                     </div>
                   </div>

@@ -11,11 +11,28 @@ export const useServiceCrudMutations = () => {
   const { uploadFiles } = useServiceFileUpload();
   const { getServiceRequest } = useServiceQueries();
 
+  // Generate service number
+  const generateServiceNumber = async (): Promise<string> => {
+    const year = new Date().getFullYear();
+    const { count } = await supabase
+      .from('service_requests')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', `${year}-01-01`)
+      .lt('created_at', `${year + 1}-01-01`);
+
+    const serviceCount = (count || 0) + 1;
+    return `SR-${year}-${serviceCount.toString().padStart(4, '0')}`;
+  };
+
   // Create service request
   const createServiceRequestMutation = useMutation({
     mutationFn: async ({ formData, files }: { formData: ServiceRequestFormData, files: File[] }) => {
+      // Generate service number
+      const serviceNumber = await generateServiceNumber();
+      
       const serviceRequestData = {
         ...formData,
+        service_number: serviceNumber,
         due_date: formData.due_date?.toISOString(),
         reported_date: formData.reported_date?.toISOString(),
         status: formData.assigned_to && formData.assigned_to !== 'unassigned' ? 'assigned' as const : 'new' as const,

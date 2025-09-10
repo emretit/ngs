@@ -753,6 +753,9 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-50 border-b">
+                        <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                          🔢 Servis No
+                        </TableHead>
                         <TableHead 
                           className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
                           onClick={() => handleSort("title")}
@@ -798,13 +801,13 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                     <TableBody>
                       {isLoading ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                          <TableCell colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                             Yükleniyor...
                           </TableCell>
                         </TableRow>
                       ) : sortedServices.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                          <TableCell colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                             Servis talebi bulunamadı
                           </TableCell>
                         </TableRow>
@@ -817,6 +820,11 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                               className="hover:bg-muted/50 cursor-pointer"
                               onClick={() => handleSelectRequest(service)}
                             >
+                              <TableCell className="px-4 py-4">
+                                <div className="text-sm font-mono text-muted-foreground">
+                                  {service.service_number || 'SR-' + service.id.slice(-6).toUpperCase()}
+                                </div>
+                              </TableCell>
                               <TableCell className="px-4 py-4">
                                 <div className="space-y-1">
                                   <p className="font-medium text-foreground">{service.title}</p>

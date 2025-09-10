@@ -4572,6 +4572,7 @@ export type Database = {
           notes: string[] | null
           priority: Database["public"]["Enums"]["service_priority"] | null
           reported_date: string | null
+          service_number: string | null
           service_type: string | null
           status: Database["public"]["Enums"]["service_status"] | null
           title: string
@@ -4602,6 +4603,7 @@ export type Database = {
           notes?: string[] | null
           priority?: Database["public"]["Enums"]["service_priority"] | null
           reported_date?: string | null
+          service_number?: string | null
           service_type?: string | null
           status?: Database["public"]["Enums"]["service_status"] | null
           title: string
@@ -4632,6 +4634,7 @@ export type Database = {
           notes?: string[] | null
           priority?: Database["public"]["Enums"]["service_priority"] | null
           reported_date?: string | null
+          service_number?: string | null
           service_type?: string | null
           status?: Database["public"]["Enums"]["service_status"] | null
           title?: string

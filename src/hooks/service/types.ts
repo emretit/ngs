@@ -13,6 +13,7 @@ export type ServiceStatus = 'new' | 'in_progress' | 'completed' | 'cancelled' | 
 
 export interface ServiceRequest {
   id: string;
+  service_number?: string;
   title: string;
   description?: string;
   status: ServiceStatus;
@@ -43,6 +44,7 @@ export interface ServiceRequest {
 
 export interface ServiceRequestFormData {
   id?: string;
+  service_number?: string;
   title: string;
   description?: string;
   priority: ServicePriority;

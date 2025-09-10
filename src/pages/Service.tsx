@@ -7,7 +7,7 @@ import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import { ServiceRequestDetail } from "@/components/service/ServiceRequestDetail";
 import { ServiceRequestForm } from "@/components/service/ServiceRequestForm";
 import ServicePageHeader from "@/components/service/ServicePageHeader";
-import ServiceStatsCards from "@/components/service/ServiceStatsCards";
+import ServiceStatsEnhancedCards from "@/components/service/ServiceStatsEnhancedCards";
 import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { EnhancedCard, SummaryCard } from "@/components/shared";
 import { Badge } from "@/components/ui/badge";
@@ -429,7 +429,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
               }}
             />
 
-            <ServiceStatsCards 
+            <ServiceStatsEnhancedCards 
               stats={stats} 
               viewType={activeView} 
             />

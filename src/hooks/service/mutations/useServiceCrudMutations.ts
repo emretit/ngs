@@ -1,15 +1,18 @@
 
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ServiceRequestFormData } from "../types";
 import { useServiceFileUpload } from "../useServiceFileUpload";
 import { useServiceQueries } from "../useServiceQueries";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export const useServiceCrudMutations = () => {
   const queryClient = useQueryClient();
   const { uploadFiles } = useServiceFileUpload();
   const { getServiceRequest } = useServiceQueries();
+  const { userData } = useCurrentUser();
 
   // Generate service number
   const generateServiceNumber = async (): Promise<string> => {
@@ -37,6 +40,7 @@ export const useServiceCrudMutations = () => {
         service_reported_date: formData.service_reported_date?.toISOString(),
         service_status: formData.assigned_technician && formData.assigned_technician !== 'unassigned' ? 'assigned' as const : 'new' as const,
         attachments: [],
+        company_id: userData?.company_id,
       };
 
       // Submit to Supabase
@@ -115,9 +119,9 @@ export const useServiceCrudMutations = () => {
 
       const updatePayload = {
         ...updateData,
-        due_date: updateData.due_date ? updateData.due_date.toISOString() : currentRequest.due_date,
-        reported_date: updateData.reported_date ? updateData.reported_date.toISOString() : currentRequest.reported_date,
-        status: updateData.assigned_to && updateData.assigned_to !== 'unassigned' ? 'assigned' as const : currentRequest.status,
+        service_due_date: updateData.service_due_date ? updateData.service_due_date.toISOString() : currentRequest.service_due_date,
+        service_reported_date: updateData.service_reported_date ? updateData.service_reported_date.toISOString() : currentRequest.service_reported_date,
+        service_status: updateData.assigned_technician && updateData.assigned_technician !== 'unassigned' ? 'assigned' as const : currentRequest.service_status,
         attachments: attachmentsForDb
       };
 

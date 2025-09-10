@@ -45,6 +45,15 @@ export interface ServiceSlipFormData {
   }>;
   technician_signature?: string;
   completion_date?: string;
+  customer_id?: string;
+  equipment?: {
+    name: string;
+    model: string;
+    serial_number: string;
+    location: string;
+  };
+  service_type?: string;
+  warranty_status?: string;
 }
 
 export interface ServiceSlipPdfOptions {

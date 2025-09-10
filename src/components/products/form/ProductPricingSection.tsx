@@ -5,6 +5,7 @@ import PriceInput from "./pricing/PriceInput";
 import TaxRateSelect from "./pricing/TaxRateSelect";
 import CurrencySelect from "./pricing/CurrencySelect";
 import PricePreviewCard from "./pricing/PricePreviewCard";
+import DiscountRateInput from "./pricing/DiscountRateInput";
 
 interface ProductPricingSectionProps {
   form: UseFormReturn<ProductFormSchema>;
@@ -68,6 +69,8 @@ const ProductPricingSection = ({ form }: ProductPricingSectionProps) => {
           />
 
           <TaxRateSelect form={form} />
+          
+          <DiscountRateInput form={form} />
         </div>
 
         <PricePreviewCard 

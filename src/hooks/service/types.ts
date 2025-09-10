@@ -40,6 +40,12 @@ export interface ServiceRequest {
   equipment_data?: Record<string, any>;
   service_details?: Record<string, any>;
   slip_status?: 'draft' | 'completed' | 'signed';
+  // Additional fields for compatibility
+  due_date?: string;
+  reported_date?: string;
+  assigned_to?: string;
+  status?: ServiceStatus;
+  company_id?: string;
 }
 
 export interface ServiceRequestFormData {
@@ -55,6 +61,11 @@ export interface ServiceRequestFormData {
   service_reported_date?: Date;
   equipment_id?: string;
   assigned_technician?: string;
+  company_id?: string;
+  // Additional fields for compatibility
+  due_date?: Date;
+  reported_date?: Date;
+  assigned_to?: string;
 }
 
 export interface ServiceQueriesResult {

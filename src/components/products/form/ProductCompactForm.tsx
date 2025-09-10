@@ -75,6 +75,19 @@ const ProductCompactForm = ({ form }: ProductCompactFormProps) => {
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full">
+      {/* Hidden company_id field */}
+      <FormField
+        control={form.control}
+        name="company_id"
+        render={({ field }) => (
+          <FormItem className="hidden">
+            <FormControl>
+              <Input type="hidden" {...field} />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      
       {/* Left Column */}
       <div className="space-y-6">
         {/* Basic Information Card */}

@@ -20,7 +20,7 @@ type FieldProps = {
 export const TitleField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="title"
+    name="service_title"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export const TitleField: React.FC<FieldProps> = ({ form }) => (
 export const DescriptionField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="description"
+    name="service_request_description"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-2">
@@ -67,7 +67,7 @@ export const DescriptionField: React.FC<FieldProps> = ({ form }) => (
 export const PriorityField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="priority"
+    name="service_priority"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export const ServiceTypeField: React.FC<FieldProps> = ({ form }) => (
 export const LocationField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="location"
+    name="service_location"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export const LocationField: React.FC<FieldProps> = ({ form }) => (
 export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="reported_date"
+    name="service_reported_date"
     render={({ field }) => (
       <FormItem className="flex flex-col">
         <FormLabel className="flex items-center gap-2">
@@ -197,7 +197,7 @@ export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
 export const DueDateField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="due_date"
+    name="service_due_date"
     render={({ field }) => (
       <FormItem className="flex flex-col">
         <FormLabel className="flex items-center gap-2">
@@ -244,7 +244,7 @@ export const DueDateField: React.FC<FieldProps> = ({ form }) => (
 export const TechnicianField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="assigned_to"
+    name="assigned_technician"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-2">

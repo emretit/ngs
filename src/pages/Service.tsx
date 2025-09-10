@@ -76,6 +76,19 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
     },
   });
 
+  // Müşteri verilerini getir
+  const { data: customers } = useQuery({
+    queryKey: ['customers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id, name, company');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const handleSelectRequest = (request: ServiceRequest) => {
     setSelectedRequest(request);
     setIsDetailOpen(true);
@@ -828,6 +841,15 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                               <TableCell className="px-4 py-4">
                                 <div className="space-y-1">
                                   <p className="font-medium text-foreground">{service.service_title}</p>
+                                  {service.customer_id && (
+                                    <p className="text-sm text-muted-foreground">
+                                      <span className="font-medium">Müşteri:</span> {
+                                        customers?.find(c => c.id === service.customer_id)?.name || 
+                                        customers?.find(c => c.id === service.customer_id)?.company || 
+                                        'Bilinmeyen Müşteri'
+                                      }
+                                    </p>
+                                  )}
                                   {service.service_request_description && (
                                     <p className="text-sm text-muted-foreground line-clamp-2">
                                       <span className="font-medium">Servis Talebi:</span> {service.service_request_description}

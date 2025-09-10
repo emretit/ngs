@@ -14,18 +14,23 @@ export const useProductFormActions = (
 
   const onSubmit = async (values: ProductFormSchema, addAnother = false) => {
     console.log("Product submission started:", { values, isEditing, productId });
-    setIsSubmitting(true);
-    try {
-      // Prepare data by ensuring null values for empty strings in UUID fields
-      const preparedData = {
-        ...values,
-        category_id: values.category_id && values.category_id.trim() !== "" && values.category_id !== "none" ? values.category_id : null,
-        supplier_id: values.supplier_id && values.supplier_id.trim() !== "" && values.supplier_id !== "none" ? values.supplier_id : null,
-        // Make sure stock_threshold is explicitly included
-        stock_threshold: values.stock_threshold !== undefined ? values.stock_threshold : values.min_stock_level
-      };
-      
-      console.log("Prepared data for submission:", preparedData);
+      console.log("Form values company_id:", values.company_id);
+      console.log("All form values:", values);
+      setIsSubmitting(true);
+      try {
+        // Prepare data by ensuring null values for empty strings in UUID fields
+        const preparedData = {
+          ...values,
+          category_id: values.category_id && values.category_id.trim() !== "" && values.category_id !== "none" ? values.category_id : null,
+          supplier_id: values.supplier_id && values.supplier_id.trim() !== "" && values.supplier_id !== "none" ? values.supplier_id : null,
+          // Make sure stock_threshold is explicitly included
+          stock_threshold: values.stock_threshold !== undefined ? values.stock_threshold : values.min_stock_level,
+          // Ensure company_id is included
+            company_id: values.company_id || "5a9c24d2-876e-4eb6-aea5-19328bc38a3a"
+        };
+        
+        console.log("Prepared data for submission:", preparedData);
+        console.log("Prepared data company_id:", preparedData.company_id);
       
       if (isEditing && productId) {
         const updateData = {
@@ -68,7 +73,7 @@ export const useProductFormActions = (
             sku: preparedData.sku,
             barcode: preparedData.barcode,
             price: preparedData.price,
-            discount_price: preparedData.discount_price,
+            discount_rate: preparedData.discount_rate,
             stock_quantity: preparedData.stock_quantity,
             min_stock_level: preparedData.min_stock_level,
             stock_threshold: preparedData.stock_threshold,
@@ -82,6 +87,7 @@ export const useProductFormActions = (
             image_url: preparedData.image_url,
             category_id: preparedData.category_id,
             supplier_id: preparedData.supplier_id,
+            company_id: preparedData.company_id,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })

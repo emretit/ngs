@@ -14,27 +14,35 @@ export const productSchema = z.object({
   description: z.string().nullable().optional().transform(val => val || ""),
   sku: z.string().nullable().optional().transform(val => val || "").refine(val => !val || val.length <= 100, "SKU çok uzun"),
   barcode: z.string().nullable().optional().transform(val => val || "").refine(val => !val || val.length <= 50, "Barkod çok uzun"),
-  discount_price: z.coerce.number().min(0, "İndirimli fiyat 0'dan küçük olamaz").nullable().optional(),
+  discount_rate: z.coerce.number().min(0, "İndirim oranı 0'dan küçük olamaz").max(100, "İndirim oranı 100'den büyük olamaz").optional().default(0),
   min_stock_level: z.coerce.number().min(0, "Minimum stok seviyesi 0'dan küçük olamaz").optional().default(0),
   stock_threshold: z.coerce.number().min(0, "Stok eşiği 0'dan küçük olamaz").optional().default(0),
   exchange_rate: z.coerce.number().min(0.001, "Döviz kuru çok küçük").optional(),
   category_type: z.string().optional().default("product").refine(val => ["product", "service"].includes(val), "Geçersiz kategori tipi"),
   status: z.string().optional().default("active").refine(val => ["active", "inactive", "discontinued"].includes(val), "Geçersiz durum"),
   image_url: z.string().url("Geçersiz URL formatı").nullable().optional(),
-  category_id: z.string().uuid("Geçersiz kategori ID").nullable().optional(),
-  supplier_id: z.string().uuid("Geçersiz tedarikçi ID").nullable().optional(),
+  category_id: z.string().nullable().optional().transform(val => {
+    if (!val || val === "") return null;
+    // UUID validasyonu sadece değer varsa yapılır
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(val)) {
+      throw new Error("Geçersiz kategori ID formatı");
+    }
+    return val;
+  }),
+  supplier_id: z.string().nullable().optional().transform(val => {
+    if (!val || val === "") return null;
+    // UUID validasyonu sadece değer varsa yapılır
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(val)) {
+      throw new Error("Geçersiz tedarikçi ID formatı");
+    }
+    return val;
+  }),
+  company_id: z.string().uuid("Geçersiz şirket ID").optional(),
   purchase_price: z.coerce.number().min(0, "Alış fiyatı 0'dan küçük olamaz").nullable().optional(),
   price_includes_vat: z.boolean().optional().default(false),
   purchase_price_includes_vat: z.boolean().optional().default(false),
-}).refine(data => {
-  // Custom validation: discount_price should be less than price
-  if (data.discount_price && data.price && data.discount_price >= data.price) {
-    return false;
-  }
-  return true;
-}, {
-  message: "İndirimli fiyat, normal fiyattan küçük olmalıdır",
-  path: ["discount_price"]
 });
 
 export type ProductFormSchema = z.infer<typeof productSchema>;

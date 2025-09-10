@@ -21,7 +21,7 @@ export const useProductForm = () => {
       sku: "",
       barcode: "",
       price: 0,
-      discount_price: null,
+      discount_rate: 0,
       stock_quantity: 0,
       min_stock_level: 0,
       stock_threshold: 0,
@@ -35,8 +35,24 @@ export const useProductForm = () => {
       image_url: null,
       category_id: "",
       supplier_id: "",
+      company_id: "5a9c24d2-876e-4eb6-aea5-19328bc38a3a",
     },
   });
+
+  // Watch price and discount_rate for automatic discount calculation
+  const watchedPrice = form.watch("price");
+  const watchedDiscountRate = form.watch("discount_rate");
+
+  // Calculate discount price when price or discount rate changes
+  useEffect(() => {
+    if (watchedPrice && watchedDiscountRate > 0) {
+      const discountAmount = (watchedPrice * watchedDiscountRate) / 100;
+      const discountedPrice = watchedPrice - discountAmount;
+      form.setValue("discount_price", discountedPrice);
+    } else {
+      form.setValue("discount_price", null);
+    }
+  }, [watchedPrice, watchedDiscountRate, form]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -60,7 +76,7 @@ export const useProductForm = () => {
             image_url: data.image_url || null,
             category_id: data.category_id || "",
             supplier_id: data.supplier_id || "",
-            discount_price: data.discount_price || null,
+            discount_rate: data.discount_rate || 0,
             stock_threshold: data.stock_threshold || data.min_stock_level, // Default to min_stock_level if not set
           });
         }

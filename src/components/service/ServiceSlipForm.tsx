@@ -5,10 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, FileText, CheckCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2, FileText, CheckCircle, Search, Package, User, Wrench } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceSlipData, ServiceSlipFormData } from "@/types/service-slip";
 import { ServiceSlipService } from "@/services/serviceSlipService";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useCustomerSelect } from "@/hooks/useCustomerSelect";
+import ProductSearchDialog from "@/components/proposals/form/items/product-dialog/ProductSearchDialog";
+import { Product } from "@/types/product";
 
 interface ServiceSlipFormProps {
   serviceRequestId: string;
@@ -30,7 +36,23 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
     work_performed: '',
     parts_used: [],
     completion_date: '',
+    technician_signature: '',
   });
+
+  // Müşteri ve ürün seçimi için state'ler
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [showProductDialog, setShowProductDialog] = useState(false);
+  const [equipmentInfo, setEquipmentInfo] = useState({
+    name: '',
+    model: '',
+    serial_number: '',
+    location: ''
+  });
+  const [serviceType, setServiceType] = useState('');
+  const [warrantyStatus, setWarrantyStatus] = useState('');
+
+  // Müşteri verilerini çek
+  const { customers, isLoading: customersLoading } = useCustomerSelect();
 
   useEffect(() => {
     if (existingSlip) {
@@ -41,6 +63,25 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
         completion_date: existingSlip.completion_date || '',
         technician_signature: existingSlip.technician_signature,
       });
+      
+      // Müşteri bilgilerini set et
+      if (existingSlip.customer) {
+        setSelectedCustomer(existingSlip.customer);
+      }
+      
+      // Ekipman bilgilerini set et
+      if (existingSlip.equipment) {
+        setEquipmentInfo({
+          name: existingSlip.equipment.name || '',
+          model: existingSlip.equipment.model || '',
+          serial_number: existingSlip.equipment.serial_number || '',
+          location: existingSlip.equipment.location || ''
+        });
+      }
+      
+      // Servis türü ve garanti durumu
+      setServiceType(existingSlip.service_details.service_type || '');
+      setWarrantyStatus(existingSlip.service_details.warranty_status || '');
     }
   }, [existingSlip]);
 
@@ -67,6 +108,29 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
     }));
   };
 
+  const handleProductSelect = (product: Product, quantity?: number, customPrice?: number, discountRate?: number) => {
+    const finalPrice = customPrice !== undefined ? customPrice : (product.price || 0);
+    const finalQuantity = quantity || 1;
+    
+    const newPart = {
+      name: product.name,
+      quantity: finalQuantity,
+      unit_price: finalPrice
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      parts_used: [...prev.parts_used, newPart]
+    }));
+    
+    setShowProductDialog(false);
+  };
+
+  const handleCustomerSelect = (customerId: string) => {
+    const customer = customers?.find(c => c.id === customerId);
+    setSelectedCustomer(customer);
+  };
+
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -80,16 +144,25 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
         return;
       }
 
+      // Form verilerini genişlet
+      const extendedFormData = {
+        ...formData,
+        customer_id: selectedCustomer?.id,
+        equipment: equipmentInfo,
+        service_type: serviceType,
+        warranty_status: warrantyStatus,
+      };
+
       let slip: ServiceSlipData;
 
       if (existingSlip) {
-        slip = await ServiceSlipService.updateServiceSlip(existingSlip.id, formData);
+        slip = await ServiceSlipService.updateServiceSlip(existingSlip.id, extendedFormData);
         toast({
           title: "Başarılı",
           description: "Servis fişi güncellendi.",
         });
       } else {
-        slip = await ServiceSlipService.createServiceSlip(serviceRequestId, formData);
+        slip = await ServiceSlipService.createServiceSlip(serviceRequestId, extendedFormData);
         toast({
           title: "Başarılı",
           description: "Servis fişi oluşturuldu.",
@@ -152,6 +225,137 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
         </SheetHeader>
 
         <div className="space-y-6 mt-6">
+          {/* Müşteri Bilgileri */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Müşteri Bilgileri
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Müşteri Seç</Label>
+                <Select onValueChange={handleCustomerSelect} value={selectedCustomer?.id || ''}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Müşteri seçin..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers?.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        {customer.name} {customer.company && `(${customer.company})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedCustomer && (
+                <div className="grid grid-cols-2 gap-4 p-3 bg-muted/50 rounded-lg">
+                  <div>
+                    <Label className="text-sm font-medium">Ad Soyad</Label>
+                    <p className="text-sm">{selectedCustomer.name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Şirket</Label>
+                    <p className="text-sm">{selectedCustomer.company || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Telefon</Label>
+                    <p className="text-sm">{selectedCustomer.mobile_phone || selectedCustomer.office_phone || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">E-posta</Label>
+                    <p className="text-sm">{selectedCustomer.email || '-'}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Ekipman Bilgileri */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wrench className="h-5 w-5" />
+                Ekipman Bilgileri
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="equipment_name">Ekipman Adı</Label>
+                  <Input
+                    id="equipment_name"
+                    placeholder="Ekipman adı"
+                    value={equipmentInfo.name}
+                    onChange={(e) => setEquipmentInfo(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="equipment_model">Model</Label>
+                  <Input
+                    id="equipment_model"
+                    placeholder="Model"
+                    value={equipmentInfo.model}
+                    onChange={(e) => setEquipmentInfo(prev => ({ ...prev, model: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="equipment_serial">Seri No</Label>
+                  <Input
+                    id="equipment_serial"
+                    placeholder="Seri numarası"
+                    value={equipmentInfo.serial_number}
+                    onChange={(e) => setEquipmentInfo(prev => ({ ...prev, serial_number: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="equipment_location">Lokasyon</Label>
+                  <Input
+                    id="equipment_location"
+                    placeholder="Lokasyon"
+                    value={equipmentInfo.location}
+                    onChange={(e) => setEquipmentInfo(prev => ({ ...prev, location: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Servis Türü ve Garanti */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Servis Türü</Label>
+              <Select value={serviceType} onValueChange={setServiceType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Servis türü seçin..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bakim">Bakım</SelectItem>
+                  <SelectItem value="onarim">Onarım</SelectItem>
+                  <SelectItem value="kurulum">Kurulum</SelectItem>
+                  <SelectItem value="test">Test</SelectItem>
+                  <SelectItem value="diger">Diğer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Garanti Durumu</Label>
+              <Select value={warrantyStatus} onValueChange={setWarrantyStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Garanti durumu seçin..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="garanti_kapsaminda">Garanti Kapsamında</SelectItem>
+                  <SelectItem value="garanti_disinda">Garanti Dışında</SelectItem>
+                  <SelectItem value="uzatilmis_garanti">Uzatılmış Garanti</SelectItem>
+                  <SelectItem value="belirsiz">Belirsiz</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {/* Problem Description */}
           <div className="space-y-2">
             <Label htmlFor="problem_description">Problem Tanımı *</Label>
@@ -180,16 +384,30 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                Kullanılan Parçalar
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addPart}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Parça Ekle
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Kullanılan Parçalar
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowProductDialog(true)}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Ürün Seç
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addPart}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Manuel Ekle
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -273,6 +491,14 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
             </Button>
           </div>
         </div>
+
+        {/* Ürün Seçim Dialogu */}
+        <ProductSearchDialog
+          open={showProductDialog}
+          onOpenChange={setShowProductDialog}
+          onSelectProduct={handleProductSelect}
+          selectedCurrency="TRY"
+        />
       </SheetContent>
     </Sheet>
   );

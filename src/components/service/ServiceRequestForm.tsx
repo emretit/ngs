@@ -24,16 +24,16 @@ import { Label } from "@/components/ui/label";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 
 const formSchema = z.object({
-  title: z.string().min(3, { message: "Başlık en az 3 karakter olmalıdır" }),
-  description: z.string().optional(),
-  priority: z.enum(["low", "medium", "high", "urgent"]),
+  service_title: z.string().min(3, { message: "Başlık en az 3 karakter olmalıdır" }),
+  service_request_description: z.string().optional(),
+  service_priority: z.enum(["low", "medium", "high", "urgent"]),
   service_type: z.string().min(1, { message: "Servis türü seçmelisiniz" }),
-  location: z.string().optional(),
-  due_date: z.date().optional(),
-  reported_date: z.date().optional(),
+  service_location: z.string().optional(),
+  service_due_date: z.date().optional(),
+  service_reported_date: z.date().optional(),
   customer_id: z.string().optional(),
   equipment_id: z.string().optional(),
-  assigned_to: z.string().optional(),
+  assigned_technician: z.string().optional(),
 });
 
 export interface ServiceRequestFormProps {
@@ -52,14 +52,14 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
   const form = useForm<ServiceRequestFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
-      title: "",
-      description: "",
-      priority: "medium",
+      service_title: "",
+      service_request_description: "",
+      service_priority: "medium",
       service_type: "",
-      location: "",
+      service_location: "",
       customer_id: undefined,
-      reported_date: new Date(),
-      assigned_to: undefined,
+      service_reported_date: new Date(),
+      assigned_technician: undefined,
     },
   });
 

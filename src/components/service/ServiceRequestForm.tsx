@@ -13,6 +13,7 @@ import {
   LocationField, 
   DueDateField,
   ReportedDateField,
+  PlannedDateField,
   TechnicianField
 } from "./form/FormFields";
 import { CustomerField } from "./form/CustomerField";
@@ -31,6 +32,7 @@ const formSchema = z.object({
   service_location: z.string().optional(),
   service_due_date: z.date().optional(),
   service_reported_date: z.date().optional(),
+  issue_date: z.date().optional(), // Planlanan tarih
   customer_id: z.string().optional(),
   equipment_id: z.string().optional(),
   assigned_technician: z.string().optional(),
@@ -159,15 +161,27 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
               </div>
             </div>
 
-            {/* Atama ve Dosyalar */}
+            {/* Dosyalar */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <h3 className="text-lg font-semibold text-gray-800">Atama ve Dosyalar</h3>
+                <h3 className="text-lg font-semibold text-gray-800">Dosyalar</h3>
               </div>
               <div className="space-y-4">
-                <TechnicianField form={form} />
                 <FileUploadField files={files} setFiles={setFiles} />
+              </div>
+            </div>
+
+            {/* Opsiyonel Atama ve Planlama */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <h3 className="text-lg font-semibold text-gray-800">Opsiyonel Atama ve Planlama</h3>
+                <span className="text-sm text-gray-500 font-normal">(İsteğe bağlı - sonradan da eklenebilir)</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TechnicianField form={form} />
+                <PlannedDateField form={form} />
               </div>
             </div>
           </div>

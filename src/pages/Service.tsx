@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import { ServiceRequestDetail } from "@/components/service/ServiceRequestDetail";
+import { ServiceRequestForm } from "@/components/service/ServiceRequestForm";
 import ServicePageHeader from "@/components/service/ServicePageHeader";
 import ServiceStatsCards from "@/components/service/ServiceStatsCards";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, CalendarDays, Users, Clock, AlertCircle, CheckCircle, XCircle, Pause, ChevronLeft, ChevronRight, Eye, EyeOff, User, MapPin, Search, Filter, ChevronUp, ChevronDown, Calendar } from "lucide-react";
+import { Plus, CalendarDays, Users, Clock, AlertCircle, CheckCircle, XCircle, Pause, ChevronLeft, ChevronRight, Eye, EyeOff, User, MapPin, Search, Filter, ChevronUp, ChevronDown, Calendar, Trash2, Edit } from "lucide-react";
 import ServiceViewToggle from "@/components/service/ServiceViewToggle";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +44,14 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   const navigate = useNavigate();
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  
+  // Servis düzenleme pop-up'ı için state'ler
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<ServiceRequest | null>(null);
+  
+  // Silme onayı için state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<ServiceRequest | null>(null);
 
   // Calendar state'leri
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -59,7 +68,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   const [sortField, setSortField] = useState<"title" | "priority" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  const { data: serviceRequests, isLoading, error } = useServiceRequests();
+  const { data: serviceRequests, isLoading, error, deleteServiceRequest } = useServiceRequests();
 
   // Teknisyenleri getir
   const { data: technicians } = useQuery({
@@ -92,6 +101,32 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   const handleSelectRequest = (request: ServiceRequest) => {
     setSelectedRequest(request);
     setIsDetailOpen(true);
+  };
+
+  // Silme fonksiyonu
+  const handleDeleteService = (service: ServiceRequest) => {
+    setServiceToDelete(service);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (serviceToDelete) {
+      deleteServiceRequest(serviceToDelete.id);
+      setDeleteConfirmOpen(false);
+      setServiceToDelete(null);
+    }
+  };
+
+  // ServiceRequest'i ServiceRequestFormData'ya dönüştür
+  const convertToFormData = (request: ServiceRequest) => {
+    return {
+      ...request,
+      service_due_date: request.service_due_date ? new Date(request.service_due_date) : undefined,
+      service_reported_date: request.service_reported_date ? new Date(request.service_reported_date) : undefined,
+      issue_date: request.issue_date ? new Date(request.issue_date) : undefined,
+      due_date: request.due_date ? new Date(request.due_date) : undefined,
+      reported_date: request.reported_date ? new Date(request.reported_date) : undefined,
+    };
   };
 
   // Öncelik renklerini belirle
@@ -162,8 +197,8 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
       const realEvents = serviceRequests.map(request => ({
         id: `real-${request.id}`,
         title: request.service_title || 'Servis Talebi',
-        start: request.service_due_date ? new Date(request.service_due_date) : new Date(),
-        end: request.service_due_date ? new Date(new Date(request.service_due_date).getTime() + 2 * 60 * 60 * 1000) : new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 saat sonra
+        start: request.issue_date ? new Date(request.issue_date) : (request.service_due_date ? new Date(request.service_due_date) : new Date()),
+        end: request.issue_date ? new Date(new Date(request.issue_date).getTime() + 2 * 60 * 60 * 1000) : (request.service_due_date ? new Date(new Date(request.service_due_date).getTime() + 2 * 60 * 60 * 1000) : new Date(Date.now() + 2 * 60 * 60 * 1000)), // 2 saat sonra
         resourceId: request.assigned_technician || 'unassigned',
         priority: request.service_priority || 'medium',
         status: request.service_status || 'pending',
@@ -804,6 +839,9 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                           📅 Bildirilme
                         </TableHead>
                         <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                          📋 Planlanan
+                        </TableHead>
+                        <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
                           ⏰ Teslim
                         </TableHead>
                         <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
@@ -814,13 +852,13 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                     <TableBody>
                       {isLoading ? (
                         <TableRow>
-                          <TableCell colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                          <TableCell colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
                             Yükleniyor...
                           </TableCell>
                         </TableRow>
                       ) : sortedServices.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                          <TableCell colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
                             Servis talebi bulunamadı
                           </TableCell>
                         </TableRow>
@@ -841,15 +879,14 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                               <TableCell className="px-4 py-4">
                                 <div className="space-y-1">
                                   <p className="font-medium text-foreground">{service.service_title}</p>
-                                  {service.customer_id && (
-                                    <p className="text-sm text-muted-foreground">
-                                      <span className="font-medium">Müşteri:</span> {
-                                        customers?.find(c => c.id === service.customer_id)?.name || 
-                                        customers?.find(c => c.id === service.customer_id)?.company || 
-                                        'Bilinmeyen Müşteri'
-                                      }
-                                    </p>
-                                  )}
+                                  <p className="text-sm text-muted-foreground">
+                                    <span className="font-medium">Müşteri:</span> {
+                                      service.customer_id ? (() => {
+                                        const customer = customers?.find(c => c.id === service.customer_id);
+                                        return customer?.name || customer?.company || 'Bilinmeyen Müşteri';
+                                      })() : 'Belirtilmemiş'
+                                    }
+                                  </p>
                                   {service.service_request_description && (
                                     <p className="text-sm text-muted-foreground line-clamp-2">
                                       <span className="font-medium">Servis Talebi:</span> {service.service_request_description}
@@ -910,36 +947,67 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                               <TableCell className="px-4 py-4">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <Calendar className="h-4 w-4" />
+                                  {service.issue_date ? moment(service.issue_date).format('DD.MM.YYYY') : 'Planlanmamış'}
+                                </div>
+                              </TableCell>
+                              <TableCell className="px-4 py-4">
+                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                  <Calendar className="h-4 w-4" />
                                   {service.service_due_date ? moment(service.service_due_date).format('DD.MM.YYYY') : 'Tarih belirtilmemiş'}
                                 </div>
                               </TableCell>
                               <TableCell className="px-4 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2">
-                                  {!service.assigned_technician ? (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        // TODO: Teknisyen atama
-                                      }}
-                                    >
-                                      <User className="h-4 w-4 mr-1" />
-                                      Ata
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSelectRequest(service);
-                                      }}
-                                    >
-                                      <Eye className="h-4 w-4 mr-1" />
-                                      Detay
-                                    </Button>
-                                  )}
+                                  {/* Ata/Düzenle Butonu */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingRequest(service);
+                                      setIsEditOpen(true);
+                                    }}
+                                    className="flex items-center gap-1"
+                                  >
+                                    {!service.assigned_technician ? (
+                                      <>
+                                        <User className="h-4 w-4" />
+                                        Ata
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Edit className="h-4 w-4" />
+                                        Düzenle
+                                      </>
+                                    )}
+                                  </Button>
+                                  
+                                  {/* Detay Butonu */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSelectRequest(service);
+                                    }}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    Detay
+                                  </Button>
+                                  
+                                  {/* Silme Butonu */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteService(service);
+                                    }}
+                                    className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -961,6 +1029,71 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
               setSelectedRequest(null);
             }}
           />
+
+          {/* Servis Düzenleme Pop-up'ı */}
+          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Servis Talebini Düzenle</DialogTitle>
+              </DialogHeader>
+              {editingRequest && (
+                <ServiceRequestForm
+                  initialData={convertToFormData(editingRequest)}
+                  isEditing={true}
+                  onClose={() => {
+                    setIsEditOpen(false);
+                    setEditingRequest(null);
+                    // Sayfayı yenile
+                    window.location.reload();
+                  }}
+                />
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Silme Onay Dialog'u */}
+          <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-red-600">
+                  <Trash2 className="h-5 w-5" />
+                  Servis Talebini Sil
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  Bu servis talebini silmek istediğinizden emin misiniz?
+                </p>
+                {serviceToDelete && (
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="font-medium text-gray-900">{serviceToDelete.service_title}</p>
+                    <p className="text-sm text-gray-600">
+                      Servis No: {serviceToDelete.service_number || 'SR-' + serviceToDelete.id.slice(-6).toUpperCase()}
+                    </p>
+                  </div>
+                )}
+                <p className="text-xs text-red-600 mt-2">
+                  ⚠️ Bu işlem geri alınamaz. Servis talebi ve ilgili tüm veriler kalıcı olarak silinecektir.
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteConfirmOpen(false)}
+                >
+                  İptal
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={confirmDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Sil
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
         </div>
       </main>

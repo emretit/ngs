@@ -59,6 +59,7 @@ export interface ServiceRequestFormData {
   service_location?: string;
   service_due_date?: Date;
   service_reported_date?: Date;
+  issue_date?: Date; // Planlanan tarih
   equipment_id?: string;
   assigned_technician?: string;
   company_id?: string;

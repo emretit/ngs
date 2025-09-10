@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, FileText, AlertTriangle, Wrench, MapPin, User, Clock, Calendar as CalendarDays } from "lucide-react";
+import { CalendarIcon, FileText, AlertTriangle, Wrench, MapPin, User, Clock, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
+import { tr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { UseFormReturn } from "react-hook-form";
 import { ServiceRequestFormData } from "@/hooks/service/types";
@@ -168,7 +169,7 @@ export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
                 )}
               >
                 {field.value ? (
-                  format(field.value, "PPP")
+                  format(field.value, "dd.MM.yyyy", { locale: tr })
                 ) : (
                   <span>Tarih seçin</span>
                 )}
@@ -185,6 +186,7 @@ export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
                 date > new Date()
               }
               initialFocus
+              locale={tr}
             />
           </PopoverContent>
         </Popover>
@@ -215,7 +217,7 @@ export const DueDateField: React.FC<FieldProps> = ({ form }) => (
                 )}
               >
                 {field.value ? (
-                  format(field.value, "PPP")
+                  format(field.value, "dd.MM.yyyy", { locale: tr })
                 ) : (
                   <span>Tarih seçin</span>
                 )}
@@ -232,6 +234,52 @@ export const DueDateField: React.FC<FieldProps> = ({ form }) => (
                 date < new Date(new Date().setHours(0, 0, 0, 0))
               }
               initialFocus
+              locale={tr}
+            />
+          </PopoverContent>
+        </Popover>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+);
+
+export const PlannedDateField: React.FC<FieldProps> = ({ form }) => (
+  <FormField
+    control={form.control}
+    name="issue_date"
+    render={({ field }) => (
+      <FormItem className="flex flex-col">
+        <FormLabel className="flex items-center gap-2">
+          <CalendarDays className="h-4 w-4 text-blue-600" />
+          Planlanan Tarih
+        </FormLabel>
+        <Popover>
+          <PopoverTrigger asChild>
+            <FormControl>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-full pl-3 text-left font-normal transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  !field.value && "text-muted-foreground"
+                )}
+              >
+                {field.value ? (
+                  format(field.value, "dd.MM.yyyy", { locale: tr })
+                ) : (
+                  <span>Tarih seçin</span>
+                )}
+                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+              </Button>
+            </FormControl>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={field.value}
+              onSelect={field.onChange}
+              initialFocus
+              locale={tr}
             />
           </PopoverContent>
         </Popover>

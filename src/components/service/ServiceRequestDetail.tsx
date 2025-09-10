@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 // Import refactored components
 import { RequestHeader } from "./detail/RequestHeader";
 import { DetailContent } from "./detail/DetailContent";
+import { ModernDetailContent } from "./detail/ModernDetailContent";
 
 interface ServiceRequestDetailProps {
   serviceRequest: ServiceRequest | null;
@@ -75,10 +76,8 @@ export function ServiceRequestDetail({ serviceRequest, isOpen, onClose }: Servic
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-[700px] overflow-y-auto">
-        <RequestHeader serviceRequest={serviceRequest} />
-        
-        <DetailContent 
+      <SheetContent className="w-full sm:max-w-[900px] overflow-y-auto">
+        <ModernDetailContent 
           serviceRequest={serviceRequest}
           status={status}
           setStatus={setStatus}

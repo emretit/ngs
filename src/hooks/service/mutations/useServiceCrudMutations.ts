@@ -33,12 +33,24 @@ export const useServiceCrudMutations = () => {
       // Generate service number
       const serviceNumber = await generateServiceNumber();
       
+      // UUID validation function
+      const isValidUUID = (str: string) => {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(str);
+      };
+
       const serviceRequestData = {
         ...formData,
         service_number: serviceNumber,
         service_due_date: formData.service_due_date?.toISOString(),
         service_reported_date: formData.service_reported_date?.toISOString(),
-        service_status: formData.assigned_technician && formData.assigned_technician !== 'unassigned' ? 'assigned' as const : 'new' as const,
+        issue_date: formData.issue_date?.toISOString(), // Planlanan tarih
+        assigned_technician: formData.assigned_technician && 
+          formData.assigned_technician !== 'unassigned' && 
+          isValidUUID(formData.assigned_technician) ? formData.assigned_technician : null,
+        service_status: formData.assigned_technician && 
+          formData.assigned_technician !== 'unassigned' && 
+          isValidUUID(formData.assigned_technician) ? 'assigned' as const : 'new' as const,
         attachments: [],
         company_id: userData?.company_id,
       };
@@ -117,11 +129,23 @@ export const useServiceCrudMutations = () => {
         size: file.size
       }));
 
+      // UUID validation function
+      const isValidUUID = (str: string) => {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        return uuidRegex.test(str);
+      };
+
       const updatePayload = {
         ...updateData,
         service_due_date: updateData.service_due_date ? updateData.service_due_date.toISOString() : currentRequest.service_due_date,
         service_reported_date: updateData.service_reported_date ? updateData.service_reported_date.toISOString() : currentRequest.service_reported_date,
-        service_status: updateData.assigned_technician && updateData.assigned_technician !== 'unassigned' ? 'assigned' as const : currentRequest.service_status,
+        issue_date: updateData.issue_date ? updateData.issue_date.toISOString() : currentRequest.issue_date, // Planlanan tarih
+        assigned_technician: updateData.assigned_technician && 
+          updateData.assigned_technician !== 'unassigned' && 
+          isValidUUID(updateData.assigned_technician) ? updateData.assigned_technician : currentRequest.assigned_technician,
+        service_status: updateData.assigned_technician && 
+          updateData.assigned_technician !== 'unassigned' && 
+          isValidUUID(updateData.assigned_technician) ? 'assigned' as const : currentRequest.service_status,
         attachments: attachmentsForDb
       };
 

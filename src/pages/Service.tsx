@@ -830,7 +830,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                                   <p className="font-medium text-foreground">{service.title}</p>
                                   {service.description && (
                                     <p className="text-sm text-muted-foreground line-clamp-2">
-                                      {service.description}
+                                      <span className="font-medium">Servis Talebi:</span> {service.description}
                                     </p>
                                   )}
                                 </div>

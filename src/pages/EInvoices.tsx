@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Navbar from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,7 +11,7 @@ import {
   Calendar, 
   Eye,
   Edit,
-  CreditCard,
+  CreditEnhancedCard,
   Trash2,
   RefreshCw
 } from "lucide-react";

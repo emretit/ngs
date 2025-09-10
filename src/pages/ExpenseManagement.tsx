@@ -1,13 +1,13 @@
 import Navbar from "@/components/Navbar";
 import { TopBar } from "@/components/TopBar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { EnhancedCard, SummaryCard } from "@/components/shared";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { Plus, TrendingDown, CreditCard, Users } from "lucide-react";
+import { Plus, TrendingDown, CreditEnhancedCard, Users } from "lucide-react";
 
 interface ExpenseManagementProps {
   isCollapsed: boolean;
@@ -70,17 +70,17 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Gider Giriş Formu */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <EnhancedCard>
+              <div>
+                <h3 className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
                   Yeni Gider Girişi
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <EnhancedCardDescription>
                   Operasyonel giderlerinizi kaydedin
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </EnhancedCardDescription>
+              </div>
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="year">Yıl</Label>
@@ -153,55 +153,55 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
                   <Plus className="h-4 w-4 mr-2" />
                   Gider Ekle
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </EnhancedCard>
 
             {/* Özet Kartları */}
             <div className="space-y-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Bu Ay Toplam Gider</CardTitle>
+              <EnhancedCard>
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h3 className="text-sm font-medium">Bu Ay Toplam Gider</h3>
                   <TrendingDown className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div>
                   <div className="text-2xl font-bold text-red-600">₺89,250</div>
                   <p className="text-xs text-muted-foreground">
                     +8% geçen aya göre
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Personel Giderleri</CardTitle>
+              <EnhancedCard>
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h3 className="text-sm font-medium">Personel Giderleri</h3>
                   <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div>
                   <div className="text-2xl font-bold">₺55,000</div>
                   <p className="text-xs text-muted-foreground">
                     Toplam giderlerin %62'si
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Sabit Giderler</CardTitle>
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
+              <EnhancedCard>
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h3 className="text-sm font-medium">Sabit Giderler</h3>
+                  <CreditEnhancedCard className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div>
                   <div className="text-2xl font-bold">₺25,750</div>
                   <p className="text-xs text-muted-foreground">
                     Kira, elektrik, internet vb.
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">En Yüksek Gider Kategorileri</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <EnhancedCard>
+                <div>
+                  <h3 className="text-sm font-medium">En Yüksek Gider Kategorileri</h3>
+                </div>
+                <div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Personel Giderleri</span>
@@ -216,18 +216,18 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
                       <span className="font-medium text-red-600">₺12,500</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
             </div>
           </div>
 
           {/* Son Girişler Tablosu */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Son Gider Girişleri</CardTitle>
-              <CardDescription>En son eklenen gider kayıtları</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <EnhancedCard>
+            <div>
+              <h3>Son Gider Girişleri</h3>
+              <EnhancedCardDescription>En son eklenen gider kayıtları</EnhancedCardDescription>
+            </div>
+            <div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -270,8 +270,8 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </EnhancedCard>
         </div>
       </main>
     </div>

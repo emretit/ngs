@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import EInvoiceStatusBadge from "@/components/sales/EInvoiceStatusBadge";
 import { useEInvoice } from "@/hooks/useEInvoice";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { EnhancedCard, SummaryCard } from "@/components/shared";
 import { 
   Plus, 
   FileUp, 
@@ -131,70 +131,70 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
                 Kesilmiş satış faturalarının yönetimi ve takibi
               </p>
             </div>
-            <Button 
+            <PrimaryButton 
               onClick={() => navigate('/sales-invoices/create')}
               className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-primary to-primary/90"
             >
               <Plus className="h-4 w-4" />
               <span>Yeni Fatura</span>
-            </Button>
+            </PrimaryButton>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card className="p-4 bg-white shadow-sm">
-              <CardContent className="p-2 space-y-2">
+            <EnhancedCard className="p-4 bg-white shadow-sm">
+              <div className="p-2 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Toplam Fatura</span>
                   <FileUp className="h-5 w-5 text-blue-500" />
                 </div>
                 <p className="text-2xl font-bold text-blue-600">{totalInvoices}</p>
                 <span className="text-sm text-gray-500">Bu dönem</span>
-              </CardContent>
-            </Card>
+              </div>
+            </EnhancedCard>
             
-            <Card className="p-4 bg-white shadow-sm">
-              <CardContent className="p-2 space-y-2">
+            <EnhancedCard className="p-4 bg-white shadow-sm">
+              <div className="p-2 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Ödenen</span>
                   <FileUp className="h-5 w-5 text-green-500" />
                 </div>
                 <p className="text-2xl font-bold text-green-600">{formatCurrency(paidAmountSum)}</p>
                 <span className="text-sm text-gray-500">{totalPaid} fatura</span>
-              </CardContent>
-            </Card>
+              </div>
+            </EnhancedCard>
             
-            <Card className="p-4 bg-white shadow-sm">
-              <CardContent className="p-2 space-y-2">
+            <EnhancedCard className="p-4 bg-white shadow-sm">
+              <div className="p-2 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Bekleyen</span>
                   <FileUp className="h-5 w-5 text-orange-500" />
                 </div>
                 <p className="text-2xl font-bold text-orange-600">{formatCurrency(unpaidAmountSum)}</p>
                 <span className="text-sm text-gray-500">{totalUnpaid} fatura</span>
-              </CardContent>
-            </Card>
+              </div>
+            </EnhancedCard>
             
-            <Card className="p-4 bg-white shadow-sm">
-              <CardContent className="p-2 space-y-2">
+            <EnhancedCard className="p-4 bg-white shadow-sm">
+              <div className="p-2 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Vadesi Geçmiş</span>
                   <FileUp className="h-5 w-5 text-red-500" />
                 </div>
                 <p className="text-2xl font-bold text-red-600">{totalOverdue}</p>
                 <span className="text-sm text-gray-500">fatura</span>
-              </CardContent>
-            </Card>
+              </div>
+            </EnhancedCard>
           </div>
 
-          <Card>
-            <CardContent className="p-6">
+          <EnhancedCard>
+            <div className="p-6">
               <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <h2 className="text-lg font-semibold">Satış Faturaları</h2>
-                      <Button variant="outline" size="sm">
+                      <PrimaryButton variant="outline" size="sm">
                         <ExternalLink className="h-4 w-4 mr-2" />
                         Dışa Aktar
-                      </Button>
+                      </PrimaryButton>
                     </div>
                 <div className="flex gap-2">
                   <Select
@@ -306,9 +306,9 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
                           <td className="p-4 text-center">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">
+                                <PrimaryButton variant="outline" size="sm">
                                   <Eye className="h-4 w-4" />
-                                </Button>
+                                </PrimaryButton>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>İşlemler</DropdownMenuLabel>
@@ -352,8 +352,8 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
                   <p>Henüz fatura bulunmuyor</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </EnhancedCard>
         </div>
       </main>
     </div>

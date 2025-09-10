@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { ActionButtonGroup } from "@/components/shared";
 
 interface FormActionsProps {
   isEditMode: boolean;
@@ -16,24 +16,14 @@ export const FormActions: React.FC<FormActionsProps> = ({
   onCancel
 }) => {
   return (
-    <div className="flex justify-end space-x-2 mt-6">
-      {onCancel && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSaving}
-        >
-          Cancel
-        </Button>
-      )}
-      <Button
-        type="button"
-        onClick={onSave}
-        disabled={isSaving}
-      >
-        {isSaving ? "Saving..." : isEditMode ? "Save Changes" : "Add Employee"}
-      </Button>
-    </div>
+    <ActionButtonGroup
+      onCancel={onCancel}
+      onSave={onSave}
+      saveText={isEditMode ? "Save Changes" : "Add Employee"}
+      cancelText="Cancel"
+      saveLoading={isSaving}
+      saveDisabled={isSaving}
+      className="mt-6"
+    />
   );
 };

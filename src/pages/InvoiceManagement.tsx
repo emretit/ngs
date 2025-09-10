@@ -1,8 +1,8 @@
 import Navbar from "@/components/Navbar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EnhancedCard, SummaryCard } from "@/components/shared";
 import { Receipt, FileText, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 
 interface InvoiceManagementProps {
   isCollapsed: boolean;
@@ -62,19 +62,19 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
               const IconComponent = module.icon;
               return (
                 <Link key={module.path} to={module.path}>
-                  <Card className="h-full hover:shadow-lg transition-all duration-200 group cursor-pointer border-0 shadow-md">
-                    <CardHeader className="pb-4">
+                  <EnhancedCard className="h-full hover:shadow-lg transition-all duration-200 group cursor-pointer border-0 shadow-md">
+                    <div className="pb-4">
                       <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${module.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}>
                         <IconComponent className="h-6 w-6 text-white" />
                       </div>
-                      <CardTitle className="text-xl font-semibold text-gray-900 group-hover:text-primary transition-colors">
+                      <h3 className="text-xl font-semibold text-gray-900 group-hover:text-primary transition-colors">
                         {module.title}
-                      </CardTitle>
-                      <CardDescription className="text-gray-600">
+                      </h3>
+                      <EnhancedCardDescription className="text-gray-600">
                         {module.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                      </EnhancedCardDescription>
+                    </div>
+                    <div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-500">
                           {module.stats}
@@ -85,8 +85,8 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
                           </svg>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </EnhancedCard>
                 </Link>
               );
             })}

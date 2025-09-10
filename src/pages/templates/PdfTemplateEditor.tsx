@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+import { PrimaryButton, SecondaryButton } from '@/components/shared';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EnhancedCard, SummaryCard } from '@/components/shared';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
@@ -399,7 +399,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       <div className="border-b bg-background p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button
+            <PrimaryButton
               variant="ghost"
               size="sm"
               onClick={() => navigate('/settings')}
@@ -407,7 +407,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             >
               <ArrowLeft className="h-4 w-4" />
               Geri
-            </Button>
+            </PrimaryButton>
             <div>
               <h1 className="text-2xl font-bold">
                 {isNewTemplate ? 'Yeni PDF Şablonu' : 'PDF Şablon Editörü'}
@@ -850,14 +850,14 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                   </AccordionItem>
                 </Accordion>
 
-                {/* Action Buttons */}
+                {/* Action PrimaryButtons */}
                 <div className="grid grid-cols-2 gap-2 pt-4 border-t">
-                  <Button type="submit" disabled={isLoading}>
+                  <PrimaryButton type="submit" disabled={isLoading}>
                     <Save className="mr-2 h-4 w-4" />
                     {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
-                  </Button>
+                  </PrimaryButton>
                   
-                  <Button
+                  <PrimaryButton
                     type="button"
                     variant="outline"
                     onClick={() => navigate('/settings')}
@@ -865,7 +865,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Çık
-                  </Button>
+                  </PrimaryButton>
                 </div>
                 </form>
               </div>
@@ -877,14 +877,14 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           {/* PDF Preview */}
           <ResizablePanel defaultSize={65} minSize={50}>
             <div className="h-full p-4">
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+              <EnhancedCard className="h-full">
+                <div>
+                  <h3 className="flex items-center gap-2">
                     <Eye className="h-5 w-5" />
                     PDF Önizleme
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="h-full p-0">
+                  </h3>
+                </div>
+                <div className="h-full p-0">
                   {previewData && watchedValues ? (
                     <div className="h-full">
                       <PDFViewer className="w-full h-full">
@@ -896,8 +896,8 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                       PDF önizlemesi yükleniyor...
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>

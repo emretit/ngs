@@ -1,7 +1,7 @@
 
 import Navbar from "@/components/Navbar";
 import SimpleEmployeeForm from "@/components/employees/form/SimpleEmployeeForm";
-import { Button } from "@/components/ui/button";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 

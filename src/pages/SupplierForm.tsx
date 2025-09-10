@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { EnhancedCard } from "@/components/shared";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import Navbar from "@/components/Navbar";
 import { TopBar } from "@/components/TopBar";
 import { useToast } from "@/hooks/use-toast";

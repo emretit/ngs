@@ -1,36 +1,40 @@
 
-import { Card } from "@/components/ui/card";
+import { SummaryCard } from "@/components/shared";
+import { LucideIcon } from "lucide-react";
 
 interface DashboardCardProps {
   title: string;
   value: string | number;
-  icon: React.ReactNode;
+  icon: LucideIcon;
   trend?: {
     value: number;
     isPositive: boolean;
   };
+  color?: 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'gray';
+  onClick?: () => void;
 }
 
-const DashboardCard = ({ title, value, icon, trend }: DashboardCardProps) => {
+const DashboardCard = ({ 
+  title, 
+  value, 
+  icon, 
+  trend, 
+  color = 'blue',
+  onClick 
+}: DashboardCardProps) => {
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between">
-        <div className="text-secondary">{icon}</div>
-        {trend && (
-          <div
-            className={`text-xs ${
-              trend.isPositive ? "text-green-500" : "text-red-500"
-            }`}
-          >
-            {trend.isPositive ? "+" : "-"}{trend.value}%
-          </div>
-        )}
-      </div>
-      <div className="mt-3">
-        <h3 className="text-sm font-medium text-gray-600">{title}</h3>
-        <p className="text-xl font-bold mt-1">{value}</p>
-      </div>
-    </Card>
+    <SummaryCard
+      title={title}
+      value={value}
+      icon={icon}
+      color={color}
+      trend={trend ? {
+        value: Math.abs(trend.value),
+        label: trend.isPositive ? "artış" : "azalış",
+        direction: trend.isPositive ? "up" : "down"
+      } : undefined}
+      onClick={onClick}
+    />
   );
 };
 

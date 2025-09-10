@@ -1,9 +1,9 @@
 import React from "react";
 import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { ArrowLeft } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { EnhancedCard } from "@/components/shared";
 import { RequestsTable } from "@/components/purchase/requests/RequestsTable";
 
 interface PurchaseRequestsProps {
@@ -32,9 +32,9 @@ const PurchaseRequests = ({ isCollapsed, setIsCollapsed }: PurchaseRequestsProps
         </Button>
       </div>
 
-      <Card className="p-4">
+      <EnhancedCard className="p-4">
         <RequestsTable />
-      </Card>
+      </EnhancedCard>
     </DefaultLayout>
   );
 };

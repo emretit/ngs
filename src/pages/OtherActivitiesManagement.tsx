@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import { TopBar } from "@/components/TopBar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { EnhancedCard, SummaryCard } from "@/components/shared";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -70,17 +70,17 @@ const OtherActivitiesManagement = ({ isCollapsed, setIsCollapsed }: OtherActivit
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Diğer Faaliyetler Giriş Formu */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <EnhancedCard>
+              <div>
+                <h3 className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
                   Yeni Kayıt Girişi
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <EnhancedCardDescription>
                   Diğer gelir ve giderlerinizi kaydedin
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </EnhancedCardDescription>
+              </div>
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="year">Yıl</Label>
@@ -153,55 +153,55 @@ const OtherActivitiesManagement = ({ isCollapsed, setIsCollapsed }: OtherActivit
                   <Plus className="h-4 w-4 mr-2" />
                   Kayıt Ekle
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </EnhancedCard>
 
             {/* Özet Kartları */}
             <div className="space-y-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Faiz Gelirleri</CardTitle>
+              <EnhancedCard>
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h3 className="text-sm font-medium">Faiz Gelirleri</h3>
                   <Percent className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div>
                   <div className="text-2xl font-bold text-green-600">₺5,250</div>
                   <p className="text-xs text-muted-foreground">
                     Bu ay toplam
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Kur Farkı</CardTitle>
+              <EnhancedCard>
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h3 className="text-sm font-medium">Kur Farkı</h3>
                   <Globe className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div>
                   <div className="text-2xl font-bold text-red-600">₺-2,150</div>
                   <p className="text-xs text-muted-foreground">
                     Döviz pozisyonu zararı
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Olağandışı Gelirler</CardTitle>
+              <EnhancedCard>
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h3 className="text-sm font-medium">Olağandışı Gelirler</h3>
                   <Star className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div>
                   <div className="text-2xl font-bold text-blue-600">₺15,000</div>
                   <p className="text-xs text-muted-foreground">
                     Sabit varlık satışı
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">Kategori Dağılımı</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <EnhancedCard>
+                <div>
+                  <h3 className="text-sm font-medium">Kategori Dağılımı</h3>
+                </div>
+                <div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Faiz Gelirleri</span>
@@ -216,18 +216,18 @@ const OtherActivitiesManagement = ({ isCollapsed, setIsCollapsed }: OtherActivit
                       <span className="font-medium text-blue-600">₺15,000</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
             </div>
           </div>
 
           {/* Son Girişler Tablosu */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Son Kayıt Girişleri</CardTitle>
-              <CardDescription>En son eklenen diğer gelir/gider kayıtları</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <EnhancedCard>
+            <div>
+              <h3>Son Kayıt Girişleri</h3>
+              <EnhancedCardDescription>En son eklenen diğer gelir/gider kayıtları</EnhancedCardDescription>
+            </div>
+            <div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -270,8 +270,8 @@ const OtherActivitiesManagement = ({ isCollapsed, setIsCollapsed }: OtherActivit
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </EnhancedCard>
         </div>
       </main>
     </div>

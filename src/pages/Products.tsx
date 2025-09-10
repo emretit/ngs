@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { Plus, LayoutGrid, Table as TableIcon, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProductListHeader from "@/components/products/ProductListHeader";
@@ -220,20 +220,20 @@ const Products = ({ isCollapsed, setIsCollapsed }: ProductsProps) => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
               <div className="border rounded-lg p-1">
-                <Button
+                <PrimaryButton
                   variant={view === "grid" ? "default" : "ghost"}
                   size="icon"
                   onClick={() => setView("grid")}
                 >
                   <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
+                </PrimaryButton>
+                <PrimaryButton
                   variant={view === "table" ? "default" : "ghost"}
                   size="icon"
                   onClick={() => setView("table")}
                 >
                   <TableIcon className="h-4 w-4" />
-                </Button>
+                </PrimaryButton>
               </div>
             </div>
           </div>

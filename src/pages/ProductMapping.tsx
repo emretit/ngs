@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { EnhancedCard, SummaryCard } from '@/components/shared';
+import { PrimaryButton, SecondaryButton } from '@/components/shared';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowLeft,
@@ -351,21 +351,21 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Button
+          <PrimaryButton
             variant="outline"
             onClick={handleBack}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Geri Dön
-          </Button>
+          </PrimaryButton>
           
           {!isLoading && productMappings.length > 0 && (
             <div className="flex items-center gap-4">
               <div className="text-sm text-gray-600">
                 {productMappings.length} ürün • {productMappings.filter(m => m.action === 'create').length} yeni • {productMappings.filter(m => m.action === 'update').length} güncelleme
               </div>
-              <Button
+              <PrimaryButton
                 onClick={saveMappings}
                 disabled={isSaving}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
@@ -376,15 +376,15 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                   <CheckCircle className="w-4 h-4" />
                 )}
                 Kaydet
-              </Button>
+              </PrimaryButton>
             </div>
           )}
         </div>
 
         {/* Loading State */}
         {isLoading ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
+          <EnhancedCard>
+            <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Ürünler Yükleniyor</h3>
@@ -392,36 +392,36 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                   Fatura XML'i parse ediliyor ve ürün bilgileri çıkarılıyor...
                 </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </EnhancedCard>
         ) : parsedProducts.length === 0 ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
+          <EnhancedCard>
+            <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Ürün Bulunamadı</h3>
                 <p className="text-gray-500 mb-4">
                   Bu faturada ürün bilgisi bulunamadı veya XML parse edilemedi.
                 </p>
-                <Button variant="outline" onClick={handleBack}>
+                <PrimaryButton variant="outline" onClick={handleBack}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Geri Dön
-                </Button>
+                </PrimaryButton>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </EnhancedCard>
         ) : (
           <div className="grid grid-cols-12 gap-6">
             {/* Sol Panel - Evrak Bilgileri */}
             <div className="col-span-5">
-              <Card>
-                <CardHeader className="bg-blue-500 text-white">
-                  <CardTitle className="flex items-center gap-2">
+              <EnhancedCard>
+                <div className="bg-blue-500 text-white">
+                  <h3 className="flex items-center gap-2">
                     <FileText className="w-5 h-5" />
                     EVRAK BİLGİLERİ
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Gönderen</label>
@@ -489,20 +489,20 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                       placeholder="Açıklama giriniz..."
                     />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
             </div>
 
             {/* Sağ Panel - Ürün/Hizmetler */}
             <div className="col-span-7">
-              <Card>
-                <CardHeader className="bg-green-500 text-white">
-                  <CardTitle className="flex items-center gap-2">
+              <EnhancedCard>
+                <div className="bg-green-500 text-white">
+                  <h3 className="flex items-center gap-2">
                     <Package className="w-5 h-5" />
                     ÜRÜN / HİZMETLER
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
+                  </h3>
+                </div>
+                <div className="p-0">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-green-100">
@@ -641,8 +641,8 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
             </div>
           </div>
         )}

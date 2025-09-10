@@ -2,9 +2,9 @@
 import React, { useState } from "react";
 import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { ArrowLeft, FileText, FileDown, Plus } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { EnhancedCard } from "@/components/shared";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PurchaseOrdersTab from "@/components/purchase/orders/PurchaseOrdersTab";
 import InvoiceManagementTab from "@/components/purchase/invoices/InvoiceManagementTab";
@@ -55,7 +55,7 @@ const PurchaseManagement = ({ isCollapsed, setIsCollapsed }: PurchaseManagementP
         </div>
       </div>
 
-      <Card className="p-4">
+      <EnhancedCard className="p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4 w-full sm:w-auto">
             <TabsTrigger value="purchase-orders" className="flex items-center">
@@ -76,7 +76,7 @@ const PurchaseManagement = ({ isCollapsed, setIsCollapsed }: PurchaseManagementP
             <InvoiceManagementTab />
           </TabsContent>
         </Tabs>
-      </Card>
+      </EnhancedCard>
     </DefaultLayout>
   );
 };

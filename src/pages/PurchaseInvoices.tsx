@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
+import { EnhancedCard, SummaryCard } from "@/components/shared";
 import { 
   Plus, 
   FileUp, 
@@ -11,7 +11,7 @@ import {
   Download,
   Eye,
   Edit,
-  CreditCard,
+  CreditEnhancedCard,
   Trash2,
   RefreshCw
 } from "lucide-react";
@@ -101,63 +101,63 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
                 Alış faturalarının yönetimi
               </p>
             </div>
-            <Button className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-primary to-primary/90">
+            <PrimaryButton className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-primary to-primary/90">
               <Plus className="h-4 w-4" />
               <span>Yeni Fatura</span>
-            </Button>
+            </PrimaryButton>
           </div>
 
           <div className="w-full">
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card className="p-4 bg-white shadow-sm">
-                  <CardContent className="p-2 space-y-2">
+                <EnhancedCard className="p-4 bg-white shadow-sm">
+                  <div className="p-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Toplam Fatura</span>
                       <FileUp className="h-5 w-5 text-blue-500" />
                     </div>
                     <p className="text-2xl font-bold text-blue-600">{totalInvoices}</p>
                     <span className="text-sm text-gray-500">Bu dönem</span>
-                  </CardContent>
-                </Card>
+                  </div>
+                </EnhancedCard>
                 
-                <Card className="p-4 bg-white shadow-sm">
-                  <CardContent className="p-2 space-y-2">
+                <EnhancedCard className="p-4 bg-white shadow-sm">
+                  <div className="p-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Ödenen</span>
                       <FileUp className="h-5 w-5 text-green-500" />
                     </div>
                     <p className="text-2xl font-bold text-green-600">{formatCurrency(paidAmountSum)}</p>
                     <span className="text-sm text-gray-500">{totalPaid} fatura</span>
-                  </CardContent>
-                </Card>
+                  </div>
+                </EnhancedCard>
                 
-                <Card className="p-4 bg-white shadow-sm">
-                  <CardContent className="p-2 space-y-2">
+                <EnhancedCard className="p-4 bg-white shadow-sm">
+                  <div className="p-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Bekleyen</span>
                       <FileUp className="h-5 w-5 text-orange-500" />
                     </div>
                     <p className="text-2xl font-bold text-orange-600">{formatCurrency(pendingAmountSum)}</p>
                     <span className="text-sm text-gray-500">{totalPending} fatura</span>
-                  </CardContent>
-                </Card>
+                  </div>
+                </EnhancedCard>
                 
-                <Card className="p-4 bg-white shadow-sm">
-                  <CardContent className="p-2 space-y-2">
+                <EnhancedCard className="p-4 bg-white shadow-sm">
+                  <div className="p-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-600">Geciken</span>
                       <FileUp className="h-5 w-5 text-red-500" />
                     </div>
                     <p className="text-2xl font-bold text-red-600">{totalOverdue}</p>
                     <span className="text-sm text-gray-500">fatura</span>
-                  </CardContent>
-                </Card>
+                  </div>
+                </EnhancedCard>
               </div>
 
               {/* Filters */}
-              <Card>
-                <CardContent className="p-4">
+              <EnhancedCard>
+                <div className="p-4">
                   <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -183,10 +183,10 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
                     </Select>
                     <Popover open={dateOpen} onOpenChange={setDateOpen}>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full lg:w-auto justify-start text-left font-normal">
+                        <PrimaryButton variant="outline" className="w-full lg:w-auto justify-start text-left font-normal">
                           <FileUp className="mr-2 h-4 w-4" />
                           Tarih Aralığı
-                        </Button>
+                        </PrimaryButton>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <DatePickerWithRange
@@ -204,15 +204,15 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
                         />
                       </PopoverContent>
                     </Popover>
-                    <Button variant="outline" onClick={() => setFilters({
+                    <PrimaryButton variant="outline" onClick={() => setFilters({
                       search: "",
                       status: "all",
                       dateRange: { from: null, to: null }
                     })}>
                       <Filter className="h-4 w-4 mr-2" />
                       Temizle
-                    </Button>
-                    <Button 
+                    </PrimaryButton>
+                    <PrimaryButton 
                       variant="outline" 
                       onClick={() => {
                         refetchIncoming();
@@ -222,14 +222,14 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
                     >
                       <RefreshCw className={`h-4 w-4 mr-2 ${(isLoadingIncoming || isLoadingEarchive) ? 'animate-spin' : ''}`} />
                       E-Fatura Yenile
-                    </Button>
+                    </PrimaryButton>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
               {/* Purchase Invoices Table */}
-              <Card>
-                <CardContent className="p-0">
+              <EnhancedCard>
+                <div className="p-0">
               {isLoading || isLoadingIncoming || isLoadingEarchive ? (
                 <div className="space-y-4">
                   {[...Array(5)].map((_, i) => (
@@ -335,11 +335,11 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
                            </td>
                            <td className="p-4 text-center">
                              <div className="flex gap-2 justify-center">
-                               <Button variant="outline" size="sm">
+                               <PrimaryButton variant="outline" size="sm">
                                  <Eye className="h-4 w-4" />
-                               </Button>
+                               </PrimaryButton>
                                {(invoice.sourceType === 'earchive_received') && (
-                                 <Button 
+                                 <PrimaryButton 
                                    variant="outline" 
                                    size="sm"
                                    onClick={() => downloadAndOpenPdf(invoice.id, 'e-arşiv')}
@@ -347,7 +347,7 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
                                    className="text-blue-600 hover:text-blue-700"
                                  >
                                    <Download className="h-4 w-4" />
-                                 </Button>
+                                 </PrimaryButton>
                                )}
                              </div>
                            </td>
@@ -362,8 +362,8 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
                   <p>Henüz fatura bulunmuyor</p>
                 </div>
               )}
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
             </div>
           </div>
         </div>

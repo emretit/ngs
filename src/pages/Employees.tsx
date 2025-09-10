@@ -2,8 +2,8 @@
 import Navbar from "@/components/Navbar";
 import { EmployeeList } from "@/components/employees/EmployeeList";
 import { EmployeeSummaryStats } from "@/components/employees/stats/EmployeeSummaryStats";
-import { SalaryOverviewCards } from "@/components/employees/SalaryOverviewCards";
-import { Button } from "@/components/ui/button";
+import { SalaryOverviewEnhancedCards } from "@/components/employees/SalaryOverviewEnhancedCards";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -26,19 +26,19 @@ const Employees = ({ isCollapsed, setIsCollapsed }: EmployeesPageProps) => {
               <p className="text-gray-600 mt-1">Tüm çalışanları görüntüle ve yönet</p>
             </div>
             <div className="mt-4 md:mt-0">
-              <Button 
+              <PrimaryButton 
                 className="bg-red-600 hover:bg-red-700"
                 onClick={() => navigate("/add-employee")}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Yeni Çalışan
-              </Button>
+              </PrimaryButton>
             </div>
           </div>
           
           <EmployeeSummaryStats />
           
-          <SalaryOverviewCards />
+          <SalaryOverviewEnhancedCards />
           
           <EmployeeList />
         </div>

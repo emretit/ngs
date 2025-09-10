@@ -1,13 +1,13 @@
 import Navbar from "@/components/Navbar";
 import { TopBar } from "@/components/TopBar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { EnhancedCard, SummaryCard } from "@/components/shared";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { Plus, DollarSign, CreditCard, Banknote } from "lucide-react";
+import { Plus, DollarSign, CreditEnhancedCard, Banknote } from "lucide-react";
 
 interface FinancingManagementProps {
   isCollapsed: boolean;
@@ -68,17 +68,17 @@ const FinancingManagement = ({ isCollapsed, setIsCollapsed }: FinancingManagemen
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Finansman Giriş Formu */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <EnhancedCard>
+              <div>
+                <h3 className="flex items-center gap-2">
                   <Plus className="h-5 w-5" />
                   Yeni Finansman Girişi
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <EnhancedCardDescription>
                   Finansman faaliyetlerinizi kaydedin
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </EnhancedCardDescription>
+              </div>
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="year">Yıl</Label>
@@ -151,55 +151,55 @@ const FinancingManagement = ({ isCollapsed, setIsCollapsed }: FinancingManagemen
                   <Plus className="h-4 w-4 mr-2" />
                   Finansman Ekle
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </EnhancedCard>
 
             {/* Özet Kartları */}
             <div className="space-y-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Toplam Kredi Borcu</CardTitle>
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
+              <EnhancedCard>
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h3 className="text-sm font-medium">Toplam Kredi Borcu</h3>
+                  <CreditEnhancedCard className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div>
                   <div className="text-2xl font-bold text-orange-600">₺350,000</div>
                   <p className="text-xs text-muted-foreground">
                     5 farklı kredi
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Bu Ay Kredi Ödemesi</CardTitle>
+              <EnhancedCard>
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h3 className="text-sm font-medium">Bu Ay Kredi Ödemesi</h3>
                   <Banknote className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div>
                   <div className="text-2xl font-bold text-red-600">₺25,750</div>
                   <p className="text-xs text-muted-foreground">
                     Anapara + faiz ödemesi
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Sermaye Katkısı</CardTitle>
+              <EnhancedCard>
+                <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <h3 className="text-sm font-medium">Sermaye Katkısı</h3>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div>
                   <div className="text-2xl font-bold text-green-600">₺100,000</div>
                   <p className="text-xs text-muted-foreground">
                     Bu yıl toplam
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">Finansman Dağılımı</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <EnhancedCard>
+                <div>
+                  <h3 className="text-sm font-medium">Finansman Dağılımı</h3>
+                </div>
+                <div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Kredi Geri Ödemesi</span>
@@ -214,18 +214,18 @@ const FinancingManagement = ({ isCollapsed, setIsCollapsed }: FinancingManagemen
                       <span className="font-medium text-green-600">₺100,000</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </EnhancedCard>
             </div>
           </div>
 
           {/* Son Girişler Tablosu */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Son Finansman Girişleri</CardTitle>
-              <CardDescription>En son eklenen finansman kayıtları</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <EnhancedCard>
+            <div>
+              <h3>Son Finansman Girişleri</h3>
+              <EnhancedCardDescription>En son eklenen finansman kayıtları</EnhancedCardDescription>
+            </div>
+            <div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -268,8 +268,8 @@ const FinancingManagement = ({ isCollapsed, setIsCollapsed }: FinancingManagemen
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </EnhancedCard>
         </div>
       </main>
     </div>

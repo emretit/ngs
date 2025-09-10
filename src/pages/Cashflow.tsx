@@ -15,7 +15,7 @@ import InvoicesManager from "@/components/cashflow/InvoicesManager";
 import ExpensesManager from "@/components/cashflow/ExpensesManager";
 import BankAccounts from "@/components/cashflow/BankAccounts";
 
-import { TrendingUp, FileText, BarChart2, Users2, CreditCard, Receipt, Wallet, Building2 } from "lucide-react";
+import { TrendingUp, FileText, BarChart2, Users2, CreditEnhancedCard, Receipt, Wallet, Building2 } from "lucide-react";
 
 interface CashflowProps {
   isCollapsed: boolean;
@@ -112,7 +112,7 @@ const Cashflow = ({ isCollapsed, setIsCollapsed }: CashflowProps) => {
                   <span>Fatura Analizi</span>
                 </CustomTabsTrigger>
                 <CustomTabsTrigger value="loans-and-checks" className="flex items-center justify-center space-x-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200">
-                  <CreditCard className="h-4 w-4" />
+                  <CreditEnhancedCard className="h-4 w-4" />
                   <span>Krediler ve Çekler</span>
                 </CustomTabsTrigger>
                 <CustomTabsTrigger value="bank-accounts" className="flex items-center justify-center space-x-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200">

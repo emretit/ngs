@@ -7,7 +7,7 @@ import { EmployeeDetailsLoading } from "@/components/employees/details/EmployeeD
 import { EmployeeNotFound } from "@/components/employees/details/EmployeeNotFound";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { PrimaryButton, SecondaryButton } from "@/components/shared";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Employee } from "@/types/employee";

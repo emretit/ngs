@@ -4577,6 +4577,16 @@ export type Database = {
           title: string
           updated_at: string | null
           warranty_info: Json | null
+          // Service slip fields
+          slip_number: string | null
+          issue_date: string | null
+          completion_date: string | null
+          technician_name: string | null
+          technician_signature: string | null
+          customer_data: Json | null
+          equipment_data: Json | null
+          service_details: Json | null
+          slip_status: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -4597,6 +4607,16 @@ export type Database = {
           title: string
           updated_at?: string | null
           warranty_info?: Json | null
+          // Service slip fields
+          slip_number?: string | null
+          issue_date?: string | null
+          completion_date?: string | null
+          technician_name?: string | null
+          technician_signature?: string | null
+          customer_data?: Json | null
+          equipment_data?: Json | null
+          service_details?: Json | null
+          slip_status?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -4617,6 +4637,16 @@ export type Database = {
           title?: string
           updated_at?: string | null
           warranty_info?: Json | null
+          // Service slip fields
+          slip_number?: string | null
+          issue_date?: string | null
+          completion_date?: string | null
+          technician_name?: string | null
+          technician_signature?: string | null
+          customer_data?: Json | null
+          equipment_data?: Json | null
+          service_details?: Json | null
+          slip_status?: string | null
         }
         Relationships: [
           {
@@ -4634,57 +4664,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      service_slips: {
-        Row: {
-          company_id: string | null
-          completion_date: string | null
-          created_at: string
-          customer: Json
-          equipment: Json
-          id: string
-          issue_date: string
-          service_details: Json
-          service_request_id: string
-          slip_number: string
-          status: string
-          technician_name: string
-          technician_signature: string | null
-          updated_at: string
-        }
-        Insert: {
-          company_id?: string | null
-          completion_date?: string | null
-          created_at?: string
-          customer?: Json
-          equipment?: Json
-          id?: string
-          issue_date?: string
-          service_details?: Json
-          service_request_id: string
-          slip_number: string
-          status?: string
-          technician_name: string
-          technician_signature?: string | null
-          updated_at?: string
-        }
-        Update: {
-          company_id?: string | null
-          completion_date?: string | null
-          created_at?: string
-          customer?: Json
-          equipment?: Json
-          id?: string
-          issue_date?: string
-          service_details?: Json
-          service_request_id?: string
-          slip_number?: string
-          status?: string
-          technician_name?: string
-          technician_signature?: string | null
-          updated_at?: string
-        }
-        Relationships: []
       }
       spatial_ref_sys: {
         Row: {

@@ -31,21 +31,20 @@ export class ServiceSlipService {
       .eq('id', serviceRequest.assigned_to)
       .single();
 
-    const serviceSlipData: Omit<ServiceSlipData, 'id' | 'created_at' | 'updated_at'> = {
-      service_request_id: serviceRequestId,
+    const serviceSlipData = {
       slip_number: slipNumber,
       issue_date: new Date().toISOString(),
       completion_date: formData.completion_date,
       technician_name: technicanProfile?.full_name || 'Belirtilmemiş',
       technician_signature: formData.technician_signature,
-      customer: {
+      customer_data: {
         name: serviceRequest.customers?.name || 'Müşteri',
         company: serviceRequest.customers?.company || '',
         address: serviceRequest.customers?.address || '',
         phone: serviceRequest.customers?.mobile_phone || '',
         email: serviceRequest.customers?.email || '',
       },
-      equipment: {
+      equipment_data: {
         name: serviceRequest.equipment?.name || '',
         model: serviceRequest.equipment?.model || '',
         serial_number: serviceRequest.equipment?.serial_number || '',
@@ -58,13 +57,14 @@ export class ServiceSlipService {
         service_type: serviceRequest.service_type,
         warranty_status: serviceRequest.warranty_info?.status || '',
       },
-      status: formData.completion_date ? 'completed' : 'draft',
+      slip_status: formData.completion_date ? 'completed' : 'draft',
     };
 
-    // Save to database
+    // Update service request with slip data
     const { data, error } = await supabase
-      .from('service_slips')
-      .insert(serviceSlipData)
+      .from('service_requests')
+      .update(serviceSlipData)
+      .eq('id', serviceRequestId)
       .select()
       .single();
 
@@ -72,22 +72,39 @@ export class ServiceSlipService {
       throw new Error('Servis fişi kaydedilemedi: ' + error.message);
     }
 
-    return data as ServiceSlipData;
+    // Return data in ServiceSlipData format for compatibility
+    return {
+      id: data.id,
+      service_request_id: data.id,
+      slip_number: data.slip_number,
+      issue_date: data.issue_date,
+      completion_date: data.completion_date,
+      technician_name: data.technician_name,
+      technician_signature: data.technician_signature,
+      customer: data.customer_data,
+      equipment: data.equipment_data,
+      service_details: data.service_details,
+      status: data.slip_status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    } as ServiceSlipData;
   }
 
   /**
    * Update service slip
    */
   static async updateServiceSlip(slipId: string, formData: Partial<ServiceSlipFormData>): Promise<ServiceSlipData> {
+    const updateData: any = {
+      service_details: formData,
+      completion_date: formData.completion_date,
+      technician_signature: formData.technician_signature,
+      slip_status: formData.completion_date ? 'completed' : 'draft',
+      updated_at: new Date().toISOString(),
+    };
+
     const { data, error } = await supabase
-      .from('service_slips')
-      .update({
-        service_details: formData,
-        completion_date: formData.completion_date,
-        technician_signature: formData.technician_signature,
-        status: formData.completion_date ? 'completed' : 'draft',
-        updated_at: new Date().toISOString(),
-      })
+      .from('service_requests')
+      .update(updateData)
       .eq('id', slipId)
       .select()
       .single();
@@ -96,7 +113,22 @@ export class ServiceSlipService {
       throw new Error('Servis fişi güncellenemedi: ' + error.message);
     }
 
-    return data as ServiceSlipData;
+    // Return data in ServiceSlipData format for compatibility
+    return {
+      id: data.id,
+      service_request_id: data.id,
+      slip_number: data.slip_number,
+      issue_date: data.issue_date,
+      completion_date: data.completion_date,
+      technician_name: data.technician_name,
+      technician_signature: data.technician_signature,
+      customer: data.customer_data,
+      equipment: data.equipment_data,
+      service_details: data.service_details,
+      status: data.slip_status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    } as ServiceSlipData;
   }
 
   /**
@@ -104,16 +136,36 @@ export class ServiceSlipService {
    */
   static async getServiceSlipByRequestId(serviceRequestId: string): Promise<ServiceSlipData | null> {
     const { data, error } = await supabase
-      .from('service_slips')
+      .from('service_requests')
       .select('*')
-      .eq('service_request_id', serviceRequestId)
+      .eq('id', serviceRequestId)
+      .not('slip_number', 'is', null)
       .single();
 
     if (error && error.code !== 'PGRST116') {
       throw new Error('Servis fişi getirilemedi: ' + error.message);
     }
 
-    return data as ServiceSlipData | null;
+    if (!data || !data.slip_number) {
+      return null;
+    }
+
+    // Return data in ServiceSlipData format for compatibility
+    return {
+      id: data.id,
+      service_request_id: data.id,
+      slip_number: data.slip_number,
+      issue_date: data.issue_date,
+      completion_date: data.completion_date,
+      technician_name: data.technician_name,
+      technician_signature: data.technician_signature,
+      customer: data.customer_data,
+      equipment: data.equipment_data,
+      service_details: data.service_details,
+      status: data.slip_status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    } as ServiceSlipData;
   }
 
   /**
@@ -122,8 +174,9 @@ export class ServiceSlipService {
   private static async generateSlipNumber(): Promise<string> {
     const year = new Date().getFullYear();
     const { count } = await supabase
-      .from('service_slips')
+      .from('service_requests')
       .select('*', { count: 'exact', head: true })
+      .not('slip_number', 'is', null)
       .gte('created_at', `${year}-01-01`)
       .lt('created_at', `${year + 1}-01-01`);
 
@@ -136,7 +189,7 @@ export class ServiceSlipService {
    */
   static async completeService(slipId: string, signatureData?: string): Promise<ServiceSlipData> {
     const updateData: any = {
-      status: 'completed',
+      slip_status: 'completed',
       completion_date: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -146,7 +199,7 @@ export class ServiceSlipService {
     }
 
     const { data, error } = await supabase
-      .from('service_slips')
+      .from('service_requests')
       .update(updateData)
       .eq('id', slipId)
       .select()
@@ -160,12 +213,27 @@ export class ServiceSlipService {
     const { error: requestError } = await supabase
       .from('service_requests')
       .update({ status: 'completed' })
-      .eq('id', data.service_request_id);
+      .eq('id', slipId);
 
     if (requestError) {
       console.error('Service request status update failed:', requestError);
     }
 
-    return data as ServiceSlipData;
+    // Return data in ServiceSlipData format for compatibility
+    return {
+      id: data.id,
+      service_request_id: data.id,
+      slip_number: data.slip_number,
+      issue_date: data.issue_date,
+      completion_date: data.completion_date,
+      technician_name: data.technician_name,
+      technician_signature: data.technician_signature,
+      customer: data.customer_data,
+      equipment: data.equipment_data,
+      service_details: data.service_details,
+      status: data.slip_status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    } as ServiceSlipData;
   }
 }

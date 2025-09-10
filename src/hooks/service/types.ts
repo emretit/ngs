@@ -29,6 +29,16 @@ export interface ServiceRequest {
   location?: string;
   due_date?: string;
   reported_date?: string;
+  // Service slip fields
+  slip_number?: string;
+  issue_date?: string;
+  completion_date?: string;
+  technician_name?: string;
+  technician_signature?: string;
+  customer_data?: Record<string, any>;
+  equipment_data?: Record<string, any>;
+  service_details?: Record<string, any>;
+  slip_status?: 'draft' | 'completed' | 'signed';
 }
 
 export interface ServiceRequestFormData {

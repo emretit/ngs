@@ -1,7 +1,9 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ServiceRequest } from "@/hooks/useServiceRequests";
+import { ServiceSlipData } from "@/types/service-slip";
+import { ServiceSlipService } from "@/services/serviceSlipService";
 
 // Import refactored components
 import { StatusPrioritySection } from "./StatusPrioritySection";
@@ -16,6 +18,7 @@ import { ServiceActivitiesSection } from "./ServiceActivitiesSection";
 import { RequestAttachments } from "./RequestAttachments";
 import { NotesSection } from "./NotesSection";
 import { DetailActions } from "./DetailActions";
+import { ServiceSlipSection } from "./ServiceSlipSection";
 
 interface DetailContentProps {
   serviceRequest: ServiceRequest;
@@ -46,6 +49,36 @@ export const DetailContent: React.FC<DetailContentProps> = ({
   isPending,
   onClose
 }) => {
+  const [serviceSlip, setServiceSlip] = useState<ServiceSlipData | null>(null);
+  const [loadingSlip, setLoadingSlip] = useState(false);
+
+  // Load existing service slip
+  useEffect(() => {
+    const loadServiceSlip = async () => {
+      try {
+        setLoadingSlip(true);
+        const slip = await ServiceSlipService.getServiceSlipByRequestId(serviceRequest.id);
+        setServiceSlip(slip);
+      } catch (error) {
+        console.error('Error loading service slip:', error);
+      } finally {
+        setLoadingSlip(false);
+      }
+    };
+
+    if (serviceRequest.id) {
+      loadServiceSlip();
+    }
+  }, [serviceRequest.id]);
+
+  const refreshServiceSlip = async () => {
+    try {
+      const slip = await ServiceSlipService.getServiceSlipByRequestId(serviceRequest.id);
+      setServiceSlip(slip);
+    } catch (error) {
+      console.error('Error refreshing service slip:', error);
+    }
+  };
   return (
     <div className="space-y-4">
       {/* Üst Kısım - Durum ve Kontroller */}
@@ -93,6 +126,16 @@ export const DetailContent: React.FC<DetailContentProps> = ({
           <EquipmentInfo equipmentId={serviceRequest.equipment_id} />
         )}
       </div>
+
+      <Separator className="my-3" />
+
+      {/* Service Slip Section */}
+      <ServiceSlipSection 
+        serviceRequest={serviceRequest}
+        serviceSlip={serviceSlip}
+        loadingSlip={loadingSlip}
+        onSlipUpdated={refreshServiceSlip}
+      />
 
       <Separator className="my-3" />
 

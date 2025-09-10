@@ -5,11 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, FileText, Download, Eye } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Plus, Trash2, FileText, CheckCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { ServiceSlipData, ServiceSlipFormData } from "@/types/service-slip";
 import { ServiceSlipService } from "@/services/serviceSlipService";
-import { ServiceSlipPdfService } from "@/services/pdf/serviceSlipPdfService";
 
 interface ServiceSlipFormProps {
   serviceRequestId: string;
@@ -127,7 +126,7 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
       
       toast({
         title: "Servis Tamamlandı",
-        description: "Servis başarıyla tamamlandı ve PDF oluşturulabilir.",
+        description: "Servis başarıyla tamamlandı.",
       });
 
       onClose();
@@ -140,54 +139,6 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGeneratePdf = async () => {
-    if (!existingSlip) {
-      toast({
-        title: "Hata",
-        description: "PDF oluşturmak için önce servis fişini kaydetmelisiniz.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await ServiceSlipPdfService.downloadPdf(existingSlip);
-      toast({
-        title: "PDF İndirildi",
-        description: "Servis fişi PDF olarak indirildi.",
-      });
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast({
-        title: "Hata",
-        description: "PDF oluşturulamadı.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePreviewPdf = async () => {
-    if (!existingSlip) {
-      toast({
-        title: "Hata",
-        description: "PDF önizleme için önce servis fişini kaydetmelisiniz.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await ServiceSlipPdfService.openPdfInNewTab(existingSlip);
-    } catch (error) {
-      console.error('Error previewing PDF:', error);
-      toast({
-        title: "Hata",
-        description: "PDF önizleme açılamadı.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -311,21 +262,10 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
             </Button>
 
             {existingSlip && (
-              <>
-                <Button onClick={handleComplete} disabled={loading} variant="default">
-                  Servisi Tamamla
-                </Button>
-                
-                <Button onClick={handlePreviewPdf} variant="outline">
-                  <Eye className="h-4 w-4 mr-2" />
-                  PDF Önizleme
-                </Button>
-                
-                <Button onClick={handleGeneratePdf} variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  PDF İndir
-                </Button>
-              </>
+              <Button onClick={handleComplete} disabled={loading} variant="default">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Servisi Tamamla
+              </Button>
             )}
 
             <Button onClick={onClose} variant="outline">

@@ -81,8 +81,8 @@ const ServiceRequestRow = ({
           : "-"}
       </TableCell>
       <TableCell>{technicianName}</TableCell>
-      <TableCell>{getStatusBadge(request.status)}</TableCell>
-      <TableCell>{getPriorityBadge(request.priority)}</TableCell>
+      <TableCell>{getStatusBadge(request.status as any)}</TableCell>
+      <TableCell>{getPriorityBadge(request.priority as any)}</TableCell>
       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

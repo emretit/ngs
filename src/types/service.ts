@@ -1,5 +1,7 @@
 
-export type ServiceRequestStatus = 'new' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'on_hold';
+import { Database } from '@/integrations/supabase/types';
+
+export type ServiceRequestStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 export type ServiceRequestPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface ServiceRequestAttachment {
@@ -9,22 +11,8 @@ export interface ServiceRequestAttachment {
   size: number;
 }
 
-export interface ServiceRequest {
-  id: string;
-  title: string;
-  description?: string;
-  status: ServiceRequestStatus;
-  priority: ServiceRequestPriority;
-  customer_id?: string;
-  service_type?: string;
-  location?: string;
-  due_date?: string;
-  assignee_id?: string;
-  assigned_to?: string;
-  equipment_id?: string;
-  notes?: string[];
-  warranty_info?: Record<string, any>;
-  attachments: ServiceRequestAttachment[];
-  created_at?: string;
-  updated_at?: string;
-}
+// Use the database type as the main ServiceRequest type
+export type ServiceRequest = Database['public']['Tables']['service_requests']['Row'];
+
+// Form data type for creating/updating service requests
+export type ServiceRequestFormData = Database['public']['Tables']['service_requests']['Insert'];

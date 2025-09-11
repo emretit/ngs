@@ -4,6 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { ServiceRequest } from "@/hooks/useServiceRequests";
 import { ServiceSlipData } from "@/types/service-slip";
 import { ServiceSlipService } from "@/services/serviceSlipService";
+import { ServiceRequestAttachment } from "@/hooks/service/types";
 
 // Import refactored components
 import { StatusPrioritySection } from "./StatusPrioritySection";
@@ -145,10 +146,10 @@ export const DetailContent: React.FC<DetailContentProps> = ({
         <ServiceActivitiesSection serviceRequestId={serviceRequest.id} />
       </div>
 
-      {serviceRequest.attachments && serviceRequest.attachments.length > 0 && (
+      {serviceRequest.attachments && Array.isArray(serviceRequest.attachments) && serviceRequest.attachments.length > 0 && (
         <>
           <Separator className="my-3" />
-          <RequestAttachments attachments={serviceRequest.attachments} />
+          <RequestAttachments attachments={serviceRequest.attachments as unknown as ServiceRequestAttachment[]} />
         </>
       )}
 

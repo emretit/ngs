@@ -27,10 +27,10 @@ export function ServiceRequestDetail({ serviceRequest, isOpen, onClose }: Servic
 
   useEffect(() => {
     if (serviceRequest) {
-      setStatus(serviceRequest.status);
-      setPriority(serviceRequest.priority);
-      setAssignedTo(serviceRequest.assigned_to);
-      setNotes(serviceRequest.notes?.join("\n") || "");
+      setStatus(serviceRequest.status as ServiceStatus);
+      setPriority(serviceRequest.priority as ServicePriority);
+      setAssignedTo(serviceRequest.assigned_to || '');
+      setNotes(Array.isArray(serviceRequest.notes) ? serviceRequest.notes.join("\n") : serviceRequest.technician_notes || "");
     }
   }, [serviceRequest]);
 

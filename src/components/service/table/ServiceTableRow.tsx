@@ -50,7 +50,7 @@ const ServiceTableRow: React.FC<ServiceTableRowProps> = ({
           : "-"}
       </TableCell>
       <TableCell>{getTechnicianName(request.assigned_to)}</TableCell>
-      <TableCell>{getStatusBadge(request.status)}</TableCell>
+      <TableCell>{getStatusBadge(request.status as any)}</TableCell>
       <TableCell>
         <Badge variant="outline" className={
           request.priority === "high" 

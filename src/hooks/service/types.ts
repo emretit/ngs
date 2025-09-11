@@ -1,5 +1,6 @@
 
 import { QueryClient } from "@tanstack/react-query";
+import { Database } from '@/integrations/supabase/types';
 
 export interface ServiceRequestAttachment {
   name: string;
@@ -9,65 +10,49 @@ export interface ServiceRequestAttachment {
 }
 
 export type ServicePriority = 'low' | 'medium' | 'high' | 'urgent';
-export type ServiceStatus = 'new' | 'in_progress' | 'completed' | 'cancelled' | 'assigned' | 'on_hold';
+export type ServiceStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'new' | 'assigned' | 'on_hold';
 
-export interface ServiceRequest {
-  id: string;
-  service_number?: string;
-  service_title: string;
-  service_request_description?: string;
-  service_status: ServiceStatus;
-  service_priority: ServicePriority;
-  service_type: string;
-  attachments: ServiceRequestAttachment[];
-  notes?: string[];
-  created_at?: string;
-  updated_at?: string;
-  assigned_technician?: string;
-  customer_id?: string;
-  equipment_id?: string;
-  warranty_info?: Record<string, any>;
-  service_location?: string;
-  service_due_date?: string;
-  service_reported_date?: string;
-  // Service slip fields
-  slip_number?: string;
-  issue_date?: string;
-  completion_date?: string;
-  technician_name?: string;
-  technician_signature?: string;
-  customer_data?: Record<string, any>;
-  equipment_data?: Record<string, any>;
-  service_details?: Record<string, any>;
-  slip_status?: 'draft' | 'completed' | 'signed';
-  // Additional fields for compatibility
+// Use the database type as the main ServiceRequest type with compatibility fields
+export type ServiceRequest = Database['public']['Tables']['service_requests']['Row'] & {
+  // Compatibility fields for existing components
+  assigned_to?: string;
   due_date?: string;
   reported_date?: string;
-  assigned_to?: string;
-  status?: ServiceStatus;
-  company_id?: string;
-}
-
-export interface ServiceRequestFormData {
-  id?: string;
+  service_title?: string;
   service_number?: string;
-  service_title: string;
-  service_request_description?: string;
-  service_priority: ServicePriority;
-  customer_id?: string;
-  service_type: string;
+  service_priority?: ServicePriority;
+  service_status?: ServiceStatus;
   service_location?: string;
-  service_due_date?: Date;
-  service_reported_date?: Date;
-  issue_date?: Date; // Planlanan tarih
+  service_reported_date?: string;
+  service_due_date?: string;
+  issue_date?: string;
   equipment_id?: string;
+  notes?: string[];
+  service_request_description?: string;
   assigned_technician?: string;
-  company_id?: string;
-  // Additional fields for compatibility
+  slip_status?: 'draft' | 'completed' | 'signed';
+};
+
+// Service slip data type
+export type ServiceSlipData = Database['public']['Tables']['service_slips']['Row'] & {
+  slip_status?: 'draft' | 'in_progress' | 'completed';
+};
+
+
+// Form data type for creating/updating service requests
+export type ServiceRequestFormData = Database['public']['Tables']['service_requests']['Insert'] & {
+  // Compatibility fields for forms
+  service_title?: string;
+  service_priority?: ServicePriority;
+  service_location?: string;
+  service_reported_date?: Date;
+  service_due_date?: Date;
+  issue_date?: Date;
   due_date?: Date;
-  reported_date?: Date;
   assigned_to?: string;
-}
+  assigned_technician?: string;
+  service_request_description?: string;
+};
 
 export interface ServiceQueriesResult {
   data: ServiceRequest[] | undefined;

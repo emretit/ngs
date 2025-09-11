@@ -114,21 +114,26 @@ export const useServiceCrudMutations = () => {
         throw new Error("Service request not found");
       }
 
-      let updatedAttachments = [...(currentRequest.attachments || [])];
+      let updatedAttachments = [...(Array.isArray(currentRequest.attachments) ? currentRequest.attachments : [])];
 
       // Upload new files if any
       if (newFiles.length > 0) {
         const uploadedFiles = await uploadFiles(newFiles, id);
-        updatedAttachments = [...updatedAttachments, ...uploadedFiles];
+        updatedAttachments = [...updatedAttachments, ...uploadedFiles as any];
       }
 
       // Convert attachments to a plain object structure Supabase can handle
-      const attachmentsForDb = updatedAttachments.map(file => ({
-        name: file.name,
-        path: file.path,
-        type: file.type,
-        size: file.size
-      }));
+      const attachmentsForDb = updatedAttachments.map(file => {
+        if (typeof file === 'object' && file !== null && 'name' in file) {
+          return {
+            name: file.name,
+            path: file.path,
+            type: file.type,
+            size: file.size
+          };
+        }
+        return file; // Keep as is if not the expected structure
+      });
 
       // UUID validation function
       const isValidUUID = (str: string) => {

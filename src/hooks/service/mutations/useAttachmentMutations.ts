@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServiceQueries } from "../useServiceQueries";
+import { ServiceRequestAttachment } from "../types";
 
 export const useAttachmentMutations = () => {
   const queryClient = useQueryClient();
@@ -24,7 +25,8 @@ export const useAttachmentMutations = () => {
         throw new Error("Service request not found");
       }
 
-      const updatedAttachments = currentRequest.attachments.filter(att => att.path !== attachmentPath);
+      const attachmentsArray = Array.isArray(currentRequest.attachments) ? currentRequest.attachments as unknown as ServiceRequestAttachment[] : [];
+      const updatedAttachments = attachmentsArray.filter(att => att.path !== attachmentPath);
       
       // Convert to a plain object structure that Supabase can handle
       const attachmentsForDb = updatedAttachments.map(file => ({

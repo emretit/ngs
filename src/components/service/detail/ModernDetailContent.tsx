@@ -391,7 +391,7 @@ export const ModernDetailContent: React.FC<ModernDetailContentProps> = ({
                 <span className="font-medium">Fiş No:</span> {serviceSlip.slip_number}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Durum:</span> {serviceSlip.slip_status}
+                <span className="font-medium">Durum:</span> {serviceSlip.status}
               </p>
               {serviceSlip.completion_date && (
                 <p className="text-sm text-gray-600">
@@ -429,7 +429,7 @@ export const ModernDetailContent: React.FC<ModernDetailContentProps> = ({
       </Card>
 
       {/* Ekler */}
-      {serviceRequest.attachments && serviceRequest.attachments.length > 0 && (
+      {serviceRequest.attachments && Array.isArray(serviceRequest.attachments) && serviceRequest.attachments.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -439,7 +439,7 @@ export const ModernDetailContent: React.FC<ModernDetailContentProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {serviceRequest.attachments.map((attachment, index) => (
+              {(serviceRequest.attachments as any[]).map((attachment, index) => (
                 <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                   <Paperclip className="h-4 w-4 text-gray-600" />
                   <span className="text-sm text-gray-700">{attachment.name}</span>

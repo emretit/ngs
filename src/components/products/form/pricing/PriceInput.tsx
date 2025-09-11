@@ -14,7 +14,7 @@ import { ProductFormSchema } from "../ProductFormSchema";
 
 interface PriceInputProps {
   form: UseFormReturn<ProductFormSchema>;
-  name: "price" | "discount_price" | "purchase_price";
+  name: "price" | "purchase_price";
   label: string;
   description?: string;
   isRequired?: boolean;
@@ -46,11 +46,8 @@ const PriceInput = ({ form, name, label, description, isRequired = false, showVa
                 {...field}
                 value={field.value || ''}
                 onChange={(e) => {
-                  if (name === 'price') {
-                    field.onChange(parseFloat(e.target.value) || 0);
-                  } else {
-                    field.onChange(e.target.value ? parseFloat(e.target.value) : null);
-                  }
+                  const value = parseFloat(e.target.value);
+                  field.onChange(isNaN(value) ? 0 : value);
                 }}
               />
             </FormControl>

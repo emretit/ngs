@@ -48,9 +48,9 @@ export const useProductForm = () => {
     if (watchedPrice && watchedDiscountRate > 0) {
       const discountAmount = (watchedPrice * watchedDiscountRate) / 100;
       const discountedPrice = watchedPrice - discountAmount;
-      form.setValue("discount_price", discountedPrice);
+      // Use discount_rate field instead of discount_price
     } else {
-      form.setValue("discount_price", null);
+      // Use discount_rate field instead of discount_price
     }
   }, [watchedPrice, watchedDiscountRate, form]);
 

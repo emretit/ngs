@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "@/components/ui/form";
-import { useServiceRequests, ServiceRequestFormData } from "@/hooks/useServiceRequests";
+import { useServiceRequests } from "@/hooks/service/useServiceRequests";
+import { ServiceRequestFormData } from "@/types/service";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   TitleField, 
@@ -26,17 +27,14 @@ import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useTechnicians } from "@/hooks/useTechnicians";
 
 const formSchema = z.object({
-  service_title: z.string().min(3, { message: "Başlık en az 3 karakter olmalıdır" }),
-  service_request_description: z.string().optional(),
-  service_priority: z.enum(["low", "medium", "high", "urgent"]),
+  title: z.string().min(3, { message: "Başlık en az 3 karakter olmalıdır" }),
+  description: z.string().optional(),
+  priority: z.enum(["low", "medium", "high", "urgent"]),
   service_type: z.string().min(1, { message: "Servis türü seçmelisiniz" }),
-  service_location: z.string().optional(),
-  service_due_date: z.date().optional(),
-  service_reported_date: z.date().optional(),
-  issue_date: z.date().optional(), // Planlanan tarih
+  location: z.string().optional(),
+  scheduled_date: z.date().optional(),
   customer_id: z.string().optional(),
-  equipment_id: z.string().optional(),
-  assigned_technician: z.string().optional(),
+  assigned_technician_id: z.string().optional(),
 });
 
 export interface ServiceRequestFormProps {
@@ -53,17 +51,19 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
   const { customers } = useCustomerSelect();
   const { technicians, isLoading: techniciansLoading } = useTechnicians();
 
-  const form = useForm<ServiceRequestFormData>({
+  type FormData = z.infer<typeof formSchema>;
+
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
-      service_title: "",
-      service_request_description: "",
-      service_priority: "medium",
-      service_type: "",
-      service_location: "",
-      customer_id: undefined,
-      service_reported_date: new Date(),
-      assigned_technician: undefined,
+    defaultValues: {
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      priority: (initialData?.priority as "low" | "medium" | "high" | "urgent") || "medium",
+      service_type: initialData?.service_type || "",
+      location: initialData?.location || "",
+      customer_id: initialData?.customer_id || undefined,
+      scheduled_date: initialData?.scheduled_date ? new Date(initialData.scheduled_date) : undefined,
+      assigned_technician_id: initialData?.assigned_technician_id || undefined,
     },
   });
 
@@ -90,11 +90,24 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
     return customer?.name;
   };
 
-  const onSubmit = (data: ServiceRequestFormData) => {
+  const onSubmit = (data: FormData) => {
+    // Convert form data to ServiceRequestFormData format
+    const serviceRequestData: ServiceRequestFormData = {
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      service_type: data.service_type,
+      location: data.location,
+      scheduled_date: data.scheduled_date?.toISOString(),
+      customer_id: data.customer_id,
+      assigned_technician_id: data.assigned_technician_id,
+      status: 'pending',
+    };
+
     if (isEditing && initialData?.id) {
       updateServiceRequest({ 
         id: initialData.id, 
-        updateData: data,
+        updateData: serviceRequestData,
         newFiles: files
       });
       toast({
@@ -102,7 +115,7 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
         description: "Servis talebi başarıyla güncellendi",
       });
     } else {
-      createServiceRequest({ formData: data, files });
+      createServiceRequest({ formData: serviceRequestData, files });
       toast({
         title: "Servis Talebi Oluşturuldu",
         description: "Servis talebi başarıyla oluşturuldu",
@@ -132,7 +145,7 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
               </div>
             </div>
             <ServiceRequestPreview 
-              formData={form.getValues()} 
+              formData={form.getValues() as any} 
               files={files}
               customerName={getCustomerName()}
             />
@@ -158,17 +171,16 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="md:col-span-2">
-                  <TitleField form={form} />
+                  <TitleField form={form as any} />
                 </div>
                 <div className="md:col-span-2">
-                  <DescriptionField form={form} />
+                  <DescriptionField form={form as any} />
                 </div>
-                <PriorityField form={form} />
-                <ServiceTypeField form={form} />
-                <CustomerField form={form} />
-                <LocationField form={form} />
-                <ReportedDateField form={form} />
-                <DueDateField form={form} />
+                <PriorityField form={form as any} />
+                <ServiceTypeField form={form as any} />
+                <CustomerField form={form as any} />
+                <LocationField form={form as any} />
+                <DueDateField form={form as any} />
               </div>
             </div>
 
@@ -180,8 +192,8 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
                 <span className="text-xs text-gray-500 font-normal">(Sonradan da belirlenebilir)</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <TechnicianField form={form} technicians={technicians} isLoading={techniciansLoading} />
-                <PlannedDateField form={form} />
+                <TechnicianField form={form as any} technicians={technicians} isLoading={techniciansLoading} />
+                <PlannedDateField form={form as any} />
               </div>
             </div>
 

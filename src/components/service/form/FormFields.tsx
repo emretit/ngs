@@ -12,10 +12,9 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { UseFormReturn } from "react-hook-form";
-import { ServiceRequestFormData } from "@/hooks/service/types";
 
 type FieldProps = {
-  form: UseFormReturn<ServiceRequestFormData>;
+  form: UseFormReturn<any>;
 };
 
 type TechnicianFieldProps = FieldProps & {
@@ -26,7 +25,7 @@ type TechnicianFieldProps = FieldProps & {
 export const TitleField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="service_title"
+    name="title"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-1 text-sm">
@@ -49,7 +48,7 @@ export const TitleField: React.FC<FieldProps> = ({ form }) => (
 export const DescriptionField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="service_request_description"
+    name="description"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-1 text-sm">
@@ -73,7 +72,7 @@ export const DescriptionField: React.FC<FieldProps> = ({ form }) => (
 export const PriorityField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="service_priority"
+    name="priority"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-1 text-sm">
@@ -132,7 +131,7 @@ export const ServiceTypeField: React.FC<FieldProps> = ({ form }) => (
 export const LocationField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="service_location"
+    name="location"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-1 text-sm">
@@ -153,10 +152,58 @@ export const LocationField: React.FC<FieldProps> = ({ form }) => (
   />
 );
 
+export const DueDateField: React.FC<FieldProps> = ({ form }) => (
+  <FormField
+    control={form.control}
+    name="scheduled_date"
+    render={({ field }) => (
+      <FormItem className="flex flex-col">
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <CalendarDays className="h-3 w-3 text-purple-600" />
+          Planlanan Tarih
+        </FormLabel>
+        <Popover>
+          <PopoverTrigger asChild>
+            <FormControl>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-full h-8 pl-3 text-left font-normal text-sm transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  !field.value && "text-muted-foreground"
+                )}
+              >
+                {field.value ? (
+                  format(field.value, "dd.MM.yyyy", { locale: tr })
+                ) : (
+                  <span>Tarih seçin</span>
+                )}
+                <CalendarIcon className="ml-auto h-3 w-3 opacity-50" />
+              </Button>
+            </FormControl>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={field.value}
+              onSelect={field.onChange}
+              disabled={(date) =>
+                date > new Date()
+              }
+              initialFocus
+              locale={tr}
+            />
+          </PopoverContent>
+        </Popover>
+        <FormMessage className="text-xs" />
+      </FormItem>
+    )}
+  />
+);
+
 export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="service_reported_date"
+    name="created_at"
     render={({ field }) => (
       <FormItem className="flex flex-col">
         <FormLabel className="flex items-center gap-1 text-sm">
@@ -201,58 +248,10 @@ export const ReportedDateField: React.FC<FieldProps> = ({ form }) => (
   />
 );
 
-export const DueDateField: React.FC<FieldProps> = ({ form }) => (
-  <FormField
-    control={form.control}
-    name="service_due_date"
-    render={({ field }) => (
-      <FormItem className="flex flex-col">
-        <FormLabel className="flex items-center gap-1 text-sm">
-          <CalendarDays className="h-3 w-3 text-purple-600" />
-          Son Tarih
-        </FormLabel>
-        <Popover>
-          <PopoverTrigger asChild>
-            <FormControl>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full h-8 pl-3 text-left font-normal text-sm transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-                  !field.value && "text-muted-foreground"
-                )}
-              >
-                {field.value ? (
-                  format(field.value, "dd.MM.yyyy", { locale: tr })
-                ) : (
-                  <span>Tarih seçin</span>
-                )}
-                <CalendarIcon className="ml-auto h-3 w-3 opacity-50" />
-              </Button>
-            </FormControl>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={field.value}
-              onSelect={field.onChange}
-              disabled={(date) =>
-                date < new Date(new Date().setHours(0, 0, 0, 0))
-              }
-              initialFocus
-              locale={tr}
-            />
-          </PopoverContent>
-        </Popover>
-        <FormMessage className="text-xs" />
-      </FormItem>
-    )}
-  />
-);
-
 export const PlannedDateField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="issue_date"
+    name="scheduled_date"
     render={({ field }) => (
       <FormItem className="flex flex-col">
         <FormLabel className="flex items-center gap-1 text-sm">
@@ -297,7 +296,7 @@ export const PlannedDateField: React.FC<FieldProps> = ({ form }) => (
 export const TechnicianField: React.FC<TechnicianFieldProps> = ({ form, technicians = [], isLoading = false }) => (
   <FormField
     control={form.control}
-    name="assigned_technician"
+    name="assigned_technician_id"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-1 text-sm">

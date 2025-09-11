@@ -85,15 +85,16 @@ const OpportunitiesTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide">📋 Fırsat Başlığı</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide">🏢 Müşteri Bilgileri</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide">📊 Durum</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide">💰 Değer</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide">💱 Para Birimi</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide">⚡ Öncelik</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide">👤 Sorumlu Kişi</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide">📅 Hedef Tarih</TableHead>
-            <TableHead className="w-[50px] font-bold text-foreground/80 text-sm tracking-wide">⚙️ İşlemler</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📋 Fırsat Başlığı</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Müşteri Bilgileri</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📊 Durum</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">💰 Değer</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">💱</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">⚡ Öncelik</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">👤 Sorumlu</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Hedef Tarih</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Oluşturulma</TableHead>
+            <TableHead className="w-[50px] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -107,6 +108,7 @@ const OpportunitiesTable = ({
               <TableCell><Skeleton className="h-4 w-16" /></TableCell>
               <TableCell><Skeleton className="h-4 w-24" /></TableCell>
               <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+              <TableCell><Skeleton className="h-4 w-20" /></TableCell>
               <TableCell><Skeleton className="h-8 w-8" /></TableCell>
             </TableRow>
           ))}
@@ -119,32 +121,33 @@ const OpportunitiesTable = ({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[18%] font-bold text-foreground/80 text-sm tracking-wide">📋 Fırsat Başlığı</TableHead>
-          <TableHead className="w-[25%] font-bold text-foreground/80 text-sm tracking-wide">🏢 Müşteri Bilgileri</TableHead>
-          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide">📊 Durum</TableHead>
-          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide">💰 Değer</TableHead>
-          <TableHead className="w-[6%] font-bold text-foreground/80 text-sm tracking-wide">💱 Para Birimi</TableHead>
-          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide">⚡ Öncelik</TableHead>
-          <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide">👤 Sorumlu Kişi</TableHead>
-          <TableHead className="w-[9%] font-bold text-foreground/80 text-sm tracking-wide">📅 Hedef Tarih</TableHead>
-          <TableHead className="w-[6%] font-bold text-foreground/80 text-sm tracking-wide">⚙️ İşlemler</TableHead>
+          <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">📋 Fırsat Başlığı</TableHead>
+          <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Müşteri Bilgileri</TableHead>
+          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">📊 Durum</TableHead>
+          <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">💰 Değer</TableHead>
+          <TableHead className="w-[4%] font-bold text-foreground/80 text-sm tracking-wide text-center">💱</TableHead>
+          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">⚡ Öncelik</TableHead>
+          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-left">👤 Sorumlu</TableHead>
+          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Hedef Tarih</TableHead>
+          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Oluşturulma</TableHead>
+          <TableHead className="w-[4%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {filteredOpportunities.length === 0 ? (
                       <TableRow>
-              <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={10} className="text-center py-8 text-gray-500">
                 Bu kriterlere uygun fırsat bulunamadı
               </TableCell>
             </TableRow>
         ) : (
           filteredOpportunities.map((opportunity) => (
-            <TableRow key={opportunity.id} onClick={() => onSelectOpportunity(opportunity)} className="cursor-pointer hover:bg-gray-50">
-              <TableCell className="font-medium">{shortenText(opportunity.title, 30)}</TableCell>
-              <TableCell>
+            <TableRow key={opportunity.id} onClick={() => onSelectOpportunity(opportunity)} className="cursor-pointer hover:bg-blue-50 h-8">
+              <TableCell className="font-medium py-1 px-2 text-xs">{shortenText(opportunity.title, 35)}</TableCell>
+              <TableCell className="py-1 px-2">
                 {opportunity.customer ? (
-                  <div className="flex flex-col">
-                    <span title={opportunity.customer.name}>
+                  <div className="flex flex-col space-y-0.5">
+                    <span className="text-xs font-medium" title={opportunity.customer.name}>
                       {getShortenedCompanyName(opportunity.customer.name)}
                     </span>
                     {opportunity.customer.company && (
@@ -154,41 +157,41 @@ const OpportunitiesTable = ({
                     )}
                   </div>
                 ) : (
-                  <span className="text-gray-500">-</span>
+                  <span className="text-gray-500 text-xs">-</span>
                 )}
               </TableCell>
-              <TableCell className="text-center">
+              <TableCell className="text-center py-1 px-1">
                 <OpportunityStatusCell 
                   status={opportunity.status}
                   opportunityId={opportunity.id}
                   onStatusChange={updateOpportunityStatus}
                 />
               </TableCell>
-              <TableCell className="text-center">
+              <TableCell className="text-center py-1 px-1 text-xs font-medium">
                 {opportunity.value ? formatCurrency(opportunity.value, opportunity.currency || 'TRY') : '-'}
               </TableCell>
-              <TableCell className="text-center">
+              <TableCell className="text-center py-1 px-0.5">
                 {opportunity.currency ? (
-                  <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                  <span className="text-xs font-bold text-blue-700">
                     {opportunity.currency === 'TRY' ? '₺' : 
                      opportunity.currency === 'USD' ? '$' : 
                      opportunity.currency === 'EUR' ? '€' : 
                      opportunity.currency === 'GBP' ? '£' : 
                      opportunity.currency}
-                  </Badge>
+                  </span>
                 ) : (
-                  <span className="text-gray-500">-</span>
+                  <span className="text-gray-500 text-xs">-</span>
                 )}
               </TableCell>
-              <TableCell className="text-center">
+              <TableCell className="text-center py-1 px-1">
                 <Badge 
                   variant="outline" 
-                  className={
+                  className={`text-xs px-1.5 py-0.5 ${
                     opportunity.priority === 'high' ? 'bg-red-100 text-red-800' :
                     opportunity.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                     opportunity.priority === 'low' ? 'bg-green-100 text-green-800' :
                     'bg-gray-100 text-gray-800'
-                  }
+                  }`}
                 >
                   {opportunity.priority === 'high' && 'Yüksek'}
                   {opportunity.priority === 'medium' && 'Orta'}
@@ -196,32 +199,39 @@ const OpportunitiesTable = ({
                   {!opportunity.priority && '-'}
                 </Badge>
               </TableCell>
-              <TableCell>
+              <TableCell className="py-1 px-1">
                 {opportunity.employee ? (
-                  <div className="flex items-center space-x-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                  <div className="flex items-center space-x-1">
+                    <Avatar className="h-4 w-4">
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
                         {opportunity.employee.first_name?.[0]}
                         {opportunity.employee.last_name?.[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium">
+                    <span className="text-xs font-medium truncate">
                       {opportunity.employee.first_name} {opportunity.employee.last_name}
                     </span>
                   </div>
                 ) : (
-                  <span className="text-muted-foreground text-sm">Atanmamış</span>
+                  <span className="text-muted-foreground text-xs">-</span>
                 )}
               </TableCell>
-              <TableCell className="text-center">
+              <TableCell className="text-center py-1 px-1 text-xs">
                 {opportunity.expected_close_date ? (
                   format(new Date(opportunity.expected_close_date), "dd MMM yyyy", { locale: tr })
                 ) : (
                   <span className="text-muted-foreground">-</span>
                 )}
               </TableCell>
-              <TableCell>
-                <div className="flex justify-end">
+              <TableCell className="text-center py-1 px-1 text-xs">
+                {opportunity.created_at ? (
+                  format(new Date(opportunity.created_at), "dd MMM yyyy", { locale: tr })
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </TableCell>
+              <TableCell className="py-1 px-1">
+                <div className="flex justify-end space-x-1">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -229,17 +239,17 @@ const OpportunitiesTable = ({
                       e.stopPropagation();
                       onSelectOpportunity(opportunity);
                     }}
-                    className="h-8 w-8"
+                    className="h-6 w-6 hover:bg-blue-100"
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-3 w-3" />
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="icon"
                     onClick={(e) => e.stopPropagation()}
-                    className="h-8 w-8"
+                    className="h-6 w-6 hover:bg-gray-100"
                   >
-                    <MoreHorizontal className="h-4 w-4" />
+                    <MoreHorizontal className="h-3 w-3" />
                   </Button>
                 </div>
               </TableCell>

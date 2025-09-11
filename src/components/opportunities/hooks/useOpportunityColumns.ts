@@ -14,6 +14,7 @@ const defaultColumns: OpportunityColumn[] = [
   { id: "new", title: "Yeni", icon: Circle, color: "bg-blue-600" },
   { id: "meeting_visit", title: "Görüşme ve Ziyaret", icon: Square, color: "bg-purple-600" },
   { id: "proposal", title: "Teklif", icon: Star, color: "bg-orange-600" },
+  { id: "negotiation", title: "Müzakere", icon: Target, color: "bg-yellow-600" },
   { id: "won", title: "Kazanıldı", icon: CheckCircle2, color: "bg-green-600" },
   { id: "lost", title: "Kaybedildi", icon: XCircle, color: "bg-red-600" }
 ];
@@ -46,9 +47,9 @@ export const useOpportunityColumns = (
     const savedVersion = localStorage.getItem('opportunity-columns-version');
     
     // If no version or old version, reset to new system
-    if (!savedVersion || savedVersion !== '4-stage') {
+    if (!savedVersion || savedVersion !== '6-stage') {
       localStorage.removeItem('opportunity-columns');
-      localStorage.setItem('opportunity-columns-version', '4-stage');
+      localStorage.setItem('opportunity-columns-version', '6-stage');
       setColumns(defaultColumns);
       return;
     }

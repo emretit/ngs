@@ -2,8 +2,9 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, User, Target } from "lucide-react";
+import { Search, Filter, User, Target, Calendar } from "lucide-react";
 import { OpportunityStatus, opportunityStatusLabels } from "@/types/crm";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface OpportunityFilterBarProps {
   filterKeyword: string;
@@ -15,6 +16,10 @@ interface OpportunityFilterBarProps {
   selectedEmployee?: string;
   setSelectedEmployee?: (value: string) => void;
   employees?: Array<{ id: string; first_name: string; last_name: string }>;
+  startDate?: Date | undefined;
+  setStartDate?: (value: Date | undefined) => void;
+  endDate?: Date | undefined;
+  setEndDate?: (value: Date | undefined) => void;
 }
 
 const OpportunityFilterBar = ({
@@ -26,11 +31,15 @@ const OpportunityFilterBar = ({
   setPriorityFilter,
   selectedEmployee = 'all',
   setSelectedEmployee,
-  employees = []
+  employees = [],
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate
 }: OpportunityFilterBarProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 p-6 bg-gradient-to-r from-card/80 to-muted/40 rounded-xl border border-border/30 shadow-lg backdrop-blur-sm">
-      <div className="relative min-w-[400px] flex-1">
+    <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+      <div className="relative min-w-[250px] flex-1">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
           placeholder="Fırsat başlığı, açıklama veya müşteri adı ile ara..."
@@ -87,6 +96,22 @@ const OpportunityFilterBar = ({
           </SelectContent>
         </Select>
       )}
+
+      {/* Tarih Filtreleri */}
+      <div className="flex items-center gap-2">
+        <Calendar className="h-4 w-4 text-muted-foreground" />
+        <DatePicker
+          date={startDate}
+          onSelect={setStartDate}
+          placeholder="Başlangıç"
+        />
+        <span className="text-muted-foreground text-sm">-</span>
+        <DatePicker
+          date={endDate}
+          onSelect={setEndDate}
+          placeholder="Bitiş"
+        />
+      </div>
     </div>
   );
 };

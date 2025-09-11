@@ -2,9 +2,7 @@ import React from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Opportunity } from "@/types/crm";
 import OpportunityColumn from "./OpportunityColumn";
-import AddColumnButton from "./AddColumnButton";
 import ColumnHeader from "./ColumnHeader";
-import AddColumnDialog from "./dialogs/AddColumnDialog";
 import DeleteColumnDialog from "./dialogs/DeleteColumnDialog";
 import { useOpportunityColumns } from "./hooks/useOpportunityColumns";
 
@@ -39,13 +37,8 @@ const OpportunityKanbanBoard: React.FC<OpportunityKanbanBoardProps> = ({
 }) => {
   const {
     columns,
-    isAddColumnOpen,
-    setIsAddColumnOpen,
-    newColumnTitle,
-    setNewColumnTitle,
     columnToDelete,
     setColumnToDelete,
-    handleAddColumn,
     handleDeleteColumn,
     confirmDeleteColumn,
     isDefaultColumn,
@@ -69,24 +62,23 @@ const OpportunityKanbanBoard: React.FC<OpportunityKanbanBoardProps> = ({
   };
 
   return (
-    <>
-      <AddColumnButton onClick={() => setIsAddColumnOpen(true)} />
-      
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="columns" direction="horizontal" type="COLUMN">
-          {(provided) => (
-            <div 
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-4 auto-rows-fr"
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-            >
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div className="p-3">
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="columns" direction="horizontal" type="COLUMN">
+            {(provided) => (
+              <div 
+                className="flex gap-2 pb-4"
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+              >
               {columns.map((column, index) => (
                 <Draggable key={column.id} draggableId={column.id} index={index}>
                   {(provided, snapshot) => (
                      <div 
                       ref={provided.innerRef}
                       {...provided.draggableProps}
-                      className={`w-full min-w-0 ${snapshot.isDragging ? 'opacity-80' : ''}`}
+                      className={`flex-1 min-w-0 ${snapshot.isDragging ? 'opacity-80' : ''}`}
                     >
                       <div 
                         className={`bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 h-full ${snapshot.isDragging ? 'shadow-lg border-primary' : ''}`}
@@ -126,19 +118,12 @@ const OpportunityKanbanBoard: React.FC<OpportunityKanbanBoardProps> = ({
                   )}
                 </Draggable>
               ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
-
-      <AddColumnDialog
-        isOpen={isAddColumnOpen}
-        onClose={() => setIsAddColumnOpen(false)}
-        newColumnTitle={newColumnTitle}
-        setNewColumnTitle={setNewColumnTitle}
-        handleAddColumn={handleAddColumn}
-      />
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </div>
 
       <DeleteColumnDialog
         columnToDelete={columnToDelete}
@@ -146,7 +131,7 @@ const OpportunityKanbanBoard: React.FC<OpportunityKanbanBoardProps> = ({
         onClose={() => setColumnToDelete(null)}
         onConfirmDelete={confirmDeleteColumn}
       />
-    </>
+    </div>
   );
 };
 

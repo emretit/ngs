@@ -27,7 +27,9 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
   const [statusFilter, setStatusFilter] = useState<OpportunityStatus | "all">("all");
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
-  const [activeView, setActiveView] = useState<"kanban" | "list">("kanban");
+  const [activeView, setActiveView] = useState<"kanban" | "list">("list");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   // Fetch employees data
   const { data: employees = [] } = useQuery({
@@ -47,7 +49,13 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
   // Use opportunities with filters
   const { 
     opportunities,
-    isLoading, 
+    opportunitiesData, // Tüm fırsatlar (infinite scroll için)
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    loadMore,
+    refresh,
+    totalCount,
     error,
     handleDragEnd,
     handleUpdateOpportunity,
@@ -60,16 +68,20 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
     search: filterKeyword,
     status: statusFilter,
     priority: priorityFilter,
-    employeeId: selectedEmployee === 'all' ? null : selectedEmployee
+    employeeId: selectedEmployee === 'all' ? null : selectedEmployee,
+    startDate: startDate,
+    endDate: endDate
   });
   
-  // Group opportunities by status (new 4-stage system)
+  // Group opportunities by status (6-stage system)
   const groupedOpportunities = {
     new: (opportunities.new || [])
       .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
     meeting_visit: (opportunities.meeting_visit || [])
       .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
     proposal: (opportunities.proposal || [])
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
+    negotiation: (opportunities.negotiation || [])
       .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
     won: (opportunities.won || [])
       .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
@@ -128,6 +140,9 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
 
   // Convert grouped opportunities to flat array for list view
   const flattenedOpportunities = Object.values(groupedOpportunities).flat();
+  
+  // Infinite scroll için tüm fırsatları kullan
+  const allOpportunities = opportunitiesData || [];
 
   return (
     <DefaultLayout 
@@ -136,10 +151,11 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
       title="Fırsatlar"
       subtitle="Tüm satış fırsatlarını yönetin"
     >
-      <div className="space-y-6">
+      <div className="space-y-2">
         <OpportunitiesHeader 
           activeView={activeView} 
-          setActiveView={setActiveView} 
+          setActiveView={setActiveView}
+          opportunities={opportunities}
         />
         
         <OpportunityFilterBar 
@@ -152,6 +168,10 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
           selectedEmployee={selectedEmployee}
           setSelectedEmployee={setSelectedEmployee}
           employees={employees}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
         />
         
         {selectedOpportunities.length > 0 && (
@@ -190,8 +210,12 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
             </TabsContent>
             <TabsContent value="list" className="mt-0">
               <OpportunitiesContent
-                opportunities={flattenedOpportunities}
+                opportunities={allOpportunities}
                 isLoading={isLoading}
+                isLoadingMore={isLoadingMore}
+                hasNextPage={hasNextPage}
+                loadMore={loadMore}
+                totalCount={totalCount}
                 error={error}
                 onSelectOpportunity={handleOpportunityClick}
                 searchQuery={filterKeyword}

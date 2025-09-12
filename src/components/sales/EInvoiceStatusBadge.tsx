@@ -25,7 +25,8 @@ const EInvoiceStatusBadge: React.FC<EInvoiceStatusBadgeProps> = ({
   onStatusRefresh,
   invoiceData
 }) => {
-  const { status, isLoading, refreshStatus } = useEInvoiceStatus(salesInvoiceId);
+  // Eğer invoiceData varsa API çağrısı yapma, sadece manuel yenileme için kullan
+  const { status, isLoading, refreshStatus } = useEInvoiceStatus(invoiceData ? undefined : salesInvoiceId);
   const { updateCustomerAlias, isUpdatingAlias } = useEInvoice();
 
   // Use direct invoice data if available, otherwise use hook data
@@ -36,8 +37,10 @@ const EInvoiceStatusBadge: React.FC<EInvoiceStatusBadgeProps> = ({
     error_message: invoiceData.einvoice_error_message
   } : status;
 
-  // Listen for einvoice status updates
+  // Listen for einvoice status updates - sadece invoiceData yoksa
   useEffect(() => {
+    if (invoiceData) return; // invoiceData varsa event dinleme
+    
     const handleStatusUpdate = (event: CustomEvent) => {
       const { salesInvoiceId: updatedInvoiceId, status: newStatus } = event.detail;
       if (updatedInvoiceId === salesInvoiceId) {
@@ -51,7 +54,7 @@ const EInvoiceStatusBadge: React.FC<EInvoiceStatusBadgeProps> = ({
     return () => {
       window.removeEventListener('einvoice-status-updated', handleStatusUpdate as EventListener);
     };
-  }, [salesInvoiceId, refreshStatus]);
+  }, [salesInvoiceId, refreshStatus, invoiceData]);
 
   const getStatusIcon = (statusValue?: string) => {
     switch (statusValue) {
@@ -103,17 +106,17 @@ const EInvoiceStatusBadge: React.FC<EInvoiceStatusBadgeProps> = ({
 
   if (!displayStatus || !displayStatus.status) {
     return (
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
+        <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-600 border-gray-200">
           <FileText className="h-3 w-3" />
-          E-Fatura Gönderilmedi
+          Taslak
         </Badge>
         {onSendClick && (
           <Button
             size="sm"
             variant="outline"
             onClick={onSendClick}
-            className="h-6 px-2 text-xs"
+            className="h-6 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
           >
             Gönder
           </Button>
@@ -128,67 +131,33 @@ const EInvoiceStatusBadge: React.FC<EInvoiceStatusBadgeProps> = ({
     <div className="flex items-center gap-2">
       <Badge 
         variant="outline" 
-        className={`flex items-center gap-1 ${getStatusColor(displayStatus.status)}`}
+        className={`flex items-center gap-1 px-2 py-1 text-xs ${getStatusColor(displayStatus.status)}`}
       >
         {getStatusIcon(displayStatus.status)}
         {text}
       </Badge>
-      
-      {/* Nilvera ID */}
-      {displayStatus.nilvera_invoice_id && (
-        <span className="text-xs text-gray-500 font-mono">
-          {displayStatus.nilvera_invoice_id.slice(0, 8)}...
-        </span>
-      )}
 
-      {/* Refresh button */}
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => {
-          refreshStatus();
-          onStatusRefresh?.();
-        }}
-        className="h-6 w-6 p-0"
-      >
-        <RefreshCw className="h-3 w-3" />
-      </Button>
-
-      {/* Send button for failed cases */}
-      {(displayStatus.status === 'error' || displayStatus.status === 'draft') && onSendClick && (
+      {/* Single action button - only show when needed */}
+      {displayStatus.status === 'error' && onSendClick && (
         <Button
           size="sm"
           variant="outline"
           onClick={onSendClick}
-          className="h-6 px-2 text-xs"
+          className="h-6 px-2 text-xs text-red-600 border-red-200 hover:bg-red-50"
         >
-          {displayStatus.status === 'error' ? 'Yeniden Gönder' : 'Gönder'}
+          Yeniden Gönder
         </Button>
       )}
 
-      {/* Update Customer Alias button for error cases with CustomerAlias issue */}
-      {displayStatus.status === 'error' && displayStatus.error_message?.includes('CustomerAlias') && customerTaxNumber && (
+      {displayStatus.status === 'draft' && onSendClick && (
         <Button
           size="sm"
-          variant="ghost"
-          onClick={() => updateCustomerAlias(customerTaxNumber)}
-          disabled={isUpdatingAlias}
-          className="h-6 px-2 text-xs"
-          title="Müşteri alias bilgilerini Nilvera'dan güncelle"
+          variant="outline"
+          onClick={onSendClick}
+          className="h-6 px-2 text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
         >
-          {isUpdatingAlias ? (
-            <RefreshCw className="h-3 w-3 animate-spin" />
-          ) : (
-            <UserCheck className="h-3 w-3" />
-          )}
+          Gönder
         </Button>
-      )}
-
-      {/* Error message tooltip */}
-      {displayStatus.error_message && (
-        <div className="flex items-center">
-          <AlertCircle className="h-3 w-3 text-red-500" />
-        </div>
       )}
     </div>
   );

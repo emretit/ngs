@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, FileText, AlertTriangle, Wrench, MapPin, User, Clock, CalendarDays } from "lucide-react";
+import { CalendarIcon, FileText, AlertTriangle, Wrench, MapPin, User, Clock, CalendarDays, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -98,28 +98,29 @@ export const PriorityField: React.FC<FieldProps> = ({ form }) => (
   />
 );
 
-export const ServiceTypeField: React.FC<FieldProps> = ({ form }) => (
+export const ServiceStatusField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="service_type"
+    name="status"
     render={({ field }) => (
       <FormItem>
         <FormLabel className="flex items-center gap-1 text-sm">
           <Wrench className="h-3 w-3 text-blue-600" />
-          Servis Türü
+          Servis Durumu
         </FormLabel>
         <Select onValueChange={field.onChange} defaultValue={field.value}>
           <FormControl>
             <SelectTrigger className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <SelectValue placeholder="Servis türü seçin" />
+              <SelectValue placeholder="Servis durumu seçin" />
             </SelectTrigger>
           </FormControl>
           <SelectContent>
-            <SelectItem value="installation" className="text-sm">🔧 Kurulum</SelectItem>
-            <SelectItem value="repair" className="text-sm">⚡ Onarım</SelectItem>
-            <SelectItem value="maintenance" className="text-sm">🔨 Bakım</SelectItem>
-            <SelectItem value="inspection" className="text-sm">🔍 Kontrol</SelectItem>
-            <SelectItem value="consultation" className="text-sm">💬 Danışmanlık</SelectItem>
+            <SelectItem value="new" className="text-sm">🆕 Yeni</SelectItem>
+            <SelectItem value="assigned" className="text-sm">👤 Atanmış</SelectItem>
+            <SelectItem value="in_progress" className="text-sm">⚡ Devam Ediyor</SelectItem>
+            <SelectItem value="completed" className="text-sm">✅ Tamamlandı</SelectItem>
+            <SelectItem value="cancelled" className="text-sm">❌ İptal</SelectItem>
+            <SelectItem value="on_hold" className="text-sm">⏸️ Beklemede</SelectItem>
           </SelectContent>
         </Select>
         <FormMessage className="text-xs" />
@@ -325,6 +326,30 @@ export const TechnicianField: React.FC<TechnicianFieldProps> = ({ form, technici
             ))}
           </SelectContent>
         </Select>
+        <FormMessage className="text-xs" />
+      </FormItem>
+    )}
+  />
+);
+
+export const ServiceResultField: React.FC<FieldProps> = ({ form }) => (
+  <FormField
+    control={form.control}
+    name="service_result"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel className="flex items-center gap-1 text-sm">
+          <CheckCircle className="h-3 w-3 text-green-600" />
+          Servis Sonucu
+        </FormLabel>
+        <FormControl>
+          <Textarea
+            placeholder="Servis sonucu ve yapılan işlemler..."
+            className="resize-none transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] text-sm"
+            {...field}
+            value={field.value || ""}
+          />
+        </FormControl>
         <FormMessage className="text-xs" />
       </FormItem>
     )}

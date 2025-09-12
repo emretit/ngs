@@ -52,6 +52,7 @@ export type ServiceRequestFormData = Database['public']['Tables']['service_reque
   assigned_to?: string;
   assigned_technician?: string;
   service_request_description?: string;
+  service_result?: string;
 };
 
 export interface ServiceQueriesResult {

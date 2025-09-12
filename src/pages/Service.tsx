@@ -1,11 +1,9 @@
 
-import React, { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
-import { ServiceRequestDetail } from "@/components/service/ServiceRequestDetail";
-import { ServiceRequestForm } from "@/components/service/ServiceRequestForm";
 import ServicePageHeader from "@/components/service/ServicePageHeader";
 import ServiceStatsCards from "@/components/service/ServiceStatsCards";
 import { Button } from "@/components/ui/button";
@@ -42,12 +40,7 @@ interface ServicePageProps {
 
 const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   const navigate = useNavigate();
-  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  
-  // Servis düzenleme pop-up'ı için state'ler
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editingRequest, setEditingRequest] = useState<ServiceRequest | null>(null);
+  const [searchParams] = useSearchParams();
   
   // Silme onayı için state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -60,6 +53,14 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   const [showResourceView, setShowResourceView] = useState(true);
   const [assignedServices, setAssignedServices] = useState<Map<string, string>>(new Map());
   const [activeView, setActiveView] = useState<"calendar" | "list">("calendar");
+
+  // URL parametresinden view'ı kontrol et
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam === 'list') {
+      setActiveView('list');
+    }
+  }, [searchParams]);
   
   // Liste görünümü için state'ler
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,8 +100,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   });
 
   const handleSelectRequest = (request: ServiceRequest) => {
-    setSelectedRequest(request);
-    setIsDetailOpen(true);
+    navigate(`/service/edit/${request.id}`);
   };
 
   // Silme fonksiyonu
@@ -117,17 +117,6 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
     }
   };
 
-  // ServiceRequest'i ServiceRequestFormData'ya dönüştür
-  const convertToFormData = (request: ServiceRequest) => {
-    return {
-      ...request,
-      service_due_date: request.service_due_date ? new Date(request.service_due_date) : undefined,
-      service_reported_date: request.service_reported_date ? new Date(request.service_reported_date) : undefined,
-      issue_date: request.issue_date ? new Date(request.issue_date) : undefined,
-      due_date: request.due_date ? new Date(request.due_date) : undefined,
-      reported_date: request.reported_date ? new Date(request.reported_date) : undefined,
-    };
-  };
 
   // Öncelik renklerini belirle
   const getPriorityColor = (priority: string) => {
@@ -283,8 +272,8 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
 
   // Event handlers
   const handleSelectEvent = useCallback((event: any) => {
-    console.log('Event selected:', event);
-  }, []);
+    navigate(`/service/edit/${event.id}`);
+  }, [navigate]);
 
   const handleEventDrop = useCallback(({ event, start, end }: any) => {
     console.log('Event moved:', event, start, end);
@@ -376,9 +365,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
             <ServicePageHeader 
               activeView={activeView} 
               setActiveView={setActiveView}
-              onCreateRequest={() => {
-                // Header component'inde form açılacak
-              }}
+              onCreateRequest={() => navigate("/service/new")}
             />
 
             <ServiceStatsCards 
@@ -1032,8 +1019,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                           return (
                             <TableRow 
                               key={service.id} 
-                              className="hover:bg-muted/50 cursor-pointer"
-                              onClick={() => handleSelectRequest(service)}
+                              className="hover:bg-muted/50"
                             >
                               <TableCell className="px-4 py-4">
                                 <div className="text-sm font-mono text-muted-foreground">
@@ -1128,8 +1114,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
                                     size="icon"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setEditingRequest(service);
-                                      setIsEditOpen(true);
+                                      handleSelectRequest(service);
                                     }}
                                     title="Düzenle"
                                   >
@@ -1175,35 +1160,7 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
             )}
           </div>
 
-          <ServiceRequestDetail 
-            serviceRequest={selectedRequest}
-            isOpen={isDetailOpen}
-            onClose={() => {
-              setIsDetailOpen(false);
-              setSelectedRequest(null);
-            }}
-          />
 
-          {/* Servis Düzenleme Pop-up'ı */}
-          <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Servis Talebini Düzenle</DialogTitle>
-              </DialogHeader>
-              {editingRequest && (
-                <ServiceRequestForm
-                  initialData={convertToFormData(editingRequest)}
-                  isEditing={true}
-                  onClose={() => {
-                    setIsEditOpen(false);
-                    setEditingRequest(null);
-                    // Sayfayı yenile
-                    window.location.reload();
-                  }}
-                />
-              )}
-            </DialogContent>
-          </Dialog>
 
           {/* Silme Onay Dialog'u */}
           <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

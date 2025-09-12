@@ -57,31 +57,41 @@ export const useServiceQueries = (): ServiceQueriesResult => {
       return null;
     }
     
-    const { data, error } = await supabase
-      .from('service_requests')
-      .select('*')
-      .eq('id', id)
-      .eq('company_id', userData.company_id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('service_requests')
+        .select('*')
+        .eq('id', id)
+        .eq('company_id', userData.company_id)
+        .single();
 
-    if (error) {
-      console.error("Error fetching service request:", error);
+      if (error) {
+        console.error("Error fetching service request:", error);
+        throw error;
+      }
+
+      if (!data) {
+        console.log("No service request found with id:", id);
+        return null;
+      }
+
+      return {
+        ...data,
+        attachments: Array.isArray(data.attachments) 
+          ? data.attachments.map((att: any) => ({
+              name: String(att.name || ''),
+              path: String(att.path || ''),
+              type: String(att.type || ''),
+              size: Number(att.size || 0)
+            }))
+          : [],
+        notes: Array.isArray(data.notes) ? data.notes : undefined,
+        warranty_info: typeof data.warranty_info === 'object' ? data.warranty_info : undefined
+      };
+    } catch (error) {
+      console.error("Error in getServiceRequest:", error);
       return null;
     }
-
-    return {
-      ...data,
-      attachments: Array.isArray(data.attachments) 
-        ? data.attachments.map((att: any) => ({
-            name: String(att.name || ''),
-            path: String(att.path || ''),
-            type: String(att.type || ''),
-            size: Number(att.size || 0)
-          }))
-        : [],
-      notes: Array.isArray(data.notes) ? data.notes : undefined,
-      warranty_info: typeof data.warranty_info === 'object' ? data.warranty_info : undefined
-    };
   };
 
   return {

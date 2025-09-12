@@ -258,7 +258,6 @@ serve(async (req) => {
           },
           InvoiceLines: salesInvoice.sales_invoice_items?.map((item: any) => ({
             Name: item.urun_adi,
-            Description: item.aciklama || '',
             Quantity: parseFloat(item.miktar),
             UnitType: item.birim === 'adet' ? 'C62' : 'C62', // UBL-TR standart birim kodları
             Price: parseFloat(item.birim_fiyat),

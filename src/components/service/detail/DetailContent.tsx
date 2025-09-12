@@ -108,7 +108,7 @@ export const DetailContent: React.FC<DetailContentProps> = ({
         />
         <RequestMetadata 
           priority={serviceRequest.priority} 
-          serviceType={serviceRequest.service_type}
+          status={serviceRequest.status}
         />
       </div>
 

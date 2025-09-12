@@ -10,12 +10,13 @@ import {
   TitleField, 
   DescriptionField, 
   PriorityField, 
-  ServiceTypeField, 
+  ServiceStatusField, 
   LocationField, 
   DueDateField,
   ReportedDateField,
   PlannedDateField,
-  TechnicianField
+  TechnicianField,
+  ServiceResultField
 } from "./form/FormFields";
 import { CustomerField } from "./form/CustomerField";
 import { FileUploadField } from "./form/FileUploadField";
@@ -30,11 +31,12 @@ const formSchema = z.object({
   title: z.string().min(3, { message: "Başlık en az 3 karakter olmalıdır" }),
   description: z.string().optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]),
-  service_type: z.string().min(1, { message: "Servis türü seçmelisiniz" }),
+  status: z.enum(["new", "assigned", "in_progress", "completed", "cancelled", "on_hold"]),
   location: z.string().optional(),
   scheduled_date: z.date().optional(),
   customer_id: z.string().optional(),
   assigned_technician_id: z.string().optional(),
+  service_result: z.string().optional(),
 });
 
 export interface ServiceRequestFormProps {
@@ -59,11 +61,12 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
       title: initialData?.title || "",
       description: initialData?.description || "",
       priority: (initialData?.priority as "low" | "medium" | "high" | "urgent") || "medium",
-      service_type: initialData?.service_type || "",
+      status: (initialData?.status as "new" | "assigned" | "in_progress" | "completed" | "cancelled" | "on_hold") || "new",
       location: initialData?.location || "",
       customer_id: initialData?.customer_id || undefined,
       scheduled_date: initialData?.scheduled_date ? new Date(initialData.scheduled_date) : undefined,
       assigned_technician_id: initialData?.assigned_technician_id || undefined,
+      service_result: initialData?.service_result || "",
     },
   });
 
@@ -72,7 +75,7 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
       Object.keys(initialData).forEach((key) => {
         const value = initialData[key as keyof ServiceRequestFormData];
         if (value !== undefined) {
-          if (key === 'due_date' && typeof value === 'string') {
+          if ((key === 'scheduled_date' || key === 'due_date') && typeof value === 'string') {
             form.setValue(key as any, new Date(value));
           } else {
             form.setValue(key as any, value);
@@ -90,38 +93,55 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
     return customer?.name;
   };
 
-  const onSubmit = (data: FormData) => {
-    // Convert form data to ServiceRequestFormData format
-    const serviceRequestData: ServiceRequestFormData = {
-      title: data.title,
-      description: data.description,
-      priority: data.priority,
-      service_type: data.service_type,
-      location: data.location,
-      scheduled_date: data.scheduled_date?.toISOString(),
-      customer_id: data.customer_id,
-      assigned_technician_id: data.assigned_technician_id,
-      status: 'pending',
-    };
+  const getTechnicianName = () => {
+    const technicianId = form.watch("assigned_technician_id");
+    if (!technicianId || !technicians) return undefined;
+    
+    const technician = technicians.find(t => t.id === technicianId);
+    return technician ? `${technician.first_name} ${technician.last_name}` : undefined;
+  };
 
-    if (isEditing && initialData?.id) {
-      updateServiceRequest({ 
-        id: initialData.id, 
-        updateData: serviceRequestData,
-        newFiles: files
-      });
+  const onSubmit = async (data: FormData) => {
+    try {
+      // Convert form data to ServiceRequestFormData format
+      const serviceRequestData: ServiceRequestFormData = {
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        status: data.status,
+        location: data.location,
+        scheduled_date: data.scheduled_date?.toISOString(),
+        customer_id: data.customer_id,
+        assigned_technician_id: data.assigned_technician_id,
+        service_result: data.service_result,
+      };
+
+      if (isEditing && initialData?.id) {
+        await updateServiceRequest({ 
+          id: initialData.id, 
+          updateData: serviceRequestData,
+          newFiles: files
+        });
+        toast({
+          title: "Servis Talebi Güncellendi",
+          description: "Servis talebi başarıyla güncellendi",
+        });
+      } else {
+        await createServiceRequest({ formData: serviceRequestData, files });
+        toast({
+          title: "Servis Talebi Oluşturuldu",
+          description: "Servis talebi başarıyla oluşturuldu",
+        });
+      }
+      onClose();
+    } catch (error) {
+      console.error('Servis talebi kaydetme hatası:', error);
       toast({
-        title: "Servis Talebi Güncellendi",
-        description: "Servis talebi başarıyla güncellendi",
-      });
-    } else {
-      createServiceRequest({ formData: serviceRequestData, files });
-      toast({
-        title: "Servis Talebi Oluşturuldu",
-        description: "Servis talebi başarıyla oluşturuldu",
+        title: "Hata",
+        description: "Servis talebi kaydedilemedi. Lütfen tekrar deneyin.",
+        variant: "destructive",
       });
     }
-    onClose();
   };
 
   return (
@@ -132,7 +152,9 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
             <div className="flex items-center justify-between pb-1 border-b border-gray-200">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                <h3 className="text-sm font-semibold text-gray-800">Önizleme</h3>
+                <h3 className="text-sm font-semibold text-gray-800">
+                  {isEditing ? "Düzenleme Önizlemesi" : "Önizleme"}
+                </h3>
               </div>
               <div className="flex items-center space-x-2">
                 <Label htmlFor="show-preview" className="text-xs">Önizleme</Label>
@@ -148,60 +170,92 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
               formData={form.getValues() as any} 
               files={files}
               customerName={getCustomerName()}
+              technicianName={getTechnicianName()}
             />
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Temel Bilgiler - Kompakt */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between pb-1 border-b border-gray-200">
+            {/* Servis Bilgileri */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-200">
                 <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                  <h3 className="text-sm font-semibold text-gray-800">Temel Bilgiler</h3>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <h3 className="text-base font-semibold text-gray-900">Servis Bilgileri</h3>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Label htmlFor="show-preview" className="text-xs">Önizleme</Label>
+                  <Label htmlFor="show-preview" className="text-sm text-gray-600">Önizleme</Label>
                   <Switch 
                     id="show-preview" 
                     checked={showPreview} 
                     onCheckedChange={setShowPreview}
-                    className="scale-75"
+                    className="scale-90"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="md:col-span-2">
+              
+              {/* Başlık ve Açıklama - Tam genişlik */}
+              <div className="space-y-4">
+                <div className="space-y-2">
                   <TitleField form={form as any} />
                 </div>
-                <div className="md:col-span-2">
+                <div className="space-y-2">
                   <DescriptionField form={form as any} />
                 </div>
-                <PriorityField form={form as any} />
-                <ServiceTypeField form={form as any} />
-                <CustomerField form={form as any} />
-                <LocationField form={form as any} />
-                <DueDateField form={form as any} />
+              </div>
+
+              {/* Durum ve Öncelik - Yan yana */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <ServiceStatusField form={form as any} />
+                </div>
+                <div className="space-y-2">
+                  <PriorityField form={form as any} />
+                </div>
+              </div>
+
+              {/* Müşteri ve Konum - Yan yana */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <CustomerField form={form as any} />
+                </div>
+                <div className="space-y-2">
+                  <LocationField form={form as any} />
+                </div>
+              </div>
+
+              {/* Tarih ve Sonuç - Yan yana */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <DueDateField form={form as any} />
+                </div>
+                <div className="space-y-2">
+                  <ServiceResultField form={form as any} />
+                </div>
               </div>
             </div>
 
-            {/* Atama ve Planlama - Kompakt */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 pb-1 border-b border-gray-200">
-                <div className="w-1.5 h-1.5 bg-orange-500 rounded-full"></div>
-                <h3 className="text-sm font-semibold text-gray-800">Atama & Planlama</h3>
-                <span className="text-xs text-gray-500 font-normal">(Sonradan da belirlenebilir)</span>
+            {/* Atama & Planlama */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <h3 className="text-base font-semibold text-gray-900">Atama & Planlama</h3>
+                <span className="text-sm text-gray-500 font-normal">(Sonradan da belirlenebilir)</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <TechnicianField form={form as any} technicians={technicians} isLoading={techniciansLoading} />
-                <PlannedDateField form={form as any} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <TechnicianField form={form as any} technicians={technicians} isLoading={techniciansLoading} />
+                </div>
+                <div className="space-y-2">
+                  <PlannedDateField form={form as any} />
+                </div>
               </div>
             </div>
 
-            {/* Dosyalar - Kompakt */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 pb-1 border-b border-gray-200">
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-                <h3 className="text-sm font-semibold text-gray-800">Dosyalar</h3>
+            {/* Ek Dosyalar */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <h3 className="text-base font-semibold text-gray-900">Ek Dosyalar</h3>
               </div>
               <div className="space-y-2">
                 <FileUploadField files={files} setFiles={setFiles} />

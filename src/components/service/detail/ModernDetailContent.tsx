@@ -210,11 +210,16 @@ export const ModernDetailContent: React.FC<ModernDetailContentProps> = ({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Wrench className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-600">Servis Türü</span>
+                <span className="text-sm font-medium text-gray-600">Servis Durumu</span>
               </div>
-              <span className="text-sm text-gray-700">
-                {serviceRequest.service_type || 'Belirtilmemiş'}
-              </span>
+              <Badge className={`${getStatusColor(status)} border`}>
+                {status === 'new' ? 'Yeni' :
+                 status === 'assigned' ? 'Atanmış' :
+                 status === 'in_progress' ? 'Devam Ediyor' :
+                 status === 'completed' ? 'Tamamlandı' :
+                 status === 'cancelled' ? 'İptal' :
+                 status === 'on_hold' ? 'Beklemede' : 'Bilinmeyen'}
+              </Badge>
             </div>
           </div>
         </CardContent>

@@ -225,9 +225,9 @@ export const useEInvoiceStatus = (salesInvoiceId?: string) => {
 
     fetchStatus();
 
-    // Her 30 saniyede bir durum güncelle
-    const interval = setInterval(fetchStatus, 30000);
-    return () => clearInterval(interval);
+    // Otomatik yenileme kaldırıldı - sadece manuel yenileme
+    // const interval = setInterval(fetchStatus, 30000);
+    // return () => clearInterval(interval);
   }, [salesInvoiceId]);
 
   const refreshStatus = async () => {

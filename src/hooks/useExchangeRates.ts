@@ -147,36 +147,8 @@ export const useExchangeRates = () => {
     loadExchangeRates();
   }, []);
 
-  // Auto-refresh every day at 15:35
-  useEffect(() => {
-    const scheduleNextUpdate = () => {
-      const now = new Date();
-      const targetTime = new Date();
-      targetTime.setHours(15, 35, 0, 0); // 15:35
-      
-      // If today's 15:35 has passed, schedule for tomorrow
-      if (now > targetTime) {
-        targetTime.setDate(targetTime.getDate() + 1);
-      }
-      
-      const timeUntilUpdate = targetTime.getTime() - now.getTime();
-      
-      console.log(`Next exchange rate update scheduled for: ${targetTime.toLocaleString('tr-TR')} (in ${Math.round(timeUntilUpdate / 1000 / 60)} minutes)`);
-      
-      const timer = setTimeout(() => {
-        console.log('Auto-refreshing exchange rates at 15:35');
-        refreshExchangeRates();
-        // Schedule next update for tomorrow
-        scheduleNextUpdate();
-      }, timeUntilUpdate);
-      
-      return timer;
-    };
-
-    const timer = scheduleNextUpdate();
-    
-    return () => clearTimeout(timer);
-  }, []);
+  // Exchange rates are now updated daily via Supabase cron job at 09:00 UTC (12:00 Turkey time)
+  // No need for client-side auto-refresh
 
   // Function to manually refresh exchange rates
   const refreshExchangeRates = useCallback(async () => {

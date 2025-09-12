@@ -11,6 +11,7 @@ import SalesCRMSection from "@/components/dashboard/SalesCRMSection";
 import HRAnalytics from "@/components/dashboard/HRAnalytics";
 import OperationsOverview from "@/components/dashboard/OperationsOverview";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
+import ExchangeRateCard from "@/components/dashboard/ExchangeRateCard";
 import { 
   BarChart3, 
   DollarSign, 
@@ -189,7 +190,7 @@ const Dashboard = ({ isCollapsed, setIsCollapsed }: DashboardProps) => {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* HR Summary */}
             <Card className="h-fit">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -220,6 +221,9 @@ const Dashboard = ({ isCollapsed, setIsCollapsed }: DashboardProps) => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Exchange Rate Card */}
+            <ExchangeRateCard />
 
             {/* Operations Summary */}
             <Card className="h-fit">

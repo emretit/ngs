@@ -75,25 +75,43 @@ const Dashboard = ({ isCollapsed, setIsCollapsed }: DashboardProps) => {
       <div className="max-w-[1800px] mx-auto space-y-8 animate-fade-in">
         {/* Header with Quick Stats */}
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Kontrol Paneli</h1>
-              <p className="text-muted-foreground mt-1">İşletmenizin günlük performansına göz atın</p>
+          <div className="flex items-center justify-between p-6 bg-gradient-to-r from-primary/5 via-primary/10 to-accent/5 rounded-2xl border border-primary/10 backdrop-blur-sm shadow-lg">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-gradient-to-r from-primary to-accent rounded-full animate-pulse"></div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  Kontrol Paneli
+                </h1>
+              </div>
+              <p className="text-muted-foreground text-lg font-medium ml-6">
+                İşletmenizin günlük performansına göz atın
+              </p>
             </div>
             
             <div className="flex items-center space-x-3">
-              <Badge variant="outline" className="text-sm px-3 py-1.5 bg-background/50">
-                <Clock className="h-3 w-3 mr-1" />
-                {lastUpdated.toLocaleTimeString('tr-TR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </Badge>
-              <Button variant="outline" size="sm" onClick={handleRefresh} className="gap-2">
+              <div className="flex items-center gap-2 px-4 py-2 bg-background/80 backdrop-blur-sm rounded-xl border border-border/50 shadow-sm">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">
+                  {lastUpdated.toLocaleTimeString('tr-TR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRefresh} 
+                className="gap-2 bg-background/80 backdrop-blur-sm border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-300"
+              >
                 <RefreshCw className="h-4 w-4" />
                 Yenile
               </Button>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 bg-background/80 backdrop-blur-sm border-accent/20 hover:bg-accent/10 hover:border-accent/30 transition-all duration-300"
+              >
                 <Download className="h-4 w-4" />
                 Rapor
               </Button>

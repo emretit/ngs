@@ -127,7 +127,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     refresh,
     totalCount
   } = useInfiniteScroll(
-    ["opportunities", filters],
+    ["opportunities", JSON.stringify(filters)],
     fetchOpportunities,
     {
       pageSize: 50, // Her 50 fırsatta bir yükle
@@ -142,7 +142,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
   const opportunities: { [key: string]: Opportunity[] } = {};
 
   if (opportunitiesData) {
-    opportunitiesData.forEach((opportunity) => {
+    opportunitiesData.forEach((opportunity: Opportunity) => {
       const status = opportunity.status || 'new';
       if (!opportunities[status]) {
         opportunities[status] = [];

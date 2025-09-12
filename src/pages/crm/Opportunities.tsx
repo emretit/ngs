@@ -210,7 +210,7 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
             </TabsContent>
             <TabsContent value="list" className="mt-0">
               <OpportunitiesContent
-                opportunities={allOpportunities}
+                opportunities={(opportunitiesData as Opportunity[]) || []}
                 isLoading={isLoading}
                 isLoadingMore={isLoadingMore}
                 hasNextPage={hasNextPage}

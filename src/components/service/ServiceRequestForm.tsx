@@ -66,7 +66,7 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
       customer_id: initialData?.customer_id || undefined,
       scheduled_date: initialData?.scheduled_date ? new Date(initialData.scheduled_date) : undefined,
       assigned_technician_id: initialData?.assigned_technician_id || undefined,
-      service_result: initialData?.service_result || "",
+      service_result: (initialData as any)?.service_request_description || "",
     },
   });
 
@@ -98,7 +98,7 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
     if (!technicianId || !technicians) return undefined;
     
     const technician = technicians.find(t => t.id === technicianId);
-    return technician ? `${technician.first_name} ${technician.last_name}` : undefined;
+    return technician ? `${(technician as any).first_name || ''} ${(technician as any).last_name || ''}`.trim() : undefined;
   };
 
   const onSubmit = async (data: FormData) => {
@@ -106,14 +106,13 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
       // Convert form data to ServiceRequestFormData format
       const serviceRequestData: ServiceRequestFormData = {
         title: data.title,
-        description: data.description,
+        description: data.service_result || data.description,
         priority: data.priority,
         status: data.status,
         location: data.location,
         scheduled_date: data.scheduled_date?.toISOString(),
         customer_id: data.customer_id,
         assigned_technician_id: data.assigned_technician_id,
-        service_result: data.service_result,
       };
 
       if (isEditing && initialData?.id) {

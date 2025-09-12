@@ -18,7 +18,7 @@ const ServiceRequestEdit = ({ isCollapsed, setIsCollapsed }: ServiceRequestEditP
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { getServiceRequest } = useServiceRequests();
-  const { userData, isLoading: userLoading } = useCurrentUser();
+  const { userData, loading: userLoading } = useCurrentUser();
   const [serviceRequest, setServiceRequest] = useState<ServiceRequestFormData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +62,6 @@ const ServiceRequestEdit = ({ isCollapsed, setIsCollapsed }: ServiceRequestEditP
             scheduled_date: request.service_due_date ? new Date(request.service_due_date).toISOString() : undefined,
             customer_id: request.customer_id,
             assigned_technician_id: request.assigned_technician,
-            service_result: request.service_result || "",
           };
           setServiceRequest(formData);
         } else {

@@ -116,13 +116,6 @@ export default function VehicleMaintenance() {
   };
 
   const filteredMaintenanceRecords = maintenanceRecords?.filter(record => {
-    const matchesSearch = record.service_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.service_description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || record.service_status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const filteredMaintenanceRecords = maintenanceRecords?.filter(record => {
     const matchesSearch = record.maintenance_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          record.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || record.status === filterStatus;

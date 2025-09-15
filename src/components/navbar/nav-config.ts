@@ -150,41 +150,9 @@ export const navItems = [
     label: "Servis",
   },
   {
-    category: "Araç Yönetimi",
-    icon: Car,
     path: "/vehicles",
-    items: [
-      {
-        path: "/vehicles/list",
-        icon: Car,
-        label: "Araç Listesi",
-      },
-      {
-        path: "/vehicles/documents",
-        icon: FileText,
-        label: "Belgeler",
-      },
-      {
-        path: "/vehicles/maintenance",
-        icon: Wrench,
-        label: "Bakım & Servis",
-      },
-      {
-        path: "/vehicles/fuel",
-        icon: Fuel,
-        label: "Yakıt & KM",
-      },
-      {
-        path: "/vehicles/incidents",
-        icon: AlertTriangle,
-        label: "Olaylar & Cezalar",
-      },
-      {
-        path: "/vehicles/costs",
-        icon: DollarSign,
-        label: "Maliyetler",
-      },
-    ],
+    icon: Car,
+    label: "Araç Yönetimi",
   },
 
 ];

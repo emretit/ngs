@@ -27,16 +27,16 @@ export const TitleField: React.FC<FieldProps> = ({ form }) => (
     control={form.control}
     name="title"
     render={({ field }) => (
-      <FormItem>
-        <FormLabel className="flex items-center gap-1 text-sm">
+      <FormItem className="space-y-1">
+        <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
           <FileText className="h-3 w-3 text-blue-600" />
           Başlık
         </FormLabel>
         <FormControl>
           <Input 
-            placeholder="Servis talebi başlığı" 
+            placeholder="Örn: Klima arızası, Bilgisayar onarımı" 
             {...field}
-            className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="h-7 text-sm transition-all duration-200 focus:ring-1 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
           />
         </FormControl>
         <FormMessage className="text-xs" />
@@ -50,15 +50,15 @@ export const DescriptionField: React.FC<FieldProps> = ({ form }) => (
     control={form.control}
     name="description"
     render={({ field }) => (
-      <FormItem>
-        <FormLabel className="flex items-center gap-1 text-sm">
+      <FormItem className="space-y-1">
+        <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
           <FileText className="h-3 w-3 text-gray-600" />
-          Açıklama
+          Servis Nedeni
         </FormLabel>
         <FormControl>
           <Textarea
-            placeholder="Servis talebi ile ilgili detaylar"
-            className="resize-none transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[60px] text-sm"
+            placeholder="Örn: Klima çalışmıyor, sıcak hava üflüyor. Müşteri şikayeti: 2 gündür çalışmıyor."
+            className="resize-none transition-all duration-200 focus:ring-1 focus:ring-blue-500 focus:border-transparent min-h-[50px] text-sm placeholder-gray-400"
             {...field}
             value={field.value || ""}
           />
@@ -74,14 +74,14 @@ export const PriorityField: React.FC<FieldProps> = ({ form }) => (
     control={form.control}
     name="priority"
     render={({ field }) => (
-      <FormItem>
-        <FormLabel className="flex items-center gap-1 text-sm">
+      <FormItem className="space-y-1">
+        <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
           <AlertTriangle className="h-3 w-3 text-orange-600" />
           Öncelik
         </FormLabel>
         <Select onValueChange={field.onChange} defaultValue={field.value}>
           <FormControl>
-            <SelectTrigger className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <SelectTrigger className="h-7 text-sm transition-all duration-200 focus:ring-1 focus:ring-blue-500 focus:border-transparent">
               <SelectValue placeholder="Öncelik seçin" />
             </SelectTrigger>
           </FormControl>
@@ -103,14 +103,14 @@ export const ServiceStatusField: React.FC<FieldProps> = ({ form }) => (
     control={form.control}
     name="status"
     render={({ field }) => (
-      <FormItem>
-        <FormLabel className="flex items-center gap-1 text-sm">
+      <FormItem className="space-y-1">
+        <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
           <Wrench className="h-3 w-3 text-blue-600" />
           Servis Durumu
         </FormLabel>
         <Select onValueChange={field.onChange} defaultValue={field.value}>
           <FormControl>
-            <SelectTrigger className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <SelectTrigger className="h-7 text-sm transition-all duration-200 focus:ring-1 focus:ring-blue-500 focus:border-transparent">
               <SelectValue placeholder="Servis durumu seçin" />
             </SelectTrigger>
           </FormControl>
@@ -134,17 +134,17 @@ export const LocationField: React.FC<FieldProps> = ({ form }) => (
     control={form.control}
     name="location"
     render={({ field }) => (
-      <FormItem>
-        <FormLabel className="flex items-center gap-1 text-sm">
+      <FormItem className="space-y-1">
+        <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
           <MapPin className="h-3 w-3 text-red-600" />
           Konum
         </FormLabel>
         <FormControl>
           <Input 
-            placeholder="Servis konumu" 
+            placeholder="Örn: Ofis binası, 3. kat, Oda 301" 
             {...field} 
             value={field.value || ""} 
-            className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="h-7 text-sm transition-all duration-200 focus:ring-1 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
           />
         </FormControl>
         <FormMessage className="text-xs" />
@@ -156,12 +156,12 @@ export const LocationField: React.FC<FieldProps> = ({ form }) => (
 export const DueDateField: React.FC<FieldProps> = ({ form }) => (
   <FormField
     control={form.control}
-    name="scheduled_date"
+    name="service_reported_date"
     render={({ field }) => (
-      <FormItem className="flex flex-col">
-        <FormLabel className="flex items-center gap-1 text-sm">
+      <FormItem className="space-y-1">
+        <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
           <CalendarDays className="h-3 w-3 text-purple-600" />
-          Planlanan Tarih
+          Bildirilen Tarih
         </FormLabel>
         <Popover>
           <PopoverTrigger asChild>
@@ -169,7 +169,7 @@ export const DueDateField: React.FC<FieldProps> = ({ form }) => (
               <Button
                 variant={"outline"}
                 className={cn(
-                  "w-full h-8 pl-3 text-left font-normal text-sm transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  "w-full h-7 pl-3 text-left font-normal text-sm transition-all duration-200 hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-transparent",
                   !field.value && "text-muted-foreground"
                 )}
               >
@@ -254,8 +254,8 @@ export const PlannedDateField: React.FC<FieldProps> = ({ form }) => (
     control={form.control}
     name="scheduled_date"
     render={({ field }) => (
-      <FormItem className="flex flex-col">
-        <FormLabel className="flex items-center gap-1 text-sm">
+      <FormItem className="space-y-1">
+        <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
           <CalendarDays className="h-3 w-3 text-blue-600" />
           Planlanan Tarih
         </FormLabel>
@@ -265,7 +265,7 @@ export const PlannedDateField: React.FC<FieldProps> = ({ form }) => (
               <Button
                 variant={"outline"}
                 className={cn(
-                  "w-full h-8 pl-3 text-left font-normal text-sm transition-all duration-200 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  "w-full h-7 pl-3 text-left font-normal text-sm transition-all duration-200 hover:bg-gray-50 focus:ring-1 focus:ring-blue-500 focus:border-transparent",
                   !field.value && "text-muted-foreground"
                 )}
               >
@@ -299,14 +299,14 @@ export const TechnicianField: React.FC<TechnicianFieldProps> = ({ form, technici
     control={form.control}
     name="assigned_technician_id"
     render={({ field }) => (
-      <FormItem>
-        <FormLabel className="flex items-center gap-1 text-sm">
+      <FormItem className="space-y-1">
+        <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
           <User className="h-3 w-3 text-indigo-600" />
           Teknisyen
         </FormLabel>
         <Select onValueChange={field.onChange} defaultValue={field.value}>
           <FormControl>
-            <SelectTrigger className="h-8 text-sm transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <SelectTrigger className="h-7 text-sm transition-all duration-200 focus:ring-1 focus:ring-blue-500 focus:border-transparent">
               <SelectValue placeholder={isLoading ? "Yükleniyor..." : "Teknisyen seçin (opsiyonel)"} />
             </SelectTrigger>
           </FormControl>
@@ -337,15 +337,15 @@ export const ServiceResultField: React.FC<FieldProps> = ({ form }) => (
     control={form.control}
     name="service_result"
     render={({ field }) => (
-      <FormItem>
-        <FormLabel className="flex items-center gap-1 text-sm">
+      <FormItem className="space-y-1">
+        <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
           <CheckCircle className="h-3 w-3 text-green-600" />
           Servis Sonucu
         </FormLabel>
         <FormControl>
           <Textarea
-            placeholder="Servis sonucu ve yapılan işlemler..."
-            className="resize-none transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px] text-sm"
+            placeholder="Örn: Klima filtresi değiştirildi, gaz kontrolü yapıldı. Test edildi, çalışıyor."
+            className="resize-none transition-all duration-200 focus:ring-1 focus:ring-blue-500 focus:border-transparent min-h-[60px] text-sm placeholder-gray-400"
             {...field}
             value={field.value || ""}
           />

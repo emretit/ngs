@@ -30,8 +30,8 @@ const ServiceRequestNew = ({ isCollapsed, setIsCollapsed }: ServiceRequestNewPro
         <div className="p-4 sm:p-6 lg:p-8">
           <div className="w-full">
             {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-4 mb-4">
+            <div className="mb-4">
+              <div className="flex items-center gap-4 mb-3">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -42,14 +42,14 @@ const ServiceRequestNew = ({ isCollapsed, setIsCollapsed }: ServiceRequestNewPro
                   Geri Dön
                 </Button>
               </div>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900">Yeni Servis Talebi</h1>
-                <p className="text-lg text-gray-600">Yeni bir servis talebi oluşturun ve detaylarını belirleyin</p>
+              <div className="space-y-1">
+                <h1 className="text-2xl font-bold text-gray-900">Yeni Servis Talebi</h1>
+                <p className="text-sm text-gray-600">Yeni bir servis talebi oluşturun ve detaylarını belirleyin</p>
               </div>
             </div>
 
             {/* Form */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <ServiceRequestForm 
                 onClose={handleClose}
               />

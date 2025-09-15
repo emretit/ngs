@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { UseFormReturn } from "react-hook-form";
 import { ServiceRequestFormData } from "@/hooks/service/types";
+import { User } from "lucide-react";
 
 type CustomerFieldProps = {
   form: UseFormReturn<ServiceRequestFormData>;
@@ -18,15 +19,18 @@ export const CustomerField: React.FC<CustomerFieldProps> = ({ form }) => {
       control={form.control}
       name="customer_id"
       render={({ field }) => (
-        <FormItem>
-          <FormLabel>Müşteri</FormLabel>
+        <FormItem className="space-y-1">
+          <FormLabel className="flex items-center gap-1 text-xs font-medium text-gray-700">
+            <User className="h-3 w-3 text-green-600" />
+            Müşteri
+          </FormLabel>
           <Select 
             onValueChange={field.onChange} 
             value={field.value}
           >
             <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Müşteri seçin" />
+        <SelectTrigger className="h-7 text-sm transition-all duration-200 focus:ring-1 focus:ring-blue-500 focus:border-transparent placeholder-gray-400">
+          <SelectValue placeholder="Müşteri seçin" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>

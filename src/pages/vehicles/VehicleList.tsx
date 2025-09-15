@@ -4,79 +4,40 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Car, Gauge, Calendar, AlertCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-
-// Schema mapping: Using equipment table as vehicle master record
-// - name: vehicle identifier/plate
-// - model: vehicle model
-// - serial_number: VIN/chassis number  
-// - category: vehicle type (sedan, truck, etc.)
-// - manufacturer: vehicle brand
-// - status: active/inactive/maintenance
-// - specifications: vehicle specs as JSON (engine, fuel type, etc.)
-// - customer_id: assigned driver/department
-// - location_address: current location
-// - installation_date: purchase/lease date
-// - warranty_start/end: warranty period
-
-interface Vehicle {
-  id: string;
-  name: string; // plate number
-  model: string;
-  manufacturer: string;
-  category: string;
-  status: string;
-  serial_number: string; // VIN
-  specifications: any;
-  customer_id: string;
-  location_address: string;
-  installation_date: string;
-  warranty_end: string;
-  company_id: string;
-}
+import { useVehicles, useVehicleStats } from "@/hooks/useVehicles";
+import { Vehicle } from "@/types/vehicle";
 
 export default function VehicleList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const { data: vehicles, isLoading } = useQuery({
-    queryKey: ['vehicles'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('equipment')
-        .select('*')
-        .eq('category', 'vehicle')
-        .order('name');
-
-      if (error) throw error;
-      return data as Vehicle[];
-    },
-  });
+  const { data: vehicles, isLoading } = useVehicles();
+  const { data: stats } = useVehicleStats();
 
   const filteredVehicles = vehicles?.filter(vehicle => {
-    const matchesSearch = vehicle.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = vehicle.plate_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          vehicle.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         vehicle.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase());
+                         vehicle.brand?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || vehicle.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
   const getStatusBadge = (status: string) => {
     const statusColors = {
-      'active': 'bg-green-100 text-green-800',
-      'maintenance': 'bg-yellow-100 text-yellow-800',
-      'inactive': 'bg-red-100 text-red-800',
-      'sold': 'bg-gray-100 text-gray-800'
+      'aktif': 'bg-green-100 text-green-800',
+      'bakım': 'bg-yellow-100 text-yellow-800',
+      'pasif': 'bg-red-100 text-red-800',
+      'satıldı': 'bg-gray-100 text-gray-800',
+      'hasar': 'bg-orange-100 text-orange-800'
     };
     return statusColors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const isWarrantyExpiring = (warrantyEnd: string) => {
-    if (!warrantyEnd) return false;
+  const isInsuranceExpiring = (insuranceEnd: string) => {
+    if (!insuranceEnd) return false;
     const today = new Date();
-    const warrantyDate = new Date(warrantyEnd);
-    const diffTime = warrantyDate.getTime() - today.getTime();
+    const insuranceDate = new Date(insuranceEnd);
+    const diffTime = insuranceDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays <= 30 && diffDays > 0;
   };
@@ -98,11 +59,46 @@ export default function VehicleList() {
         </Button>
       </div>
 
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-center">{stats.total}</div>
+              <div className="text-sm text-muted-foreground text-center">Toplam</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-center text-green-600">{stats.aktif}</div>
+              <div className="text-sm text-muted-foreground text-center">Aktif</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-center text-yellow-600">{stats.bakım}</div>
+              <div className="text-sm text-muted-foreground text-center">Bakımda</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-center text-red-600">{stats.pasif}</div>
+              <div className="text-sm text-muted-foreground text-center">Pasif</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-center text-gray-600">{stats.satıldı}</div>
+              <div className="text-sm text-muted-foreground text-center">Satıldı</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="flex gap-4 items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Araç ara..."
+            placeholder="Plaka veya marka ara..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8"
@@ -114,9 +110,11 @@ export default function VehicleList() {
           className="px-3 py-2 border rounded-md"
         >
           <option value="all">Tüm Durumlar</option>
-          <option value="active">Aktif</option>
-          <option value="maintenance">Bakımda</option>
-          <option value="inactive">Pasif</option>
+          <option value="aktif">Aktif</option>
+          <option value="bakım">Bakımda</option>
+          <option value="pasif">Pasif</option>
+          <option value="satıldı">Satıldı</option>
+          <option value="hasar">Hasarlı</option>
         </select>
       </div>
 
@@ -127,25 +125,25 @@ export default function VehicleList() {
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
                   <Car className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">{vehicle.name}</CardTitle>
+                  <CardTitle className="text-lg">{vehicle.plate_number}</CardTitle>
                 </div>
                 <Badge className={getStatusBadge(vehicle.status)}>
                   {vehicle.status}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                {vehicle.manufacturer} {vehicle.model}
+                {vehicle.brand} {vehicle.model} {vehicle.year && `(${vehicle.year})`}
               </p>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-1">
                   <Gauge className="h-3 w-3" />
-                  <span>VIN: {vehicle.serial_number?.slice(-6) || 'N/A'}</span>
+                  <span>{vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : 'KM: N/A'}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  <span>{vehicle.installation_date ? new Date(vehicle.installation_date).getFullYear() : 'N/A'}</span>
+                  <span>{vehicle.purchase_date ? new Date(vehicle.purchase_date).getFullYear() : 'N/A'}</span>
                 </div>
               </div>
               
@@ -155,10 +153,16 @@ export default function VehicleList() {
                 </p>
               )}
 
-              {isWarrantyExpiring(vehicle.warranty_end) && (
+              {isInsuranceExpiring(vehicle.insurance_end_date || '') && (
                 <div className="flex items-center gap-1 text-xs text-orange-600 bg-orange-50 p-2 rounded">
                   <AlertCircle className="h-3 w-3" />
-                  Garanti yakında sona eriyor
+                  Sigorta yakında sona eriyor
+                </div>
+              )}
+
+              {vehicle.fuel_type && (
+                <div className="text-xs text-muted-foreground">
+                  Yakıt: {vehicle.fuel_type} • {vehicle.transmission}
                 </div>
               )}
 

@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Plus, Wrench, Calendar, Clock, AlertCircle, CheckCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useVehicles } from "@/hooks/useVehicles";
+import { useVehicleMaintenance, useMaintenanceStats, useUpcomingMaintenance } from "@/hooks/useVehicleMaintenance";
 
 // Schema mapping: Using service_requests for maintenance work orders
 // - service_title: maintenance type
@@ -45,37 +45,10 @@ export default function VehicleMaintenance() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedVehicle, setSelectedVehicle] = useState<string>("all");
 
-  const { data: vehicles } = useQuery({
-    queryKey: ['vehicles-for-maintenance'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('equipment')
-        .select('id, name, model, manufacturer, maintenance_schedule')
-        .eq('category', 'vehicle')
-        .order('name');
-
-      if (error) throw error;
-      return data as Vehicle[];
-    },
-  });
-
-  const { data: maintenanceRecords, isLoading } = useQuery({
-    queryKey: ['vehicle-maintenance', selectedVehicle],
-    queryFn: async () => {
-      let query = supabase
-        .from('service_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (selectedVehicle !== 'all') {
-        query = query.eq('customer_id', selectedVehicle);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as MaintenanceRecord[];
-    },
-  });
+  const { data: vehicles } = useVehicles();
+  const { data: maintenanceRecords, isLoading } = useVehicleMaintenance();
+  const { data: stats } = useMaintenanceStats();
+  const { data: upcomingMaintenance } = useUpcomingMaintenance();
 
   const maintenanceTypes = [
     'periodic', 'oil_change', 'brake_service', 'tire_change', 
@@ -149,20 +122,13 @@ export default function VehicleMaintenance() {
     return matchesSearch && matchesStatus;
   });
 
-  const completedThisMonth = maintenanceRecords
-    ?.filter(record => {
-      if (!record.completed_at) return false;
-      const completedDate = new Date(record.completed_at);
-      const now = new Date();
-      return completedDate.getMonth() === now.getMonth() && 
-             completedDate.getFullYear() === now.getFullYear();
-    }).length || 0;
-
-  const pendingMaintenance = maintenanceRecords
-    ?.filter(record => ['new', 'assigned', 'in_progress'].includes(record.service_status)).length || 0;
-
-  const upcomingCount = vehicles
-    ?.filter(vehicle => getUpcomingMaintenance(vehicle) !== null).length || 0;
+  const filteredMaintenanceRecords = maintenanceRecords?.filter(record => {
+    const matchesSearch = record.maintenance_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         record.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || record.status === filterStatus;
+    const matchesVehicle = selectedVehicle === 'all' || record.vehicle_id === selectedVehicle;
+    return matchesSearch && matchesStatus && matchesVehicle;
+  });
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Yükleniyor...</div>;
@@ -189,11 +155,11 @@ export default function VehicleMaintenance() {
               Bekleyen İşler
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {pendingMaintenance} <span className="text-sm font-normal text-muted-foreground">adet</span>
-            </div>
-          </CardContent>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats?.pending || 0} <span className="text-sm font-normal text-muted-foreground">adet</span>
+              </div>
+            </CardContent>
         </Card>
 
         <Card>
@@ -203,11 +169,11 @@ export default function VehicleMaintenance() {
               Bu Ay Tamamlanan
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {completedThisMonth} <span className="text-sm font-normal text-muted-foreground">adet</span>
-            </div>
-          </CardContent>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats?.completed || 0} <span className="text-sm font-normal text-muted-foreground">adet</span>
+              </div>
+            </CardContent>
         </Card>
 
         <Card>
@@ -217,11 +183,11 @@ export default function VehicleMaintenance() {
               Yaklaşan Bakımlar
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {upcomingCount} <span className="text-sm font-normal text-muted-foreground">araç</span>
-            </div>
-          </CardContent>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {upcomingMaintenance?.length || 0} <span className="text-sm font-normal text-muted-foreground">adet</span>
+              </div>
+            </CardContent>
         </Card>
       </div>
 

@@ -59,9 +59,10 @@ const ServiceRequestEdit = ({ isCollapsed, setIsCollapsed }: ServiceRequestEditP
             priority: request.service_priority || "medium",
             status: request.service_status || "new", 
             location: request.service_location || "",
-            scheduled_date: request.service_due_date ? new Date(request.service_due_date).toISOString() : undefined,
+            service_reported_date: request.service_reported_date ? new Date(request.service_reported_date).toISOString() : undefined,
             customer_id: request.customer_id,
             assigned_technician_id: request.assigned_technician,
+            service_result: (request as any).service_result || "",
           };
           setServiceRequest(formData);
         } else {
@@ -166,8 +167,8 @@ const ServiceRequestEdit = ({ isCollapsed, setIsCollapsed }: ServiceRequestEditP
         <div className="p-4 sm:p-6 lg:p-8">
           <div className="w-full">
             {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-4 mb-4">
+            <div className="mb-4">
+              <div className="flex items-center gap-4 mb-3">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -178,14 +179,14 @@ const ServiceRequestEdit = ({ isCollapsed, setIsCollapsed }: ServiceRequestEditP
                   Geri Dön
                 </Button>
               </div>
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900">Servis Talebini Düzenle</h1>
-                <p className="text-lg text-gray-600">Mevcut servis talebi bilgilerini güncelleyin ve düzenleyin</p>
+              <div className="space-y-1">
+                <h1 className="text-2xl font-bold text-gray-900">Servis Talebini Düzenle</h1>
+                <p className="text-sm text-gray-600">Mevcut servis talebi bilgilerini güncelleyin ve düzenleyin</p>
               </div>
             </div>
 
             {/* Form */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <ServiceRequestForm 
                 onClose={handleClose}
                 initialData={serviceRequest}

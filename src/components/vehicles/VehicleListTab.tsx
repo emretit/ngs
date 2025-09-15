@@ -1,15 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Car, Gauge, Calendar, AlertCircle } from "lucide-react";
+import { Search, Plus, Car, Gauge, Calendar, AlertCircle, TrendingUp, Fuel, Wrench, DollarSign } from "lucide-react";
 import { useVehicles, useVehicleStats } from "@/hooks/useVehicles";
 import { Vehicle } from "@/types/vehicle";
 
 export default function VehicleListTab() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const navigate = useNavigate();
 
   const { data: vehicles, isLoading } = useVehicles();
   const { data: stats } = useVehicleStats();
@@ -55,40 +57,142 @@ export default function VehicleListTab() {
         </Button>
       </div>
 
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+      {/* Dashboard Overview */}
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold">Araç Dashboard</h2>
+            <p className="text-muted-foreground">Araç durumu ve önemli uyarılar</p>
+          </div>
+        </div>
+
+        {/* Status Cards */}
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Car className="h-5 w-5 text-blue-600" />
+                  Toplam Araç
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{stats.total}</div>
+                <div className="text-sm text-muted-foreground">Kayıtlı araç</div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow border-green-200 bg-green-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2 text-green-800">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  Aktif
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-700">{stats.aktif}</div>
+                <div className="text-sm text-green-600">Çalışır durumda</div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow border-yellow-200 bg-yellow-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2 text-yellow-800">
+                  <Wrench className="h-5 w-5 text-yellow-600" />
+                  Bakımda
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-yellow-700">{stats.bakım}</div>
+                <div className="text-sm text-yellow-600">Serviste</div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow border-red-200 bg-red-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2 text-red-800">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  Pasif
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-red-700">{stats.pasif}</div>
+                <div className="text-sm text-red-600">Kullanılmıyor</div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow border-gray-200 bg-gray-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2 text-gray-800">
+                  <DollarSign className="h-5 w-5 text-gray-600" />
+                  Satıldı
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-700">{stats.satıldı}</div>
+                <div className="text-sm text-gray-600">Elden çıkarıldı</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-center">{stats.total}</div>
-              <div className="text-sm text-muted-foreground text-center">Toplam</div>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Fuel className="h-5 w-5 text-blue-600" />
+                Ortalama KM
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {vehicles && vehicles.length > 0 
+                  ? Math.round(vehicles.reduce((sum, v) => sum + (v.mileage || 0), 0) / vehicles.length).toLocaleString()
+                  : '0'
+                } km
+              </div>
+              <div className="text-sm text-muted-foreground">Filo ortalaması</div>
             </CardContent>
           </Card>
+
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-center text-green-600">{stats.aktif}</div>
-              <div className="text-sm text-muted-foreground text-center">Aktif</div>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-green-600" />
+                Ortalama Yaş
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {vehicles && vehicles.length > 0 
+                  ? Math.round(vehicles.reduce((sum, v) => {
+                      const currentYear = new Date().getFullYear();
+                      return sum + (currentYear - (v.year || currentYear));
+                    }, 0) / vehicles.length)
+                  : '0'
+                } yıl
+              </div>
+              <div className="text-sm text-muted-foreground">Filo ortalaması</div>
             </CardContent>
           </Card>
+
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-center text-yellow-600">{stats.bakım}</div>
-              <div className="text-sm text-muted-foreground text-center">Bakımda</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-center text-red-600">{stats.pasif}</div>
-              <div className="text-sm text-muted-foreground text-center">Pasif</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-center text-gray-600">{stats.satıldı}</div>
-              <div className="text-sm text-muted-foreground text-center">Satıldı</div>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+                Uyarılar
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">
+                {vehicles?.filter(v => isInsuranceExpiring(v.insurance_end_date || '')).length || 0}
+              </div>
+              <div className="text-sm text-muted-foreground">Sigorta süresi dolacak</div>
             </CardContent>
           </Card>
         </div>
-      )}
+      </div>
 
       <div className="flex gap-4 items-center">
         <div className="relative flex-1 max-w-sm">
@@ -114,60 +218,98 @@ export default function VehicleListTab() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredVehicles?.map((vehicle) => (
-          <Card key={vehicle.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2">
-                  <Car className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-lg">{vehicle.plate_number}</CardTitle>
+      {/* Vehicle List Section */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-semibold">Araç Listesi</h3>
+          <div className="text-sm text-muted-foreground">
+            {filteredVehicles?.length || 0} araç gösteriliyor
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredVehicles?.map((vehicle) => (
+            <Card key={vehicle.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-2">
+                    <Car className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">{vehicle.plate_number}</CardTitle>
+                  </div>
+                  <Badge className={getStatusBadge(vehicle.status)}>
+                    {vehicle.status}
+                  </Badge>
                 </div>
-                <Badge className={getStatusBadge(vehicle.status)}>
-                  {vehicle.status}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {vehicle.brand} {vehicle.model} {vehicle.year && `(${vehicle.year})`}
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="flex items-center gap-1">
-                  <Gauge className="h-3 w-3" />
-                  <span>{vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : 'KM: N/A'}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  <span>{vehicle.purchase_date ? new Date(vehicle.purchase_date).getFullYear() : 'N/A'}</span>
-                </div>
-              </div>
-              
-              {vehicle.location_address && (
-                <p className="text-xs text-muted-foreground">
-                  📍 {vehicle.location_address}
+                <p className="text-sm text-muted-foreground">
+                  {vehicle.brand} {vehicle.model} {vehicle.year && `(${vehicle.year})`}
                 </p>
-              )}
-
-              {isInsuranceExpiring(vehicle.insurance_end_date || '') && (
-                <div className="flex items-center gap-1 text-xs text-orange-600 bg-orange-50 p-2 rounded">
-                  <AlertCircle className="h-3 w-3" />
-                  Sigorta yakında sona eriyor
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Key Metrics */}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Gauge className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <div className="font-medium">{vehicle.mileage ? `${vehicle.mileage.toLocaleString()} km` : 'N/A'}</div>
+                      <div className="text-xs text-muted-foreground">Kilometre</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-green-600" />
+                    <div>
+                      <div className="font-medium">{vehicle.purchase_date ? new Date(vehicle.purchase_date).getFullYear() : 'N/A'}</div>
+                      <div className="text-xs text-muted-foreground">Model Yılı</div>
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {vehicle.fuel_type && (
-                <div className="text-xs text-muted-foreground">
-                  Yakıt: {vehicle.fuel_type} • {vehicle.transmission}
-                </div>
-              )}
+                {/* Fuel & Transmission */}
+                {vehicle.fuel_type && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Fuel className="h-4 w-4 text-purple-600" />
+                    <div>
+                      <span className="font-medium capitalize">{vehicle.fuel_type}</span>
+                      <span className="text-muted-foreground"> • </span>
+                      <span className="capitalize">{vehicle.transmission}</span>
+                    </div>
+                  </div>
+                )}
 
-              <Button variant="outline" className="w-full mt-3">
-                Detayları Görüntüle
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                {/* Location */}
+                {vehicle.location_address && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="text-muted-foreground">📍</div>
+                    <span className="text-muted-foreground truncate">{vehicle.location_address}</span>
+                  </div>
+                )}
+
+                {/* Alerts */}
+                {isInsuranceExpiring(vehicle.insurance_end_date || '') && (
+                  <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-100 p-2 rounded-md border border-orange-200">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="font-medium">Sigorta yakında sona eriyor</span>
+                  </div>
+                )}
+
+                {vehicle.status === 'bakım' && (
+                  <div className="flex items-center gap-2 text-xs text-yellow-700 bg-yellow-100 p-2 rounded-md border border-yellow-200">
+                    <Wrench className="h-4 w-4" />
+                    <span className="font-medium">Araç bakımda</span>
+                  </div>
+                )}
+
+                {/* Action Button */}
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-4 hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => navigate(`/vehicles/${vehicle.id}`)}
+                >
+                  Detayları Görüntüle
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {filteredVehicles?.length === 0 && (

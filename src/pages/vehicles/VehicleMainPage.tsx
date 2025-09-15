@@ -1,17 +1,14 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Car, Wrench, Fuel, FileText, AlertTriangle, DollarSign, FileContract } from "lucide-react";
+import { Car, Settings, FileText, BarChart3 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 
 // Import individual tab components
 import VehicleListTab from "@/components/vehicles/VehicleListTab";
-import VehicleMaintenanceTab from "@/components/vehicles/VehicleMaintenanceTab";
-import VehicleFuelTab from "@/components/vehicles/VehicleFuelTab";
-import VehicleDocumentsTab from "@/components/vehicles/VehicleDocumentsTab";
-import VehicleIncidentsTab from "@/components/vehicles/VehicleIncidentsTab";
-import VehicleCostsTab from "@/components/vehicles/VehicleCostsTab";
-import VehicleContractsTab from "@/components/vehicles/VehicleContractsTab";
+import VehicleOperationsTab from "@/components/vehicles/VehicleOperationsTab";
+import VehicleDocumentsContractsTab from "@/components/vehicles/VehicleDocumentsContractsTab";
+import VehicleAnalyticsTab from "@/components/vehicles/VehicleAnalyticsTab";
 
 interface VehicleMainPageProps {
   isCollapsed: boolean;
@@ -19,7 +16,7 @@ interface VehicleMainPageProps {
 }
 
 export default function VehicleMainPage({ isCollapsed, setIsCollapsed }: VehicleMainPageProps) {
-  const [activeTab, setActiveTab] = useState("list");
+  const [activeTab, setActiveTab] = useState("vehicles");
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -38,63 +35,39 @@ export default function VehicleMainPage({ isCollapsed, setIsCollapsed }: Vehicle
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-7">
-                <TabsTrigger value="list" className="flex items-center gap-2">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="vehicles" className="flex items-center gap-2">
                   <Car className="h-4 w-4" />
-                  Araç Listesi
+                  Araçlar
                 </TabsTrigger>
-                <TabsTrigger value="contracts" className="flex items-center gap-2">
-                  <FileContract className="h-4 w-4" />
-                  Sözleşmeler
-                </TabsTrigger>
-                <TabsTrigger value="maintenance" className="flex items-center gap-2">
-                  <Wrench className="h-4 w-4" />
-                  Bakım & Servis
-                </TabsTrigger>
-                <TabsTrigger value="fuel" className="flex items-center gap-2">
-                  <Fuel className="h-4 w-4" />
-                  Yakıt & KM
+                <TabsTrigger value="operations" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Operasyonlar
                 </TabsTrigger>
                 <TabsTrigger value="documents" className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Belgeler
+                  Belgeler & Sözleşmeler
                 </TabsTrigger>
-                <TabsTrigger value="incidents" className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  Olaylar & Cezalar
-                </TabsTrigger>
-                <TabsTrigger value="costs" className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
-                  Maliyetler
+                <TabsTrigger value="analytics" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Analiz & Raporlar
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="list" className="space-y-4">
+              <TabsContent value="vehicles" className="space-y-4">
                 <VehicleListTab />
               </TabsContent>
 
-              <TabsContent value="contracts" className="space-y-4">
-                <VehicleContractsTab />
-              </TabsContent>
-
-              <TabsContent value="maintenance" className="space-y-4">
-                <VehicleMaintenanceTab />
-              </TabsContent>
-
-              <TabsContent value="fuel" className="space-y-4">
-                <VehicleFuelTab />
+              <TabsContent value="operations" className="space-y-4">
+                <VehicleOperationsTab />
               </TabsContent>
 
               <TabsContent value="documents" className="space-y-4">
-                <VehicleDocumentsTab />
+                <VehicleDocumentsContractsTab />
               </TabsContent>
 
-              <TabsContent value="incidents" className="space-y-4">
-                <VehicleIncidentsTab />
-              </TabsContent>
-
-              <TabsContent value="costs" className="space-y-4">
-                <VehicleCostsTab />
+              <TabsContent value="analytics" className="space-y-4">
+                <VehicleAnalyticsTab />
               </TabsContent>
             </Tabs>
           </div>

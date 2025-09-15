@@ -45,7 +45,12 @@ interface Vehicle {
   manufacturer: string;
 }
 
-export default function VehicleFuel() {
+interface VehicleFuelProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (value: boolean) => void;
+}
+
+export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState<string>("all");
 

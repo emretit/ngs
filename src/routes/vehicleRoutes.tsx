@@ -6,35 +6,43 @@ import VehicleCosts from "@/pages/vehicles/VehicleCosts";
 import VehicleDocuments from "@/pages/vehicles/VehicleDocuments";
 import VehicleIncidents from "@/pages/vehicles/VehicleIncidents";
 
+// Wrapper components to pass layout props
+const VehicleListWrapper = (props: any) => <VehicleList {...props} />;
+const VehicleMaintenanceWrapper = (props: any) => <VehicleMaintenance {...props} />;
+const VehicleFuelWrapper = (props: any) => <VehicleFuel {...props} />;
+const VehicleCostsWrapper = (props: any) => <VehicleCosts {...props} />;
+const VehicleDocumentsWrapper = (props: any) => <VehicleDocuments {...props} />;
+const VehicleIncidentsWrapper = (props: any) => <VehicleIncidents {...props} />;
+
 export const vehicleRoutes: RouteConfig[] = [
   { 
     path: "/vehicles", 
-    component: VehicleList, 
+    component: VehicleListWrapper, 
     protected: true 
   },
   { 
     path: "/vehicles/maintenance", 
-    component: VehicleMaintenance, 
+    component: VehicleMaintenanceWrapper, 
     protected: true 
   },
   { 
     path: "/vehicles/fuel", 
-    component: VehicleFuel, 
+    component: VehicleFuelWrapper, 
     protected: true 
   },
   { 
     path: "/vehicles/costs", 
-    component: VehicleCosts, 
+    component: VehicleCostsWrapper, 
     protected: true 
   },
   { 
     path: "/vehicles/documents", 
-    component: VehicleDocuments, 
+    component: VehicleDocumentsWrapper, 
     protected: true 
   },
   { 
     path: "/vehicles/incidents", 
-    component: VehicleIncidents, 
+    component: VehicleIncidentsWrapper, 
     protected: true 
   }
 ];

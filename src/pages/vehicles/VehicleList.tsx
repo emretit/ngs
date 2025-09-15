@@ -6,8 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Car, Gauge, Calendar, AlertCircle } from "lucide-react";
 import { useVehicles, useVehicleStats } from "@/hooks/useVehicles";
 import { Vehicle } from "@/types/vehicle";
+import Navbar from "@/components/Navbar";
+import TopBar from "@/components/TopBar";
 
-export default function VehicleList() {
+interface VehicleListProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (value: boolean) => void;
+}
+
+export default function VehicleList({ isCollapsed, setIsCollapsed }: VehicleListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -43,11 +50,27 @@ export default function VehicleList() {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center p-8">Yükleniyor...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+        <main className={`flex-1 transition-all duration-300 ${
+          isCollapsed ? "ml-[60px]" : "ml-64"
+        }`}>
+          <TopBar />
+          <div className="flex justify-center p-8">Yükleniyor...</div>
+        </main>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-gray-50 flex">
+      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+      <main className={`flex-1 transition-all duration-300 ${
+        isCollapsed ? "ml-[60px]" : "ml-64"
+      }`}>
+        <TopBar />
+        <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Araç Yönetimi</h1>
@@ -180,6 +203,8 @@ export default function VehicleList() {
           <p className="text-muted-foreground">Araç bulunamadı</p>
         </div>
       )}
+        </div>
+      </main>
     </div>
   );
 }

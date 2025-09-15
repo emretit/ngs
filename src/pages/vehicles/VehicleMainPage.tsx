@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Car, Wrench, Fuel, FileText, AlertTriangle, DollarSign } from "lucide-react";
+import { Car, Wrench, Fuel, FileText, AlertTriangle, DollarSign, FileContract } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 
@@ -11,6 +11,7 @@ import VehicleFuelTab from "@/components/vehicles/VehicleFuelTab";
 import VehicleDocumentsTab from "@/components/vehicles/VehicleDocumentsTab";
 import VehicleIncidentsTab from "@/components/vehicles/VehicleIncidentsTab";
 import VehicleCostsTab from "@/components/vehicles/VehicleCostsTab";
+import VehicleContractsTab from "@/components/vehicles/VehicleContractsTab";
 
 interface VehicleMainPageProps {
   isCollapsed: boolean;
@@ -37,10 +38,14 @@ export default function VehicleMainPage({ isCollapsed, setIsCollapsed }: Vehicle
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="list" className="flex items-center gap-2">
                   <Car className="h-4 w-4" />
                   Araç Listesi
+                </TabsTrigger>
+                <TabsTrigger value="contracts" className="flex items-center gap-2">
+                  <FileContract className="h-4 w-4" />
+                  Sözleşmeler
                 </TabsTrigger>
                 <TabsTrigger value="maintenance" className="flex items-center gap-2">
                   <Wrench className="h-4 w-4" />
@@ -66,6 +71,10 @@ export default function VehicleMainPage({ isCollapsed, setIsCollapsed }: Vehicle
 
               <TabsContent value="list" className="space-y-4">
                 <VehicleListTab />
+              </TabsContent>
+
+              <TabsContent value="contracts" className="space-y-4">
+                <VehicleContractsTab />
               </TabsContent>
 
               <TabsContent value="maintenance" className="space-y-4">

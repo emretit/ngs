@@ -280,27 +280,45 @@ const ProposalCreate = ({ isCollapsed, setIsCollapsed }: ProposalCreateProps) =>
       subtitle="Enterprise-grade B2B teklif sistemi"
     >
       {/* Enhanced Sticky Header with Progress */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border/50">
-        <div className="flex items-center justify-between py-3 px-6">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="gap-2 hover:bg-muted" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4" />
-              Teklifler
+      <div className="sticky top-0 z-20 bg-gradient-to-r from-background via-background/98 to-background backdrop-blur-xl border-b border-border/30 shadow-sm">
+        <div className="flex items-center justify-between py-4 px-6">
+          <div className="flex items-center gap-6">
+            {/* Stylish Back Button */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="group gap-2 px-3 py-2 rounded-xl hover:bg-gradient-to-r hover:from-muted/50 hover:to-muted/30 transition-all duration-300 hover:shadow-sm border border-transparent hover:border-border/50" 
+              onClick={handleBack}
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+              <span className="font-medium">Teklifler</span>
             </Button>
-            <div className="h-6 w-px bg-border" />
-            <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <h1 className="text-xl font-semibold">Enterprise Teklif Sistemi</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <Progress value={completionProgress} className="w-24 h-2" />
-                  <span className="text-xs text-muted-foreground">{Math.round(completionProgress)}% tamamlandı</span>
+            
+            {/* Elegant Separator */}
+            <div className="h-8 w-px bg-gradient-to-b from-transparent via-border to-transparent" />
+            
+            {/* Enhanced Title Section */}
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h1 className="text-xl font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+                  Yeni Teklif Oluştur
+                </h1>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Progress value={completionProgress} className="w-32 h-2" />
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {Math.round(completionProgress)}%
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="gap-1.5 bg-gradient-to-r from-amber-50 to-amber-50/50 text-amber-700 border-amber-200/60 px-2.5 py-1">
+                    <Clock className="h-3 w-3" />
+                    Taslak
+                  </Badge>
                 </div>
               </div>
-              <Badge variant="outline" className="gap-1 bg-amber-50 text-amber-700 border-amber-200">
-                <Clock className="h-3 w-3" />
-                Taslak
-              </Badge>
             </div>
           </div>
           
@@ -315,7 +333,7 @@ const ProposalCreate = ({ isCollapsed, setIsCollapsed }: ProposalCreateProps) =>
               variant="outline" 
               size="sm" 
               onClick={() => setPreviewOpen(true)}
-              className="gap-2"
+              className="gap-2 rounded-lg hover:bg-gradient-to-r hover:from-muted/60 hover:to-muted/40 transition-all duration-200 border-border/60 hover:border-border"
             >
               <Eye className="h-4 w-4" />
               Önizleme
@@ -326,11 +344,12 @@ const ProposalCreate = ({ isCollapsed, setIsCollapsed }: ProposalCreateProps) =>
               size="sm" 
               onClick={handleSaveDraft} 
               disabled={autoSaving}
+              className="gap-2 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-50/50 hover:text-blue-700 hover:border-blue-200 transition-all duration-200"
             >
               {autoSaving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4" />
               )}
               Taslak Kaydet
             </Button>
@@ -339,7 +358,7 @@ const ProposalCreate = ({ isCollapsed, setIsCollapsed }: ProposalCreateProps) =>
               size="sm" 
               onClick={handleSaveAndSend} 
               disabled={saving || !hasChanges}
-              className="gap-2"
+              className="gap-2 rounded-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-sm hover:shadow-md transition-all duration-200"
             >
               <Send className="h-4 w-4" />
               {saving ? "Kaydediliyor..." : "Kaydet ve Gönder"}
@@ -363,11 +382,11 @@ const ProposalCreate = ({ isCollapsed, setIsCollapsed }: ProposalCreateProps) =>
 
       {/* Main Content with Enhanced Tabs */}
       <div className="p-6">
-        <Card className="shadow-sm border-0 bg-white/50">
+        <Card className="shadow-lg border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b bg-muted/30 px-6 pt-4">
-                <TabsList className="grid w-full grid-cols-5 bg-transparent h-auto p-0 gap-1">
+              <div className="border-b border-border/30 bg-gradient-to-r from-muted/20 via-muted/30 to-muted/20 px-6 pt-6">
+                <TabsList className="grid w-full grid-cols-5 bg-background/60 backdrop-blur-sm h-auto p-1 gap-1 rounded-xl shadow-sm border border-border/50">
                   <TabsTrigger 
                     value="basic" 
                     className={cn(

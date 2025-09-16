@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Table, TableBody } from "@/components/ui/table";
+import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { useProposals } from "@/hooks/useProposals";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";

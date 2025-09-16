@@ -54,15 +54,13 @@ const ServiceRequestEdit = ({ isCollapsed, setIsCollapsed }: ServiceRequestEditP
           // Convert ServiceRequest to ServiceRequestFormData
           const formData: ServiceRequestFormData = {
             id: request.id,
-            title: request.service_title || "",
-            description: request.service_request_description || "",
-            priority: request.service_priority || "medium",
-            status: request.service_status || "new", 
-            location: request.service_location || "",
-            service_reported_date: request.service_reported_date ? new Date(request.service_reported_date).toISOString() : undefined,
+            title: request.title || "",
+            description: request.description || "",
+            priority: (request.priority as any) || "medium",
+            status: (request.status as any) || "new",
+            location: request.location || "",
             customer_id: request.customer_id,
-            assigned_technician_id: request.assigned_technician,
-            service_result: (request as any).service_result || "",
+            assigned_technician_id: request.assigned_technician_id || undefined,
           };
           setServiceRequest(formData);
         } else {

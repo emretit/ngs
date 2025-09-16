@@ -33,7 +33,7 @@ const formSchema = z.object({
   priority: z.enum(["low", "medium", "high", "urgent"]),
   status: z.enum(["new", "assigned", "in_progress", "completed", "cancelled", "on_hold"]).optional(),
   location: z.string().optional(),
-  service_reported_date: z.date().optional(),
+  created_at: z.date().optional(),
   customer_id: z.string().optional(),
   assigned_technician_id: z.string().optional(),
   service_result: z.string().optional(),
@@ -64,7 +64,7 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
       status: isEditing ? (initialData?.status as "new" | "assigned" | "in_progress" | "completed" | "cancelled" | "on_hold") || "new" : "new",
       location: initialData?.location || "",
       customer_id: initialData?.customer_id || undefined,
-      service_reported_date: initialData?.service_reported_date ? new Date(initialData.service_reported_date) : undefined,
+      created_at: initialData?.created_at ? new Date(initialData.created_at) : undefined,
       assigned_technician_id: initialData?.assigned_technician_id || undefined,
       service_result: (initialData as any)?.service_request_description || "",
     },
@@ -75,7 +75,7 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
       Object.keys(initialData).forEach((key) => {
         const value = initialData[key as keyof ServiceRequestFormData];
         if (value !== undefined) {
-          if ((key === 'scheduled_date' || key === 'due_date') && typeof value === 'string') {
+          if ((key === 'scheduled_date' || key === 'created_at') && typeof value === 'string') {
             form.setValue(key as any, new Date(value));
           } else {
             form.setValue(key as any, value);
@@ -110,7 +110,6 @@ export function ServiceRequestForm({ onClose, initialData, isEditing = false }: 
         priority: data.priority,
         status: data.status || "new", // Yeni servis için otomatik "new" status
         location: data.location,
-        service_reported_date: data.service_reported_date?.toISOString(),
         customer_id: data.customer_id,
         assigned_technician_id: data.assigned_technician_id,
       };

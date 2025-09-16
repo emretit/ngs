@@ -34,14 +34,6 @@ interface MaintenanceRecord {
   company_id: string;
 }
 
-interface Vehicle {
-  id: string;
-  name: string;
-  model: string;
-  manufacturer: string;
-  maintenance_schedule: any;
-}
-
 interface VehicleMaintenanceProps {
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void;
@@ -97,7 +89,7 @@ export default function VehicleMaintenance({ isCollapsed, setIsCollapsed }: Vehi
 
   const getVehicleName = (vehicleId: string) => {
     const vehicle = vehicles?.find(v => v.id === vehicleId);
-    return vehicle ? `${vehicle.name} - ${vehicle.manufacturer} ${vehicle.model}` : 'Bilinmeyen Araç';
+    return vehicle ? `${vehicle.plate_number} - ${vehicle.brand} ${vehicle.model}` : 'Bilinmeyen Araç';
   };
 
   const getUpcomingMaintenance = (vehicle: Vehicle) => {
@@ -207,36 +199,6 @@ export default function VehicleMaintenance({ isCollapsed, setIsCollapsed }: Vehi
         </Card>
       </div>
 
-      {upcomingCount > 0 && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-800">
-              <AlertCircle className="h-5 w-5" />
-              Yaklaşan Bakım Uyarıları
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {vehicles
-                ?.map(vehicle => {
-                  const daysUntil = getUpcomingMaintenance(vehicle);
-                  if (daysUntil === null) return null;
-                  
-                  return (
-                    <div key={vehicle.id} className="flex justify-between items-center p-2 bg-white rounded">
-                      <span className="font-medium">{vehicle.name} - {vehicle.manufacturer} {vehicle.model}</span>
-                      <Badge variant="outline" className="text-orange-800 border-orange-300">
-                        {daysUntil} gün sonra
-                      </Badge>
-                    </div>
-                  );
-                })
-                .filter(Boolean)}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="flex gap-4 items-center flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -298,9 +260,9 @@ export default function VehicleMaintenance({ isCollapsed, setIsCollapsed }: Vehi
             <TableBody>
               {filteredMaintenanceRecords?.map((record) => (
                 <TableRow key={record.id}>
-                  <TableCell className="font-medium">
-                    {getVehicleName(record.customer_id)}
-                  </TableCell>
+                    <TableCell className="font-medium">
+                      {getVehicleName(record.vehicle_id)}
+                    </TableCell>
                   <TableCell>
                     <Badge variant="outline">
                       {getMaintenanceTypeLabel(record.service_title)}
@@ -321,10 +283,10 @@ export default function VehicleMaintenance({ isCollapsed, setIsCollapsed }: Vehi
                   </TableCell>
                   <TableCell>
                     {record.scheduled_date && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(record.scheduled_date).toLocaleDateString('tr-TR')}
-                      </div>
+                       <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(record.scheduled_date as string).toLocaleDateString('tr-TR')}
+                        </div>
                     )}
                   </TableCell>
                   <TableCell>

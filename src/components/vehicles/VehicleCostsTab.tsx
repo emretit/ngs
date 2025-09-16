@@ -146,12 +146,14 @@ export default function VehicleCostsTab() {
           <CardContent>
             <div className="text-lg font-bold">
               {Object.keys(categoryTotals).length > 0 && 
-                Object.entries(categoryTotals).sort(([,a], [,b]) => b - a)[0]?.[0] || 'Yok'
+                (Object.entries(categoryTotals) as [string, number][])
+                  .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0] || 'Yok'
               }
             </div>
             <div className="text-sm text-muted-foreground">
               ₺{Object.keys(categoryTotals).length > 0 && 
-                Object.entries(categoryTotals).sort(([,a], [,b]) => b - a)[0]?.[1]?.toLocaleString() || '0'
+                ((Object.entries(categoryTotals) as [string, number][])
+                  .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[1] as number | undefined)?.toLocaleString() || '0'
               }
             </div>
           </CardContent>
@@ -187,7 +189,7 @@ export default function VehicleCostsTab() {
                 </Badge>
                 <div className="text-lg font-bold mt-2">₺{total.toLocaleString()}</div>
                 <div className="text-sm text-muted-foreground">
-                  %{((total / totalAllTime) * 100).toFixed(1)}
+                  %{totalAllTime ? (((total as number) / totalAllTime) * 100).toFixed(1) : '0.0'}
                 </div>
               </div>
             ))}

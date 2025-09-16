@@ -146,15 +146,15 @@ export const useFuelStats = () => {
       let totalEfficiency = 0;
       let vehiclesWithEfficiency = 0;
 
-      Object.values(vehicleGroups).forEach(records => {
-        if (records.length >= 2) {
-          const sortedRecords = records
-            .filter(r => r.mileage)
-            .sort((a, b) => a.mileage - b.mileage);
+      (Object.values(vehicleGroups) as any[][]).forEach((records: any[]) => {
+        if ((records as any[]).length >= 2) {
+          const sortedRecords = (records as any[])
+            .filter((r: any) => r.mileage)
+            .sort((a: any, b: any) => a.mileage - b.mileage);
           
           if (sortedRecords.length >= 2) {
             const totalDistance = sortedRecords[sortedRecords.length - 1].mileage - sortedRecords[0].mileage;
-            const totalLiters = sortedRecords.reduce((sum, r) => sum + r.liters, 0);
+            const totalLiters = sortedRecords.reduce((sum: number, r: any) => sum + r.liters, 0);
             
             if (totalLiters > 0) {
               totalEfficiency += totalDistance / totalLiters;

@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Plus, Wrench, Calendar, Clock, AlertCircle, CheckCircle } from "lucide-react";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useVehicleMaintenance, useMaintenanceStats, useUpcomingMaintenance } from "@/hooks/useVehicleMaintenance";
+import { Vehicle } from "@/types/vehicle";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 
@@ -92,27 +93,7 @@ export default function VehicleMaintenance({ isCollapsed, setIsCollapsed }: Vehi
     return vehicle ? `${vehicle.plate_number} - ${vehicle.brand} ${vehicle.model}` : 'Bilinmeyen Araç';
   };
 
-  const getUpcomingMaintenance = (vehicle: Vehicle) => {
-    if (!vehicle.maintenance_schedule) return null;
-    
-    try {
-      const schedule = vehicle.maintenance_schedule;
-      if (schedule.next_service_date) {
-        const nextDate = new Date(schedule.next_service_date);
-        const today = new Date();
-        const diffTime = nextDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays <= 30 && diffDays > 0) {
-          return diffDays;
-        }
-      }
-    } catch (e) {
-      console.log('Error parsing maintenance schedule:', e);
-    }
-    
-    return null;
-  };
+  // Removed getUpcomingMaintenance function as it requires fields not in schema
 
   const filteredMaintenanceRecords = maintenanceRecords?.filter(record => {
     const matchesSearch = record.maintenance_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -218,7 +199,7 @@ export default function VehicleMaintenance({ isCollapsed, setIsCollapsed }: Vehi
           <option value="all">Tüm Araçlar</option>
           {vehicles?.map(vehicle => (
             <option key={vehicle.id} value={vehicle.id}>
-              {vehicle.name} - {vehicle.manufacturer} {vehicle.model}
+              {vehicle.plate_number} - {vehicle.brand} {vehicle.model}
             </option>
           ))}
         </select>

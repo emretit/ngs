@@ -20,7 +20,7 @@ import { PdfExportService } from "@/services/pdf/pdfExportService";
 
 
 interface ProposalTableRowProps {
-  proposal: Proposal;
+  proposal: Proposal | null;
   index: number;
   formatMoney: (amount: number) => string;
   onSelect: (proposal: Proposal) => void;
@@ -28,6 +28,7 @@ interface ProposalTableRowProps {
   onDelete: (proposalId: string) => void;
   templates: any[];
   onPdfPrint: (proposal: Proposal, templateId: string) => void;
+  isLoading?: boolean;
 }
 
 export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
@@ -38,11 +39,28 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
   onStatusChange,
   onDelete,
   templates,
-  onPdfPrint
+  onPdfPrint,
+  isLoading = false
 }) => {
   const navigate = useNavigate();
   const { calculateTotals } = useProposalCalculations();
   const { toast } = useToast();
+
+  // Loading state için skeleton göster
+  if (isLoading || !proposal) {
+    return (
+      <TableRow className="h-8">
+        <TableCell className="py-2 px-3"><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-2"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-2"><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-2"><div className="h-6 w-6 bg-gray-200 rounded animate-pulse" /></TableCell>
+      </TableRow>
+    );
+  }
 
   // Metinleri kısalt
   const shortenText = (text: string, maxLength: number = 25) => {
@@ -112,114 +130,77 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
   
   return (
     <TableRow 
-      className="cursor-pointer hover:bg-gray-50"
-      onClick={() => onSelect(proposal)}
+      key={proposal.id} 
+      onClick={() => onSelect(proposal)} 
+      className="cursor-pointer hover:bg-blue-50 h-8"
     >
-      <TableCell className="font-medium p-4">#{proposal.number}</TableCell>
-      <TableCell className="p-4">
+      <TableCell className="font-medium py-2 px-3 text-xs">#{proposal.number}</TableCell>
+      <TableCell className="py-2 px-3">
         {proposal.customer ? (
-          <div className="flex items-center space-x-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {proposal.customer.name?.substring(0, 1) || 'C'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="font-medium" title={proposal.customer.name}>
-                {getShortenedCompanyName()}
-              </div>
-              {proposal.customer.company && (
-                <div className="text-xs text-muted-foreground" title={proposal.customer.company}>
-                  {getShortenedCompanyInfo()}
-                </div>
-              )}
-            </div>
+          <div className="flex flex-col space-y-0">
+            <span className="text-xs font-medium" title={proposal.customer.name}>
+              {getShortenedCompanyName()}
+            </span>
+            {proposal.customer.company && (
+              <span className="text-xs text-gray-500" title={proposal.customer.company}>
+                {getShortenedCompanyInfo()}
+              </span>
+            )}
           </div>
         ) : (
-          <span className="text-muted-foreground">{proposal.customer_name || "Müşteri yok"}</span>
+          <span className="text-gray-500 text-xs">{proposal.customer_name || "Müşteri yok"}</span>
         )}
       </TableCell>
-      <ProposalStatusCell 
-        status={proposal.status} 
-        proposalId={proposal.id} 
-        onStatusChange={onStatusChange} 
-      />
-      <TableCell className="p-4">
+      <TableCell className="text-center py-2 px-2">
+        <ProposalStatusCell 
+          status={proposal.status} 
+          proposalId={proposal.id} 
+          onStatusChange={onStatusChange} 
+        />
+      </TableCell>
+      <TableCell className="py-2 px-2">
         {proposal.employee ? (
-          <div className="flex items-center space-x-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback>
+          <div className="flex items-center space-x-0.5">
+            <Avatar className="h-3.5 w-3.5">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">
                 {proposal.employee.first_name?.[0]}
                 {proposal.employee.last_name?.[0]}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm">
+            <span className="text-xs font-medium truncate">
               {proposal.employee.first_name} {proposal.employee.last_name}
             </span>
           </div>
         ) : (
-          <span className="text-muted-foreground">-</span>
+          <span className="text-muted-foreground text-xs">-</span>
         )}
       </TableCell>
-      <TableCell className="font-medium p-4">
+      <TableCell className="text-center py-2 px-2 text-xs font-medium">
         {formatProposalAmount(getGrandTotal(), proposal.currency || 'TRY')}
       </TableCell>
-      <TableCell className="p-4">{formatDate(proposal.created_at)}</TableCell>
-      <TableCell className="p-4">{formatDate(proposal.valid_until)}</TableCell>
-      <TableCell className="p-4">
-        <div className="flex items-center justify-end space-x-1">
+      <TableCell className="text-center py-2 px-2 text-xs">{formatDate(proposal.created_at)}</TableCell>
+      <TableCell className="text-center py-2 px-2 text-xs">{formatDate(proposal.valid_until)}</TableCell>
+      <TableCell className="py-2 px-2">
+        <div className="flex justify-end space-x-0.5">
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleEdit}
-            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(proposal);
+            }}
+            className="h-4 w-4 hover:bg-blue-100"
           >
-            <Eye className="h-4 w-4" />
+            <Eye className="h-2.5 w-2.5" />
           </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleEdit}>
-                <PenLine className="h-4 w-4 mr-2" />
-                Düzenle
-              </DropdownMenuItem>
-              
-              {templates.length > 0 && (
-                <DropdownMenuItem>
-                  <FileText className="h-4 w-4 mr-2" />
-                  PDF İndir
-                  <DropdownMenu>
-                    <DropdownMenuContent>
-                      {templates.map((template) => (
-                        <DropdownMenuItem
-                          key={template.id}
-                          onClick={(e) => handlePdfPrintClick(e, template.id)}
-                        >
-                          {template.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </DropdownMenuItem>
-              )}
-              
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(proposal.id);
-                }}
-                className="text-red-600"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Sil
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4 hover:bg-gray-100"
+          >
+            <MoreHorizontal className="h-2.5 w-2.5" />
+          </Button>
         </div>
       </TableCell>
     </TableRow>

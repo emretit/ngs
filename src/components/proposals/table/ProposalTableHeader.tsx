@@ -28,35 +28,15 @@ export const ProposalTableHeader = ({
 
   return (
     <TableHeader>
-      <TableRow className="bg-gray-50 border-b">
-        {columns.map((column) => (
-          column.visible && (
-            <TableHead 
-              key={column.id}
-              className={cn(
-                "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide",
-                column.sortable ? 'cursor-pointer hover:bg-muted/50' : '',
-                column.id === 'actions' ? 'text-right' : ''
-              )}
-              onClick={column.sortable && onSort ? () => onSort(column.id) : undefined}
-            >
-              <div className={cn("flex items-center", column.id === 'actions' ? 'justify-end' : '')}>
-                <span>
-                  {column.id === 'number' && '📄 '}
-                  {column.id === 'customer' && '🏢 '}
-                  {column.id === 'status' && '📊 '}
-                  {column.id === 'employee' && '👤 '}
-                  {column.id === 'total_amount' && '💰 '}
-                  {column.id === 'created_at' && '📅 '}
-                  {column.id === 'valid_until' && '⏰ '}
-                  {column.id === 'actions' && '⚙️ '}
-                  {column.label}
-                </span>
-                {column.sortable && getSortIcon(column.id)}
-              </div>
-            </TableHead>
-          )
-        ))}
+      <TableRow>
+        <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">📄 Teklif No</TableHead>
+        <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Müşteri Bilgileri</TableHead>
+        <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">📊 Durum</TableHead>
+        <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">👤 Satış Temsilcisi</TableHead>
+        <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">💰 Toplam Tutar</TableHead>
+        <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Oluşturma Tarihi</TableHead>
+        <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">⏰ Geçerlilik</TableHead>
+        <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
       </TableRow>
     </TableHeader>
   );

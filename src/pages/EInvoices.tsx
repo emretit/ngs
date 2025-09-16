@@ -1,26 +1,12 @@
-import React, { useState } from 'react';
-import Navbar from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Search, 
-  Plus, 
-  FileText, 
-  Calendar, 
-  Eye,
-  Edit,
-  CreditCard,
-  Trash2,
-  RefreshCw
-} from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
-import { tr } from 'date-fns/locale';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
-import { DateRange } from 'react-day-picker';
-import EInvoiceList from "@/components/purchase/e-invoices/EInvoiceList";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
+import EInvoiceHeader from "@/components/einvoice/EInvoiceHeader";
+import EInvoiceFilterBar from "@/components/einvoice/EInvoiceFilterBar";
+import EInvoiceContent from "@/components/einvoice/EInvoiceContent";
+import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
+import { useToast } from '@/hooks/use-toast';
+import EInvoiceProcessModal from "@/components/purchase/e-invoices/EInvoiceProcessModal";
 
 interface EInvoicesProps {
   isCollapsed: boolean;
@@ -28,55 +14,132 @@ interface EInvoicesProps {
 }
 
 const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Date range filter states - Default to current month
+  const getCurrentMonthRange = () => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    return {
+      start: startOfMonth.toISOString().split('T')[0],
+      end: endOfMonth.toISOString().split('T')[0]
+    };
+  };
+  
+  const currentMonth = getCurrentMonthRange();
+  const [startDate, setStartDate] = useState(currentMonth.start);
+  const [endDate, setEndDate] = useState(currentMonth.end);
+  
+  const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ startDate, endDate });
+  
+  // Filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
+  
+  // Refetch when date filters change
+  useEffect(() => {
+    refetch();
+  }, [startDate, endDate, refetch]);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
+  // Apply filters
+  const filteredInvoices = incomingInvoices.filter(invoice => {
+    const matchesSearch = !searchTerm || 
+      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.supplierTaxNumber.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'unanswered' && !invoice.isAnswered) ||
+      (statusFilter === 'pending' && invoice.status === 'pending') ||
+      (statusFilter === 'overdue' && invoice.status === 'overdue');
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleProcessInvoice = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setIsProcessModalOpen(true);
   };
 
-  const handleStatusFilter = (value: string) => {
-    setStatusFilter(value);
+  const handleRefresh = () => {
+    refetch();
+    toast({
+      title: "Yenilendi",
+      description: "E-fatura listesi güncellendi"
+    });
   };
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    const safeRange = range || { from: undefined, to: undefined };
-    setDateRange(safeRange);
+  const handleFilter = () => {
+    refetch();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}
-      >
-        <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-orange-400">
-                E-Faturalar
-              </h1>
-              <p className="text-gray-600">
-                Gelen işlenmemiş e-faturaların yönetimi
-              </p>
-            </div>
-            <Button className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-orange-500 to-orange-600">
-              <RefreshCw className="h-4 w-4" />
-              <span>E-Fatura Çek</span>
-            </Button>
-          </div>
+    <DefaultLayout 
+      isCollapsed={isCollapsed} 
+      setIsCollapsed={setIsCollapsed}
+      title="E-Faturalar"
+      subtitle="Gelen işlenmemiş e-faturaların yönetimi"
+    >
+      <div className="space-y-2">
+        <EInvoiceHeader 
+          totalCount={filteredInvoices.length}
+          onRefresh={handleRefresh}
+          isRefreshing={isLoading}
+        />
+        
+        <EInvoiceFilterBar 
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          onFilter={handleFilter}
+          isFiltering={isLoading}
+        />
+        
+        <EInvoiceContent
+          invoices={filteredInvoices}
+          isLoading={isLoading}
+          onProcessInvoice={handleProcessInvoice}
+          onRefresh={handleRefresh}
+          searchTerm={searchTerm}
+          statusFilter={statusFilter}
+          dateFilter={dateFilter}
+        />
+      </div>
 
-          <div className="bg-white rounded-lg border">
-            <div className="p-6">
-              <EInvoiceList />
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+      {/* Process Modal */}
+      {selectedInvoice && (
+        <EInvoiceProcessModal
+          isOpen={isProcessModalOpen}
+          onClose={() => {
+            setIsProcessModalOpen(false);
+            setSelectedInvoice(null);
+          }}
+          invoice={selectedInvoice}
+          onProcessComplete={() => {
+            refetch();
+            setIsProcessModalOpen(false);
+            setSelectedInvoice(null);
+            toast({
+              title: "Başarılı",
+              description: "E-fatura başarıyla işlendi"
+            });
+          }}
+        />
+      )}
+    </DefaultLayout>
   );
 };
 

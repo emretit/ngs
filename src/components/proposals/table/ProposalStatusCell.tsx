@@ -23,12 +23,12 @@ export const ProposalStatusCell = ({
   onStatusChange 
 }: ProposalStatusCellProps) => {
   return (
-    <TableCell onClick={(e) => e.stopPropagation()}>
+    <div onClick={(e) => e.stopPropagation()}>
       <Select
         value={status}
         onValueChange={(value) => onStatusChange(proposalId, value as ProposalStatus)}
       >
-        <SelectTrigger className="w-[140px] h-9 border-none bg-transparent p-0 focus:ring-0">
+        <SelectTrigger className="w-[120px] h-7 border-none bg-transparent p-0 focus:ring-0 text-xs">
           <SelectValue>
             <StatusBadge status={status} />
           </SelectValue>
@@ -41,6 +41,6 @@ export const ProposalStatusCell = ({
           ))}
         </SelectContent>
       </Select>
-    </TableCell>
+    </div>
   );
 };

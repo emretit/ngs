@@ -142,11 +142,11 @@ const OpportunitiesTable = ({
             </TableRow>
         ) : (
           filteredOpportunities.map((opportunity) => (
-            <TableRow key={opportunity.id} onClick={() => onSelectOpportunity(opportunity)} className="cursor-pointer hover:bg-blue-50 h-8">
-              <TableCell className="font-medium py-1 px-2 text-xs">{shortenText(opportunity.title, 35)}</TableCell>
-              <TableCell className="py-1 px-2">
+            <TableRow key={opportunity.id} onClick={() => onSelectOpportunity(opportunity)} className="cursor-pointer hover:bg-blue-50 h-4">
+              <TableCell className="font-medium py-0 px-2 text-xs">{shortenText(opportunity.title, 35)}</TableCell>
+              <TableCell className="py-0 px-2">
                 {opportunity.customer ? (
-                  <div className="flex flex-col space-y-0.5">
+                  <div className="flex flex-col space-y-0">
                     <span className="text-xs font-medium" title={opportunity.customer.name}>
                       {getShortenedCompanyName(opportunity.customer.name)}
                     </span>
@@ -160,17 +160,17 @@ const OpportunitiesTable = ({
                   <span className="text-gray-500 text-xs">-</span>
                 )}
               </TableCell>
-              <TableCell className="text-center py-1 px-1">
+              <TableCell className="text-center py-0 px-1">
                 <OpportunityStatusCell 
                   status={opportunity.status}
                   opportunityId={opportunity.id}
                   onStatusChange={updateOpportunityStatus}
                 />
               </TableCell>
-              <TableCell className="text-center py-1 px-1 text-xs font-medium">
+              <TableCell className="text-center py-0 px-1 text-xs font-medium">
                 {opportunity.value ? formatCurrency(opportunity.value, opportunity.currency || 'TRY') : '-'}
               </TableCell>
-              <TableCell className="text-center py-1 px-0.5">
+              <TableCell className="text-center py-0 px-0.5">
                 {opportunity.currency ? (
                   <span className="text-xs font-bold text-blue-700">
                     {opportunity.currency === 'TRY' ? '₺' : 
@@ -183,7 +183,7 @@ const OpportunitiesTable = ({
                   <span className="text-gray-500 text-xs">-</span>
                 )}
               </TableCell>
-              <TableCell className="text-center py-1 px-1">
+              <TableCell className="text-center py-0 px-1">
                 <Badge 
                   variant="outline" 
                   className={`text-xs px-1.5 py-0.5 ${
@@ -199,10 +199,10 @@ const OpportunitiesTable = ({
                   {!opportunity.priority && '-'}
                 </Badge>
               </TableCell>
-              <TableCell className="py-1 px-1">
+              <TableCell className="py-0 px-1">
                 {opportunity.employee ? (
-                  <div className="flex items-center space-x-1">
-                    <Avatar className="h-4 w-4">
+                  <div className="flex items-center space-x-0.5">
+                    <Avatar className="h-3.5 w-3.5">
                       <AvatarFallback className="bg-primary/10 text-primary text-xs">
                         {opportunity.employee.first_name?.[0]}
                         {opportunity.employee.last_name?.[0]}
@@ -216,22 +216,22 @@ const OpportunitiesTable = ({
                   <span className="text-muted-foreground text-xs">-</span>
                 )}
               </TableCell>
-              <TableCell className="text-center py-1 px-1 text-xs">
+              <TableCell className="text-center py-0 px-1 text-xs">
                 {opportunity.expected_close_date ? (
                   format(new Date(opportunity.expected_close_date), "dd MMM yyyy", { locale: tr })
                 ) : (
                   <span className="text-muted-foreground">-</span>
                 )}
               </TableCell>
-              <TableCell className="text-center py-1 px-1 text-xs">
+              <TableCell className="text-center py-0 px-1 text-xs">
                 {opportunity.created_at ? (
                   format(new Date(opportunity.created_at), "dd MMM yyyy", { locale: tr })
                 ) : (
                   <span className="text-muted-foreground">-</span>
                 )}
               </TableCell>
-              <TableCell className="py-1 px-1">
-                <div className="flex justify-end space-x-1">
+              <TableCell className="py-0 px-1">
+                <div className="flex justify-end space-x-0.5">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -239,17 +239,17 @@ const OpportunitiesTable = ({
                       e.stopPropagation();
                       onSelectOpportunity(opportunity);
                     }}
-                    className="h-6 w-6 hover:bg-blue-100"
+                    className="h-4 w-4 hover:bg-blue-100"
                   >
-                    <Eye className="h-3 w-3" />
+                    <Eye className="h-2.5 w-2.5" />
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="icon"
                     onClick={(e) => e.stopPropagation()}
-                    className="h-6 w-6 hover:bg-gray-100"
+                    className="h-4 w-4 hover:bg-gray-100"
                   >
-                    <MoreHorizontal className="h-3 w-3" />
+                    <MoreHorizontal className="h-2.5 w-2.5" />
                   </Button>
                 </div>
               </TableCell>

@@ -195,37 +195,71 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect }: ProposalTable
   // The filtering is handled at the parent level with infinite scroll
   const filteredProposals = sortedProposals;
 
+  if (isLoading) {
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">📄 Teklif No</TableHead>
+            <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Müşteri Bilgileri</TableHead>
+            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">📊 Durum</TableHead>
+            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">👤 Satış Temsilcisi</TableHead>
+            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">💰 Toplam Tutar</TableHead>
+            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Oluşturma Tarihi</TableHead>
+            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">⏰ Geçerlilik</TableHead>
+            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index} className="h-8">
+              <TableCell className="py-2 px-3"><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
+              <TableCell className="py-2 px-3"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+              <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+              <TableCell className="py-2 px-2"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+              <TableCell className="py-2 px-2"><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
+              <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+              <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+              <TableCell className="py-2 px-2"><div className="h-6 w-6 bg-gray-200 rounded animate-pulse" /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  }
+
   return (
-    <div className="bg-gradient-to-br from-card via-muted/20 to-background rounded-2xl shadow-2xl border border-border/10 backdrop-blur-xl relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 opacity-50"></div>
-      <div className="relative z-10 p-6">
-      <div className="overflow-x-auto">
-        <Table className="border-collapse">
-          <ProposalTableHeader 
-            columns={columns} 
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-          />
-          <TableBody>
-            {filteredProposals.map((proposal, index) => (
-              <ProposalTableRow
-                key={proposal.id}
-                proposal={proposal}
-                index={index}
-                formatMoney={formatMoney}
-                onSelect={onProposalSelect}
-                onStatusChange={handleStatusUpdate}
-                onDelete={handleDeleteProposal}
-                templates={templates}
-                onPdfPrint={handlePdfPrint}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      </div>
-    </div>
+    <Table>
+      <ProposalTableHeader 
+        columns={columns} 
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+      />
+      <TableBody>
+        {filteredProposals.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+              Bu kriterlere uygun teklif bulunamadı
+            </TableCell>
+          </TableRow>
+        ) : (
+          filteredProposals.map((proposal, index) => (
+            <ProposalTableRow
+              key={proposal.id}
+              proposal={proposal}
+              index={index}
+              formatMoney={formatMoney}
+              onSelect={onProposalSelect}
+              onStatusChange={handleStatusUpdate}
+              onDelete={handleDeleteProposal}
+              templates={templates}
+              onPdfPrint={handlePdfPrint}
+            />
+          ))
+        )}
+      </TableBody>
+    </Table>
   );
 };
 

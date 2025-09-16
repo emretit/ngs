@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/back-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CalendarDays, Plus, Trash2, Eye, FileDown, ArrowLeft, Calculator, Check, ChevronsUpDown, Edit } from "lucide-react";
+import { CalendarDays, Plus, Trash2, Eye, FileDown, Calculator, Check, ChevronsUpDown, Edit, FileText, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
 import { proposalStatusLabels, proposalStatusColors, ProposalStatus } from "@/types/proposal";
@@ -399,53 +400,70 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
     <DefaultLayout 
       isCollapsed={isCollapsed} 
       setIsCollapsed={setIsCollapsed}
-      title="Yeni Teklif"
-      subtitle="Hızlı ve kolay teklif oluşturma"
+      title="World-Class Teklif Oluşturma"
+      subtitle="Enterprise-grade B2B teklif sistemi"
     >
-      {/* Header Actions */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate("/proposals")}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Geri
-          </Button>
-        </div>
-        
-        <div className="flex items-center gap-2">
-
-          <Button 
-            variant="outline" 
-            onClick={() => handleSave('draft')}
-            disabled={saving}
-            size="sm"
-          >
-            Taslak Kaydet
-          </Button>
-          <Button 
-            onClick={() => handleSave('sent')}
-            disabled={saving}
-            className="gap-2"
-            size="sm"
-          >
-            <Calculator className="h-4 w-4" />
-            {saving ? "Kaydediliyor..." : "Teklifi Kaydet"}
-          </Button>
+      {/* Enhanced Sticky Header with Progress */}
+      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
+        <div className="flex items-center justify-between p-3 pl-12">
+          <div className="flex items-center gap-3">
+            {/* Simple Back Button */}
+            <BackButton 
+              onClick={() => navigate("/proposals")}
+              variant="ghost"
+              size="sm"
+            >
+              Teklifler
+            </BackButton>
+            
+            {/* Simple Title Section with Icon */}
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <div className="space-y-0.5">
+                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  Yeni Teklif Oluştur
+                </h1>
+                <p className="text-xs text-muted-foreground/70">
+                  Hızlı ve kolay teklif oluşturma
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => handleSave('draft')}
+              disabled={saving}
+              className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-50/50 hover:text-blue-700 hover:border-blue-200 transition-all duration-200 hover:shadow-sm"
+            >
+              <span className="font-medium">Taslak Kaydet</span>
+            </Button>
+            <Button 
+              onClick={() => handleSave('sent')}
+              disabled={saving}
+              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+            >
+              <Calculator className="h-4 w-4" />
+              <span>{saving ? "Kaydediliyor..." : "Teklifi Kaydet"}</span>
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Top Row - Customer & Proposal Details Combined */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Customer Information */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Müşteri Bilgileri</CardTitle>
+          <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                </div>
+                Müşteri Bilgileri
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-0">
               <div className="grid grid-cols-1 gap-3">
@@ -565,9 +583,14 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
           </Card>
 
           {/* Offer Details */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Teklif Detayları</CardTitle>
+          <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
+                  <CalendarDays className="h-4 w-4 text-green-600" />
+                </div>
+                Teklif Detayları
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -670,13 +693,18 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         {/* Products/Services Table - Full Width */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
           <div className="xl:col-span-3">
-            <Card>
-              <CardHeader className="pb-3">
+            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold">Ürün/Hizmet Listesi</CardTitle>
-                  <Button onClick={addItem} size="sm" className="gap-2">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
+                      <Plus className="h-4 w-4 text-purple-600" />
+                    </div>
+                    Ürün/Hizmet Listesi
+                  </CardTitle>
+                  <Button onClick={addItem} size="sm" className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:shadow-sm transition-all duration-200">
                     <Plus className="h-4 w-4" />
-                    Satır Ekle
+                    <span className="font-medium">Satır Ekle</span>
                   </Button>
                 </div>
               </CardHeader>
@@ -783,10 +811,12 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
 
           {/* Financial Summary - Right Side */}
           <div className="xl:col-span-1">
-            <Card className="sticky top-6">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Calculator className="h-4 w-4" />
+            <Card className="sticky top-6 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-orange-50 to-orange-50/50 border border-orange-200/50">
+                    <Calculator className="h-4 w-4 text-orange-600" />
+                  </div>
                   Finansal Özet
                 </CardTitle>
               </CardHeader>
@@ -867,8 +897,16 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         </div>
 
         {/* Terms & Conditions - Full Width */}
-        <Card>
-          <CardContent className="p-4">
+        <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-50/50 border border-indigo-200/50">
+                <Check className="h-4 w-4 text-indigo-600" />
+              </div>
+              Şartlar ve Koşullar
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
             <ProposalFormTerms
               paymentTerms={formData.payment_terms}
               deliveryTerms={formData.delivery_terms}

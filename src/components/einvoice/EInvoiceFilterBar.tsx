@@ -7,8 +7,6 @@ import { DatePicker } from "@/components/ui/date-picker";
 interface EInvoiceFilterBarProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
-  statusFilter: string;
-  setStatusFilter: (value: string) => void;
   dateFilter: string;
   setDateFilter: (value: string) => void;
   typeFilter: string;
@@ -24,8 +22,6 @@ interface EInvoiceFilterBarProps {
 const EInvoiceFilterBar = ({
   searchTerm,
   setSearchTerm,
-  statusFilter,
-  setStatusFilter,
   dateFilter,
   setDateFilter,
   typeFilter,
@@ -88,18 +84,6 @@ const EInvoiceFilterBar = ({
           />
         </div>
         
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <FileText className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="Durum Filtresi" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tüm Durumlar</SelectItem>
-            <SelectItem value="unanswered">Cevaplanmamış</SelectItem>
-            <SelectItem value="pending">Beklemede</SelectItem>
-            <SelectItem value="overdue">Gecikmiş</SelectItem>
-          </SelectContent>
-        </Select>
 
         <Select value={dateFilter} onValueChange={setDateFilter}>
           <SelectTrigger className="w-[150px]">

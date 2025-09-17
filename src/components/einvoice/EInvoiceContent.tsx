@@ -32,7 +32,6 @@ interface EInvoiceContentProps {
   onProcessInvoice: (invoice: any) => void;
   onRefresh: () => void;
   searchTerm: string;
-  statusFilter: string;
   dateFilter: string;
 }
 
@@ -42,26 +41,13 @@ const EInvoiceContent = ({
   onProcessInvoice,
   onRefresh,
   searchTerm,
-  statusFilter,
   dateFilter
 }: EInvoiceContentProps) => {
   const { toast } = useToast();
 
   // Calculate summary statistics
   const totalInvoices = invoices.length;
-  const unansweredInvoices = invoices.filter(inv => !inv.isAnswered).length;
-  const overdueInvoices = invoices.filter(inv => inv.status === 'overdue').length;
   const totalAmount = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
-
-  const getStatusBadge = (invoice: any) => {
-    if (invoice.isAnswered) {
-      return <Badge className="bg-green-100 text-green-800">Cevaplanmış</Badge>;
-    } else if (invoice.status === 'overdue') {
-      return <Badge className="bg-red-100 text-red-800">Gecikmiş</Badge>;
-    } else {
-      return <Badge className="bg-orange-100 text-orange-800">Beklemede</Badge>;
-    }
-  };
 
   const getInvoiceTypeBadge = (invoiceType: string) => {
     switch (invoiceType) {
@@ -127,33 +113,13 @@ const EInvoiceContent = ({
   return (
     <div className="space-y-4">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardContent className="flex items-center p-4">
             <FileText className="h-8 w-8 text-blue-600 mr-3" />
             <div>
               <p className="text-sm font-medium text-blue-600">Toplam</p>
               <p className="text-lg font-bold text-blue-900">{totalInvoices}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center p-4">
-            <Clock className="h-8 w-8 text-orange-600 mr-3" />
-            <div>
-              <p className="text-sm font-medium text-orange-600">Cevaplanmamış</p>
-              <p className="text-lg font-bold text-orange-900">{unansweredInvoices}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center p-4">
-            <AlertTriangle className="h-8 w-8 text-red-600 mr-3" />
-            <div>
-              <p className="text-sm font-medium text-red-600">Gecikmiş</p>
-              <p className="text-lg font-bold text-red-900">{overdueInvoices}</p>
             </div>
           </CardContent>
         </Card>
@@ -186,7 +152,6 @@ const EInvoiceContent = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📋 Durum</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📄 Fatura No</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🏷️ Fatura Tipi</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📋 Fatura Senaryosu</TableHead>
@@ -201,9 +166,6 @@ const EInvoiceContent = ({
               <TableBody>
                 {invoices.map((invoice) => (
                   <TableRow key={invoice.id} className="hover:bg-blue-50 h-8">
-                    <TableCell className="py-1 px-2">
-                      {getStatusBadge(invoice)}
-                    </TableCell>
                     <TableCell className="font-medium py-1 px-2 text-xs">
                       <span className="text-blue-600">{invoice.invoiceNumber}</span>
                     </TableCell>

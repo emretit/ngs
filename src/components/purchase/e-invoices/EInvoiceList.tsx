@@ -47,7 +47,6 @@ export default function EInvoiceList() {
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
@@ -67,29 +66,13 @@ export default function EInvoiceList() {
       invoice.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.supplierTaxNumber.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'unanswered' && !invoice.isAnswered) ||
-      (statusFilter === 'pending' && invoice.status === 'pending') ||
-      (statusFilter === 'overdue' && invoice.status === 'overdue');
-
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   // Calculate summary statistics
   const totalInvoices = filteredInvoices.length;
-  const unansweredInvoices = filteredInvoices.filter(inv => !inv.isAnswered).length;
-  const overdueInvoices = filteredInvoices.filter(inv => inv.status === 'overdue').length;
   const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
 
-  const getStatusBadge = (invoice: any) => {
-    if (invoice.isAnswered) {
-      return <Badge className="bg-green-100 text-green-800">Cevaplanmış</Badge>;
-    } else if (invoice.status === 'overdue') {
-      return <Badge className="bg-red-100 text-red-800">Gecikmiş</Badge>;
-    } else {
-      return <Badge className="bg-orange-100 text-orange-800">Beklemede</Badge>;
-    }
-  };
 
   const getInvoiceTypeBadge = (invoiceType: string) => {
     switch (invoiceType) {
@@ -225,17 +208,6 @@ export default function EInvoiceList() {
                 </div>
               </div>
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Durum filtresi" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tüm Durumlar</SelectItem>
-                  <SelectItem value="unanswered">Cevaplanmamış</SelectItem>
-                  <SelectItem value="pending">Beklemede</SelectItem>
-                  <SelectItem value="overdue">Gecikmiş</SelectItem>
-                </SelectContent>
-              </Select>
 
               <Select value={dateFilter} onValueChange={setDateFilter}>
                 <SelectTrigger className="w-[150px]">
@@ -263,25 +235,6 @@ export default function EInvoiceList() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="flex items-center p-4">
-                <Clock className="h-8 w-8 text-orange-600 mr-3" />
-                <div>
-                  <p className="text-sm font-medium text-orange-600">Cevaplanmamış</p>
-                  <p className="text-lg font-bold text-orange-900">{unansweredInvoices}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="flex items-center p-4">
-                <AlertTriangle className="h-8 w-8 text-red-600 mr-3" />
-                <div>
-                  <p className="text-sm font-medium text-red-600">Gecikmiş</p>
-                  <p className="text-lg font-bold text-red-900">{overdueInvoices}</p>
-                </div>
-              </CardContent>
-            </Card>
 
             <Card>
               <CardContent className="flex items-center p-4">
@@ -318,7 +271,6 @@ export default function EInvoiceList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Durum</TableHead>
                   <TableHead>Fatura No</TableHead>
                   <TableHead>Fatura Tipi</TableHead>
                   <TableHead>Fatura Senaryosu</TableHead>
@@ -333,9 +285,6 @@ export default function EInvoiceList() {
               <TableBody>
                 {filteredInvoices.map((invoice) => (
                   <TableRow key={invoice.id} className="hover:bg-muted/50">
-                    <TableCell>
-                      {getStatusBadge(invoice)}
-                    </TableCell>
                     <TableCell className="font-medium">
                       {invoice.invoiceNumber}
                     </TableCell>

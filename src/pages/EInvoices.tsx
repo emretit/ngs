@@ -37,7 +37,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
@@ -55,11 +54,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       invoice.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.supplierTaxNumber.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'unanswered' && !invoice.isAnswered) ||
-      (statusFilter === 'pending' && invoice.status === 'pending') ||
-      (statusFilter === 'overdue' && invoice.status === 'overdue');
-
     const matchesType = typeFilter === 'all' || 
       (typeFilter === 'TEMELFATURA' && invoice.invoiceProfile === 'TEMELFATURA') ||
       (typeFilter === 'TICARIFATURA' && invoice.invoiceProfile === 'TICARIFATURA') ||
@@ -69,7 +63,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       (typeFilter === 'KAMU' && invoice.invoiceProfile === 'KAMU') ||
       (typeFilter === 'HKS' && invoice.invoiceProfile === 'HKS');
 
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesType;
   });
 
   const handleProcessInvoice = (invoice: any) => {
@@ -106,8 +100,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
         <EInvoiceFilterBar 
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
           dateFilter={dateFilter}
           setDateFilter={setDateFilter}
           typeFilter={typeFilter}
@@ -126,7 +118,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           onProcessInvoice={handleProcessInvoice}
           onRefresh={handleRefresh}
           searchTerm={searchTerm}
-          statusFilter={statusFilter}
           dateFilter={dateFilter}
         />
       </div>

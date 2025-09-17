@@ -11,6 +11,8 @@ interface EInvoiceFilterBarProps {
   setStatusFilter: (value: string) => void;
   dateFilter: string;
   setDateFilter: (value: string) => void;
+  typeFilter: string;
+  setTypeFilter: (value: string) => void;
   startDate: string;
   setStartDate: (value: string) => void;
   endDate: string;
@@ -26,6 +28,8 @@ const EInvoiceFilterBar = ({
   setStatusFilter,
   dateFilter,
   setDateFilter,
+  typeFilter,
+  setTypeFilter,
   startDate,
   setStartDate,
   endDate,
@@ -107,6 +111,23 @@ const EInvoiceFilterBar = ({
             <SelectItem value="today">Bugün</SelectItem>
             <SelectItem value="week">Bu Hafta</SelectItem>
             <SelectItem value="month">Bu Ay</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[180px]">
+            <FileText className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Fatura Türü" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm Türler</SelectItem>
+            <SelectItem value="TEMELFATURA">Temel Fatura</SelectItem>
+            <SelectItem value="TICARIFATURA">Ticari Fatura</SelectItem>
+            <SelectItem value="IHRACAT">İhracat</SelectItem>
+            <SelectItem value="YOLCUBERABERFATURA">Yolcu Beraber</SelectItem>
+            <SelectItem value="EARSIVFATURA">E-Arşiv</SelectItem>
+            <SelectItem value="KAMU">Kamu</SelectItem>
+            <SelectItem value="HKS">HKS</SelectItem>
           </SelectContent>
         </Select>
       </div>

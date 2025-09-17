@@ -91,6 +91,54 @@ export default function EInvoiceList() {
     }
   };
 
+  const getInvoiceTypeBadge = (invoiceType: string) => {
+    switch (invoiceType) {
+      case 'SATIS':
+        return <Badge className="bg-green-100 text-green-800">Satış</Badge>;
+      case 'IADE':
+        return <Badge className="bg-red-100 text-red-800">İade</Badge>;
+      case 'OZELMATRAH':
+        return <Badge className="bg-blue-100 text-blue-800">Özel Matrah</Badge>;
+      case 'TEVKIFAT_IADE':
+        return <Badge className="bg-blue-100 text-blue-800">Tevkifat İade</Badge>;
+      case 'KONAKLAMA':
+        return <Badge className="bg-purple-100 text-purple-800">Konaklama</Badge>;
+      case 'SGK':
+        return <Badge className="bg-blue-100 text-blue-800">SGK</Badge>;
+      case 'IHRAC_KAYITLI':
+        return <Badge className="bg-blue-100 text-blue-800">İhraç Kayıtlı</Badge>;
+      case 'ISTISNA':
+        return <Badge className="bg-blue-100 text-blue-800">İstisna</Badge>;
+      case 'TEMEL':
+        return <Badge className="bg-gray-100 text-gray-800">Temel</Badge>;
+      case 'TICARI':
+        return <Badge className="bg-green-100 text-green-800">Ticari</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800">{invoiceType || 'Bilinmiyor'}</Badge>;
+    }
+  };
+
+  const getInvoiceProfileBadge = (invoiceProfile: string) => {
+    switch (invoiceProfile) {
+      case 'TEMELFATURA':
+        return <Badge variant="outline" className="border-blue-500 text-blue-700">Temel Fatura</Badge>;
+      case 'TICARIFATURA':
+        return <Badge variant="outline" className="border-green-500 text-green-700">Ticari Fatura</Badge>;
+      case 'IHRACAT':
+        return <Badge variant="outline" className="border-purple-500 text-purple-700">İhracat</Badge>;
+      case 'YOLCUBERABERFATURA':
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-700">Yolcu Beraber</Badge>;
+      case 'EARSIVFATURA':
+        return <Badge variant="outline" className="border-indigo-500 text-indigo-700">E-Arşiv</Badge>;
+      case 'KAMU':
+        return <Badge variant="outline" className="border-red-500 text-red-700">Kamu</Badge>;
+      case 'HKS':
+        return <Badge variant="outline" className="border-gray-500 text-gray-700">HKS</Badge>;
+      default:
+        return <Badge variant="outline" className="border-gray-500 text-gray-700">{invoiceProfile || 'Bilinmiyor'}</Badge>;
+    }
+  };
+
   const handleProcessInvoice = (invoice: any) => {
     setSelectedInvoice(invoice);
     setIsProcessModalOpen(true);
@@ -272,10 +320,11 @@ export default function EInvoiceList() {
                 <TableRow>
                   <TableHead>Durum</TableHead>
                   <TableHead>Fatura No</TableHead>
+                  <TableHead>Fatura Tipi</TableHead>
+                  <TableHead>Fatura Senaryosu</TableHead>
                   <TableHead>Tedarikçi</TableHead>
                   <TableHead>Vergi No</TableHead>
                   <TableHead>Fatura Tarihi</TableHead>
-                  <TableHead>Vade Tarihi</TableHead>
                   <TableHead className="text-right">Tutar</TableHead>
                   <TableHead>Para Birimi</TableHead>
                   <TableHead className="text-center">İşlemler</TableHead>
@@ -289,6 +338,12 @@ export default function EInvoiceList() {
                     </TableCell>
                     <TableCell className="font-medium">
                       {invoice.invoiceNumber}
+                    </TableCell>
+                    <TableCell>
+                      {getInvoiceTypeBadge(invoice.invoiceType)}
+                    </TableCell>
+                    <TableCell>
+                      {getInvoiceProfileBadge(invoice.invoiceProfile)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">

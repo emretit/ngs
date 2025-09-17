@@ -39,6 +39,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
   
@@ -59,7 +60,16 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       (statusFilter === 'pending' && invoice.status === 'pending') ||
       (statusFilter === 'overdue' && invoice.status === 'overdue');
 
-    return matchesSearch && matchesStatus;
+    const matchesType = typeFilter === 'all' || 
+      (typeFilter === 'TEMELFATURA' && invoice.invoiceProfile === 'TEMELFATURA') ||
+      (typeFilter === 'TICARIFATURA' && invoice.invoiceProfile === 'TICARIFATURA') ||
+      (typeFilter === 'IHRACAT' && invoice.invoiceProfile === 'IHRACAT') ||
+      (typeFilter === 'YOLCUBERABERFATURA' && invoice.invoiceProfile === 'YOLCUBERABERFATURA') ||
+      (typeFilter === 'EARSIVFATURA' && invoice.invoiceProfile === 'EARSIVFATURA') ||
+      (typeFilter === 'KAMU' && invoice.invoiceProfile === 'KAMU') ||
+      (typeFilter === 'HKS' && invoice.invoiceProfile === 'HKS');
+
+    return matchesSearch && matchesStatus && matchesType;
   });
 
   const handleProcessInvoice = (invoice: any) => {
@@ -100,6 +110,8 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           setStatusFilter={setStatusFilter}
           dateFilter={dateFilter}
           setDateFilter={setDateFilter}
+          typeFilter={typeFilter}
+          setTypeFilter={setTypeFilter}
           startDate={startDate}
           setStartDate={setStartDate}
           endDate={endDate}

@@ -97,7 +97,8 @@ serve(async (req) => {
         PageSize: '100', // Increased from 50 to 100
         SortColumn: 'IssueDate',
         SortType: 'DESC',
-        IsArchive: 'false'
+        IsArchive: 'false',
+        IsTransfer: 'false' // Sadece aktarılmamış (işlenmemiş) faturaları getir
       });
       
       // Add date filters - default to current month if not provided (max 6 months per Nilvera API)
@@ -112,6 +113,7 @@ serve(async (req) => {
       queryParams.append('EndDate', endDate);
       
       console.log('📅 Date filter (current month):', { startDate, endDate });
+      console.log('⚠️  Sadece aktarılmamış (işlenmemiş) faturalar getiriliyor (IsTransfer=false)');
       
       const apiUrl = `https://apitest.nilvera.com/einvoice/Purchase?${queryParams.toString()}`;
       console.log('🌐 Endpoint:', apiUrl);
@@ -153,6 +155,8 @@ serve(async (req) => {
       // Only log first invoice to avoid huge console output
       if (nilveraData.Content?.length > 0) {
         console.log('📄 First invoice sample:', nilveraData.Content[0]);
+        console.log('🔍 IsTransfer field:', nilveraData.Content[0].IsTransfer);
+        console.log('🔍 Available fields:', Object.keys(nilveraData.Content[0]));
       }
 
       // Transform Nilvera data to our format

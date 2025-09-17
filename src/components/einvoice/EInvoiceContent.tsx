@@ -63,6 +63,54 @@ const EInvoiceContent = ({
     }
   };
 
+  const getInvoiceTypeBadge = (invoiceType: string) => {
+    switch (invoiceType) {
+      case 'SATIS':
+        return <Badge className="bg-green-100 text-green-800 text-xs">Satış</Badge>;
+      case 'IADE':
+        return <Badge className="bg-red-100 text-red-800 text-xs">İade</Badge>;
+      case 'OZELMATRAH':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">Özel Matrah</Badge>;
+      case 'TEVKIFAT_IADE':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">Tevkifat İade</Badge>;
+      case 'KONAKLAMA':
+        return <Badge className="bg-purple-100 text-purple-800 text-xs">Konaklama</Badge>;
+      case 'SGK':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">SGK</Badge>;
+      case 'IHRAC_KAYITLI':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">İhraç Kayıtlı</Badge>;
+      case 'ISTISNA':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs">İstisna</Badge>;
+      case 'TEMEL':
+        return <Badge className="bg-gray-100 text-gray-800 text-xs">Temel</Badge>;
+      case 'TICARI':
+        return <Badge className="bg-green-100 text-green-800 text-xs">Ticari</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 text-xs">{invoiceType || 'Bilinmiyor'}</Badge>;
+    }
+  };
+
+  const getInvoiceProfileBadge = (invoiceProfile: string) => {
+    switch (invoiceProfile) {
+      case 'TEMELFATURA':
+        return <Badge variant="outline" className="border-blue-500 text-blue-700 text-xs">Temel Fatura</Badge>;
+      case 'TICARIFATURA':
+        return <Badge variant="outline" className="border-green-500 text-green-700 text-xs">Ticari Fatura</Badge>;
+      case 'IHRACAT':
+        return <Badge variant="outline" className="border-purple-500 text-purple-700 text-xs">İhracat</Badge>;
+      case 'YOLCUBERABERFATURA':
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-700 text-xs">Yolcu Beraber</Badge>;
+      case 'EARSIVFATURA':
+        return <Badge variant="outline" className="border-indigo-500 text-indigo-700 text-xs">E-Arşiv</Badge>;
+      case 'KAMU':
+        return <Badge variant="outline" className="border-red-500 text-red-700 text-xs">Kamu</Badge>;
+      case 'HKS':
+        return <Badge variant="outline" className="border-gray-500 text-gray-700 text-xs">HKS</Badge>;
+      default:
+        return <Badge variant="outline" className="border-gray-500 text-gray-700 text-xs">{invoiceProfile || 'Bilinmiyor'}</Badge>;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -140,10 +188,11 @@ const EInvoiceContent = ({
                 <TableRow>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📋 Durum</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📄 Fatura No</TableHead>
+                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🏷️ Fatura Tipi</TableHead>
+                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📋 Fatura Senaryosu</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Tedarikçi</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🔢 Vergi No</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Fatura Tarihi</TableHead>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Vade Tarihi</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-right">💰 Tutar</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">💱 Para Birimi</TableHead>
                   <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">⚙️ İşlemler</TableHead>
@@ -159,6 +208,12 @@ const EInvoiceContent = ({
                       <span className="text-blue-600">{invoice.invoiceNumber}</span>
                     </TableCell>
                     <TableCell className="py-1 px-2">
+                      {getInvoiceTypeBadge(invoice.invoiceType)}
+                    </TableCell>
+                    <TableCell className="py-1 px-2">
+                      {getInvoiceProfileBadge(invoice.invoiceProfile)}
+                    </TableCell>
+                    <TableCell className="py-1 px-2">
                       <div className="flex items-center">
                         <Building className="h-3 w-3 text-muted-foreground mr-2" />
                         <span className="text-xs">{invoice.supplierName}</span>
@@ -172,16 +227,6 @@ const EInvoiceContent = ({
                         <Calendar className="h-3 w-3 text-muted-foreground mr-1" />
                         {format(new Date(invoice.invoiceDate), 'dd MMM yyyy', { locale: tr })}
                       </div>
-                    </TableCell>
-                    <TableCell className="text-center py-1 px-1 text-xs">
-                      {invoice.dueDate ? (
-                        <div className="flex items-center justify-center">
-                          <Calendar className="h-3 w-3 text-muted-foreground mr-1" />
-                          {format(new Date(invoice.dueDate), 'dd MMM yyyy', { locale: tr })}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
                     </TableCell>
                     <TableCell className="text-right font-semibold py-1 px-1 text-xs">
                       {invoice.totalAmount.toLocaleString('tr-TR', {

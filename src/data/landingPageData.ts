@@ -52,18 +52,19 @@ export const screenshots = [
 
 export const pricingPlans = [
   {
-    name: "Starter",
-    price: "₺299",
-    description: "Küçük işletmeler ve yeni başlayanlar için ideal.",
+    name: "Ücretsiz",
+    price: "₺0",
+    description: "5 kullanıcıya kadar tamamen ücretsiz. E-fatura dahil!",
     features: [
       "5 kullanıcıya kadar",
+      "E-fatura entegrasyonu",
       "Temel CRM özellikleri",
       "Müşteri yönetimi",
       "Basit raporlama",
       "E-posta desteği"
     ],
-    buttonText: "Ücretsiz Deneyin",
-    featured: false
+    buttonText: "Ücretsiz Başla",
+    featured: true
   },
   {
     name: "Business",
@@ -71,14 +72,14 @@ export const pricingPlans = [
     description: "Büyüyen işletmeler için kapsamlı özellikler.",
     features: [
       "20 kullanıcıya kadar",
-      "Gelişmiş CRM özellikleri",
+      "Gelişmiş e-fatura özellikleri",
       "Envanter yönetimi",
       "Finansal raporlama",
       "Öncelikli destek",
       "API erişimi"
     ],
     buttonText: "Ücretsiz Deneyin",
-    featured: true
+    featured: false
   },
   {
     name: "Enterprise",
@@ -99,48 +100,48 @@ export const pricingPlans = [
 
 export const testimonials = [
   {
-    quote: "Bu platform sayesinde satış süreçlerimizi %30 hızlandırdık ve müşteri memnuniyetimiz arttı.",
+    quote: "Modern arayüzü ve kullanım kolaylığı gerçekten etkileyici! İşletmemizi dijitalleştirdik.",
     name: "Ahmet Yılmaz",
-    role: "Satış Direktörü, ABC Teknoloji",
+    role: "Genel Müdür, ABC Teknoloji",
     avatar: "https://randomuser.me/api/portraits/men/1.jpg",
   },
   {
-    quote: "Stok yönetimimiz çok daha verimli hale geldi. Artık stok eksikliği yaşamıyoruz.",
-    name: "Ayşe Demir",
-    role: "Operasyon Müdürü, XYZ Üretim",
+    quote: "8 modülün tek platformda olması iş akışlarımızı çok hızlandırdı. Harika çözüm!",
+    name: "Zeynep Kara",
+    role: "Operasyon Müdürü, İnovasyon Ltd.",
     avatar: "https://randomuser.me/api/portraits/women/2.jpg",
   },
   {
-    quote: "Finansal raporlama artık dakikalar içinde tamamlanıyor, eskiden günler alıyordu.",
-    name: "Mehmet Kaya",
-    role: "Finans Müdürü, 123 Holding",
+    quote: "Kullanıcı dostu ara yüz sayesinde ekibimiz hızla adapte oldu. Çok memnunuz.",
+    name: "Can Özkan",
+    role: "İş Geliştirme Müdürü, TechCorp",
     avatar: "https://randomuser.me/api/portraits/men/3.jpg",
   },
 ];
 
 export const faqs = [
   {
-    question: "Platform kurulumu ne kadar sürer?",
-    answer: "Kurulum genellikle 24-48 saat içinde tamamlanır. Verilerinizin miktarına ve özel ihtiyaçlarınıza bağlı olarak bu süre değişebilir. Kurulum ekibimiz, sorunsuz bir geçiş için size rehberlik edecektir."
+    question: "E-fatura entegrasyonu nasıl çalışıyor?",
+    answer: "Nilvera API entegrasyonu ile e-fatura gönderim ve alma işlemlerinizi otomatikleştiriyoruz. Yasal mevzuata tam uyumlu, güvenli ve hızlı."
   },
   {
-    question: "Mevcut verilerimizi aktarabilir miyiz?",
-    answer: "Evet, platformumuz çeşitli kaynaklardan veri aktarımını destekler. Excel, CSV ve diğer popüler CRM/ERP sistemlerinden veri aktarımı yapabilirsiniz. Teknik ekibimiz bu süreçte size yardımcı olacaktır."
+    question: "5 kullanıcıya kadar gerçekten ücretsiz mi?",
+    answer: "Evet! E-fatura entegrasyonu dahil olmak üzere temel tüm özellikler 5 kullanıcıya kadar tamamen ücretsiz."
   },
   {
-    question: "Özel entegrasyonlar mümkün mü?",
-    answer: "Evet, API'lerimiz ile kendi sistemlerinize özel entegrasyonlar geliştirebilirsiniz. Ayrıca, birçok popüler uygulama ve servisle hazır entegrasyonlar sunuyoruz."
+    question: "Kurulum ne kadar sürer?",
+    answer: "24-48 saat içinde kurulum tamamlanır ve e-fatura entegrasyonunuz hazır hale gelir."
   },
   {
-    question: "Eğitim ve destek seçenekleri nelerdir?",
-    answer: "Tüm paketlerimizde e-posta desteği sunuyoruz. Business ve Enterprise paketlerimizde telefon ve canlı destek de dahildir. Ayrıca, kapsamlı dokümantasyon ve video eğitimlerimizden yararlanabilirsiniz."
+    question: "Mevcut verilerim aktarılır mı?",
+    answer: "Evet, Excel, CSV ve diğer sistemlerden veri aktarımı yapılır. E-fatura geçmişiniz de korunur."
   },
   {
-    question: "Verilerimizin güvenliği nasıl sağlanıyor?",
-    answer: "Verileriniz, endüstri standardı SSL şifreleme, düzenli yedekleme ve güvenlik denetimleri ile korunmaktadır. KVKK ve GDPR uyumlu hizmet veriyoruz."
+    question: "Hangi e-fatura sağlayıcıları destekleniyor?",
+    answer: "Şu an Nilvera entegrasyonu aktif. Diğer sağlayıcılar için destek ekleyebiliriz."
   },
   {
-    question: "Fiyatlandırma planlarını değiştirebilir miyiz?",
-    answer: "Evet, ihtiyaçlarınız değiştikçe paketler arasında geçiş yapabilirsiniz. Planınızı yükseltmek istediğinizde, fiyat farkını ödeyerek hemen geçiş yapabilirsiniz."
+    question: "Teknik destek nasıl alırım?",
+    answer: "E-posta, telefon, canlı destek ve video eğitimlerle 7/24 destekliyoruz."
   }
 ];

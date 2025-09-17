@@ -52,12 +52,12 @@
   animation: slide-up 1s ease-out forwards;
 }
 
-/* Grid Pattern Background */
+/* Background Grid Pattern */
 .bg-grid-pattern {
   background-image: 
-    linear-gradient(hsl(var(--border)) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px);
-  background-size: 50px 50px;
+    linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 /* Enhanced Shadow */

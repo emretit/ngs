@@ -51,14 +51,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       invoice.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.supplierTaxNumber.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesType = typeFilter === 'all' || 
-      (typeFilter === 'TEMELFATURA' && invoice.invoiceProfile === 'TEMELFATURA') ||
-      (typeFilter === 'TICARIFATURA' && invoice.invoiceProfile === 'TICARIFATURA') ||
-      (typeFilter === 'IHRACAT' && invoice.invoiceProfile === 'IHRACAT') ||
-      (typeFilter === 'YOLCUBERABERFATURA' && invoice.invoiceProfile === 'YOLCUBERABERFATURA') ||
-      (typeFilter === 'EARSIVFATURA' && invoice.invoiceProfile === 'EARSIVFATURA') ||
-      (typeFilter === 'KAMU' && invoice.invoiceProfile === 'KAMU') ||
-      (typeFilter === 'HKS' && invoice.invoiceProfile === 'HKS');
+    const matchesType = typeFilter === 'all' || typeFilter === 'TEMELFATURA';
 
     return matchesSearch && matchesType;
   });

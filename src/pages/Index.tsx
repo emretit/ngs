@@ -3,10 +3,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import HeroSection from "@/components/landing/HeroSection";
+import ModuleShowcaseSection from "@/components/landing/ModuleShowcaseSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
+import InteractiveDemoSection from "@/components/landing/InteractiveDemoSection";
+import IndustrySection from "@/components/landing/IndustrySection";
 import ScreenshotSection from "@/components/landing/ScreenshotSection";
 import PricingSection from "@/components/landing/PricingSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
+import TrustSecuritySection from "@/components/landing/TrustSecuritySection";
 import FaqSection from "@/components/landing/FaqSection";
 import CtaSection from "@/components/landing/CtaSection";
 import FooterSection from "@/components/landing/FooterSection";
@@ -97,10 +101,14 @@ const Index = () => {
       
       <main className="pt-16">
         <HeroSection />
+        <ModuleShowcaseSection />
         <FeaturesSection />
+        <InteractiveDemoSection />
+        <IndustrySection />
         <ScreenshotSection />
         <PricingSection />
         <TestimonialsSection />
+        <TrustSecuritySection />
         <FaqSection />
         <CtaSection />
         <FooterSection />

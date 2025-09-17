@@ -5,15 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import InfiniteScroll from "@/components/ui/infinite-scroll";
 
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  stock_quantity: number;
-  image_url: string | null;
-  currency: string;
-}
+import { Product } from "@/types/product";
 
 interface ProductGridProps {
   products: Product[];

@@ -12,22 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
-// Define Product type locally if not available from types
-interface Product {
-  id: string;
-  name: string;
-  sku: string | null;
-  price: number;
-  currency: string;
-  stock_quantity: number;
-  min_stock_level: number;
-  is_active: boolean;
-  category_id: string | null;
-  product_categories: {
-    id: string;
-    name: string;
-  } | null;
-}
+import { Product } from "@/types/product";
 
 interface ProductsProps {
   isCollapsed: boolean;

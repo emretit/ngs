@@ -287,11 +287,11 @@ export default function EInvoiceList() {
                       {invoice.invoiceNumber}
                     </TableCell>
                     <TableCell>
-                      {getInvoiceTypeBadge(invoice.invoiceType)}
-                    </TableCell>
-                    <TableCell>
-                      {getInvoiceProfileBadge(invoice.invoiceProfile)}
-                    </TableCell>
+                       {getInvoiceTypeBadge(invoice.invoiceDate)}
+                     </TableCell>
+                     <TableCell>
+                       {getInvoiceProfileBadge("TEMELFATURA")}
+                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">
                         <Building className="h-4 w-4 text-muted-foreground mr-2" />

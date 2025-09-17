@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import InfiniteScroll from "@/components/ui/infinite-scroll";
 
 interface Product {
   id: string;
@@ -35,17 +36,31 @@ interface Product {
 interface ProductListTableProps {
   products: Product[] | undefined;
   isLoading: boolean;
+  isLoadingMore?: boolean;
+  hasNextPage?: boolean;
+  loadMore?: () => void;
+  totalCount?: number;
   sortField: "name" | "price" | "stock_quantity" | "category";
   sortDirection: "asc" | "desc";
   onSortFieldChange: (field: "name" | "price" | "stock_quantity" | "category") => void;
+  onProductClick?: (product: Product) => void;
+  onProductSelect?: (product: Product) => void;
+  selectedProducts?: Product[];
 }
 
-const ProductListTable = ({ 
-  products, 
-  isLoading, 
-  sortField, 
-  sortDirection, 
-  onSortFieldChange 
+const ProductListTable = ({
+  products,
+  isLoading,
+  isLoadingMore = false,
+  hasNextPage = false,
+  loadMore,
+  totalCount = 0,
+  sortField,
+  sortDirection,
+  onSortFieldChange,
+  onProductClick,
+  onProductSelect,
+  selectedProducts = []
 }: ProductListTableProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -226,6 +241,16 @@ const ProductListTable = ({
             </TableBody>
           </Table>
         </div>
+
+        {/* Infinite Scroll Trigger */}
+        <InfiniteScroll
+          hasNextPage={hasNextPage}
+          isLoadingMore={isLoadingMore}
+          onLoadMore={loadMore}
+          className="mt-4"
+        >
+          <div />
+        </InfiniteScroll>
       </div>
     </div>
   );

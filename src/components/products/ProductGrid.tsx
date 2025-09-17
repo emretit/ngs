@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import InfiniteScroll from "@/components/ui/infinite-scroll";
 
 interface Product {
   id: string;
@@ -17,9 +18,24 @@ interface Product {
 interface ProductGridProps {
   products: Product[];
   isLoading: boolean;
+  isLoadingMore?: boolean;
+  hasNextPage?: boolean;
+  loadMore?: () => void;
+  onProductClick?: (product: Product) => void;
+  onProductSelect?: (product: Product) => void;
+  selectedProducts?: Product[];
 }
 
-const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
+const ProductGrid = ({
+  products,
+  isLoading,
+  isLoadingMore = false,
+  hasNextPage = false,
+  loadMore,
+  onProductClick,
+  onProductSelect,
+  selectedProducts = []
+}: ProductGridProps) => {
   const navigate = useNavigate();
 
   const getStockStatusBadge = (quantity: number) => {
@@ -88,6 +104,16 @@ const ProductGrid = ({ products, isLoading }: ProductGridProps) => {
           </CardContent>
         </Card>
       ))}
+
+      {/* Infinite Scroll Trigger */}
+      <InfiniteScroll
+        hasNextPage={hasNextPage}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={loadMore}
+        className="col-span-full mt-4"
+      >
+        <div />
+      </InfiniteScroll>
     </div>
   );
 };

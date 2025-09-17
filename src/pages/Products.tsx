@@ -1,9 +1,7 @@
-
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Plus, LayoutGrid, Table as TableIcon, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import ProductListHeader from "@/components/products/ProductListHeader";
 import ProductListFilters from "@/components/products/ProductListFilters";
 import ProductListTable from "@/components/products/ProductListTable";
@@ -11,18 +9,25 @@ import ProductGrid from "@/components/products/ProductGrid";
 import ProductImportDialog from "@/components/products/excel/ProductImportDialog";
 import { exportProductsToExcel, exportProductTemplateToExcel } from "@/utils/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
-import InfiniteScroll from "@/components/ui/infinite-scroll";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+
+// Define Product type locally if not available from types
+interface Product {
+  id: string;
+  name: string;
+  sku: string | null;
+  price: number;
+  currency: string;
+  stock_quantity: number;
+  min_stock_level: number;
+  is_active: boolean;
+  category_id: string | null;
+  product_categories: {
+    id: string;
+    name: string;
+  } | null;
+}
 
 interface ProductsProps {
   isCollapsed: boolean;
@@ -32,15 +37,17 @@ interface ProductsProps {
 const Products = ({ isCollapsed, setIsCollapsed }: ProductsProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [view, setView] = useState<"grid" | "table">("table");
+  const [activeView, setActiveView] = useState<"grid" | "table">("table");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [sortField, setSortField] = useState<"name" | "price" | "stock_quantity" | "category">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const pageSize = 20;
+
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -54,9 +61,19 @@ const Products = ({ isCollapsed, setIsCollapsed }: ProductsProps) => {
     },
   });
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['products', searchQuery, categoryFilter, stockFilter],
-    queryFn: async () => {
+  // Use infinite scroll for products
+  const {
+    data: products,
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    error,
+    loadMore,
+    refresh,
+    totalCount
+  } = useInfiniteScroll<Product>(
+    ['products', searchQuery, categoryFilter, stockFilter, sortField, sortDirection],
+    async (page: number, size: number) => {
       let query = supabase
         .from("products")
         .select(`
@@ -65,11 +82,11 @@ const Products = ({ isCollapsed, setIsCollapsed }: ProductsProps) => {
             id,
             name
           )
-        `);
+        `, { count: 'exact' });
 
-      // Filtreleme uygula
+      // Apply filters
       if (searchQuery) {
-        query = query.ilike("name", `%${searchQuery}%`);
+        query = query.or(`name.ilike.%${searchQuery}%,sku.ilike.%${searchQuery}%`);
       }
 
       if (categoryFilter && categoryFilter !== "all") {
@@ -90,91 +107,64 @@ const Products = ({ isCollapsed, setIsCollapsed }: ProductsProps) => {
         }
       }
 
-      const { data, error } = await query
-        .order("created_at", { ascending: false });
+
+      // Apply sorting
+      const orderField = sortField === "category" ? "product_categories(name)" : sortField;
+      query = query.order(orderField, { ascending: sortDirection === "asc" });
+
+      // Apply pagination
+      const from = (page - 1) * size;
+      const to = from + size - 1;
+
+      const { data, error, count } = await query.range(from, to);
 
       if (error) throw error;
-      return data || [];
-    }
-  });
 
-  // Filtreleme ve sıralama
-  const filteredProducts = products?.filter(product => {
-    const matchesSearch = !searchQuery || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesCategory = !categoryFilter || categoryFilter === "all" || product.category_id === categoryFilter;
-    
-    let matchesStock = true;
-    if (stockFilter !== "all") {
-      switch (stockFilter) {
-        case "out_of_stock":
-          matchesStock = product.stock_quantity === 0;
-          break;
-        case "low_stock":
-          matchesStock = product.stock_quantity > 0 && product.stock_quantity <= 5;
-          break;
-        case "in_stock":
-          matchesStock = product.stock_quantity > 5;
-          break;
-      }
-    }
-
-    return matchesSearch && matchesCategory && matchesStock;
-  });
-
-  const allSortedProducts = filteredProducts?.sort((a, b) => {
-    let valueA, valueB;
-    
-    // Determine values to compare based on sort field
-    if (sortField === "name") {
-      valueA = a.name.toLowerCase();
-      valueB = b.name.toLowerCase();
-    } else if (sortField === "category") {
-      valueA = (a.product_categories?.name || '').toLowerCase();
-      valueB = (b.product_categories?.name || '').toLowerCase();
-    } else if (sortField === "price") {
-      valueA = a.price;
-      valueB = b.price;
-    } else { // stock_quantity
-      valueA = a.stock_quantity;
-      valueB = b.stock_quantity;
-    }
-    
-    // Compare values based on sort direction
-    if (sortDirection === "asc") {
-      return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
-    } else {
-      return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
-    }
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil((allSortedProducts?.length || 0) / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const sortedProducts = allSortedProducts?.slice(startIndex, endIndex);
+      return {
+        data: data || [],
+        totalCount: count || 0,
+        hasNextPage: data && data.length === size
+      };
+    },
+    { pageSize }
+  );
 
   const handleSort = (field: "name" | "price" | "stock_quantity" | "category") => {
     if (field === sortField) {
-      // Toggle direction if same field
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      // New field, set direction based on field
       setSortField(field);
-      // Text fields default to asc, numeric to desc
       setSortDirection(field === "price" || field === "stock_quantity" ? "desc" : "asc");
     }
   };
 
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    // Navigate to product detail page
+    navigate(`/products/${product.id}`);
+  };
+
+  const handleProductSelect = (product: Product) => {
+    setSelectedProducts(prev => {
+      const isSelected = prev.some(p => p.id === product.id);
+      return isSelected
+        ? prev.filter(p => p.id !== product.id)
+        : [...prev, product];
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedProducts([]);
+  };
+
   const handleBulkAction = async (action: string) => {
-    console.log('Bulk action:', action);
+    console.log('Bulk action:', action, selectedProducts);
+    // Implement bulk actions here
   };
 
   const handleImportSuccess = () => {
-    // Refresh products list after successful import
     queryClient.invalidateQueries({ queryKey: ['products'] });
+    refresh();
   };
 
   const handleDownloadTemplate = () => {
@@ -189,190 +179,138 @@ const Products = ({ isCollapsed, setIsCollapsed }: ProductsProps) => {
     setIsImportDialogOpen(true);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}
-      >
-        <TopBar />
-        <div className="p-4 sm:p-8">
-          <ProductListHeader 
-            totalProducts={allSortedProducts?.length || 0}
-            onDownloadTemplate={handleDownloadTemplate}
-            onExportExcel={handleExportExcel}
-            onImportExcel={handleImportExcel}
-            onBulkAction={handleBulkAction}
-          />
-          
-          <ProductListFilters 
-            search={searchQuery}
-            setSearch={setSearchQuery}
-            categoryFilter={categoryFilter}
-            setCategoryFilter={setCategoryFilter}
-            stockFilter={stockFilter}
-            setStockFilter={setStockFilter}
-            categories={categories}
-          />
+  // Flatten products for display
+  const flatProducts = products || [];
 
-          <div className="flex items-center justify-between mb-6">
+  // Group products by status for header stats
+  const groupedProducts = {
+    all: flatProducts,
+    in_stock: flatProducts.filter(p => p.stock_quantity > 5),
+    low_stock: flatProducts.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 5),
+    out_of_stock: flatProducts.filter(p => p.stock_quantity === 0),
+    active: flatProducts.filter(p => p.is_active),
+    inactive: flatProducts.filter(p => !p.is_active),
+  };
+
+  return (
+    <DefaultLayout
+      isCollapsed={isCollapsed}
+      setIsCollapsed={setIsCollapsed}
+      title="Ürünler"
+      subtitle="Envanter ve ürün katalogunu yönetin"
+    >
+      <div className="space-y-2">
+        {/* Header */}
+        <ProductListHeader
+          activeView={activeView}
+          setActiveView={setActiveView}
+          products={groupedProducts}
+          totalProducts={totalCount || 0}
+          onDownloadTemplate={handleDownloadTemplate}
+          onExportExcel={handleExportExcel}
+          onImportExcel={handleImportExcel}
+          onBulkAction={handleBulkAction}
+        />
+
+        {/* Filters */}
+        <ProductListFilters
+          search={searchQuery}
+          setSearch={setSearchQuery}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+          stockFilter={stockFilter}
+          setStockFilter={setStockFilter}
+          categories={categories}
+        />
+
+        {/* Bulk Actions */}
+        {selectedProducts.length > 0 && (
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
             <div className="flex items-center space-x-4">
-              <div className="border rounded-lg p-1">
-                <Button
-                  variant={view === "grid" ? "default" : "ghost"}
-                  size="icon"
-                  onClick={() => setView("grid")}
+              <span className="text-sm font-medium">
+                {selectedProducts.length} ürün seçildi
+              </span>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleBulkAction('activate')}
+                  className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
                 >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={view === "table" ? "default" : "ghost"}
-                  size="icon"
-                  onClick={() => setView("table")}
+                  Aktifleştir
+                </button>
+                <button
+                  onClick={() => handleBulkAction('deactivate')}
+                  className="text-sm px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
                 >
-                  <TableIcon className="h-4 w-4" />
-                </Button>
+                  Pasifleştir
+                </button>
+                <button
+                  onClick={() => handleBulkAction('update_category')}
+                  className="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                >
+                  Kategori Güncelle
+                </button>
               </div>
+            </div>
+            <button
+              onClick={handleClearSelection}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Seçimi Temizle
+            </button>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="flex items-center justify-center h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-muted-foreground">Ürünler yükleniyor...</p>
             </div>
           </div>
+        ) : error ? (
+          <div className="h-96 flex items-center justify-center">
+            <div className="text-red-500">Ürünler yüklenirken bir hata oluştu</div>
+          </div>
+        ) : (
+          <Tabs value={activeView} className="w-full">
+            <TabsContent value="grid" className="mt-0">
+              <ProductGrid
+                products={flatProducts}
+                isLoading={isLoading}
+                isLoadingMore={isLoadingMore}
+                hasNextPage={hasNextPage}
+                loadMore={loadMore}
+                onProductClick={handleProductClick}
+                onProductSelect={handleProductSelect}
+                selectedProducts={selectedProducts}
+              />
+            </TabsContent>
+            <TabsContent value="table" className="mt-0">
+              <ProductListTable
+                products={flatProducts}
+                isLoading={isLoading}
+                isLoadingMore={isLoadingMore}
+                hasNextPage={hasNextPage}
+                loadMore={loadMore}
+                totalCount={totalCount || 0}
+                sortField={sortField}
+                sortDirection={sortDirection}
+                onSortFieldChange={handleSort}
+                onProductClick={handleProductClick}
+                onProductSelect={handleProductSelect}
+                selectedProducts={selectedProducts}
+              />
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
 
-          {view === "grid" ? (
-            <ProductGrid products={sortedProducts as any} isLoading={isLoading} />
-          ) : (
-            <ProductListTable 
-              products={sortedProducts}
-              isLoading={isLoading}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSortFieldChange={handleSort}
-            />
-          )}
-          
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-card rounded-lg border">
-              <div className="text-sm text-muted-foreground">
-                Toplam <span className="font-medium text-foreground">{allSortedProducts?.length || 0}</span> ürün, 
-                <span className="font-medium text-foreground"> {startIndex + 1}-{Math.min(endIndex, allSortedProducts?.length || 0)}</span> arası gösteriliyor
-              </div>
-              <Pagination>
-                <PaginationContent className="gap-1">
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (currentPage > 1) setCurrentPage(currentPage - 1);
-                      }}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "hover:bg-accent"}
-                    />
-                  </PaginationItem>
-                  
-                  {/* Smart pagination with ellipsis */}
-                  {(() => {
-                    const pages = [];
-                    const showPages = 5;
-                    let startPage = Math.max(1, currentPage - Math.floor(showPages / 2));
-                    const endPage = Math.min(totalPages, startPage + showPages - 1);
-                    
-                    if (endPage - startPage < showPages - 1) {
-                      startPage = Math.max(1, endPage - showPages + 1);
-                    }
-                    
-                    if (startPage > 1) {
-                      pages.push(
-                        <PaginationItem key={1}>
-                          <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage(1);
-                            }}
-                            className="hover:bg-accent"
-                          >
-                            1
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                      if (startPage > 2) {
-                        pages.push(
-                          <PaginationItem key="start-ellipsis">
-                            <span className="px-3 py-2 text-muted-foreground">...</span>
-                          </PaginationItem>
-                        );
-                      }
-                    }
-                    
-                    for (let i = startPage; i <= endPage; i++) {
-                      pages.push(
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage(i);
-                            }}
-                            isActive={currentPage === i}
-                            className={currentPage === i ? "bg-primary text-primary-foreground" : "hover:bg-accent"}
-                          >
-                            {i}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }
-                    
-                    if (endPage < totalPages) {
-                      if (endPage < totalPages - 1) {
-                        pages.push(
-                          <PaginationItem key="end-ellipsis">
-                            <span className="px-3 py-2 text-muted-foreground">...</span>
-                          </PaginationItem>
-                        );
-                      }
-                      pages.push(
-                        <PaginationItem key={totalPages}>
-                          <PaginationLink
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setCurrentPage(totalPages);
-                            }}
-                            className="hover:bg-accent"
-                          >
-                            {totalPages}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }
-                    
-                    return pages;
-                  })()}
-                  
-                  <PaginationItem>
-                    <PaginationNext 
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                      }}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "hover:bg-accent"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
-        </div>
-      </main>
-      
-      <ProductImportDialog 
+      <ProductImportDialog
         isOpen={isImportDialogOpen}
         setIsOpen={setIsImportDialogOpen}
         onImportSuccess={handleImportSuccess}
       />
-    </div>
+    </DefaultLayout>
   );
 };
 

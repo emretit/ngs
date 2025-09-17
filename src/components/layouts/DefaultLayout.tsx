@@ -32,7 +32,7 @@ const DefaultLayout = ({
         
         <Separator />
         
-        <main className="pt-3 pr-3 pb-3 pl-0">
+        <main className="p-6">
           {children}
         </main>
       </div>

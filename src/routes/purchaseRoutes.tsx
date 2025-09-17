@@ -6,6 +6,7 @@ const PurchaseRequests = lazy(() => import("@/pages/PurchaseRequests"));
 const ProductMapping = lazy(() => import("@/pages/ProductMapping"));
 const PurchaseInvoices = lazy(() => import("@/pages/PurchaseInvoices"));
 const EInvoices = lazy(() => import("@/pages/EInvoices"));
+const EInvoiceProcess = lazy(() => import("@/pages/EInvoiceProcess"));
 
 export const purchaseRoutes: RouteConfig[] = [
   {
@@ -26,6 +27,11 @@ export const purchaseRoutes: RouteConfig[] = [
   {
     path: "/purchase/e-invoice",
     component: EInvoices,
+    protected: true,
+  },
+  {
+    path: "/purchase/e-invoice/process/:invoiceId",
+    component: EInvoiceProcess,
     protected: true,
   },
   {

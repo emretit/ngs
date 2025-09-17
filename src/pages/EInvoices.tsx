@@ -6,7 +6,6 @@ import EInvoiceFilterBar from "@/components/einvoice/EInvoiceFilterBar";
 import EInvoiceContent from "@/components/einvoice/EInvoiceContent";
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
 import { useToast } from '@/hooks/use-toast';
-import EInvoiceProcessModal from "@/components/purchase/e-invoices/EInvoiceProcessModal";
 
 interface EInvoicesProps {
   isCollapsed: boolean;
@@ -39,8 +38,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
-  const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
   
   // Refetch when date filters change
   useEffect(() => {
@@ -66,10 +63,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
     return matchesSearch && matchesType;
   });
 
-  const handleProcessInvoice = (invoice: any) => {
-    setSelectedInvoice(invoice);
-    setIsProcessModalOpen(true);
-  };
 
   const handleRefresh = () => {
     refetch();
@@ -115,33 +108,12 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
         <EInvoiceContent
           invoices={filteredInvoices}
           isLoading={isLoading}
-          onProcessInvoice={handleProcessInvoice}
           onRefresh={handleRefresh}
           searchTerm={searchTerm}
           dateFilter={dateFilter}
         />
       </div>
 
-      {/* Process Modal */}
-      {selectedInvoice && (
-        <EInvoiceProcessModal
-          isOpen={isProcessModalOpen}
-          onClose={() => {
-            setIsProcessModalOpen(false);
-            setSelectedInvoice(null);
-          }}
-          invoice={selectedInvoice}
-          onProcessComplete={() => {
-            refetch();
-            setIsProcessModalOpen(false);
-            setSelectedInvoice(null);
-            toast({
-              title: "Başarılı",
-              description: "E-fatura başarıyla işlendi"
-            });
-          }}
-        />
-      )}
     </DefaultLayout>
   );
 };

@@ -24,12 +24,12 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 interface EInvoiceContentProps {
   invoices: any[];
   isLoading: boolean;
-  onProcessInvoice: (invoice: any) => void;
   onRefresh: () => void;
   searchTerm: string;
   dateFilter: string;
@@ -38,12 +38,12 @@ interface EInvoiceContentProps {
 const EInvoiceContent = ({
   invoices,
   isLoading,
-  onProcessInvoice,
   onRefresh,
   searchTerm,
   dateFilter
 }: EInvoiceContentProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Calculate summary statistics
   const totalInvoices = invoices.length;
@@ -204,7 +204,7 @@ const EInvoiceContent = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => onProcessInvoice(invoice)}
+                          onClick={() => navigate(`/purchase/e-invoice/process/${invoice.id}`)}
                           className="h-6 w-6 bg-orange-50 text-orange-700 hover:bg-orange-100"
                         >
                           <Package className="h-3 w-3" />

@@ -21,9 +21,9 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
 import { useToast } from '@/hooks/use-toast';
-import EInvoiceProcessModal from './EInvoiceProcessModal';
 
 export default function EInvoiceList() {
   // Date range filter states - Default to current month
@@ -44,12 +44,11 @@ export default function EInvoiceList() {
   
   const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ startDate, endDate });
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
-  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
-  const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
   
   // Refetch when date filters change
   useEffect(() => {
@@ -123,8 +122,7 @@ export default function EInvoiceList() {
   };
 
   const handleProcessInvoice = (invoice: any) => {
-    setSelectedInvoice(invoice);
-    setIsProcessModalOpen(true);
+    navigate(`/purchase/e-invoice/process/${invoice.id}`);
   };
 
   const handleRefresh = () => {
@@ -362,26 +360,6 @@ export default function EInvoiceList() {
         </CardContent>
       </Card>
 
-      {/* Process Modal */}
-      {selectedInvoice && (
-        <EInvoiceProcessModal
-          isOpen={isProcessModalOpen}
-          onClose={() => {
-            setIsProcessModalOpen(false);
-            setSelectedInvoice(null);
-          }}
-          invoice={selectedInvoice}
-          onProcessComplete={() => {
-            refetch();
-            setIsProcessModalOpen(false);
-            setSelectedInvoice(null);
-            toast({
-              title: "Başarılı",
-              description: "E-fatura başarıyla işlendi"
-            });
-          }}
-        />
-      )}
     </div>
   );
 }

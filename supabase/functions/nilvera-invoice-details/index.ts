@@ -1,13 +1,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
+import { XMLParser } from 'https://esm.sh/fast-xml-parser@4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -18,7 +19,7 @@ serve(async (req) => {
     console.log('📋 Request method:', req.method);
 
     const SUPABASE_URL = 'https://vwhwufnckpqirxptwncw.supabase.co';
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const SUPABASE_SERVICE_ROLE_KEY = (globalThis as any).Deno?.env?.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!SUPABASE_SERVICE_ROLE_KEY) {
       console.error('❌ SUPABASE_SERVICE_ROLE_KEY is not set');
@@ -97,21 +98,16 @@ serve(async (req) => {
       console.log('🔑 Using API key:', nilveraAuth.api_key ? `${nilveraAuth.api_key.substring(0, 8)}...` : 'MISSING');
       console.log('📄 Invoice ID:', invoiceId);
 
-      // Get invoice details using the correct endpoint with ETTN (envelopeUUID)
-      const apiUrl = `https://apitest.nilvera.com/api/e-fatura-api/gelen-faturalar/detaylari-getirir`;
+      // Get invoice details using the correct endpoint
+      const apiUrl = `https://apitest.nilvera.com/einvoice/Purchase/${invoiceId}/Details`;
       console.log('🌐 Detail Endpoint:', apiUrl);
 
       const nilveraResponse = await fetch(apiUrl, {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${nilveraAuth.api_key}`,
-          'Content-Type': 'application/json',
           'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          ettn: envelopeUUID || invoiceId,
-          uuid: invoiceId
-        })
+        }
       });
 
       console.log('📡 API Response Status:', nilveraResponse.status);
@@ -130,20 +126,19 @@ serve(async (req) => {
       // Also try to get the XML content which should contain line items
       let xmlContent = null;
       try {
-        const xmlUrl = `https://apitest.nilvera.com/einvoice/Purchase/${invoiceId}/Xml`;
+        const xmlUrl = `https://apitest.nilvera.com/einvoice/Purchase/${invoiceId}/xml`;
         console.log('🌐 XML Endpoint:', xmlUrl);
 
         const xmlResponse = await fetch(xmlUrl, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${nilveraAuth.api_key}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/xml'
           }
         });
 
         if (xmlResponse.ok) {
-          xmlContent = await xmlResponse.text();
+          xmlContent = await xmlResponse.text() as string;
           console.log('✅ XML content retrieved');
         } else {
           console.log('⚠️ Could not retrieve XML content:', xmlResponse.status);
@@ -153,7 +148,7 @@ serve(async (req) => {
       }
 
       // Parse invoice line items from the response
-      let invoiceItems = [];
+      let invoiceItems: any[] = [];
 
       // First try to extract from the detail response
       if (nilveraData.Lines && Array.isArray(nilveraData.Lines)) {
@@ -179,38 +174,58 @@ serve(async (req) => {
 
       // If no lines found in detail response, try to parse from XML
       if (invoiceItems.length === 0 && xmlContent) {
-        console.log('🔍 Trying to parse line items from XML...');
+        console.log('🔍 Trying to parse line items from XML using fast-xml-parser...');
 
-        // This is a basic XML parsing - in a real implementation you'd want to use a proper XML parser
-        // For now, we'll try to extract some basic information
         try {
-          // Look for invoice line patterns in XML
-          const lineMatches = xmlContent.match(/<cac:InvoiceLine[\s\S]*?<\/cac:InvoiceLine>/g);
-          if (lineMatches) {
-            invoiceItems = lineMatches.map((lineXml: string, index: number) => {
-              const getXmlValue = (tag: string) => {
-                const match = lineXml.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`));
-                return match ? match[1] : '';
-              };
+          const parser = new XMLParser({
+            ignoreAttributes: false,
+            attributeNamePrefix: '@',
+            textNodeName: '#text'
+          });
+
+          const xmlObj = parser.parse(xmlContent);
+          console.log('✅ XML parsed successfully');
+
+          // Navigate through the XML structure to find invoice lines
+          const invoice = xmlObj?.Invoice || xmlObj?.['cac:Invoice'] || xmlObj;
+          const invoiceLines = invoice?.['cac:InvoiceLine'] || [];
+
+          // Ensure invoiceLines is an array
+          const linesArray = Array.isArray(invoiceLines) ? invoiceLines : [invoiceLines];
+
+          if (linesArray.length > 0) {
+            console.log(`📊 Found ${linesArray.length} invoice lines in XML`);
+
+            invoiceItems = linesArray.map((line: any, index: number) => {
+              // Extract item information
+              const item = line?.['cac:Item'] || {};
+              const price = line?.['cac:Price'] || {};
+              const taxTotal = line?.['cac:TaxTotal']?.['cac:TaxSubtotal'] || {};
+              const quantity = line?.['cbc:InvoicedQuantity'] || {};
 
               return {
                 id: `xml-line-${index}`,
-                description: getXmlValue('cbc:Name') || getXmlValue('cbc:Description') || `Ürün ${index + 1}`,
-                productCode: getXmlValue('cbc:ID') || '',
-                quantity: parseFloat(getXmlValue('cbc:InvoicedQuantity') || '0'),
-                unit: getXmlValue('cbc:InvoicedQuantity')?.match(/unitCode="([^"]*)"/)?.at(1) || 'Adet',
-                unitPrice: parseFloat(getXmlValue('cbc:PriceAmount') || '0'),
-                vatRate: parseFloat(getXmlValue('cbc:Percent') || '18'),
-                vatAmount: parseFloat(getXmlValue('cbc:TaxAmount') || '0'),
-                totalAmount: parseFloat(getXmlValue('cbc:LineExtensionAmount') || '0'),
+                description: item?.['cbc:Name'] || item?.['cbc:Description'] || `Ürün ${index + 1}`,
+                productCode: line?.['cbc:ID'] || item?.['cac:SellersItemIdentification']?.['cbc:ID'] || '',
+                quantity: parseFloat(quantity?.['#text'] || quantity || '1'),
+                unit: quantity?.['@unitCode'] || 'Adet',
+                unitPrice: parseFloat(price?.['cbc:PriceAmount']?.['#text'] || price?.['cbc:PriceAmount'] || '0'),
+                vatRate: parseFloat(taxTotal?.['cac:TaxCategory']?.['cbc:Percent'] || '18'),
+                vatAmount: parseFloat(taxTotal?.['cbc:TaxAmount']?.['#text'] || taxTotal?.['cbc:TaxAmount'] || '0'),
+                totalAmount: parseFloat(line?.['cbc:LineExtensionAmount']?.['#text'] || line?.['cbc:LineExtensionAmount'] || '0'),
                 discountRate: 0,
                 discountAmount: 0,
-                lineNumber: index + 1
+                lineNumber: line?.['cbc:ID'] || index + 1
               };
             });
+
+            console.log(`✅ Successfully parsed ${invoiceItems.length} items from XML`);
+          } else {
+            console.log('⚠️ No invoice lines found in XML structure');
           }
         } catch (xmlParseError) {
           console.log('⚠️ XML parsing error:', xmlParseError.message);
+          console.log('📋 XML structure sample:', xmlContent?.substring(0, 500));
         }
       }
 

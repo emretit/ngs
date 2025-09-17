@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface InvoiceItem {
   id: string;
+  lineNumber: number;
   description: string;
   productCode: string;
   quantity: number;
@@ -73,16 +74,36 @@ export default function EInvoiceProcessModal({
   const loadInvoiceDetails = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('nilvera-invoices', {
-        body: { 
-          action: 'get_invoice_details',
-          invoice: { invoiceId: invoice.id }
+      console.log('🔄 Loading invoice details for:', invoice.id);
+
+      const { data, error } = await supabase.functions.invoke('nilvera-invoice-details', {
+        body: {
+          invoiceId: invoice.id,
+          envelopeUUID: invoice.envelopeUUID
         }
       });
 
-      if (data?.success && data.invoiceDetails?.items) {
+      console.log('📡 Invoice details response:', { data, error });
+
+      if (error) {
+        console.error('❌ Supabase function error:', error);
+        throw new Error(error.message || 'Fatura detayları alınamadı');
+      }
+
+      if (!data) {
+        console.error('❌ No data received from function');
+        throw new Error('Function response is empty');
+      }
+
+      if (!data.success) {
+        console.error('❌ Function returned error:', data.error);
+        throw new Error(data.error || 'Fatura detayları alınamadı');
+      }
+
+      if (data.invoiceDetails?.items) {
         const items: InvoiceItem[] = data.invoiceDetails.items.map((item: any, index: number) => ({
-          id: `item-${index}`,
+          id: item.id || `item-${index}`,
+          lineNumber: item.lineNumber || index + 1,
           description: item.description || '',
           productCode: item.productCode || '',
           quantity: item.quantity || 0,
@@ -95,12 +116,35 @@ export default function EInvoiceProcessModal({
           discountAmount: item.discountAmount || 0,
           isMatched: false
         }));
+
+        console.log('✅ Parsed invoice items:', items.length);
+        console.log('📄 First item:', items[0]);
         setInvoiceItems(items);
+      } else {
+        console.log('⚠️ No items found in invoice details');
+        // Create a single item from invoice totals as fallback
+        const fallbackItem: InvoiceItem = {
+          id: 'fallback-item',
+          lineNumber: 1,
+          description: `${invoice.supplierName} - Fatura Kalemi`,
+          productCode: '',
+          quantity: 1,
+          unit: 'Adet',
+          unitPrice: invoice.totalAmount - (invoice.taxAmount || 0),
+          vatRate: 18,
+          vatAmount: invoice.taxAmount || 0,
+          totalAmount: invoice.totalAmount,
+          discountRate: 0,
+          discountAmount: 0,
+          isMatched: false
+        };
+        setInvoiceItems([fallbackItem]);
       }
     } catch (error: any) {
+      console.error('❌ Error loading invoice details:', error);
       toast({
         title: "Hata",
-        description: "Fatura detayları yüklenirken hata oluştu",
+        description: error.message || "Fatura detayları yüklenirken hata oluştu",
         variant: "destructive"
       });
     } finally {
@@ -313,7 +357,7 @@ export default function EInvoiceProcessModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-orange-600">
             E-Fatura İşleme - {invoice?.invoiceNumber}
@@ -326,12 +370,12 @@ export default function EInvoiceProcessModal({
             <CardTitle className="text-lg">Fatura Bilgileri</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="flex items-center gap-2">
                 <Building className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Tedarikçi</p>
-                  <p className="font-medium">{invoice?.supplierName}</p>
+                  <p className="font-medium">{invoice?.supplierName || 'Bilinmiyor'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -344,6 +388,13 @@ export default function EInvoiceProcessModal({
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Fatura No</p>
+                  <p className="font-medium">{invoice?.invoiceNumber || 'Bilinmiyor'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-sm text-muted-foreground">Toplam Tutar</p>
@@ -351,7 +402,7 @@ export default function EInvoiceProcessModal({
                     {invoice?.totalAmount?.toLocaleString('tr-TR', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
-                    })} {invoice?.currency}
+                    })} {invoice?.currency || 'TRY'}
                   </p>
                 </div>
               </div>
@@ -413,20 +464,25 @@ export default function EInvoiceProcessModal({
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">Sıra</TableHead>
                     <TableHead>Durum</TableHead>
+                    <TableHead>Mal/Hizmet</TableHead>
                     <TableHead>Açıklama</TableHead>
-                    <TableHead>Ürün Kodu</TableHead>
-                    <TableHead>Miktar</TableHead>
-                    <TableHead>Birim</TableHead>
-                    <TableHead>Birim Fiyat</TableHead>
-                    <TableHead>KDV %</TableHead>
-                    <TableHead>Toplam</TableHead>
+                    <TableHead>Satıcı Ürün Kodu</TableHead>
+                    <TableHead className="w-20">Miktar</TableHead>
+                    <TableHead className="w-20">Birim Fiyat</TableHead>
+                    <TableHead className="w-20">KDV Oranı</TableHead>
+                    <TableHead className="w-20">KDV Tutarı</TableHead>
+                    <TableHead className="w-20">Mal Hizmet Tutarı</TableHead>
                     <TableHead>Ürün Eşleştirme</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {invoiceItems.map((item) => (
                     <TableRow key={item.id}>
+                      <TableCell className="text-center font-medium">
+                        {item.lineNumber}
+                      </TableCell>
                       <TableCell>
                         {item.isMatched ? (
                           <CheckCircle className="h-5 w-5 text-green-500" />
@@ -434,28 +490,42 @@ export default function EInvoiceProcessModal({
                           <AlertTriangle className="h-5 w-5 text-orange-500" />
                         )}
                       </TableCell>
+                      <TableCell className="max-w-[150px]">
+                        <div className="truncate font-medium" title={item.description}>
+                          {item.description}
+                        </div>
+                      </TableCell>
                       <TableCell className="max-w-[200px]">
-                        <div className="truncate" title={item.description}>
+                        <div className="truncate text-sm text-gray-600" title={item.description}>
                           {item.description}
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-sm">
                         {item.productCode || '-'}
                       </TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.unit}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
+                        {item.quantity} {item.unit}
+                      </TableCell>
+                      <TableCell className="text-right">
                         {item.unitPrice.toLocaleString('tr-TR', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
-                        })}
+                        })} TL
                       </TableCell>
-                      <TableCell>{item.vatRate}%</TableCell>
-                      <TableCell className="font-semibold">
+                      <TableCell className="text-center">
+                        %{item.vatRate.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {item.vatAmount.toLocaleString('tr-TR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })} TL
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
                         {item.totalAmount.toLocaleString('tr-TR', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
-                        })}
+                        })} TL
                       </TableCell>
                       <TableCell>
                         {item.isMatched ? (
@@ -509,6 +579,41 @@ export default function EInvoiceProcessModal({
             </CardContent>
           </Card>
         )}
+
+        {/* Invoice Summary */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Mal Hizmet Toplam Tutarı</p>
+                <p className="text-lg font-semibold">
+                  {invoiceItems.reduce((sum, item) => sum + (item.totalAmount - item.vatAmount), 0).toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })} TL
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Toplam KDV</p>
+                <p className="text-lg font-semibold">
+                  {invoiceItems.reduce((sum, item) => sum + item.vatAmount, 0).toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })} TL
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Genel Toplam</p>
+                <p className="text-xl font-bold text-orange-600">
+                  {invoiceItems.reduce((sum, item) => sum + item.totalAmount, 0).toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })} TL
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Action Buttons */}
         <div className="flex items-center justify-between pt-6">

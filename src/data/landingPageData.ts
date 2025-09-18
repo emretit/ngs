@@ -83,7 +83,7 @@ export const pricingPlans = [
   },
   {
     name: "Enterprise",
-    price: "₺999",
+    price: "",
     description: "Büyük ölçekli işletmeler için özel çözümler.",
     features: [
       "Sınırsız kullanıcı",

@@ -56,9 +56,15 @@ const PricingSection = () => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-red-100/30 to-gray-100/30 opacity-0 group-hover:opacity-60 blur-xl transition-all duration-500"></div>
               
               <div className="relative z-10 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
-                  <div className="text-2xl font-bold group-hover:scale-110 transition-transform duration-300">{plan.price}</div>
-                </div>
+                {plan.price ? (
+                  <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
+                    <div className="text-2xl font-bold group-hover:scale-110 transition-transform duration-300">{plan.price}</div>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/20 text-red-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
+                    <div className="text-lg font-bold group-hover:scale-110 transition-transform duration-300">💬</div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-center mb-3">
                   <h3 className="font-bold text-gray-800 text-lg group-hover:text-red-700 transition-colors duration-300">

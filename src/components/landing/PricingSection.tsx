@@ -1,5 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ import { pricingPlans } from "@/data/landingPageData";
 
 const PricingSection = () => {
   const navigate = useNavigate();
+  const [isYearly, setIsYearly] = useState(false);
 
   const handleSignUp = () => {
     navigate("/signup");
@@ -29,22 +31,51 @@ const PricingSection = () => {
             </div>
           </div>
           
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-5 leading-relaxed font-sans">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-5 leading-tight font-sans">
             <span className="text-white">İşletmenize</span>
-            <span className="block bg-gradient-to-r from-red-400 via-red-500 to-red-600 bg-clip-text text-transparent mt-1 leading-loose">
+            <span className="block bg-gradient-to-r from-red-400 via-red-500 to-red-600 bg-clip-text text-transparent leading-tight">
               Uygun&nbsp;Çözüm
             </span>
           </h2>
-          
+
+          {/* Pricing Toggle */}
+          <div className="flex items-center justify-center mb-8">
+            <div className="bg-white/10 backdrop-blur-sm rounded-full p-1 flex items-center space-x-1">
+              <button
+                onClick={() => setIsYearly(false)}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  !isYearly
+                    ? 'bg-red-600 text-white shadow-lg'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                Aylık
+              </button>
+              <button
+                onClick={() => setIsYearly(true)}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 relative ${
+                  isYearly
+                    ? 'bg-red-600 text-white shadow-lg'
+                    : 'text-white/70 hover:text-white'
+                }`}
+              >
+                Yıllık
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  %17
+                </span>
+              </button>
+            </div>
+          </div>
+
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
           {pricingPlans.map((plan, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className={`group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer ${
-                plan.featured 
-                  ? 'border-red-300/60 hover:border-red-400/80 ring-2 ring-red-200/40 shadow-xl' 
+                plan.featured
+                  ? 'border-4 border-red-500/80 hover:border-red-600 ring-4 ring-red-300/30 shadow-2xl'
                   : 'border-gray-200/60 hover:border-red-200/60 shadow-lg'
               }`}
               style={{ animationDelay: `${index * 200}ms` }}
@@ -56,9 +87,28 @@ const PricingSection = () => {
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-red-100/30 to-gray-100/30 opacity-0 group-hover:opacity-60 blur-xl transition-all duration-500"></div>
               
               <div className="relative z-10 text-center">
-                {plan.price ? (
-                  <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
-                    <div className="text-2xl font-bold group-hover:scale-110 transition-transform duration-300">{plan.price}</div>
+                {(isYearly ? plan.yearlyPrice : plan.monthlyPrice) ? (
+                  <div className="mb-4">
+                    <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-600 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
+                      <div className="text-2xl font-bold group-hover:scale-110 transition-transform duration-300">
+                        {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+                      </div>
+                    </div>
+                    {isYearly && plan.yearlyDiscount && (
+                      <div className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full inline-block">
+                        {plan.yearlyDiscount}
+                      </div>
+                    )}
+                    {!isYearly && plan.name !== "Ücretsiz" && (
+                      <div className="text-gray-500 text-xs">
+                        /ay
+                      </div>
+                    )}
+                    {isYearly && plan.name !== "Ücretsiz" && (
+                      <div className="text-gray-500 text-xs">
+                        /yıl
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/20 text-red-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
@@ -77,7 +127,7 @@ const PricingSection = () => {
                   )}
                 </div>
 
-                <p className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300 mb-4">
+                <p className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors duration-300 mb-4">
                   {plan.description}
                 </p>
                 <ul className="space-y-2 mb-6">
@@ -88,19 +138,19 @@ const PricingSection = () => {
                           <Check className="h-2.5 w-2.5 text-red-600" />
                         </div>
                       </div>
-                      <span className="ml-3 text-xs text-gray-600 group-hover/item:text-gray-700 transition-colors duration-300 leading-relaxed">
+                      <span className="ml-3 text-xs text-gray-600 group-hover/item:text-gray-800 transition-colors duration-300 leading-relaxed">
                         {feature}
                       </span>
                     </li>
                   ))}
                 </ul>
 
-                <Button 
-                  variant={plan.featured ? "default" : "outline"} 
-                  className={`w-full py-3 text-sm font-semibold transition-all duration-300 ${
-                    plan.featured 
-                      ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl hover:scale-105 text-white' 
-                      : 'border-2 border-red-300/30 hover:bg-red-50 hover:border-red-400/50 hover:scale-105 text-red-600'
+                <Button
+                  variant={plan.featured ? "default" : "outline"}
+                  className={`w-full py-4 px-6 text-base font-bold transition-all duration-300 shadow-lg ${
+                    plan.featured
+                      ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white hover:text-white shadow-xl hover:shadow-2xl hover:scale-110 border-0'
+                      : 'border-2 border-red-500/50 hover:bg-red-500 hover:text-white hover:border-red-600 hover:scale-110 text-red-600 bg-white shadow-md hover:shadow-xl'
                   }`}
                   onClick={handleSignUp}
                 >

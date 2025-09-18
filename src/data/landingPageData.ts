@@ -53,7 +53,8 @@ export const screenshots = [
 export const pricingPlans = [
   {
     name: "Ücretsiz",
-    price: "₺0",
+    monthlyPrice: "₺0",
+    yearlyPrice: "₺0",
     description: "5 kullanıcıya kadar tamamen ücretsiz. E-fatura dahil!",
     features: [
       "5 kullanıcıya kadar",
@@ -64,11 +65,13 @@ export const pricingPlans = [
       "E-posta desteği"
     ],
     buttonText: "Ücretsiz Başla",
-    featured: true
+    featured: false
   },
   {
     name: "Business",
-    price: "₺599",
+    monthlyPrice: "₺999",
+    yearlyPrice: "₺9.999",
+    yearlyDiscount: "17% indirim",
     description: "Büyüyen işletmeler için kapsamlı özellikler.",
     features: [
       "20 kullanıcıya kadar",
@@ -79,11 +82,12 @@ export const pricingPlans = [
       "API erişimi"
     ],
     buttonText: "Ücretsiz Deneyin",
-    featured: false
+    featured: true
   },
   {
     name: "Enterprise",
-    price: "",
+    monthlyPrice: "",
+    yearlyPrice: "",
     description: "Büyük ölçekli işletmeler için özel çözümler.",
     features: [
       "Sınırsız kullanıcı",

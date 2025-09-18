@@ -6,7 +6,6 @@ import HeroSection from "@/components/landing/HeroSection";
 import ModuleShowcaseSection from "@/components/landing/ModuleShowcaseSection";
 import PricingSection from "@/components/landing/PricingSection";
 import FaqSection from "@/components/landing/FaqSection";
-import CtaSection from "@/components/landing/CtaSection";
 import FooterSection from "@/components/landing/FooterSection";
 import LoginButton from "@/components/navbar/LoginButton";
 import MobileMenu from "@/components/landing/MobileMenu";
@@ -184,7 +183,6 @@ const Index = () => {
         <ModuleShowcaseSection />
         <PricingSection />
         <FaqSection />
-        <CtaSection />
         <FooterSection />
       </main>
 

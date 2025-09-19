@@ -28,20 +28,26 @@ export const useOpexCategories = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch expense categories
+      // Use NGS İLETİŞİM company ID directly
+      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
+
+      // Fetch both default categories (company_id = null) and company-specific categories
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('cashflow_categories')
         .select(`
           id,
           name,
           type,
+          company_id,
           cashflow_subcategories (
             id,
             name,
-            category_id
+            category_id,
+            company_id
           )
         `)
         .eq('type', 'expense')
+        .or(`company_id.is.null,company_id.eq.${ngsCompanyId}`)
         .order('name');
 
       if (categoriesError) throw categoriesError;
@@ -50,9 +56,9 @@ export const useOpexCategories = () => {
       const transformedCategories: OpexCategory[] = (categoriesData || []).map(category => {
         // Determine category type based on name
         let categoryType: 'personnel' | 'operational' | 'other' = 'other';
-        if (category.name === 'Personel Giderleri') {
+        if (category.name === 'Maaş ve Ücretler') {
           categoryType = 'personnel';
-        } else if (category.name === 'Operasyonel Giderler') {
+        } else if (category.name === 'Operasyonel Giderler' || category.name === 'Ham Madde' || category.name === 'Yakıt ve Bakım') {
           categoryType = 'operational';
         }
 
@@ -61,7 +67,7 @@ export const useOpexCategories = () => {
           name: category.name,
           type: category.type as 'income' | 'expense',
           subcategories: category.cashflow_subcategories || [],
-          isAutoPopulated: category.name === 'Personel Giderleri',
+          isAutoPopulated: category.name === 'Maaş ve Ücretler',
           categoryType
         };
       });

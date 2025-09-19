@@ -22,9 +22,13 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       setLoading(true);
       setError(null);
       
+      // Use NGS İLETİŞİM company ID directly
+      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
+      
       let query = supabase
         .from('cashflow_subcategories')
         .select('*')
+        .or(`company_id.is.null,company_id.eq.${ngsCompanyId}`)
         .order('name');
 
       if (catId) {
@@ -50,9 +54,12 @@ export const useCashflowSubcategories = (categoryId?: string) => {
 
   const createSubcategory = async (categoryId: string, name: string) => {
     try {
+      // Use NGS İLETİŞİM company ID directly
+      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
+      
       const { data: newSubcategory, error } = await supabase
         .from('cashflow_subcategories')
-        .insert([{ category_id: categoryId, name }])
+        .insert([{ category_id: categoryId, name, company_id: ngsCompanyId }])
         .select()
         .single();
 

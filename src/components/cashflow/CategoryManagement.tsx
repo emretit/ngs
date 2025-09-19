@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
-import { Plus, Edit, Trash2, TrendingUp, TrendingDown, Tag, MoreHorizontal, Search, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Edit, Trash2, TrendingUp, TrendingDown, Tag, MoreHorizontal, Search, Filter, ChevronDown, ChevronRight } from "lucide-react";
 import { useCashflowCategories, CreateCategoryData } from "@/hooks/useCashflowCategories";
 import { useCashflowSubcategories } from "@/hooks/useCashflowSubcategories";
 
@@ -99,38 +100,62 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
     : { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700', dot: 'bg-rose-500' };
 
   return (
-    <div className="group">
-      {/* Main Category Card */}
-      <div className={`p-4 ${colorScheme.bg} ${colorScheme.border} border rounded-xl hover:shadow-md transition-all duration-200 h-full flex flex-col`}>
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className={`w-3 h-3 ${colorScheme.dot} rounded-full mt-1 flex-shrink-0`}></div>
+    <div className="bg-white rounded-lg hover:shadow-sm transition-all duration-200">
+      {/* Ana Kategori Kartı */}
+      <div className="p-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className={`w-2 h-2 ${colorScheme.dot} rounded-full flex-shrink-0`}></div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-base truncate mb-2">{category.name}</h3>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="outline" className={`${colorScheme.border} ${colorScheme.text} font-medium text-xs`}>
-                  {isIncome ? 'Gelir' : 'Gider'}
-                </Badge>
-                {subcategories.length > 0 && (
-                  <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
-                    {subcategories.length} alt
-                  </Badge>
-                )}
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={subcategories.length > 0 ? () => setIsExpanded(!isExpanded) : undefined}
+                disabled={subcategories.length === 0}
+                className={`w-full justify-between p-2 h-8 text-xs font-medium transition-all duration-200 text-gray-900 hover:text-gray-900 ${
+                  isIncome
+                    ? 'hover:bg-emerald-50 border-0 hover:shadow-sm'
+                    : 'border-dashed hover:bg-rose-50 border-rose-200 hover:border-rose-300 hover:shadow-sm disabled:bg-rose-25 disabled:border-rose-100'
+                } ${isExpanded ? 'shadow-sm' : ''} ${subcategories.length === 0 ? 'cursor-default' : 'cursor-pointer'}`}
+              >
+                <span className="truncate font-semibold">{category.name}</span>
+                <div className="flex items-center gap-1">
+                  {subcategories.length > 0 ? (
+                    <>
+                      <span className={`text-xs px-1 py-0.5 rounded-full text-gray-700 ${
+                        isIncome ? 'bg-emerald-100' : 'bg-rose-100'
+                      }`}>
+                        {subcategories.length}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronDown className="h-3 w-3 flex-shrink-0 transition-transform" />
+                      ) : (
+                        <ChevronRight className="h-3 w-3 flex-shrink-0 transition-transform" />
+                      )}
+                    </>
+                  ) : (
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full text-gray-600 ${
+                      isIncome ? 'bg-emerald-50' : 'bg-rose-50'
+                    }`}>
+                      {isIncome ? 'Gelir' : 'Gider'}
+                    </span>
+                  )}
+                </div>
+              </Button>
             </div>
           </div>
 
-          <div className="flex items-start gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {/* Alt Kategori Ekle */}
             <Dialog open={isAddSubcategoryOpen} onOpenChange={setIsAddSubcategoryOpen}>
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 hover:bg-blue-100 group-hover:opacity-100 opacity-60 transition-opacity"
+                  className="h-5 w-5 p-0 hover:bg-gray-100"
                   title="Alt kategori ekle"
                 >
-                  <Plus className="h-3.5 w-3.5 text-blue-600" />
+                  <Plus className="h-3 w-3 text-gray-500" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-md">
@@ -176,67 +201,72 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
                   variant="ghost"
                   size="sm"
                   onClick={() => onEdit(category)}
-                  className="h-8 w-8 p-0 hover:bg-gray-100 group-hover:opacity-100 opacity-60 transition-opacity"
+                  className="h-5 w-5 p-0 hover:bg-gray-100"
                   title="Düzenle"
                 >
-                  <Edit className="h-3.5 w-3.5 text-gray-600" />
+                  <Edit className="h-3 w-3 text-gray-500" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onDelete(category)}
-                  className="h-8 w-8 p-0 hover:bg-red-100 group-hover:opacity-100 opacity-60 transition-opacity"
+                  className="h-5 w-5 p-0 hover:bg-red-100"
                   title="Sil"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                  <Trash2 className="h-3 w-3 text-red-500" />
                 </Button>
               </>
-            )}
-
-            {/* Genişlet/Daralt */}
-            {subcategories.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="h-8 w-8 p-0 hover:bg-gray-100 transition-all"
-                title={isExpanded ? "Daralt" : "Genişlet"}
-              >
-                <MoreHorizontal className={`h-3.5 w-3.5 text-gray-600 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-              </Button>
             )}
           </div>
         </div>
 
-        {/* Alt Kategoriler - Kompakt Liste */}
-        {isExpanded && subcategories.length > 0 && (
-          <div className="mt-3 space-y-1">
-            {subcategories.map((subcategory) => (
-              <div key={subcategory.id} className="flex items-center justify-between py-1.5 px-3 bg-white/60 rounded-lg border border-gray-200/50 hover:bg-white/80 transition-colors">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0"></div>
-                  <span className="text-xs font-medium text-gray-700 truncate">{subcategory.name}</span>
-                </div>
-                <div className="flex gap-1 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEditSubcategory(subcategory)}
-                    className="h-6 w-6 p-0 hover:bg-gray-200"
-                  >
-                    <Edit className="h-2.5 w-2.5 text-gray-500" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteSubcategoryClick(subcategory)}
-                    className="h-6 w-6 p-0 hover:bg-red-100"
-                  >
-                    <Trash2 className="h-2.5 w-2.5 text-red-500" />
-                  </Button>
-                </div>
+        {/* Alt Kategoriler - Şık Dropdown Panel */}
+        {subcategories.length > 0 && isExpanded && (
+          <div className="mt-3 pt-3 border-t border-gray-100/80">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Alt Kategoriler</h4>
+                <span className="text-xs text-gray-400">{subcategories.length} adet</span>
               </div>
-            ))}
+              {subcategories.map((subcategory, index) => (
+                <div
+                  key={subcategory.id}
+                  className={`group flex items-center justify-between py-2 px-3 rounded-md text-sm hover:bg-gradient-to-r transition-all duration-200 border border-transparent hover:border-gray-200/60 ${
+                    isIncome
+                      ? 'bg-emerald-50/50 hover:from-emerald-50 hover:to-emerald-100/50'
+                      : 'bg-rose-50/50 hover:from-rose-50 hover:to-rose-100/50'
+                  }`}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      isIncome ? 'bg-emerald-400' : 'bg-rose-400'
+                    }`}></div>
+                    <span className="text-gray-900 truncate font-medium leading-none">{subcategory.name}</span>
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditSubcategory(subcategory)}
+                      className="h-6 w-6 p-0 hover:bg-white/80 hover:shadow-sm transition-all"
+                      title="Düzenle"
+                    >
+                      <Edit className="h-3 w-3 text-gray-500 hover:text-gray-700" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteSubcategoryClick(subcategory)}
+                      className="h-6 w-6 p-0 hover:bg-red-50 hover:shadow-sm transition-all"
+                      title="Sil"
+                    >
+                      <Trash2 className="h-3 w-3 text-red-400 hover:text-red-600" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -579,27 +609,100 @@ const CategoryManagement = () => {
         </div>
       </div>
 
-      {/* Kategori Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredCategories().length > 0 ? (
-          filteredCategories().map((category) => (
-            <CategoryItem
-              key={category.id}
-              category={category}
-              onEdit={handleEdit}
-              onDelete={handleDeleteClick}
-            />
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Tag className="h-8 w-8 text-gray-400" />
+      {/* Kategoriler - İki Sütunlu Yapı */}
+      {selectedType === 'all' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Gelir Kategorileri - Sol Sütun */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Gelir Kategorileri</h3>
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+                {incomeCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length} kategori
+              </Badge>
             </div>
-            <p className="text-gray-500 font-medium">Kategori bulunamadı</p>
-            <p className="text-sm text-gray-400 mt-1">Arama terimlerinizi değiştirin veya yeni kategori oluşturun</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {incomeCategories
+                .filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true)
+                .map((category) => (
+                  <CategoryItem
+                    key={category.id}
+                    category={category}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
+                  />
+                ))}
+              {incomeCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length === 0 && (
+                <div className="col-span-full text-center py-12">
+                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <TrendingUp className="h-8 w-8 text-emerald-400" />
+                  </div>
+                  <p className="text-gray-500 font-medium">Gelir kategorisi bulunamadı</p>
+                  <p className="text-sm text-gray-400 mt-1">Yeni gelir kategorisi oluşturun</p>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Gider Kategorileri - Sağ Sütun */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-rose-100 rounded-lg">
+                <TrendingDown className="h-5 w-5 text-rose-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Gider Kategorileri</h3>
+              <Badge variant="secondary" className="bg-rose-100 text-rose-700">
+                {expenseCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length} kategori
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {expenseCategories
+                .filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true)
+                .map((category) => (
+                  <CategoryItem
+                    key={category.id}
+                    category={category}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
+                  />
+                ))}
+              {expenseCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length === 0 && (
+                <div className="col-span-full text-center py-12">
+                  <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <TrendingDown className="h-8 w-8 text-rose-400" />
+                  </div>
+                  <p className="text-gray-500 font-medium">Gider kategorisi bulunamadı</p>
+                  <p className="text-sm text-gray-400 mt-1">Yeni gider kategorisi oluşturun</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        // Filtrelenmiş Görünüm
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filteredCategories().length > 0 ? (
+            filteredCategories().map((category) => (
+              <CategoryItem
+                key={category.id}
+                category={category}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Tag className="h-8 w-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500 font-medium">Kategori bulunamadı</p>
+              <p className="text-sm text-gray-400 mt-1">Arama terimlerinizi değiştirin veya yeni kategori oluşturun</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

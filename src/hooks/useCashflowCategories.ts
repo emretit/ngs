@@ -27,9 +27,13 @@ export const useCashflowCategories = () => {
       setLoading(true);
       setError(null);
       
+      // Use NGS İLETİŞİM company ID directly
+      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
+      
       const { data, error } = await supabase
         .from('cashflow_categories')
         .select('*')
+        .or(`company_id.is.null,company_id.eq.${ngsCompanyId}`)
         .order('name');
 
       if (error) throw error;

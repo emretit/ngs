@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle, CheckCircle, Key } from "lucide-react";
+import { AlertCircle, CheckCircle, Key, User, Eye, EyeOff, Plug } from "lucide-react";
 
 export const NilveraSettings = () => {
   const [username, setUsername] = useState("");
@@ -14,6 +14,8 @@ export const NilveraSettings = () => {
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>("");
+  const [nilveraData, setNilveraData] = useState<{username: string, apiKey: string} | null>(null);
+  const [showCredentials, setShowCredentials] = useState(false);
   const { toast } = useToast();
 
   // Check if user already has Nilvera authentication
@@ -49,9 +51,14 @@ export const NilveraSettings = () => {
       if (data && !error) {
         setIsConnected(true);
         setConnectionStatus("Nilvera bağlantısı aktif");
+        setNilveraData({
+          username: data.username,
+          apiKey: data.api_key
+        });
       } else {
         setIsConnected(false);
         setConnectionStatus("Nilvera bağlantısı yok");
+        setNilveraData(null);
       }
     } catch (error) {
       console.error('Error checking Nilvera status:', error);
@@ -140,7 +147,8 @@ export const NilveraSettings = () => {
 
       setIsConnected(false);
       setConnectionStatus("Nilvera bağlantısı kesildi");
-      
+      setNilveraData(null);
+
       toast({
         title: "Başarılı",
         description: "Nilvera bağlantısı kesildi",
@@ -156,83 +164,162 @@ export const NilveraSettings = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            Nilvera E-Fatura Entegrasyonu
-          </CardTitle>
-          <CardDescription>
-            E-fatura işlemlerinizi gerçekleştirmek için Nilvera hesap bilgilerinizi girin
-          </CardDescription>
+      <Card className="shadow-lg border-0 bg-white">
+        <CardHeader className="pb-4">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-green-600 rounded-xl text-white shadow-lg">
+              <Key className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-xl font-semibold text-gray-900 mb-2">
+                Nilvera E-Fatura Entegrasyonu
+              </CardTitle>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                E-fatura işlemlerinizi otomatikleştirmek için Nilvera hesap bilgilerinizi güvenli şekilde bağlayın
+              </p>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {/* Connection Status */}
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+          <div className={`flex items-center gap-3 p-4 rounded-xl border-2 ${
+            isConnected
+              ? 'bg-green-50 border-green-200/80 text-green-900'
+              : 'bg-orange-50 border-orange-200/80 text-orange-900'
+          }`}>
             {isConnected ? (
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-green-600 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-white" />
+              </div>
             ) : (
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <div className="p-2 bg-orange-500 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-white" />
+              </div>
             )}
-            <span className="text-sm font-medium">{connectionStatus}</span>
+            <div>
+              <span className="font-semibold text-sm">{connectionStatus}</span>
+              {isConnected && (
+                <p className="text-xs opacity-80 mt-1">E-fatura işlemleri kullanılabilir</p>
+              )}
+            </div>
           </div>
 
           {!isConnected ? (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Nilvera Kullanıcı Adı</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Kullanıcı adınızı girin..."
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
+
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-sm font-medium flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-500" />
+                    Nilvera Kullanıcı Adı
+                  </Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="Kullanıcı adınızı girin..."
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="h-11 bg-white border-gray-200 focus:border-green-500 focus:ring-green-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
+                    <Key className="h-4 w-4 text-gray-500" />
+                    Nilvera Şifre
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Şifrenizi girin..."
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-11 bg-white border-gray-200 focus:border-green-500 focus:ring-green-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey" className="text-sm font-medium flex items-center gap-2">
+                    <Plug className="h-4 w-4 text-gray-500" />
+                    Nilvera API Key
+                  </Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    placeholder="API Key'inizi buraya girin..."
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="h-11 bg-white border-gray-200 focus:border-green-500 focus:ring-green-500/20"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Nilvera Şifre</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Şifrenizi girin..."
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="apiKey">Nilvera API Key</Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  placeholder="API Key'inizi buraya girin..."
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  API Key'inizi Nilvera panel - Entegrasyon - API bölümünden alabilirsiniz
-                </p>
-              </div>
-
-              <Button 
-                onClick={handleAuthenticate} 
+              <Button
+                onClick={handleAuthenticate}
                 disabled={loading || !username.trim() || !password.trim() || !apiKey.trim()}
-                className="w-full"
+                className="w-full h-12 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                {loading ? "Doğrulanıyor..." : "Bağlan"}
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    Doğrulanıyor...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Plug className="h-4 w-4" />
+                    Nilvera'ya Bağlan
+                  </div>
+                )}
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm text-green-800">
-                  ✅ Nilvera bağlantınız aktif. E-fatura işlemlerini gerçekleştirebilirsiniz.
-                </p>
-              </div>
+              {nilveraData && (
+                <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-green-900">Hesap Bilgileri</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCredentials(!showCredentials)}
+                      className="h-8 px-3 text-green-700 hover:bg-green-100"
+                    >
+                      {showCredentials ? (
+                        <>
+                          <EyeOff className="h-4 w-4 mr-1" />
+                          Gizle
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-4 w-4 mr-1" />
+                          Göster
+                        </>
+                      )}
+                    </Button>
+                  </div>
 
-              <Button 
-                variant="destructive" 
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-green-800">Kullanıcı Adı:</span>
+                      <span className="font-mono bg-white px-2 py-1 rounded border">
+                        {showCredentials ? nilveraData.username : '••••••••'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-green-800">API Key:</span>
+                      <span className="font-mono bg-white px-2 py-1 rounded border">
+                        {showCredentials
+                          ? `${nilveraData.apiKey.substring(0, 8)}...${nilveraData.apiKey.substring(nilveraData.apiKey.length - 4)}`
+                          : '••••••••••••••••'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Button
+                variant="destructive"
                 onClick={handleDisconnect}
                 className="w-full"
               >
@@ -243,18 +330,41 @@ export const NilveraSettings = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>API Key Nasıl Alınır?</CardTitle>
+      <Card className="shadow-lg border-0 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg text-blue-900">
+            <div className="p-2 bg-blue-600 rounded-lg">
+              <Key className="h-5 w-5 text-white" />
+            </div>
+            API Key Nasıl Alınır?
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            <li>Nilvera paneline giriş yapın</li>
-            <li>Sol menüden Entegrasyon sekmesine tıklayın</li>
-            <li>API bölümüne gidin</li>
-            <li>API Key kısmından key'inizi kopyalayın</li>
-            <li>Yukarıdaki alana yapıştırıp Bağlan butonuna tıklayın</li>
-          </ol>
+          <div className="bg-white rounded-xl p-5 border border-blue-200/50">
+            <ol className="space-y-3 text-sm">
+              {[
+                "Nilvera paneline giriş yapın",
+                "Sol menüden Entegrasyon sekmesine tıklayın",
+                "API bölümüne gidin",
+                "API Key kısmından key'inizi kopyalayın",
+                "Yukarıdaki alana yapıştırıp Bağlan butonuna tıklayın"
+              ].map((step, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                    {index + 1}
+                  </div>
+                  <span className="text-gray-700 leading-relaxed">{step}</span>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200/50">
+              <p className="text-xs text-blue-800 flex items-center gap-2">
+                <span className="text-base">🔗</span>
+                <span><strong>Nilvera Panel:</strong> Hesabınızla giriş yaptıktan sonra bu adımları takip edebilirsiniz.</span>
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

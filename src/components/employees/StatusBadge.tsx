@@ -11,17 +11,17 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
     switch (status) {
       case 'aktif':
         return {
-          className: "bg-green-100 text-green-800 hover:bg-green-100 border-green-200",
-          label: "Active"
+          className: "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-200/50 shadow-sm",
+          label: "🟢 Aktif"
         };
       case 'pasif':
         return {
-          className: "bg-red-100 text-red-800 hover:bg-red-100 border-red-200",
-          label: "Inactive"
+          className: "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200/50 shadow-sm",
+          label: "⚪ Pasif"
         };
       default:
         return {
-          className: "bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-200",
+          className: "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200/50 shadow-sm",
           label: status
         };
     }
@@ -30,7 +30,7 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
   const config = getStatusConfig(status);
 
   return (
-    <Badge variant="outline" className={config.className}>
+    <Badge variant="outline" className={`px-3 py-1.5 text-sm font-medium ${config.className}`}>
       {config.label}
     </Badge>
   );

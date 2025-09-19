@@ -157,118 +157,137 @@ const CashflowOverview = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="space-y-8">
-          {/* Header Section */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-border/40">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                Finansal Genel Bakış
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                Nakit akışı ve finansal performans analizi
-              </p>
+    <div className="space-y-6">
+
+      {/* Enhanced Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="group relative overflow-hidden bg-white border border-green-100 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-green-500 rounded-lg shadow-lg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+              </svg>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-sm text-muted-foreground">
-                Dönem:
+          </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">
+              Toplam Nakit Girişi
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-green-600 mb-2">
+              {formatCurrency(
+                CASHFLOW_STRUCTURE.filter(c => c.type === 'inflow' || c.type === 'investing' || c.type === 'financing')
+                  .reduce((sum, cat) => sum + getTotalByCategory(cat.key), 0)
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-1 bg-green-100 rounded-full">
+                <span className="text-xs font-medium text-green-700">Yıllık toplam</span>
               </div>
-              <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                <SelectTrigger className="w-32 bg-background/50 backdrop-blur-sm border-border/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
-                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="group relative overflow-hidden bg-white border border-red-100 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-rose-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-red-500 rounded-lg shadow-lg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+              </svg>
             </div>
           </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">
+              Toplam Nakit Çıkışı
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-red-600 mb-2">
+              {formatCurrency(
+                CASHFLOW_STRUCTURE.filter(c => c.type === 'outflow')
+                  .reduce((sum, cat) => sum + getTotalByCategory(cat.key), 0)
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-1 bg-red-100 rounded-full">
+                <span className="text-xs font-medium text-red-700">Yıllık toplam</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="relative overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:shadow-lg transition-all duration-200">
-              <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-success/10"></div>
-              <CardHeader className="relative pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Toplam Nakit Girişi
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative">
-                <div className="text-2xl font-bold text-success">
-                  {formatCurrency(
-                    CASHFLOW_STRUCTURE.filter(c => c.type === 'inflow' || c.type === 'investing' || c.type === 'financing')
-                      .reduce((sum, cat) => sum + getTotalByCategory(cat.key), 0)
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Yıllık toplam
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:shadow-lg transition-all duration-200">
-              <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-destructive/10"></div>
-              <CardHeader className="relative pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Toplam Nakit Çıkışı
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative">
-                <div className="text-2xl font-bold text-destructive">
-                  {formatCurrency(
-                    CASHFLOW_STRUCTURE.filter(c => c.type === 'outflow')
-                      .reduce((sum, cat) => sum + getTotalByCategory(cat.key), 0)
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Yıllık toplam
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:shadow-lg transition-all duration-200">
-              <div className={`absolute inset-0 bg-gradient-to-br ${getNetCashFlow() >= 0 ? 'from-success/5 to-success/10' : 'from-destructive/5 to-destructive/10'}`}></div>
-              <CardHeader className="relative pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Net Nakit Akışı
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative">
-                <div className={`text-2xl font-bold ${getNetCashFlow() >= 0 ? 'text-success' : 'text-destructive'}`}>
-                  {formatCurrency(getNetCashFlow())}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {getNetCashFlow() >= 0 ? 'Pozitif akış' : 'Negatif akış'}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:shadow-lg transition-all duration-200">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10"></div>
-              <CardHeader className="relative pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Aylık Ortalama
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative">
-                <div className="text-2xl font-bold text-primary">
-                  {formatCurrency(getNetCashFlow() / 12)}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Ortalama aylık akış
-                </div>
-              </CardContent>
-            </Card>
+        <Card className={`group relative overflow-hidden bg-white border ${getNetCashFlow() >= 0 ? 'border-green-100 hover:shadow-green-500/10' : 'border-red-100 hover:shadow-red-500/10'} hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}>
+          <div className={`absolute inset-0 bg-gradient-to-br ${getNetCashFlow() >= 0 ? 'from-green-50 to-emerald-50' : 'from-red-50 to-rose-50'}`}></div>
+          <div className="absolute top-4 right-4">
+            <div className={`p-2 ${getNetCashFlow() >= 0 ? 'bg-green-500' : 'bg-red-500'} rounded-lg shadow-lg`}>
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
           </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">
+              Net Nakit Akışı
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative">
+            <div className={`text-2xl lg:text-3xl font-bold ${getNetCashFlow() >= 0 ? 'text-green-600' : 'text-red-600'} mb-2`}>
+              {formatCurrency(getNetCashFlow())}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`px-2 py-1 ${getNetCashFlow() >= 0 ? 'bg-green-100' : 'bg-red-100'} rounded-full`}>
+                <span className={`text-xs font-medium ${getNetCashFlow() >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                  {getNetCashFlow() >= 0 ? 'Pozitif akış' : 'Negatif akış'}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Financial Overview Section */}
-          <div className="bg-background/50 backdrop-blur-sm rounded-lg border border-border/50 p-6">
-            <FinancialOverview />
+        <Card className="group relative overflow-hidden bg-white border border-blue-100 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-blue-500 rounded-lg shadow-lg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">
+              Aylık Ortalama
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-blue-600 mb-2">
+              {formatCurrency(getNetCashFlow() / 12)}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-1 bg-blue-100 rounded-full">
+                <span className="text-xs font-medium text-blue-700">Ortalama aylık akış</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Enhanced Financial Overview Section */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 lg:p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Detaylı Finansal Analiz</h2>
+            <p className="text-gray-600 text-sm">Kapsamlı finansal performans göstergeleri</p>
           </div>
         </div>
+        <FinancialOverview />
       </div>
     </div>
   );

@@ -297,144 +297,228 @@ const EmployeeCosts = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Personel Maliyetleri</h2>
-          <p className="text-gray-600">Aktif çalışanların detaylı maaş ve maliyet bilgileri</p>
+    <div className="space-y-8">
+      {/* Enhanced Header Section */}
+      <div className="bg-gradient-to-r from-white to-blue-50/50 rounded-2xl border border-blue-100/50 shadow-sm p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <Users className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Personel Maliyetleri</h1>
+              <p className="text-gray-600 text-base">Aktif çalışanların detaylı maaş ve maliyet bilgileri - Kapsamlı HR analizi</p>
+            </div>
+          </div>
+          <Button
+            onClick={exportToCSV}
+            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+            CSV İndir
+          </Button>
         </div>
-        <Button onClick={exportToCSV} className="flex items-center gap-2">
-          <FileDown className="h-4 w-4" />
-          CSV İndir
-        </Button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Toplam Çalışan</CardTitle>
+      {/* Enhanced Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="group relative overflow-hidden bg-white border border-blue-100 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-blue-500 rounded-lg shadow-lg">
+              <Users className="h-5 w-5 text-white" />
+            </div>
+          </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">Toplam Çalışan</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-blue-600 mb-2">
+              {filteredCosts.length}
+            </div>
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-500" />
-              <span className="text-2xl font-bold">{filteredCosts.length}</span>
+              <div className="px-2 py-1 bg-blue-100 rounded-full">
+                <span className="text-xs font-medium text-blue-700">Aktif personel</span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Toplam Brüt Maaş</CardTitle>
+        <Card className="group relative overflow-hidden bg-white border border-green-100 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-green-500 rounded-lg shadow-lg">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
+          </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">Toplam Brüt Maaş</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-green-600 mb-2">
+              {formatCurrency(totalCosts.gross_salary)}
+            </div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
-              <span className="text-2xl font-bold">{formatCurrency(totalCosts.gross_salary)}</span>
+              <div className="px-2 py-1 bg-green-100 rounded-full">
+                <span className="text-xs font-medium text-green-700">Aylık toplam</span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Toplam Net Maaş</CardTitle>
+        <Card className="group relative overflow-hidden bg-white border border-purple-100 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-indigo-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-purple-500 rounded-lg shadow-lg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+          </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">Toplam Net Maaş</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-purple-600 mb-2">
+              {formatCurrency(totalCosts.net_salary)}
+            </div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-blue-500" />
-              <span className="text-2xl font-bold">{formatCurrency(totalCosts.net_salary)}</span>
+              <div className="px-2 py-1 bg-purple-100 rounded-full">
+                <span className="text-xs font-medium text-purple-700">Net ödemeler</span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Toplam İşveren Maliyeti</CardTitle>
+        <Card className="group relative overflow-hidden bg-white border border-red-100 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-rose-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-red-500 rounded-lg shadow-lg">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
+          </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">Toplam İşveren Maliyeti</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-red-600 mb-2">
+              {formatCurrency(totalCosts.total_employer_cost)}
+            </div>
             <div className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-red-500" />
-              <span className="text-2xl font-bold">{formatCurrency(totalCosts.total_employer_cost)}</span>
+              <div className="px-2 py-1 bg-red-100 rounded-full">
+                <span className="text-xs font-medium text-red-700">Gerçek maliyet</span>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Personel ara..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Departman seç" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tüm Departmanlar</SelectItem>
-            {uniqueDepartments.map((dept) => (
-              <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Enhanced Filters Section */}
+      <Card className="bg-white border border-gray-200 shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-gray-100 rounded-lg">
+              <Search className="h-4 w-4 text-gray-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Filtreleme ve Arama</h3>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Personel ara (isim, e-posta, telefon, TC)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+              <SelectTrigger className="w-full sm:w-48 border-gray-300 focus:border-blue-500">
+                <SelectValue placeholder="Departman seç" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tüm Departmanlar</SelectItem>
+                {uniqueDepartments.map((dept) => (
+                  <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Employee Costs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Detaylı Personel Maliyetleri</CardTitle>
-          <CardDescription>Tüm aktif çalışanların maaş ve maliyet detayları</CardDescription>
+      {/* Enhanced Employee Costs Table */}
+      <Card className="bg-white border border-gray-200 shadow-lg">
+        <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold text-gray-900">Detaylı Personel Maliyetleri</CardTitle>
+              <CardDescription className="text-gray-600">Tüm aktif çalışanların maaş ve maliyet detayları - Kapsamlı personel analizi</CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
+        <CardContent className="p-6">
+          <div className="overflow-x-auto rounded-xl border border-gray-200">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[200px]">Kişisel Bilgiler</TableHead>
-                  <TableHead className="text-right min-w-[100px]">Net Maaş</TableHead>
-                  <TableHead className="text-right min-w-[100px]">SGK İşveren</TableHead>
-                  <TableHead className="text-right min-w-[80px]">Yemek</TableHead>
-                  <TableHead className="text-right min-w-[80px]">Ulaşım</TableHead>
-                  <TableHead className="text-right min-w-[120px]">Toplam Maliyet</TableHead>
+                <TableRow className="bg-gray-50/50 hover:bg-gray-50">
+                  <TableHead className="min-w-[200px] font-semibold text-gray-700">Kişisel Bilgiler</TableHead>
+                  <TableHead className="text-right min-w-[100px] font-semibold text-gray-700">Net Maaş</TableHead>
+                  <TableHead className="text-right min-w-[100px] font-semibold text-gray-700">SGK İşveren</TableHead>
+                  <TableHead className="text-right min-w-[80px] font-semibold text-gray-700">Yemek</TableHead>
+                  <TableHead className="text-right min-w-[80px] font-semibold text-gray-700">Ulaşım</TableHead>
+                  <TableHead className="text-right min-w-[120px] font-semibold text-gray-700">Toplam Maliyet</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCosts.map((employee) => (
-                  <TableRow key={employee.id}>
+                  <TableRow key={employee.id} className="hover:bg-blue-50/30 transition-colors">
                     <TableCell className="font-medium">
-                      <div className="space-y-1">
-                        <div className="font-medium">{employee.first_name} {employee.last_name}</div>
-                        <div className="text-xs text-gray-500">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-full">
+                            <Users className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900">{employee.first_name} {employee.last_name}</div>
+                            <div className="text-sm text-gray-600">{employee.department} • {employee.position}</div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 pl-11">
                           {employee.date_of_birth && (
-                            <div>Doğum: {new Date(employee.date_of_birth).toLocaleDateString('tr-TR')}</div>
+                            <div>📅 {new Date(employee.date_of_birth).toLocaleDateString('tr-TR')}</div>
                           )}
-                          {employee.gender && <div>Cinsiyet: {employee.gender}</div>}
-                          {employee.marital_status && <div>Medeni: {employee.marital_status}</div>}
-                          {employee.id_ssn && <div>TC: {employee.id_ssn}</div>}
+                          {employee.gender && <div>👤 {employee.gender}</div>}
+                          {employee.marital_status && <div>💍 {employee.marital_status}</div>}
+                          {employee.id_ssn && <div>🆔 {employee.id_ssn}</div>}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-right font-semibold text-purple-600">
                       {formatCurrency(employee.net_salary)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right font-medium text-blue-600">
                       {formatCurrency(employee.manual_employer_sgk_cost)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right font-medium text-green-600">
                       {formatCurrency(employee.meal_allowance)}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right font-medium text-orange-600">
                       {formatCurrency(employee.transport_allowance)}
                     </TableCell>
-                    <TableCell className="text-right font-bold text-red-600">
-                      {formatCurrency(employee.total_employer_cost)}
+                    <TableCell className="text-right">
+                      <div className="font-bold text-red-600 text-lg">
+                        {formatCurrency(employee.total_employer_cost)}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Gerçek maliyet
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

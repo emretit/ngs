@@ -7,16 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, ChevronDown, Download, Users, Calculator, Save } from "lucide-react";
 import { useOpexMatrix } from "@/hooks/useOpexMatrix";
+import { useOpexCategories, OpexCategory } from "@/hooks/useOpexCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
-
-interface OpexCategory {
-  name: string;
-  subcategories: string[];
-  isAutoPopulated?: boolean;
-  type: 'personnel' | 'operational' | 'other';
-}
 
 interface EmployeeSalaryData {
   department: string;
@@ -31,39 +25,7 @@ interface EmployeeSalaryData {
   accident_insurance_amount: number;
 }
 
-const OPEX_CATEGORIES: OpexCategory[] = [
-  {
-    name: "Personel Giderleri",
-    subcategories: ["Net Maaşlar", "SGK İşveren Payı", "İşsizlik Sigortası", "İş Kazası Sigortası", "Yemek Yardımı", "Ulaşım Yardımı"],
-    isAutoPopulated: true,
-    type: 'personnel'
-  },
-  {
-    name: "Operasyonel Giderler",
-    subcategories: ["Kira", "Elektrik", "Su", "Doğalgaz", "İnternet", "Telefon"],
-    type: 'operational'
-  },
-  {
-    name: "Ofis Giderleri",
-    subcategories: ["Ofis Malzemeleri", "Temizlik", "Güvenlik", "Bakım"],
-    type: 'other'
-  },
-  {
-    name: "Pazarlama & Satış",
-    subcategories: ["Reklam", "Promosyon", "Etkinlik", "Satış Komisyonu"],
-    type: 'other'
-  },
-  {
-    name: "Finansman Giderleri",
-    subcategories: ["Kredi Faizleri", "Kart Komisyonları", "Banka Masrafları", "Kambiyo Giderleri", "Faktoring Giderleri", "Leasing Giderleri", "Diğer Finansman Giderleri"],
-    type: 'other'
-  },
-  {
-    name: "Genel Giderler",
-    subcategories: ["Danışmanlık", "Sigorta", "Vergiler", "Yasal Giderler", "Diğer"],
-    type: 'other'
-  }
-];
+// OPEX_CATEGORIES artık veritabanından gelecek
 
 const MONTHS = [
   'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
@@ -78,6 +40,7 @@ const OpexMatrix = () => {
   const [matrixData, setMatrixData] = useState<Record<string, Record<number, number>>>({});
   const [loading, setLoading] = useState(false);
   const { data: opexData, upsertOpexMatrix, loading: opexLoading } = useOpexMatrix();
+  const { categories: opexCategories, loading: categoriesLoading } = useOpexCategories();
   const { toast } = useToast();
 
   // Auto-save timeout
@@ -337,7 +300,7 @@ const OpexMatrix = () => {
 
   // Calculate column total
   const getColumnTotal = (month: number): number => {
-    return OPEX_CATEGORIES.reduce((total, category) => {
+    return opexCategories.reduce((total, category) => {
       return total + getCategoryTotal(category.name, month);
     }, 0);
   };
@@ -371,12 +334,12 @@ const OpexMatrix = () => {
 
   // Calculate category total (sum of all subcategories in a category)
   const getCategoryTotal = (category: string, month: number): number => {
-    const categoryData = OPEX_CATEGORIES.find(c => c.name === category);
+    const categoryData = opexCategories.find(c => c.name === category);
     if (!categoryData) return 0;
 
     return categoryData.subcategories.reduce((total, subcategory) => {
-      const cellValue = getCellValue(category, subcategory, month);
-      const autoValue = categoryData.isAutoPopulated ? getAutoPopulatedValue(subcategory, month) : 0;
+      const cellValue = getCellValue(category, subcategory.name, month);
+      const autoValue = categoryData.isAutoPopulated ? getAutoPopulatedValue(subcategory.name, month) : 0;
       return total + cellValue + autoValue;
     }, 0);
   };
@@ -401,12 +364,12 @@ const OpexMatrix = () => {
   const exportToExcel = () => {
     const csvData = [
       ['Kategori', 'Alt Kategori', ...MONTHS, 'Toplam'],
-      ...OPEX_CATEGORIES.flatMap(category => 
+      ...opexCategories.flatMap(category => 
         category.subcategories.map(subcategory => [
           category.name,
-          subcategory,
-          ...MONTHS.map((_, index) => getCellValue(category.name, subcategory, index + 1)),
-          getRowTotal(category.name, subcategory)
+          subcategory.name,
+          ...MONTHS.map((_, index) => getCellValue(category.name, subcategory.name, index + 1)),
+          getRowTotal(category.name, subcategory.name)
         ])
       ),
       ['TOPLAM', '', ...MONTHS.map((_, index) => getColumnTotal(index + 1)), getGrandTotal()]
@@ -432,13 +395,13 @@ const OpexMatrix = () => {
       // Save all non-zero values in the matrix
       const savePromises = [];
       
-      for (const category of OPEX_CATEGORIES) {
+      for (const category of opexCategories) {
         for (const subcategory of category.subcategories) {
           for (let month = 1; month <= 12; month++) {
-            const value = getCellValue(category.name, subcategory, month);
+            const value = getCellValue(category.name, subcategory.name, month);
             if (value > 0) {
               savePromises.push(
-                upsertOpexMatrix(selectedYear, month, category.name, subcategory, value)
+                upsertOpexMatrix(selectedYear, month, category.name, subcategory.name, value)
               );
             }
           }
@@ -462,6 +425,14 @@ const OpexMatrix = () => {
       setLoading(false);
     }
   };
+
+  if (loading || opexLoading || categoriesLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -508,7 +479,7 @@ const OpexMatrix = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {OPEX_CATEGORIES.map((category) => (
+                {opexCategories.map((category) => (
                   <>
                     <TableRow key={category.name} className="bg-muted/50">
                       <TableCell 

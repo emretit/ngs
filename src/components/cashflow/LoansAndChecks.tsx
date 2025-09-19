@@ -473,45 +473,122 @@ export function LoansAndChecks() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Toplam Kredi Borcu</CardTitle>
+    <div className="space-y-8">
+      {/* Enhanced Header Section */}
+      <div className="bg-gradient-to-r from-white to-purple-50/50 rounded-2xl border border-purple-100/50 shadow-sm p-6">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg">
+            <CreditCard className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Krediler ve Çekler</h1>
+            <p className="text-gray-600 text-base">Kredi borçları ve çek yönetimi - Finansal yükümlülükler takibi</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="group relative overflow-hidden bg-white border border-red-100 hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-50 to-rose-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-red-500 rounded-lg shadow-lg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            </div>
+          </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">Toplam Kredi Borcu</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalLoanDebt)}</div>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-red-600 mb-2">
+              {formatCurrency(totalLoanDebt)}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-1 bg-red-100 rounded-full">
+                <span className="text-xs font-medium text-red-700">Kalan borç</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Toplam Ödenecek Çek</CardTitle>
+
+        <Card className="group relative overflow-hidden bg-white border border-orange-100 hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-orange-500 rounded-lg shadow-lg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+          </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">Toplam Ödenecek Çek</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalPayableChecks)}</div>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-orange-600 mb-2">
+              {formatCurrency(totalPayableChecks)}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-1 bg-orange-100 rounded-full">
+                <span className="text-xs font-medium text-orange-700">Ödenecek</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Bu Ay Ödenecek Toplam</CardTitle>
+
+        <Card className="group relative overflow-hidden bg-white border border-blue-100 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50"></div>
+          <div className="absolute top-4 right-4">
+            <div className="p-2 bg-blue-500 rounded-lg shadow-lg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+          <CardHeader className="relative pb-2">
+            <CardTitle className="text-sm font-semibold text-gray-700">Bu Ay Ödenecek Toplam</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatCurrency(thisMonthPayments)}</div>
+          <CardContent className="relative">
+            <div className="text-2xl lg:text-3xl font-bold text-blue-600 mb-2">
+              {formatCurrency(thisMonthPayments)}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-1 bg-blue-100 rounded-full">
+                <span className="text-xs font-medium text-blue-700">Bu ay</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Krediler ve Çekler</CardTitle>
+      {/* Enhanced Main Content */}
+      <Card className="bg-white border border-gray-200 shadow-lg">
+        <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-purple-50 to-indigo-50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+              </svg>
+            </div>
+            <CardTitle className="text-xl font-bold text-gray-900">Detaylı Krediler ve Çekler Yönetimi</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="loans">Krediler</TabsTrigger>
-              <TabsTrigger value="checks">Çekler</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl">
+              <TabsTrigger
+                value="loans"
+                className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 font-medium"
+              >
+                💳 Krediler
+              </TabsTrigger>
+              <TabsTrigger
+                value="checks"
+                className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 font-medium"
+              >
+                📄 Çekler
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="loans" className="space-y-4">

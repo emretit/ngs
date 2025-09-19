@@ -1,5 +1,6 @@
 
 import Cashflow from "@/pages/Cashflow";
+import CashflowCategoriesWrapper from "@/pages/CashflowCategoriesWrapper";
 import PurchaseInvoices from "@/pages/PurchaseInvoices";
 import SalesInvoices from "@/pages/SalesInvoices";
 import CreateSalesInvoice from "@/pages/CreateSalesInvoice";
@@ -17,6 +18,7 @@ export const cashflowRoutes: RouteConfig[] = [
   { path: "/cashflow/loans-and-checks", component: Cashflow, protected: true },
   { path: "/cashflow/invoices", component: Cashflow, protected: true },
   { path: "/cashflow/bank-accounts", component: Cashflow, protected: true },
+  { path: "/cashflow/categories", component: CashflowCategoriesWrapper, protected: true },
 ];
 
 // Define finance routes (keeping existing purchase/sales invoice routes)

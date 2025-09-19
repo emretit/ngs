@@ -6,7 +6,7 @@ export interface CashflowCategory {
   id: string;
   name: string;
   type: 'income' | 'expense';
-  user_id: string | null;
+  company_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -49,12 +49,12 @@ export const useCashflowCategories = () => {
 
   const createCategory = async (data: CreateCategoryData) => {
     try {
-      // Auth disabled - no user check needed
-      const user_id = '00000000-0000-0000-0000-000000000001'; // Default user ID
+      // Use NGS İLETİŞİM company ID directly
+      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
 
       const insertData = {
         ...data,
-        user_id: user_id,
+        company_id: ngsCompanyId,
       };
 
       const { data: newCategory, error } = await supabase
@@ -67,16 +67,16 @@ export const useCashflowCategories = () => {
       
       setCategories(prev => [...prev, newCategory as CashflowCategory].sort((a, b) => a.name.localeCompare(b.name)));
       toast({
-        title: "Success",
-        description: "Category created successfully",
+        title: "Başarılı",
+        description: "Kategori başarıyla oluşturuldu",
       });
       
       return newCategory;
     } catch (err: any) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to create category: " + err.message,
+        title: "Hata",
+        description: "Kategori oluşturulurken hata oluştu: " + err.message,
       });
       throw err;
     }
@@ -95,16 +95,16 @@ export const useCashflowCategories = () => {
       
       setCategories(prev => prev.map(c => c.id === id ? updatedCategory as CashflowCategory : c).sort((a, b) => a.name.localeCompare(b.name)));
       toast({
-        title: "Success",
-        description: "Category updated successfully",
+        title: "Başarılı",
+        description: "Kategori başarıyla güncellendi",
       });
       
       return updatedCategory;
     } catch (err: any) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to update category: " + err.message,
+        title: "Hata",
+        description: "Kategori güncellenirken hata oluştu: " + err.message,
       });
       throw err;
     }
@@ -121,14 +121,14 @@ export const useCashflowCategories = () => {
       
       setCategories(prev => prev.filter(c => c.id !== id));
       toast({
-        title: "Success",
-        description: "Category deleted successfully",
+        title: "Başarılı",
+        description: "Kategori başarıyla silindi",
       });
     } catch (err: any) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to delete category: " + err.message,
+        title: "Hata",
+        description: "Kategori silinirken hata oluştu: " + err.message,
       });
       throw err;
     }

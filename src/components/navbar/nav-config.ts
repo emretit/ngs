@@ -37,11 +37,25 @@ import {
 } from "lucide-react";
 
 export const navItems = [
+  // 1. Gösterge Paneli
   {
     path: "/dashboard",
     icon: Home,
     label: "Gösterge Paneli",
   },
+  // 2. Müşteriler
+  {
+    path: "/contacts",
+    icon: User,
+    label: "Müşteriler",
+  },
+  // 3. Tedarikçiler
+  {
+    path: "/suppliers",
+    icon: Building2,
+    label: "Tedarikçiler",
+  },
+  // 4. Satış Yönetimi
   {
     category: "Satış Yönetimi",
     icon: TrendingUp,
@@ -79,6 +93,7 @@ export const navItems = [
       },
     ],
   },
+  // 5. Satın Alma
   {
     category: "Satın Alma",
     icon: PackageCheck,
@@ -96,6 +111,13 @@ export const navItems = [
       },
     ],
   },
+  // 6. Servis
+  {
+    path: "/service",
+    icon: Wrench,
+    label: "Servis",
+  },
+  // 7. Fatura Yönetimi
   {
     category: "Fatura Yönetimi",
     icon: Receipt,
@@ -116,45 +138,32 @@ export const navItems = [
         icon: FileText,
         label: "E-Fatura",
       },
-
     ],
   },
-  {
-    path: "/contacts",
-    icon: User,
-    label: "Müşteriler",
-  },
-  {
-    path: "/suppliers",
-    icon: Building2,
-    label: "Tedarikçiler",
-  },
-  {
-    path: "/products",
-    icon: Package,
-    label: "Ürünler",
-  },
-  {
-    path: "/employees",
-    icon: Users,
-    label: "Çalışanlar",
-  },
+  // 8. Nakit Akış
   {
     path: "/cashflow",
     icon: CreditCard,
     label: "Nakit Akış",
   },
+  // 9. Ürünler
   {
-    path: "/service",
-    icon: Wrench,
-    label: "Servis",
+    path: "/products",
+    icon: Package,
+    label: "Ürünler",
   },
+  // 10. Çalışanlar
+  {
+    path: "/employees",
+    icon: Users,
+    label: "Çalışanlar",
+  },
+  // 11. Araç Yönetimi
   {
     path: "/vehicles",
     icon: Car,
     label: "Araç Yönetimi",
   },
-
 ];
 
 export const settingsItem = {

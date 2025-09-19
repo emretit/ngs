@@ -164,6 +164,12 @@ export const navItems = [
     icon: Car,
     label: "Araç Yönetimi",
   },
+  // 12. Raporlar
+  {
+    path: "/reports",
+    icon: BarChart2,
+    label: "Raporlar",
+  },
 ];
 
 export const settingsItem = {

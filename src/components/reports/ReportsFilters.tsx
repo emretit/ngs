@@ -11,7 +11,7 @@ interface ReportsFiltersProps {
 export default function ReportsFilters({ searchParams, setSearchParams }: ReportsFiltersProps) {
   const updateFilter = (key: string, value: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (value) {
+    if (value && value !== 'all') {
       newParams.set(key, value);
     } else {
       newParams.delete(key);
@@ -92,15 +92,15 @@ export default function ReportsFilters({ searchParams, setSearchParams }: Report
 
           <div className="flex items-center gap-2 min-w-[180px]">
             <Users className="h-4 w-4 text-muted-foreground" />
-            <Select 
-              value={searchParams.get('department') || ''} 
+            <Select
+              value={searchParams.get('department') || 'all'}
               onValueChange={(value) => updateFilter('department', value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Departman" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tümü</SelectItem>
+                <SelectItem value="all">Tümü</SelectItem>
                 <SelectItem value="sales">Satış</SelectItem>
                 <SelectItem value="purchasing">Satın Alma</SelectItem>
                 <SelectItem value="service">Servis</SelectItem>
@@ -111,15 +111,15 @@ export default function ReportsFilters({ searchParams, setSearchParams }: Report
 
           <div className="flex items-center gap-2 min-w-[180px]">
             <User className="h-4 w-4 text-muted-foreground" />
-            <Select 
-              value={searchParams.get('customerSupplier') || ''} 
+            <Select
+              value={searchParams.get('customerSupplier') || 'all'}
               onValueChange={(value) => updateFilter('customerSupplier', value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Müşteri/Tedarikçi" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tümü</SelectItem>
+                <SelectItem value="all">Tümü</SelectItem>
                 <SelectItem value="customers">Sadece Müşteriler</SelectItem>
                 <SelectItem value="suppliers">Sadece Tedarikçiler</SelectItem>
               </SelectContent>

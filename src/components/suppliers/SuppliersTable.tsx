@@ -171,7 +171,20 @@ const SuppliersTable = ({
       : valueB.localeCompare(valueA);
   });
 
-  const filteredSuppliers = sortedSuppliers;
+  // Filter suppliers based on search query, status, and type
+  const filteredSuppliers = sortedSuppliers.filter(supplier => {
+    const matchesSearch = !searchQuery || 
+      supplier.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      supplier.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      supplier.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      supplier.mobile_phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      supplier.office_phone?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = !statusFilter || statusFilter === 'all' || supplier.status === statusFilter;
+    const matchesType = !typeFilter || typeFilter === 'all' || supplier.type === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
   if (isLoading) {
     return (

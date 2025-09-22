@@ -171,7 +171,20 @@ const CustomersTable = ({
       : valueB.localeCompare(valueA);
   });
 
-  const filteredCustomers = sortedCustomers;
+  // Filter customers based on search query, status, and type
+  const filteredCustomers = sortedCustomers.filter(customer => {
+    const matchesSearch = !searchQuery || 
+      customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.mobile_phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      customer.office_phone?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = !statusFilter || statusFilter === 'all' || customer.status === statusFilter;
+    const matchesType = !typeFilter || typeFilter === 'all' || customer.type === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
   if (isLoading) {
     return (

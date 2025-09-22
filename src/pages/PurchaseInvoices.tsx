@@ -24,6 +24,10 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
     setFilters,
   } = usePurchaseInvoices();
   
+  // Debug için console.log ekle
+  console.log('🔍 PurchaseInvoices - invoices:', invoices);
+  console.log('🔍 PurchaseInvoices - isLoading:', isLoading);
+  
   const { incomingInvoices, isLoading: isLoadingIncoming, refetch: refetchIncoming } = useIncomingInvoices();
   const { earchiveInvoices, isLoading: isLoadingEarchive, refetch: refetchEarchive } = useEarchiveInvoices();
   const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();

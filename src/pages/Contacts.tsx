@@ -19,10 +19,7 @@ const Contacts = ({ isCollapsed, setIsCollapsed }: ContactsProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedCustomers, setSelectedCustomers] = useState<Customer[]>([]);
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const pageSize = 20;
 
   const { data: customers, isLoading, error } = useQuery({
@@ -46,13 +43,6 @@ const Contacts = ({ isCollapsed, setIsCollapsed }: ContactsProps) => {
     console.error("Error loading customers:", error);
   }
 
-  const handleCustomerClick = (customer: Customer) => {
-    setSelectedCustomer(customer);
-  };
-
-  const handleCloseDetail = () => {
-    setSelectedCustomer(null);
-  };
 
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomers(prev => {
@@ -88,10 +78,6 @@ const Contacts = ({ isCollapsed, setIsCollapsed }: ContactsProps) => {
           setSelectedStatus={setSelectedStatus}
           selectedType={selectedType}
           setSelectedType={setSelectedType}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
         />
         
         {selectedCustomers.length > 0 && (
@@ -118,7 +104,7 @@ const Contacts = ({ isCollapsed, setIsCollapsed }: ContactsProps) => {
             isLoading={isLoading}
             totalCount={customers?.length || 0}
             error={error}
-            onCustomerSelect={handleCustomerClick}
+            onCustomerSelect={() => {}}
             onCustomerSelectToggle={handleCustomerSelect}
             selectedCustomers={selectedCustomers}
             setSelectedCustomers={setSelectedCustomers}

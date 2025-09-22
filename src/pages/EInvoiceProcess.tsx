@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
 import CompactProductForm from '@/components/einvoice/CompactProductForm';
-import SupplierSelector from '@/components/einvoice/SupplierSelector';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   ArrowLeft, 
@@ -59,6 +58,29 @@ interface EInvoiceDetails {
   tax_total: number;
   total_amount: number;
   items: EInvoiceItem[];
+  // Detaylı tedarikçi bilgileri
+  supplier_details?: {
+    company_name?: string;
+    tax_number?: string;
+    trade_registry_number?: string;
+    mersis_number?: string;
+    email?: string;
+    phone?: string;
+    website?: string;
+    fax?: string;
+    address?: {
+      street?: string;
+      district?: string;
+      city?: string;
+      postal_code?: string;
+      country?: string;
+    };
+    bank_info?: {
+      bank_name?: string;
+      iban?: string;
+      account_number?: string;
+    };
+  };
 }
 
 interface Product {
@@ -119,6 +141,13 @@ export default function EInvoiceProcess() {
       loadAllData();
     }
   }, [invoiceId]);
+
+  // Tedarikçi eşleştirmesi için useEffect
+  useEffect(() => {
+    if (invoice && suppliers.length > 0) {
+      matchSupplier();
+    }
+  }, [invoice, suppliers]);
 
   const loadAllData = async () => {
     setIsLoading(true);
@@ -190,6 +219,12 @@ export default function EInvoiceProcess() {
         description: item.description
       })) || [];
 
+      // Detaylı tedarikçi bilgilerini çıkar
+      const supplierDetails = detailsData.invoiceDetails?.supplierInfo || detailsData.invoiceDetails?.companyInfo || {};
+      
+      console.log('🔍 Raw supplier details from API:', supplierDetails);
+      console.log('🔍 Full invoice details:', detailsData.invoiceDetails);
+      
       const invoiceDetails: EInvoiceDetails = {
         id: invoiceData.id,
         invoice_number: invoiceData.invoiceNumber,
@@ -201,7 +236,29 @@ export default function EInvoiceProcess() {
         subtotal: invoiceData.totalAmount - invoiceData.taxAmount,
         tax_total: invoiceData.taxAmount,
         total_amount: invoiceData.totalAmount,
-        items
+        items,
+        supplier_details: {
+          company_name: supplierDetails.companyName || supplierDetails.name || invoiceData.supplierName,
+          tax_number: supplierDetails.taxNumber || supplierDetails.vkn || invoiceData.supplierTaxNumber,
+          trade_registry_number: supplierDetails.tradeRegistryNumber || supplierDetails.ticaretSicilNo,
+          mersis_number: supplierDetails.mersisNumber || supplierDetails.mersisNo,
+          email: supplierDetails.email || supplierDetails.eMail,
+          phone: supplierDetails.phone || supplierDetails.telefon || supplierDetails.phoneNumber,
+          website: supplierDetails.website || supplierDetails.webSite,
+          fax: supplierDetails.fax || supplierDetails.faks,
+          address: {
+            street: supplierDetails.address?.street || supplierDetails.adres?.sokak || supplierDetails.addressLine,
+            district: supplierDetails.address?.district || supplierDetails.adres?.ilce || supplierDetails.district,
+            city: supplierDetails.address?.city || supplierDetails.adres?.il || supplierDetails.city,
+            postal_code: supplierDetails.address?.postal_code || supplierDetails.adres?.postaKodu || supplierDetails.postalCode,
+            country: supplierDetails.address?.country || supplierDetails.adres?.ulke || supplierDetails.country || 'Türkiye'
+          },
+          bank_info: {
+            bank_name: supplierDetails.bankInfo?.bankName || supplierDetails.banka?.bankaAdi,
+            iban: supplierDetails.bankInfo?.iban || supplierDetails.banka?.iban,
+            account_number: supplierDetails.bankInfo?.accountNumber || supplierDetails.banka?.hesapNo
+          }
+        }
       };
 
       setInvoice(invoiceDetails);
@@ -248,32 +305,37 @@ export default function EInvoiceProcess() {
 
   const loadSuppliers = async () => {
     try {
-      // Load all suppliers from suppliers table
+      // Load all suppliers from suppliers table with company_id filter for RLS
       const { data: suppliersData, error: suppliersError } = await supabase
         .from('suppliers')
-        .select('id, name, tax_number, email')
+        .select('id, name, tax_number, email, company_id')
         .eq('status', 'aktif') // Only active suppliers
         .order('name');
 
       if (suppliersError) throw suppliersError;
       setSuppliers(suppliersData || []);
 
-      // Try to find supplier by tax number - hızlı kontrol
-      if (invoice) {
-        const matchingSupplier = suppliersData?.find(s => 
-          s.tax_number === invoice.supplier_tax_number
-        );
-        if (matchingSupplier) {
-          setSelectedSupplierId(matchingSupplier.id);
-          setSupplierMatchStatus('found');
-        } else {
-          setSupplierMatchStatus('not_found');
-        }
-      }
-
     } catch (error: any) {
       console.error('❌ Error loading suppliers:', error);
+    }
+  };
+
+  // Tedarikçi eşleştirmesi için ayrı fonksiyon
+  const matchSupplier = async () => {
+    if (!invoice || !suppliers.length) return;
+
+    setSupplierMatchStatus('searching');
+    const matchingSupplier = suppliers.find(s => 
+      s.tax_number === invoice.supplier_tax_number
+    );
+    
+    if (matchingSupplier) {
+      setSelectedSupplierId(matchingSupplier.id);
+      setSupplierMatchStatus('found');
+      console.log('✅ Tedarikçi otomatik eşleştirildi:', matchingSupplier.name);
+    } else {
       setSupplierMatchStatus('not_found');
+      console.log('⚠️ Tedarikçi bulunamadı:', invoice.supplier_tax_number);
     }
   };
 
@@ -338,15 +400,52 @@ export default function EInvoiceProcess() {
     
     setIsCreatingSupplier(true);
     try {
-      // E-faturadan gelen bilgilerle yeni tedarikçi oluştur
+      // Mevcut kullanıcının company_id'sini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
+      }
+
+      // Kullanıcının company_id'sini al
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !userProfile?.company_id) {
+        throw new Error('Şirket bilgisi bulunamadı');
+      }
+
+      // E-faturadan gelen detaylı bilgilerle yeni tedarikçi oluştur
       const supplierData = {
-        name: invoice.supplier_name,
-        tax_number: invoice.supplier_tax_number,
+        name: invoice.supplier_details?.company_name || invoice.supplier_name,
+        tax_number: invoice.supplier_details?.tax_number || invoice.supplier_tax_number,
+        trade_registry_number: invoice.supplier_details?.trade_registry_number,
+        mersis_number: invoice.supplier_details?.mersis_number,
+        email: invoice.supplier_details?.email,
+        office_phone: invoice.supplier_details?.phone,
+        website: invoice.supplier_details?.website,
+        fax: invoice.supplier_details?.fax,
+        address: invoice.supplier_details?.address ? 
+          `${invoice.supplier_details.address.street || ''} ${invoice.supplier_details.address.district || ''} ${invoice.supplier_details.address.city || ''}`.trim() : 
+          undefined,
+        city: invoice.supplier_details?.address?.city,
+        district: invoice.supplier_details?.address?.district,
+        postal_code: invoice.supplier_details?.address?.postal_code,
+        country: invoice.supplier_details?.address?.country || 'Türkiye',
+        bank_name: invoice.supplier_details?.bank_info?.bank_name,
+        iban: invoice.supplier_details?.bank_info?.iban,
+        account_number: invoice.supplier_details?.bank_info?.account_number,
         type: 'kurumsal',
         status: 'aktif',
-        company: invoice.supplier_name,
-        balance: 0
+        company: invoice.supplier_details?.company_name || invoice.supplier_name,
+        balance: 0,
+        company_id: userProfile.company_id // RLS için company_id ekle
       };
+
+      console.log('🔍 Tedarikçi kaydedilecek bilgiler:', supplierData);
+      console.log('🔍 E-fatura tedarikçi detayları:', invoice.supplier_details);
 
       const { data: newSupplier, error } = await supabase
         .from('suppliers')
@@ -355,6 +454,8 @@ export default function EInvoiceProcess() {
         .single();
 
       if (error) throw error;
+
+      console.log('✅ Tedarikçi başarıyla oluşturuldu:', newSupplier);
 
       // Tedarikçi listesini güncelle
       setSuppliers(prev => [...prev, newSupplier]);
@@ -365,7 +466,7 @@ export default function EInvoiceProcess() {
 
       toast({
         title: "Başarılı",
-        description: "Tedarikçi oluşturuldu ve seçildi",
+        description: `Tedarikçi "${supplierData.name}" detaylı bilgilerle oluşturuldu ve seçildi`,
       });
 
     } catch (error: any) {
@@ -392,9 +493,77 @@ export default function EInvoiceProcess() {
 
     setIsCreating(true);
     try {
-      // Save matching results to database first
+      // Mevcut kullanıcının company_id'sini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
+      }
+
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !userProfile?.company_id) {
+        throw new Error('Şirket bilgisi bulunamadı');
+      }
+
+      // First, check if invoice exists in einvoices table, if not create it
+      let einvoiceId = invoice.id;
+      
+      const { data: existingInvoice, error: checkError } = await supabase
+        .from('einvoices')
+        .select('id')
+        .eq('id', invoice.id)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+        throw checkError;
+      }
+
+      if (!existingInvoice) {
+        // Create invoice in einvoices table first
+        console.log('🔄 Creating invoice in einvoices table...');
+        const { data: newInvoice, error: createInvoiceError } = await supabase
+          .from('einvoices')
+          .insert({
+            id: invoice.id,
+            invoice_number: invoice.invoice_number,
+            supplier_name: invoice.supplier_name,
+            supplier_tax_number: invoice.supplier_tax_number,
+            invoice_date: invoice.invoice_date,
+            due_date: invoice.due_date,
+            status: 'pending',
+            total_amount: invoice.total_amount,
+            paid_amount: 0,
+            remaining_amount: invoice.total_amount,
+            currency: invoice.currency,
+            tax_amount: invoice.tax_total,
+            nilvera_id: invoice.id, // Store original Nilvera ID
+            xml_data: {
+              supplier_details: invoice.supplier_details,
+              original_invoice_data: invoice
+            },
+            company_id: userProfile.company_id
+          })
+          .select()
+          .single();
+
+        if (createInvoiceError) {
+          console.error('❌ Error creating invoice:', createInvoiceError);
+          throw createInvoiceError;
+        }
+
+        einvoiceId = newInvoice.id;
+        console.log('✅ Invoice created in einvoices table:', einvoiceId);
+      } else {
+        console.log('✅ Invoice already exists in einvoices table:', einvoiceId);
+      }
+
+      // Save matching results to database
       const matchingRecords = matchingItems.map(item => ({
-        invoice_id: invoice.id,
+        invoice_id: einvoiceId,
         invoice_line_id: item.invoice_item.id,
         invoice_product_name: item.invoice_item.product_name,
         invoice_product_code: item.invoice_item.product_code,
@@ -407,7 +576,8 @@ export default function EInvoiceProcess() {
         match_type: 'manual',
         match_confidence: 1.0,
         is_confirmed: true,
-        notes: item.notes
+        notes: item.notes,
+        company_id: userProfile.company_id // RLS için company_id ekle
       }));
 
       const { error: insertError } = await supabase
@@ -434,7 +604,8 @@ export default function EInvoiceProcess() {
             status: 'active',
             is_active: true,
             stock_quantity: 0,
-            description: `E-faturadan oluşturulan ürün - Fatura No: ${invoice.invoice_number}`
+            description: `E-faturadan oluşturulan ürün - Fatura No: ${invoice.invoice_number}`,
+            company_id: userProfile.company_id // RLS için company_id ekle
           })
           .select()
           .single();
@@ -480,7 +651,8 @@ export default function EInvoiceProcess() {
           invoice_date: formData.invoice_date,
           due_date: formData.due_date || formData.invoice_date,
           notes: formData.notes,
-          einvoice_id: invoice.id
+          einvoice_id: invoice.id,
+          company_id: userProfile.company_id // RLS için company_id ekle
         })
         .select()
         .single();
@@ -499,7 +671,7 @@ export default function EInvoiceProcess() {
         tax_rate: item.invoice_item.tax_rate,
         discount_rate: item.invoice_item.discount_rate || 0,
         line_total: item.invoice_item.line_total,
-        company_id: purchaseInvoice.company_id
+        company_id: userProfile.company_id // RLS için company_id ekle
       }));
 
       const { error: itemsError } = await supabase
@@ -621,81 +793,125 @@ export default function EInvoiceProcess() {
                   Fatura Bilgileri
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-6">
-                  {/* Invoice Information */}
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Fatura No</Label>
-                      <p className="text-sm font-semibold text-foreground mt-1">{invoice.invoice_number}</p>
-                    </div>
-                    
-                    <div>
-                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tedarikçi</Label>
-                      <p className="text-sm font-semibold text-foreground mt-1">{invoice.supplier_name}</p>
-                      <p className="text-xs text-muted-foreground">VKN: {invoice.supplier_tax_number}</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tarih</Label>
-                        <p className="text-sm text-foreground mt-1">
-                          {format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale: tr })}
-                        </p>
+              <CardContent className="p-4">
+                {/* Kompakt Fatura Bilgileri */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Fatura No:</span>
+                    <span className="font-semibold text-sm">{invoice.invoice_number}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Tarih:</span>
+                    <span className="text-sm">
+                      {format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale: tr })}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Kalem:</span>
+                    <span className="text-sm font-medium">{invoice.items.length}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="text-sm text-gray-500">Toplam:</span>
+                    <span className="text-lg font-bold text-primary">
+                      {invoice.total_amount.toFixed(2)} {invoice.currency}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Tedarikçi Bilgileri ve Durumu */}
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">Tedarikçi</Label>
+                    <div className={`mt-1 p-3 rounded text-sm ${
+                      supplierMatchStatus === 'found' ? 'bg-green-50 border border-green-200' : 
+                      supplierMatchStatus === 'not_found' ? 'bg-orange-50 border border-orange-200' : 
+                      'bg-gray-50 border border-gray-200'
+                    }`}>
+                      {/* Tedarikçi Bilgileri */}
+                      <div className="mb-3">
+                        <div className="font-medium text-gray-900">{invoice.supplier_name}</div>
+                        <div className="text-gray-600 text-xs mt-1">VKN: {invoice.supplier_tax_number}</div>
+                        {invoice.supplier_details?.email && (
+                          <div className="text-gray-500 text-xs mt-1">📧 {invoice.supplier_details.email}</div>
+                        )}
+                        {invoice.supplier_details?.phone && (
+                          <div className="text-gray-500 text-xs mt-1">📞 {invoice.supplier_details.phone}</div>
+                        )}
                       </div>
-                      
-                      <div>
-                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Kalem</Label>
-                        <p className="text-sm font-semibold text-foreground mt-1">{invoice.items.length}</p>
+
+                      {/* Durum ve İşlemler */}
+                      <div className="pt-2 border-t border-gray-200">
+                        {supplierMatchStatus === 'searching' && (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                            <span className="text-blue-700 text-sm">Tedarikçi aranıyor...</span>
+                          </div>
+                        )}
+
+                        {supplierMatchStatus === 'found' && selectedSupplierId && (
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-600" />
+                            <span className="text-green-700 font-medium text-sm">✅ Sistemimizde kayıtlı</span>
+                          </div>
+                        )}
+
+                        {supplierMatchStatus === 'not_found' && (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-4 w-4 text-orange-600" />
+                              <span className="text-orange-700 text-sm font-medium">⚠️ Sistemimizde kayıtlı değil</span>
+                            </div>
+                            <Button
+                              onClick={handleCreateNewSupplier}
+                              disabled={isCreatingSupplier}
+                              size="sm"
+                              className="bg-orange-600 hover:bg-orange-700 text-white text-xs"
+                            >
+                              {isCreatingSupplier ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                  Ekleniyor...
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tedarikçi Ekle
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    
-                    <div>
-                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Toplam</Label>
-                      <p className="text-lg font-bold text-primary mt-1">
-                        {invoice.total_amount.toFixed(2)} {invoice.currency}
-                      </p>
                     </div>
                   </div>
+                </div>
 
-                  {/* Purchase Invoice Form */}
-                  <div className="pt-4 border-t border-border space-y-4">
-                     {/* Supplier Selection */}
-                     <SupplierSelector
-                       value={selectedSupplierId}
-                       onChange={setSelectedSupplierId}
-                       onNewSupplier={handleCreateNewSupplier}
-                       suppliers={suppliers}
-                       matchStatus={supplierMatchStatus}
-                       placeholder="Tedarikçi ara ve seçin..."
-                       invoiceSupplierName={invoice?.supplier_name}
-                       invoiceSupplierTaxNumber={invoice?.supplier_tax_number}
-                       isCreatingSupplier={isCreatingSupplier}
-                     />
+                {/* Fatura Tarihi ve Notlar */}
+                <div className="mt-4 pt-4 border-t space-y-3">
+                  <div>
+                    <Label htmlFor="invoice_date" className="text-sm font-medium">Fatura Tarihi</Label>
+                    <Input
+                      id="invoice_date"
+                      type="date"
+                      value={formData.invoice_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, invoice_date: e.target.value }))}
+                      className="mt-1"
+                    />
+                  </div>
 
-                    {/* Invoice Date */}
-                    <div className="space-y-2">
-                      <Label htmlFor="invoice_date" className="text-sm font-medium">Fatura Tarihi</Label>
-                      <Input
-                        id="invoice_date"
-                        type="date"
-                        value={formData.invoice_date}
-                        onChange={(e) => setFormData(prev => ({ ...prev, invoice_date: e.target.value }))}
-                      />
-                    </div>
-
-                    {/* Notes */}
-                    <div className="space-y-2">
-                      <Label htmlFor="notes" className="text-sm font-medium">Notlar</Label>
-                      <Textarea
-                        id="notes"
-                        value={formData.notes}
-                        onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                        rows={2}
-                        placeholder="Fatura ile ilgili notlar..."
-                        className="text-sm"
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="notes" className="text-sm font-medium">Notlar</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                      rows={2}
+                      placeholder="Fatura ile ilgili notlar..."
+                      className="mt-1 text-sm"
+                    />
                   </div>
                 </div>
               </CardContent>

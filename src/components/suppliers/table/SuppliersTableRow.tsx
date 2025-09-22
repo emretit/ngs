@@ -78,7 +78,7 @@ const SuppliersTableRow = ({
   return (
     <TableRow 
       className={`cursor-pointer hover:bg-blue-50 h-8 ${isSelected ? 'bg-blue-50' : ''}`}
-      onClick={() => onSelect(supplier)}
+      onClick={() => navigate(`/suppliers/${supplier.id}`)}
     >
       {/* Checkbox */}
       {onSelectToggle && (

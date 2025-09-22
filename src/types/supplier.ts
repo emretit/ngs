@@ -29,6 +29,11 @@ export interface Supplier {
     type: number;
   }> | null;
   einvoice_alias_name: string | null;
+  bank_name: string | null;
+  iban: string | null;
+  account_number: string | null;
+  trade_registry_number: string | null;
+  mersis_number: string | null;
   created_at: string;
   updated_at: string;
   company_id: string | null;

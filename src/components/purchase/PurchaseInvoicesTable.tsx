@@ -103,18 +103,34 @@ const PurchaseInvoicesTable = ({
     });
   };
 
+  // Debug için console.log ekle
+  console.log('🔍 PurchaseInvoicesTable - invoices:', invoices);
+  console.log('🔍 PurchaseInvoicesTable - incomingInvoices:', incomingInvoices);
+  console.log('🔍 PurchaseInvoicesTable - earchiveInvoices:', earchiveInvoices);
+  
   // Tüm faturaları birleştir ve filtrele
   const allInvoices = [
-    ...filterInvoices(invoices, 'purchase').map(invoice => ({
-      ...invoice,
-      sourceType: 'purchase',
-      invoiceDate: invoice.invoice_date,
-      sortDate: new Date(invoice.invoice_date).getTime(),
-      displayNumber: invoice.invoice_number,
-      displaySupplier: 'Tedarikçi', // TODO: supplier lookup
-      displayAmount: invoice.total_amount,
-      displayStatus: invoice.status
-    })),
+    ...filterInvoices(invoices, 'purchase').map(invoice => {
+      // Debug için supplier bilgisini logla
+      console.log('🔍 Invoice supplier debug:', {
+        invoice_id: invoice.id,
+        invoice_number: invoice.invoice_number,
+        supplier: invoice.supplier,
+        supplier_name: invoice.supplier?.name,
+        supplier_company: invoice.supplier?.company
+      });
+      
+      return {
+        ...invoice,
+        sourceType: 'purchase',
+        invoiceDate: invoice.invoice_date,
+        sortDate: new Date(invoice.invoice_date).getTime(),
+        displayNumber: invoice.invoice_number,
+        displaySupplier: invoice.supplier?.name || invoice.supplier?.company || 'Bilinmeyen Tedarikçi',
+        displayAmount: invoice.total_amount,
+        displayStatus: invoice.status
+      };
+    }),
     ...filterInvoices(incomingInvoices, 'incoming').filter(invoice => 
       invoice.status?.toLowerCase().includes('alındı') || 
       invoice.responseStatus?.toLowerCase().includes('received')
@@ -142,6 +158,9 @@ const PurchaseInvoicesTable = ({
       displayStatus: 'received'
     }))
   ].sort((a, b) => b.sortDate - a.sortDate);
+  
+  // Debug için allInvoices'ı da logla
+  console.log('🔍 PurchaseInvoicesTable - allInvoices:', allInvoices);
 
   if (isLoading) {
     return (

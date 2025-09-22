@@ -19,10 +19,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [selectedSuppliers, setSelectedSuppliers] = useState<Supplier[]>([]);
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const pageSize = 20;
 
   const { data: suppliers, isLoading, error } = useQuery({
@@ -46,13 +43,6 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
     console.error("Error loading suppliers:", error);
   }
 
-  const handleSupplierClick = (supplier: Supplier) => {
-    setSelectedSupplier(supplier);
-  };
-
-  const handleCloseDetail = () => {
-    setSelectedSupplier(null);
-  };
 
   const handleSupplierSelect = (supplier: Supplier) => {
     setSelectedSuppliers(prev => {
@@ -88,10 +78,6 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
           setSelectedStatus={setSelectedStatus}
           selectedType={selectedType}
           setSelectedType={setSelectedType}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
         />
         
         {selectedSuppliers.length > 0 && (
@@ -118,7 +104,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
             isLoading={isLoading}
             totalCount={suppliers?.length || 0}
             error={error}
-            onSupplierSelect={handleSupplierClick}
+            onSupplierSelect={() => {}}
             onSupplierSelectToggle={handleSupplierSelect}
             selectedSuppliers={selectedSuppliers}
             setSelectedSuppliers={setSelectedSuppliers}

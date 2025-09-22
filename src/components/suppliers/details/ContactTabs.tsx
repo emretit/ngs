@@ -1,5 +1,5 @@
 
-import { Activity, Receipt, FileText, CreditCard, FileStack, TrendingUp, Package } from "lucide-react";
+import { Activity, Receipt, CreditCard, FileStack, Package } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -8,9 +8,6 @@ import {
   CustomTabsList, 
   CustomTabsTrigger 
 } from "@/components/ui/custom-tabs";
-import { ContactInfo } from "./ContactInfo";
-import { FinancialInfo } from "./FinancialInfo";
-import { HistoryCard } from "./HistoryCard";
 import { Supplier } from "@/types/supplier";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,13 +82,8 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
   );
 
   return (
-    <CustomTabs defaultValue="overview" className="space-y-4">
-      <CustomTabsList className="grid grid-cols-3 lg:grid-cols-6 w-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-1 shadow-sm">
-        <TabTrigger 
-          value="overview" 
-          icon={<TrendingUp className="h-4 w-4" />} 
-          label="Genel Bakış" 
-        />
+    <CustomTabs defaultValue="payments" className="space-y-4">
+      <CustomTabsList className="grid grid-cols-2 lg:grid-cols-5 w-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-1 shadow-sm">
         <TabTrigger 
           value="payments" 
           icon={<CreditCard className="h-4 w-4" />} 
@@ -123,21 +115,6 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
           count={tabCounts?.contracts}
         />
       </CustomTabsList>
-
-      <CustomTabsContent value="overview" className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <ContactInfo supplier={supplier} onUpdate={(updatedSupplier) => {
-              // Supplier güncellendiğinde ana query'yi yeniden fetch edebiliriz
-              console.log('Supplier updated:', updatedSupplier);
-            }} />
-            <FinancialInfo supplier={supplier} />
-          </div>
-          <div>
-            <HistoryCard supplier={supplier} />
-          </div>
-        </div>
-      </CustomTabsContent>
 
       <CustomTabsContent value="payments">
         <EmptyState

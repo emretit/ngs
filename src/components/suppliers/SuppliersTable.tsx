@@ -194,11 +194,11 @@ const SuppliersTable = ({
             {onSupplierSelectToggle && (
               <TableHead className="w-[40px] font-bold text-foreground/80 text-sm tracking-wide text-center">
                 <Checkbox
-                  checked={selectedSuppliers.length === suppliers.length && suppliers.length > 0}
+                  checked={selectedSuppliers.length === filteredSuppliers.length && filteredSuppliers.length > 0}
                   onCheckedChange={(checked) => {
                     if (setSelectedSuppliers) {
                       if (checked) {
-                        setSelectedSuppliers(suppliers);
+                        setSelectedSuppliers(filteredSuppliers);
                       } else {
                         setSelectedSuppliers([]);
                       }
@@ -251,13 +251,13 @@ const SuppliersTable = ({
         onSelectAll={(checked) => {
           if (setSelectedSuppliers) {
             if (checked) {
-              setSelectedSuppliers(suppliers);
+              setSelectedSuppliers(filteredSuppliers);
             } else {
               setSelectedSuppliers([]);
             }
           }
         }}
-        isAllSelected={selectedSuppliers.length === suppliers.length && suppliers.length > 0}
+        isAllSelected={selectedSuppliers.length === filteredSuppliers.length && filteredSuppliers.length > 0}
       />
       <TableBody>
         {filteredSuppliers.length === 0 ? (

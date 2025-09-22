@@ -194,11 +194,11 @@ const CustomersTable = ({
             {onCustomerSelectToggle && (
               <TableHead className="w-[40px] font-bold text-foreground/80 text-sm tracking-wide text-center">
                 <Checkbox
-                  checked={selectedCustomers.length === customers.length && customers.length > 0}
+                  checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
                   onCheckedChange={(checked) => {
                     if (setSelectedCustomers) {
                       if (checked) {
-                        setSelectedCustomers(customers);
+                        setSelectedCustomers(filteredCustomers);
                       } else {
                         setSelectedCustomers([]);
                       }
@@ -251,13 +251,13 @@ const CustomersTable = ({
         onSelectAll={(checked) => {
           if (setSelectedCustomers) {
             if (checked) {
-              setSelectedCustomers(customers);
+              setSelectedCustomers(filteredCustomers);
             } else {
               setSelectedCustomers([]);
             }
           }
         }}
-        isAllSelected={selectedCustomers.length === customers.length && customers.length > 0}
+        isAllSelected={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
       />
       <TableBody>
         {filteredCustomers.length === 0 ? (

@@ -2,14 +2,12 @@ import { useState } from "react";
 import { Plus, FileText, CheckCircle, Clock, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Customer } from "@/types/customer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { proposalStatusLabels, proposalStatusColors } from "@/types/proposal";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
+import { Proposal } from "@/types/proposal";
+import ProposalTable from "@/components/proposals/ProposalTable";
 
 interface ProposalsTabProps {
   customer: Customer;
@@ -61,13 +59,45 @@ export const ProposalsTab = ({ customer }: ProposalsTabProps) => {
         .from('proposals')
         .select(`
           *,
-          employee:employee_id (first_name, last_name)
+          customer:customer_id (*),
+          employee:employee_id (*)
         `)
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      
+      // Map the database fields to match our Proposal type
+      return data.map((item: any): Proposal => ({
+        id: item.id,
+        number: item.number,
+        title: item.title,
+        description: item.description,
+        customer_id: item.customer_id,
+        opportunity_id: item.opportunity_id,
+        employee_id: item.employee_id,
+        status: item.status,
+        total_amount: item.total_amount || 0,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        valid_until: item.valid_until,
+        items: Array.isArray(item.items) ? item.items : [],
+        attachments: Array.isArray(item.attachments) ? item.attachments : [],
+        currency: item.currency || "TRY",
+        terms: item.terms,
+        notes: item.notes,
+        total_value: item.total_amount || 0,
+        proposal_number: item.number,
+        payment_terms: item.payment_terms || "",
+        delivery_terms: item.delivery_terms || "",
+        internal_notes: item.internal_notes || "",
+        discounts: item.discounts || 0,
+        additional_charges: item.additional_charges || 0,
+        customer: item.customer,
+        employee: item.employee,
+        customer_name: item.customer?.name,
+        employee_name: item.employee ? `${item.employee.first_name} ${item.employee.last_name}` : undefined
+      }));
     },
   });
 
@@ -75,8 +105,8 @@ export const ProposalsTab = ({ customer }: ProposalsTabProps) => {
     navigate(`/proposals/new?customer_id=${customer.id}`);
   };
 
-  const handleProposalClick = (proposalId: string) => {
-    navigate(`/proposals/${proposalId}`);
+  const handleProposalClick = (proposal: Proposal) => {
+    navigate(`/proposals/${proposal.id}`);
   };
 
   return (
@@ -187,65 +217,13 @@ export const ProposalsTab = ({ customer }: ProposalsTabProps) => {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoadingProposals ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-2">
-                    <div className="w-32 h-4 bg-gray-200 animate-pulse rounded" />
-                    <div className="w-24 h-3 bg-gray-200 animate-pulse rounded" />
-                  </div>
-                  <div className="w-16 h-6 bg-gray-200 animate-pulse rounded" />
-                </div>
-              ))}
-            </div>
-          ) : proposals && proposals.length > 0 ? (
-            <div className="space-y-4">
-              {proposals.map((proposal) => (
-                <div 
-                  key={proposal.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => handleProposalClick(proposal.id)}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="font-medium">{proposal.title}</h4>
-                      <Badge 
-                        variant="outline" 
-                        className={proposalStatusColors[proposal.status as keyof typeof proposalStatusColors]}
-                      >
-                        {proposalStatusLabels[proposal.status as keyof typeof proposalStatusLabels]}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      <span>#{proposal.number}</span>
-                      <span className="mx-2">•</span>
-                      <span>{format(new Date(proposal.created_at), 'dd MMMM yyyy', { locale: tr })}</span>
-                      {proposal.employee && (
-                        <>
-                          <span className="mx-2">•</span>
-                          <span>{proposal.employee.first_name} {proposal.employee.last_name}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold">
-                      {proposal.total_amount?.toLocaleString('tr-TR', { 
-                        style: 'currency', 
-                        currency: 'TRY' 
-                      }) || '₺0,00'}
-                    </div>
-                    {proposal.valid_until && (
-                      <div className="text-xs text-muted-foreground">
-                        Son: {format(new Date(proposal.valid_until), 'dd.MM.yyyy')}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
+          {proposals && proposals.length > 0 ? (
+            <ProposalTable 
+              proposals={proposals}
+              isLoading={isLoadingProposals}
+              onProposalSelect={handleProposalClick}
+            />
+          ) : !isLoadingProposals ? (
             <div className="text-center py-8">
               <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="font-medium text-gray-900 mb-2">Henüz teklif yok</h3>
@@ -255,7 +233,7 @@ export const ProposalsTab = ({ customer }: ProposalsTabProps) => {
                 İlk Teklifi Oluştur
               </Button>
             </div>
-          )}
+          ) : null}
         </CardContent>
       </Card>
     </div>

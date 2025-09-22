@@ -776,7 +776,7 @@ export default function EInvoiceProcess() {
                 </div>
 
                 {/* Matching Table */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-50">

@@ -293,11 +293,11 @@ serve(async (req) => {
             
             console.log('🎯 E-fatura alias detayı:', einvoiceAlias);
             
-            formattedData = {
-              aliasName: einvoiceAlias?.Name || '',
-              companyName: mukellefData.Title || mukellefData.Name || '',
-              taxNumber: mukellefData.TaxNumber || '',
-              taxOffice: mukellefData.TaxOffice || '',
+              formattedData = {
+                aliasName: einvoiceAlias?.Name || '',
+                companyName: mukellefData.Title || mukellefData.Name || '',
+                taxNumber: mukellefData.TaxNumber || '',
+                taxOffice: mukellefData.TaxDepartment || '',
               address: mukellefData.Address || '',
               city: mukellefData.City || '',
               district: mukellefData.District || '',

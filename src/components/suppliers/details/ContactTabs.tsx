@@ -11,6 +11,7 @@ import {
 import { Supplier } from "@/types/supplier";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import SupplierInvoicesTab from './SupplierInvoicesTab';
 
 interface ContactTabsProps {
   supplier: Supplier;
@@ -21,7 +22,7 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
   const { data: tabCounts } = useQuery({
     queryKey: ['supplier-tab-counts', supplier.id],
     queryFn: async () => {
-      const [paymentsRes, purchaseOrdersRes] = await Promise.all([
+      const [paymentsRes, purchaseOrdersRes, purchaseInvoicesRes, salesInvoicesRes] = await Promise.all([
         supabase
           .from('payments')
           .select('id', { count: 'exact' })
@@ -30,6 +31,14 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
           .from('purchase_orders')
           .select('id', { count: 'exact' })
           .eq('supplier_id', supplier.id),
+        supabase
+          .from('purchase_invoices')
+          .select('id', { count: 'exact' })
+          .eq('supplier_id', supplier.id),
+        supabase
+          .from('sales_invoices')
+          .select('id', { count: 'exact' })
+          .eq('customer_id', supplier.id), // Tedarikçi aynı zamanda müşteri olabilir
       ]);
 
       return {
@@ -37,7 +46,7 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
         proposals: 0, // TODO: Implement proposals count
         purchaseOrders: purchaseOrdersRes.count || 0,
         activities: 0, // TODO: Implement activities count
-        invoices: 0, // TODO: Implement invoices count
+        invoices: (purchaseInvoicesRes.count || 0) + (salesInvoicesRes.count || 0),
         contracts: 0, // TODO: Implement contracts count
       };
     },
@@ -141,10 +150,9 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
       </CustomTabsContent>
 
       <CustomTabsContent value="invoices">
-        <EmptyState
-          icon={<Receipt className="w-8 h-8 text-gray-400" />}
-          title="Faturalar"
-          description="Bu tedarikçiden alınan faturalar burada görüntülenecek."
+        <SupplierInvoicesTab 
+          supplierId={supplier.id} 
+          supplierName={supplier.name || supplier.company || 'Tedarikçi'}
         />
       </CustomTabsContent>
 

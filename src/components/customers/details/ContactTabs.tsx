@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/custom-tabs";
 import { PaymentsTab } from "./PaymentsTab";
 import { ProposalsTab } from "./ProposalsTab";
+import CustomerInvoicesTab from "./CustomerInvoicesTab";
 import { Customer } from "@/types/customer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +24,7 @@ export const ContactTabs = ({ customer }: ContactTabsProps) => {
   const { data: tabCounts } = useQuery({
     queryKey: ['customer-tab-counts', customer.id],
     queryFn: async () => {
-      const [paymentsRes, proposalsRes, serviceRequestsRes] = await Promise.all([
+      const [paymentsRes, proposalsRes, serviceRequestsRes, salesInvoicesRes, purchaseInvoicesRes] = await Promise.all([
         supabase
           .from('payments')
           .select('id', { count: 'exact' })
@@ -36,6 +37,14 @@ export const ContactTabs = ({ customer }: ContactTabsProps) => {
           .from('service_requests')
           .select('id', { count: 'exact' })
           .eq('customer_id', customer.id),
+        supabase
+          .from('sales_invoices')
+          .select('id', { count: 'exact' })
+          .eq('customer_id', customer.id),
+        supabase
+          .from('purchase_invoices')
+          .select('id', { count: 'exact' })
+          .eq('supplier_id', customer.id), // Müşteri aynı zamanda tedarikçi olabilir
       ]);
 
       return {
@@ -43,7 +52,7 @@ export const ContactTabs = ({ customer }: ContactTabsProps) => {
         proposals: proposalsRes.count || 0,
         serviceRequests: serviceRequestsRes.count || 0,
         activities: 0, // TODO: Implement activities count
-        invoices: 0, // TODO: Implement invoices count
+        invoices: (salesInvoicesRes.count || 0) + (purchaseInvoicesRes.count || 0),
         contracts: 0, // TODO: Implement contracts count
       };
     },
@@ -153,10 +162,9 @@ export const ContactTabs = ({ customer }: ContactTabsProps) => {
       </CustomTabsContent>
 
       <CustomTabsContent value="invoices">
-        <EmptyState
-          icon={<Receipt className="w-8 h-8 text-gray-400" />}
-          title="Faturalar"
-          description="Bu müşteri için kesilen faturalar burada görüntülenecek."
+        <CustomerInvoicesTab 
+          customerId={customer.id} 
+          customerName={customer.name || customer.company || 'Müşteri'}
         />
       </CustomTabsContent>
 

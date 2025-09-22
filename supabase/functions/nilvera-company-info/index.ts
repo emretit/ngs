@@ -125,7 +125,7 @@ serve(async (req) => {
         const companyData = await companyResponse.json();
         console.log('✅ Nilvera API yanıtı alındı:', JSON.stringify(companyData, null, 2));
 
-        // Firma bilgilerini düzenle
+        // Firma bilgilerini düzenle - Tüm 18 alan
         const formattedCompanyInfo = {
           name: companyData.Name || '',
           taxNumber: companyData.TaxNumber || '',
@@ -140,6 +140,7 @@ serve(async (req) => {
           email: companyData.Email || '',
           website: companyData.WebSite || '',
           isActive: companyData.IsActive || false,
+          isDeleted: companyData.IsDeleted || false,
           aliases: companyData.Aliases || [],
           // Ödeme bilgileri
           payeeFinancialAccountID: companyData.PayeeFinancialAccountID || '',

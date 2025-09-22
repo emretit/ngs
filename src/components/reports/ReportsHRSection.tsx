@@ -143,7 +143,7 @@ export default function ReportsHRSection({ isExpanded, onToggle, searchParams }:
                   <div className="text-sm text-muted-foreground">Aktif Personel</div>
                 </div>
                 <div className="space-y-1">
-                  {departmentStats?.slice(0, 4).map((dept, index) => (
+                  {departmentStats?.slice(0, 4).map((dept: any, index: number) => (
                     <div key={index} className="flex justify-between text-sm">
                       <span>{dept.department}</span>
                       <span className="font-medium">{dept.count}</span>

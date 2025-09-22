@@ -270,7 +270,7 @@ const ExpensesManager = () => {
     }
     
     // Filter by category
-    if (filterCategory !== 'all' && expense.category_id !== filterCategory) {
+    if (filterCategory !== 'all' && expense.category?.name !== filterCategory) {
       return false;
     }
     

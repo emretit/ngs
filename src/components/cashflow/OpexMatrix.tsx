@@ -524,16 +524,16 @@ const OpexMatrix = () => {
                            <TableCell className="sticky left-[200px] bg-background z-10">
                              <div className="flex items-center gap-2">
                                <button
-                                 onClick={() => toggleSubcategory(category.name, subcategory)}
+                                 onClick={() => toggleSubcategory(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name)}
                                  className="p-0.5 rounded hover:bg-muted/50 transition-colors"
                                >
-                                 {expandedSubcategories.has(`${category.name}|${subcategory}`) ? (
-                                   <ChevronDown className="h-3 w-3" />
-                                 ) : (
-                                   <ChevronRight className="h-3 w-3" />
-                                 )}
-                               </button>
-                               <span>{subcategory}</span>
+                                  {expandedSubcategories.has(`${category.name}|${typeof subcategory === 'string' ? subcategory : subcategory.name}`) ? (
+                                    <ChevronDown className="h-3 w-3" />
+                                  ) : (
+                                    <ChevronRight className="h-3 w-3" />
+                                  )}
+                                </button>
+                                <span>{typeof subcategory === 'string' ? subcategory : subcategory.name}</span>
                                {category.isAutoPopulated && (
                                  <Badge variant="outline">Auto</Badge>
                                )}
@@ -541,8 +541,8 @@ const OpexMatrix = () => {
                            </TableCell>
                            {MONTHS.map((_, monthIndex) => {
                              const month = monthIndex + 1;
-                             const value = getCellValue(category.name, subcategory, month);
-                             const autoValue = category.isAutoPopulated ? getAutoPopulatedValue(subcategory, month) : 0;
+                              const value = getCellValue(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name, month);
+                              const autoValue = category.isAutoPopulated ? getAutoPopulatedValue(typeof subcategory === 'string' ? subcategory : subcategory.name, month) : 0;
                              
                              return (
                                <TableCell key={monthIndex} className="text-center p-2">
@@ -554,7 +554,7 @@ const OpexMatrix = () => {
                                    <Input
                                      type="number"
                                      value={value || ''}
-                                     onChange={(e) => handleCellChange(category.name, subcategory, month, e.target.value)}
+                                     onChange={(e) => handleCellChange(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name, month, e.target.value)}
                                      className="w-full text-center border-0 bg-transparent focus:bg-background"
                                      placeholder="0"
                                    />
@@ -563,12 +563,12 @@ const OpexMatrix = () => {
                              );
                            })}
                            <TableCell className="text-center font-medium">
-                             {formatCurrency(getRowTotal(category.name, subcategory))}
+                             {formatCurrency(getRowTotal(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name))}
                            </TableCell>
                          </TableRow>
                          
                          {/* Subcategory Details Row */}
-                         {expandedSubcategories.has(`${category.name}|${subcategory}`) && (
+                         {expandedSubcategories.has(`${category.name}|${typeof subcategory === 'string' ? subcategory : subcategory.name}`) && (
                            <TableRow className="animate-accordion-down bg-muted/20">
                              <TableCell className="sticky left-0 bg-muted/20 z-10"></TableCell>
                              <TableCell className="sticky left-[200px] bg-muted/20 z-10">
@@ -578,7 +578,7 @@ const OpexMatrix = () => {
                              </TableCell>
                              {MONTHS.map((_, monthIndex) => {
                                const month = monthIndex + 1;
-                               const value = getCellValue(category.name, subcategory, month);
+                               const value = getCellValue(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name, month);
                                
                                return (
                                  <TableCell key={monthIndex} className="text-center p-2 bg-muted/20">

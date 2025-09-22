@@ -166,7 +166,7 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
                           <p className="font-semibold text-gray-900 text-base">
                             {employee.first_name} {employee.last_name}
                           </p>
-                          <p className="text-sm text-gray-500 font-mono">{employee.employee_id}</p>
+                          <p className="text-sm text-gray-500 font-mono">{employee.id}</p>
                         </div>
                       </div>
                     </TableCell>

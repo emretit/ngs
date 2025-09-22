@@ -86,26 +86,7 @@ const EInvoiceFilterBar = ({
           />
         </div>
 
-        {/* Filtrele Butonu */}
-        {onFilter && (
-          <Button
-            onClick={onFilter}
-            disabled={isFiltering}
-            className="h-10"
-          >
-            {isFiltering ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Filtreleniyor...
-              </>
-            ) : (
-              <>
-                <Filter className="mr-2 h-4 w-4" />
-                Filtrele
-              </>
-            )}
-          </Button>
-        )}
+        {/* Filtrele Butonu - Artık otomatik filtreleme yapıldığı için kaldırıldı */}
       </div>
     </Card>
   );

@@ -39,10 +39,8 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const [dateFilter, setDateFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   
-  // Refetch when date filters change
-  useEffect(() => {
-    refetch();
-  }, [startDate, endDate, refetch]);
+  // Date filters değiştiğinde otomatik refetch yapılmaz
+  // React Query otomatik olarak queryKey değişikliğini algılar
 
   // Apply filters
   const filteredInvoices = incomingInvoices.filter(invoice => {
@@ -66,7 +64,8 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   };
 
   const handleFilter = () => {
-    refetch();
+    // React Query otomatik olarak date filters değişikliğini algılar
+    // Manuel refetch gerekmez
   };
 
   return (
@@ -94,7 +93,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
-          onFilter={handleFilter}
           isFiltering={isLoading}
         />
         

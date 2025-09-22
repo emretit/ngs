@@ -75,10 +75,12 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
   };
 
   const { data: incomingInvoices = [], error, refetch } = useQuery({
-    queryKey: ['incoming-invoices'],
+    queryKey: ['incoming-invoices', dateFilters?.startDate, dateFilters?.endDate],
     queryFn: fetchIncomingInvoices,
     retry: 1,
     retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 dakika cache
+    refetchOnWindowFocus: false, // Pencere odaklandığında refetch etme
   });
 
   return {

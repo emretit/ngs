@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
 import CompactProductForm from '@/components/einvoice/CompactProductForm';
 import CompactSupplierForm from '@/components/einvoice/CompactSupplierForm';
+import SupplierSelector from '@/components/einvoice/SupplierSelector';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   ArrowLeft, 
@@ -638,61 +639,15 @@ export default function EInvoiceProcess() {
 
                   {/* Purchase Invoice Form */}
                   <div className="pt-4 border-t border-border space-y-4">
-                    {/* Supplier Selection */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="supplier" className="text-sm font-medium">Alış Faturası Tedarikçisi *</Label>
-                        <div className="flex items-center gap-1">
-                          {supplierMatchStatus === 'searching' && (
-                            <div className="flex items-center gap-1 text-xs text-primary">
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              <span>Aranıyor...</span>
-                            </div>
-                          )}
-                          {supplierMatchStatus === 'found' && (
-                            <div className="flex items-center gap-1 text-xs text-green-600">
-                              <Check className="h-3 w-3" />
-                              <span>Eşleşti</span>
-                            </div>
-                          )}
-                          {supplierMatchStatus === 'not_found' && (
-                            <div className="flex items-center gap-1 text-xs text-destructive">
-                              <X className="h-3 w-3" />
-                              <span>Bulunamadı</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
-                        <SelectTrigger id="supplier">
-                          <SelectValue placeholder="Tedarikçi seçin" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {suppliers.map(supplier => (
-                            <SelectItem key={supplier.id} value={supplier.id}>
-                              <div className="flex flex-col">
-                                <span className="font-medium text-sm">{supplier.name}</span>
-                                <span className="text-xs text-muted-foreground">VKN: {supplier.tax_number}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      
-                      {supplierMatchStatus === 'not_found' && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCreateNewSupplier}
-                          className="w-full"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Yeni Tedarikçi Oluştur
-                        </Button>
-                      )}
-                    </div>
+                     {/* Supplier Selection */}
+                     <SupplierSelector
+                       value={selectedSupplierId}
+                       onChange={setSelectedSupplierId}
+                       onNewSupplier={handleCreateNewSupplier}
+                       suppliers={suppliers}
+                       matchStatus={supplierMatchStatus}
+                       placeholder="Tedarikçi ara ve seçin..."
+                     />
 
                     {/* Invoice Date */}
                     <div className="space-y-2">

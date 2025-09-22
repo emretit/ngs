@@ -9,6 +9,7 @@ import {
   CustomTabsTrigger 
 } from "@/components/ui/custom-tabs";
 import { PaymentsTab } from "./PaymentsTab";
+import { ProposalsTab } from "./ProposalsTab";
 import { Customer } from "@/types/customer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -148,11 +149,7 @@ export const ContactTabs = ({ customer }: ContactTabsProps) => {
       </CustomTabsContent>
 
       <CustomTabsContent value="offers">
-        <EmptyState
-          icon={<FileText className="w-8 h-8 text-gray-400" />}
-          title="Teklifler"
-          description="Bu müşteri için hazırlanan teklifler burada görüntülenecek."
-        />
+        <ProposalsTab customer={customer} />
       </CustomTabsContent>
 
       <CustomTabsContent value="invoices">

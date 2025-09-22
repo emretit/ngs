@@ -7,10 +7,14 @@ if (!GROQ_API_KEY) {
   console.warn('Groq API key not found. Set VITE_GROQ_API_KEY in your .env file');
 }
 
-const groq = new Groq({
-  apiKey: GROQ_API_KEY,
-  dangerouslyAllowBrowser: true // Client-side kullanım için
-});
+let groq: Groq | null = null;
+
+if (GROQ_API_KEY) {
+  groq = new Groq({
+    apiKey: GROQ_API_KEY,
+    dangerouslyAllowBrowser: true // Client-side kullanım için
+  });
+}
 
 export interface SQLGenerationResult {
   sql: string;
@@ -111,7 +115,7 @@ KURALLAR:
 export const generateSQLFromQuery = async (
   userQuery: string
 ): Promise<SQLGenerationResult> => {
-  if (!GROQ_API_KEY) {
+  if (!GROQ_API_KEY || !groq) {
     return {
       sql: '',
       explanation: 'Groq API key bulunamadı. Lütfen VITE_GROQ_API_KEY environment variable\'ını ayarlayın.',
@@ -170,8 +174,8 @@ export const testGroqConnection = async (): Promise<boolean> => {
   console.log('API Key available:', !!GROQ_API_KEY);
   console.log('API Key prefix:', GROQ_API_KEY ? GROQ_API_KEY.substring(0, 8) + '...' : 'none');
 
-  if (!GROQ_API_KEY) {
-    console.error('No Groq API key found');
+  if (!GROQ_API_KEY || !groq) {
+    console.error('No Groq API key found or Groq client not initialized');
     return false;
   }
 

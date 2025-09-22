@@ -2,10 +2,14 @@ import Groq from 'groq-sdk';
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
-const groq = new Groq({
-  apiKey: GROQ_API_KEY,
-  dangerouslyAllowBrowser: true
-});
+let groq: Groq | null = null;
+
+if (GROQ_API_KEY) {
+  groq = new Groq({
+    apiKey: GROQ_API_KEY,
+    dangerouslyAllowBrowser: true
+  });
+}
 
 export interface UsageStats {
   daily: {
@@ -169,6 +173,11 @@ export class GroqUsageTracker {
 
   // Get real usage from Groq API (if available in headers)
   async getRealUsageFromAPI(): Promise<Partial<UsageStats> | null> {
+    if (!groq) {
+      console.warn('Groq client not initialized');
+      return null;
+    }
+    
     try {
       // Make a minimal request to get headers
       const response = await groq.chat.completions.create({

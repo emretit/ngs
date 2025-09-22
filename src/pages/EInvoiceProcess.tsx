@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
+import CompactProductForm from '@/components/einvoice/CompactProductForm';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   ArrowLeft, 
@@ -93,6 +94,8 @@ export default function EInvoiceProcess() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isProductFormOpen, setIsProductFormOpen] = useState(false);
+  const [currentItemIndex, setCurrentItemIndex] = useState<number>(-1);
   
   // Form fields for purchase invoice
   const [formData, setFormData] = useState({
@@ -278,12 +281,32 @@ export default function EInvoiceProcess() {
   };
 
   const handleCreateNewProduct = (itemIndex: number) => {
-    const updatedMatching = [...matchingItems];
-    updatedMatching[itemIndex] = {
-      ...updatedMatching[itemIndex],
-      matched_product_id: undefined
-    };
-    setMatchingItems(updatedMatching);
+    setCurrentItemIndex(itemIndex);
+    setIsProductFormOpen(true);
+  };
+
+  const handleProductCreated = (newProduct: Product) => {
+    // Add to products list
+    setProducts(prev => [...prev, newProduct]);
+    
+    // Match with current item
+    if (currentItemIndex >= 0) {
+      const updatedMatching = [...matchingItems];
+      updatedMatching[currentItemIndex] = {
+        ...updatedMatching[currentItemIndex],
+        matched_product_id: newProduct.id
+      };
+      setMatchingItems(updatedMatching);
+    }
+    
+    // Reset form state
+    setCurrentItemIndex(-1);
+    setIsProductFormOpen(false);
+    
+    toast({
+      title: "Başarılı",
+      description: "Ürün oluşturuldu ve eşleştirildi",
+    });
   };
 
   const handleRemoveMatch = (itemIndex: number) => {
@@ -738,6 +761,25 @@ export default function EInvoiceProcess() {
           </Button>
         </div>
       </div>
+
+      {/* Compact Product Form Modal */}
+      <CompactProductForm
+        isOpen={isProductFormOpen}
+        onClose={() => {
+          setIsProductFormOpen(false);
+          setCurrentItemIndex(-1);
+        }}
+        onProductCreated={handleProductCreated}
+        initialData={
+          currentItemIndex >= 0 ? {
+            name: matchingItems[currentItemIndex]?.invoice_item.product_name || "",
+            unit: matchingItems[currentItemIndex]?.invoice_item.unit || "Adet",
+            price: matchingItems[currentItemIndex]?.invoice_item.unit_price || 0,
+            tax_rate: matchingItems[currentItemIndex]?.invoice_item.tax_rate || 18,
+            code: matchingItems[currentItemIndex]?.invoice_item.product_code || "",
+          } : undefined
+        }
+      />
     </DefaultLayout>
   );
 }

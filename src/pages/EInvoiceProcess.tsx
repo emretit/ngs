@@ -250,10 +250,11 @@ export default function EInvoiceProcess() {
 
   const loadSuppliers = async () => {
     try {
+      // Load all customers as potential suppliers since there's no supplier type
       const { data: suppliersData, error: suppliersError } = await supabase
         .from('customers')
         .select('id, name, tax_number, email')
-        .eq('type', 'supplier')
+        .eq('type', 'kurumsal') // Use 'kurumsal' instead of 'supplier'
         .order('name');
 
       if (suppliersError) throw suppliersError;

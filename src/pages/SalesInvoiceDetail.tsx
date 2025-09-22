@@ -125,21 +125,35 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
     >
       <div className="space-y-6">
         {/* Header Actions */}
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <Button
+            variant="outline"
             onClick={() => navigate('/sales-invoices')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Geri
           </Button>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline">
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/sales-invoices/edit/${id}`)}
+            >
               <Edit className="h-4 w-4 mr-2" />
               Düzenle
             </Button>
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (invoice.nilvera_invoice_id) {
+                  // Nilvera PDF indirme
+                  console.log('PDF indiriliyor...');
+                } else {
+                  // Yerel PDF oluşturma
+                  window.print();
+                }
+              }}
+            >
               <Download className="h-4 w-4 mr-2" />
               PDF İndir
             </Button>
@@ -156,9 +170,11 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
               </CardTitle>
               <div className="flex items-center gap-2">
                 {getDocumentTypeBadge(invoice.document_type)}
-                <Badge variant="outline" className="bg-gray-100">
-                  {invoice.durum}
-                </Badge>
+                {invoice.durum && (
+                  <Badge variant="outline" className="bg-gray-100">
+                    {invoice.durum}
+                  </Badge>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -234,18 +250,28 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
             <Separator />
 
             {/* Tutar Bilgileri */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <label className="text-sm font-medium text-gray-500">Ara Toplam</label>
-                <p className="text-lg font-semibold">{formatCurrency(invoice.ara_toplam)}</p>
+                <p className="text-lg font-semibold">{formatCurrency(invoice.ara_toplam || 0)}</p>
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <label className="text-sm font-medium text-gray-500">KDV Tutarı</label>
-                <p className="text-lg font-semibold">{formatCurrency(invoice.kdv_tutari)}</p>
+                <p className="text-lg font-semibold">{formatCurrency(invoice.kdv_tutari || 0)}</p>
               </div>
               <div className="text-center p-4 bg-blue-50 rounded-lg">
                 <label className="text-sm font-medium text-gray-500">Toplam Tutar</label>
-                <p className="text-xl font-bold text-blue-600">{formatCurrency(invoice.toplam_tutar)}</p>
+                <p className="text-xl font-bold text-blue-600">{formatCurrency(invoice.toplam_tutar || 0)}</p>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <label className="text-sm font-medium text-gray-500">Durum</label>
+                <div className="mt-1">
+                  {invoice.durum && (
+                    <Badge variant="outline" className="bg-green-100">
+                      {invoice.durum}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -258,6 +284,23 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                 </div>
               </>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Fatura Kalemleri */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Fatura Kalemleri
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8 text-gray-500">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Fatura kalemleri henüz mevcut değil</p>
+              <p className="text-sm mt-1">Fatura kalemi bilgileri buraya eklenecektir</p>
+            </div>
           </CardContent>
         </Card>
 

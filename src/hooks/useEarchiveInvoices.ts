@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useEarchiveInvoices = () => {
+export const useEarchiveInvoices = (enabled = true) => {
   const query = useQuery({
     queryKey: ["earchive-invoices"],
     queryFn: async () => {
@@ -11,7 +11,7 @@ export const useEarchiveInvoices = () => {
           .select("*")
           .eq("document_type", "e_arsiv")
           .order("created_at", { ascending: false });
-        
+
         if (error) throw error;
         return data || [];
       } catch (error) {
@@ -19,6 +19,10 @@ export const useEarchiveInvoices = () => {
         return [];
       }
     },
+    enabled, // Hook'u koşullu olarak etkinleştir
+    staleTime: 5 * 60 * 1000, // 5 dakika boyunca fresh kabul et
+    gcTime: 10 * 60 * 1000, // 10 dakika cache'de tut
+    refetchOnWindowFocus: false, // Pencere odaklandığında refetch etme
   });
 
   return { 

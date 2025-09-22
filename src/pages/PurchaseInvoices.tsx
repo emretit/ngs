@@ -17,21 +17,24 @@ interface PurchaseInvoicesProps {
 
 const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps) => {
   const navigate = useNavigate();
-  const { 
-    invoices, 
-    isLoading, 
-    filters, 
+  const [activeTab, setActiveTab] = useState("purchase"); // purchase, incoming, earchive
+
+  // Ana purchase faturalarını her zaman yükle
+  const {
+    invoices,
+    isLoading,
+    filters,
     setFilters,
   } = usePurchaseInvoices();
-  
-  // Debug için console.log ekle
-  console.log('🔍 PurchaseInvoices - invoices:', invoices);
-  console.log('🔍 PurchaseInvoices - isLoading:', isLoading);
-  
-  const { incomingInvoices, isLoading: isLoadingIncoming, refetch: refetchIncoming } = useIncomingInvoices();
-  const { earchiveInvoices, isLoading: isLoadingEarchive, refetch: refetchEarchive } = useEarchiveInvoices();
+
+  // Ana faturaları öncelikli olarak göster
+  console.log('🔍 PurchaseInvoices - ana faturalar yüklendi:', invoices?.length || 0);
+
+  // Sadece gerekli olan veri kaynaklarını yükle
+  const { incomingInvoices, isLoading: isLoadingIncoming, refetch: refetchIncoming } = useIncomingInvoices(undefined, false); // Başlangıçta kapalı
+  const { earchiveInvoices, isLoading: isLoadingEarchive, refetch: refetchEarchive } = useEarchiveInvoices(false); // Başlangıçta kapalı
   const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
-  
+
   const [filterKeyword, setFilterKeyword] = useState("");
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");

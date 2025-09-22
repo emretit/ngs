@@ -14,9 +14,18 @@ export const usePurchaseInvoices = () => {
   });
 
   const fetchInvoices = async (): Promise<PurchaseInvoice[]> => {
+    // Supplier bilgilerini JOIN ile tek sorguda çek
     let query = supabase
       .from("purchase_invoices")
-      .select("*")
+      .select(`
+        *,
+        supplier:suppliers (
+          id,
+          name,
+          company,
+          tax_number
+        )
+      `)
       .order("created_at", { ascending: false });
 
     if (filters.status && filters.status !== "all") {
@@ -36,46 +45,18 @@ export const usePurchaseInvoices = () => {
     }
 
     const { data: invoices, error } = await query;
-    
+
     if (error) {
       toast.error("Faturalar yüklenirken hata oluştu");
       throw error;
     }
-    
+
     if (!invoices || invoices.length === 0) {
       return [];
     }
-    
-    // Supplier bilgilerini ayrı olarak çek
-    const supplierIds = [...new Set(invoices.map(inv => inv.supplier_id).filter(Boolean))];
-    
-    let suppliers: any[] = [];
-    if (supplierIds.length > 0) {
-      const { data: suppliersData, error: suppliersError } = await supabase
-        .from("suppliers")
-        .select("id, name, company, tax_number")
-        .in("id", supplierIds);
-      
-      if (suppliersError) {
-        console.error("Supplier bilgileri alınamadı:", suppliersError);
-      } else {
-        suppliers = suppliersData || [];
-      }
-    }
-    
-    // Invoice'lara supplier bilgilerini ekle
-    const invoicesWithSuppliers = invoices.map(invoice => ({
-      ...invoice,
-      supplier: suppliers.find(s => s.id === invoice.supplier_id) || null
-    }));
-    
-    // Debug için data'yı logla
-    console.log('🔍 usePurchaseInvoices - invoices:', invoicesWithSuppliers);
-    if (invoicesWithSuppliers.length > 0) {
-      console.log('🔍 usePurchaseInvoices - first invoice supplier:', invoicesWithSuppliers[0].supplier);
-    }
-    
-    return invoicesWithSuppliers;
+
+
+    return invoices;
   };
 
   const fetchInvoiceById = async (id: string): Promise<PurchaseInvoice> => {
@@ -181,6 +162,9 @@ export const usePurchaseInvoices = () => {
   const { data: invoices, isLoading, error, refetch } = useQuery({
     queryKey: ['purchaseInvoices', filters],
     queryFn: fetchInvoices,
+    staleTime: 5 * 60 * 1000, // 5 dakika boyunca fresh kabul et
+    gcTime: 10 * 60 * 1000, // 10 dakika cache'de tut
+    refetchOnWindowFocus: false, // Pencere odaklandığında refetch etme
   });
 
   const createInvoiceMutation = useMutation({

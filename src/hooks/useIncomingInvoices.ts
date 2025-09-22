@@ -21,7 +21,7 @@ export interface IncomingInvoice {
   xmlData: any;
 }
 
-export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?: string }) => {
+export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?: string }, enabled = true) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchIncomingInvoices = async (): Promise<IncomingInvoice[]> => {
@@ -77,6 +77,7 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
   const { data: incomingInvoices = [], error, refetch } = useQuery({
     queryKey: ['incoming-invoices', dateFilters?.startDate, dateFilters?.endDate],
     queryFn: fetchIncomingInvoices,
+    enabled, // Hook'u koşullu olarak etkinleştir
     retry: 1,
     retryDelay: 1000,
     staleTime: 5 * 60 * 1000, // 5 dakika cache

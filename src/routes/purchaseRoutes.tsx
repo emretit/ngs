@@ -5,6 +5,7 @@ const PurchaseManagement = lazy(() => import("@/pages/PurchaseManagement"));
 const PurchaseRequests = lazy(() => import("@/pages/PurchaseRequests"));
 const ProductMapping = lazy(() => import("@/pages/ProductMapping"));
 const PurchaseInvoices = lazy(() => import("@/pages/PurchaseInvoices"));
+const PurchaseInvoiceDetail = lazy(() => import("@/pages/PurchaseInvoiceDetail"));
 const EInvoices = lazy(() => import("@/pages/EInvoices"));
 const EInvoiceProcess = lazy(() => import("@/pages/EInvoiceProcess"));
 
@@ -22,6 +23,16 @@ export const purchaseRoutes: RouteConfig[] = [
   {
     path: "/purchase/requests",
     component: PurchaseRequests,
+    protected: true,
+  },
+  {
+    path: "/purchase-invoices",
+    component: PurchaseInvoices,
+    protected: true,
+  },
+  {
+    path: "/purchase-invoices/:id",
+    component: PurchaseInvoiceDetail,
     protected: true,
   },
   {

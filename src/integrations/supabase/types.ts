@@ -870,6 +870,7 @@ export type Database = {
           matched_stock_code: string | null
           matched_stock_id: string | null
           matched_stock_name: string | null
+          notes: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -895,6 +896,7 @@ export type Database = {
           matched_stock_code?: string | null
           matched_stock_id?: string | null
           matched_stock_name?: string | null
+          notes?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -920,6 +922,7 @@ export type Database = {
           matched_stock_code?: string | null
           matched_stock_id?: string | null
           matched_stock_name?: string | null
+          notes?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -5084,64 +5087,109 @@ export type Database = {
       }
       suppliers: {
         Row: {
+          account_number: string | null
           address: string | null
+          aliases: Json | null
           balance: number
+          bank_name: string | null
           city: string | null
           company: string | null
           company_id: string | null
+          country: string | null
           created_at: string | null
           district: string | null
+          einvoice_alias_name: string | null
           email: string | null
+          fax: string | null
+          iban: string | null
           id: string
+          is_active: boolean | null
+          mersis_number: string | null
           mobile_phone: string | null
           name: string
           office_phone: string | null
+          payee_financial_account_id: string | null
+          payment_means_channel_code: string | null
+          payment_means_code: string | null
+          postal_code: string | null
           representative: string | null
           status: Database["public"]["Enums"]["supplier_status"]
           tax_number: string | null
           tax_office: string | null
+          trade_registry_number: string | null
           type: Database["public"]["Enums"]["supplier_type"]
           updated_at: string | null
+          website: string | null
         }
         Insert: {
+          account_number?: string | null
           address?: string | null
+          aliases?: Json | null
           balance?: number
+          bank_name?: string | null
           city?: string | null
           company?: string | null
           company_id?: string | null
+          country?: string | null
           created_at?: string | null
           district?: string | null
+          einvoice_alias_name?: string | null
           email?: string | null
+          fax?: string | null
+          iban?: string | null
           id?: string
+          is_active?: boolean | null
+          mersis_number?: string | null
           mobile_phone?: string | null
           name: string
           office_phone?: string | null
+          payee_financial_account_id?: string | null
+          payment_means_channel_code?: string | null
+          payment_means_code?: string | null
+          postal_code?: string | null
           representative?: string | null
           status?: Database["public"]["Enums"]["supplier_status"]
           tax_number?: string | null
           tax_office?: string | null
+          trade_registry_number?: string | null
           type: Database["public"]["Enums"]["supplier_type"]
           updated_at?: string | null
+          website?: string | null
         }
         Update: {
+          account_number?: string | null
           address?: string | null
+          aliases?: Json | null
           balance?: number
+          bank_name?: string | null
           city?: string | null
           company?: string | null
           company_id?: string | null
+          country?: string | null
           created_at?: string | null
           district?: string | null
+          einvoice_alias_name?: string | null
           email?: string | null
+          fax?: string | null
+          iban?: string | null
           id?: string
+          is_active?: boolean | null
+          mersis_number?: string | null
           mobile_phone?: string | null
           name?: string
           office_phone?: string | null
+          payee_financial_account_id?: string | null
+          payment_means_channel_code?: string | null
+          payment_means_code?: string | null
+          postal_code?: string | null
           representative?: string | null
           status?: Database["public"]["Enums"]["supplier_status"]
           tax_number?: string | null
           tax_office?: string | null
+          trade_registry_number?: string | null
           type?: Database["public"]["Enums"]["supplier_type"]
           updated_at?: string | null
+          website?: string | null
         }
         Relationships: [
           {

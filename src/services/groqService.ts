@@ -4,7 +4,7 @@ import Groq from 'groq-sdk';
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
 if (!GROQ_API_KEY) {
-  console.warn('Groq API key not found. Set VITE_GROQ_API_KEY in your .env file');
+  // Groq API key not configured - AI reporting features will be disabled
 }
 
 let groq: Groq | null = null;

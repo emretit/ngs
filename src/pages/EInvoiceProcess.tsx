@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -834,39 +835,33 @@ export default function EInvoiceProcess() {
                                       {item.invoice_item.product_name}
                                     </p>
                                   </div>
-                                ) : (
-                                  <Select
-                                    value=""
-                                    onValueChange={(value) => {
-                                      if (value === 'new_product') {
-                                        handleCreateNewProduct(index);
-                                      } else {
-                                        handleManualMatch(index, value);
-                                      }
-                                    }}
-                                  >
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue placeholder="Ürün seçin" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="new_product">
-                                        <div className="flex items-center gap-2">
-                                          <Plus className="h-4 w-4" />
-                                          Yeni ürün oluştur
-                                        </div>
-                                      </SelectItem>
-                                      {filteredProducts.map((product) => (
-                                        <SelectItem key={product.id} value={product.id}>
-                                          <div>
-                                            <p className="font-medium text-sm">{product.name}</p>
-                                            <p className="text-xs text-gray-500">
-                                              SKU: {product.sku || '-'} • {product.price.toFixed(2)} {invoice.currency}
-                                            </p>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                 ) : (
+                                   <SearchableSelect
+                                     options={[
+                                       {
+                                         value: "new_product",
+                                         label: "🆕 Yeni ürün oluştur",
+                                         searchableText: "yeni ürün oluştur new product"
+                                       },
+                                       ...products.map((product) => ({
+                                         value: product.id,
+                                         label: product.name,
+                                         searchableText: `${product.name} ${product.sku || ''} ${product.price} ${product.unit || ''}`
+                                       }))
+                                     ]}
+                                     value=""
+                                     onValueChange={(value) => {
+                                       if (value === 'new_product') {
+                                         handleCreateNewProduct(index);
+                                       } else {
+                                         handleManualMatch(index, value);
+                                       }
+                                     }}
+                                     placeholder="Ürün ara ve seçin..."
+                                     searchPlaceholder="Ürün adı, SKU veya birim fiyat ara..."
+                                     emptyMessage="Ürün bulunamadı"
+                                     className="w-full"
+                                   />
                                 )}
                               </div>
                             </TableCell>

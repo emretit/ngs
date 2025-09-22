@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Package, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useQuery } from "@tanstack/react-query";
 
 const formSchema = z.object({
   name: z.string().min(1, "Ürün adı gerekli"),
@@ -47,6 +48,25 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
+  // Get current user's company_id
+  const { data: userProfile } = useQuery({
+    queryKey: ["user-profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not found");
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: isOpen,
+  });
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -74,6 +94,15 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
   }, [isOpen, initialData, form]);
 
   const onSubmit = async (data: FormData) => {
+    if (!userProfile?.company_id) {
+      toast({
+        title: "Hata",
+        description: "Kullanıcı bilgileri yüklenemedi. Lütfen sayfayı yenileyin.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const { data: newProduct, error } = await supabase
@@ -93,6 +122,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
           stock_quantity: 0,
           min_stock_level: 0,
           stock_threshold: 0,
+          company_id: userProfile.company_id,
         })
         .select()
         .single();

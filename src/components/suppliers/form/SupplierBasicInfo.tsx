@@ -140,18 +140,18 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
 
         {/* E-fatura mükellefi detay bilgileri ve otomatik doldurma önerisi */}
         {mukellefInfo ? (
-          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
+          <div className="mt-2 p-3 bg-success/5 border border-success/20 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">E-Fatura Mükellefi Bulundu</span>
+                <CheckCircle className="w-4 h-4 text-success" />
+                <span className="text-sm font-medium text-success-foreground">E-Fatura Mükellefi Bulundu</span>
               </div>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleSaveAsSupplier}
                 disabled={isCreating}
-                className="h-7 px-2 text-xs bg-white hover:bg-green-50 border-green-300 text-green-700 hover:text-green-800"
+                className="h-8 px-3 text-xs"
               >
                 {isCreating ? (
                   <>
@@ -166,88 +166,49 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
                 )}
               </Button>
             </div>
-            <div className="space-y-3 text-xs text-green-700 mb-2">
+
+            {/* Mükellef Bilgileri Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
               {/* Temel Bilgiler */}
-              <div>
-                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+              <div className="space-y-2">
+                <h4 className="font-semibold text-success-foreground text-sm mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
                   Temel Bilgiler
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
-                  <div><strong>Şirket:</strong> {mukellefInfo.companyName}</div>
-                  <div><strong>Vergi No:</strong> {formData.tax_number}</div>
-                  <div><strong>Vergi Dairesi:</strong> {mukellefInfo.taxOffice || 'API\'den gelmedi'}</div>
-                  {mukellefInfo.type && <div><strong>Tip:</strong> {mukellefInfo.type}</div>}
-                  {mukellefInfo.accountType && <div><strong>Hesap Tipi:</strong> {mukellefInfo.accountType}</div>}
+                <div className="space-y-1 pl-4">
+                  <div><span className="font-medium">Ünvan:</span> {mukellefInfo.companyName}</div>
+                  <div><span className="font-medium">Vergi No:</span> {formData.tax_number}</div>
+                  <div><span className="font-medium">Vergi Dairesi:</span> {mukellefInfo.taxOffice || '-'}</div>
+                  {mukellefInfo.type && <div><span className="font-medium">Tip:</span> {mukellefInfo.type}</div>}
+                  {mukellefInfo.accountType && <div><span className="font-medium">Hesap Tipi:</span> {mukellefInfo.accountType}</div>}
                 </div>
               </div>
 
               {/* Adres Bilgileri */}
-              <div>
-                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+              <div className="space-y-2">
+                <h4 className="font-semibold text-success-foreground text-sm mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
                   Adres Bilgileri
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
-                  {mukellefInfo.address && <div><strong>Adres:</strong> {mukellefInfo.address}</div>}
-                  {mukellefInfo.city && <div><strong>Şehir:</strong> {mukellefInfo.city}</div>}
-                  {mukellefInfo.district && <div><strong>İlçe:</strong> {mukellefInfo.district}</div>}
-                  <div><strong>Ülke:</strong> Türkiye</div>
-                  <div><strong>Posta Kodu:</strong> -</div>
+                <div className="space-y-1 pl-4">
+                  {mukellefInfo.address && <div><span className="font-medium">Adres:</span> {mukellefInfo.address}</div>}
+                  {mukellefInfo.district && <div><span className="font-medium">İlçe:</span> {mukellefInfo.district}</div>}
+                  {mukellefInfo.city && <div><span className="font-medium">Şehir:</span> {mukellefInfo.city}</div>}
+                  <div><span className="font-medium">Ülke:</span> Türkiye</div>
                 </div>
               </div>
 
-              {/* E-Fatura Bilgileri */}
-              <div>
-                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+              {/* E-Fatura & Ticari Bilgiler */}
+              <div className="space-y-2">
+                <h4 className="font-semibold text-success-foreground text-sm mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
                   E-Fatura Bilgileri
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
-                  {mukellefInfo.aliasName && <div><strong>E-Fatura Alias:</strong> {mukellefInfo.aliasName}</div>}
-                  <div><strong>E-Fatura Durumu:</strong> <span className="text-green-600 font-semibold">Aktif</span></div>
-                  <div><strong>Mükellef Tipi:</strong> E-Fatura Mükellefi</div>
-                </div>
-              </div>
-
-              {/* Ticari Bilgiler */}
-              <div>
-                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  Ticari Bilgiler
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
-                  {mukellefInfo.mersisNo && <div><strong>Mersis No:</strong> {mukellefInfo.mersisNo}</div>}
-                  {mukellefInfo.sicilNo && <div><strong>Sicil No:</strong> {mukellefInfo.sicilNo}</div>}
-                  <div><strong>Durum:</strong> <span className="text-green-600 font-semibold">Aktif</span></div>
-                  <div><strong>Silinmiş:</strong> <span className="text-red-600 font-semibold">Hayır</span></div>
-                </div>
-              </div>
-
-              {/* İletişim Bilgileri */}
-              <div>
-                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  İletişim Bilgileri
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
-                  <div><strong>Telefon:</strong> -</div>
-                  <div><strong>Faks:</strong> -</div>
-                  <div><strong>E-posta:</strong> -</div>
-                  <div><strong>Web Sitesi:</strong> -</div>
-                </div>
-              </div>
-
-              {/* Ödeme Bilgileri */}
-              <div>
-                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                  Ödeme Bilgileri
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
-                  <div><strong>Finansal Hesap ID:</strong> -</div>
-                  <div><strong>Ödeme Yöntemi Kodu:</strong> -</div>
-                  <div><strong>Ödeme Kanal Kodu:</strong> -</div>
+                <div className="space-y-1 pl-4">
+                  {mukellefInfo.aliasName && <div><span className="font-medium">Alias:</span> {mukellefInfo.aliasName}</div>}
+                  <div><span className="font-medium">Durum:</span> <span className="text-success font-semibold">Aktif</span></div>
+                  {mukellefInfo.mersisNo && <div><span className="font-medium">Mersis No:</span> {mukellefInfo.mersisNo}</div>}
+                  {mukellefInfo.sicilNo && <div><span className="font-medium">Sicil No:</span> {mukellefInfo.sicilNo}</div>}
                 </div>
               </div>
             </div>

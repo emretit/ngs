@@ -1,7 +1,6 @@
 // @ts-nocheck
 // This component is temporarily disabled due to type migration
-
-import React from 'react';
+// It will be re-enabled after service request type migration is complete
 
 export default function ServiceRequestCalendarDisabled() {
   return (

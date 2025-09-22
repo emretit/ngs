@@ -486,7 +486,8 @@ export default function EInvoiceProcess() {
         unit_price: item.invoice_item.unit_price,
         tax_rate: item.invoice_item.tax_rate,
         discount_rate: item.invoice_item.discount_rate || 0,
-        line_total: item.invoice_item.line_total
+        line_total: item.invoice_item.line_total,
+        company_id: purchaseInvoice.company_id
       }));
 
       const { error: itemsError } = await supabase

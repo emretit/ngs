@@ -3997,12 +3997,79 @@ export type Database = {
           },
         ]
       }
+      purchase_invoice_items: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          discount_rate: number
+          id: string
+          line_total: number
+          product_id: string | null
+          product_name: string
+          purchase_invoice_id: string
+          quantity: number
+          sku: string | null
+          tax_rate: number
+          unit: string
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          discount_rate?: number
+          id?: string
+          line_total?: number
+          product_id?: string | null
+          product_name: string
+          purchase_invoice_id: string
+          quantity?: number
+          sku?: string | null
+          tax_rate?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          discount_rate?: number
+          id?: string
+          line_total?: number
+          product_id?: string | null
+          product_name?: string
+          purchase_invoice_id?: string
+          quantity?: number
+          sku?: string | null
+          tax_rate?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoice_items_purchase_invoice_id_fkey"
+            columns: ["purchase_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_invoices: {
         Row: {
           company_id: string | null
           created_at: string | null
           currency: string
           due_date: string
+          einvoice_id: string | null
           id: string
           invoice_date: string
           invoice_number: string
@@ -4021,6 +4088,7 @@ export type Database = {
           created_at?: string | null
           currency?: string
           due_date: string
+          einvoice_id?: string | null
           id?: string
           invoice_date: string
           invoice_number: string
@@ -4039,6 +4107,7 @@ export type Database = {
           created_at?: string | null
           currency?: string
           due_date?: string
+          einvoice_id?: string | null
           id?: string
           invoice_date?: string
           invoice_number?: string

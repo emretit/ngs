@@ -3,18 +3,33 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Employee } from "@/types/employee";
 import { showSuccess, showError } from "@/utils/toastUtils";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useEmployeeData = () => {
+  const { user, session } = useAuth();
+  
   const { data: employees = [], isLoading, refetch } = useQuery({
-    queryKey: ['employees'],
+    queryKey: ['employees', user?.id],
     queryFn: async () => {
+      if (!session) {
+        console.log('No session available for employees query');
+        return [];
+      }
+
       try {
+        console.log('Fetching employees with session:', session.user.id);
+        
         const { data, error } = await supabase
           .from('employees')
           .select('*')
           .order('created_at', { ascending: false });
           
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
+        
+        console.log('Employees fetched successfully:', data?.length || 0);
         return data as Employee[];
       } catch (error) {
         console.error('Error fetching employees:', error);
@@ -22,6 +37,7 @@ export const useEmployeeData = () => {
         return [];
       }
     },
+    enabled: !!session,
   });
 
   const handleClearEmployees = async () => {

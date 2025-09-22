@@ -21,6 +21,8 @@ interface SupplierSelectorProps {
   className?: string;
   isLoading?: boolean;
   matchStatus?: 'searching' | 'found' | 'not_found' | null;
+  invoiceSupplierName?: string;
+  invoiceSupplierTaxNumber?: string;
 }
 
 const SupplierSelector = ({ 
@@ -31,7 +33,9 @@ const SupplierSelector = ({
   placeholder = "Tedarikçi seçin...", 
   className,
   isLoading = false,
-  matchStatus
+  matchStatus,
+  invoiceSupplierName,
+  invoiceSupplierTaxNumber
 }: SupplierSelectorProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,11 +75,11 @@ const SupplierSelector = ({
   const getStatusText = () => {
     switch (matchStatus) {
       case 'searching':
-        return 'Aranıyor...';
+        return 'Kontrol ediliyor...';
       case 'found':
         return 'Eşleşti';
       case 'not_found':
-        return 'Bulunamadı';
+        return 'Yok';
       default:
         return '';
     }
@@ -98,6 +102,37 @@ const SupplierSelector = ({
           </div>
         )}
       </div>
+
+      {/* E-fatura tedarikçi bilgileri - bulunamadığında göster */}
+      {matchStatus === 'not_found' && invoiceSupplierName && (
+        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-orange-900">
+                E-faturadan gelen tedarikçi:
+              </p>
+              <p className="text-sm text-orange-700 font-semibold">
+                {invoiceSupplierName}
+              </p>
+              {invoiceSupplierTaxNumber && (
+                <p className="text-xs text-orange-600">
+                  VKN: {invoiceSupplierTaxNumber}
+                </p>
+              )}
+            </div>
+            {onNewSupplier && (
+              <Button
+                onClick={onNewSupplier}
+                size="sm"
+                className="ml-3 bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Tedarikçi Ekle
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>

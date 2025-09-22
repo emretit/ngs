@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
 import CompactProductForm from '@/components/einvoice/CompactProductForm';
-import CompactSupplierForm from '@/components/einvoice/CompactSupplierForm';
 import SupplierSelector from '@/components/einvoice/SupplierSelector';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
@@ -101,7 +100,6 @@ export default function EInvoiceProcess() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
-  const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(-1);
   const [supplierMatchStatus, setSupplierMatchStatus] = useState<'searching' | 'found' | 'not_found' | null>(null);
   
@@ -249,8 +247,6 @@ export default function EInvoiceProcess() {
 
   const loadSuppliers = async () => {
     try {
-      setSupplierMatchStatus('searching');
-      
       // Load all customers as potential suppliers since there's no supplier type
       const { data: suppliersData, error: suppliersError } = await supabase
         .from('customers')
@@ -261,7 +257,7 @@ export default function EInvoiceProcess() {
       if (suppliersError) throw suppliersError;
       setSuppliers(suppliersData || []);
 
-      // Try to find supplier by tax number
+      // Try to find supplier by tax number - hızlı kontrol
       if (invoice) {
         const matchingSupplier = suppliersData?.find(s => 
           s.tax_number === invoice.supplier_tax_number
@@ -326,29 +322,6 @@ export default function EInvoiceProcess() {
     });
   };
 
-  const handleCreateNewSupplier = () => {
-    setIsSupplierFormOpen(true);
-  };
-
-  const handleSupplierCreated = async (newSupplier: any) => {
-    // Add to suppliers list
-    setSuppliers(prev => [...prev, newSupplier]);
-    
-    // Invalidate customers query so dropdowns refresh
-    await queryClient.invalidateQueries({ queryKey: ["customers"] });
-    
-    // Auto-select the new supplier
-    setSelectedSupplierId(newSupplier.id);
-    setSupplierMatchStatus('found');
-    
-    // Reset form state
-    setIsSupplierFormOpen(false);
-    
-    toast({
-      title: "Başarılı",
-      description: "Tedarikçi oluşturuldu ve seçildi",
-    });
-  };
 
   const handleRemoveMatch = (itemIndex: number) => {
     const updatedMatching = [...matchingItems];
@@ -357,6 +330,20 @@ export default function EInvoiceProcess() {
       matched_product_id: undefined
     };
     setMatchingItems(updatedMatching);
+  };
+
+  const handleCreateNewSupplier = () => {
+    if (!invoice) return;
+    
+    // E-faturadan gelen tedarikçi bilgilerini URL parametreleri olarak gönder
+    const supplierData = {
+      name: invoice.supplier_name,
+      tax_number: invoice.supplier_tax_number,
+      type: 'kurumsal'
+    };
+    
+    const params = new URLSearchParams(supplierData);
+    navigate(`/supplier/new?${params.toString()}`);
   };
 
   const handleCreatePurchaseInvoice = async () => {
@@ -647,6 +634,8 @@ export default function EInvoiceProcess() {
                        suppliers={suppliers}
                        matchStatus={supplierMatchStatus}
                        placeholder="Tedarikçi ara ve seçin..."
+                       invoiceSupplierName={invoice?.supplier_name}
+                       invoiceSupplierTaxNumber={invoice?.supplier_tax_number}
                      />
 
                     {/* Invoice Date */}
@@ -826,19 +815,6 @@ export default function EInvoiceProcess() {
         }
       />
 
-      {/* Compact Supplier Form Modal */}
-      <CompactSupplierForm
-        isOpen={isSupplierFormOpen}
-        onClose={() => setIsSupplierFormOpen(false)}
-        onSupplierCreated={handleSupplierCreated}
-        initialData={
-          invoice ? {
-            name: invoice.supplier_name,
-            tax_number: invoice.supplier_tax_number,
-            company: invoice.supplier_name,
-          } : undefined
-        }
-      />
     </DefaultLayout>
   );
 }

@@ -17,16 +17,16 @@ import { cn } from "@/lib/utils";
 interface SupplierListProps {
   suppliers: Supplier[] | undefined;
   isLoading: boolean;
+  sortField: "name" | "balance" | "company";
   sortDirection: "asc" | "desc";
-  onSortDirectionChange: (direction: "asc" | "desc") => void;
+  onSortFieldChange: (field: "name" | "balance" | "company") => void;
 }
 
-const SupplierList = ({ suppliers, isLoading, sortDirection, onSortDirectionChange }: SupplierListProps) => {
-  const toggleSort = () => {
-    onSortDirectionChange(sortDirection === "asc" ? "desc" : "asc");
-  };
-
-  const getSortIcon = () => {
+const SupplierList = ({ suppliers, isLoading, sortField, sortDirection, onSortFieldChange }: SupplierListProps) => {
+  const getSortIcon = (field: "name" | "balance" | "company") => {
+    if (field !== sortField) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
+    }
     return sortDirection === "asc" 
       ? <ChevronUp className="h-4 w-4 ml-1" />
       : <ChevronDown className="h-4 w-4 ml-1" />;
@@ -40,8 +40,16 @@ const SupplierList = ({ suppliers, isLoading, sortDirection, onSortDirectionChan
           <Table className="border-collapse">
             <TableHeader>
               <TableRow className="bg-gray-50 border-b">
-                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  🏭 Şirket/Tedarikçi
+                <TableHead 
+                  className={cn(
+                    "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
+                  )}
+                  onClick={() => onSortFieldChange("name")}
+                >
+                  <div className="flex items-center">
+                    <span>🏭 Şirket/Tedarikçi</span>
+                    {getSortIcon("name")}
+                  </div>
                 </TableHead>
                 <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
                   👤 Yetkili Kişi
@@ -62,11 +70,11 @@ const SupplierList = ({ suppliers, isLoading, sortDirection, onSortDirectionChan
                   className={cn(
                     "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
                   )}
-                  onClick={toggleSort}
+                  onClick={() => onSortFieldChange("balance")}
                 >
                   <div className="flex items-center">
                     <span>💰 Bakiye</span>
-                    {getSortIcon()}
+                    {getSortIcon("balance")}
                   </div>
                 </TableHead>
                 <TableHead className="h-12 px-4 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">

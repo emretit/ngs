@@ -33,10 +33,26 @@ interface MukellefData {
   address: string;
   city: string;
   district: string;
+  country: string;
+  postalCode: string;
+  phoneNumber: string;
+  fax: string;
+  email: string;
+  website: string;
+  isActive: boolean;
+  isDeleted: boolean;
   mersisNo: string;
   sicilNo: string;
   accountType: string;
   type: string;
+  aliases: Array<{
+    Alias: string;
+    AliasType: number;
+    Type: number;
+  }>;
+  payeeFinancialAccountID: string;
+  paymentMeansChannelCode: string;
+  paymentMeansCode: string;
 }
 
 interface CompanyInfoResult {

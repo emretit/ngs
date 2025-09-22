@@ -167,8 +167,8 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
               </Button>
             </div>
 
-            {/* Mükellef Bilgileri Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+            {/* Mükellef Bilgileri Grid - Tüm 18 Alan */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
               {/* Temel Bilgiler */}
               <div className="space-y-2">
                 <h4 className="font-semibold text-success-foreground text-sm mb-2 flex items-center gap-2">
@@ -181,6 +181,8 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
                   <div><span className="font-medium">Vergi Dairesi:</span> {mukellefInfo.taxOffice || '-'}</div>
                   {mukellefInfo.type && <div><span className="font-medium">Tip:</span> {mukellefInfo.type}</div>}
                   {mukellefInfo.accountType && <div><span className="font-medium">Hesap Tipi:</span> {mukellefInfo.accountType}</div>}
+                  <div><span className="font-medium">Aktif:</span> {mukellefInfo.isActive ? '✅' : '❌'}</div>
+                  {mukellefInfo.isDeleted !== undefined && <div><span className="font-medium">Silinmiş:</span> {mukellefInfo.isDeleted ? '⚠️' : '✅'}</div>}
                 </div>
               </div>
 
@@ -194,7 +196,22 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
                   {mukellefInfo.address && <div><span className="font-medium">Adres:</span> {mukellefInfo.address}</div>}
                   {mukellefInfo.district && <div><span className="font-medium">İlçe:</span> {mukellefInfo.district}</div>}
                   {mukellefInfo.city && <div><span className="font-medium">Şehir:</span> {mukellefInfo.city}</div>}
-                  <div><span className="font-medium">Ülke:</span> Türkiye</div>
+                  {mukellefInfo.country && <div><span className="font-medium">Ülke:</span> {mukellefInfo.country}</div>}
+                  {mukellefInfo.postalCode && <div><span className="font-medium">Posta Kodu:</span> {mukellefInfo.postalCode}</div>}
+                </div>
+              </div>
+
+              {/* İletişim Bilgileri */}
+              <div className="space-y-2">
+                <h4 className="font-semibold text-success-foreground text-sm mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
+                  İletişim Bilgileri
+                </h4>
+                <div className="space-y-1 pl-4">
+                  {mukellefInfo.phoneNumber && <div><span className="font-medium">Telefon:</span> {mukellefInfo.phoneNumber}</div>}
+                  {mukellefInfo.fax && <div><span className="font-medium">Fax:</span> {mukellefInfo.fax}</div>}
+                  {mukellefInfo.email && <div><span className="font-medium">E-posta:</span> {mukellefInfo.email}</div>}
+                  {mukellefInfo.website && <div><span className="font-medium">Web:</span> {mukellefInfo.website}</div>}
                 </div>
               </div>
 
@@ -202,13 +219,27 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
               <div className="space-y-2">
                 <h4 className="font-semibold text-success-foreground text-sm mb-2 flex items-center gap-2">
                   <div className="w-2 h-2 bg-success rounded-full"></div>
-                  E-Fatura Bilgileri
+                  E-Fatura & Ticari
                 </h4>
                 <div className="space-y-1 pl-4">
                   {mukellefInfo.aliasName && <div><span className="font-medium">Alias:</span> {mukellefInfo.aliasName}</div>}
-                  <div><span className="font-medium">Durum:</span> <span className="text-success font-semibold">Aktif</span></div>
                   {mukellefInfo.mersisNo && <div><span className="font-medium">Mersis No:</span> {mukellefInfo.mersisNo}</div>}
                   {mukellefInfo.sicilNo && <div><span className="font-medium">Sicil No:</span> {mukellefInfo.sicilNo}</div>}
+                  {mukellefInfo.payeeFinancialAccountID && <div><span className="font-medium">Mali Hesap ID:</span> {mukellefInfo.payeeFinancialAccountID}</div>}
+                  {mukellefInfo.paymentMeansCode && <div><span className="font-medium">Ödeme Kod:</span> {mukellefInfo.paymentMeansCode}</div>}
+                  {mukellefInfo.paymentMeansChannelCode && <div><span className="font-medium">Ödeme Kanal:</span> {mukellefInfo.paymentMeansChannelCode}</div>}
+                  {mukellefInfo.aliases && mukellefInfo.aliases.length > 0 && (
+                    <div>
+                      <span className="font-medium">Aliases:</span>
+                      <div className="ml-2 mt-1">
+                        {mukellefInfo.aliases.map((alias, index) => (
+                          <div key={index} className="text-xs">
+                            • {alias.Alias} (Tip: {alias.AliasType}, Type: {alias.Type})
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

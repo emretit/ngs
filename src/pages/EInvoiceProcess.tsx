@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
 import CompactProductForm from '@/components/einvoice/CompactProductForm';
+import CompactSupplierForm from '@/components/einvoice/CompactSupplierForm';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   ArrowLeft, 
@@ -20,7 +22,8 @@ import {
   X,
   Loader2,
   AlertCircle,
-  Save
+  Save,
+  Info,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -97,7 +100,9 @@ export default function EInvoiceProcess() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
+  const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(-1);
+  const [supplierMatchStatus, setSupplierMatchStatus] = useState<'searching' | 'found' | 'not_found' | null>(null);
   
   // Form fields for purchase invoice
   const [formData, setFormData] = useState({
@@ -243,6 +248,8 @@ export default function EInvoiceProcess() {
 
   const loadSuppliers = async () => {
     try {
+      setSupplierMatchStatus('searching');
+      
       // Load all customers as potential suppliers since there's no supplier type
       const { data: suppliersData, error: suppliersError } = await supabase
         .from('customers')
@@ -260,11 +267,15 @@ export default function EInvoiceProcess() {
         );
         if (matchingSupplier) {
           setSelectedSupplierId(matchingSupplier.id);
+          setSupplierMatchStatus('found');
+        } else {
+          setSupplierMatchStatus('not_found');
         }
       }
 
     } catch (error: any) {
       console.error('❌ Error loading suppliers:', error);
+      setSupplierMatchStatus('not_found');
     }
   };
 
@@ -311,6 +322,30 @@ export default function EInvoiceProcess() {
     toast({
       title: "Başarılı",
       description: "Ürün oluşturuldu ve eşleştirildi",
+    });
+  };
+
+  const handleCreateNewSupplier = () => {
+    setIsSupplierFormOpen(true);
+  };
+
+  const handleSupplierCreated = async (newSupplier: any) => {
+    // Add to suppliers list
+    setSuppliers(prev => [...prev, newSupplier]);
+    
+    // Invalidate customers query so dropdowns refresh
+    await queryClient.invalidateQueries({ queryKey: ["customers"] });
+    
+    // Auto-select the new supplier
+    setSelectedSupplierId(newSupplier.id);
+    setSupplierMatchStatus('found');
+    
+    // Reset form state
+    setIsSupplierFormOpen(false);
+    
+    toast({
+      title: "Başarılı",
+      description: "Tedarikçi oluşturuldu ve seçildi",
     });
   };
 
@@ -595,22 +630,71 @@ export default function EInvoiceProcess() {
                   <h4 className="text-sm font-semibold text-gray-900">Alış Faturası</h4>
                   
                   <div>
-                    <Label htmlFor="supplier">Tedarikçi *</Label>
-                    <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Tedarikçi seçin" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {suppliers.map(supplier => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
-                            <div>
-                              <p className="font-medium text-xs">{supplier.name}</p>
-                              <p className="text-xs text-gray-500">VKN: {supplier.tax_number}</p>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label htmlFor="supplier">Tedarikçi *</Label>
+                      {supplierMatchStatus === 'searching' && (
+                        <div className="flex items-center gap-1 text-xs text-blue-600">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Aranıyor...
+                        </div>
+                      )}
+                      {supplierMatchStatus === 'found' && (
+                        <div className="flex items-center gap-1 text-xs text-green-600">
+                          <Check className="h-3 w-3" />
+                          Eşleşti
+                        </div>
+                      )}
+                      {supplierMatchStatus === 'not_found' && (
+                        <div className="flex items-center gap-1 text-xs text-orange-600">
+                          <X className="h-3 w-3" />
+                          Bulunamadı
+                        </div>
+                      )}
+                    </div>
+                    
+                    {supplierMatchStatus === 'not_found' && invoice && (
+                      <Alert className="mb-3">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          <div className="space-y-1">
+                            <p><strong>VKN:</strong> {invoice.supplier_tax_number}</p>
+                            <p><strong>Tedarikçi:</strong> {invoice.supplier_name}</p>
+                            <p className="text-xs text-muted-foreground">Bu vergi numarası ile kayıtlı tedarikçi bulunamadı.</p>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Tedarikçi seçin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {suppliers.map(supplier => (
+                            <SelectItem key={supplier.id} value={supplier.id}>
+                              <div>
+                                <p className="font-medium text-xs">{supplier.name}</p>
+                                <p className="text-xs text-gray-500">VKN: {supplier.tax_number}</p>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {supplierMatchStatus === 'not_found' && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCreateNewSupplier}
+                          className="w-full flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Yeni Tedarikçi Oluştur
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <div>
@@ -782,6 +866,20 @@ export default function EInvoiceProcess() {
             price: matchingItems[currentItemIndex]?.invoice_item.unit_price || 0,
             tax_rate: matchingItems[currentItemIndex]?.invoice_item.tax_rate || 18,
             code: matchingItems[currentItemIndex]?.invoice_item.product_code || "",
+          } : undefined
+        }
+      />
+
+      {/* Compact Supplier Form Modal */}
+      <CompactSupplierForm
+        isOpen={isSupplierFormOpen}
+        onClose={() => setIsSupplierFormOpen(false)}
+        onSupplierCreated={handleSupplierCreated}
+        initialData={
+          invoice ? {
+            name: invoice.supplier_name,
+            tax_number: invoice.supplier_tax_number,
+            company: invoice.supplier_name,
           } : undefined
         }
       />

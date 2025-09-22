@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, AlertTriangle, CheckCircle, XCircle, LayoutGrid, List, FileText, Download, Upload, MoreHorizontal, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
-import ProductForm from "./ProductForm";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +43,6 @@ const ProductListHeader = ({
   onImportExcel,
   onBulkAction
 }: ProductListHeaderProps) => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Toplam ürün sayısını hesapla
   const totalCount = products.all.length;
@@ -208,7 +206,7 @@ const ProductListHeader = ({
 
             <Button
               className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 h-8 px-4"
-              onClick={() => setIsFormOpen(true)}
+              onClick={() => window.location.href = '/product-form'}
             >
               <Plus className="h-4 w-4" />
               <span>Yeni Ürün</span>
@@ -230,14 +228,6 @@ const ProductListHeader = ({
           </div>
         </div>
       </div>
-
-      {/* Product Form Modal */}
-      {isFormOpen && (
-        <ProductForm
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-        />
-      )}
     </>
   );
 };

@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Proposal, ProposalItem } from "@/types/proposal";
 import { mockCrmService } from "@/services/mockCrm";
@@ -18,6 +19,7 @@ interface OrderFormProps {
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { createOrderMutation } = useOrders();
   const [loading, setLoading] = useState(false);
@@ -122,8 +124,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
         description: "Sipariş başarıyla oluşturuldu",
       });
       
-      // Redirect to orders list
-      window.location.href = '/orders/list';
+      // Navigate to orders list
+      navigate('/orders/list');
       
     } catch (error) {
       console.error("Error creating order:", error);
@@ -187,8 +189,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
         description: "Sipariş taslak olarak kaydedildi",
       });
       
-      // Redirect to orders list
-      window.location.href = '/orders/list';
+      // Navigate to orders list
+      navigate('/orders/list');
       
     } catch (error) {
       console.error("Error saving draft order:", error);

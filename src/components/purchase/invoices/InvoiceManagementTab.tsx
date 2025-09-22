@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -87,6 +88,7 @@ export default function InvoiceManagementTab() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
   
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   // Otomatik yenileme için useEffect
@@ -219,8 +221,8 @@ export default function InvoiceManagementTab() {
     // Fatura verilerini session storage'a kaydet
     sessionStorage.setItem(`invoice_${invoice.id}`, JSON.stringify(invoice));
     
-    // Yeni sayfaya yönlendir
-    window.location.href = `/product-mapping/${invoice.id}`;
+    // Navigate to product mapping page
+    navigate(`/product-mapping/${invoice.id}`);
   };
 
   // Dikkat alma fonksiyonu

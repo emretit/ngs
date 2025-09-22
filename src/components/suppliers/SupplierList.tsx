@@ -1,5 +1,4 @@
 
-import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -8,8 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import SupplierTableRow from "./SupplierTableRow";
 import { Supplier } from "@/types/supplier";
 import { cn } from "@/lib/utils";
@@ -23,10 +21,9 @@ interface SupplierListProps {
 }
 
 const SupplierList = ({ suppliers, isLoading, sortField, sortDirection, onSortFieldChange }: SupplierListProps) => {
-  const getSortIcon = (field: "name" | "balance" | "company") => {
-    if (field !== sortField) {
-      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
-    }
+  const getSortIcon = (field: string) => {
+    if (field !== sortField) return null;
+    
     return sortDirection === "asc" 
       ? <ChevronUp className="h-4 w-4 ml-1" />
       : <ChevronDown className="h-4 w-4 ml-1" />;
@@ -44,11 +41,11 @@ const SupplierList = ({ suppliers, isLoading, sortField, sortDirection, onSortFi
                   className={cn(
                     "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
                   )}
-                  onClick={() => onSortFieldChange("name")}
+                  onClick={() => onSortFieldChange("company")}
                 >
                   <div className="flex items-center">
-                    <span>🏭 Şirket/Tedarikçi</span>
-                    {getSortIcon("name")}
+                    <span>🏢 Şirket/Tedarikçi</span>
+                    {getSortIcon("company")}
                   </div>
                 </TableHead>
                 <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">

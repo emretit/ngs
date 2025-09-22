@@ -14,17 +14,29 @@ import { Download, FileText, MoreHorizontal } from "lucide-react";
 interface SuppliersTableProps {
   suppliers: Supplier[];
   isLoading: boolean;
+  totalCount?: number;
+  error?: any;
   onSupplierSelect: (supplier: Supplier) => void;
   onSupplierSelectToggle?: (supplier: Supplier) => void;
   selectedSuppliers?: Supplier[];
+  setSelectedSuppliers?: (suppliers: Supplier[]) => void;
+  searchQuery?: string;
+  statusFilter?: string;
+  typeFilter?: string;
 }
 
 const SuppliersTable = ({ 
   suppliers, 
   isLoading, 
+  totalCount,
+  error,
   onSupplierSelect, 
   onSupplierSelectToggle,
-  selectedSuppliers = []
+  selectedSuppliers = [],
+  setSelectedSuppliers,
+  searchQuery,
+  statusFilter,
+  typeFilter
 }: SuppliersTableProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -40,7 +52,7 @@ const SuppliersTable = ({
     { id: "representative", label: "Temsilci", visible: true, sortable: true },
     { id: "balance", label: "Bakiye", visible: true, sortable: true },
     { id: "created_at", label: "Oluşturma Tarihi", visible: true, sortable: true },
-    { id: "actions", label: "İşlemler", visible: true },
+    { id: "actions", label: "İşlemler", visible: true, sortable: false },
   ]);
 
   const handleSort = (field: string) => {
@@ -171,10 +183,12 @@ const SuppliersTable = ({
                 <Checkbox
                   checked={selectedSuppliers.length === suppliers.length && suppliers.length > 0}
                   onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedSuppliers(suppliers);
-                    } else {
-                      setSelectedSuppliers([]);
+                    if (setSelectedSuppliers) {
+                      if (checked) {
+                        setSelectedSuppliers(suppliers);
+                      } else {
+                        setSelectedSuppliers([]);
+                      }
                     }
                   }}
                 />

@@ -14,17 +14,29 @@ import { Download, FileText, MoreHorizontal } from "lucide-react";
 interface CustomersTableProps {
   customers: Customer[];
   isLoading: boolean;
+  totalCount?: number;
+  error?: any;
   onCustomerSelect: (customer: Customer) => void;
   onCustomerSelectToggle?: (customer: Customer) => void;
   selectedCustomers?: Customer[];
+  setSelectedCustomers?: (customers: Customer[]) => void;
+  searchQuery?: string;
+  statusFilter?: string;
+  typeFilter?: string;
 }
 
 const CustomersTable = ({ 
   customers, 
   isLoading, 
+  totalCount,
+  error,
   onCustomerSelect, 
   onCustomerSelectToggle,
-  selectedCustomers = []
+  selectedCustomers = [],
+  setSelectedCustomers,
+  searchQuery,
+  statusFilter,
+  typeFilter
 }: CustomersTableProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -40,7 +52,7 @@ const CustomersTable = ({
     { id: "representative", label: "Temsilci", visible: true, sortable: true },
     { id: "balance", label: "Bakiye", visible: true, sortable: true },
     { id: "created_at", label: "Oluşturma Tarihi", visible: true, sortable: true },
-    { id: "actions", label: "İşlemler", visible: true },
+    { id: "actions", label: "İşlemler", visible: true, sortable: false },
   ]);
 
   const handleSort = (field: string) => {
@@ -171,10 +183,12 @@ const CustomersTable = ({
                 <Checkbox
                   checked={selectedCustomers.length === customers.length && customers.length > 0}
                   onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedCustomers(customers);
-                    } else {
-                      setSelectedCustomers([]);
+                    if (setSelectedCustomers) {
+                      if (checked) {
+                        setSelectedCustomers(customers);
+                      } else {
+                        setSelectedCustomers([]);
+                      }
                     }
                   }}
                 />
@@ -222,7 +236,6 @@ const CustomersTable = ({
         onSort={handleSort}
         hasSelection={true}
         onSelectAll={(checked) => {
-          console.log('onSelectAll called:', checked, 'setSelectedCustomers:', setSelectedCustomers);
           if (setSelectedCustomers) {
             if (checked) {
               setSelectedCustomers(customers);

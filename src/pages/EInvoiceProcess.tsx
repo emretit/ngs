@@ -601,136 +601,121 @@ export default function EInvoiceProcess() {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-6">
-                  {/* Invoice Information Section */}
+                  {/* Invoice Information */}
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tedarikçi</Label>
-                        <p className="text-sm font-semibold text-foreground mt-1">{invoice.supplier_name}</p>
-                      </div>
-                      
-                      <div>
-                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Vergi No</Label>
-                        <p className="text-sm font-mono text-foreground mt-1">{invoice.supplier_tax_number}</p>
-                      </div>
-                      
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Fatura No</Label>
+                      <p className="text-sm font-semibold text-foreground mt-1">{invoice.invoice_number}</p>
+                    </div>
+                    
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tedarikçi</Label>
+                      <p className="text-sm font-semibold text-foreground mt-1">{invoice.supplier_name}</p>
+                      <p className="text-xs text-muted-foreground">VKN: {invoice.supplier_tax_number}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tarih</Label>
                         <p className="text-sm text-foreground mt-1">
-                          {format(new Date(invoice.invoice_date), 'dd MMMM yyyy', { locale: tr })}
+                          {format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale: tr })}
                         </p>
                       </div>
                       
                       <div>
-                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Toplam</Label>
-                        <p className="text-sm font-mono font-semibold text-primary mt-1">
-                          {invoice.total_amount.toFixed(2)} {invoice.currency}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Kalem Sayısı</Label>
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Kalem</Label>
                         <p className="text-sm font-semibold text-foreground mt-1">{invoice.items.length}</p>
                       </div>
                     </div>
+                    
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Toplam</Label>
+                      <p className="text-lg font-bold text-primary mt-1">
+                        {invoice.total_amount.toFixed(2)} {invoice.currency}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Purchase Invoice Form Section */}
-                  <div className="pt-4 border-t border-border">
-                    <div className="space-y-4">
-                      <h4 className="text-sm font-semibold text-foreground">Alış Faturası Bilgileri</h4>
-                      
-                      {/* Supplier Selection */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="supplier" className="text-sm font-medium">Tedarikçi *</Label>
-                          <div className="flex items-center gap-1">
-                            {supplierMatchStatus === 'searching' && (
-                              <div className="flex items-center gap-1 text-xs text-primary">
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                <span>Aranıyor...</span>
-                              </div>
-                            )}
-                            {supplierMatchStatus === 'found' && (
-                              <div className="flex items-center gap-1 text-xs text-green-600">
-                                <Check className="h-3 w-3" />
-                                <span>Eşleşti</span>
-                              </div>
-                            )}
-                            {supplierMatchStatus === 'not_found' && (
-                              <div className="flex items-center gap-1 text-xs text-destructive">
-                                <X className="h-3 w-3" />
-                                <span>Bulunamadı</span>
-                              </div>
-                            )}
-                          </div>
+                  {/* Purchase Invoice Form */}
+                  <div className="pt-4 border-t border-border space-y-4">
+                    {/* Supplier Selection */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="supplier" className="text-sm font-medium">Alış Faturası Tedarikçisi *</Label>
+                        <div className="flex items-center gap-1">
+                          {supplierMatchStatus === 'searching' && (
+                            <div className="flex items-center gap-1 text-xs text-primary">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              <span>Aranıyor...</span>
+                            </div>
+                          )}
+                          {supplierMatchStatus === 'found' && (
+                            <div className="flex items-center gap-1 text-xs text-green-600">
+                              <Check className="h-3 w-3" />
+                              <span>Eşleşti</span>
+                            </div>
+                          )}
+                          {supplierMatchStatus === 'not_found' && (
+                            <div className="flex items-center gap-1 text-xs text-destructive">
+                              <X className="h-3 w-3" />
+                              <span>Bulunamadı</span>
+                            </div>
+                          )}
                         </div>
-                        
-                        {supplierMatchStatus === 'not_found' && invoice && (
-                          <Alert>
-                            <Info className="h-4 w-4" />
-                            <AlertDescription className="text-sm">
-                              <div className="space-y-1">
-                                <p><strong>VKN:</strong> {invoice.supplier_tax_number}</p>
-                                <p><strong>Tedarikçi:</strong> {invoice.supplier_name}</p>
-                                <p className="text-xs text-muted-foreground">Bu vergi numarası ile kayıtlı tedarikçi bulunamadı.</p>
+                      </div>
+                      
+                      <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
+                        <SelectTrigger id="supplier">
+                          <SelectValue placeholder="Tedarikçi seçin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {suppliers.map(supplier => (
+                            <SelectItem key={supplier.id} value={supplier.id}>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-sm">{supplier.name}</span>
+                                <span className="text-xs text-muted-foreground">VKN: {supplier.tax_number}</span>
                               </div>
-                            </AlertDescription>
-                          </Alert>
-                        )}
-                        
-                        <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
-                          <SelectTrigger id="supplier">
-                            <SelectValue placeholder="Tedarikçi seçin" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {suppliers.map(supplier => (
-                              <SelectItem key={supplier.id} value={supplier.id}>
-                                <div className="flex flex-col">
-                                  <span className="font-medium text-sm">{supplier.name}</span>
-                                  <span className="text-xs text-muted-foreground">VKN: {supplier.tax_number}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        
-                        {supplierMatchStatus === 'not_found' && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleCreateNewSupplier}
-                            className="w-full"
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Yeni Tedarikçi Oluştur
-                          </Button>
-                        )}
-                      </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {supplierMatchStatus === 'not_found' && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCreateNewSupplier}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Yeni Tedarikçi Oluştur
+                        </Button>
+                      )}
+                    </div>
 
-                      {/* Invoice Date */}
-                      <div className="space-y-2">
-                        <Label htmlFor="invoice_date" className="text-sm font-medium">Fatura Tarihi</Label>
-                        <Input
-                          id="invoice_date"
-                          type="date"
-                          value={formData.invoice_date}
-                          onChange={(e) => setFormData(prev => ({ ...prev, invoice_date: e.target.value }))}
-                        />
-                      </div>
+                    {/* Invoice Date */}
+                    <div className="space-y-2">
+                      <Label htmlFor="invoice_date" className="text-sm font-medium">Fatura Tarihi</Label>
+                      <Input
+                        id="invoice_date"
+                        type="date"
+                        value={formData.invoice_date}
+                        onChange={(e) => setFormData(prev => ({ ...prev, invoice_date: e.target.value }))}
+                      />
+                    </div>
 
-                      {/* Notes */}
-                      <div className="space-y-2">
-                        <Label htmlFor="notes" className="text-sm font-medium">Notlar</Label>
-                        <Textarea
-                          id="notes"
-                          value={formData.notes}
-                          onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                          rows={3}
-                          placeholder="Fatura ile ilgili notlar..."
-                        />
-                      </div>
+                    {/* Notes */}
+                    <div className="space-y-2">
+                      <Label htmlFor="notes" className="text-sm font-medium">Notlar</Label>
+                      <Textarea
+                        id="notes"
+                        value={formData.notes}
+                        onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                        rows={2}
+                        placeholder="Fatura ile ilgili notlar..."
+                        className="text-sm"
+                      />
                     </div>
                   </div>
                 </div>

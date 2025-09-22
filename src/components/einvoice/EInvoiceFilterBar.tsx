@@ -35,111 +35,77 @@ const EInvoiceFilterBar = ({
   isFiltering = false
 }: EInvoiceFilterBarProps) => {
   return (
-    <Card className="p-6 shadow-sm">
-      <div className="space-y-4">
-        {/* Başlık */}
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">Filtre ve Arama</h3>
+    <Card className="p-4 shadow-sm">
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Arama */}
+        <div className="flex-1 min-w-[300px] relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Fatura no, firma adı veya vergi no ile ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-10"
+          />
         </div>
 
-        {/* Ana filtre alanı */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          
-          {/* Arama */}
-          <div className="lg:col-span-2 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Fatura no, firma adı veya vergi no ile ara..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-10"
-            />
-          </div>
+        {/* Fatura Türü */}
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[180px] h-10">
+            <FileText className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Fatura Türü" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm Türler</SelectItem>
+            <SelectItem value="TEMELFATURA">Temel Fatura</SelectItem>
+            <SelectItem value="TICARIFATURA">Ticari Fatura</SelectItem>
+            <SelectItem value="IHRACAT">İhracat</SelectItem>
+            <SelectItem value="YOLCUBERABERFATURA">Yolcu Beraber</SelectItem>
+            <SelectItem value="EARSIVFATURA">E-Arşiv</SelectItem>
+            <SelectItem value="KAMU">Kamu</SelectItem>
+            <SelectItem value="HKS">HKS</SelectItem>
+          </SelectContent>
+        </Select>
 
-          {/* Tarih Filtresi */}
-          <Select value={dateFilter} onValueChange={setDateFilter}>
-            <SelectTrigger className="h-10">
-              <Calendar className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Tarih Filtresi" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tüm Tarihler</SelectItem>
-              <SelectItem value="today">Bugün</SelectItem>
-              <SelectItem value="week">Bu Hafta</SelectItem>
-              <SelectItem value="month">Bu Ay</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Fatura Türü */}
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="h-10">
-              <FileText className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Fatura Türü" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tüm Türler</SelectItem>
-              <SelectItem value="TEMELFATURA">Temel Fatura</SelectItem>
-              <SelectItem value="TICARIFATURA">Ticari Fatura</SelectItem>
-              <SelectItem value="IHRACAT">İhracat</SelectItem>
-              <SelectItem value="YOLCUBERABERFATURA">Yolcu Beraber</SelectItem>
-              <SelectItem value="EARSIVFATURA">E-Arşiv</SelectItem>
-              <SelectItem value="KAMU">Kamu</SelectItem>
-              <SelectItem value="HKS">HKS</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Tarih Aralığı */}
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-[140px] h-10"
+            title="Başlangıç Tarihi"
+          />
+          <span className="text-muted-foreground">-</span>
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-[140px] h-10"
+            title="Bitiş Tarihi"
+          />
         </div>
 
-        {/* Tarih Aralığı Seçimi */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4 border-t border-gray-100">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">Özel Tarih Aralığı:</span>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground whitespace-nowrap">Başlangıç:</label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-[140px] h-9"
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground whitespace-nowrap">Bitiş:</label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-[140px] h-9"
-              />
-            </div>
-            
-            {onFilter && (
-              <Button
-                onClick={onFilter}
-                disabled={isFiltering}
-                size="sm"
-                className="ml-2"
-              >
-                {isFiltering ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Filtreleniyor...
-                  </>
-                ) : (
-                  <>
-                    <Filter className="mr-2 h-4 w-4" />
-                    Filtrele
-                  </>
-                )}
-              </Button>
+        {/* Filtrele Butonu */}
+        {onFilter && (
+          <Button
+            onClick={onFilter}
+            disabled={isFiltering}
+            className="h-10"
+          >
+            {isFiltering ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Filtreleniyor...
+              </>
+            ) : (
+              <>
+                <Filter className="mr-2 h-4 w-4" />
+                Filtrele
+              </>
             )}
-          </div>
-        </div>
+          </Button>
+        )}
       </div>
     </Card>
   );

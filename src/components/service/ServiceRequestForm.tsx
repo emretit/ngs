@@ -3,7 +3,13 @@
 
 import React from 'react';
 
-export default function ServiceRequestFormDisabled() {
+interface ServiceRequestFormProps {
+  onClose?: () => void;
+  initialData?: any;
+  isEditing?: boolean;
+}
+
+export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = () => {
   return (
     <div className="p-8 text-center">
       <h3 className="text-lg font-semibold text-gray-600 mb-2">Servis Formu Geçici Olarak Devre Dışı</h3>
@@ -11,3 +17,5 @@ export default function ServiceRequestFormDisabled() {
     </div>
   );
 }
+
+export default ServiceRequestForm;

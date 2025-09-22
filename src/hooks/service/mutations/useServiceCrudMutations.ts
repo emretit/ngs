@@ -1,41 +1,29 @@
-
-
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { ServiceRequestFormData } from "../types";
-import { useServiceFileUpload } from "../useServiceFileUpload";
-import { useServiceQueries } from "../useServiceQueries";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useServiceQueries } from "../useServiceQueries";
+import { toast } from "@/hooks/use-toast";
 
 export const useServiceCrudMutations = () => {
   const queryClient = useQueryClient();
-  const { uploadFiles } = useServiceFileUpload();
-  const { getServiceRequest } = useServiceQueries();
   const { userData } = useCurrentUser();
+  const { getServiceRequest } = useServiceQueries();
 
-  // Generate service number
-  const generateServiceNumber = async (): Promise<string> => {
-    const year = new Date().getFullYear();
-    const { count } = await supabase
-      .from('service_requests')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', `${year}-01-01`)
-      .lt('created_at', `${year + 1}-01-01`);
-
-    const serviceCount = (count || 0) + 1;
-    return `SR-${year}-${serviceCount.toString().padStart(4, '0')}`;
-  };
-
-  // Create service request
+  // Create service request mutation
   const createServiceRequestMutation = useMutation({
-    mutationFn: async ({ formData, files }: { formData: ServiceRequestFormData, files: File[] }) => {
-      // Generate service number
-      const serviceNumber = await generateServiceNumber();
+    mutationFn: async ({ formData, files }: { formData: ServiceRequestFormData; files: File[] }) => {
+      console.log("Creating service request with data:", formData);
       
-      // UUID validation function
-      const isValidUUID = (str: string) => {
+      if (!userData?.company_id) {
+        throw new Error("Company ID is required");
+      }
+
+      // Generate a unique service number
+      const serviceNumber = `SRV-${Date.now()}`;
+
+      // Helper function to validate UUID
+      const isValidUUID = (str: string): boolean => {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         return uuidRegex.test(str);
       };
@@ -43,9 +31,12 @@ export const useServiceCrudMutations = () => {
       const serviceRequestData = {
         ...formData,
         service_number: serviceNumber,
-        service_due_date: formData.service_due_date?.toISOString(),
-        service_reported_date: formData.service_reported_date?.toISOString(),
-        issue_date: formData.issue_date?.toISOString(), // Planlanan tarih
+        service_due_date: formData.service_due_date ? 
+          (typeof formData.service_due_date === 'string' ? formData.service_due_date : null) : null,
+        service_reported_date: formData.service_reported_date ? 
+          (typeof formData.service_reported_date === 'string' ? formData.service_reported_date : null) : null,
+        issue_date: formData.issue_date ? 
+          (typeof formData.issue_date === 'string' ? formData.issue_date : null) : null,
         assigned_technician: formData.assigned_technician && 
           formData.assigned_technician !== 'unassigned' && 
           isValidUUID(formData.assigned_technician) ? formData.assigned_technician : null,
@@ -53,99 +44,145 @@ export const useServiceCrudMutations = () => {
           formData.assigned_technician !== 'unassigned' && 
           isValidUUID(formData.assigned_technician) ? 'assigned' as const : 'new' as const,
         attachments: [],
-        company_id: userData?.company_id,
+        company_id: userData.company_id,
       };
 
-      // Submit to Supabase
+      console.log("Submitting service request data:", serviceRequestData);
+
       const { data, error } = await supabase
         .from('service_requests')
-        .insert(serviceRequestData)
+        .insert([serviceRequestData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating service request:", error);
+        throw error;
+      }
 
-      if (files.length > 0 && data) {
-        const uploadedFiles = await uploadFiles(files, data.id);
-        
-        // After upload, update with the attachments array
-        // Convert to a plain object structure that Supabase can handle
-        const attachmentsForDb = uploadedFiles.map(file => ({
-          name: file.name,
-          path: file.path,
-          type: file.type,
-          size: file.size
-        }));
-        
-        const { error: updateError } = await supabase
-          .from('service_requests')
-          .update({ attachments: attachmentsForDb })
-          .eq('id', data.id);
+      console.log("Service request created successfully:", data);
 
-        if (updateError) throw updateError;
+      // Upload files if any
+      if (files && files.length > 0) {
+        const attachments = [];
+        
+        for (const file of files) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${data.id}_${Date.now()}.${fileExt}`;
+          const filePath = `service-requests/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('attachments')
+            .upload(filePath, file);
+
+          if (uploadError) {
+            console.error("Error uploading file:", uploadError);
+            continue;
+          }
+
+          attachments.push({
+            name: file.name,
+            path: filePath,
+            type: file.type,
+            size: file.size
+          });
+        }
+
+        // Update the service request with attachments
+        if (attachments.length > 0) {
+          const { error: updateError } = await supabase
+            .from('service_requests')
+            .update({ attachments })
+            .eq('id', data.id);
+
+          if (updateError) {
+            console.error("Error updating attachments:", updateError);
+          }
+        }
       }
 
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] });
-      toast.success("Service request created successfully");
+      toast({
+        title: "Başarılı",
+        description: "Servis talebi başarıyla oluşturuldu.",
+      });
     },
     onError: (error) => {
-      console.error('Service request creation error:', error);
-      toast.error("Failed to create service request");
+      console.error("Create service request error:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Servis talebi oluşturulurken bir hata oluştu.",
+      });
     },
   });
 
-  // Update service request
+  // Update service request mutation
   const updateServiceRequestMutation = useMutation({
-    mutationFn: async ({ 
-      id, 
-      updateData, 
-      newFiles = [] 
-    }: { 
-      id: string; 
-      updateData: Partial<ServiceRequestFormData>; 
-      newFiles?: File[] 
-    }) => {
-      // Get current service request
+    mutationFn: async ({ id, updateData, newFiles }: { id: string; updateData: Partial<ServiceRequestFormData>; newFiles?: File[] }) => {
+      console.log("Updating service request:", id, updateData);
+      
+      if (!userData?.company_id) {
+        throw new Error("Company ID is required");
+      }
+
+      // Fetch current request data to preserve existing values
       const currentRequest = await getServiceRequest(id);
       if (!currentRequest) {
         throw new Error("Service request not found");
       }
 
-      let updatedAttachments = [...(Array.isArray(currentRequest.attachments) ? currentRequest.attachments : [])];
-
-      // Upload new files if any
-      if (newFiles.length > 0) {
-        const uploadedFiles = await uploadFiles(newFiles, id);
-        updatedAttachments = [...updatedAttachments, ...uploadedFiles as any];
-      }
-
-      // Convert attachments to a plain object structure Supabase can handle
-      const attachmentsForDb = updatedAttachments.map(file => {
-        if (typeof file === 'object' && file !== null && 'name' in file) {
-          return {
-            name: file.name,
-            path: file.path,
-            type: file.type,
-            size: file.size
-          };
-        }
-        return file; // Keep as is if not the expected structure
-      });
-
-      // UUID validation function
-      const isValidUUID = (str: string) => {
+      // Helper function to validate UUID
+      const isValidUUID = (str: string): boolean => {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         return uuidRegex.test(str);
       };
 
+      let attachmentsForDb = Array.isArray(currentRequest.attachments) ? currentRequest.attachments : [];
+
+      // Upload new files if any
+      if (newFiles && newFiles.length > 0) {
+        const newAttachments = [];
+        
+        for (const file of newFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${id}_${Date.now()}.${fileExt}`;
+          const filePath = `service-requests/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('attachments')
+            .upload(filePath, file);
+
+          if (uploadError) {
+            console.error("Error uploading file:", uploadError);
+            continue;
+          }
+
+          newAttachments.push({
+            name: file.name,
+            path: filePath,
+            type: file.type,
+            size: file.size
+          });
+        }
+
+        attachmentsForDb = [...attachmentsForDb, ...newAttachments];
+      }
+
       const updatePayload = {
         ...updateData,
-        service_due_date: updateData.service_due_date ? updateData.service_due_date.toISOString() : currentRequest.service_due_date,
-        service_reported_date: updateData.service_reported_date ? updateData.service_reported_date.toISOString() : currentRequest.service_reported_date,
-        issue_date: updateData.issue_date ? updateData.issue_date.toISOString() : currentRequest.issue_date, // Planlanan tarih
+        service_due_date: updateData.service_due_date ? 
+          (typeof updateData.service_due_date === 'string' ? updateData.service_due_date : currentRequest.service_due_date) : 
+          currentRequest.service_due_date,
+        service_reported_date: updateData.service_reported_date ? 
+          (typeof updateData.service_reported_date === 'string' ? updateData.service_reported_date : currentRequest.service_reported_date) : 
+          currentRequest.service_reported_date,
+        issue_date: updateData.issue_date ? 
+          (typeof updateData.issue_date === 'string' ? updateData.issue_date : currentRequest.issue_date) : 
+          currentRequest.issue_date,
         assigned_technician: updateData.assigned_technician && 
           updateData.assigned_technician !== 'unassigned' && 
           isValidUUID(updateData.assigned_technician) ? updateData.assigned_technician : currentRequest.assigned_technician,
@@ -155,23 +192,38 @@ export const useServiceCrudMutations = () => {
         attachments: attachmentsForDb
       };
 
+      console.log("Update payload:", updatePayload);
+
       const { data, error } = await supabase
         .from('service_requests')
         .update(updatePayload)
         .eq('id', id)
+        .eq('company_id', userData.company_id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating service request:", error);
+        throw error;
+      }
+
+      console.log("Service request updated successfully:", data);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] });
-      toast.success("Service request updated successfully");
+      toast({
+        title: "Başarılı",
+        description: "Servis talebi başarıyla güncellendi.",
+      });
     },
     onError: (error) => {
-      console.error('Service request update error:', error);
-      toast.error("Failed to update service request");
+      console.error("Update service request error:", error);
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Servis talebi güncellenirken bir hata oluştu.",
+      });
     },
   });
 

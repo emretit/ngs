@@ -9,7 +9,10 @@ export const useServiceRequests = (): UseServiceRequestsResult => {
 
   return {
     ...queries,
-    ...mutations
+    ...mutations,
+    data: queries.serviceRequests,
+    isError: !!queries.error,
+    getServiceRequest: (id: string) => queries.serviceRequests.find(req => req.id === id)
   };
 };
 

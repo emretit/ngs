@@ -95,10 +95,9 @@ export const useServiceQueries = (): ServiceQueriesResult => {
   };
 
   return {
-    data: serviceRequestsQuery.data,
+    serviceRequests: serviceRequestsQuery.data || [],
     isLoading: serviceRequestsQuery.isLoading,
     error: serviceRequestsQuery.error as Error | null,
-    isError: !!serviceRequestsQuery.error,
     refetch: serviceRequestsQuery.refetch,
     getServiceRequest
   };

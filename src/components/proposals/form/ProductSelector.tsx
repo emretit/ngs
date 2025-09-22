@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,11 +12,12 @@ interface ProductSelectorProps {
   value: string;
   onChange: (productName: string, product?: Product) => void;
   onProductSelect?: (product: Product) => void;
+  onNewProduct?: () => void;
   placeholder?: string;
   className?: string;
 }
 
-const ProductSelector = ({ value, onChange, onProductSelect, placeholder = "Ürün seçin...", className }: ProductSelectorProps) => {
+const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, placeholder = "Ürün seçin...", className }: ProductSelectorProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -131,6 +132,24 @@ const ProductSelector = ({ value, onChange, onProductSelect, placeholder = "Ür�
                 </CommandItem>
               ))}
             </CommandGroup>
+            
+            {/* Yeni Ürün Oluştur Butonu - Ayrı CommandGroup */}
+            {onNewProduct && (
+              <CommandGroup>
+                <CommandItem
+                  onSelect={() => {
+                    onNewProduct();
+                    setOpen(false);
+                  }}
+                  className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/50 data-[selected=true]:bg-accent/10 data-[selected=true]:text-accent-foreground rounded-sm transition-colors border-t border-border mt-1"
+                >
+                  <div className="flex items-center gap-2">
+                    <Plus size={16} className="text-primary" />
+                    <span className="text-sm font-medium text-primary">Yeni ürün oluştur</span>
+                  </div>
+                </CommandItem>
+              </CommandGroup>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

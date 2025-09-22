@@ -7,25 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select";
+import ProductSelector from '@/components/proposals/form/ProductSelector';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
 import { 
   ArrowLeft, 
   FileText, 
-  Building, 
-  DollarSign, 
-  Package, 
   Target,
-  Zap,
   Plus,
   Check,
   X,
-  Search,
   Loader2,
   AlertCircle,
-  Save,
-  Eye
+  Save
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -76,8 +69,6 @@ interface Product {
 interface ProductMatchingItem {
   invoice_item: EInvoiceItem;
   matched_product_id?: string;
-  match_type: 'automatic' | 'manual' | 'new_product' | 'unmatched';
-  confidence_score?: number;
   notes?: string;
 }
 
@@ -99,10 +90,8 @@ export default function EInvoiceProcess() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [matchingItems, setMatchingItems] = useState<ProductMatchingItem[]>([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState('');
   
   const [isLoading, setIsLoading] = useState(true);
-  const [isAutoMatching, setIsAutoMatching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   
   // Form fields for purchase invoice
@@ -219,9 +208,7 @@ export default function EInvoiceProcess() {
 
       // Initialize matching items
       const initialMatching: ProductMatchingItem[] = invoiceDetails.items.map(item => ({
-        invoice_item: item,
-        match_type: 'unmatched',
-        confidence_score: 0
+        invoice_item: item
       }));
 
       setMatchingItems(initialMatching);
@@ -276,84 +263,25 @@ export default function EInvoiceProcess() {
     }
   };
 
-  const performAutoMatching = async () => {
-    setIsAutoMatching(true);
-    try {
-      const updatedMatching = matchingItems.map(item => {
-        const invoiceItem = item.invoice_item;
-        let bestMatch: Product | null = null;
-        let confidence = 0;
-
-        // 1. Exact SKU match (highest priority)
-        if (invoiceItem.product_code) {
-          bestMatch = products.find(p => p.sku === invoiceItem.product_code) || null;
-          if (bestMatch) confidence = 0.95;
-        }
-
-        // 2. Exact name match
-        if (!bestMatch) {
-          bestMatch = products.find(p => 
-            p.name.toLowerCase() === invoiceItem.product_name.toLowerCase()
-          ) || null;
-          if (bestMatch) confidence = 0.90;
-        }
-
-        // 3. Partial name match
-        if (!bestMatch) {
-          const nameWords = invoiceItem.product_name.toLowerCase().split(' ');
-          bestMatch = products.find(p => {
-            const productWords = p.name.toLowerCase().split(' ');
-            const commonWords = nameWords.filter(word => productWords.includes(word));
-            return commonWords.length >= Math.min(2, nameWords.length / 2);
-          }) || null;
-          if (bestMatch) confidence = 0.70;
-        }
-
-        return {
-          ...item,
-          matched_product_id: bestMatch?.id,
-          match_type: bestMatch ? 'automatic' as const : 'unmatched' as const,
-          confidence_score: confidence
-        };
-      });
-
-      setMatchingItems(updatedMatching);
-
-      const matchedCount = updatedMatching.filter(item => item.matched_product_id).length;
-      toast({
-        title: "Otomatik Eşleştirme Tamamlandı",
-        description: `${matchedCount} / ${updatedMatching.length} ürün otomatik olarak eşleştirildi`,
-      });
-
-    } catch (error: any) {
-      toast({
-        title: "Hata",
-        description: "Otomatik eşleştirme sırasında hata oluştu",
-        variant: "destructive"
-      });
-    } finally {
-      setIsAutoMatching(false);
-    }
-  };
 
   const handleManualMatch = (itemIndex: number, productId: string) => {
     const updatedMatching = [...matchingItems];
     updatedMatching[itemIndex] = {
       ...updatedMatching[itemIndex],
-      matched_product_id: productId,
-      match_type: 'manual',
-      confidence_score: 1.0
+      matched_product_id: productId
     };
     setMatchingItems(updatedMatching);
+  };
+
+  const handleProductSelect = (itemIndex: number, product: Product) => {
+    handleManualMatch(itemIndex, product.id);
   };
 
   const handleCreateNewProduct = (itemIndex: number) => {
     const updatedMatching = [...matchingItems];
     updatedMatching[itemIndex] = {
       ...updatedMatching[itemIndex],
-      matched_product_id: undefined,
-      match_type: 'new_product',
-      confidence_score: 1.0
+      matched_product_id: undefined
     };
     setMatchingItems(updatedMatching);
   };
@@ -362,9 +290,7 @@ export default function EInvoiceProcess() {
     const updatedMatching = [...matchingItems];
     updatedMatching[itemIndex] = {
       ...updatedMatching[itemIndex],
-      matched_product_id: undefined,
-      match_type: 'unmatched',
-      confidence_score: 0
+      matched_product_id: undefined
     };
     setMatchingItems(updatedMatching);
   };
@@ -393,8 +319,8 @@ export default function EInvoiceProcess() {
         invoice_total_amount: item.invoice_item.line_total,
         invoice_tax_rate: item.invoice_item.tax_rate,
         matched_stock_id: item.matched_product_id,
-        match_type: item.match_type,
-        match_confidence: item.confidence_score || 0,
+        match_type: 'manual',
+        match_confidence: 1.0,
         is_confirmed: true,
         notes: item.notes
       }));
@@ -406,7 +332,7 @@ export default function EInvoiceProcess() {
       if (insertError) throw insertError;
 
       // Create new products if needed
-      const newProductItems = matchingItems.filter(item => item.match_type === 'new_product');
+      const newProductItems = matchingItems.filter(item => !item.matched_product_id);
       
       for (const item of newProductItems) {
         const { data: newProduct, error: productError } = await supabase
@@ -443,7 +369,7 @@ export default function EInvoiceProcess() {
 
       // Get only valid items for purchase invoice
       const validItems = matchingItems.filter(item => 
-        item.match_type !== 'unmatched'
+        item.matched_product_id
       );
 
       const subtotal = validItems.reduce((sum, item) => 
@@ -516,50 +442,14 @@ export default function EInvoiceProcess() {
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
-  const getMatchStatusBadge = (item: ProductMatchingItem) => {
-    switch (item.match_type) {
-      case 'automatic':
-        return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-            <Zap className="h-3 w-3 mr-1" />
-            Otomatik ({Math.round((item.confidence_score || 0) * 100)}%)
-          </Badge>
-        );
-      case 'manual':
-        return (
-          <Badge variant="secondary" className="bg-green-100 text-green-700">
-            <Check className="h-3 w-3 mr-1" />
-            Manuel
-          </Badge>
-        );
-      case 'new_product':
-        return (
-          <Badge variant="secondary" className="bg-orange-100 text-orange-700">
-            <Plus className="h-3 w-3 mr-1" />
-            Yeni Ürün
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="text-gray-500">
-            <AlertCircle className="h-3 w-3 mr-1" />
-            Eşleşmemiş
-          </Badge>
-        );
-    }
-  };
 
   const getMatchedProduct = (productId?: string) => {
     return products.find(p => p.id === productId);
   };
 
   const matchedCount = matchingItems.filter(item => 
-    item.match_type !== 'unmatched'
+    item.matched_product_id
   ).length;
 
   const allMatched = matchedCount === matchingItems.length && matchingItems.length > 0;
@@ -634,20 +524,6 @@ export default function EInvoiceProcess() {
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Eşleştirme İlerlemesi
-              </span>
-              <span className="text-sm text-gray-500">
-                {matchedCount} / {matchingItems.length} eşleştirildi ({Math.round((matchedCount / matchingItems.length) * 100)}%)
-              </span>
-            </div>
-            <Progress value={(matchedCount / matchingItems.length) * 100} className="h-2" />
-          </CardContent>
-        </Card>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -743,38 +619,9 @@ export default function EInvoiceProcess() {
                     <Target className="h-5 w-5 text-green-600" />
                     Ürün Eşleştirme
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={performAutoMatching}
-                      disabled={isAutoMatching}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      {isAutoMatching ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Zap className="h-4 w-4" />
-                      )}
-                      Otomatik Eşleştir
-                    </Button>
-                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                {/* Search */}
-                <div className="p-4 border-b bg-gray-50">
-                  <div className="relative">
-                    <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <Input
-                      placeholder="Ürün ara (isim veya SKU)..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
                 {/* Matching Table */}
                 <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
                   <Table>
@@ -783,7 +630,6 @@ export default function EInvoiceProcess() {
                         <TableHead className="w-12">#</TableHead>
                         <TableHead className="min-w-48">Fatura Kalemi</TableHead>
                         <TableHead className="w-20 text-right">Miktar</TableHead>
-                        <TableHead className="w-32">Durum</TableHead>
                         <TableHead className="min-w-64">Eşleşen Ürün</TableHead>
                         <TableHead className="w-32">İşlemler</TableHead>
                       </TableRow>
@@ -812,9 +658,6 @@ export default function EInvoiceProcess() {
                               {item.invoice_item.quantity.toFixed(2)}
                             </TableCell>
                             <TableCell>
-                              {getMatchStatusBadge(item)}
-                            </TableCell>
-                            <TableCell>
                               <div className="space-y-2">
                                 {matchedProduct ? (
                                   <div className="p-2 bg-green-50 border border-green-200 rounded">
@@ -826,47 +669,20 @@ export default function EInvoiceProcess() {
                                       {matchedProduct.price.toFixed(2)} {invoice.currency}
                                     </p>
                                   </div>
-                                ) : item.match_type === 'new_product' ? (
-                                  <div className="p-2 bg-orange-50 border border-orange-200 rounded">
-                                    <p className="font-medium text-orange-900 text-sm">
-                                      Yeni ürün oluşturulacak
-                                    </p>
-                                    <p className="text-xs text-orange-600">
-                                      {item.invoice_item.product_name}
-                                    </p>
-                                  </div>
-                                 ) : (
-                                   <SearchableSelect
-                                     options={[
-                                       {
-                                         value: "new_product",
-                                         label: "🆕 Yeni ürün oluştur",
-                                         searchableText: "yeni ürün oluştur new product"
-                                       },
-                                       ...products.map((product) => ({
-                                         value: product.id,
-                                         label: product.name,
-                                         searchableText: `${product.name} ${product.sku || ''} ${product.price} ${product.unit || ''}`
-                                       }))
-                                     ]}
+                                ) : (
+                                   <ProductSelector
                                      value=""
-                                     onValueChange={(value) => {
-                                       if (value === 'new_product') {
-                                         handleCreateNewProduct(index);
-                                       } else {
-                                         handleManualMatch(index, value);
-                                       }
-                                     }}
+                                     onChange={() => {}}
+                                     onProductSelect={(product) => handleProductSelect(index, product)}
+                                     onNewProduct={() => handleCreateNewProduct(index)}
                                      placeholder="Ürün ara ve seçin..."
-                                     searchPlaceholder="Ürün adı, SKU veya birim fiyat ara..."
-                                     emptyMessage="Ürün bulunamadı"
-                                     className="w-full"
+                                     className="text-xs"
                                    />
                                 )}
                               </div>
                             </TableCell>
                             <TableCell>
-                              {item.match_type !== 'unmatched' && (
+                              {item.matched_product_id && (
                                 <Button
                                   onClick={() => handleRemoveMatch(index)}
                                   variant="ghost"

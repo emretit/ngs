@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Package, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   name: z.string().min(1, "Ürün adı gerekli"),
@@ -46,6 +46,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
   initialData
 }) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
 
   // Get current user's company_id
@@ -129,8 +130,11 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
 
       if (error) throw error;
 
+      // Invalidate products query so dropdown refreshes
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+
       toast({
-        title: "Başarılı",
+        title: "Başarılı", 
         description: "Ürün başarıyla oluşturuldu",
       });
 

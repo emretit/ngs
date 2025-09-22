@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,6 +85,7 @@ export default function EInvoiceProcess() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [invoice, setInvoice] = useState<EInvoiceDetails | null>(null);
@@ -285,9 +287,12 @@ export default function EInvoiceProcess() {
     setIsProductFormOpen(true);
   };
 
-  const handleProductCreated = (newProduct: Product) => {
+  const handleProductCreated = async (newProduct: Product) => {
     // Add to products list
     setProducts(prev => [...prev, newProduct]);
+    
+    // Invalidate products query so all dropdowns refresh
+    await queryClient.invalidateQueries({ queryKey: ["products"] });
     
     // Match with current item
     if (currentItemIndex >= 0) {

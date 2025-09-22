@@ -10,16 +10,16 @@ const SupplierFormHeader = ({ id }: SupplierFormHeaderProps) => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex items-center gap-4 mb-8">
+    <div className="flex items-center gap-3 mb-4">
       <button
         onClick={() => navigate('/suppliers')}
-        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
       >
-        <ArrowLeft className="h-5 w-5" />
+        <ArrowLeft className="h-4 w-4" />
       </button>
       <div>
-        <h1 className="text-3xl font-bold">{id ? "Tedarikçiyi Düzenle" : "Yeni Tedarikçi"}</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-xl font-semibold">{id ? "Tedarikçiyi Düzenle" : "Yeni Tedarikçi"}</h1>
+        <p className="text-sm text-gray-600">
           {id ? "Tedarikçi bilgilerini güncelleyin" : "Yeni tedarikçi ekleyin"}
         </p>
       </div>

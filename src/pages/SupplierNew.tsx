@@ -144,7 +144,7 @@ const SupplierNew = ({ isCollapsed, setIsCollapsed }: SupplierNewProps) => {
         }`}
       >
         <TopBar />
-        <div className="p-4 sm:p-6 lg:p-8">
+        <div className="p-4 sm:p-6 w-full">
           <div className="w-full">
             <SupplierFormHeader />
 

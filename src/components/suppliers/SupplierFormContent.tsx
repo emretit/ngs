@@ -22,23 +22,23 @@ const SupplierFormContent = ({
 }: SupplierFormContentProps) => {
   return (
     <div className="w-full">
-      <Card className="w-full bg-gradient-to-br from-background to-muted/20 border-0 shadow-lg">
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 sm:space-y-8">
+      <Card className="w-full bg-white border border-border/50 shadow-sm">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <SupplierFormFields formData={formData} setFormData={setFormData} />
 
-          <div className="flex justify-end space-x-4 pt-6 border-t border-border/50">
+          <div className="flex justify-end space-x-3 pt-6 border-t border-border/30">
             <Button
               type="button"
               variant="outline"
               onClick={onCancel}
-              className="px-6 sm:px-8 py-2 sm:py-3"
+              className="px-6 py-2 h-10 text-sm"
             >
               İptal
             </Button>
             <Button 
               type="submit" 
               disabled={isPending}
-              className="px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+              className="px-6 py-2 h-10 text-sm bg-primary hover:bg-primary/90"
             >
               {isPending ? "Kaydediliyor..." : (isEdit ? "Güncelle" : "Kaydet")}
             </Button>

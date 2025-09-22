@@ -37,6 +37,15 @@ const SupplierForm = ({ isCollapsed, setIsCollapsed }: SupplierFormProps) => {
     tax_office: "",
     city: "",
     district: "",
+    country: "",
+    postal_code: "",
+    fax: "",
+    website: "",
+    is_active: true,
+    payee_financial_account_id: "",
+    payment_means_channel_code: "",
+    payment_means_code: "",
+    aliases: [],
     einvoice_alias_name: "",
   });
 
@@ -82,7 +91,16 @@ const SupplierForm = ({ isCollapsed, setIsCollapsed }: SupplierFormProps) => {
         tax_office: supplier.tax_office || "",
         city: supplier.city || "",
         district: supplier.district || "",
-        einvoice_alias_name: "",
+        country: supplier.country || "",
+        postal_code: supplier.postal_code || "",
+        fax: supplier.fax || "",
+        website: supplier.website || "",
+        is_active: supplier.is_active ?? true,
+        payee_financial_account_id: supplier.payee_financial_account_id || "",
+        payment_means_channel_code: supplier.payment_means_channel_code || "",
+        payment_means_code: supplier.payment_means_code || "",
+        aliases: supplier.aliases || [],
+        einvoice_alias_name: supplier.einvoice_alias_name || "",
       });
     }
   }, [supplier]);

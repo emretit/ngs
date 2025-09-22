@@ -99,6 +99,7 @@ export default function EInvoiceProcess() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingSupplier, setIsCreatingSupplier] = useState(false);
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(-1);
   const [supplierMatchStatus, setSupplierMatchStatus] = useState<'searching' | 'found' | 'not_found' | null>(null);
@@ -247,11 +248,11 @@ export default function EInvoiceProcess() {
 
   const loadSuppliers = async () => {
     try {
-      // Load all customers as potential suppliers since there's no supplier type
+      // Load all suppliers from suppliers table
       const { data: suppliersData, error: suppliersError } = await supabase
-        .from('customers')
+        .from('suppliers')
         .select('id, name, tax_number, email')
-        .eq('type', 'kurumsal') // Use 'kurumsal' instead of 'supplier'
+        .eq('status', 'aktif') // Only active suppliers
         .order('name');
 
       if (suppliersError) throw suppliersError;
@@ -332,18 +333,51 @@ export default function EInvoiceProcess() {
     setMatchingItems(updatedMatching);
   };
 
-  const handleCreateNewSupplier = () => {
+  const handleCreateNewSupplier = async () => {
     if (!invoice) return;
     
-    // E-faturadan gelen tedarikçi bilgilerini URL parametreleri olarak gönder
-    const supplierData = {
-      name: invoice.supplier_name,
-      tax_number: invoice.supplier_tax_number,
-      type: 'kurumsal'
-    };
-    
-    const params = new URLSearchParams(supplierData);
-    navigate(`/supplier/new?${params.toString()}`);
+    setIsCreatingSupplier(true);
+    try {
+      // E-faturadan gelen bilgilerle yeni tedarikçi oluştur
+      const supplierData = {
+        name: invoice.supplier_name,
+        tax_number: invoice.supplier_tax_number,
+        type: 'kurumsal',
+        status: 'aktif',
+        company: invoice.supplier_name,
+        balance: 0
+      };
+
+      const { data: newSupplier, error } = await supabase
+        .from('suppliers')
+        .insert([supplierData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Tedarikçi listesini güncelle
+      setSuppliers(prev => [...prev, newSupplier]);
+      
+      // Yeni tedarikçiyi seç
+      setSelectedSupplierId(newSupplier.id);
+      setSupplierMatchStatus('found');
+
+      toast({
+        title: "Başarılı",
+        description: "Tedarikçi oluşturuldu ve seçildi",
+      });
+
+    } catch (error: any) {
+      console.error('❌ Error creating supplier:', error);
+      toast({
+        title: "Hata",
+        description: error.message || "Tedarikçi oluşturulurken hata oluştu",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingSupplier(false);
+    }
   };
 
   const handleCreatePurchaseInvoice = async () => {
@@ -636,6 +670,7 @@ export default function EInvoiceProcess() {
                        placeholder="Tedarikçi ara ve seçin..."
                        invoiceSupplierName={invoice?.supplier_name}
                        invoiceSupplierTaxNumber={invoice?.supplier_tax_number}
+                       isCreatingSupplier={isCreatingSupplier}
                      />
 
                     {/* Invoice Date */}

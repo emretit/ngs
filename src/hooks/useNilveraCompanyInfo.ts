@@ -35,6 +35,8 @@ interface MukellefData {
   district: string;
   mersisNo: string;
   sicilNo: string;
+  accountType: string;
+  type: string;
 }
 
 interface CompanyInfoResult {

@@ -20,6 +20,7 @@ interface SupplierSelectorProps {
   placeholder?: string;
   className?: string;
   isLoading?: boolean;
+  isCreatingSupplier?: boolean;
   matchStatus?: 'searching' | 'found' | 'not_found' | null;
   invoiceSupplierName?: string;
   invoiceSupplierTaxNumber?: string;
@@ -33,6 +34,7 @@ const SupplierSelector = ({
   placeholder = "Tedarikçi seçin...", 
   className,
   isLoading = false,
+  isCreatingSupplier = false,
   matchStatus,
   invoiceSupplierName,
   invoiceSupplierTaxNumber
@@ -124,10 +126,15 @@ const SupplierSelector = ({
               <Button
                 onClick={onNewSupplier}
                 size="sm"
-                className="ml-3 bg-orange-600 hover:bg-orange-700 text-white"
+                disabled={isCreatingSupplier}
+                className="ml-3 bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
               >
-                <Plus className="h-4 w-4 mr-1" />
-                Tedarikçi Ekle
+                {isCreatingSupplier ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4 mr-1" />
+                )}
+                {isCreatingSupplier ? 'Ekleniyor...' : 'Tedarikçi Ekle'}
               </Button>
             )}
           </div>

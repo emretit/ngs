@@ -15,6 +15,20 @@ export interface Supplier {
   tax_office: string | null;
   city: string | null;
   district: string | null;
+  country: string | null;
+  postal_code: string | null;
+  fax: string | null;
+  website: string | null;
+  is_active: boolean;
+  payee_financial_account_id: string | null;
+  payment_means_channel_code: string | null;
+  payment_means_code: string | null;
+  aliases: Array<{
+    alias: string;
+    alias_type: number;
+    type: number;
+  }> | null;
+  einvoice_alias_name: string | null;
   created_at: string;
   updated_at: string;
   company_id: string | null;
@@ -35,5 +49,18 @@ export interface SupplierFormData {
   tax_office: string;
   city: string;
   district: string;
+  country: string;
+  postal_code: string;
+  fax: string;
+  website: string;
+  is_active: boolean;
+  payee_financial_account_id: string;
+  payment_means_channel_code: string;
+  payment_means_code: string;
+  aliases: Array<{
+    alias: string;
+    alias_type: number;
+    type: number;
+  }>;
   einvoice_alias_name: string;
 }

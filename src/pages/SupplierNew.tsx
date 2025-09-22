@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ const SupplierNew = ({ isCollapsed, setIsCollapsed }: SupplierNewProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   
   const [formData, setFormData] = useState<SupplierFormData>({
     name: "",
@@ -34,8 +35,36 @@ const SupplierNew = ({ isCollapsed, setIsCollapsed }: SupplierNewProps) => {
     tax_office: "",
     city: "",
     district: "",
+    country: "",
+    postal_code: "",
+    fax: "",
+    website: "",
+    is_active: true,
+    payee_financial_account_id: "",
+    payment_means_channel_code: "",
+    payment_means_code: "",
+    aliases: [],
     einvoice_alias_name: "",
   });
+
+  // URL parametrelerinden form verilerini doldur
+  useEffect(() => {
+    const name = searchParams.get('name');
+    const tax_number = searchParams.get('tax_number');
+    const type = searchParams.get('type') as 'bireysel' | 'kurumsal' | null;
+    const status = searchParams.get('status') as 'aktif' | 'pasif' | 'potansiyel' | null;
+
+    if (name || tax_number || type || status) {
+      setFormData(prev => ({
+        ...prev,
+        name: name || prev.name,
+        tax_number: tax_number || prev.tax_number,
+        type: type || prev.type,
+        status: status || prev.status,
+        company: name || prev.company, // E-faturadan gelen name'i company olarak da kullan
+      }));
+    }
+  }, [searchParams]);
 
   const mutation = useMutation({
     mutationFn: async (data: SupplierFormData) => {
@@ -54,6 +83,16 @@ const SupplierNew = ({ isCollapsed, setIsCollapsed }: SupplierNewProps) => {
         tax_office: data.type === 'kurumsal' ? data.tax_office || null : null,
         city: data.city || null,
         district: data.district || null,
+        country: data.country || null,
+        postal_code: data.postal_code || null,
+        fax: data.fax || null,
+        website: data.website || null,
+        is_active: data.is_active,
+        payee_financial_account_id: data.payee_financial_account_id || null,
+        payment_means_channel_code: data.payment_means_channel_code || null,
+        payment_means_code: data.payment_means_code || null,
+        aliases: data.aliases.length > 0 ? data.aliases : null,
+        einvoice_alias_name: data.einvoice_alias_name || null,
       };
 
       const { data: newSupplier, error } = await supabase

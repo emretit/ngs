@@ -245,6 +245,8 @@ serve(async (req) => {
 
         const mukellefData = await mukellefResponse.json();
         console.log('✅ GlobalCompany API yanıtı alındı:', JSON.stringify(mukellefData, null, 2));
+        console.log('🔍 TaxOffice bilgisi:', mukellefData.TaxOffice);
+        console.log('🔍 Tüm alanlar:', Object.keys(mukellefData));
 
         // GetGlobalCustomerInfo yanıtını işle - tek mükellef döndürür
         let isEinvoiceMukellef = false;

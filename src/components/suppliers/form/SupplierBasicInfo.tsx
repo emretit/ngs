@@ -55,6 +55,8 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
       district: mukellefInfo?.district,
       mersisNo: mukellefInfo?.mersisNo,
       sicilNo: mukellefInfo?.sicilNo,
+      accountType: mukellefInfo?.accountType,
+      type: mukellefInfo?.type,
       email: formData.email,
       phone: formData.mobile_phone || formData.office_phone,
     };
@@ -164,15 +166,90 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
                 )}
               </Button>
             </div>
-            <div className="space-y-1 text-xs text-green-700 mb-2">
-              <div><strong>Şirket:</strong> {mukellefInfo.companyName}</div>
-              {mukellefInfo.aliasName && <div><strong>E-Fatura Alias:</strong> {mukellefInfo.aliasName}</div>}
-              {mukellefInfo.taxOffice && <div><strong>Vergi Dairesi:</strong> {mukellefInfo.taxOffice}</div>}
-              {mukellefInfo.address && <div><strong>Adres:</strong> {mukellefInfo.address}</div>}
-              {mukellefInfo.city && <div><strong>Şehir:</strong> {mukellefInfo.city}</div>}
-              {mukellefInfo.district && <div><strong>İlçe:</strong> {mukellefInfo.district}</div>}
-              {mukellefInfo.mersisNo && <div><strong>Mersis No:</strong> {mukellefInfo.mersisNo}</div>}
-              {mukellefInfo.sicilNo && <div><strong>Sicil No:</strong> {mukellefInfo.sicilNo}</div>}
+            <div className="space-y-3 text-xs text-green-700 mb-2">
+              {/* Temel Bilgiler */}
+              <div>
+                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  Temel Bilgiler
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
+                  <div><strong>Şirket:</strong> {mukellefInfo.companyName}</div>
+                  <div><strong>Vergi No:</strong> {formData.tax_number}</div>
+                  <div><strong>Vergi Dairesi:</strong> {mukellefInfo.taxOffice || 'API\'den gelmedi'}</div>
+                  {mukellefInfo.type && <div><strong>Tip:</strong> {mukellefInfo.type}</div>}
+                  {mukellefInfo.accountType && <div><strong>Hesap Tipi:</strong> {mukellefInfo.accountType}</div>}
+                </div>
+              </div>
+
+              {/* Adres Bilgileri */}
+              <div>
+                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  Adres Bilgileri
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
+                  {mukellefInfo.address && <div><strong>Adres:</strong> {mukellefInfo.address}</div>}
+                  {mukellefInfo.city && <div><strong>Şehir:</strong> {mukellefInfo.city}</div>}
+                  {mukellefInfo.district && <div><strong>İlçe:</strong> {mukellefInfo.district}</div>}
+                  <div><strong>Ülke:</strong> Türkiye</div>
+                  <div><strong>Posta Kodu:</strong> -</div>
+                </div>
+              </div>
+
+              {/* E-Fatura Bilgileri */}
+              <div>
+                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  E-Fatura Bilgileri
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
+                  {mukellefInfo.aliasName && <div><strong>E-Fatura Alias:</strong> {mukellefInfo.aliasName}</div>}
+                  <div><strong>E-Fatura Durumu:</strong> <span className="text-green-600 font-semibold">Aktif</span></div>
+                  <div><strong>Mükellef Tipi:</strong> E-Fatura Mükellefi</div>
+                </div>
+              </div>
+
+              {/* Ticari Bilgiler */}
+              <div>
+                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  Ticari Bilgiler
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
+                  {mukellefInfo.mersisNo && <div><strong>Mersis No:</strong> {mukellefInfo.mersisNo}</div>}
+                  {mukellefInfo.sicilNo && <div><strong>Sicil No:</strong> {mukellefInfo.sicilNo}</div>}
+                  <div><strong>Durum:</strong> <span className="text-green-600 font-semibold">Aktif</span></div>
+                  <div><strong>Silinmiş:</strong> <span className="text-red-600 font-semibold">Hayır</span></div>
+                </div>
+              </div>
+
+              {/* İletişim Bilgileri */}
+              <div>
+                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  İletişim Bilgileri
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
+                  <div><strong>Telefon:</strong> -</div>
+                  <div><strong>Faks:</strong> -</div>
+                  <div><strong>E-posta:</strong> -</div>
+                  <div><strong>Web Sitesi:</strong> -</div>
+                </div>
+              </div>
+
+              {/* Ödeme Bilgileri */}
+              <div>
+                <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  Ödeme Bilgileri
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-4">
+                  <div><strong>Finansal Hesap ID:</strong> -</div>
+                  <div><strong>Ödeme Yöntemi Kodu:</strong> -</div>
+                  <div><strong>Ödeme Kanal Kodu:</strong> -</div>
+                </div>
+              </div>
             </div>
             
             {/* Otomatik doldurma önerisi */}
@@ -194,6 +271,7 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
                         address: mukellefInfo.address || formData.address,
                         city: mukellefInfo.city || formData.city,
                         district: mukellefInfo.district || formData.district,
+                        einvoice_alias_name: mukellefInfo.aliasName || formData.einvoice_alias_name,
                       });
                     }
                   }}
@@ -273,6 +351,40 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
               placeholder="Mahalle, sokak, bina no..."
               className="h-11"
             />
+          </div>
+
+          {/* Ülke ve Posta Kodu */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="country" className="text-sm font-medium text-foreground flex items-center gap-2">
+                <div className="p-1.5 bg-blue-100 rounded-lg">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                </div>
+                <span>Ülke</span>
+              </Label>
+              <Input
+                id="country"
+                value={formData.country}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                placeholder="Türkiye"
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="postal_code" className="text-sm font-medium text-foreground flex items-center gap-2">
+                <div className="p-1.5 bg-blue-100 rounded-lg">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                </div>
+                <span>Posta Kodu</span>
+              </Label>
+              <Input
+                id="postal_code"
+                value={formData.postal_code}
+                onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                placeholder="34000"
+                className="h-11"
+              />
+            </div>
           </div>
         </div>
       </div>

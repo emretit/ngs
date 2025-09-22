@@ -13,6 +13,8 @@ interface VknToCustomerData {
   district?: string;
   mersisNo?: string;
   sicilNo?: string;
+  accountType?: string;
+  type?: string;
   email?: string;
   phone?: string;
 }

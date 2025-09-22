@@ -17,14 +17,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import ProductSelector from '@/components/proposals/form/ProductSelector';
 import DefaultLayout from '@/components/layouts/DefaultLayout';
 
 interface ParsedProduct {
@@ -166,12 +160,12 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
           
           // SKU ile eşleştirme
           if (product.sku) {
-            suggestedProduct = existingProductsData.find(p => p.sku === product.sku);
+            suggestedProduct = existingProductsData.find((p: ExistingProduct) => p.sku === product.sku);
           }
-          
+
           // İsim ile eşleştirme
           if (!suggestedProduct && product.name) {
-            suggestedProduct = existingProductsData.find(p => 
+            suggestedProduct = existingProductsData.find((p: ExistingProduct) =>
               p.name.toLowerCase().includes(product.name.toLowerCase()) ||
               product.name.toLowerCase().includes(p.name.toLowerCase())
             );
@@ -219,33 +213,36 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
     loadInvoiceData();
   }, [invoiceId]);
 
-  // Eşleştirme değişikliği
-  const handleMappingChange = (index: number, selectedValue: string) => {
+  // Ürün seçimi
+  const handleProductSelect = (index: number, product: any) => {
     const newMappings = [...productMappings];
-    
-    if (selectedValue === 'create') {
-      // Yeni ürün oluştur
-      newMappings[index] = {
-        ...newMappings[index],
-        selectedProductId: null,
-        action: 'create'
-      };
-    } else if (selectedValue === 'skip') {
-      // Atla
-      newMappings[index] = {
-        ...newMappings[index],
-        selectedProductId: null,
-        action: 'skip'
-      };
-    } else {
-      // Mevcut ürünle eşleştir
-      newMappings[index] = {
-        ...newMappings[index],
-        selectedProductId: selectedValue,
-        action: 'update'
-      };
-    }
-    
+    newMappings[index] = {
+      ...newMappings[index],
+      selectedProductId: product.id,
+      action: 'update'
+    };
+    setProductMappings(newMappings);
+  };
+
+  // Yeni ürün oluşturma
+  const handleCreateNewProduct = (index: number) => {
+    const newMappings = [...productMappings];
+    newMappings[index] = {
+      ...newMappings[index],
+      selectedProductId: null,
+      action: 'create'
+    };
+    setProductMappings(newMappings);
+  };
+
+  // Ürün eşleştirmesini atla
+  const handleSkipProduct = (index: number) => {
+    const newMappings = [...productMappings];
+    newMappings[index] = {
+      ...newMappings[index],
+      selectedProductId: null,
+      action: 'skip'
+    };
     setProductMappings(newMappings);
   };
 
@@ -529,40 +526,65 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                                 <div className="font-medium text-sm">
                                   {mapping.parsedProduct.name}
                                 </div>
-                                <div className="relative">
-                                  <Select
-                                    value={
-                                      mapping.action === 'create' ? 'create' :
-                                      mapping.action === 'skip' ? 'skip' :
-                                      mapping.selectedProductId || 'create'
-                                    }
-                                    onValueChange={(value) => handleMappingChange(index, value)}
-                                  >
-                                    <SelectTrigger className="h-8 text-xs bg-blue-50 border-blue-200">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="create">
-                                        <span className="text-blue-600 font-medium">Yeni Ürün Kartı Aç</span>
-                                      </SelectItem>
-                                      <SelectItem value="skip">
-                                        <span className="text-gray-600">Atla</span>
-                                      </SelectItem>
-                                      {existingProducts.map((product) => (
-                                        <SelectItem key={product.id} value={product.id}>
-                                          <div className="flex flex-col">
-                                            <span className="font-medium">{product.name}</span>
-                                            {product.sku && (
-                                              <span className="text-xs text-gray-500">SKU: {product.sku}</span>
-                                            )}
-                                            <span className="text-xs text-gray-500">
-                                              {product.price.toLocaleString('tr-TR')} TL
-                                            </span>
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                <div className="space-y-2">
+                                  {mapping.selectedProductId ? (
+                                    <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded">
+                                      <div>
+                                        <p className="font-medium text-green-900 text-sm">
+                                          {existingProducts.find(p => p.id === mapping.selectedProductId)?.name}
+                                        </p>
+                                        <p className="text-xs text-green-600">
+                                          {existingProducts.find(p => p.id === mapping.selectedProductId)?.sku &&
+                                            `SKU: ${existingProducts.find(p => p.id === mapping.selectedProductId)?.sku} • `}
+                                          {existingProducts.find(p => p.id === mapping.selectedProductId)?.price.toLocaleString('tr-TR')} TL
+                                        </p>
+                                      </div>
+                                      <button
+                                        onClick={() => handleSkipProduct(index)}
+                                        className="text-red-600 hover:text-red-700 text-xs"
+                                      >
+                                        Kaldır
+                                      </button>
+                                    </div>
+                                  ) : mapping.action === 'create' ? (
+                                    <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded">
+                                      <span className="text-blue-600 font-medium text-sm">Yeni Ürün Oluşturulacak</span>
+                                      <button
+                                        onClick={() => handleSkipProduct(index)}
+                                        className="text-red-600 hover:text-red-700 text-xs"
+                                      >
+                                        İptal
+                                      </button>
+                                    </div>
+                                  ) : mapping.action === 'skip' ? (
+                                    <div className="p-2 bg-gray-50 border border-gray-200 rounded">
+                                      <span className="text-gray-600 text-sm">Atlandı</span>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      <ProductSelector
+                                        value=""
+                                        onChange={() => {}}
+                                        onProductSelect={(product) => handleProductSelect(index, product)}
+                                        placeholder="Ürün seçin veya ara..."
+                                        className="text-xs h-8"
+                                      />
+                                      <div className="flex gap-1">
+                                        <button
+                                          onClick={() => handleCreateNewProduct(index)}
+                                          className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded"
+                                        >
+                                          Yeni Ürün
+                                        </button>
+                                        <button
+                                          onClick={() => handleSkipProduct(index)}
+                                          className="text-xs text-gray-600 hover:text-gray-700 px-2 py-1 bg-gray-50 rounded"
+                                        >
+                                          Atla
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </td>

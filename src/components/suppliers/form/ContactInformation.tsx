@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { SupplierFormData } from "@/types/supplier";
-import { User, Mail, Phone, Users } from "lucide-react";
+import { User, Mail, Phone, Users, Globe, FileText } from "lucide-react";
 import { getDigitsOnly, formatPhoneNumber } from "@/utils/phoneFormatter";
 
 interface ContactInformationProps {
@@ -86,6 +86,34 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
               id="office_phone"
               value={formData.office_phone ? formatPhoneNumber(formData.office_phone) : ""}
               onChange={(value) => setFormData({ ...formData, office_phone: getDigitsOnly(value) })}
+              className="h-10"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="fax" className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+              <FileText className="w-3 h-3 text-gray-500" />
+              <span>Faks</span>
+            </Label>
+            <PhoneInput
+              id="fax"
+              value={formData.fax ? formatPhoneNumber(formData.fax) : ""}
+              onChange={(value) => setFormData({ ...formData, fax: getDigitsOnly(value) })}
+              className="h-10"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="website" className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+              <Globe className="w-3 h-3 text-purple-500" />
+              <span>Web Sitesi</span>
+            </Label>
+            <Input
+              id="website"
+              type="url"
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+              placeholder="https://www.example.com"
               className="h-10"
             />
           </div>

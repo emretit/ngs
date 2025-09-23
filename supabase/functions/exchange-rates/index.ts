@@ -51,8 +51,7 @@ serve(async (req) => {
     const { data: existingRates, error: checkError } = await supabase
       .from('exchange_rates')
       .select('*')
-      .eq('update_date', todayISO)
-      .limit(3);
+      .eq('update_date', todayISO);
 
     if (checkError) {
       console.error('❌ Error checking existing rates:', checkError);

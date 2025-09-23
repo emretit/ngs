@@ -71,12 +71,28 @@ export const useExchangeRates = () => {
     const forLatest = rates.filter(r => r.update_date === latestDate);
     const seen = new Set<string>();
     const deduped: ExchangeRate[] = [];
-    for (const r of forLatest) {
+    
+    // Priority order: USD, EUR, GBP first, then others
+    const priorityCurrencies = ['USD', 'EUR', 'GBP'];
+    const otherCurrencies = forLatest.filter(r => !priorityCurrencies.includes(r.currency_code));
+    
+    // Add priority currencies first
+    for (const currency of priorityCurrencies) {
+      const rate = forLatest.find(r => r.currency_code === currency);
+      if (rate && !seen.has(rate.currency_code)) {
+        seen.add(rate.currency_code);
+        deduped.push(rate);
+      }
+    }
+    
+    // Add other currencies
+    for (const r of otherCurrencies) {
       if (!seen.has(r.currency_code)) {
         seen.add(r.currency_code);
         deduped.push(r);
       }
     }
+    
     return { list: deduped, latestDate };
   }, []);
 
@@ -114,24 +130,20 @@ export const useExchangeRates = () => {
           const { list, latestDate } = normalizeLatestRates(dbRates);
           setExchangeRates(list);
           setLastUpdate(latestDate);
-          console.log(`Exchange rates loaded for latest date ${latestDate}:`, list.length);
           return;
         }
         
         // If no data in database, try to fetch fresh rates
-        console.log("No rates in database, fetching fresh rates");
         try {
           const freshRates = await fetchFreshRates();
           const { list, latestDate } = normalizeLatestRates(freshRates);
           setExchangeRates(list);
           setLastUpdate(latestDate);
-          console.log(`Fresh exchange rates loaded for latest date ${latestDate}:`, list.length);
         } catch (freshError) {
           console.error("Failed to fetch fresh rates:", freshError);
           // Use fallback rates
           setExchangeRates(fallbackRates);
           setLastUpdate(fallbackRates[0].update_date);
-          console.log("Using fallback exchange rates");
         }
       } catch (err) {
         console.error("Error loading exchange rates:", err);
@@ -233,7 +245,6 @@ export const useExchangeRates = () => {
       }
     });
     
-    console.log('Exchange rates map:', ratesMap);
     return ratesMap;
   }, [exchangeRates]);
 
@@ -241,16 +252,12 @@ export const useExchangeRates = () => {
   const convertCurrency = useCallback((amount: number, fromCurrency: string, toCurrency: string): number => {
     if (fromCurrency === toCurrency) return amount;
     
-    console.log(`Converting ${amount} ${fromCurrency} to ${toCurrency}`);
-    
     const rates = getRatesMap();
-    console.log('Using rates:', rates);
     
     // If converting FROM foreign currency TO TRY
     if (toCurrency === 'TRY') {
       const rate = rates[fromCurrency] || 1;
       const result = amount * rate;
-      console.log(`${amount} ${fromCurrency} × ${rate} = ${result} TRY`);
       return result;
     }
     
@@ -258,14 +265,12 @@ export const useExchangeRates = () => {
     if (fromCurrency === 'TRY') {
       const rate = rates[toCurrency] || 1;
       const result = amount / rate;
-      console.log(`${amount} TRY ÷ ${rate} = ${result} ${toCurrency}`);
       return result;
     }
     
     // If converting between two foreign currencies, go through TRY
     const amountInTRY = amount * (rates[fromCurrency] || 1);
     const result = amountInTRY / (rates[toCurrency] || 1);
-    console.log(`${amount} ${fromCurrency} → ${amountInTRY} TRY → ${result} ${toCurrency}`);
     return result;
   }, [getRatesMap]);
 

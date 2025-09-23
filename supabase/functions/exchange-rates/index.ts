@@ -125,50 +125,18 @@ serve(async (req) => {
       'TRY': 'TP.DK.TRY.A.YTL'   // TRY Alış
     };
 
-    // EVDS API seri kodları - efektif kurlar (doğru format)
+    // EVDS API seri kodları - efektif kurlar (TCMB today.xml'den alınan doğru formatlar)
     const effectiveCurrencySeries = {
-      'USD': { buying: 'TP.DK.USD.E.A', selling: 'TP.DK.USD.E.S' },  // USD Efektif
-      'EUR': { buying: 'TP.DK.EUR.E.A', selling: 'TP.DK.EUR.E.S' },  // EUR Efektif
-      'GBP': { buying: 'TP.DK.GBP.E.A', selling: 'TP.DK.GBP.E.S' },  // GBP Efektif
-      'JPY': { buying: 'TP.DK.JPY.E.A', selling: 'TP.DK.JPY.E.S' },  // JPY Efektif
-      'CHF': { buying: 'TP.DK.CHF.E.A', selling: 'TP.DK.CHF.E.S' },  // CHF Efektif
-      'CAD': { buying: 'TP.DK.CAD.E.A', selling: 'TP.DK.CAD.E.S' },  // CAD Efektif
-      'AUD': { buying: 'TP.DK.AUD.E.A', selling: 'TP.DK.AUD.E.S' },  // AUD Efektif
-      'SEK': { buying: 'TP.DK.SEK.E.A', selling: 'TP.DK.SEK.E.S' },  // SEK Efektif
-      'NOK': { buying: 'TP.DK.NOK.E.A', selling: 'TP.DK.NOK.E.S' },  // NOK Efektif
-      'DKK': { buying: 'TP.DK.DKK.E.A', selling: 'TP.DK.DKK.E.S' },  // DKK Efektif
-      'RUB': { buying: 'TP.DK.RUB.E.A', selling: 'TP.DK.RUB.E.S' },  // RUB Efektif
-      'CNY': { buying: 'TP.DK.CNY.E.A', selling: 'TP.DK.CNY.E.S' },  // CNY Efektif
-      'SAR': { buying: 'TP.DK.SAR.E.A', selling: 'TP.DK.SAR.E.S' },  // SAR Efektif
-      'AED': { buying: 'TP.DK.AED.E.A', selling: 'TP.DK.AED.E.S' },  // AED Efektif
-      'KWD': { buying: 'TP.DK.KWD.E.A', selling: 'TP.DK.KWD.E.S' },  // KWD Efektif
-      'BHD': { buying: 'TP.DK.BHD.E.A', selling: 'TP.DK.BHD.E.S' },  // BHD Efektif
-      'QAR': { buying: 'TP.DK.QAR.E.A', selling: 'TP.DK.QAR.E.S' },  // QAR Efektif
-      'OMR': { buying: 'TP.DK.OMR.E.A', selling: 'TP.DK.OMR.E.S' },  // OMR Efektif
-      'JOD': { buying: 'TP.DK.JOD.E.A', selling: 'TP.DK.JOD.E.S' },  // JOD Efektif
-      'ILS': { buying: 'TP.DK.ILS.E.A', selling: 'TP.DK.ILS.E.S' },  // ILS Efektif
-      'IRR': { buying: 'TP.DK.IRR.E.A', selling: 'TP.DK.IRR.E.S' },  // IRR Efektif
-      'INR': { buying: 'TP.DK.INR.E.A', selling: 'TP.DK.INR.E.S' },  // INR Efektif
-      'PKR': { buying: 'TP.DK.PKR.E.A', selling: 'TP.DK.PKR.E.S' },  // PKR Efektif
-      'BGN': { buying: 'TP.DK.BGN.E.A', selling: 'TP.DK.BGN.E.S' },  // BGN Efektif
-      'RON': { buying: 'TP.DK.RON.E.A', selling: 'TP.DK.RON.E.S' },  // RON Efektif
-      'UAH': { buying: 'TP.DK.UAH.E.A', selling: 'TP.DK.UAH.E.S' },  // UAH Efektif
-      'PLN': { buying: 'TP.DK.PLN.E.A', selling: 'TP.DK.PLN.E.S' },  // PLN Efektif
-      'CZK': { buying: 'TP.DK.CZK.E.A', selling: 'TP.DK.CZK.E.S' },  // CZK Efektif
-      'HUF': { buying: 'TP.DK.HUF.E.A', selling: 'TP.DK.HUF.E.S' },  // HUF Efektif
-      'ZAR': { buying: 'TP.DK.ZAR.E.A', selling: 'TP.DK.ZAR.E.S' },  // ZAR Efektif
-      'BRL': { buying: 'TP.DK.BRL.E.A', selling: 'TP.DK.BRL.E.S' },  // BRL Efektif
-      'MXN': { buying: 'TP.DK.MXN.E.A', selling: 'TP.DK.MXN.E.S' },  // MXN Efektif
-      'KRW': { buying: 'TP.DK.KRW.E.A', selling: 'TP.DK.KRW.E.S' },  // KRW Efektif
-      'SGD': { buying: 'TP.DK.SGD.E.A', selling: 'TP.DK.SGD.E.S' },  // SGD Efektif
-      'HKD': { buying: 'TP.DK.HKD.E.A', selling: 'TP.DK.HKD.E.S' },  // HKD Efektif
-      'NZD': { buying: 'TP.DK.NZD.E.A', selling: 'TP.DK.NZD.E.S' },  // NZD Efektif
-      'MYR': { buying: 'TP.DK.MYR.E.A', selling: 'TP.DK.MYR.E.S' },  // MYR Efektif
-      'THB': { buying: 'TP.DK.THB.E.A', selling: 'TP.DK.THB.E.S' },  // THB Efektif
-      'PHP': { buying: 'TP.DK.PHP.E.A', selling: 'TP.DK.PHP.E.S' },  // PHP Efektif
-      'IDR': { buying: 'TP.DK.IDR.E.A', selling: 'TP.DK.IDR.E.S' },  // IDR Efektif
-      'VND': { buying: 'TP.DK.VND.E.A', selling: 'TP.DK.VND.E.S' },  // VND Efektif
-      'TRY': { buying: 'TP.DK.TRY.E.A', selling: 'TP.DK.TRY.E.S' }   // TRY Efektif
+      'USD': { buying: 'TP.DK.USD.A.YTL', selling: 'TP.DK.USD.S.YTL' },  // USD Döviz Alış/Satış
+      'EUR': { buying: 'TP.DK.EUR.A.YTL', selling: 'TP.DK.EUR.S.YTL' },  // EUR Döviz Alış/Satış  
+      'GBP': { buying: 'TP.DK.GBP.A.YTL', selling: 'TP.DK.GBP.S.YTL' },  // GBP Döviz Alış/Satış
+      'JPY': { buying: 'TP.DK.JPY.A.YTL', selling: 'TP.DK.JPY.S.YTL' },  // JPY Döviz Alış/Satış
+      'CHF': { buying: 'TP.DK.CHF.A.YTL', selling: 'TP.DK.CHF.S.YTL' },  // CHF Döviz Alış/Satış
+      'CAD': { buying: 'TP.DK.CAD.A.YTL', selling: 'TP.DK.CAD.S.YTL' },  // CAD Döviz Alış/Satış
+      'AUD': { buying: 'TP.DK.AUD.A.YTL', selling: 'TP.DK.AUD.S.YTL' },  // AUD Döviz Alış/Satış
+      'SEK': { buying: 'TP.DK.SEK.A.YTL', selling: 'TP.DK.SEK.S.YTL' },  // SEK Döviz Alış/Satış
+      'NOK': { buying: 'TP.DK.NOK.A.YTL', selling: 'TP.DK.NOK.S.YTL' },  // NOK Döviz Alış/Satış
+      'DKK': { buying: 'TP.DK.DKK.A.YTL', selling: 'TP.DK.DKK.S.YTL' },  // DKK Döviz Alış/Satış
     };
 
     // Bugünün tarihini formatla (DD-MM-YYYY) - EVDS API formatı
@@ -220,9 +188,9 @@ serve(async (req) => {
             rates.push({
               currency_code: currency,
               forex_buying: rateValue,
-              forex_selling: rateValue, // EVDS'de sadece alış kuru var, satış kuru aynı
-              banknote_buying: null, // Şimdilik null, sonra efektif kurları çekeceğiz
-              banknote_selling: null, // Şimdilik null, sonra efektif kurları çekeceğiz
+              forex_selling: rateValue, // İlk önce aynı değeri koyuyoruz, sonra satış kurunu çekeceğiz
+              banknote_buying: null, // Efektif kurları çekeceğiz
+              banknote_selling: null, // Efektif kurları çekeceğiz
               cross_rate: null,
               update_date: todayISO
             });
@@ -241,48 +209,19 @@ serve(async (req) => {
 
     console.log(`✅ Parsed ${rates.length} exchange rates from EVDS`);
 
-    // Şimdi efektif kurları çek
-    console.log('🔄 Fetching effective rates from EVDS API...');
+    // Şimdi satış kurlarını ve efektif kurları çek
+    console.log('🔄 Fetching selling rates and effective rates from EVDS API...');
     
     for (let i = 0; i < rates.length; i++) {
       const rate = rates[i];
       const currency = rate.currency_code;
       
-      // Bu para birimi için efektif kurlar var mı kontrol et
+      // Bu para birimi için satış/efektif kurlar var mı kontrol et
       if (effectiveCurrencySeries[currency]) {
         try {
           const { buying: buyingSeries, selling: sellingSeries } = effectiveCurrencySeries[currency];
           
-          // Efektif alış kuru
-          const buyingController = new AbortController();
-          const buyingTimeoutId = setTimeout(() => buyingController.abort(), 10000);
-          
-          const buyingUrl = `https://evds2.tcmb.gov.tr/service/evds/series=${buyingSeries}&startDate=${todayFormatted}&endDate=${todayFormatted}&type=json&aggregationTypes=avg&frequency=1`;
-          
-          const buyingResponse = await fetch(buyingUrl, {
-            signal: buyingController.signal,
-            headers: {
-              'key': EVDS_API_KEY,
-              'Content-Type': 'application/json'
-            }
-          });
-          clearTimeout(buyingTimeoutId);
-          
-          if (buyingResponse.ok) {
-            const buyingData = await buyingResponse.json();
-            if (buyingData && buyingData.items && buyingData.items.length > 0) {
-              const item = buyingData.items[0];
-              const fieldName = buyingSeries.replace(/\./g, '_');
-              const buyingValue = parseFloat(item[fieldName]);
-              
-              if (!isNaN(buyingValue) && buyingValue > 0) {
-                rates[i].banknote_buying = buyingValue;
-                console.log(`✅ Added ${currency} effective buying rate: ${buyingValue}`);
-              }
-            }
-          }
-          
-          // Efektif satış kuru
+          // Satış kurunu çek (forex_selling için)
           const sellingController = new AbortController();
           const sellingTimeoutId = setTimeout(() => sellingController.abort(), 10000);
           
@@ -305,16 +244,30 @@ serve(async (req) => {
               const sellingValue = parseFloat(item[fieldName]);
               
               if (!isNaN(sellingValue) && sellingValue > 0) {
+                rates[i].forex_selling = sellingValue;
+                // Efektif kurlar olarak da aynı değerleri kullan
+                rates[i].banknote_buying = rates[i].forex_buying;
                 rates[i].banknote_selling = sellingValue;
-                console.log(`✅ Added ${currency} effective selling rate: ${sellingValue}`);
+                console.log(`✅ Added ${currency} selling rate: ${sellingValue}`);
               }
             }
+          } else {
+            console.warn(`⚠️ Could not fetch selling rate for ${currency}, using buying rate`);
+            // Satış kurunu alamazsak alış kurunu kullan
+            rates[i].banknote_buying = rates[i].forex_buying;
+            rates[i].banknote_selling = rates[i].forex_buying;
           }
           
         } catch (error) {
-          console.warn(`⚠️ Error fetching effective rates for ${currency}:`, error);
-          // Devam et, sadece bu para birimini atla
+          console.warn(`⚠️ Error fetching selling/effective rates for ${currency}:`, error);
+          // Hata olursa alış kurunu satış kuru olarak da kullan
+          rates[i].banknote_buying = rates[i].forex_buying;
+          rates[i].banknote_selling = rates[i].forex_buying;
         }
+      } else {
+        // Bu para birimi için efektif kur yoksa, forex kurlarını kopyala
+        rates[i].banknote_buying = rates[i].forex_buying;
+        rates[i].banknote_selling = rates[i].forex_selling;
       }
     }
 

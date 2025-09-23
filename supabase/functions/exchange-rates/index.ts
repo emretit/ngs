@@ -54,20 +54,10 @@ serve(async (req) => {
 
     console.log('🔍 Found existing rates:', existingRates?.length || 0);
 
-    // If we already have today's rates, return them
-    if (existingRates && existingRates.length > 0) {
+    // If we already have today's rates and it's not a force refresh, return them
+    if (existingRates && existingRates.length > 2) { // Only return if we have multiple currencies
       console.log('✅ Today\'s rates already exist, returning cached data');
       
-      // Log the update check
-      await supabase
-        .from('exchange_rate_updates')
-        .insert({
-          status: 'success',
-          message: `Today's rates already exist (${existingRates.length} currencies)`,
-          count: existingRates.length,
-          company_id: null // Global update
-        });
-
       return new Response(
         JSON.stringify({ 
           rates: existingRates,
@@ -111,25 +101,25 @@ serve(async (req) => {
       return Number.isFinite(num) ? num : null;
     };
     
-    // Extract currency data using regex
-    const currencyRegex = /<Currency\s+CurrencyCode="([^"]+)"[^>]*>([\s\S]*?)<\/Currency>/g;
+    // Extract currency data using regex - Updated to match actual TCMB XML format
+    const currencyRegex = /<currency[^>]*currencycode="([^"]+)"[^>]*>([\s\S]*?)<\/currency>/gi;
     let match;
     
     while ((match = currencyRegex.exec(xmlData)) !== null) {
       const [, code, currencyData] = match;
       
-      // Extract values using regex
+      // Extract values using regex with case-insensitive matching
       const getXmlValue = (tag: string, data: string) => {
-        const regex = new RegExp(`<${tag}>([^<]+)<\/${tag}>`);
+        const regex = new RegExp(`<${tag}>([^<]+)<\/${tag}>`, 'i');
         const m = data.match(regex);
         return m ? m[1] : null;
       };
       
-      const forexBuyingN = parseNumber(getXmlValue('ForexBuying', currencyData));
-      const forexSellingN = parseNumber(getXmlValue('ForexSelling', currencyData));
-      const banknoteBuyingN = parseNumber(getXmlValue('BanknoteBuying', currencyData));
-      const banknoteSellingN = parseNumber(getXmlValue('BanknoteSelling', currencyData));
-      const crossRateN = parseNumber(getXmlValue('CrossRateOther', currencyData));
+      const forexBuyingN = parseNumber(getXmlValue('forexbuying', currencyData));
+      const forexSellingN = parseNumber(getXmlValue('forexselling', currencyData));
+      const banknoteBuyingN = parseNumber(getXmlValue('banknotebuying', currencyData));
+      const banknoteSellingN = parseNumber(getXmlValue('banknoteselling', currencyData));
+      const crossRateN = parseNumber(getXmlValue('crossrateother', currencyData));
 
       if (code && forexBuyingN !== null && forexSellingN !== null) {
         rates.push({
@@ -144,15 +134,22 @@ serve(async (req) => {
       }
     }
 
-    console.log(`✅ Parsed ${rates.length} exchange rates`);
+    console.log(`✅ Parsed ${rates.length} exchange rates from TCMB`);
 
-    // Insert rates into database
+    if (rates.length === 0) {
+      throw new Error('No valid exchange rates parsed from TCMB data');
+    }
+
+    // Delete today's existing rates first, then insert new ones
+    await supabase
+      .from('exchange_rates')
+      .delete()
+      .eq('update_date', today);
+
+    // Insert new rates
     const { error: insertError } = await supabase
       .from('exchange_rates')
-      .upsert(rates, { 
-        onConflict: 'currency_code,update_date',
-        ignoreDuplicates: false 
-      });
+      .insert(rates);
 
     if (insertError) {
       console.error('❌ Error inserting rates:', insertError);

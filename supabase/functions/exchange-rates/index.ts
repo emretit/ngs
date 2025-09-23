@@ -1,7 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
-import { XMLParser } from 'https://esm.sh/fast-xml-parser@5.0.9';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -91,27 +90,28 @@ serve(async (req) => {
     const xmlData = await tcmbResponse.text();
     console.log('✅ TCMB API response received');
 
-    // Parse XML data using fast-xml-parser
+    // Parse XML data using regex (simple approach for TCMB XML)
     const rates: ExchangeRate[] = [];
-    const parser = new XMLParser({
-      ignoreAttributes: false,
-      attributeNamePrefix: "@_",
-      textNodeName: "#text"
-    });
     
-    const jsonObj = parser.parse(xmlData);
-    const currencies = jsonObj.Tarih_Date?.Currency || [];
+    // Extract currency data using regex
+    const currencyRegex = /<Currency\s+CurrencyCode="([^"]+)"[^>]*>([\s\S]*?)<\/Currency>/g;
+    let match;
     
-    // Handle both single currency object and array of currencies
-    const currencyArray = Array.isArray(currencies) ? currencies : [currencies];
-
-    for (const currency of currencyArray) {
-      const code = currency['@_CurrencyCode'];
-      const forexBuying = currency.ForexBuying;
-      const forexSelling = currency.ForexSelling;
-      const banknoteBuying = currency.BanknoteBuying;
-      const banknoteSelling = currency.BanknoteSelling;
-      const crossRate = currency.CrossRateOther;
+    while ((match = currencyRegex.exec(xmlData)) !== null) {
+      const [, code, currencyData] = match;
+      
+      // Extract values using regex
+      const getXmlValue = (tag: string, data: string) => {
+        const regex = new RegExp(`<${tag}>([^<]+)<\/${tag}>`);
+        const match = data.match(regex);
+        return match ? match[1] : null;
+      };
+      
+      const forexBuying = getXmlValue('ForexBuying', currencyData);
+      const forexSelling = getXmlValue('ForexSelling', currencyData);
+      const banknoteBuying = getXmlValue('BanknoteBuying', currencyData);
+      const banknoteSelling = getXmlValue('BanknoteSelling', currencyData);
+      const crossRate = getXmlValue('CrossRateOther', currencyData);
 
       if (code && forexBuying && forexSelling) {
         rates.push({

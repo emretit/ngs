@@ -115,7 +115,6 @@ serve(async (req) => {
 
       if (code && forexBuying && forexSelling) {
         rates.push({
-          id: `tcmb-${code}-${today}`,
           currency_code: code,
           forex_buying: parseFloat(forexBuying),
           forex_selling: parseFloat(forexSelling),
@@ -133,7 +132,7 @@ serve(async (req) => {
     const { error: insertError } = await supabase
       .from('exchange_rates')
       .upsert(rates, { 
-        onConflict: 'id',
+        onConflict: 'currency_code,update_date',
         ignoreDuplicates: false 
       });
 

@@ -48,7 +48,7 @@ export const fetchTCMBExchangeRates = async (): Promise<ExchangeRates> => {
     
     // If no data in database, try the edge function
     console.log("No rates in database, trying edge function");
-    const { data: functionData, error: functionError } = await supabase.functions.invoke('fetch-exchange-rates', {
+    const { data: functionData, error: functionError } = await supabase.functions.invoke('exchange-rates', {
       method: 'GET'
     });
     

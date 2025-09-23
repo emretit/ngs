@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 interface ExchangeRate {
-  id: string;
   currency_code: string;
   forex_buying: number;
   forex_selling: number;
@@ -40,16 +39,20 @@ serve(async (req) => {
 
     // Check if we already have today's rates
     const today = new Date().toISOString().split('T')[0];
+    console.log('📅 Checking for today:', today);
+    
     const { data: existingRates, error: checkError } = await supabase
       .from('exchange_rates')
       .select('*')
       .eq('update_date', today)
-      .limit(1);
+      .limit(3);
 
     if (checkError) {
       console.error('❌ Error checking existing rates:', checkError);
-      throw new Error(`Database error: ${checkError.message}`);
+      // Don't throw here, continue to try fetch fresh rates
     }
+
+    console.log('🔍 Found existing rates:', existingRates?.length || 0);
 
     // If we already have today's rates, return them
     if (existingRates && existingRates.length > 0) {
@@ -80,15 +83,21 @@ serve(async (req) => {
 
     console.log('🔄 Fetching fresh rates from TCMB API...');
 
-    // Fetch rates from TCMB API
-    const tcmbResponse = await fetch('https://www.tcmb.gov.tr/kurlar/today.xml');
+    // Fetch rates from TCMB API with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const tcmbResponse = await fetch('https://www.tcmb.gov.tr/kurlar/today.xml', {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
     
     if (!tcmbResponse.ok) {
       throw new Error(`TCMB API error: ${tcmbResponse.status}`);
     }
 
     const xmlData = await tcmbResponse.text();
-    console.log('✅ TCMB API response received');
+    console.log('✅ TCMB API response received, length:', xmlData.length);
 
     // Parse XML data using regex (simple approach for TCMB XML)
     const rates: ExchangeRate[] = [];

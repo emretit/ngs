@@ -25,7 +25,12 @@ serve(async (req) => {
 
   try {
     console.log('🚀 Exchange rates function started');
-    
+
+    // Parse request body to check for forceRefresh parameter
+    const body = await req.json().catch(() => ({}));
+    const forceRefresh = body.forceRefresh || false;
+    console.log('🔄 Force refresh requested:', forceRefresh);
+
     const SUPABASE_URL = 'https://vwhwufnckpqirxptwncw.supabase.co';
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
@@ -55,7 +60,7 @@ serve(async (req) => {
     console.log('🔍 Found existing rates:', existingRates?.length || 0);
 
     // If we already have today's rates and it's not a force refresh, return them
-    if (existingRates && existingRates.length > 2) { // Only return if we have multiple currencies
+    if (existingRates && existingRates.length > 2 && !forceRefresh) { // Only return if we have multiple currencies
       console.log('✅ Today\'s rates already exist, returning cached data');
       
       return new Response(
@@ -71,7 +76,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('🔄 Fetching fresh rates from TCMB API...');
+    console.log('🔄 Fetching fresh rates from TCMB API...', forceRefresh ? '(Force refresh)' : '(No cache found)');
 
     // Fetch rates from TCMB API with timeout
     const controller = new AbortController();

@@ -112,9 +112,10 @@ export const useExchangeRates = () => {
         
         if (dbRates.length > 0) {
           const { list, latestDate } = normalizeLatestRates(dbRates);
-          console.log('Raw DB rates:', dbRates);
-          console.log('Normalized rates:', list);
-          console.log('Currency codes:', list.map(r => r.currency_code));
+          console.log('Raw DB rates length:', dbRates.length);
+          console.log('First 10 raw DB rates:', dbRates.slice(0, 10).map(r => ({ code: r.currency_code, date: r.update_date })));
+          console.log('Normalized rates length:', list.length);
+          console.log('Normalized currency codes:', list.map(r => r.currency_code));
           setExchangeRates(list);
           setLastUpdate(latestDate);
           console.log(`Exchange rates loaded for latest date ${latestDate}:`, list.length);

@@ -43,10 +43,8 @@ const ExchangeRateCard: React.FC = () => {
     }
   };
 
-  // Filter rates to only show USD, EUR, and GBP
-  const filteredRates = exchangeRates.filter(rate => 
-    ["USD", "EUR", "GBP"].includes(rate.currency_code)
-  );
+  // Show all available currencies (temporary for debugging)
+  const filteredRates = exchangeRates;
 
   // Log which currencies are available for debugging
   React.useEffect(() => {

@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
+import { XMLParser } from 'https://esm.sh/fast-xml-parser@5.0.9';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -90,21 +91,27 @@ serve(async (req) => {
     const xmlData = await tcmbResponse.text();
     console.log('✅ TCMB API response received');
 
-    // Parse XML data
+    // Parse XML data using fast-xml-parser
     const rates: ExchangeRate[] = [];
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlData, 'text/xml');
-    const currencies = xmlDoc.getElementsByTagName('Currency');
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: "@_",
+      textNodeName: "#text"
+    });
+    
+    const jsonObj = parser.parse(xmlData);
+    const currencies = jsonObj.Tarih_Date?.Currency || [];
+    
+    // Handle both single currency object and array of currencies
+    const currencyArray = Array.isArray(currencies) ? currencies : [currencies];
 
-    for (let i = 0; i < currencies.length; i++) {
-      const currency = currencies[i];
-      const code = currency.getAttribute('CurrencyCode');
-      const name = currency.getElementsByTagName('Isim')[0]?.textContent;
-      const forexBuying = currency.getElementsByTagName('ForexBuying')[0]?.textContent;
-      const forexSelling = currency.getElementsByTagName('ForexSelling')[0]?.textContent;
-      const banknoteBuying = currency.getElementsByTagName('BanknoteBuying')[0]?.textContent;
-      const banknoteSelling = currency.getElementsByTagName('BanknoteSelling')[0]?.textContent;
-      const crossRate = currency.getElementsByTagName('CrossRateOther')[0]?.textContent;
+    for (const currency of currencyArray) {
+      const code = currency['@_CurrencyCode'];
+      const forexBuying = currency.ForexBuying;
+      const forexSelling = currency.ForexSelling;
+      const banknoteBuying = currency.BanknoteBuying;
+      const banknoteSelling = currency.BanknoteSelling;
+      const crossRate = currency.CrossRateOther;
 
       if (code && forexBuying && forexSelling) {
         rates.push({

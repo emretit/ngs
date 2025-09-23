@@ -11,6 +11,7 @@ import {
 import { PaymentsTab } from "./PaymentsTab";
 import { ProposalsTab } from "./ProposalsTab";
 import CustomerInvoicesTab from "./CustomerInvoicesTab";
+import { CustomerServicesTab } from "./CustomerServicesTab";
 import { Customer } from "@/types/customer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -150,11 +151,7 @@ export const ContactTabs = ({ customer }: ContactTabsProps) => {
       </CustomTabsContent>
 
       <CustomTabsContent value="service-receipts">
-        <EmptyState
-          icon={<Receipt className="w-8 h-8 text-gray-400" />}
-          title="Servis Talepleri"
-          description="Bu müşteri için oluşturulan servis talepleri burada görüntülenecek."
-        />
+        <CustomerServicesTab customer={customer} />
       </CustomTabsContent>
 
       <CustomTabsContent value="offers">

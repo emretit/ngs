@@ -12,8 +12,8 @@ interface ExchangeRate {
   currency_code: string;
   forex_buying: number;
   forex_selling: number;
-  banknote_buying: number;
-  banknote_selling: number;
+  banknote_buying: number | null;
+  banknote_selling: number | null;
   cross_rate: number | null;
   update_date: string;
 }
@@ -93,6 +93,15 @@ serve(async (req) => {
     // Parse XML data using regex (simple approach for TCMB XML)
     const rates: ExchangeRate[] = [];
     
+    // Helper: safely parse numbers like "32,7156" or "-"
+    const parseNumber = (val: string | null): number | null => {
+      if (!val) return null;
+      const cleaned = val.replace(/,/g, '.').trim();
+      if (cleaned === '-' || cleaned === '') return null;
+      const num = parseFloat(cleaned);
+      return Number.isFinite(num) ? num : null;
+    };
+    
     // Extract currency data using regex
     const currencyRegex = /<Currency\s+CurrencyCode="([^"]+)"[^>]*>([\s\S]*?)<\/Currency>/g;
     let match;
@@ -103,24 +112,24 @@ serve(async (req) => {
       // Extract values using regex
       const getXmlValue = (tag: string, data: string) => {
         const regex = new RegExp(`<${tag}>([^<]+)<\/${tag}>`);
-        const match = data.match(regex);
-        return match ? match[1] : null;
+        const m = data.match(regex);
+        return m ? m[1] : null;
       };
       
-      const forexBuying = getXmlValue('ForexBuying', currencyData);
-      const forexSelling = getXmlValue('ForexSelling', currencyData);
-      const banknoteBuying = getXmlValue('BanknoteBuying', currencyData);
-      const banknoteSelling = getXmlValue('BanknoteSelling', currencyData);
-      const crossRate = getXmlValue('CrossRateOther', currencyData);
+      const forexBuyingN = parseNumber(getXmlValue('ForexBuying', currencyData));
+      const forexSellingN = parseNumber(getXmlValue('ForexSelling', currencyData));
+      const banknoteBuyingN = parseNumber(getXmlValue('BanknoteBuying', currencyData));
+      const banknoteSellingN = parseNumber(getXmlValue('BanknoteSelling', currencyData));
+      const crossRateN = parseNumber(getXmlValue('CrossRateOther', currencyData));
 
-      if (code && forexBuying && forexSelling) {
+      if (code && forexBuyingN !== null && forexSellingN !== null) {
         rates.push({
           currency_code: code,
-          forex_buying: parseFloat(forexBuying),
-          forex_selling: parseFloat(forexSelling),
-          banknote_buying: banknoteBuying ? parseFloat(banknoteBuying) : 0,
-          banknote_selling: banknoteSelling ? parseFloat(banknoteSelling) : 0,
-          cross_rate: crossRate ? parseFloat(crossRate) : null,
+          forex_buying: forexBuyingN,
+          forex_selling: forexSellingN,
+          banknote_buying: banknoteBuyingN,
+          banknote_selling: banknoteSellingN,
+          cross_rate: crossRateN,
           update_date: today
         });
       }

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export interface ExchangeRate {
-  id: string;
+  id?: string;
   currency_code: string;
   forex_buying: number | null;
   forex_selling: number | null;
@@ -84,7 +84,7 @@ export const useExchangeRates = () => {
   const fetchExchangeRatesFromDB = async (): Promise<ExchangeRate[]> => {
     const { data, error } = await supabase
       .from('exchange_rates')
-      .select('*')
+      .select('id, currency_code, forex_buying, forex_selling, banknote_buying, banknote_selling, cross_rate, update_date')
       .order('update_date', { ascending: false });
       
     if (error) throw error;
@@ -112,6 +112,9 @@ export const useExchangeRates = () => {
         
         if (dbRates.length > 0) {
           const { list, latestDate } = normalizeLatestRates(dbRates);
+          console.log('Raw DB rates:', dbRates);
+          console.log('Normalized rates:', list);
+          console.log('Currency codes:', list.map(r => r.currency_code));
           setExchangeRates(list);
           setLastUpdate(latestDate);
           console.log(`Exchange rates loaded for latest date ${latestDate}:`, list.length);

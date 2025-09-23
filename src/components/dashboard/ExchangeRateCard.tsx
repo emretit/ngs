@@ -48,6 +48,14 @@ const ExchangeRateCard: React.FC = () => {
     ["USD", "EUR", "GBP"].includes(rate.currency_code)
   );
 
+  // Log which currencies are available for debugging
+  React.useEffect(() => {
+    if (exchangeRates.length > 0) {
+      console.log('Available currencies:', exchangeRates.map(r => r.currency_code).join(', '));
+      console.log('Showing USD, EUR, GBP:', filteredRates.map(r => r.currency_code).join(', '));
+    }
+  }, [exchangeRates, filteredRates]);
+
   // Available currencies for historical lookup
   const availableCurrencies = [
     { code: "USD", name: "Amerikan Doları" },

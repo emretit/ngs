@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 interface ExchangeRate {
+  id?: string;
   currency_code: string;
   forex_buying: number;
   forex_selling: number;
@@ -173,10 +174,11 @@ serve(async (req) => {
       .delete()
       .eq('update_date', todayISO);
 
-    // Insert new rates
-    const { error: insertError } = await supabase
+    // Insert new rates and get the inserted data with IDs
+    const { data: insertedRates, error: insertError } = await supabase
       .from('exchange_rates')
-      .insert(rates);
+      .insert(rates)
+      .select('id, currency_code, forex_buying, forex_selling, banknote_buying, banknote_selling, cross_rate, update_date');
 
     if (insertError) {
       console.error('❌ Error inserting rates:', insertError);
@@ -197,9 +199,9 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
-        rates: rates,
+        rates: insertedRates || rates,
         cached: false,
-        message: `Updated ${rates.length} exchange rates`
+        message: `Updated ${(insertedRates || rates).length} exchange rates`
       }),
       { 
         status: 200, 

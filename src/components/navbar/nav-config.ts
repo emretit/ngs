@@ -33,7 +33,8 @@ import {
   AlertTriangle,
   DollarSign,
   MapPin,
-  Gauge
+  Gauge,
+  CheckSquare
 } from "lucide-react";
 
 export const navItems = [
@@ -75,6 +76,11 @@ export const navItems = [
         path: "/activities",
         icon: ListTodo,
         label: "Aktiviteler",
+      },
+      {
+        path: "/tasks",
+        icon: CheckSquare,
+        label: "Görev Panosu",
       },
       {
         path: "/orders/list",

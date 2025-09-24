@@ -1,7 +1,6 @@
-
 export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'postponed';
 
-export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export type TaskType = 'general' | 'call' | 'meeting' | 'follow_up' | 'proposal' | 'opportunity' | 'reminder' | 'email';
 
@@ -35,8 +34,27 @@ export interface Task {
     avatar_url?: string;
   };
   opportunity_id?: string;
+  order_rank?: string;
 }
 
 export interface TaskWithOverdue extends Task {
   isOverdue: boolean;
+}
+
+export interface TaskFilters {
+  status?: TaskStatus[];
+  priority?: TaskPriority[];
+  assigneeId?: string[];
+  dueDateRange?: {
+    start: Date;
+    end: Date;
+  };
+  onlyMine?: boolean;
+}
+
+export interface TaskBoard {
+  todo: TaskWithOverdue[];
+  in_progress: TaskWithOverdue[];
+  completed: TaskWithOverdue[];
+  postponed: TaskWithOverdue[];
 }

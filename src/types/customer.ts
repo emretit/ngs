@@ -13,6 +13,15 @@ export interface Customer {
   address: string | null;
   city: string | null;
   district: string | null;
+  country: string | null;
+  postal_code: string | null;
+  fax: string | null;
+  website: string | null;
+  bank_name: string | null;
+  iban: string | null;
+  account_number: string | null;
+  trade_registry_number: string | null;
+  mersis_number: string | null;
   tax_number: string | null;
   tax_office: string | null;
   is_einvoice_mukellef: boolean;

@@ -34,6 +34,8 @@ export interface Supplier {
   account_number: string | null;
   trade_registry_number: string | null;
   mersis_number: string | null;
+  last_interaction: string | null;
+  is_einvoice_mukellef: boolean;
   created_at: string;
   updated_at: string;
   company_id: string | null;

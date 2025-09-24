@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Plus, Calendar, List, LayoutGrid } from 'lucide-react';
 import DefaultLayout from '@/components/layouts/DefaultLayout';
 import TaskBoard from '@/components/tasks/TaskBoard';
+import TaskCalendar from '@/components/tasks/TaskCalendar';
+import TaskList from '@/components/tasks/TaskList';
 import TaskFilters from '@/components/tasks/TaskFilters';
 import TaskModal from '@/components/tasks/TaskModal';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TaskFilters as ITaskFilters } from '@/types/task';
+import { TaskFilters as ITaskFilters, TaskWithOverdue } from '@/types/task';
 
 interface TasksPageProps {
   isCollapsed: boolean;
@@ -16,9 +18,15 @@ interface TasksPageProps {
 const Tasks: React.FC<TasksPageProps> = ({ isCollapsed, setIsCollapsed }) => {
   const [filters, setFilters] = useState<ITaskFilters>({});
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<TaskWithOverdue | null>(null);
   const [activeView, setActiveView] = useState<'board' | 'calendar' | 'list'>('board');
 
   const handleCreateTask = () => {
+    setIsNewTaskModalOpen(true);
+  };
+
+  const handleTaskClick = (task: TaskWithOverdue) => {
+    setSelectedTask(task);
     setIsNewTaskModalOpen(true);
   };
 
@@ -69,23 +77,11 @@ const Tasks: React.FC<TasksPageProps> = ({ isCollapsed, setIsCollapsed }) => {
           )}
           
           {activeView === 'calendar' && (
-            <div className="flex items-center justify-center h-96 bg-muted/20 rounded-lg border-2 border-dashed">
-              <div className="text-center space-y-2">
-                <Calendar className="h-12 w-12 mx-auto text-muted-foreground" />
-                <h3 className="text-lg font-medium">Takvim Görünümü</h3>
-                <p className="text-muted-foreground">Yakında gelecek...</p>
-              </div>
-            </div>
+            <TaskCalendar filters={filters} onTaskClick={handleTaskClick} />
           )}
           
           {activeView === 'list' && (
-            <div className="flex items-center justify-center h-96 bg-muted/20 rounded-lg border-2 border-dashed">
-              <div className="text-center space-y-2">
-                <List className="h-12 w-12 mx-auto text-muted-foreground" />
-                <h3 className="text-lg font-medium">Liste Görünümü</h3>
-                <p className="text-muted-foreground">Yakında gelecek...</p>
-              </div>
-            </div>
+            <TaskList filters={filters} onTaskClick={handleTaskClick} />
           )}
         </div>
       </div>
@@ -93,7 +89,11 @@ const Tasks: React.FC<TasksPageProps> = ({ isCollapsed, setIsCollapsed }) => {
       {/* New Task Modal */}
       <TaskModal
         isOpen={isNewTaskModalOpen}
-        onClose={() => setIsNewTaskModalOpen(false)}
+        onClose={() => {
+          setIsNewTaskModalOpen(false);
+          setSelectedTask(null);
+        }}
+        task={selectedTask}
         defaultStatus="todo"
       />
     </DefaultLayout>

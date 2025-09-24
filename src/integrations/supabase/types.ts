@@ -23,6 +23,7 @@ export type Database = {
           due_date: string | null
           id: string
           opportunity_id: string | null
+          order_rank: string | null
           priority: string
           related_item_id: string | null
           related_item_title: string | null
@@ -40,6 +41,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           opportunity_id?: string | null
+          order_rank?: string | null
           priority?: string
           related_item_id?: string | null
           related_item_title?: string | null
@@ -57,6 +59,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           opportunity_id?: string | null
+          order_rank?: string | null
           priority?: string
           related_item_id?: string | null
           related_item_title?: string | null
@@ -703,11 +706,15 @@ export type Database = {
       }
       customers: {
         Row: {
+          account_number: string | null
           address: string | null
+          aliases: Json | null
           balance: number
+          bank_name: string | null
           city: string | null
           company: string | null
           company_id: string | null
+          country: string | null
           created_at: string | null
           district: string | null
           einvoice_address: string | null
@@ -720,25 +727,39 @@ export type Database = {
           einvoice_sicil_no: string | null
           einvoice_tax_office: string | null
           email: string | null
+          fax: string | null
+          iban: string | null
           id: string
+          is_active: boolean | null
           is_einvoice_mukellef: boolean | null
           last_interaction: string | null
+          mersis_number: string | null
           mobile_phone: string | null
           name: string
           office_phone: string | null
+          payee_financial_account_id: string | null
+          payment_means_channel_code: string | null
+          payment_means_code: string | null
+          postal_code: string | null
           representative: string | null
           status: Database["public"]["Enums"]["customer_status"]
           tax_number: string | null
           tax_office: string | null
+          trade_registry_number: string | null
           type: Database["public"]["Enums"]["customer_type"]
           updated_at: string | null
+          website: string | null
         }
         Insert: {
+          account_number?: string | null
           address?: string | null
+          aliases?: Json | null
           balance?: number
+          bank_name?: string | null
           city?: string | null
           company?: string | null
           company_id?: string | null
+          country?: string | null
           created_at?: string | null
           district?: string | null
           einvoice_address?: string | null
@@ -751,25 +772,39 @@ export type Database = {
           einvoice_sicil_no?: string | null
           einvoice_tax_office?: string | null
           email?: string | null
+          fax?: string | null
+          iban?: string | null
           id?: string
+          is_active?: boolean | null
           is_einvoice_mukellef?: boolean | null
           last_interaction?: string | null
+          mersis_number?: string | null
           mobile_phone?: string | null
           name: string
           office_phone?: string | null
+          payee_financial_account_id?: string | null
+          payment_means_channel_code?: string | null
+          payment_means_code?: string | null
+          postal_code?: string | null
           representative?: string | null
           status?: Database["public"]["Enums"]["customer_status"]
           tax_number?: string | null
           tax_office?: string | null
+          trade_registry_number?: string | null
           type: Database["public"]["Enums"]["customer_type"]
           updated_at?: string | null
+          website?: string | null
         }
         Update: {
+          account_number?: string | null
           address?: string | null
+          aliases?: Json | null
           balance?: number
+          bank_name?: string | null
           city?: string | null
           company?: string | null
           company_id?: string | null
+          country?: string | null
           created_at?: string | null
           district?: string | null
           einvoice_address?: string | null
@@ -782,18 +817,28 @@ export type Database = {
           einvoice_sicil_no?: string | null
           einvoice_tax_office?: string | null
           email?: string | null
+          fax?: string | null
+          iban?: string | null
           id?: string
+          is_active?: boolean | null
           is_einvoice_mukellef?: boolean | null
           last_interaction?: string | null
+          mersis_number?: string | null
           mobile_phone?: string | null
           name?: string
           office_phone?: string | null
+          payee_financial_account_id?: string | null
+          payment_means_channel_code?: string | null
+          payment_means_code?: string | null
+          postal_code?: string | null
           representative?: string | null
           status?: Database["public"]["Enums"]["customer_status"]
           tax_number?: string | null
           tax_office?: string | null
+          trade_registry_number?: string | null
           type?: Database["public"]["Enums"]["customer_type"]
           updated_at?: string | null
+          website?: string | null
         }
         Relationships: [
           {
@@ -2145,6 +2190,8 @@ export type Database = {
           created_at: string | null
           cross_rate: number | null
           currency_code: string
+          effective_buying: number | null
+          effective_selling: number | null
           forex_buying: number | null
           forex_selling: number | null
           id: string
@@ -2158,6 +2205,8 @@ export type Database = {
           created_at?: string | null
           cross_rate?: number | null
           currency_code: string
+          effective_buying?: number | null
+          effective_selling?: number | null
           forex_buying?: number | null
           forex_selling?: number | null
           id?: string
@@ -2171,6 +2220,8 @@ export type Database = {
           created_at?: string | null
           cross_rate?: number | null
           currency_code?: string
+          effective_buying?: number | null
+          effective_selling?: number | null
           forex_buying?: number | null
           forex_selling?: number | null
           id?: string
@@ -5098,12 +5149,22 @@ export type Database = {
           country: string | null
           created_at: string | null
           district: string | null
+          einvoice_address: string | null
           einvoice_alias_name: string | null
+          einvoice_checked_at: string | null
+          einvoice_city: string | null
+          einvoice_company_name: string | null
+          einvoice_district: string | null
+          einvoice_mersis_no: string | null
+          einvoice_sicil_no: string | null
+          einvoice_tax_office: string | null
           email: string | null
           fax: string | null
           iban: string | null
           id: string
           is_active: boolean | null
+          is_einvoice_mukellef: boolean | null
+          last_interaction: string | null
           mersis_number: string | null
           mobile_phone: string | null
           name: string
@@ -5133,12 +5194,22 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           district?: string | null
+          einvoice_address?: string | null
           einvoice_alias_name?: string | null
+          einvoice_checked_at?: string | null
+          einvoice_city?: string | null
+          einvoice_company_name?: string | null
+          einvoice_district?: string | null
+          einvoice_mersis_no?: string | null
+          einvoice_sicil_no?: string | null
+          einvoice_tax_office?: string | null
           email?: string | null
           fax?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean | null
+          is_einvoice_mukellef?: boolean | null
+          last_interaction?: string | null
           mersis_number?: string | null
           mobile_phone?: string | null
           name: string
@@ -5168,12 +5239,22 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           district?: string | null
+          einvoice_address?: string | null
           einvoice_alias_name?: string | null
+          einvoice_checked_at?: string | null
+          einvoice_city?: string | null
+          einvoice_company_name?: string | null
+          einvoice_district?: string | null
+          einvoice_mersis_no?: string | null
+          einvoice_sicil_no?: string | null
+          einvoice_tax_office?: string | null
           email?: string | null
           fax?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean | null
+          is_einvoice_mukellef?: boolean | null
+          last_interaction?: string | null
           mersis_number?: string | null
           mobile_phone?: string | null
           name?: string
@@ -5197,6 +5278,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suppliers_representative_uuid_fkey"
+            columns: ["representative"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -6653,6 +6741,85 @@ export type Database = {
         }
         Relationships: []
       }
+      v_tasks: {
+        Row: {
+          assignee_id: string | null
+          company_id: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string | null
+          opportunity_id: string | null
+          order_rank: string | null
+          priority: string | null
+          related_item_id: string | null
+          related_item_title: string | null
+          related_item_type: string | null
+          status: string | null
+          title: string | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assignee_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          opportunity_id?: string | null
+          order_rank?: string | null
+          priority?: string | null
+          related_item_id?: string | null
+          related_item_title?: string | null
+          related_item_type?: string | null
+          status?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assignee_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string | null
+          opportunity_id?: string | null
+          order_rank?: string | null
+          priority?: string | null
+          related_item_id?: string | null
+          related_item_title?: string | null
+          related_item_type?: string | null
+          status?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       _postgis_deprecate: {
@@ -6965,6 +7132,10 @@ export type Database = {
       }
       generate_order_number: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_order_rank: {
+        Args: { company_id_val: string; status_column: string }
         Returns: string
       }
       generate_work_order_code: {

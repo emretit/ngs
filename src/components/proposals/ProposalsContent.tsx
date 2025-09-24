@@ -14,6 +14,7 @@ interface ProposalsContentProps {
   totalCount?: number;
   error: any;
   onProposalSelect: (proposal: Proposal) => void;
+  onStatusChange?: () => void;
   searchQuery?: string;
   statusFilter?: string;
   employeeFilter?: string;
@@ -28,6 +29,7 @@ const ProposalsContent = ({
   totalCount,
   error,
   onProposalSelect,
+  onStatusChange,
   searchQuery,
   statusFilter,
   employeeFilter
@@ -71,6 +73,7 @@ const ProposalsContent = ({
             proposals={proposals}
             isLoading={isLoading}
             onProposalSelect={onProposalSelect}
+            onStatusChange={onStatusChange}
           />
           
           {/* Infinite scroll trigger */}

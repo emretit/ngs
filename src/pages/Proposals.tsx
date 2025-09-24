@@ -76,6 +76,11 @@ const Proposals = ({ isCollapsed, setIsCollapsed }: ProposalsPageProps) => {
     pageSize
   );
 
+  // Durum değişikliği sonrası sayfayı yenile
+  const handleProposalStatusChange = () => {
+    refresh();
+  };
+
   if (error || kanbanError) {
     toast.error("Teklifler yüklenirken bir hata oluştu");
     console.error("Error loading proposals:", error || kanbanError);
@@ -166,6 +171,7 @@ const Proposals = ({ isCollapsed, setIsCollapsed }: ProposalsPageProps) => {
               <ProposalKanban
                 proposals={kanbanProposals} 
                 onProposalSelect={handleProposalClick}
+                onStatusChange={handleProposalStatusChange}
               />
             </TabsContent>
             <TabsContent value="list" className="mt-0">
@@ -178,6 +184,7 @@ const Proposals = ({ isCollapsed, setIsCollapsed }: ProposalsPageProps) => {
                 totalCount={totalCount}
                 error={error}
                 onProposalSelect={handleProposalClick}
+                onStatusChange={handleProposalStatusChange}
                 searchQuery={searchQuery}
                 statusFilter={selectedStatus}
                 employeeFilter={selectedEmployee}

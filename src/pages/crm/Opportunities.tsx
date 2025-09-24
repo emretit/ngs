@@ -73,20 +73,26 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
     endDate: endDate
   });
   
-  // Group opportunities by status (6-stage system)
+  // Group opportunities by status (6-stage system) - sorted by creation date only
+  const sortByCreatedAt = (a: any, b: any) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    
+    // If dates are the same, sort by ID to maintain consistent order
+    if (dateA === dateB) {
+      return a.id.localeCompare(b.id);
+    }
+    
+    return dateB - dateA; // Newest first
+  };
+
   const groupedOpportunities = {
-    new: (opportunities.new || [])
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-    meeting_visit: (opportunities.meeting_visit || [])
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-    proposal: (opportunities.proposal || [])
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-    negotiation: (opportunities.negotiation || [])
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-    won: (opportunities.won || [])
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
-    lost: (opportunities.lost || [])
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
+    new: (opportunities.new || []).sort(sortByCreatedAt),
+    meeting_visit: (opportunities.meeting_visit || []).sort(sortByCreatedAt),
+    proposal: (opportunities.proposal || []).sort(sortByCreatedAt),
+    negotiation: (opportunities.negotiation || []).sort(sortByCreatedAt),
+    won: (opportunities.won || []).sort(sortByCreatedAt),
+    lost: (opportunities.lost || []).sort(sortByCreatedAt),
   };
 
   const handleOpportunityClick = (opportunity: Opportunity) => {

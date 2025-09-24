@@ -21,23 +21,22 @@ interface ProposalTableProps {
   proposals: Proposal[];
   isLoading: boolean;
   onProposalSelect: (proposal: Proposal) => void;
+  onStatusChange?: () => void;
 }
 
-const ProposalTable = ({ proposals, isLoading, onProposalSelect }: ProposalTableProps) => {
+const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange }: ProposalTableProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [sortField, setSortField] = useState<string>("created_at");
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
   
   const [columns] = useState<Column[]>([
-    { id: "number", label: "Teklif No", visible: true, sortable: true },
-    { id: "customer", label: "Müşteri", visible: true, sortable: true },
-    { id: "status", label: "Durum", visible: true, sortable: true },
-    { id: "employee", label: "Satış Temsilcisi", visible: true, sortable: true },
-    { id: "total_amount", label: "Toplam Tutar", visible: true, sortable: true },
-    { id: "created_at", label: "Oluşturma Tarihi", visible: true, sortable: true },
-    { id: "valid_until", label: "Geçerlilik", visible: true, sortable: true },
+    { id: "number", label: "Teklif No", visible: true, sortable: false },
+    { id: "customer", label: "Müşteri", visible: true, sortable: false },
+    { id: "status", label: "Durum", visible: true, sortable: false },
+    { id: "employee", label: "Satış Temsilcisi", visible: true, sortable: false },
+    { id: "total_amount", label: "Toplam Tutar", visible: true, sortable: false },
+    { id: "created_at", label: "Oluşturma Tarihi", visible: true, sortable: false },
+    { id: "valid_until", label: "Geçerlilik", visible: true, sortable: false },
     { id: "actions", label: "İşlemler", visible: true },
   ]);
 
@@ -76,19 +75,15 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect }: ProposalTable
     }
   };
 
-  const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
 
   const handleStatusUpdate = async (proposalId: string, newStatus: ProposalStatus) => {
     try {
       await changeProposalStatus(proposalId, newStatus);
+      // Hem normal proposals hem de infinite scroll query'lerini invalidate et
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      // Sayfayı yenile
+      onStatusChange?.();
       
       toast({
         title: "Durum güncellendi",
@@ -159,36 +154,18 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect }: ProposalTable
     return <div className="p-4 text-center text-gray-500">Henüz teklif bulunmamaktadır.</div>;
   }
 
-  // Sort proposals based on the sort field and direction
+  // Sort proposals by creation date (newest first) - no other sorting
   const sortedProposals = [...proposals].sort((a, b) => {
     if (!a || !b) return 0;
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
     
-    const fieldA = sortField === 'customer' 
-      ? a.customer?.name || ''
-      : sortField === 'employee'
-      ? a.employee?.first_name || ''
-      : (a as any)[sortField];
-      
-    const fieldB = sortField === 'customer' 
-      ? b.customer?.name || ''
-      : sortField === 'employee'
-      ? b.employee?.first_name || ''
-      : (b as any)[sortField];
-    
-    if (!fieldA && !fieldB) return 0;
-    if (!fieldA) return sortDirection === 'asc' ? -1 : 1;
-    if (!fieldB) return sortDirection === 'asc' ? 1 : -1;
-    
-    if (typeof fieldA === 'number' && typeof fieldB === 'number') {
-      return sortDirection === 'asc' ? fieldA - fieldB : fieldB - fieldA;
+    // If dates are the same, sort by ID to maintain consistent order
+    if (dateA === dateB) {
+      return a.id.localeCompare(b.id);
     }
     
-    const valueA = String(fieldA).toLowerCase();
-    const valueB = String(fieldB).toLowerCase();
-    
-    return sortDirection === 'asc'
-      ? valueA.localeCompare(valueB)
-      : valueB.localeCompare(valueA);
+    return dateB - dateA; // Newest first
   });
 
   // Since we're now receiving proposals directly, no need for additional filtering
@@ -232,9 +209,6 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect }: ProposalTable
     <Table>
       <ProposalTableHeader 
         columns={columns} 
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
       />
       <TableBody>
         {filteredProposals.length === 0 ? (

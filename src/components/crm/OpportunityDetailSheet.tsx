@@ -80,12 +80,25 @@ export const OpportunityDetailSheet = ({
       
       return { id, status, previousStatus: opportunity?.status };
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-      toast.success('Fırsat güncellendi');
+      if (data.status) {
+        toast.success('Durum güncellendi', {
+          description: `Fırsat durumu başarıyla güncellendi.`,
+          className: "bg-green-50 border-green-200",
+        });
+      } else {
+        toast.success('Fırsat güncellendi', {
+          description: `Fırsat başarıyla güncellendi.`,
+          className: "bg-green-50 border-green-200",
+        });
+      }
     },
     onError: (error) => {
-      toast.error('Fırsat güncellenirken bir hata oluştu');
+      toast.error('Hata', {
+        description: 'Fırsat güncellenirken bir hata oluştu',
+        className: "bg-red-50 border-red-200",
+      });
       console.error('Error updating opportunity:', error);
     }
   });

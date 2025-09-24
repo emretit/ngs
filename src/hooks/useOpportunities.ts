@@ -64,7 +64,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     // Pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
-    query = query.range(from, to).order("updated_at", { ascending: false });
+    query = query.range(from, to).order("created_at", { ascending: false });
 
     const { data, error, count } = await query;
 
@@ -212,9 +212,21 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+      
+      toast({
+        title: "Durum güncellendi",
+        description: `Fırsat durumu başarıyla güncellendi.`,
+        className: "bg-green-50 border-green-200",
+      });
+      
       return Promise.resolve();
     } catch (error) {
       console.error("Error updating opportunity status:", error);
+      toast({
+        title: "Hata",
+        description: "Fırsat durumu güncellenirken bir hata oluştu.",
+        variant: "destructive",
+      });
       throw error;
     }
   };

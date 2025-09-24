@@ -1,31 +1,14 @@
 
 import React from 'react';
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Column } from "../types";
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface ProposalTableHeaderProps {
-  columns: Column[];
-  sortField?: string;
-  sortDirection?: 'asc' | 'desc';
-  onSort?: (fieldId: string) => void;
+  columns: any[];
 }
 
 export const ProposalTableHeader = ({ 
-  columns, 
-  sortField, 
-  sortDirection, 
-  onSort 
+  columns
 }: ProposalTableHeaderProps) => {
-  const getSortIcon = (field: string) => {
-    if (field !== sortField) return null;
-    
-    return sortDirection === "asc" 
-      ? <ChevronUp className="h-4 w-4 ml-1" />
-      : <ChevronDown className="h-4 w-4 ml-1" />;
-  };
-
   return (
     <TableHeader>
       <TableRow>

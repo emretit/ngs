@@ -11,6 +11,7 @@ import { changeProposalStatus } from "@/services/crmService";
 interface ProposalKanbanProps {
   proposals: Proposal[];
   onProposalSelect: (proposal: Proposal) => void;
+  onStatusChange?: () => void;
 }
 
 const columns = [
@@ -22,7 +23,7 @@ const columns = [
   { id: "expired", title: proposalStatusLabels.expired, icon: proposalStatusIcons.expired, color: "bg-orange-600" }
 ];
 
-export const ProposalKanban = ({ proposals, onProposalSelect }: ProposalKanbanProps) => {
+export const ProposalKanban = ({ proposals, onProposalSelect, onStatusChange }: ProposalKanbanProps) => {
   const queryClient = useQueryClient();
   const [localProposals, setLocalProposals] = useState<Proposal[]>(proposals);
 
@@ -35,7 +36,11 @@ export const ProposalKanban = ({ proposals, onProposalSelect }: ProposalKanbanPr
       await changeProposalStatus(id, status);
     },
     onSuccess: () => {
+      // Hem normal proposals hem de infinite scroll query'lerini invalidate et
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      // Sayfayı yenile
+      onStatusChange?.();
       toast.success('Teklif durumu güncellendi');
     },
     onError: (error) => {

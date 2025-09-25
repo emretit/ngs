@@ -93,13 +93,8 @@ const SuppliersTableRow = ({
 
       {/* Şirket */}
       <TableCell className="py-2 px-3">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-            {(supplier.company || supplier.name).charAt(0).toUpperCase()}
-          </div>
-          <div className="text-xs font-medium text-gray-900">
-            {supplier.company || supplier.name}
-          </div>
+        <div className="text-xs font-medium text-gray-900">
+          {supplier.company || supplier.name}
         </div>
       </TableCell>
 

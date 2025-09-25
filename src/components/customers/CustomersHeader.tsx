@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, TrendingUp, Clock, MoreHorizontal, Download, Mail, Trash2, FileText } from "lucide-react";
+import { Plus, Users, TrendingUp, Clock, MoreHorizontal, Download, Mail, Trash2, FileText, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer } from "@/types/customer";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -30,7 +30,7 @@ const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
         {/* Sol taraf - Başlık */}
         <div className="flex items-center gap-3">
           <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white shadow-lg">
-            <Users className="h-5 w-5" />
+            <User className="h-5 w-5" />
           </div>
           <div className="space-y-0.5">
             <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">

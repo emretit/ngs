@@ -64,7 +64,16 @@ export const UserManagement = () => {
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          employees!profiles_employee_id_fkey (
+            id,
+            first_name,
+            last_name,
+            position,
+            department
+          )
+        `)
         .order('created_at', { ascending: sortOrder === 'asc' });
       
       if (profilesError) throw profilesError;

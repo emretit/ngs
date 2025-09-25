@@ -3,10 +3,12 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Task, TaskStatus, TaskPriority } from "@/types/task";
+import { Task, TaskStatus } from "@/types/task";
 import TaskMainInfo from "./TaskMainInfo";
 import TaskMetadata from "./TaskMetadata";
 import { SubtaskManager } from "./subtasks";
+import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 
 interface TaskDetailsProps {
   task: Task;
@@ -65,6 +67,11 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
     console.log("Subtasks updated:", subtasks);
   };
 
+  const handleSave = () => {
+    updateTaskMutation.mutate(formData);
+  };
+
+
   return (
     <div className="space-y-6">
       <TaskMainInfo 
@@ -82,6 +89,17 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
         onUpdate={handleUpdateSubtasks} 
         isUpdating={isUpdating}
       />
+      
+      <div className="flex justify-end space-x-2 pt-4 border-t">
+        <Button 
+          onClick={handleSave} 
+          disabled={isUpdating}
+          className="flex items-center space-x-2"
+        >
+          <Save className="h-4 w-4" />
+          <span>{isUpdating ? "Kaydediliyor..." : "Kaydet"}</span>
+        </Button>
+      </div>
     </div>
   );
 };

@@ -58,7 +58,7 @@ const NewTaskForm = ({
     setIsSubmitting(true);
     try {
       const { error } = await supabase
-        .from('tasks')
+        .from('activities')
         .insert({
           title: formData.title,
           description: formData.description,

@@ -50,6 +50,15 @@ const SuppliersTableHeader = ({ columns, sortField, sortDirection, onSort, hasSe
           onClick={column.sortable ? () => onSort(column.id) : undefined}
         >
           <div className="flex items-center gap-1">
+            {column.id === 'company' && <span className="text-lg mr-2">🏢</span>}
+            {column.id === 'name' && <span className="text-lg mr-2">👤</span>}
+            {column.id === 'contact' && <span className="text-lg mr-2">📞</span>}
+            {column.id === 'type' && <span className="text-lg mr-2">🏷️</span>}
+            {column.id === 'status' && <span className="text-lg mr-2">📊</span>}
+            {column.id === 'representative' && <span className="text-lg mr-2">🤝</span>}
+            {column.id === 'balance' && <span className="text-lg mr-2">💰</span>}
+            {column.id === 'created_at' && <span className="text-lg mr-2">📅</span>}
+            {column.id === 'actions' && <span className="text-lg mr-2">⚙️</span>}
             <span>{column.label}</span>
             {column.sortable && getSortIcon(column.id)}
           </div>

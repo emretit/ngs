@@ -60,30 +60,28 @@ export const TasksTable = ({
   }
 
   return (
-    <div className="border rounded-md shadow-xl bg-gradient-to-br from-card/90 to-muted/30 backdrop-blur-sm">
-      <Table>
-        <TasksTableHeader 
-          sortField={sortField} 
-          sortDirection={sortDirection}
-          handleSort={handleSort}
-        />
-        <TableBody>
-          {sortedTasks.length === 0 ? (
-            <TasksTableEmpty />
-          ) : (
-            sortedTasks.map((task) => (
-              <TasksTableRow 
-                key={task.id} 
-                task={task} 
-                onSelectTask={onSelectTask}
-                onStatusChange={updateTaskStatus}
-                onDeleteTask={deleteTask}
-              />
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <Table>
+      <TasksTableHeader 
+        sortField={sortField} 
+        sortDirection={sortDirection}
+        handleSort={handleSort}
+      />
+      <TableBody>
+        {sortedTasks.length === 0 ? (
+          <TasksTableEmpty />
+        ) : (
+          sortedTasks.map((task) => (
+            <TasksTableRow 
+              key={task.id} 
+              task={task} 
+              onSelectTask={onSelectTask}
+              onStatusChange={updateTaskStatus}
+              onDeleteTask={deleteTask}
+            />
+          ))
+        )}
+      </TableBody>
+    </Table>
   );
 };
 

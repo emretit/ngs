@@ -36,7 +36,7 @@ const OpportunitiesHeader = ({ activeView, setActiveView, opportunities = {} }: 
         {/* Sol taraf - Başlık */}
         <div className="flex items-center gap-3">
           <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg">
-            <TrendingUp className="h-5 w-5" />
+            <Target className="h-5 w-5" />
           </div>
           <div className="space-y-0.5">
             <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">

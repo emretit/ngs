@@ -47,7 +47,7 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
       if (!task?.id) throw new Error('Task ID is required');
 
       const { data, error } = await supabase
-        .from('tasks')
+        .from('activities')
         .update(updatedTask as any)
         .eq('id', task.id)
         .select();
@@ -56,12 +56,12 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Task updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['activities'] });
+      toast.success('Aktivite başarıyla güncellendi');
       onClose();
     },
     onError: (error) => {
-      toast.error('Failed to update task');
+      toast.error('Aktivite güncellenirken hata oluştu');
       console.error('Update error:', error);
     }
   });
@@ -82,23 +82,23 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <h2 className="text-lg font-semibold text-foreground">Task Details</h2>
+          <h2 className="text-lg font-semibold text-foreground">Aktivite Detayları</h2>
         </SheetHeader>
         
         <div className="py-4 space-y-6">
           <Textarea
-            placeholder="Add a description..."
+            placeholder="Açıklama ekle..."
             value={formData.description || ""}
             onChange={(e) => handleInputChange('description', e.target.value)}
             className="min-h-[100px]"
           />
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button variant="outline" onClick={onClose}>İptal</Button>
             <Button onClick={handleSave} disabled={updateTaskMutation.isPending}>
-              {updateTaskMutation.isPending ? "Saving..." : (
+              {updateTaskMutation.isPending ? "Kaydediliyor..." : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Save Changes
+                  Değişiklikleri Kaydet
                 </>
               )}
             </Button>

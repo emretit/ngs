@@ -1,9 +1,10 @@
 
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { DatePicker } from "@/components/ui/date-picker";
 import { UseFormWatch, UseFormSetValue, FieldErrors } from "react-hook-form";
 import { FormValues } from "./types";
+import { Star } from "lucide-react";
 
 interface TaskMetadataProps {
   watch: UseFormWatch<FormValues>;
@@ -14,21 +15,16 @@ interface TaskMetadataProps {
 const TaskMetadata = ({ watch, setValue, errors }: TaskMetadataProps) => {
   return (
     <div className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="priority">Öncelik</Label>
-        <Select 
-          value={watch("priority")} 
-          onValueChange={(value) => setValue("priority", value as any)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Öncelik seçin" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Düşük</SelectItem>
-            <SelectItem value="medium">Orta</SelectItem>
-            <SelectItem value="high">Yüksek</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex items-center space-x-3">
+        <Switch
+          id="is_important"
+          checked={watch("is_important")}
+          onCheckedChange={(checked) => setValue("is_important", checked)}
+        />
+        <Label htmlFor="is_important" className="flex items-center space-x-2 cursor-pointer">
+          <Star className={`h-4 w-4 ${watch("is_important") ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
+          <span>Önemli</span>
+        </Label>
       </div>
       
       <div className="grid gap-2">

@@ -5,12 +5,15 @@ import DefaultLayout from "@/components/layouts/DefaultLayout";
 import TasksContent from "@/components/activities/TasksContent";
 import TasksPageHeader from "@/components/activities/header/TasksPageHeader";
 import TasksFilterBar from "@/components/activities/filters/TasksFilterBar";
+import { useKanbanTasks } from "@/components/activities/hooks/useKanbanTasks";
 import NewActivityDialog from "@/components/activities/NewActivityDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Task, TaskStatus } from "@/types/task";
 import { ViewType } from "@/components/activities/header/TasksViewToggle";
 import TasksKanban from "@/components/activities/TasksKanban";
+import TasksCalendar from "@/components/activities/calendar/TasksCalendar";
+import MyDayView from "@/components/activities/myday/MyDayView";
 
 interface ActivitiesPageProps {
   isCollapsed: boolean;
@@ -40,6 +43,14 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
     }
   });
 
+  // Kanban verilerini al (header için)
+  const { tasks: kanbanTasks } = useKanbanTasks({
+    searchQuery,
+    selectedEmployee: selectedAssignee,
+    selectedType,
+    selectedStatus
+  });
+
   const handleAddTask = () => {
     setIsNewActivityDialogOpen(true);
   };
@@ -61,6 +72,7 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
           onCreateTask={handleAddTask} 
           activeView={activeView}
           setActiveView={setActiveView}
+          activities={kanbanTasks}
         />
 
         <TasksFilterBar
@@ -85,7 +97,25 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
         )}
         
         {activeView === "kanban" && (
-          <TasksKanban 
+          <TasksKanban
+            searchQuery={searchQuery}
+            selectedEmployee={selectedAssignee}
+            selectedType={selectedType}
+            selectedStatus={selectedStatus}
+          />
+        )}
+
+        {activeView === "calendar" && (
+          <TasksCalendar
+            searchQuery={searchQuery}
+            selectedEmployee={selectedAssignee}
+            selectedType={selectedType}
+            selectedStatus={selectedStatus}
+          />
+        )}
+
+        {activeView === "myday" && (
+          <MyDayView
             searchQuery={searchQuery}
             selectedEmployee={selectedAssignee}
             selectedType={selectedType}

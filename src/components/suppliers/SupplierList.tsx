@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Building2, User, Phone, Tag, BarChart3, Users, DollarSign, Settings } from "lucide-react";
 import SupplierTableRow from "./SupplierTableRow";
 import { Supplier } from "@/types/supplier";
 import { cn } from "@/lib/utils";
@@ -36,46 +36,66 @@ const SupplierList = ({ suppliers, isLoading, sortField, sortDirection, onSortFi
         <div className="overflow-x-auto">
           <Table className="border-collapse">
             <TableHeader>
-              <TableRow className="bg-gray-50 border-b">
+              <TableRow className="bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 border-b border-gray-200 shadow-sm">
                 <TableHead 
                   className={cn(
-                    "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
+                    "w-[20%] h-12 px-4 text-left align-middle font-bold text-green-700 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-green-100/50 transition-colors"
                   )}
                   onClick={() => onSortFieldChange("company")}
                 >
                   <div className="flex items-center">
-                    <span>🏢 Şirket/Tedarikçi</span>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    <span>Şirket/Tedarikçi</span>
                     {getSortIcon("company")}
                   </div>
                 </TableHead>
-                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  👤 Yetkili Kişi
+                <TableHead className="w-[15%] h-12 px-4 text-left align-middle font-bold text-green-700 whitespace-nowrap text-sm tracking-wide">
+                  <div className="flex items-center">
+                    <User className="h-4 w-4 mr-2" />
+                    <span>Yetkili Kişi</span>
+                  </div>
                 </TableHead>
-                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  📞 İletişim
+                <TableHead className="w-[18%] h-12 px-4 text-left align-middle font-bold text-green-700 whitespace-nowrap text-sm tracking-wide">
+                  <div className="flex items-center">
+                    <Phone className="h-4 w-4 mr-2" />
+                    <span>İletişim</span>
+                  </div>
                 </TableHead>
-                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  🏷️ Tip
+                <TableHead className="w-[10%] h-12 px-4 text-center align-middle font-bold text-green-700 whitespace-nowrap text-sm tracking-wide">
+                  <div className="flex items-center justify-center">
+                    <Tag className="h-4 w-4 mr-2" />
+                    <span>Tip</span>
+                  </div>
                 </TableHead>
-                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  📊 Durum
+                <TableHead className="w-[10%] h-12 px-4 text-center align-middle font-bold text-green-700 whitespace-nowrap text-sm tracking-wide">
+                  <div className="flex items-center justify-center">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    <span>Durum</span>
+                  </div>
                 </TableHead>
-                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  🤝 Temsilci
+                <TableHead className="w-[12%] h-12 px-4 text-left align-middle font-bold text-green-700 whitespace-nowrap text-sm tracking-wide">
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 mr-2" />
+                    <span>Temsilci</span>
+                  </div>
                 </TableHead>
                 <TableHead 
                   className={cn(
-                    "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
+                    "w-[10%] h-12 px-4 text-center align-middle font-bold text-green-700 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-green-100/50 transition-colors"
                   )}
                   onClick={() => onSortFieldChange("balance")}
                 >
-                  <div className="flex items-center">
-                    <span>💰 Bakiye</span>
+                  <div className="flex items-center justify-center">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    <span>Bakiye</span>
                     {getSortIcon("balance")}
                   </div>
                 </TableHead>
-                <TableHead className="h-12 px-4 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  ⚙️ İşlemler
+                <TableHead className="w-[5%] h-12 px-4 text-right align-middle font-bold text-green-700 whitespace-nowrap text-sm tracking-wide">
+                  <div className="flex items-center justify-end">
+                    <Settings className="h-4 w-4 mr-2" />
+                    <span>İşlemler</span>
+                  </div>
                 </TableHead>
               </TableRow>
             </TableHeader>

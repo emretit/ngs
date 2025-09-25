@@ -14,6 +14,10 @@ import { useUserMutations } from "./hooks/useUserMutations";
 import { UserAvatar } from "./components/UserAvatar";
 import { UserRoleSelect } from "./components/UserRoleSelect";
 import { UserActions } from "./components/UserActions";
+import { EmployeeMatchingDialog } from "./EmployeeMatchingDialog";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { User, Building2 } from "lucide-react";
 
 type UserListProps = {
   users: UserWithRoles[];
@@ -22,6 +26,8 @@ type UserListProps = {
 
 export const UserList = ({ users, isLoading }: UserListProps) => {
   const { assignRoleMutation, resetPasswordMutation, deactivateUserMutation } = useUserMutations();
+  const [selectedProfile, setSelectedProfile] = useState<UserWithRoles | null>(null);
+  const [isMatchingDialogOpen, setIsMatchingDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -69,6 +75,7 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
           <TableRow>
             <TableHead>Kullanıcı</TableHead>
             <TableHead>Rol</TableHead>
+            <TableHead>Çalışan Eşleştirme</TableHead>
             <TableHead>Durum</TableHead>
             <TableHead>Kayıt Tarihi</TableHead>
             <TableHead className="text-right">İşlemler</TableHead>
@@ -77,7 +84,7 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
         <TableBody>
           {users.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                 Kullanıcı bulunamadı.
               </TableCell>
             </TableRow>
@@ -95,6 +102,32 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
                     user={user}
                     onRoleChange={(role) => assignRoleMutation.mutate({ userId: user.id, role })}
                   />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    {user.employee_id ? (
+                      <Badge variant="outline" className="text-green-600 border-green-200">
+                        <Building2 className="h-3 w-3 mr-1" />
+                        Eşleştirilmiş
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-gray-500">
+                        <User className="h-3 w-3 mr-1" />
+                        Eşleştirilmemiş
+                      </Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedProfile(user);
+                        setIsMatchingDialogOpen(true);
+                      }}
+                      className="h-6 px-2 text-xs"
+                    >
+                      {user.employee_id ? "Değiştir" : "Eşleştir"}
+                    </Button>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge variant={user.is_active !== false ? "default" : "secondary"}>
@@ -116,6 +149,15 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
           )}
         </TableBody>
       </Table>
+      
+      <EmployeeMatchingDialog
+        isOpen={isMatchingDialogOpen}
+        onClose={() => {
+          setIsMatchingDialogOpen(false);
+          setSelectedProfile(null);
+        }}
+        profile={selectedProfile}
+      />
     </div>
   );
 };

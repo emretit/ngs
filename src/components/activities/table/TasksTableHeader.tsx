@@ -33,7 +33,7 @@ const TasksTableHeader: React.FC<TasksTableHeaderProps> = ({
         <span>
           {field === 'title' && '📋 '}
           {field === 'due_date' && '📅 '}
-          {field === 'priority' && '⚡ '}
+          {field === 'priority' && '⭐ '}
           {field === 'assignee' && '👤 '}
           {field === 'related_item' && '🔗 '}
           {field === 'status' && '📊 '}
@@ -49,7 +49,7 @@ const TasksTableHeader: React.FC<TasksTableHeaderProps> = ({
       <TableRow className="bg-gray-50 border-b">
         {renderSortableHeader("Başlık", "title")}
         {renderSortableHeader("Tarih", "due_date")}
-        {renderSortableHeader("Öncelik", "priority")}
+        {renderSortableHeader("Önem", "priority")}
         {renderSortableHeader("Sorumlu", "assignee")}
         {renderSortableHeader("İlişkili Öğe", "related_item")}
         {renderSortableHeader("Durum", "status")}

@@ -35,7 +35,7 @@ export const useKanbanTasks = ({
   });
 
   const { data: tasks = [], isLoading, error } = useQuery({
-    queryKey: ["tasks", userData?.company_id],
+    queryKey: ["activities", userData?.company_id],
     queryFn: async () => {
       if (!userData?.company_id) {
         return [];

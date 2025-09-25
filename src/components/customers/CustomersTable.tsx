@@ -207,15 +207,60 @@ const CustomersTable = ({
                 />
               </TableHead>
             )}
-            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Şirket</TableHead>
-            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-left">👤 Yetkili Kişi</TableHead>
-            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">📞 İletişim</TableHead>
-            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">🏷️ Tip</TableHead>
-            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">📊 Durum</TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-left">🤝 Temsilci</TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">💰 Bakiye</TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Oluşturma Tarihi</TableHead>
-            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
+            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
+              <div className="flex items-center">
+                <span className="text-lg mr-2">🏢</span>
+                <span>Şirket</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-left">
+              <div className="flex items-center">
+                <span className="text-lg mr-2">👤</span>
+                <span>Yetkili Kişi</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
+              <div className="flex items-center">
+                <span className="text-lg mr-2">📞</span>
+                <span>İletişim</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+              <div className="flex items-center justify-center">
+                <span className="text-lg mr-2">🏷️</span>
+                <span>Tip</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+              <div className="flex items-center justify-center">
+                <span className="text-lg mr-2">📊</span>
+                <span>Durum</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-left">
+              <div className="flex items-center">
+                <span className="text-lg mr-2">🤝</span>
+                <span>Temsilci</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+              <div className="flex items-center justify-center">
+                <span className="text-lg mr-2">💰</span>
+                <span>Bakiye</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+              <div className="flex items-center justify-center">
+                <span className="text-lg mr-2">📅</span>
+                <span>Oluşturma Tarihi</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-right">
+              <div className="flex items-center justify-end">
+                <span className="text-lg mr-2">⚙️</span>
+                <span>İşlemler</span>
+              </div>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

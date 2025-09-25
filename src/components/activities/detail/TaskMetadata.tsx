@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Star } from "lucide-react";
 import type { Task } from "@/types/task";
 
 interface TaskMetadataProps {
@@ -112,23 +114,16 @@ const TaskMetadata = ({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Öncelik</label>
-        <Select
-          value={formData.priority}
-          onValueChange={(value) => 
-            handleInputChange('priority', value as Task['priority'])
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Öncelik seçin" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Düşük</SelectItem>
-            <SelectItem value="medium">Orta</SelectItem>
-            <SelectItem value="high">Yüksek</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex items-center space-x-3">
+        <Switch
+          id="is_important"
+          checked={formData.is_important || false}
+          onCheckedChange={(checked) => handleInputChange('is_important', checked)}
+        />
+        <label htmlFor="is_important" className="flex items-center space-x-2 cursor-pointer text-sm font-medium">
+          <Star className={`h-4 w-4 ${formData.is_important ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
+          <span>Önemli</span>
+        </label>
       </div>
     </>
   );

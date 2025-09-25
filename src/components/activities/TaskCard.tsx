@@ -5,10 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CalendarIcon, MoreHorizontal, Edit, Trash2, UserIcon, Clock, CheckCircle2, AlertCircle } from "lucide-react";
-import { TaskWithOverdue, TaskPriority } from "@/types/task";
+import { CalendarIcon, MoreHorizontal, Edit, Trash2, UserIcon, Clock, CheckCircle2, AlertCircle, RefreshCw, Star } from "lucide-react";
+import { TaskWithOverdue } from "@/types/task";
 import { format } from "date-fns";
-import { getPriorityColor } from "@/components/service/utils/priorityUtils";
 
 interface TaskCardProps {
   task: TaskWithOverdue;
@@ -19,7 +18,6 @@ interface TaskCardProps {
 }
 
 const TaskCard = ({ task, index, onEdit, onSelect, onDelete }: TaskCardProps) => {
-  const priorityColor = getPriorityColor(task.priority as TaskPriority);
   
   // Metinleri kısalt
   const shortenText = (text: string, maxLength: number = 30) => {
@@ -67,9 +65,17 @@ const TaskCard = ({ task, index, onEdit, onSelect, onDelete }: TaskCardProps) =>
           `}>
             <CardContent className="p-3">
               <div className="flex justify-between items-start mb-2">
-                <h4 className="font-medium text-sm text-gray-900 line-clamp-2 flex-1 mr-2">
-                  {shortenText(task.title, 30)}
-                </h4>
+                <div className="flex items-center space-x-1 flex-1 mr-2">
+                  {task.is_important && (
+                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 flex-shrink-0" title="Önemli görev" />
+                  )}
+                  {task.is_recurring && (
+                    <RefreshCw className="h-3 w-3 text-blue-500 flex-shrink-0" title="Tekrar eden görev" />
+                  )}
+                  <h4 className="font-medium text-sm text-gray-900 line-clamp-2">
+                    {shortenText(task.title, (task.is_important ? 2 : 0) + (task.is_recurring ? 2 : 0) + 26)}
+                  </h4>
+                </div>
                 
                 {/* 3 Nokta Menü */}
                 <DropdownMenu>
@@ -116,13 +122,13 @@ const TaskCard = ({ task, index, onEdit, onSelect, onDelete }: TaskCardProps) =>
               )}
               
               <div className="flex items-center justify-between mb-2">
-                <Badge className={`${priorityColor} text-xs font-medium`} variant="outline">
-                  {task.priority === "high" 
-                    ? "Yüksek" 
-                    : task.priority === "medium" 
-                      ? "Orta" 
-                      : "Düşük"}
-                </Badge>
+                {task.is_important && (
+                  <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs font-medium" variant="outline">
+                    <Star className="h-3 w-3 mr-1 fill-yellow-600" />
+                    Önemli
+                  </Badge>
+                )}
+                {!task.is_important && <div />} {/* Spacer when not important */}
                 
                 <Badge className={`${getStatusColor(task.status)} text-xs font-medium`} variant="outline">
                   {getStatusIcon(task.status)}

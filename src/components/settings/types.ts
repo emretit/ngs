@@ -14,6 +14,15 @@ export type UserProfile = {
   created_at: string | null;
   updated_at: string | null;
   is_active: boolean;
+  employee_id?: string;
+  company_id?: string;
+  employees?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    position: string;
+    department: string;
+  } | null;
 };
 
 export type UserWithRoles = UserProfile & { user_roles: UserRole[] };

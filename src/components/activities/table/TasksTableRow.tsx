@@ -2,11 +2,13 @@
 import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { 
-  MoreHorizontal, 
-  Eye, 
+import {
+  MoreHorizontal,
+  Eye,
   Trash,
-  CheckCircle2
+  CheckCircle2,
+  RefreshCw,
+  Star
 } from "lucide-react";
 import { Task, TaskStatus } from "@/types/task";
 import { format } from "date-fns";
@@ -18,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { PriorityBadge } from "./PriorityBadge";
 
 interface TasksTableRowProps {
   task: Task;
@@ -45,11 +46,21 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-      case "todo": return "bg-gray-100 hover:bg-gray-200 text-gray-800";
-      case "in_progress": return "bg-blue-100 hover:bg-blue-200 text-blue-800";
-      case "completed": return "bg-green-100 hover:bg-green-200 text-green-800";
-      case "postponed": return "bg-yellow-100 hover:bg-yellow-200 text-yellow-800";
-      default: return "bg-gray-100 hover:bg-gray-200 text-gray-800";
+      case "todo": return "bg-red-100 border-red-200 text-red-800 hover:bg-red-200";
+      case "in_progress": return "bg-yellow-100 border-yellow-200 text-yellow-800 hover:bg-yellow-200";
+      case "completed": return "bg-green-100 border-green-200 text-green-800 hover:bg-green-200";
+      case "postponed": return "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200";
+      default: return "bg-gray-100 border-gray-200 text-gray-800 hover:bg-gray-200";
+    }
+  };
+
+  const getStatusIcon = (status: TaskStatus) => {
+    switch (status) {
+      case "todo": return "🔴";
+      case "in_progress": return "🟡";
+      case "completed": return "🟢";
+      case "postponed": return "⚪";
+      default: return "⚪";
     }
   };
 
@@ -69,13 +80,28 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
       onClick={() => onSelectTask(task)}
     >
       <TableCell className="p-4 font-medium">
-        {task.title}
+        <div className="flex items-center space-x-2">
+          {task.is_important && (
+            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" title="Önemli görev" />
+          )}
+          {task.is_recurring && (
+            <RefreshCw className="h-4 w-4 text-blue-500" title="Tekrar eden görev" />
+          )}
+          <span>{task.title}</span>
+        </div>
       </TableCell>
       <TableCell className="p-4 text-muted-foreground">
         {formatDate(task.due_date)}
       </TableCell>
       <TableCell className="p-4">
-        <PriorityBadge priority={task.priority} />
+        {task.is_important ? (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
+            <Star className="h-3 w-3 mr-1 fill-yellow-600" />
+            Önemli
+          </Badge>
+        ) : (
+          <span className="text-gray-400 text-sm">-</span>
+        )}
       </TableCell>
       <TableCell className="p-4">
         {task.assignee ? task.assignee.first_name + " " + task.assignee.last_name : "-"}
@@ -90,9 +116,12 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
         )}
       </TableCell>
       <TableCell className="p-4">
-        <Badge variant="outline" className={getStatusColor(task.status)}>
-          {getStatusLabel(task.status)}
-        </Badge>
+        <div className="flex items-center space-x-2">
+          <span className="text-lg">{getStatusIcon(task.status)}</span>
+          <Badge variant="outline" className={getStatusColor(task.status)}>
+            {getStatusLabel(task.status)}
+          </Badge>
+        </div>
       </TableCell>
       <TableCell className="p-4 text-right">
         <div className="flex justify-end">

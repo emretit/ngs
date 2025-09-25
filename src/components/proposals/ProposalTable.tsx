@@ -15,7 +15,7 @@ import { PdfExportService } from "@/services/pdf/pdfExportService";
 import { PdfTemplate } from "@/types/pdf-template";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Building2, BarChart3, User, DollarSign, Calendar, Clock, Settings } from "lucide-react";
 
 interface ProposalTableProps {
   proposals: Proposal[];
@@ -177,14 +177,54 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">📄 Teklif No</TableHead>
-            <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Müşteri Bilgileri</TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">📊 Durum</TableHead>
-            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">👤 Satış Temsilcisi</TableHead>
-            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">💰 Toplam Tutar</TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Oluşturma Tarihi</TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">⏰ Geçerlilik</TableHead>
-            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
+            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span>Teklif No</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                <span>Müşteri Bilgileri</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+              <div className="flex items-center justify-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                <span>Durum</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                <span>Satış Temsilcisi</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+              <div className="flex items-center justify-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                <span>Toplam Tutar</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+              <div className="flex items-center justify-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>Oluşturma Tarihi</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+              <div className="flex items-center justify-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>Geçerlilik</span>
+              </div>
+            </TableHead>
+            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">
+              <div className="flex items-center justify-end gap-2">
+                <Settings className="h-4 w-4" />
+                <span>İşlemler</span>
+              </div>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

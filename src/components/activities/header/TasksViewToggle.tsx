@@ -1,8 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List, Calendar, Sun } from "lucide-react";
 
-export type ViewType = "table" | "kanban";
+export type ViewType = "table" | "kanban" | "calendar" | "myday";
 
 interface TasksViewToggleProps {
   activeView: ViewType;
@@ -12,6 +12,16 @@ interface TasksViewToggleProps {
 const TasksViewToggle = ({ activeView, setActiveView }: TasksViewToggleProps) => {
   return (
     <div className="flex rounded-md overflow-hidden border">
+      <Button
+        type="button"
+        variant={activeView === "myday" ? "default" : "ghost"}
+        size="sm"
+        className="rounded-none"
+        onClick={() => setActiveView("myday")}
+      >
+        <Sun className="h-4 w-4 mr-2" />
+        Bugün
+      </Button>
       <Button
         type="button"
         variant={activeView === "table" ? "default" : "ghost"}
@@ -31,6 +41,16 @@ const TasksViewToggle = ({ activeView, setActiveView }: TasksViewToggleProps) =>
       >
         <LayoutGrid className="h-4 w-4 mr-2" />
         Kanban
+      </Button>
+      <Button
+        type="button"
+        variant={activeView === "calendar" ? "default" : "ghost"}
+        size="sm"
+        className="rounded-none"
+        onClick={() => setActiveView("calendar")}
+      >
+        <Calendar className="h-4 w-4 mr-2" />
+        Takvim
       </Button>
     </div>
   );

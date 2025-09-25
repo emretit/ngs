@@ -7,6 +7,7 @@ interface UserData {
   full_name: string | null;
   email: string;
   company_id: string | null;
+  employee_id: string | null;
 }
 
 export const useCurrentUser = () => {
@@ -61,7 +62,7 @@ export const useCurrentUser = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, full_name, email, company_id')
+          .select('id, full_name, email, company_id, employee_id')
           .eq('id', user.id)
           .maybeSingle();
 

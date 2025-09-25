@@ -10,6 +10,7 @@ interface UseKanbanTasksProps {
   selectedEmployee?: string | null;
   selectedType?: string | null;
   selectedStatus?: TaskStatus | "all" | null;
+  isMyDay?: boolean;
 }
 
 interface KanbanTasks {
@@ -23,7 +24,8 @@ export const useKanbanTasks = ({
   searchQuery = "",
   selectedEmployee = null,
   selectedType = null,
-  selectedStatus = null
+  selectedStatus = null,
+  isMyDay = false
 }: UseKanbanTasksProps) => {
   const { userData } = useCurrentUser();
   const { getClient } = useAuth();
@@ -77,18 +79,24 @@ export const useKanbanTasks = ({
   useEffect(() => {
     if (!tasks || isLoading) return;
 
-    // Filter tasks based on search query, employee, type, and status
+    // Filter tasks based on search query, employee, type, status, and "My Day"
     const filteredTasks = tasks.filter(task => {
       const matchesSearch = 
         !searchQuery || 
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
+      // My Day filter: show tasks assigned to current user's employee_id
+      let matchesMyDay = true;
+      if (isMyDay && userData?.employee_id) {
+        matchesMyDay = task.assignee_id === userData.employee_id;
+      }
+      
       const matchesEmployee = !selectedEmployee || task.assignee_id === selectedEmployee;
       const matchesType = !selectedType || task.type === selectedType;
       const matchesStatus = !selectedStatus || selectedStatus === "all" || task.status === selectedStatus;
       
-      return matchesSearch && matchesEmployee && matchesType && matchesStatus;
+      return matchesSearch && matchesEmployee && matchesType && matchesStatus && matchesMyDay;
     });
 
     // Group filtered tasks by status
@@ -110,7 +118,7 @@ export const useKanbanTasks = ({
     }
 
     setTasksState(groupedTasks);
-  }, [tasks, searchQuery, selectedEmployee, selectedType, selectedStatus, isLoading]);
+  }, [tasks, searchQuery, selectedEmployee, selectedType, selectedStatus, isLoading, isMyDay, userData?.employee_id]);
 
   return {
     tasks: tasksState,

@@ -12,7 +12,7 @@ import { TaskType } from "@/types/task";
 import { CreateTemplateData } from "@/types/template";
 import TaskRecurrence from "../form/TaskRecurrence";
 import { useState } from "react";
-import { Star } from "lucide-react";
+import { RefreshCw, Star } from "lucide-react";
 
 const templateFormSchema = z.object({
   name: z.string().min(1, "Şablon adı gereklidir"),
@@ -79,7 +79,8 @@ export const TemplateForm = ({ onSubmit, onCancel, initialData }: TemplateFormPr
       description: data.description,
       template_data: {
         ...data.template_data,
-        title: data.template_data.title || "Şablon Görevi"
+        title: data.template_data.title || "Şablon Görevi",
+        type: data.template_data.type || "general"
       },
       is_public: data.is_public,
     });
@@ -166,15 +167,15 @@ export const TemplateForm = ({ onSubmit, onCancel, initialData }: TemplateFormPr
 
             <div className="space-y-2">
               <Label>Tür</Label>
-              <Select
-                value={watch("template_data.type")}
-                onValueChange={(value) => {
-                  const validTypes = ["general", "opportunity", "proposal", "service"] as const;
-                  if (validTypes.includes(value as any)) {
-                    setValue("template_data.type", value as TaskType);
-                  }
-                }}
-              >
+                <Select
+                  value={watch("template_data.type")}
+                  onValueChange={(value: string) => {
+                    const validTypes = ["general", "opportunity", "proposal", "service"] as const;
+                    if (validTypes.includes(value as any)) {
+                      setValue("template_data.type", value as "general" | "opportunity" | "proposal" | "service");
+                    }
+                  }}
+                >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -212,21 +213,49 @@ export const TemplateForm = ({ onSubmit, onCancel, initialData }: TemplateFormPr
 
           {watchedIsRecurring && (
             <div className="border-l-4 border-blue-200 pl-4">
-              <TaskRecurrence
-                value={{
-                  recurrence_type: watch("template_data.recurrence_type") || 'none',
-                  recurrence_interval: watch("template_data.recurrence_interval"),
-                  recurrence_days: watch("template_data.recurrence_days"),
-                  recurrence_day_of_month: watch("template_data.recurrence_day_of_month"),
-                  recurrence_end_date: undefined, // Templates don't have end dates
-                }}
-                onChange={(recurrence) => {
-                  setValue("template_data.recurrence_type", recurrence.recurrence_type);
-                  setValue("template_data.recurrence_interval", recurrence.recurrence_interval);
-                  setValue("template_data.recurrence_days", recurrence.recurrence_days);
-                  setValue("template_data.recurrence_day_of_month", recurrence.recurrence_day_of_month);
-                }}
-              />
+              <div className="space-y-4 p-4 border rounded-lg bg-primary/5">
+                <div className="flex items-center space-x-3">
+                  <RefreshCw className="h-5 w-5 text-primary" />
+                  <Label className="text-base font-medium">Tekrarlama Ayarları</Label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tekrarlama Sıklığı</Label>
+                    <Select 
+                      value={watch("template_data.recurrence_type") || 'none'} 
+                      onValueChange={(value) => setValue("template_data.recurrence_type", value as any)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sıklık seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">🗓️ Günlük</SelectItem>
+                        <SelectItem value="weekly">📅 Haftalık</SelectItem>
+                        <SelectItem value="monthly">📆 Aylık</SelectItem>
+                        <SelectItem value="custom">⚙️ Özel</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {watch("template_data.recurrence_type") === 'custom' && (
+                    <div className="space-y-2">
+                      <Label>Özel Aralık</Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          max="365"
+                          value={watch("template_data.recurrence_interval") || 1}
+                          onChange={(e) => setValue("template_data.recurrence_interval", parseInt(e.target.value) || 1)}
+                          className="w-20"
+                        />
+                        <span className="flex items-center text-sm text-muted-foreground">günde bir</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </CardContent>

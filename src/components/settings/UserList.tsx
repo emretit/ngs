@@ -156,7 +156,11 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
           setIsMatchingDialogOpen(false);
           setSelectedProfile(null);
         }}
-        profile={selectedProfile}
+        profile={selectedProfile ? {
+          ...selectedProfile,
+          email: selectedProfile.email || '',
+          company_id: selectedProfile.company_id || ''
+        } : null}
       />
     </div>
   );

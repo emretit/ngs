@@ -84,7 +84,7 @@ const ProposalFormItems: React.FC<ProposalFormItemsProps> = ({ items, onItemsCha
               <TableHead className="w-[250px]">Ürün/Hizmet</TableHead>
               <TableHead>Adet</TableHead>
               <TableHead>Birim Fiyat</TableHead>
-              <TableHead>Vergi %</TableHead>
+              <TableHead>KDV %</TableHead>
               <TableHead className="text-right">Toplam</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
@@ -132,9 +132,10 @@ const ProposalFormItems: React.FC<ProposalFormItemsProps> = ({ items, onItemsCha
                         type="number"
                         min="0"
                         max="100"
-                        value={item.tax_rate}
+                        value={item.tax_rate || 0}
                         onChange={(e) => updateItem(item.id, "tax_rate", parseFloat(e.target.value))}
                         className="w-20 dark:bg-gray-800 dark:border-gray-700"
+                        placeholder="0"
                       />
                     </TableCell>
                     <TableCell className="text-right font-medium">

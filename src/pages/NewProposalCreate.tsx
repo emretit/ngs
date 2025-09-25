@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CalendarDays, Plus, Trash2, Eye, FileDown, Calculator, Check, ChevronsUpDown, Edit, FileText, Clock } from "lucide-react";
+import { CalendarDays, Plus, Trash, Eye, FileDown, Calculator, Check, ChevronsUpDown, Edit, FileText, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
 import { proposalStatusLabels, proposalStatusColors, ProposalStatus } from "@/types/proposal";
@@ -277,6 +277,8 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         quantity: productData.quantity,
         unit: productData.unit,
         unit_price: productData.unit_price,
+        tax_rate: productData.vat_rate,
+        discount_rate: productData.discount_rate,
         total_price: productData.total_price,
         currency: productData.currency || formData.currency
       };
@@ -291,6 +293,8 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         quantity: productData.quantity,
         unit: productData.unit,
         unit_price: productData.unit_price,
+        tax_rate: productData.vat_rate,
+        discount_rate: productData.discount_rate,
         total_price: productData.total_price,
         currency: productData.currency || formData.currency
       };
@@ -457,15 +461,15 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Customer Information */}
           <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
                   <FileText className="h-4 w-4 text-blue-600" />
                 </div>
                 Müşteri Bilgileri
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 pt-0">
+            <CardContent className="space-y-2 pt-0">
               <div className="grid grid-cols-1 gap-3">
                 <div>
                   <Label htmlFor="customer_company" className="text-sm">Firma Adı *</Label>
@@ -568,7 +572,6 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                   error=""
                 />
                 <div>
-                  <Label htmlFor="prepared_by">Teklifi Hazırlayan</Label>
                   <EmployeeSelector
                     value={formData.prepared_by || ""}
                     onChange={(value) => {
@@ -584,15 +587,15 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
 
           {/* Offer Details */}
           <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
                   <CalendarDays className="h-4 w-4 text-green-600" />
                 </div>
                 Teklif Detayları
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 pt-0">
+            <CardContent className="space-y-2 pt-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <Label htmlFor="offer_date" className="text-sm">Teklif Tarihi</Label>
@@ -691,35 +694,123 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         </div>
 
         {/* Products/Services Table - Full Width */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-          <div className="xl:col-span-3">
-            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-              <CardHeader className="pb-4">
+        <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
                       <Plus className="h-4 w-4 text-purple-600" />
                     </div>
                     Ürün/Hizmet Listesi
                   </CardTitle>
-                  <Button onClick={addItem} size="sm" className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:shadow-sm transition-all duration-200">
+                  <Button onClick={addItem} size="sm" className="gap-2 px-3 py-1.5 rounded-lg hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:shadow-sm transition-all duration-200">
                     <Plus className="h-4 w-4" />
-                    <span className="font-medium">Satır Ekle</span>
+                    <span className="font-medium text-sm">Satır Ekle</span>
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3">
+          <CardContent className="pt-0">
+                {/* Kolon Başlıkları */}
+                <div className="grid grid-cols-12 gap-2 mb-3 px-1">
+                  <div className="col-span-5">
+                    <Label className="text-xs font-medium text-gray-600">Ürün/Hizmet</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">Miktar</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">Birim</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">Birim Fiyat</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">KDV %</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">İndirim</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">Toplam</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">İşlemler</Label>
+                  </div>
+                </div>
+
+                {/* Veri Satırları */}
+                <div className="space-y-2">
                   {items.map((item, index) => (
-                    <div key={item.id} className="border rounded-lg p-3 bg-gray-50/50">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-sm text-gray-600">
-                          Satır {item.row_number}
-                        </span>
-                        <div className="flex gap-1">
+                    <div key={item.id} className="border rounded-lg p-1.5 bg-gray-50/50">
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        {/* Ürün/Hizmet */}
+                        <div className="col-span-5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-xs text-gray-600 min-w-[20px]">{item.row_number}.</span>
+                            <ProductSelector
+                              value={item.description || ''}
+                              onChange={(productName) => {
+                                handleItemChange(index, 'description', productName);
+                              }}
+                              onProductSelect={(product) => handleProductModalSelect(product, index)}
+                              placeholder="Ürün seçin..."
+                              className="flex-1 max-w-full"
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Miktar */}
+                        <div className="col-span-1">
+                          <Input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                            min="1"
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        
+                        {/* Birim */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
+                            {item.unit || 'adet'}
+                          </div>
+                        </div>
+                        
+                        {/* Birim Fiyat */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs">
+                            {formatCurrency(item.unit_price, item.currency || 'TRY')}
+                          </div>
+                        </div>
+                        
+                        {/* KDV % */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
+                            {item.tax_rate ? `%${item.tax_rate}` : '-'}
+                          </div>
+                        </div>
+                        
+                        {/* İndirim */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
+                            {item.discount_rate && item.discount_rate > 0 ? `%${item.discount_rate}` : '-'}
+                          </div>
+                        </div>
+                        
+                        {/* Toplam */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs">
+                            {formatCurrency(item.total_price, item.currency || 'TRY')}
+                          </div>
+                        </div>
+                        
+                        {/* Düzenle ve Sil Butonları */}
+                        <div className="col-span-1 flex gap-1 justify-center">
                           <Button
+                            type="button"
                             variant="ghost"
-                            size="sm"
+                            size="icon"
                             onClick={() => {
                               const existingData = {
                                 name: item.name,
@@ -737,111 +828,83 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                               setEditingItemData(existingData);
                               setProductModalOpen(true);
                             }}
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                            className="h-6 w-6 p-0"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3 w-3" />
                           </Button>
                           {items.length > 1 && (
                             <Button
+                              type="button"
                               variant="ghost"
-                              size="sm"
+                              size="icon"
                               onClick={() => removeItem(index)}
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash className="h-3 w-3" />
                             </Button>
                           )}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
-                        <div className="md:col-span-6">
-                          <Label className="text-sm">Ürün/Hizmet *</Label>
-                          <ProductSelector
-                            value={item.description || ''}
-                            onChange={(productName) => {
-                              handleItemChange(index, 'description', productName);
-                            }}
-                            onProductSelect={(product) => handleProductModalSelect(product, index)}
-                            placeholder="Ürün seçin..."
-                            className="mt-1"
-                          />
-                        </div>
-                        <div className="md:col-span-1">
-                          <Label className="text-sm">Miktar</Label>
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                            min="1"
-                            className="mt-1"
-                          />
-                        </div>
-                        <div className="md:col-span-1">
-                          <Label className="text-sm">Birim</Label>
-                          <div className="mt-1 p-2 bg-gray-100 rounded text-center font-medium text-sm">
-                            {item.unit || 'adet'}
-                          </div>
-                        </div>
-                        <div className="md:col-span-2">
-                          <Label className="text-sm">Birim Fiyat</Label>
-                           <div className="mt-1 p-2 bg-gray-100 rounded text-right font-medium text-sm">
-                             {formatCurrency(item.unit_price, item.currency || 'TRY')}
-                           </div>
-                         </div>
-                         <div className="md:col-span-1">
-                           <Label className="text-sm">İndirim</Label>
-                           <div className="mt-1 p-2 bg-gray-100 rounded text-center font-medium text-sm">
-                             {item.discount_rate && item.discount_rate > 0 ? `%${item.discount_rate}` : '-'}
-                           </div>
-                         </div>
-                         <div className="md:col-span-1">
-                           <Label className="text-sm">Toplam</Label>
-                           <div className="mt-1 p-2 bg-gray-100 rounded text-right font-medium text-sm">
-                             {formatCurrency(item.total_price, item.currency || 'TRY')}
-                           </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Financial Summary - Right Side */}
-          <div className="xl:col-span-1">
-            <Card className="sticky top-6 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-orange-50 to-orange-50/50 border border-orange-200/50">
-                    <Calculator className="h-4 w-4 text-orange-600" />
-                  </div>
-                  Finansal Özet
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 pt-0">
+        {/* Terms and Financial Summary - Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Terms & Conditions */}
+          <Card className="lg:col-span-2 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-50/50 border border-indigo-200/50">
+                  <Check className="h-4 w-4 text-indigo-600" />
+                </div>
+                Şartlar ve Koşullar
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <ProposalFormTerms
+                paymentTerms={formData.payment_terms}
+                deliveryTerms={formData.delivery_terms}
+                warrantyTerms={formData.warranty_terms}
+                priceTerms={formData.price_terms}
+                otherTerms={formData.other_terms}
+                onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Financial Summary */}
+          <Card className="lg:col-span-1 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Calculator className="h-4 w-4" />
+                Finansal Özet
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 pt-0">
                 {/* Always use multi-currency display to show actual currencies used */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {Object.entries(calculationsByCurrency).map(([currency, totals]) => (
-                    <div key={currency} className="border rounded-lg p-3 space-y-2">
-                      <div className="font-medium text-sm text-center mb-2 text-primary">
+                    <div key={currency} className="space-y-1">
+                      <div className="text-right text-sm font-medium text-primary mb-2">
                         {Object.keys(calculationsByCurrency).length > 1 ? `${currency} Toplamları` : "Finansal Toplam"}
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                      <div className="space-y-1 text-right">
+                        <div className="flex justify-between text-xs">
                           <span className="text-gray-600">Brüt Toplam:</span>
                           <span className="font-medium">{formatCurrency(totals.gross, currency)}</span>
                         </div>
                         
                         {/* Global Discount Controls */}
-                        <div className="border-t pt-2 space-y-2">
-                          <div className="font-medium text-xs text-center text-muted-foreground">
+                        <div className="border-t pt-1 space-y-1">
+                          <div className="text-xs text-center text-muted-foreground mb-1">
                             Genel İndirim
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <Select value={globalDiscountType} onValueChange={(value: 'percentage' | 'amount') => setGlobalDiscountType(value)}>
-                              <SelectTrigger className="w-20 h-8 text-xs">
+                              <SelectTrigger className="w-16 h-6 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -857,33 +920,33 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                               placeholder="0"
                               min="0"
                               step={globalDiscountType === 'percentage' ? '0.1' : '0.01'}
-                              className="flex-1 h-8 text-xs"
+                              className="flex-1 h-6 text-xs"
                             />
                           </div>
                         </div>
                         
                         {totals.discount > 0 && (
-                          <div className="flex justify-between text-red-600 text-sm">
+                          <div className="flex justify-between text-red-600 text-xs">
                             <span>İndirim:</span>
                             <span>-{formatCurrency(totals.discount, currency)}</span>
                           </div>
                         )}
                         
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-xs">
                           <span className="text-gray-600">Net Toplam:</span>
                           <span className="font-medium">{formatCurrency(totals.net, currency)}</span>
                         </div>
                         
                         {totals.vat > 0 && (
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">KDV:</span>
                             <span className="font-medium">{formatCurrency(totals.vat, currency)}</span>
                           </div>
                         )}
                         
-                        <Separator />
+                        <Separator className="my-1" />
                         
-                        <div className="flex justify-between font-bold">
+                        <div className="flex justify-between font-bold text-sm">
                           <span>GENEL TOPLAM:</span>
                           <span className="text-green-600">{formatCurrency(totals.grand, currency)}</span>
                         </div>
@@ -891,32 +954,9 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Terms & Conditions - Full Width */}
-        <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-50/50 border border-indigo-200/50">
-                <Check className="h-4 w-4 text-indigo-600" />
-              </div>
-              Şartlar ve Koşullar
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ProposalFormTerms
-              paymentTerms={formData.payment_terms}
-              deliveryTerms={formData.delivery_terms}
-              warrantyTerms={formData.warranty_terms}
-              priceTerms={formData.price_terms}
-              otherTerms={formData.other_terms}
-              onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
-            />
-          </CardContent>
-        </Card>
 
         {/* Product Details Modal */}
         <ProductDetailsModal

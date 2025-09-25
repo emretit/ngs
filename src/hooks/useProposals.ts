@@ -6,37 +6,18 @@ import { Proposal, ProposalStatus } from "@/types/proposal";
 import { ProposalFilters } from "@/components/proposals/types";
 import { useCurrentUser } from "./useCurrentUser";
 import { useInfiniteScroll } from "./useInfiniteScroll";
+import { parseProposalData } from "@/services/proposal/helpers/dataParser";
 
 // Helper function to map database results to Proposal type
 const mapProposalData = (item: any): Proposal => {
+  // Use parseProposalData to handle JSON parsing
+  const parsedData = parseProposalData(item);
+  if (!parsedData) {
+    throw new Error("Failed to parse proposal data");
+  }
+  
   return {
-    id: item.id,
-    number: item.number,
-    title: item.title,
-    description: item.description,
-    customer_id: item.customer_id,
-    opportunity_id: item.opportunity_id,
-    employee_id: item.employee_id,
-    status: item.status as ProposalStatus,
-    total_amount: item.total_amount || 0,
-    created_at: item.created_at,
-    updated_at: item.updated_at,
-    valid_until: item.valid_until,
-    items: Array.isArray(item.items) ? item.items : [],
-    attachments: Array.isArray(item.attachments) ? item.attachments : [],
-    currency: item.currency || "TRY",
-    terms: item.terms,
-    notes: item.notes,
-    
-    // Backward compatibility fields
-    total_value: item.total_amount || 0,
-    proposal_number: item.number,
-    payment_terms: item.payment_terms || "",
-    delivery_terms: item.delivery_terms || "",
-    internal_notes: item.internal_notes || "",
-    discounts: item.discounts || 0,
-    additional_charges: item.additional_charges || 0,
-    
+    ...parsedData,
     // Include relations
     customer: item.customer,
     employee: item.employee,

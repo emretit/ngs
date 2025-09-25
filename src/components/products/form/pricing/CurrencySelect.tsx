@@ -8,19 +8,8 @@ import {
 } from "@/components/ui/form";
 import { UseFormReturn, useWatch } from "react-hook-form";
 import { ProductFormSchema } from "../ProductFormSchema";
-import { Badge } from "@/components/ui/badge";
-import { 
-  getCurrentExchangeRates, 
-  formatExchangeRate 
-} from "@/components/proposals/form/items/utils/currencyUtils";
 import { useEffect } from "react";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
-} from "@/components/ui/tooltip";
+import { getCurrentExchangeRates } from "@/components/proposals/form/items/utils/currencyUtils";
 import CurrencyDropdown from "@/components/shared/CurrencyDropdown";
 
 interface CurrencySelectProps {
@@ -60,18 +49,6 @@ const CurrencySelect = ({ form }: CurrencySelectProps) => {
           <FormItem>
             <div className="flex items-center gap-2">
               <FormLabel>Para Birimi</FormLabel>
-              {field.value && field.value !== "TRY" && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <AlertCircle className="h-4 w-4 text-amber-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">Farklı para birimi seçildiğinde, döviz kuru otomatik olarak uygulanır</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
             </div>
             <FormControl>
               <CurrencyDropdown
@@ -85,14 +62,6 @@ const CurrencySelect = ({ form }: CurrencySelectProps) => {
         )}
       />
       
-      {selectedCurrency && selectedCurrency !== "TRY" && (
-        <div className="flex items-center mt-1 text-sm">
-          <RefreshCw className="h-3 w-3 mr-1 text-muted-foreground" />
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-normal">
-            {formatExchangeRate(selectedCurrency, "TRY", getCurrentExchangeRates()[selectedCurrency])}
-          </Badge>
-        </div>
-      )}
     </div>
   );
 };

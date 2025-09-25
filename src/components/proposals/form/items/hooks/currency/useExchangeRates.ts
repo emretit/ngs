@@ -1,39 +1,20 @@
 
-import { useState, useEffect } from "react";
-import { fetchTCMBExchangeRates } from "../../utils/currencyUtils";
-import { ExchangeRates } from "../../types/currencyTypes";
+import { useExchangeRates as useDashboardExchangeRates } from "@/hooks/useExchangeRates";
 
 export const useExchangeRates = () => {
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({
+  const dashboardRates = useDashboardExchangeRates();
+  
+  // Convert dashboard format to proposal format
+  const exchangeRates = {
     TRY: 1,
-    USD: 32.5,
-    EUR: 35.2,
-    GBP: 41.3
-  });
-  const [isLoadingRates, setIsLoadingRates] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const getExchangeRates = async () => {
-      setIsLoadingRates(true);
-      try {
-        const rates = await fetchTCMBExchangeRates();
-        setExchangeRates(rates);
-        console.log("Exchange rates loaded:", rates);
-      } catch (error) {
-        console.error("Error fetching exchange rates:", error);
-        setError(error instanceof Error ? error : new Error('Unknown error fetching exchange rates'));
-      } finally {
-        setIsLoadingRates(false);
-      }
-    };
-
-    getExchangeRates();
-  }, []);
+    USD: dashboardRates.exchangeRates.find(rate => rate.currency_code === 'USD')?.forex_selling || 32.5,
+    EUR: dashboardRates.exchangeRates.find(rate => rate.currency_code === 'EUR')?.forex_selling || 35.2,
+    GBP: dashboardRates.exchangeRates.find(rate => rate.currency_code === 'GBP')?.forex_selling || 41.3
+  };
 
   return {
     exchangeRates,
-    isLoadingRates,
-    error
+    isLoadingRates: dashboardRates.loading,
+    error: dashboardRates.error
   };
 };

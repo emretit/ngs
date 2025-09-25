@@ -17,71 +17,16 @@ export const formatCurrencyValue = (amount: number, currency: string = "TRY"): s
   return formatter.format(amount);
 };
 
-// Fetch exchange rates from the database with better error handling
+// This function is deprecated - use useExchangeRates hook from dashboard instead
 export const fetchTCMBExchangeRates = async (): Promise<ExchangeRates> => {
-  try {
-    // First try to get from the database
-    const { data, error } = await supabase
-      .from('exchange_rates')
-      .select('*')
-      .order('update_date', { ascending: false });
-    
-    if (error) {
-      console.error("Database error:", error);
-      throw new Error(`Database error: ${error.message}`);
-    }
-    
-    if (data && data.length > 0) {
-      // Transform the data into the expected format
-      const rates: ExchangeRates = { TRY: 1 };
-      const updateDate = data[0].update_date;
-      
-      data.forEach(rate => {
-        if (rate.currency_code && rate.forex_buying) {
-          rates[rate.currency_code] = rate.forex_buying;
-        }
-      });
-      
-      console.log(`Exchange rates fetched (${updateDate}):`, rates);
-      return rates;
-    }
-    
-    // If no data in database, try the edge function
-    console.log("No rates in database, trying edge function");
-    const { data: functionData, error: functionError } = await supabase.functions.invoke('exchange-rates', {
-      method: 'GET'
-    });
-    
-    if (functionError) {
-      console.error("Function error:", functionError);
-      throw new Error(`Function error: ${functionError.message}`);
-    }
-    
-    if (functionData && functionData.data) {
-      // Transform the function data into the expected format
-      const rates: ExchangeRates = { TRY: 1 };
-      functionData.data.forEach((rate: any) => {
-        if (rate.currency_code && rate.forex_buying) {
-          rates[rate.currency_code] = rate.forex_buying;
-        }
-      });
-      
-      console.log("Function Exchange rates fetched:", rates);
-      return rates;
-    }
-    
-    console.warn("No exchange rate data available, using fallback rates");
-    throw new Error('No exchange rate data available');
-  } catch (error) {
-    console.error("Error fetching exchange rates:", error);
-    // Return fallback exchange rates if API call fails
-    return {
-      TRY: 1,
-      USD: 32.5,
-      EUR: 35.2,
-      GBP: 41.3
-    };
-  }
+  console.warn("fetchTCMBExchangeRates is deprecated. Use useExchangeRates hook from dashboard instead.");
+  // Return fallback rates as last resort
+  return {
+    TRY: 1,
+    USD: 32.5,
+    EUR: 35.2,
+    GBP: 41.3
+  };
 };
 
 // Convert an amount from one currency to another

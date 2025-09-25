@@ -29,31 +29,31 @@ const fallbackRates: ExchangeRate[] = [
   {
     id: "fallback-usd",
     currency_code: "USD",
-    forex_buying: 32.5,
-    forex_selling: 32.7,
-    banknote_buying: 32.4,
-    banknote_selling: 32.8,
+    forex_buying: 41.395,
+    forex_selling: 41.4695,
+    banknote_buying: 41.366,
+    banknote_selling: 41.5317,
     cross_rate: 1,
     update_date: new Date().toISOString().split('T')[0]
   },
   {
     id: "fallback-eur",
     currency_code: "EUR",
-    forex_buying: 35.2,
-    forex_selling: 35.4,
-    banknote_buying: 35.1,
-    banknote_selling: 35.5,
-    cross_rate: 1.08,
+    forex_buying: 48.607,
+    forex_selling: 48.6946,
+    banknote_buying: 48.573,
+    banknote_selling: 48.7676,
+    cross_rate: 1.17,
     update_date: new Date().toISOString().split('T')[0]
   },
   {
     id: "fallback-gbp",
     currency_code: "GBP",
-    forex_buying: 41.3,
-    forex_selling: 41.5,
-    banknote_buying: 41.2,
-    banknote_selling: 41.6,
-    cross_rate: 1.27,
+    forex_buying: 55.5629,
+    forex_selling: 55.8526,
+    banknote_buying: 55.524,
+    banknote_selling: 55.9363,
+    cross_rate: 1.35,
     update_date: new Date().toISOString().split('T')[0]
   }
 ];

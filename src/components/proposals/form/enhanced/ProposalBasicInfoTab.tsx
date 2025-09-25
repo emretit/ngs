@@ -183,13 +183,10 @@ const ProposalBasicInfoTab: React.FC<ProposalBasicInfoTabProps> = ({
               </div>
 
               {/* Employee Selection */}
-              <div className="space-y-2">
-                <Label>Sorumlu Çalışan</Label>
-                <EmployeeSelector
-                  value={formData.employee_id}
-                  onChange={(value) => onFieldChange("employee_id", value)}
-                />
-              </div>
+              <EmployeeSelector
+                value={formData.employee_id}
+                onChange={(value) => onFieldChange("employee_id", value)}
+              />
 
               {/* Valid Until Date */}
               <div className="space-y-2">

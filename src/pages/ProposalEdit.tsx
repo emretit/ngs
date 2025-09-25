@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download } from "lucide-react";
+import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
 import { useProposalEdit } from "@/hooks/useProposalEdit";
@@ -335,6 +335,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         quantity: productData.quantity,
         unit: productData.unit,
         unit_price: productData.unit_price,
+        tax_rate: productData.vat_rate,
+        discount_rate: productData.discount_rate,
         total_price: productData.total_price,
         currency: productData.currency || formData.currency
       };
@@ -349,6 +351,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         quantity: productData.quantity,
         unit: productData.unit,
         unit_price: productData.unit_price,
+        tax_rate: productData.vat_rate,
+        discount_rate: productData.discount_rate,
         total_price: productData.total_price,
         currency: productData.currency || formData.currency
       };
@@ -676,7 +680,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" className="bg-red-600 hover:bg-red-700 text-white" size="sm">
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash className="h-4 w-4 mr-2" />
                 Sil
               </Button>
             </AlertDialogTrigger>
@@ -705,10 +709,10 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {/* Customer Information */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Müşteri Bilgileri</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Müşteri Bilgileri</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 pt-0">
+            <CardContent className="space-y-2 pt-0">
               <div className="grid grid-cols-1 gap-3">
                 <div>
                   <Label htmlFor="customer_company" className="text-sm">Firma Adı *</Label>
@@ -821,7 +825,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                   error=""
                 />
                 <div>
-                  <Label htmlFor="prepared_by">Teklifi Hazırlayan</Label>
                   <EmployeeSelector
                     value={formData.prepared_by || ""}
                     onChange={(value) => {
@@ -939,30 +942,118 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         </div>
 
         {/* Products/Services Table - Full Width */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-          <div className="xl:col-span-3">
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold">Ürün/Hizmet Listesi</CardTitle>
-                  <Button onClick={addItem} size="sm" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Satır Ekle
-                  </Button>
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold">Ürün/Hizmet Listesi</CardTitle>
+              <Button onClick={addItem} size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Satır Ekle
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+                {/* Kolon Başlıkları */}
+                <div className="grid grid-cols-12 gap-2 mb-3 px-1">
+                  <div className="col-span-5">
+                    <Label className="text-xs font-medium text-gray-600">Ürün/Hizmet</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">Miktar</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">Birim</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">Birim Fiyat</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">KDV %</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">İndirim</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">Toplam</Label>
+                  </div>
+                  <div className="col-span-1">
+                    <Label className="text-xs font-medium text-gray-600">İşlemler</Label>
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3">
+
+                {/* Veri Satırları */}
+                <div className="space-y-2">
                   {items.map((item, index) => (
-                    <div key={item.id} className="border rounded-lg p-3 bg-gray-50/50">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-sm text-gray-600">
-                          Satır {item.row_number}
-                        </span>
-                        <div className="flex gap-1">
+                    <div key={item.id} className="border rounded-lg p-1.5 bg-gray-50/50">
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        {/* Ürün/Hizmet */}
+                        <div className="col-span-5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-xs text-gray-600 min-w-[20px]">{item.row_number}.</span>
+                            <ProductSelector
+                              value={item.description || ''}
+                              onChange={(productName) => {
+                                handleItemChange(index, 'description', productName);
+                              }}
+                              onProductSelect={(product) => handleProductModalSelect(product, index)}
+                              placeholder="Ürün seçin..."
+                              className="flex-1 max-w-full"
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Miktar */}
+                        <div className="col-span-1">
+                          <Input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                            min="1"
+                            className="h-8 text-xs"
+                          />
+                        </div>
+                        
+                        {/* Birim */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
+                            {item.unit || 'adet'}
+                          </div>
+                        </div>
+                        
+                        {/* Birim Fiyat */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs">
+                            {formatCurrency(item.unit_price, item.currency || 'TRY')}
+                          </div>
+                        </div>
+                        
+                        {/* KDV % */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
+                            {item.tax_rate ? `%${item.tax_rate}` : '-'}
+                          </div>
+                        </div>
+                        
+                        {/* İndirim */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
+                            {item.discount_rate && item.discount_rate > 0 ? `%${item.discount_rate}` : '-'}
+                          </div>
+                        </div>
+                        
+                        {/* Toplam */}
+                        <div className="col-span-1">
+                          <div className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs">
+                            {formatCurrency(item.total_price, item.currency || 'TRY')}
+                          </div>
+                        </div>
+                        
+                        {/* Düzenle ve Sil Butonları */}
+                        <div className="col-span-1 flex gap-1 justify-center">
                           <Button
+                            type="button"
                             variant="ghost"
-                            size="sm"
+                            size="icon"
                             onClick={() => {
                               const existingData = {
                                 name: item.name,
@@ -980,101 +1071,79 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                               setEditingItemData(existingData);
                               setProductModalOpen(true);
                             }}
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                            className="h-6 w-6 p-0"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3 w-3" />
                           </Button>
                           {items.length > 1 && (
                             <Button
+                              type="button"
                               variant="ghost"
-                              size="sm"
+                              size="icon"
                               onClick={() => removeItem(index)}
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash className="h-3 w-3" />
                             </Button>
                           )}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
-                        <div className="md:col-span-7">
-                          <Label className="text-sm">Ürün/Hizmet *</Label>
-                          <ProductSelector
-                            value={item.description || ''}
-                            onChange={(productName) => {
-                              handleItemChange(index, 'description', productName);
-                            }}
-                            onProductSelect={(product) => handleProductModalSelect(product, index)}
-                            placeholder="Ürün seçin..."
-                            className="mt-1"
-                          />
-                        </div>
-                        <div className="md:col-span-1">
-                          <Label className="text-sm">Miktar</Label>
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                            min="1"
-                            className="mt-1"
-                          />
-                        </div>
-                        <div className="md:col-span-1">
-                          <Label className="text-sm">Birim</Label>
-                          <div className="mt-1 p-2 bg-gray-100 rounded text-left font-medium text-sm">
-                            {item.unit || 'adet'}
-                          </div>
-                        </div>
-                        <div className="md:col-span-2">
-                          <Label className="text-sm">Birim Fiyat</Label>
-                           <div className="mt-1 p-2 bg-gray-100 rounded text-right font-medium text-sm">
-                             {formatCurrency(item.unit_price, item.currency || 'TRY')}
-                           </div>
-                         </div>
-                         <div className="md:col-span-1">
-                           <Label className="text-sm">Toplam</Label>
-                           <div className="mt-1 p-2 bg-gray-100 rounded text-right font-medium text-sm">
-                             {formatCurrency(item.total_price, item.currency || 'TRY')}
-                           </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Financial Summary - Right Side */}
-          <div className="xl:col-span-1">
-            <Card className="sticky top-6">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Calculator className="h-4 w-4" />
-                  Finansal Özet
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 pt-0">
+        {/* Terms and Financial Summary - Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Terms & Conditions */}
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Check className="h-4 w-4" />
+                Şartlar ve Koşullar
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <ProposalFormTerms
+                paymentTerms={formData.payment_terms}
+                deliveryTerms={formData.delivery_terms}
+                warrantyTerms={formData.warranty_terms}
+                priceTerms={formData.price_terms}
+                otherTerms={formData.other_terms}
+                onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Financial Summary */}
+          <Card className="lg:col-span-1">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Calculator className="h-4 w-4" />
+                Finansal Özet
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 pt-0">
                 {/* Multi-currency display */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {Object.entries(calculationsByCurrency).map(([currency, totals]) => (
-                    <div key={currency} className="border rounded-lg p-3 space-y-2">
-                      <div className="font-medium text-sm text-center mb-2 text-primary">
+                    <div key={currency} className="space-y-1">
+                      <div className="text-right text-sm font-medium text-primary mb-2">
                         {Object.keys(calculationsByCurrency).length > 1 ? `${currency} Toplamları` : "Finansal Toplam"}
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                      <div className="space-y-1 text-right">
+                        <div className="flex justify-between text-xs">
                           <span className="text-gray-600">Brüt Toplam:</span>
                           <span className="font-medium">{formatCurrency(totals.gross, currency)}</span>
                         </div>
                         
                         {/* VAT Percentage Control */}
-                        <div className="border-t pt-2 space-y-2">
-                          <div className="font-medium text-xs text-center text-muted-foreground">
+                        <div className="border-t pt-1 space-y-1">
+                          <div className="text-xs text-center text-muted-foreground mb-1">
                             KDV Oranı
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <Input
                               type="number"
                               value={formData.vat_percentage}
@@ -1085,7 +1154,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                               min="0"
                               max="100"
                               step="0.1"
-                              className="flex-1 h-8 text-xs"
+                              className="flex-1 h-6 text-xs"
                             />
                             <div className="px-2 py-1 bg-muted text-xs flex items-center">
                               %
@@ -1094,16 +1163,16 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                         </div>
 
                         {/* Global Discount Controls */}
-                        <div className="border-t pt-2 space-y-2">
-                          <div className="font-medium text-xs text-center text-muted-foreground">
+                        <div className="border-t pt-1 space-y-1">
+                          <div className="text-xs text-center text-muted-foreground mb-1">
                             Genel İndirim
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <Select value={globalDiscountType} onValueChange={(value: 'percentage' | 'amount') => {
                               setGlobalDiscountType(value);
                               setHasChanges(true);
                             }}>
-                              <SelectTrigger className="w-20 h-8 text-xs">
+                              <SelectTrigger className="w-16 h-6 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1122,33 +1191,33 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                               placeholder="0"
                               min="0"
                               step={globalDiscountType === 'percentage' ? '0.1' : '0.01'}
-                              className="flex-1 h-8 text-xs"
+                              className="flex-1 h-6 text-xs"
                             />
                           </div>
                         </div>
                         
                         {totals.discount > 0 && (
-                          <div className="flex justify-between text-red-600 text-sm">
+                          <div className="flex justify-between text-red-600 text-xs">
                             <span>İndirim:</span>
                             <span>-{formatCurrency(totals.discount, currency)}</span>
                           </div>
                         )}
                         
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between text-xs">
                           <span className="text-gray-600">Net Toplam:</span>
                           <span className="font-medium">{formatCurrency(totals.net, currency)}</span>
                         </div>
                         
                         {totals.vat > 0 && (
-                          <div className="flex justify-between text-sm">
+                          <div className="flex justify-between text-xs">
                             <span className="text-gray-600">KDV:</span>
                             <span className="font-medium">{formatCurrency(totals.vat, currency)}</span>
                           </div>
                         )}
                         
-                        <Separator />
+                        <Separator className="my-1" />
                         
-                        <div className="flex justify-between font-bold">
+                        <div className="flex justify-between font-bold text-sm">
                           <span>GENEL TOPLAM:</span>
                           <span className="text-green-600">{formatCurrency(totals.grand, currency)}</span>
                         </div>
@@ -1156,24 +1225,9 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Terms & Conditions - Full Width */}
-        <Card>
-          <CardContent className="p-4">
-            <ProposalFormTerms
-              paymentTerms={formData.payment_terms}
-              deliveryTerms={formData.delivery_terms}
-              warrantyTerms={formData.warranty_terms}
-              priceTerms={formData.price_terms}
-              otherTerms={formData.other_terms}
-              onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
-            />
-          </CardContent>
-        </Card>
 
         {/* Product Details Modal */}
         <ProductDetailsModal

@@ -64,14 +64,26 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between",
+            "w-full justify-between min-w-0 text-xs h-8 bg-background border-border hover:border-primary hover:bg-background transition-colors duration-200 focus:border-primary focus:ring-0",
             !value && "text-muted-foreground",
             className
           )}
+          style={{
+            borderColor: 'hsl(var(--border))',
+            backgroundColor: 'hsl(var(--background))'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'hsl(var(--primary))';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'hsl(var(--border))';
+          }}
           disabled={isLoading}
         >
-          <span className="truncate text-left flex-1">{value || placeholder}</span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <span className="truncate text-left flex-1 min-w-0 text-xs" title={value || placeholder}>
+            {value || <span className="text-muted-foreground">{placeholder}</span>}
+          </span>
+          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[500px] p-0" align="start">

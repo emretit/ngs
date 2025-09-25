@@ -12,7 +12,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import ExchangeRateInfo from "./ExchangeRateInfo";
 import { getCurrentExchangeRates } from "@/components/proposals/form/items/utils/currencyUtils";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -231,9 +230,6 @@ const ProductPricing = ({
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
               <span className="text-sm text-gray-500">Para Birimi</span>
-              {!isEditing && currency !== "TRY" && (
-                <ExchangeRateInfo currency={currency} />
-              )}
             </div>
             {isEditing ? (
               <div className="flex flex-col items-end">
@@ -252,9 +248,6 @@ const ProductPricing = ({
                     ))}
                   </SelectContent>
                 </Select>
-                {editValues.currency !== "TRY" && (
-                  <ExchangeRateInfo currency={editValues.currency} />
-                )}
               </div>
             ) : (
               <div className="flex items-center gap-2">

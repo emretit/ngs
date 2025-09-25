@@ -30,7 +30,8 @@ const TaskSubtaskList = ({ subtasks, onChange }: TaskSubtaskListProps) => {
       id: crypto.randomUUID(),
       title: newSubtask.trim(),
       completed: false,
-      task_id: ""
+      task_id: "",
+      created_at: new Date().toISOString()
     };
     
     onChange([...subtasks, newSubtaskItem]);

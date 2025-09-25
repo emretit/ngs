@@ -158,7 +158,7 @@ export const EmployeeMatchingDialog = ({
               <h3 className="font-medium text-sm text-gray-700 mb-2">Kullanıcı Bilgileri</h3>
               <div className="flex items-center space-x-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={profile.avatar_url} />
+                  <AvatarImage src={profile.full_name ? undefined : undefined} />
                   <AvatarFallback>
                     {profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase()}
                   </AvatarFallback>

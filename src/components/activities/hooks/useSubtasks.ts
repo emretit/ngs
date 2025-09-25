@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { SubTask } from "@/types/task";
 
-export const useSubtasks = (initialSubtasks: SubTask[] = []) => {
-  const [subtasks, setSubtasks] = useState<SubTask[]>(initialSubtasks);
+export const useSubtasks = (taskId: string) => {
   const [newSubtask, setNewSubtask] = useState("");
+  const [subtasks, setSubtasks] = useState<SubTask[]>([]);
 
   const handleAddSubtask = () => {
     if (!newSubtask.trim()) return;
@@ -14,7 +13,8 @@ export const useSubtasks = (initialSubtasks: SubTask[] = []) => {
       id: uuidv4(),
       title: newSubtask.trim(),
       completed: false,
-      task_id: ""
+      task_id: taskId,
+      created_at: new Date().toISOString()
     };
     
     setSubtasks(prev => [...prev, newSubtaskItem]);
@@ -35,11 +35,11 @@ export const useSubtasks = (initialSubtasks: SubTask[] = []) => {
 
   return {
     subtasks,
-    setSubtasks,
     newSubtask,
     setNewSubtask,
     handleAddSubtask,
     handleToggleSubtask,
-    handleDeleteSubtask
+    handleDeleteSubtask,
+    setSubtasks
   };
 };

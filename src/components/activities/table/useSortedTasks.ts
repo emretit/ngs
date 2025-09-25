@@ -21,11 +21,6 @@ export const useSortedTasks = (
           valueA = a.due_date ? new Date(a.due_date).getTime() : Number.MAX_SAFE_INTEGER;
           valueB = b.due_date ? new Date(b.due_date).getTime() : Number.MAX_SAFE_INTEGER;
           break;
-        case "priority":
-          const priorityOrder = { high: 0, medium: 1, low: 2 };
-          valueA = priorityOrder[a.priority as keyof typeof priorityOrder];
-          valueB = priorityOrder[b.priority as keyof typeof priorityOrder];
-          break;
         case "status":
           valueA = a.status;
           valueB = b.status;

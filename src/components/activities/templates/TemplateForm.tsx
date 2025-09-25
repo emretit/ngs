@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskType } from "@/types/task";
 import { CreateTemplateData } from "@/types/template";
-import { TaskRecurrence } from "../form/TaskRecurrence";
+import TaskRecurrence from "../form/TaskRecurrence";
 import { useState } from "react";
 import { Star } from "lucide-react";
 
@@ -77,7 +77,10 @@ export const TemplateForm = ({ onSubmit, onCancel, initialData }: TemplateFormPr
     onSubmit({
       name: data.name,
       description: data.description,
-      template_data: data.template_data,
+      template_data: {
+        ...data.template_data,
+        title: data.template_data.title || "Şablon Görevi"
+      },
       is_public: data.is_public,
     });
   };
@@ -165,7 +168,12 @@ export const TemplateForm = ({ onSubmit, onCancel, initialData }: TemplateFormPr
               <Label>Tür</Label>
               <Select
                 value={watch("template_data.type")}
-                onValueChange={(value) => setValue("template_data.type", value as TaskType)}
+                onValueChange={(value) => {
+                  const validTypes = ["general", "opportunity", "proposal", "service"] as const;
+                  if (validTypes.includes(value as any)) {
+                    setValue("template_data.type", value as TaskType);
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />

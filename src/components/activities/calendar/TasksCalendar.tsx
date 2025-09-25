@@ -107,7 +107,6 @@ const TasksCalendar = ({
           task: task,
           status: task.status,
           assignee: task.assignee,
-          priority: task.priority,
           color: statusColors[task.status as TaskStatus] || statusColors.todo
         }
       }));

@@ -67,10 +67,10 @@ const TaskCard = ({ task, index, onEdit, onSelect, onDelete }: TaskCardProps) =>
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center space-x-1 flex-1 mr-2">
                   {task.is_important && (
-                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 flex-shrink-0" title="Önemli görev" />
+                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                   )}
                   {task.is_recurring && (
-                    <RefreshCw className="h-3 w-3 text-blue-500 flex-shrink-0" title="Tekrar eden görev" />
+                    <RefreshCw className="h-3 w-3 text-blue-500 flex-shrink-0" />
                   )}
                   <h4 className="font-medium text-sm text-gray-900 line-clamp-2">
                     {shortenText(task.title, (task.is_important ? 2 : 0) + (task.is_recurring ? 2 : 0) + 26)}

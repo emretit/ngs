@@ -1,14 +1,17 @@
 export type TaskStatus = "todo" | "in_progress" | "completed" | "postponed";
-export type TaskType = "general" | "opportunity" | "proposal" | "service";
+export type TaskType = "general" | "opportunity" | "proposal" | "service" | "call" | "meeting" | "follow_up" | "reminder" | "email";
+export type TaskPriority = "low" | "medium" | "high";
 
 export interface Task {
   id: string;
   title: string;
   description?: string;
   status: TaskStatus;
+  priority?: TaskPriority;
   is_important?: boolean;
   type: TaskType;
   assignee_id?: string;
+  assigned_to?: string; // For compatibility with some older code
   assignee?: {
     id: string;
     first_name: string;
@@ -22,6 +25,7 @@ export interface Task {
   related_item_id?: string;
   related_item_type?: string;
   related_item_title?: string;
+  subtasks?: SubTask[];
 
   // Recurring task fields
   is_recurring?: boolean;

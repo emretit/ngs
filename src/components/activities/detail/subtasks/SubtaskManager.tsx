@@ -35,7 +35,8 @@ export const SubtaskManager = ({ task, onUpdate, isUpdating = false }: SubtaskMa
       id: crypto.randomUUID(),
       title: newSubtask.trim(),
       completed: false,
-      task_id: task.id
+      task_id: task.id,
+      created_at: new Date().toISOString()
     };
     
     onUpdate([...subtasks, newSubtaskItem]);

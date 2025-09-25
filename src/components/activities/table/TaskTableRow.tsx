@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TableRow, TableCell } from "@/components/ui/table";
-import { PriorityBadge } from "./PriorityBadge";
 import type { Task } from "@/types/task";
 
 interface TaskTableRowProps {
@@ -66,7 +65,9 @@ const TaskTableRow = ({
           <span className="text-muted-foreground">-</span>
         )}
       </TableCell>
-      <TableCell className="p-4"><PriorityBadge priority={task.priority} /></TableCell>
+      <TableCell className="p-4">
+        <span className="text-sm text-muted-foreground">N/A</span>
+      </TableCell>
       <TableCell className="p-4">
         {task.assignee ? (
           <div className="flex items-center space-x-2">

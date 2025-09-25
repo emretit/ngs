@@ -82,10 +82,10 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
       <TableCell className="p-4 font-medium">
         <div className="flex items-center space-x-2">
           {task.is_important && (
-            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" title="Önemli görev" />
+            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
           )}
           {task.is_recurring && (
-            <RefreshCw className="h-4 w-4 text-blue-500" title="Tekrar eden görev" />
+            <RefreshCw className="h-4 w-4 text-blue-500" />
           )}
           <span>{task.title}</span>
         </div>

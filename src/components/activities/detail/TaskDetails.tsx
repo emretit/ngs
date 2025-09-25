@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Task, TaskStatus } from "@/types/task";
+import { Task, TaskStatus, SubTask } from "@/types/task";
 import TaskMainInfo from "./TaskMainInfo";
 import TaskMetadata from "./TaskMetadata";
 import { SubtaskManager } from "./subtasks";
@@ -59,9 +59,8 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
     handleInputChange('due_date', newDate?.toISOString());
   };
 
-  const handleUpdateSubtasks = (subtasks: Task['subtasks']) => {
-    setFormData(prev => ({ ...prev, subtasks }));
-    
+  const handleUpdateSubtasks = (subtasks: SubTask[]) => {
+    // Note: Task type doesn't include subtasks, handle separately
     // You would typically have another mutation to update subtasks in the database
     // This is a placeholder for that functionality
     console.log("Subtasks updated:", subtasks);

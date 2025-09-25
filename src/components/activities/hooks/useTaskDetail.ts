@@ -17,7 +17,6 @@ export const useTaskDetail = () => {
         title: updatedTask.title,
         description: updatedTask.description,
         status: updatedTask.status,
-        priority: updatedTask.priority,
         type: updatedTask.type || 'general',
         due_date: updatedTask.due_date,
         assignee_id: updatedTask.assignee_id,

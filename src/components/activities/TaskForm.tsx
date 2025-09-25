@@ -19,7 +19,6 @@ export default function TaskForm({ task, onClose }: TaskFormProps) {
       title: task?.title || "",
       description: task?.description || "",
       status: task?.status || "todo",
-      priority: task?.priority || "medium",
       type: task?.type || "general",
       assignee_id: task?.assignee_id || undefined,
       due_date: task?.due_date ? new Date(task.due_date) : undefined,

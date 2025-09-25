@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
 import { useProposalEdit } from "@/hooks/useProposalEdit";
@@ -30,6 +31,7 @@ import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
 import ProductSelector from "@/components/proposals/form/ProductSelector";
 import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
+import CustomerSelector from "@/components/proposals/form/CustomerSelector";
 
 interface LineItem extends ProposalItem {
   row_number: number;
@@ -44,9 +46,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { proposal, loading, saving, handleBack, handleSave } = useProposalEdit();
-  const { customers, isLoading: isLoadingCustomers } = useCustomerSelect();
-  const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
-  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
@@ -56,25 +55,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const [globalDiscountType, setGlobalDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [globalDiscountValue, setGlobalDiscountValue] = useState<number>(0);
 
-  // Turkish character normalization function
-  const normalizeTurkish = (text: string): string => {
-    return text
-      .toLowerCase()
-      .replace(/ş/g, 's').replace(/Ş/g, 's')
-      .replace(/ç/g, 'c').replace(/Ç/g, 'c')
-      .replace(/ğ/g, 'g').replace(/Ğ/g, 'g')
-      .replace(/ü/g, 'u').replace(/Ü/g, 'u')
-      .replace(/ö/g, 'o').replace(/Ö/g, 'o')
-      .replace(/ı/g, 'i').replace(/I/g, 'i').replace(/İ/g, 'i');
-  };
-
-  // Filter customers based on search query
-  const filteredCustomers = customers?.filter(customer => {
-    if (!customerSearchQuery.trim()) return true;
-    
-    const normalizedQuery = normalizeTurkish(customerSearchQuery);
-    return customer.searchableText.includes(normalizedQuery);
-  });
 
   // Form state matching the proposal edit format
   const [formData, setFormData] = useState({
@@ -82,11 +62,11 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     customer_company: "",
     contact_name: "",
     contact_title: "",
-    offer_date: "",
+    offer_date: undefined as Date | undefined,
     offer_number: "",
     
     // General Section
-    validity_date: "",
+    validity_date: undefined as Date | undefined,
     prepared_by: "",
     notes: "",
     
@@ -139,16 +119,13 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   // Initialize form data when proposal loads
   useEffect(() => {
     if (proposal) {
-      // Find the customer to get the company name
-      const customer = customers?.find(c => c.id === proposal.customer_id);
-      
       setFormData({
-        customer_company: customer?.company || customer?.name || "",
-        contact_name: customer?.name || "",
+        customer_company: proposal.customer_company || "",
+        contact_name: proposal.contact_name || "",
         contact_title: "",
-        offer_date: proposal.created_at ? proposal.created_at.split('T')[0] : "",
+        offer_date: proposal.created_at ? new Date(proposal.created_at) : undefined,
         offer_number: proposal.number || "",
-        validity_date: proposal.valid_until ? proposal.valid_until.split('T')[0] : "",
+        validity_date: proposal.valid_until ? new Date(proposal.valid_until) : undefined,
         prepared_by: proposal.employee_id || "",
         notes: proposal.notes || "",
         currency: proposal.currency || "TRY",
@@ -188,7 +165,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         }]);
       }
     }
-  }, [proposal, customers]);
+  }, [proposal]);
 
   // Track changes
   const handleFieldChange = (field: string, value: any) => {
@@ -417,7 +394,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         number: formData.offer_number,
         customer_id: formData.customer_id || null,
         employee_id: formData.employee_id || null,
-        valid_until: formData.validity_date,
+        valid_until: formData.validity_date?.toISOString().split('T')[0] || "",
         terms: `${formData.payment_terms}\n\n${formData.delivery_terms}\n\nGaranti: ${formData.warranty_terms}`,
         payment_terms: formData.payment_terms,
         delivery_terms: formData.delivery_terms,
@@ -714,110 +691,15 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
               <div className="grid grid-cols-1 gap-3">
-                <div>
-                  <Label htmlFor="customer_company" className="text-sm">Firma Adı *</Label>
-                  <Popover open={customerSearchOpen} onOpenChange={setCustomerSearchOpen}>
-                    <PopoverTrigger asChild>
-                                             <Button
-                         variant="outline"
-                         role="combobox"
-                         aria-expanded={customerSearchOpen}
-                         className={cn(
-                           "w-full justify-between",
-                           !formData.customer_company && "text-muted-foreground"
-                         )}
-                         disabled={isLoadingCustomers}
-                        >
-                         <span className="truncate text-left flex-1">
-                           {formData.customer_id ? (
-                             (() => {
-                               const customer = customers?.find(c => c.id === formData.customer_id);
-                               if (customer) {
-                                 return customer.company || customer.name;
-                               }
-                               return formData.customer_company || "Müşteri bulunamadı";
-                             })()
-                           ) : (formData.customer_company || "Müşteri ara...")}
-                         </span>
-                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0" align="start">
-                       <Command shouldFilter={false} className="rounded-lg border shadow-md">
-                         <CommandInput 
-                           placeholder="Müşteri veya firma adı ile ara..." 
-                           className="h-9"
-                           value={customerSearchQuery}
-                           onValueChange={setCustomerSearchQuery}
-                         />
-                        <CommandList className="max-h-[300px]">
-                          <CommandEmpty className="py-6 text-center text-sm">
-                            Aramanızla eşleşen müşteri bulunamadı.
-                          </CommandEmpty>
-                          <CommandGroup>
-                             {filteredCustomers?.map((customer) => (
-                               <CommandItem
-                                 key={customer.id}
-                                 value={customer.searchableText}
-                                 onSelect={() => {
-                                   const selectedName = customer.company || customer.name;
-                                   handleFieldChange('customer_company', selectedName);
-                                   handleFieldChange('contact_name', customer.name);
-                                   handleFieldChange('customer_id', customer.id);
-                                   setCustomerSearchOpen(false);
-                                 }}
-                                className="flex items-center gap-2 p-3 cursor-pointer hover:bg-muted/50 data-[selected=true]:bg-accent/10 data-[selected=true]:text-accent-foreground rounded-sm transition-colors"
-                              >
-                                 <Check
-                                   className={cn(
-                                     "h-4 w-4 shrink-0",
-                                     formData.customer_id === customer.id ? "opacity-100" : "opacity-0"
-                                   )}
-                                 />
-                                <div className="flex flex-col gap-1 min-w-0 flex-1">
-                                  <div className="flex items-center gap-2">
-                                    {customer.company ? (
-                                      <>
-                                        <span className="font-medium text-foreground truncate">
-                                          {customer.company}
-                                        </span>
-                                        <span className="px-2 py-1 text-xs bg-muted rounded-md text-muted-foreground">
-                                          {customer.name}
-                                        </span>
-                                      </>
-                                    ) : (
-                                      <span className="font-medium text-foreground truncate">
-                                        {customer.name}
-                                      </span>
-                                    )}
-                                  </div>
-                                  {customer.email && (
-                                    <span className="text-xs text-muted-foreground truncate">
-                                      {customer.email}
-                                    </span>
-                                  )}
-                                  {(customer.mobile_phone || customer.address) && (
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      {customer.mobile_phone && (
-                                        <span>{customer.mobile_phone}</span>
-                                      )}
-                                      {customer.mobile_phone && customer.address && (
-                                        <span>•</span>
-                                      )}
-                                      {customer.address && (
-                                        <span className="truncate">{customer.address}</span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                <CustomerSelector
+                  value={formData.customer_id}
+                  onChange={(customerId, customerName, companyName) => {
+                    handleFieldChange('customer_id', customerId);
+                    handleFieldChange('customer_company', companyName);
+                    handleFieldChange('contact_name', customerName);
+                  }}
+                  error=""
+                />
                 <ContactPersonInput
                   value={formData.contact_name}
                   onChange={(value) => handleFieldChange('contact_name', value)}
@@ -843,99 +725,72 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold">Teklif Detayları</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <Label htmlFor="offer_date" className="text-sm">Teklif Tarihi</Label>
-                  <Input
-                    id="offer_date"
-                    type="date"
-                    value={formData.offer_date}
-                    onChange={(e) => handleFieldChange('offer_date', e.target.value)}
-                  />
+            <CardContent className="space-y-4 pt-0">
+              {/* Tarih Alanları - Altlı Üstlü */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="offer_date" className="text-sm font-medium text-gray-700">Teklif Tarihi</Label>
+                    <DatePicker
+                      date={formData.offer_date}
+                      onSelect={(date) => handleFieldChange('offer_date', date)}
+                      placeholder="Teklif tarihi seçin"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="validity_date" className="text-sm font-medium text-gray-700">
+                      Geçerlilik Tarihi <span className="text-red-500">*</span>
+                    </Label>
+                    <DatePicker
+                      date={formData.validity_date}
+                      onSelect={(date) => handleFieldChange('validity_date', date)}
+                      placeholder="Geçerlilik tarihi seçin"
+                    />
+                  </div>
                 </div>
+              </div>
+
+              {/* Diğer Alanlar */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="offer_number" className="text-sm">Teklif No</Label>
+                  <Label htmlFor="offer_number" className="text-sm font-medium text-gray-700">Teklif No</Label>
                   <Input
                     id="offer_number"
                     value={formData.offer_number}
                     onChange={(e) => handleFieldChange('offer_number', e.target.value)}
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="validity_date" className="text-sm">Geçerlilik Tarihi *</Label>
-                  <Input
-                    id="validity_date"
-                    type="date"
-                    value={formData.validity_date}
-                    onChange={(e) => handleFieldChange('validity_date', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="status" className="text-sm">Teklif Durumu</Label>
+                  <Label htmlFor="status" className="text-sm font-medium text-gray-700">Teklif Durumu</Label>
                   <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Durum seçin" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">
-                        <div className="flex items-center gap-2">
-                          <Badge className={proposalStatusColors.draft}>
-                            {proposalStatusLabels.draft}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="pending_approval">
-                        <div className="flex items-center gap-2">
-                          <Badge className={proposalStatusColors.pending_approval}>
-                            {proposalStatusLabels.pending_approval}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="sent">
-                        <div className="flex items-center gap-2">
-                          <Badge className={proposalStatusColors.sent}>
-                            {proposalStatusLabels.sent}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="accepted">
-                        <div className="flex items-center gap-2">
-                          <Badge className={proposalStatusColors.accepted}>
-                            {proposalStatusLabels.accepted}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="rejected">
-                        <div className="flex items-center gap-2">
-                          <Badge className={proposalStatusColors.rejected}>
-                            {proposalStatusLabels.rejected}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="expired">
-                        <div className="flex items-center gap-2">
-                          <Badge className={proposalStatusColors.expired}>
-                            {proposalStatusLabels.expired}
-                          </Badge>
-                        </div>
-                      </SelectItem>
+                      {Object.entries(proposalStatusLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-block w-2 h-2 rounded-full ${proposalStatusColors[value as ProposalStatus]}`}></span>
+                            {label}
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label htmlFor="notes" className="text-sm">Notlar</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => handleFieldChange('notes', e.target.value)}
-                    placeholder="Teklif hakkında özel notlar..."
-                    rows={2}
-                    className="resize-none"
-                  />
-                </div>
+              </div>
+
+              {/* Notlar Alanı */}
+              <div>
+                <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Notlar</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => handleFieldChange('notes', e.target.value)}
+                  placeholder="Teklif hakkında notlarınızı yazın..."
+                  className="mt-1 min-h-[80px] resize-none"
+                />
               </div>
             </CardContent>
           </Card>
@@ -1124,26 +979,28 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                 Finansal Özet
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 pt-0">
+            <CardContent className="space-y-4 pt-0">
                 {/* Multi-currency display */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {Object.entries(calculationsByCurrency).map(([currency, totals]) => (
-                    <div key={currency} className="space-y-1">
-                      <div className="text-right text-sm font-medium text-primary mb-2">
-                        {Object.keys(calculationsByCurrency).length > 1 ? `${currency} Toplamları` : "Finansal Toplam"}
-                      </div>
-                      <div className="space-y-1 text-right">
+                    <div key={currency} className="space-y-3">
+                      {Object.keys(calculationsByCurrency).length > 1 && (
+                        <div className="text-right text-sm font-medium text-primary">
+                          {currency} Toplamları
+                        </div>
+                      )}
+                      <div className="space-y-2 text-right">
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-600">Brüt Toplam:</span>
                           <span className="font-medium">{formatCurrency(totals.gross, currency)}</span>
                         </div>
                         
                         {/* VAT Percentage Control */}
-                        <div className="border-t pt-1 space-y-1">
-                          <div className="text-xs text-center text-muted-foreground mb-1">
+                        <div className="border-t pt-2 space-y-2">
+                          <div className="text-xs text-center text-muted-foreground">
                             KDV Oranı
                           </div>
-                          <div className="flex gap-1">
+                          <div className="flex gap-2">
                             <Input
                               type="number"
                               value={formData.vat_percentage}
@@ -1163,11 +1020,11 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                         </div>
 
                         {/* Global Discount Controls */}
-                        <div className="border-t pt-1 space-y-1">
-                          <div className="text-xs text-center text-muted-foreground mb-1">
+                        <div className="border-t pt-2 space-y-2">
+                          <div className="text-xs text-center text-muted-foreground">
                             Genel İndirim
                           </div>
-                          <div className="flex gap-1">
+                          <div className="flex gap-2">
                             <Select value={globalDiscountType} onValueChange={(value: 'percentage' | 'amount') => {
                               setGlobalDiscountType(value);
                               setHasChanges(true);
@@ -1215,7 +1072,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                           </div>
                         )}
                         
-                        <Separator className="my-1" />
+                        <Separator className="my-2" />
                         
                         <div className="flex justify-between font-bold text-sm">
                           <span>GENEL TOPLAM:</span>

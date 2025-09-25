@@ -27,11 +27,12 @@ export const getStatusColor = (status: TaskStatus): string => {
 export const getTypeDisplay = (type: TaskType): string => {
   switch (type) {
     case "general": return "Genel";
+    case "opportunity": return "Fırsat";
+    case "proposal": return "Teklif";
+    case "service": return "Hizmet";
     case "call": return "Arama";
     case "meeting": return "Toplantı";
     case "follow_up": return "Takip";
-    case "proposal": return "Teklif";
-    case "opportunity": return "Fırsat";
     case "reminder": return "Hatırlatma";
     case "email": return "E-posta";
     default: return type;

@@ -48,8 +48,14 @@ export const filterItems = (
 
     // Priority filtering
     if (filters.priority && filters.priority.length > 0) {
-      if (!filters.priority.includes(item.priority)) {
-        return false;
+      // Check if item has priority property (for tasks)
+      if ('priority' in item && item.priority) {
+        if (!filters.priority.includes(item.priority)) {
+          return false;
+        }
+      } else {
+        // Skip priority filtering for items without priority
+        return true;
       }
     }
 

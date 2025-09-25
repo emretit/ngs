@@ -1,7 +1,7 @@
 
 import { formatDateOffset } from './utils';
 import { mockCrmService, mockTasksAPI } from '@/services/mockCrm';
-import { TaskStatus, TaskPriority } from '@/types/task';
+import { TaskStatus } from '@/types/task';
 
 interface AssignTaskParams {
   title: string;
@@ -24,8 +24,7 @@ export const taskWorkflow = {
         title: params.title,
         description: params.description || 'Takip gerekli',
         status: 'todo' as TaskStatus,
-        priority: (params.priority || 'medium') as TaskPriority,
-        assigned_to: params.assigned_to,
+        assignee_id: params.assigned_to,
         due_date: params.due_date || formatDateOffset(3),
         related_item_id: params.related_item_id,
         related_item_type: params.related_item_type,
@@ -56,8 +55,7 @@ export const taskWorkflow = {
         title: `İnceleme: ${opportunityTitle}`,
         description: 'Yeni oluşturulan fırsatı inceleyiniz.',
         status: 'todo' as TaskStatus,
-        priority: 'high' as TaskPriority,
-        assigned_to: assigneeId,
+        assignee_id: assigneeId,
         due_date: formatDateOffset(1),
         related_item_id: opportunityId,
         related_item_type: 'opportunity',

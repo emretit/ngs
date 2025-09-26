@@ -65,7 +65,7 @@ serve(async (req) => {
     // Hash password for demo users
     const ownerEmail = 'owner@test.com';
     const memberEmail = 'member@test.com';
-    const pwHash = await bcrypt.hash('Passw0rd!Strong', 10);
+    const pwHash = await bcrypt.hash('Passw0rd!Strong', '10');
 
     console.log('Creating/updating demo users...');
 

@@ -148,7 +148,7 @@ serve(async (req) => {
       });
       
       // Log all unique sender names to see variety
-      const uniqueSenders = [...new Set(nilveraData.Content?.map(inv => inv.SenderName) || [])];
+      const uniqueSenders = [...new Set(nilveraData.Content?.map((inv: any) => inv.SenderName) || [])];
       console.log('🏢 Unique sender companies found:', uniqueSenders);
       console.log('📊 Total unique senders:', uniqueSenders.length);
       
@@ -212,7 +212,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
-    } catch (apiError) {
+    } catch (apiError: any) {
       console.error('❌ Nilvera API call failed:', apiError);
       console.error('❌ Error details:', {
         message: apiError.message,
@@ -257,7 +257,7 @@ serve(async (req) => {
       });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in nilvera-incoming-invoices function:', error);
     console.error('❌ Error stack:', error.stack);
     console.error('❌ Error name:', error.name);

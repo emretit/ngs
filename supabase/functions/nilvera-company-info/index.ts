@@ -156,7 +156,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Firma bilgileri alma hatası:', error);
         
         return new Response(JSON.stringify({ 
@@ -263,7 +263,7 @@ serve(async (req) => {
           console.log('🎯 Aliases uzunluğu:', mukellefData.Aliases ? mukellefData.Aliases.length : 0);
           
           if (mukellefData.Aliases) {
-            mukellefData.Aliases.forEach((alias, index) => {
+            mukellefData.Aliases.forEach((alias: any, index: number) => {
               console.log(`🎯 Alias ${index}:`, {
                 Name: alias.Name,
                 DeletionTime: alias.DeletionTime,
@@ -275,7 +275,7 @@ serve(async (req) => {
           
           // Aliases array'inde e-fatura alias'ı var mı kontrol et
           const hasEinvoiceAlias = mukellefData.Aliases && 
-            mukellefData.Aliases.some(alias => 
+            mukellefData.Aliases.some((alias: any) =>
               alias.Name && 
               alias.Name.startsWith('urn:mail:') && 
               alias.DeletionTime === null
@@ -285,7 +285,7 @@ serve(async (req) => {
           
           if (hasEinvoiceAlias) {
             isEinvoiceMukellef = true;
-            const einvoiceAlias = mukellefData.Aliases.find(alias => 
+            const einvoiceAlias = mukellefData.Aliases.find((alias: any) =>
               alias.Name && 
               alias.Name.startsWith('urn:mail:') && 
               alias.DeletionTime === null
@@ -322,7 +322,7 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Mükellef sorgulama hatası:', error);
         
         return new Response(JSON.stringify({ 
@@ -337,7 +337,7 @@ serve(async (req) => {
 
     throw new Error('Geçersiz işlem');
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Nilvera company info function hatası:', error);
     
     return new Response(JSON.stringify({ 

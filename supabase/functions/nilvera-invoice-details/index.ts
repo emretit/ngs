@@ -143,7 +143,7 @@ serve(async (req: Request) => {
         } else {
           console.log('⚠️ Could not retrieve XML content:', xmlResponse.status);
         }
-      } catch (xmlError) {
+      } catch (xmlError: any) {
         console.log('⚠️ XML fetch error:', xmlError.message);
       }
 
@@ -223,7 +223,7 @@ serve(async (req: Request) => {
           } else {
             console.log('⚠️ No invoice lines found in XML structure');
           }
-        } catch (xmlParseError) {
+        } catch (xmlParseError: any) {
           console.log('⚠️ XML parsing error:', xmlParseError.message);
           console.log('📋 XML structure sample:', xmlContent?.substring(0, 500));
         }
@@ -263,7 +263,7 @@ serve(async (req: Request) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
-    } catch (apiError) {
+    } catch (apiError: any) {
       console.error('❌ Nilvera API call failed:', apiError);
       console.error('❌ Error details:', {
         message: apiError.message,
@@ -282,7 +282,7 @@ serve(async (req: Request) => {
       });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in nilvera-invoice-details function:', error);
     console.error('❌ Error stack:', error.stack);
     console.error('❌ Error name:', error.name);

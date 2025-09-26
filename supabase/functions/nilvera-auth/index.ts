@@ -87,7 +87,7 @@ serve(async (req) => {
 
     throw new Error('Invalid action');
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in nilvera-auth function:', error);
     return new Response(JSON.stringify({ 
       success: false, 

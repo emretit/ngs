@@ -317,7 +317,7 @@ serve(async (req) => {
             let nilveraAlias = null;
             if (globalCompanyData.Aliases && globalCompanyData.Aliases.length > 0) {
               // Use Aliases array (GetGlobalCustomerInfo format)
-              const einvoiceAlias = globalCompanyData.Aliases.find(alias => 
+              const einvoiceAlias = globalCompanyData.Aliases.find((alias: any) => 
                 alias.Name && 
                 alias.Name.startsWith('urn:mail:') && 
                 alias.DeletionTime === null
@@ -362,7 +362,7 @@ serve(async (req) => {
           } else {
             console.log('ℹ️ Customer is not e-fatura mükellefi, CustomerAlias will not be included');
           }
-        } catch (globalCompanyError) {
+        } catch (globalCompanyError: any) {
           console.error('❌ Alias verification failed:', globalCompanyError.message);
           // If verification fails, don't use the alias - but don't delete it either
           console.log('ℹ️ Alias verification failed, CustomerAlias will not be included');
@@ -497,7 +497,7 @@ serve(async (req) => {
         .from('sales_invoices')
         .update({
           einvoice_status: 'error',
-          einvoice_error_message: error.message,
+          einvoice_error_message: (error as any).message,
           einvoice_error_code: 'SEND_ERROR',
           einvoice_nilvera_response: null
         })
@@ -512,11 +512,11 @@ serve(async (req) => {
 
       // Determine appropriate HTTP status code
       let httpStatus = 400;
-      if (error.message.includes('duplicate') || error.message.includes('already exists')) {
+      if ((error as any).message?.includes('duplicate') || (error as any).message?.includes('already exists')) {
         httpStatus = 409; // Conflict
-      } else if (error.message.includes('unauthorized') || error.message.includes('forbidden')) {
+      } else if ((error as any).message?.includes('unauthorized') || (error as any).message?.includes('forbidden')) {
         httpStatus = 401; // Unauthorized
-      } else if (error.message.includes('not found')) {
+      } else if ((error as any).message?.includes('not found')) {
         httpStatus = 404; // Not Found
       }
 
@@ -524,7 +524,7 @@ serve(async (req) => {
         success: false,
         message: 'E-fatura gönderimi başarısız oldu',
         status: 'error',
-        error: error.message,
+        error: (error as any).message,
         error_code: 'SEND_ERROR',
         timestamp: new Date().toISOString()
       };
@@ -537,7 +537,7 @@ serve(async (req) => {
       });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in nilvera-send-invoice function:', error);
     console.error('❌ Error stack:', error.stack);
     console.error('❌ Error name:', error.name);

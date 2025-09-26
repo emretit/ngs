@@ -153,7 +153,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Status check error:', error);
       
       return new Response(JSON.stringify({ 
@@ -165,7 +165,7 @@ serve(async (req) => {
       });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error in nilvera-check-status function:', error);
     console.error('❌ Error stack:', error.stack);
     console.error('❌ Error name:', error.name);

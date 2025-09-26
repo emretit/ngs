@@ -155,7 +155,7 @@ serve(async (req) => {
 
       console.log(`✅ Parsed ${rates.length} exchange rates from TCMB XML`);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error fetching/parsing TCMB XML:', error);
       throw error;
     }
@@ -208,7 +208,7 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Exchange rates function error:', error);
     
     // Log the error
@@ -227,7 +227,7 @@ serve(async (req) => {
             company_id: null
           });
       }
-    } catch (logError) {
+    } catch (logError: any) {
       console.error('❌ Error logging error:', logError);
     }
 

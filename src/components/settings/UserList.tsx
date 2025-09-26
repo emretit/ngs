@@ -22,6 +22,10 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { logger } from "@/utils/logger";
+import { handleError, handleSuccess } from "@/utils/errorHandler";
+import { EmployeeDeletionDialog } from "./components/EmployeeDeletionDialog";
+import { Employee } from "./types";
 
 type UserListProps = {
   users: UserWithRoles[];
@@ -31,6 +35,8 @@ type UserListProps = {
 export const UserList = ({ users, isLoading }: UserListProps) => {
   const { assignRoleMutation, resetPasswordMutation, deactivateUserMutation } = useUserMutations();
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [showDeletionDialog, setShowDeletionDialog] = useState(false);
   const { userData } = useCurrentUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -38,35 +44,29 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
   // Update profile with employee match
   const updateProfileMutation = useMutation({
     mutationFn: async ({ userId, employeeId }: { userId: string; employeeId: string | null }) => {
-      console.log('Updating profile:', { userId, employeeId });
+      logger.info('Updating user-employee mapping', { userId, employeeId });
+      
       const { error } = await supabase
         .from("profiles")
         .update({ employee_id: employeeId })
         .eq("id", userId);
 
       if (error) {
-        console.error('Supabase error:', error);
+        logger.error('Profile update failed', error);
         throw error;
       }
       
-      console.log('Profile updated successfully');
+      logger.info('Profile updated successfully');
     },
     onSuccess: (data, variables) => {
-      console.log('Mutation success:', { data, variables });
+      handleSuccess('User-employee mapping updated successfully', 'updateProfile', variables);
+      
       // Invalidate all queries that might contain user data
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['users', 'settings'] });
       queryClient.invalidateQueries({ queryKey: ['users', 'settings', 'employee-matching'] });
-      // Force refetch
-      queryClient.refetchQueries({ queryKey: ["users"] });
-      queryClient.refetchQueries({ queryKey: ['users'] });
-      queryClient.refetchQueries({ queryKey: ['users', 'settings'] });
-      queryClient.refetchQueries({ queryKey: ['users', 'settings', 'employee-matching'] });
-      // Force complete refetch
-      queryClient.invalidateQueries();
-      queryClient.refetchQueries();
+      
       toast({
         title: "Başarılı",
         description: "Kullanıcı-çalışan eşleştirmesi güncellendi",
@@ -74,27 +74,96 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
       setEditingUserId(null);
     },
     onError: (error: any) => {
-      console.error('Mutation error:', error);
+      handleError(error, {
+        operation: 'updateProfile',
+        userId: userData?.id,
+        metadata: { error: error.message }
+      });
+    },
+  });
+
+  // Delete employee mutation
+  const deleteEmployeeMutation = useMutation({
+    mutationFn: async ({ employeeId, deleteUser }: { employeeId: string; deleteUser: boolean }) => {
+      logger.info('Deleting employee', { employeeId, deleteUser });
+
+      if (deleteUser) {
+        // First get the user_id from employee
+        const { data: employee, error: fetchError } = await supabase
+          .from("employees")
+          .select("user_id")
+          .eq("id", employeeId)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        // Delete both employee and user
+        const { error: deleteUserError } = await supabase
+          .from("profiles")
+          .delete()
+          .eq("id", employee.user_id);
+
+        if (deleteUserError) throw deleteUserError;
+      }
+
+      // Delete employee (this will be handled automatically if user is deleted due to cascade)
+      const { error: deleteEmployeeError } = await supabase
+        .from("employees")
+        .delete()
+        .eq("id", employeeId);
+
+      if (deleteEmployeeError) throw deleteEmployeeError;
+    },
+    onSuccess: (data, variables) => {
+      handleSuccess('Employee deleted successfully', 'deleteEmployee', variables);
+      
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      
       toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Eşleştirme güncellenirken hata oluştu: " + error.message,
+        title: "Başarılı",
+        description: variables.deleteUser ? "Çalışan ve kullanıcı silindi" : "Çalışan silindi",
+      });
+      
+      setShowDeletionDialog(false);
+      setEmployeeToDelete(null);
+    },
+    onError: (error: any) => {
+      handleError(error, {
+        operation: 'deleteEmployee',
+        userId: userData?.id,
+        metadata: { error: error.message }
       });
     },
   });
 
   const handleEmployeeSelect = (userId: string, employeeId: string) => {
-    console.log('handleEmployeeSelect called:', { userId, employeeId });
+    logger.info('Employee selection triggered', { userId, employeeId });
     if (employeeId) {
-      console.log('Calling mutation...');
       updateProfileMutation.mutate({ userId, employeeId });
     } else {
-      console.log('No employeeId provided');
+      logger.warn('No employeeId provided in handleEmployeeSelect');
     }
   };
 
   const handleRemoveMatch = (userId: string) => {
     updateProfileMutation.mutate({ userId, employeeId: null });
+  };
+
+  const handleEmployeeDeletion = (employee: Employee) => {
+    setEmployeeToDelete(employee);
+    setShowDeletionDialog(true);
+  };
+
+  const handleConfirmDeletion = (deleteUser: boolean) => {
+    if (employeeToDelete) {
+      deleteEmployeeMutation.mutate({ 
+        employeeId: employeeToDelete.id, 
+        deleteUser 
+      });
+    }
   };
 
   if (isLoading) {
@@ -277,6 +346,17 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
           )}
         </TableBody>
       </Table>
+      
+      <EmployeeDeletionDialog
+        employee={employeeToDelete}
+        isOpen={showDeletionDialog}
+        onClose={() => {
+          setShowDeletionDialog(false);
+          setEmployeeToDelete(null);
+        }}
+        onConfirm={handleConfirmDeletion}
+        isLoading={deleteEmployeeMutation.isPending}
+      />
     </div>
   );
 };

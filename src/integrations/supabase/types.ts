@@ -1905,6 +1905,7 @@ export type Database = {
           postal_code: string | null
           status: Database["public"]["Enums"]["employee_status"]
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -1934,6 +1935,7 @@ export type Database = {
           postal_code?: string | null
           status?: Database["public"]["Enums"]["employee_status"]
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -1963,6 +1965,7 @@ export type Database = {
           postal_code?: string | null
           status?: Database["public"]["Enums"]["employee_status"]
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1970,6 +1973,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3819,6 +3829,7 @@ export type Database = {
           created_at: string | null
           device_id: string | null
           email: string | null
+          employee_id: string | null
           fcm_token: string | null
           first_name: string | null
           full_name: string | null
@@ -3839,6 +3850,7 @@ export type Database = {
           created_at?: string | null
           device_id?: string | null
           email?: string | null
+          employee_id?: string | null
           fcm_token?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -3859,6 +3871,7 @@ export type Database = {
           created_at?: string | null
           device_id?: string | null
           email?: string | null
+          employee_id?: string | null
           fcm_token?: string | null
           first_name?: string | null
           full_name?: string | null
@@ -3885,6 +3898,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]

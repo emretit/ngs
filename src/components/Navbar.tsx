@@ -14,7 +14,14 @@ interface NavbarProps {
 const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem("sidebarExpandedMenus");
+      return saved ? new Set<string>(JSON.parse(saved)) : new Set<string>();
+    } catch {
+      return new Set<string>();
+    }
+  });
 
   useEffect(() => {
     const newExpanded = new Set<string>(expandedMenus);
@@ -29,6 +36,15 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
     });
     setExpandedMenus(newExpanded);
   }, [location.pathname]);
+
+  // Persist expanded menus between page navigations
+  useEffect(() => {
+    try {
+      localStorage.setItem("sidebarExpandedMenus", JSON.stringify(Array.from(expandedMenus)));
+    } catch {
+      // ignore
+    }
+  }, [expandedMenus]);
 
   const toggleMenu = (path: string) => {
     const newExpanded = new Set(expandedMenus);

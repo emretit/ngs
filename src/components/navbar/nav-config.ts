@@ -59,9 +59,10 @@ export const navItems = [
   },
   // 4. Satış Yönetimi
   {
-    category: "Satış Yönetimi",
-    icon: TrendingUp,
     path: "/crm",
+    icon: TrendingUp,
+    label: "Satış Yönetimi",
+    hasDropdown: true,
     items: [
       {
         path: "/activities",
@@ -97,9 +98,10 @@ export const navItems = [
   },
   // 5. Satın Alma
   {
-    category: "Satın Alma",
-    icon: PackageCheck,
     path: "/purchase",
+    icon: PackageCheck,
+    label: "Satın Alma",
+    hasDropdown: true,
     items: [
       {
         path: "/purchase/requests",
@@ -121,9 +123,10 @@ export const navItems = [
   },
   // 7. Fatura Yönetimi
   {
-    category: "Fatura Yönetimi",
-    icon: Receipt,
     path: "/invoices",
+    icon: Receipt,
+    label: "Fatura Yönetimi",
+    hasDropdown: true,
     items: [
       {
         path: "/sales-invoices",
@@ -144,9 +147,10 @@ export const navItems = [
   },
   // 8. Nakit Akış
   {
-    category: "Nakit Akış",
-    icon: CreditCard,
     path: "/cashflow",
+    icon: CreditCard,
+    label: "Nakit Akış",
+    hasDropdown: true,
     items: [
       {
         path: "/cashflow",

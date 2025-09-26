@@ -10,7 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Check, ChevronsUpDown, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { handleError, handleSuccess } from "@/utils/errorHandler";
+import { logger } from "@/utils/logger";
 import { generateRecurringTasks, createNextTaskInstance } from "@/utils/recurringTaskScheduler";
 
 interface NewActivityDialogProps {
@@ -86,8 +87,9 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
       if (error) throw error;
       setOpportunities(data || []);
     } catch (error) {
-      console.error('Fırsatlar yüklenirken hata:', error);
-      toast.error('Fırsatlar yüklenemedi');
+      handleError(error, {
+        operation: "fetchOpportunities"
+      });
     } finally {
       setIsLoadingOpportunities(false);
     }
@@ -104,8 +106,9 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
       if (error) throw error;
       setEmployees(data || []);
     } catch (error) {
-      console.error('Çalışanlar yüklenirken hata:', error);
-      toast.error('Çalışanlar yüklenemedi');
+      handleError(error, {
+        operation: "fetchEmployees"
+      });
     } finally {
       setIsLoadingEmployees(false);
     }
@@ -116,7 +119,9 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
     e.preventDefault();
 
     if (!title.trim()) {
-      toast.error('Başlık gereklidir');
+      handleError(new Error("Başlık gereklidir"), {
+        operation: "validateActivityForm"
+      });
       return;
     }
 
@@ -184,21 +189,23 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
               .insert(tasksToInsert);
 
             if (batchError) {
-              console.error("Error creating recurring task instances:", batchError);
+              logger.error("Error creating recurring task instances", batchError);
             }
           }
         } catch (error) {
-          console.error("Error generating recurring tasks:", error);
+          logger.error("Error generating recurring tasks", error);
         }
       }
 
-      toast.success('Aktivite başarıyla oluşturuldu');
+      handleSuccess("Aktivite başarıyla oluşturuldu", "createActivity");
       resetForm();
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Aktivite oluşturulurken hata:', error);
-      toast.error('Aktivite oluşturulamadı');
+      handleError(error, {
+        operation: "createActivity",
+        metadata: { title }
+      });
     } finally {
       setIsLoading(false);
     }

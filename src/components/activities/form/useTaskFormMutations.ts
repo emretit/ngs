@@ -1,7 +1,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { showSuccess, showError } from "@/utils/toastUtils";
+import { handleError, handleSuccess } from "@/utils/errorHandler";
+import { logger } from "@/utils/logger";
 import { FormValues } from "./types";
 import { generateRecurringTasks, createNextTaskInstance } from "@/utils/recurringTaskScheduler";
 
@@ -36,11 +37,11 @@ export const useTaskFormMutations = (onClose: () => void, taskId?: string) => {
           .insert(tasksToInsert);
 
         if (batchError) {
-          console.error("Error creating recurring task instances:", batchError);
+          logger.error("Error creating recurring task instances", batchError);
         }
       }
     } catch (error) {
-      console.error("Error generating recurring tasks:", error);
+      logger.error("Error generating recurring tasks", error);
     }
   };
 
@@ -87,12 +88,13 @@ export const useTaskFormMutations = (onClose: () => void, taskId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
-      showSuccess("Aktivite başarıyla oluşturuldu");
+      handleSuccess("Aktivite başarıyla oluşturuldu", "createTask");
       onClose();
     },
     onError: (error) => {
-      console.error("Error creating task:", error);
-      showError("Aktivite oluşturulurken bir hata oluştu");
+      handleError(error, {
+        operation: "createTask"
+      });
     },
   });
 
@@ -133,12 +135,13 @@ export const useTaskFormMutations = (onClose: () => void, taskId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
-      showSuccess("Aktivite başarıyla güncellendi");
+      handleSuccess("Aktivite başarıyla güncellendi", "updateTask");
       onClose();
     },
     onError: (error) => {
-      console.error("Error updating task:", error);
-      showError("Aktivite güncellenirken bir hata oluştu");
+      handleError(error, {
+        operation: "updateTask"
+      });
     },
   });
 

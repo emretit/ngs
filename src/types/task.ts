@@ -11,7 +11,6 @@ export interface Task {
   is_important?: boolean;
   type: TaskType;
   assignee_id?: string;
-  assigned_to?: string; // For compatibility with some older code
   assignee?: {
     id: string;
     first_name: string;

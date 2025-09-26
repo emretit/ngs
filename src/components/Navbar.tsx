@@ -1,16 +1,10 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NavHeader from "./navbar/NavHeader";
 import NavLink from "./navbar/NavLink";
 import { navItems, settingsItem } from "./navbar/nav-config";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface NavbarProps {
   isCollapsed: boolean;
@@ -19,55 +13,86 @@ interface NavbarProps {
 
 const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+
+  const toggleMenu = (path: string) => {
+    const newExpanded = new Set(expandedMenus);
+    if (newExpanded.has(path)) {
+      newExpanded.delete(path);
+    } else {
+      newExpanded.add(path);
+    }
+    setExpandedMenus(newExpanded);
+  };
+
+  const handleParentClick = (item: any) => {
+    if (item.hasDropdown && item.items) {
+      // Toggle the menu and navigate to the parent page
+      toggleMenu(item.path);
+      navigate(item.path);
+    } else {
+      navigate(item.path);
+    }
+  };
 
   const renderNavItem = (item: any) => {
     if (item.hasDropdown && item.items) {
-      // Item with dropdown
+      const isExpanded = expandedMenus.has(item.path);
+      const isActive = location.pathname === item.path;
+      const hasActiveChild = item.items.some((subItem: any) => location.pathname === subItem.path);
+      
       return (
-        <DropdownMenu key={item.path}>
-          <DropdownMenuTrigger asChild>
-            <div className={cn(
-              "flex items-center justify-between transition-all duration-200 rounded-lg group cursor-pointer px-3 h-10",
-              location.pathname === item.path || item.items.some((subItem: any) => location.pathname === subItem.path)
+        <div key={item.path} className="space-y-1">
+          {/* Parent item */}
+          <div
+            onClick={() => handleParentClick(item)}
+            className={cn(
+              "flex items-center justify-between transition-all duration-200 rounded-lg group cursor-pointer",
+              isCollapsed ? "justify-center px-3 h-10" : "px-3 h-10",
+              isActive || hasActiveChild
                 ? "bg-primary/15 text-primary font-semibold shadow-sm"
                 : "text-gray-300 hover:bg-gray-800/70 hover:text-white"
-            )}>
-              <div className="flex items-center space-x-3">
-                <item.icon className="h-4 w-4 flex-shrink-0" />
-                {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
-              </div>
-              {!isCollapsed && (
-                <ChevronDown className="h-3 w-3 opacity-50" />
-              )}
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            side="right" 
-            align="start" 
-            className="w-56 bg-gray-900 border-gray-800"
+            )}
           >
-            <DropdownMenuItem asChild>
-              <NavLink
-                to={item.path}
-                icon={item.icon}
-                label={item.label}
-                isActive={location.pathname === item.path}
-                isCollapsed={false}
-              />
-            </DropdownMenuItem>
-            {item.items.map((subItem: any) => (
-              <DropdownMenuItem key={subItem.path} asChild>
+            <div className="flex items-center space-x-3">
+              <item.icon className="h-4 w-4 flex-shrink-0" />
+              {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+            </div>
+            {!isCollapsed && (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleMenu(item.path);
+                }}
+                className="p-1 hover:bg-gray-700/50 rounded"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-3 w-3" />
+                ) : (
+                  <ChevronRight className="h-3 w-3" />
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Sub-items */}
+          {!isCollapsed && isExpanded && (
+            <div className="ml-4 space-y-1 border-l border-gray-700 pl-4">
+              {item.items.map((subItem: any) => (
                 <NavLink
+                  key={subItem.path}
                   to={subItem.path}
                   icon={subItem.icon}
                   label={subItem.label}
                   isActive={location.pathname === subItem.path}
                   isCollapsed={false}
+                  isSubItem={true}
                 />
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              ))}
+            </div>
+          )}
+        </div>
       );
     } else {
       // Regular nav item

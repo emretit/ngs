@@ -22,11 +22,11 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ isCollapsed, setIsCollapse
             // Create route element with props for protected routes
             const RouteElement = route.protected ? (
               <ProtectedRoute>
-                <route.component isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+                <route.component key={route.path} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
               </ProtectedRoute>
             ) : (
               <PublicRoute>
-                <route.component />
+                <route.component key={route.path} />
               </PublicRoute>
             );
 

@@ -1,6 +1,7 @@
 
 import { toast } from "@/hooks/use-toast";
 import { CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { logger } from "./logger";
 
 type ToastOptions = {
   /** Duration in milliseconds */
@@ -13,6 +14,7 @@ type ToastOptions = {
  * @param options Optional configuration options
  */
 export const showSuccess = (message: string, options?: ToastOptions) => {
+  logger.info(`Success: ${message}`);
   return toast({
     title: "Başarılı",
     description: message,
@@ -27,6 +29,7 @@ export const showSuccess = (message: string, options?: ToastOptions) => {
  * @param options Optional configuration options
  */
 export const showError = (message: string, options?: ToastOptions) => {
+  logger.error(`Error toast: ${message}`);
   return toast({
     title: "Hata",
     description: message,
@@ -42,6 +45,7 @@ export const showError = (message: string, options?: ToastOptions) => {
  * @param options Optional configuration options
  */
 export const showWarning = (message: string, options?: ToastOptions) => {
+  logger.warn(`Warning: ${message}`);
   return toast({
     title: "Uyarı",
     description: message,
@@ -56,6 +60,7 @@ export const showWarning = (message: string, options?: ToastOptions) => {
  * @param options Optional configuration options
  */
 export const showInfo = (message: string, options?: ToastOptions) => {
+  logger.info(`Info: ${message}`);
   return toast({
     title: "Bilgi",
     description: message,

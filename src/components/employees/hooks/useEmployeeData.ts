@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Employee } from "@/types/employee";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { useAuth } from "@/hooks/useAuth";
+import { logger } from "@/utils/logger";
 
 export const useEmployeeData = () => {
   const { user, session } = useAuth();
@@ -12,12 +13,12 @@ export const useEmployeeData = () => {
     queryKey: ['employees', user?.id],
     queryFn: async () => {
       if (!session) {
-        console.log('No session available for employees query');
+        logger.info('No session available for employees query');
         return [];
       }
 
       try {
-        console.log('Fetching employees with session:', session.user.id);
+        logger.info('Fetching employees', { userId: session.user.id });
         
         const { data, error } = await supabase
           .from('employees')
@@ -25,14 +26,13 @@ export const useEmployeeData = () => {
           .order('created_at', { ascending: false });
           
         if (error) {
-          console.error('Supabase error:', error);
           throw error;
         }
         
-        console.log('Employees fetched successfully:', data?.length || 0);
+        logger.info('Employees fetched successfully', { count: data?.length || 0 });
         return data as Employee[];
       } catch (error) {
-        console.error('Error fetching employees:', error);
+        logger.error('Error fetching employees', error);
         showError("Çalışan bilgileri yüklenirken bir hata oluştu.");
         return [];
       }
@@ -53,7 +53,7 @@ export const useEmployeeData = () => {
       
       refetch();
     } catch (error) {
-      console.error('Error clearing employees:', error);
+      logger.error('Error clearing employees', error);
       showError("Çalışan bilgileri silinirken bir hata oluştu.");
     }
   };

@@ -120,8 +120,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   useEffect(() => {
     if (proposal) {
       setFormData({
-        customer_company: proposal.customer_company || "",
-        contact_name: proposal.contact_name || "",
+        customer_company: String(proposal.customer_company || ""),
+        contact_name: String(proposal.contact_name || ""),
         contact_title: "",
         offer_date: proposal.created_at ? new Date(proposal.created_at) : undefined,
         offer_number: proposal.number || "",

@@ -40,7 +40,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
                     label={subItem.label}
                     isActive={location.pathname === subItem.path}
                     isCollapsed={isCollapsed}
-                    isSubItem={true}
+                    isSubItem={false}
                   />
                 ))}
               </div>

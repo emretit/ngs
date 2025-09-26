@@ -41,7 +41,7 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Update profile with employee match
+  // Update profile with employee match (optimized)
   const updateProfileMutation = useMutation({
     mutationFn: async ({ userId, employeeId }: { userId: string; employeeId: string | null }) => {
       logger.info('Updating user-employee mapping', { userId, employeeId });
@@ -61,11 +61,11 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
     onSuccess: (data, variables) => {
       handleSuccess('User-employee mapping updated successfully', 'updateProfile', variables);
       
-      // Invalidate all queries that might contain user data
-      queryClient.invalidateQueries({ queryKey: ["profiles"] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      queryClient.invalidateQueries({ queryKey: ['users', 'settings'] });
-      queryClient.invalidateQueries({ queryKey: ['users', 'settings', 'employee-matching'] });
+      // Only invalidate the specific queries we need
+      queryClient.invalidateQueries({ 
+        queryKey: ["profiles"],
+        exact: false 
+      });
       
       toast({
         title: "Başarılı",
@@ -141,10 +141,10 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
 
   const handleEmployeeSelect = (userId: string, employeeId: string) => {
     logger.info('Employee selection triggered', { userId, employeeId });
-    if (employeeId) {
+    if (employeeId && employeeId !== "") {
       updateProfileMutation.mutate({ userId, employeeId });
     } else {
-      logger.warn('No employeeId provided in handleEmployeeSelect');
+      logger.warn('No valid employeeId provided in handleEmployeeSelect');
     }
   };
 

@@ -42,9 +42,13 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
 
   const handleParentClick = (item: any) => {
     if (item.hasDropdown && item.items) {
-      // Always expand the menu when clicked and navigate to the parent page
+      // Toggle the menu when clicked and navigate to the parent page
       const newExpanded = new Set(expandedMenus);
-      newExpanded.add(item.path);
+      if (newExpanded.has(item.path)) {
+        newExpanded.delete(item.path);
+      } else {
+        newExpanded.add(item.path);
+      }
       setExpandedMenus(newExpanded);
       navigate(item.path);
     } else {

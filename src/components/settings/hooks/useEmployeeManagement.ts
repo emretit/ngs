@@ -1,45 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Employee } from "../types";
+import { Employee } from "@/types/employee";
 import { logger } from "@/utils/logger";
 import { handleError, handleSuccess } from "@/utils/errorHandler";
+import { useEmployeeData } from "@/components/employees/hooks/useEmployeeData";
 
 export const useEmployeeManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Fetch employees with user relationships
-  const {
-    data: employees,
-    isLoading,
-    error
-  } = useQuery({
-    queryKey: ['employees', 'with-users'],
-    queryFn: async () => {
-      logger.info('Fetching employees with user relationships');
-      
-      const { data, error } = await supabase
-        .from('employees')
-        .select(`
-          *,
-          profiles:user_id (
-            id,
-            email,
-            full_name
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        logger.error('Failed to fetch employees', error);
-        throw error;
-      }
-
-      logger.info('Successfully fetched employees', { count: data?.length });
-      return data as (Employee & { profiles?: { id: string; email: string; full_name: string } | null })[];
-    },
-  });
+  
+  // Use existing employee data hook
+  const { employees, isLoading, refetch } = useEmployeeData();
 
   // Create employee mutation
   const createEmployeeMutation = useMutation({
@@ -179,7 +151,7 @@ export const useEmployeeManagement = () => {
   return {
     employees,
     isLoading,
-    error,
+    refetch,
     createEmployeeMutation,
     updateEmployeeMutation,
     deleteEmployeeMutation,

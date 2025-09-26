@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
 import { EmployeeDeletionDialog } from "./EmployeeDeletionDialog";
-import { Employee } from "../types";
+import { Employee } from "@/types/employee";
 
 export const EmployeeManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -121,7 +121,7 @@ export const EmployeeManagement = () => {
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Çalışan ara..."
-          value={searchTerm}
+          value={searchTerm || ""}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />

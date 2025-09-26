@@ -13,6 +13,7 @@ export interface Employee {
   hire_date: string;
   status: EmployeeStatus;
   avatar_url: string | null;
+  user_id?: string | null;
   
   // Extended personal information
   date_of_birth?: string | null;

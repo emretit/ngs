@@ -385,7 +385,7 @@ const BankAccounts = ({ showBalances }: BankAccountsProps) => {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 text-lg">{card.card_name}</h3>
-                        <p className="text-sm text-gray-600">{formatCardNumber(card.card_number)}</p>
+                        <p className="text-sm text-gray-600">{formatCardNumber(card.card_name)}</p>
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">

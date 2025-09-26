@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,20 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const newExpanded = new Set<string>(expandedMenus);
+    navItems.forEach((item: any) => {
+      if (item.hasDropdown && item.items) {
+        const isParentActive = location.pathname === item.path;
+        const hasActiveChild = item.items.some((s: any) => location.pathname === s.path);
+        if (isParentActive || hasActiveChild) {
+          newExpanded.add(item.path);
+        }
+      }
+    });
+    setExpandedMenus(newExpanded);
+  }, [location.pathname]);
 
   const toggleMenu = (path: string) => {
     const newExpanded = new Set(expandedMenus);

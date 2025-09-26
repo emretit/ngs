@@ -1,5 +1,11 @@
 
 import Cashflow from "@/pages/Cashflow";
+import CashflowOpexEntry from "@/pages/CashflowOpexEntry";
+import CashflowExpenses from "@/pages/CashflowExpenses";
+import CashflowEmployeeCosts from "@/pages/CashflowEmployeeCosts";
+import CashflowLoansAndChecks from "@/pages/CashflowLoansAndChecks";
+import CashflowInvoices from "@/pages/CashflowInvoices";
+import CashflowBankAccounts from "@/pages/CashflowBankAccounts";
 import CashflowCategoriesWrapper from "@/pages/CashflowCategoriesWrapper";
 import PurchaseInvoices from "@/pages/PurchaseInvoices";
 import SalesInvoices from "@/pages/SalesInvoices";
@@ -11,13 +17,12 @@ import { RouteConfig } from "./types";
 // Define cashflow routes
 export const cashflowRoutes: RouteConfig[] = [
   { path: "/cashflow", component: Cashflow, protected: true },
-  
-  { path: "/cashflow/opex-entry", component: Cashflow, protected: true },
-  { path: "/cashflow/expenses", component: Cashflow, protected: true },
-  { path: "/cashflow/employee-costs", component: Cashflow, protected: true },
-  { path: "/cashflow/loans-and-checks", component: Cashflow, protected: true },
-  { path: "/cashflow/invoices", component: Cashflow, protected: true },
-  { path: "/cashflow/bank-accounts", component: Cashflow, protected: true },
+  { path: "/cashflow/opex-entry", component: CashflowOpexEntry, protected: true },
+  { path: "/cashflow/expenses", component: CashflowExpenses, protected: true },
+  { path: "/cashflow/employee-costs", component: CashflowEmployeeCosts, protected: true },
+  { path: "/cashflow/loans-and-checks", component: CashflowLoansAndChecks, protected: true },
+  { path: "/cashflow/invoices", component: CashflowInvoices, protected: true },
+  { path: "/cashflow/bank-accounts", component: CashflowBankAccounts, protected: true },
   { path: "/cashflow/categories", component: CashflowCategoriesWrapper, protected: true },
 ];
 

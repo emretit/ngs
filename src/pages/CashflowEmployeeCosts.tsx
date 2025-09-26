@@ -1,15 +1,14 @@
 import Navbar from "@/components/Navbar";
 import { TopBar } from "@/components/TopBar";
-import CashflowOverview from "@/components/cashflow/CashflowOverview";
-import { DollarSign } from "lucide-react";
+import EmployeeCosts from "@/components/cashflow/EmployeeCosts";
+import { Users2 } from "lucide-react";
 
-interface CashflowProps {
+interface CashflowEmployeeCostsProps {
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void;
 }
 
-const Cashflow = ({ isCollapsed, setIsCollapsed }: CashflowProps) => {
-
+const CashflowEmployeeCosts = ({ isCollapsed, setIsCollapsed }: CashflowEmployeeCostsProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
@@ -17,26 +16,20 @@ const Cashflow = ({ isCollapsed, setIsCollapsed }: CashflowProps) => {
         <TopBar />
         <div className="p-8">
           <div className="w-full">
-            {/* Header - Fırsatlar gibi */}
+            {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
-              {/* Sol taraf - Başlık */}
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white shadow-lg">
-                  <DollarSign className="h-5 w-5" />
+                <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-white shadow-lg">
+                  <Users2 className="h-5 w-5" />
                 </div>
                 <div className="space-y-0.5">
                   <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                    Nakit Akış Yönetimi
+                    Çalışan Maliyetleri
                   </h1>
                   <p className="text-xs text-muted-foreground/70">
-                    Gelir ve giderlerinizi profesyonel bir şekilde yönetin ve analiz edin.
+                    Çalışan maliyetlerinizi hesaplayın ve takip edin.
                   </p>
                 </div>
-              </div>
-              
-              {/* Sağ taraf - Boş (kartlar kaldırıldı) */}
-              <div className="flex items-center gap-2">
-                {/* İleride butonlar eklenebilir */}
               </div>
             </div>
 
@@ -44,7 +37,7 @@ const Cashflow = ({ isCollapsed, setIsCollapsed }: CashflowProps) => {
             <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
               <div className="p-6">
                 <div className="space-y-6">
-                  <CashflowOverview />
+                  <EmployeeCosts />
                 </div>
               </div>
             </div>
@@ -55,4 +48,4 @@ const Cashflow = ({ isCollapsed, setIsCollapsed }: CashflowProps) => {
   );
 };
 
-export default Cashflow;
+export default CashflowEmployeeCosts;

@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CreditCard, Building2, Eye, EyeOff, Banknote } from "lucide-react";
+import { 
+  Building2, 
+  Plus, 
+  TrendingUp, 
+  Wallet,
+  PiggyBank,
+  ArrowUpRight,
+  MoreHorizontal,
+  Edit,
+  Trash2
+} from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface BankAccount {
@@ -30,11 +39,15 @@ interface CreditCard {
   expiry_date: string;
 }
 
-const BankAccounts = () => {
+
+interface BankAccountsProps {
+  showBalances: boolean;
+}
+
+const BankAccounts = ({ showBalances }: BankAccountsProps) => {
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showBalances, setShowBalances] = useState(false);
 
   const fetchBankAccounts = async () => {
     try {
@@ -100,6 +113,7 @@ const BankAccounts = () => {
     return number.replace(/(.{4})/g, '$1-').slice(0, -1);
   };
 
+
   const totalBankBalance = bankAccounts.reduce((sum, account) => {
     if (account.currency === 'TRY') {
       return sum + (account.current_balance || 0);
@@ -110,277 +124,358 @@ const BankAccounts = () => {
   const totalCreditLimit = creditCards.reduce((sum, card) => sum + (card.credit_limit || 0), 0);
   const totalCreditUsed = creditCards.reduce((sum, card) => sum + (card.current_balance || 0), 0);
 
+
   return (
     <div className="space-y-8">
-      {/* Enhanced Header Section */}
-      <div className="bg-gradient-to-r from-white to-green-50/50 rounded-2xl border border-green-100/50 shadow-sm p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="flex items-center gap-4">
+      {/* Modern Summary Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Toplam Nakit */}
+        <Card className="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute top-4 right-4">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <Wallet className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <CardContent className="relative p-6">
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-gray-600">Toplam Nakit</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {showBalances ? formatCurrency(totalBankBalance, 'TRY') : '••••••'}
+              </p>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                <span className="text-sm text-green-600 font-medium">Banka hesapları</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Kredi Limiti */}
+        <Card className="group relative overflow-hidden bg-gradient-to-br from-green-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute top-4 right-4">
+            <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
+              <Building2 className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <CardContent className="relative p-6">
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-gray-600">Kredi Limiti</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {showBalances ? formatCurrency(totalCreditLimit, 'TRY') : '••••••'}
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-gray-600">Kredi kartları</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Kullanılan Kredi */}
+        <Card className="group relative overflow-hidden bg-gradient-to-br from-orange-50 to-amber-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute top-4 right-4">
+            <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg">
+              <Building2 className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <CardContent className="relative p-6">
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-gray-600">Kullanılan Kredi</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {showBalances ? formatCurrency(totalCreditUsed, 'TRY') : '••••••'}
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-orange-500 h-2 rounded-full" style={{width: `${totalCreditLimit > 0 ? (totalCreditUsed / totalCreditLimit) * 100 : 0}%`}}></div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Net Pozisyon */}
+        <Card className="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-violet-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+          <div className="absolute top-4 right-4">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg">
+              <PiggyBank className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <CardContent className="relative p-6">
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-gray-600">Net Pozisyon</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {showBalances ? formatCurrency(totalBankBalance - totalCreditUsed, 'TRY') : '••••••'}
+              </p>
+              <div className="flex items-center gap-2">
+                <ArrowUpRight className="h-4 w-4 text-green-500" />
+                <span className="text-sm text-green-600 font-medium">Pozitif</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Modern Bank Accounts Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <Building2 className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Banka Hesapları</h2>
+              <p className="text-gray-600">Tüm banka hesaplarınızı tek yerden yönetin</p>
+            </div>
+          </div>
+          <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg">
+            <Plus className="h-4 w-4 mr-2" />
+            Yeni Hesap Ekle
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="text-gray-600 font-medium">Banka hesapları yükleniyor...</p>
+            </div>
+          </div>
+        ) : bankAccounts.length === 0 ? (
+          <Card className="border-2 border-dashed border-gray-300 bg-gray-50/50">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="p-4 bg-gray-100 rounded-full mb-4">
+                <Building2 className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Henüz banka hesabı yok</h3>
+              <p className="text-gray-500 text-center mb-6">İlk banka hesabınızı ekleyerek başlayabilirsiniz</p>
+              <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                İlk Hesabınızı Ekleyin
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bankAccounts.map((account) => (
+              <Card key={account.id} className="group relative overflow-hidden bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full -translate-y-16 translate-x-16"></div>
+                <CardContent className="relative p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
+                        <Building2 className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-lg">{account.account_name}</h3>
+                        <p className="text-sm text-gray-600">{account.bank_name}</p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Hesap Tipi</span>
+                      <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">
+                        {getAccountTypeLabel(account.account_type)}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Para Birimi</span>
+                      <span className="font-medium text-gray-900">{account.currency}</span>
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600">Güncel Bakiye</span>
+                        <span className="text-lg font-bold text-gray-900">
+                          {showBalances
+                            ? formatCurrency(account.current_balance || 0, account.currency)
+                            : '••••••'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Kullanılabilir</span>
+                        <span className="font-medium text-green-600">
+                          {showBalances
+                            ? formatCurrency(account.available_balance || 0, account.currency)
+                            : '••••••'
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <Badge 
+                        variant={account.is_active ? "default" : "secondary"} 
+                        className={account.is_active ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-gray-100 text-gray-600"}
+                      >
+                        {account.is_active ? '✅ Aktif' : '❌ Pasif'}
+                      </Badge>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Modern Credit Cards Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
               <Building2 className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Banka Hesapları</h1>
-              <p className="text-gray-600 text-base">Banka hesapları ve kredi kartları yönetimi - Finansal varlık takibi</p>
+              <h2 className="text-2xl font-bold text-gray-900">Kredi Kartları</h2>
+              <p className="text-gray-600">Kredi kartlarınızı takip edin ve yönetin</p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowBalances(!showBalances)}
-            className="flex items-center gap-2 bg-white border-gray-300 hover:border-green-400 hover:bg-green-50"
-          >
-            {showBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            {showBalances ? 'Bakiyeleri Gizle' : 'Bakiyeleri Göster'}
+          <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg">
+            <Plus className="h-4 w-4 mr-2" />
+            Yeni Kart Ekle
           </Button>
         </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+              <p className="text-gray-600 font-medium">Kredi kartları yükleniyor...</p>
+            </div>
+          </div>
+        ) : creditCards.length === 0 ? (
+          <Card className="border-2 border-dashed border-gray-300 bg-gray-50/50">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="p-4 bg-gray-100 rounded-full mb-4">
+                <Building2 className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Henüz kredi kartı yok</h3>
+              <p className="text-gray-500 text-center mb-6">İlk kredi kartınızı ekleyerek başlayabilirsiniz</p>
+              <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                İlk Kartınızı Ekleyin
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {creditCards.map((card) => (
+              <Card key={card.id} className="group relative overflow-hidden bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full -translate-y-16 translate-x-16"></div>
+                <CardContent className="relative p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-md">
+                        <Building2 className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-lg">{card.card_name}</h3>
+                        <p className="text-sm text-gray-600">{formatCardNumber(card.card_number)}</p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Kart Tipi</span>
+                      <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
+                        {getCardTypeLabel(card.card_type)}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Son Kullanma</span>
+                      <span className="font-medium text-gray-900">
+                        {new Date(card.expiry_date).toLocaleDateString('tr-TR')}
+                      </span>
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600">Güncel Bakiye</span>
+                        <span className="text-lg font-bold text-orange-600">
+                          {showBalances
+                            ? formatCurrency(card.current_balance || 0, 'TRY')
+                            : '••••••'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600">Kredi Limiti</span>
+                        <span className="font-semibold text-green-600">
+                          {showBalances
+                            ? formatCurrency(card.credit_limit || 0, 'TRY')
+                            : '••••••'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Kullanılabilir</span>
+                        <span className="font-medium text-blue-600">
+                          {showBalances
+                            ? formatCurrency(card.available_limit || 0, 'TRY')
+                            : '••••••'
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="pt-2">
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                        <span>Kullanım Oranı</span>
+                        <span>{Math.round(((card.current_balance || 0) / (card.credit_limit || 1)) * 100)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-orange-400 to-red-500 h-2 rounded-full transition-all duration-300" 
+                          style={{width: `${Math.min(((card.current_balance || 0) / (card.credit_limit || 1)) * 100, 100)}%`}}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3">
+                      <Badge 
+                        variant={card.status === 'active' ? "default" : "secondary"} 
+                        className={card.status === 'active' ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-gray-100 text-gray-600"}
+                      >
+                        {card.status === 'active' ? '✅ Aktif' : '❌ Pasif'}
+                      </Badge>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500 hover:text-red-700">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Enhanced Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="group relative overflow-hidden bg-white border border-blue-100 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:-translate-y-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50"></div>
-          <div className="absolute top-4 right-4">
-            <div className="p-2 bg-blue-500 rounded-lg shadow-lg">
-              <Building2 className="h-5 w-5 text-white" />
-            </div>
-          </div>
-          <CardContent className="relative p-6">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-gray-700">Toplam Nakit</p>
-              <p className="text-2xl lg:text-3xl font-bold text-blue-600">
-                {showBalances ? formatCurrency(totalBankBalance, 'TRY') : '••••••'}
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="px-2 py-1 bg-blue-100 rounded-full">
-                  <span className="text-xs font-medium text-blue-700">Banka hesapları</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="group relative overflow-hidden bg-white border border-green-100 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 hover:-translate-y-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50"></div>
-          <div className="absolute top-4 right-4">
-            <div className="p-2 bg-green-500 rounded-lg shadow-lg">
-              <CreditCard className="h-5 w-5 text-white" />
-            </div>
-          </div>
-          <CardContent className="relative p-6">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-gray-700">Kredi Limiti</p>
-              <p className="text-2xl lg:text-3xl font-bold text-green-600">
-                {showBalances ? formatCurrency(totalCreditLimit, 'TRY') : '••••••'}
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="px-2 py-1 bg-green-100 rounded-full">
-                  <span className="text-xs font-medium text-green-700">Toplam limit</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="group relative overflow-hidden bg-white border border-orange-100 hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-amber-50"></div>
-          <div className="absolute top-4 right-4">
-            <div className="p-2 bg-orange-500 rounded-lg shadow-lg">
-              <Banknote className="h-5 w-5 text-white" />
-            </div>
-          </div>
-          <CardContent className="relative p-6">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold text-gray-700">Kullanılan Kredi</p>
-              <p className="text-2xl lg:text-3xl font-bold text-orange-600">
-                {showBalances ? formatCurrency(totalCreditUsed, 'TRY') : '••••••'}
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="px-2 py-1 bg-orange-100 rounded-full">
-                  <span className="text-xs font-medium text-orange-700">Kullanılan</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Enhanced Bank Accounts */}
-      <Card className="bg-white border border-gray-200 shadow-lg">
-        <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Building2 className="h-5 w-5 text-blue-600" />
-            </div>
-            <CardTitle className="text-xl font-bold text-gray-900">Banka Hesapları</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="rounded-xl border border-gray-200 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50/50 hover:bg-gray-50">
-                  <TableHead className="font-semibold text-gray-700">Hesap Adı</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Banka</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Tip</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Para Birimi</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Bakiye</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Kullanılabilir</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Durum</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p className="text-gray-600 font-medium">Banka hesapları yükleniyor...</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : bankAccounts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="p-3 bg-gray-100 rounded-full">
-                          <Building2 className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-gray-900 font-medium">Henüz banka hesabı bulunmuyor</p>
-                          <p className="text-gray-500 text-sm mt-1">İlk hesabınızı ekleyerek başlayabilirsiniz</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  bankAccounts.map((account) => (
-                    <TableRow key={account.id} className="hover:bg-blue-50/30 transition-colors">
-                      <TableCell className="font-semibold text-gray-900">{account.account_name}</TableCell>
-                      <TableCell className="text-gray-700">{account.bank_name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">
-                          {getAccountTypeLabel(account.account_type)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium text-gray-700">{account.currency}</TableCell>
-                      <TableCell className="font-semibold text-blue-600">
-                        {showBalances
-                          ? formatCurrency(account.current_balance || 0, account.currency)
-                          : '••••••'
-                        }
-                      </TableCell>
-                      <TableCell className="font-medium text-green-600">
-                        {showBalances
-                          ? formatCurrency(account.available_balance || 0, account.currency)
-                          : '••••••'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={account.is_active ? "default" : "secondary"} className={account.is_active ? "bg-green-100 text-green-700 hover:bg-green-200" : ""}>
-                          {account.is_active ? '✅ Aktif' : '❌ Pasif'}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Enhanced Credit Cards */}
-      <Card className="bg-white border border-gray-200 shadow-lg">
-        <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CreditCard className="h-5 w-5 text-green-600" />
-            </div>
-            <CardTitle className="text-xl font-bold text-gray-900">Kredi Kartları</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="rounded-xl border border-gray-200 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50/50 hover:bg-gray-50">
-                  <TableHead className="font-semibold text-gray-700">Kart Adı</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Tip</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Bakiye</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Limit</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Kullanılabilir</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Son Kullanma</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Durum</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                        <p className="text-gray-600 font-medium">Kredi kartları yükleniyor...</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : creditCards.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="p-3 bg-gray-100 rounded-full">
-                          <CreditCard className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-gray-900 font-medium">Henüz kredi kartı bulunmuyor</p>
-                          <p className="text-gray-500 text-sm mt-1">İlk kartınızı ekleyerek başlayabilirsiniz</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  creditCards.map((card) => (
-                    <TableRow key={card.id} className="hover:bg-green-50/30 transition-colors">
-                      <TableCell className="font-semibold text-gray-900">{card.card_name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
-                          {getCardTypeLabel(card.card_type)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold text-orange-600">
-                        {showBalances
-                          ? formatCurrency(card.current_balance || 0, 'TRY')
-                          : '••••••'
-                        }
-                      </TableCell>
-                      <TableCell className="font-semibold text-green-600">
-                        {showBalances
-                          ? formatCurrency(card.credit_limit || 0, 'TRY')
-                          : '••••••'
-                        }
-                      </TableCell>
-                      <TableCell className="font-medium text-blue-600">
-                        {showBalances
-                          ? formatCurrency(card.available_limit || 0, 'TRY')
-                          : '••••••'
-                        }
-                      </TableCell>
-                      <TableCell className="text-gray-700">
-                        📅 {new Date(card.expiry_date).toLocaleDateString('tr-TR')}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={card.status === 'active' ? "default" : "secondary"} className={card.status === 'active' ? "bg-green-100 text-green-700 hover:bg-green-200" : ""}>
-                          {card.status === 'active' ? '✅ Aktif' : '❌ Pasif'}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

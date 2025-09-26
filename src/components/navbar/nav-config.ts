@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   User,
   Users,
+  Users2,
   Wrench,
   BarChart2,
   ListTodo,
@@ -143,9 +144,46 @@ export const navItems = [
   },
   // 8. Nakit Akış
   {
-    path: "/cashflow",
+    category: "Nakit Akış",
     icon: CreditCard,
-    label: "Nakit Akış",
+    path: "/cashflow",
+    items: [
+      {
+        path: "/cashflow",
+        icon: BarChart2,
+        label: "Genel Bakış",
+      },
+      {
+        path: "/cashflow/opex-entry",
+        icon: FileText,
+        label: "OPEX Girişi",
+      },
+      {
+        path: "/cashflow/expenses",
+        icon: Receipt,
+        label: "Giderler",
+      },
+      {
+        path: "/cashflow/employee-costs",
+        icon: Users2,
+        label: "Çalışan Maliyetleri",
+      },
+      {
+        path: "/cashflow/loans-and-checks",
+        icon: Calculator,
+        label: "Krediler ve Çekler",
+      },
+      {
+        path: "/cashflow/invoices",
+        icon: FileEdit,
+        label: "Faturalar",
+      },
+      {
+        path: "/cashflow/bank-accounts",
+        icon: Building,
+        label: "Hesaplar",
+      },
+    ],
   },
   // 9. Ürünler
   {

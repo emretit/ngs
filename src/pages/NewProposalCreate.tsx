@@ -471,6 +471,11 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                       handleFieldChange('employee_id', value);
                     }}
                     error=""
+                    label="Teklifi Hazırlayan"
+                    placeholder="Teklifi hazırlayan seçin..."
+                    searchPlaceholder="Teklifi hazırlayan ara..."
+                    loadingText="Teklifi hazırlayanlar yükleniyor..."
+                    noResultsText="Teklifi hazırlayan bulunamadı"
                   />
                 </div>
               </div>

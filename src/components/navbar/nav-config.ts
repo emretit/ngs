@@ -56,18 +56,17 @@ export const navItems = [
     icon: Building2,
     label: "Tedarikçiler",
   },
-  // 4. Aktiviteler
-  {
-    path: "/activities",
-    icon: ListTodo,
-    label: "Aktiviteler",
-  },
-  // 5. Satış Yönetimi
+  // 4. Satış Yönetimi
   {
     category: "Satış Yönetimi",
     icon: TrendingUp,
     path: "/crm",
     items: [
+      {
+        path: "/activities",
+        icon: ListTodo,
+        label: "Aktiviteler",
+      },
       {
         path: "/opportunities",
         icon: Target,
@@ -95,7 +94,7 @@ export const navItems = [
       },
     ],
   },
-  // 6. Satın Alma
+  // 5. Satın Alma
   {
     category: "Satın Alma",
     icon: PackageCheck,
@@ -113,13 +112,13 @@ export const navItems = [
       },
     ],
   },
-  // 7. Servis
+  // 6. Servis
   {
     path: "/service",
     icon: Wrench,
     label: "Servis",
   },
-  // 8. Fatura Yönetimi
+  // 7. Fatura Yönetimi
   {
     category: "Fatura Yönetimi",
     icon: Receipt,
@@ -142,31 +141,31 @@ export const navItems = [
       },
     ],
   },
-  // 9. Nakit Akış
+  // 8. Nakit Akış
   {
     path: "/cashflow",
     icon: CreditCard,
     label: "Nakit Akış",
   },
-  // 10. Ürünler
+  // 9. Ürünler
   {
     path: "/products",
     icon: Package,
     label: "Ürünler",
   },
-  // 11. Çalışanlar
+  // 10. Çalışanlar
   {
     path: "/employees",
     icon: Users,
     label: "Çalışanlar",
   },
-  // 12. Araç Yönetimi
+  // 11. Araç Yönetimi
   {
     path: "/vehicles",
     icon: Car,
     label: "Araç Yönetimi",
   },
-  // 13. Raporlar
+  // 12. Raporlar
   {
     path: "/reports",
     icon: BarChart2,

@@ -17,6 +17,7 @@ import {
   Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface Employee {
   id: string;
@@ -32,23 +33,50 @@ interface EmployeeSelectorProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  companyId?: string;
+  label?: string;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  loadingText?: string;
+  noResultsText?: string;
+  showLabel?: boolean;
+  className?: string;
 }
 
-const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({ value, onChange, error }) => {
+const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({ 
+  value, 
+  onChange, 
+  error, 
+  companyId,
+  label = "Çalışan Seçin",
+  placeholder = "Çalışan seçin...",
+  searchPlaceholder = "Çalışan ara...",
+  loadingText = "Çalışanlar yükleniyor...",
+  noResultsText = "Çalışan bulunamadı",
+  showLabel = true,
+  className = ""
+}) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { userData } = useCurrentUser();
 
   const { data: employees = [], isLoading } = useQuery({
-    queryKey: ["employees"],
+    queryKey: ["employees", companyId || userData?.company_id],
     queryFn: async () => {
+      const targetCompanyId = companyId || userData?.company_id;
+      if (!targetCompanyId) return [];
+      
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name, position, department")
+        .eq("company_id", targetCompanyId)
+        .eq("status", "aktif")
         .order("first_name");
       
       if (error) throw error;
       return data as Employee[] || [];
     },
+    enabled: !!(companyId || userData?.company_id),
   });
 
   // Filter employees based on search query
@@ -73,18 +101,19 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({ value, onChange, er
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className={cn("space-y-2", className)}>
+        {showLabel && <Label className={error ? "text-red-500" : ""}>{label}</Label>}
         <div className="flex items-center justify-center py-4">
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          <span className="ml-2 text-sm">Teklifi hazırlayanlar yükleniyor...</span>
+          <span className="ml-2 text-sm">{loadingText}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <Label className={error ? "text-red-500" : ""}>Teklifi Hazırlayan</Label>
+    <div className={cn("space-y-2", className)}>
+      {showLabel && <Label className={error ? "text-red-500" : ""}>{label}</Label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -100,7 +129,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({ value, onChange, er
             <span className="truncate text-left flex-1">
               {selectedEmployee 
                 ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}${selectedEmployee.position ? ` (${selectedEmployee.position})` : ""}`
-                : "Teklifi hazırlayan seçin..."
+                : placeholder
               }
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -111,7 +140,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({ value, onChange, er
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Teklifi hazırlayan ara..."
+                placeholder={searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -123,8 +152,8 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({ value, onChange, er
             {filteredEmployees.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 {searchQuery 
-                  ? `"${searchQuery}" ile eşleşen teklifi hazırlayan bulunamadı` 
-                  : "Teklifi hazırlayan bulunamadı"}
+                  ? `"${searchQuery}" ile eşleşen çalışan bulunamadı` 
+                  : noResultsText}
               </div>
             ) : (
               <div className="p-1">

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -9,20 +8,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Search, User, Building2, Mail, Phone } from "lucide-react";
+import { User, Building2 } from "lucide-react";
+import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 
 interface Employee {
   id: string;
@@ -54,42 +47,10 @@ export const EmployeeMatchingDialog = ({
   onClose,
   profile,
 }: EmployeeMatchingDialogProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
-
-  // Fetch employees for the current company
-  const { data: employees = [], isLoading: employeesLoading } = useQuery({
-    queryKey: ["employees-for-matching", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      
-      const { data, error } = await supabase
-        .from("employees")
-        .select("id, first_name, last_name, email, phone, position, department, avatar_url")
-        .eq("company_id", userData.company_id)
-        .eq("status", "aktif")
-        .order("first_name");
-
-      if (error) throw error;
-      return data as Employee[];
-    },
-    enabled: !!userData?.company_id && isOpen,
-  });
-
-  // Filter employees based on search query
-  const filteredEmployees = employees.filter((employee) => {
-    const searchTerm = searchQuery.toLowerCase();
-    return (
-      employee.first_name.toLowerCase().includes(searchTerm) ||
-      employee.last_name.toLowerCase().includes(searchTerm) ||
-      employee.email.toLowerCase().includes(searchTerm) ||
-      employee.position.toLowerCase().includes(searchTerm) ||
-      employee.department.toLowerCase().includes(searchTerm)
-    );
-  });
 
   // Set initial selected employee when profile changes
   useEffect(() => {
@@ -139,8 +100,6 @@ export const EmployeeMatchingDialog = ({
     updateProfileMutation.mutate(null);
   };
 
-  const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -170,85 +129,22 @@ export const EmployeeMatchingDialog = ({
               </div>
             </div>
 
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Çalışan ara..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+            {/* Employee Selector */}
+            <div className="space-y-2">
+              <EmployeeSelector
+                value={selectedEmployeeId}
+                onChange={setSelectedEmployeeId}
+                error=""
+                companyId={userData?.company_id}
               />
             </div>
 
-            {/* Employee List */}
-            <div className="flex-1 overflow-y-auto space-y-2">
-              {employeesLoading ? (
-                <div className="text-center py-4 text-gray-500">Yükleniyor...</div>
-              ) : filteredEmployees.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">
-                  {searchQuery ? "Arama kriterlerine uygun çalışan bulunamadı" : "Çalışan bulunamadı"}
-                </div>
-              ) : (
-                filteredEmployees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedEmployeeId === employee.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                    onClick={() => setSelectedEmployeeId(employee.id)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={employee.avatar_url} />
-                        <AvatarFallback>
-                          {employee.first_name[0]}{employee.last_name[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <p className="font-medium truncate">
-                            {employee.first_name} {employee.last_name}
-                          </p>
-                          {selectedEmployeeId === employee.id && (
-                            <Badge variant="secondary" className="text-xs">
-                              Seçili
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <Mail className="h-3 w-3" />
-                            <span className="truncate">{employee.email}</span>
-                          </div>
-                          {employee.phone && (
-                            <div className="flex items-center space-x-1">
-                              <Phone className="h-3 w-3" />
-                              <span>{employee.phone}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2 text-xs text-gray-400 mt-1">
-                          <Building2 className="h-3 w-3" />
-                          <span>{employee.position}</span>
-                          <span>•</span>
-                          <span>{employee.department}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
             {/* Current Match Info */}
-            {selectedEmployee && (
+            {selectedEmployeeId && (
               <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                 <h4 className="font-medium text-sm text-green-800 mb-1">Seçilen Çalışan</h4>
                 <p className="text-sm text-green-700">
-                  {selectedEmployee.first_name} {selectedEmployee.last_name} - {selectedEmployee.position}
+                  Çalışan eşleştirildi
                 </p>
               </div>
             )}

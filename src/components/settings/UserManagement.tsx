@@ -60,7 +60,15 @@ export const UserManagement = () => {
   }, [queryClient, toast]);
 
   const { data: users, isLoading } = useQuery({
-    queryKey: ['users'],
+    queryKey: ['users', 'settings', 'employee-matching'],
+    staleTime: 0,
+    cacheTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
     queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')

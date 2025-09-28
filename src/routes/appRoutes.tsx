@@ -18,6 +18,7 @@ import { vehicleRoutes } from "./vehicleRoutes";
 import Deliveries from "@/pages/Deliveries";
 import Returns from "@/pages/Returns";
 import InvoiceManagement from "@/pages/InvoiceManagement";
+import ModulesTree from "@/pages/ModulesTree";
 
 
 
@@ -42,5 +43,6 @@ export const appRoutes: RouteConfig[] = [
   { path: "/deliveries", component: Deliveries, protected: true },
   { path: "/returns", component: Returns, protected: true },
   { path: "/invoices", component: InvoiceManagement, protected: true },
+  { path: "/modules-tree", component: ModulesTree, protected: true },
 
 ];

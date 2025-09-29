@@ -1,504 +1,518 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import ReactFlow, {
-  Node,
-  Edge,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Connection,
-  Background,
-  Controls,
-  MiniMap,
-  NodeProps,
-  BackgroundVariant,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+import React, { useState, useCallback, useEffect } from 'react';
+import { ReactFlowProvider, useReactFlow, Node } from 'reactflow';
 import { useNavigate } from 'react-router-dom';
-import { layoutElements } from '@/lib/layout';
+import { toast } from 'sonner';
+
 import DefaultLayout from '@/components/layouts/DefaultLayout';
-import { ModuleInfoPanel } from '@/components/modules/ModuleInfoPanel';
-import { ModuleSearch } from '@/components/modules/ModuleSearch';
+import { ModuleFlow } from '@/components/modules/ModuleFlow';
+import { RightDrawer } from '@/components/modules/RightDrawer';
+import { ShortcutsModal } from '@/components/modules/ShortcutsModal';
 
-// Custom node component
-const CustomNode = ({ data, selected }: NodeProps) => {
-  const isRoot = data.isRoot;
-  const isMainModule = data.isMainModule;
-  const hasRoute = data.hasRoute;
-  
-  return (
-    <div
-      className={`
-        px-6 py-4 rounded-xl border-2 transition-all duration-300 cursor-pointer
-        animate-fade-in hover-scale
-        ${
-          isRoot
-            ? 'bg-gradient-to-br from-primary/20 via-primary/30 to-primary/40 border-primary font-bold text-primary shadow-2xl shadow-primary/30 animate-pulse'
-            : isMainModule 
-              ? 'bg-gradient-to-br from-accent/20 via-accent/30 to-accent/20 border-accent text-accent-foreground shadow-xl hover:shadow-2xl font-semibold hover:border-accent'
-              : hasRoute
-                ? 'bg-gradient-to-br from-card via-card/90 to-card/80 border-border text-card-foreground shadow-lg hover:shadow-xl hover:border-primary/50 hover:bg-gradient-to-br hover:from-primary/5 hover:to-primary/10'
-                : 'bg-gradient-to-br from-muted via-muted/80 to-muted/60 border-muted-foreground/20 text-muted-foreground shadow-md hover:shadow-lg opacity-75'
-        } 
-        ${selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-105' : ''}
-        ${hasRoute ? 'hover:text-primary' : ''}
-      `}
-      style={{ minWidth: '200px', textAlign: 'center' }}
-    >
-      <div className={`${isRoot ? 'text-xl' : isMainModule ? 'text-base' : 'text-sm'} font-medium transition-colors duration-200`}>
-        {data.label}
-      </div>
-      {isRoot && (
-        <div className="text-xs text-primary/70 mt-1 animate-fade-in">
-          İş Yönetim Sistemi
-        </div>
-      )}
-      {isMainModule && (
-        <div className="text-xs text-accent/60 mt-1">
-          Ana Modül
-        </div>
-      )}
-      {hasRoute && !isRoot && !isMainModule && (
-        <div className="text-xs text-muted-foreground/60 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          Tıklayın →
-        </div>
-      )}
-    </div>
-  );
-};
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-const nodeTypes = {
-  custom: CustomNode,
-};
+import { 
+  Search, 
+  Filter, 
+  RotateCcw, 
+  Download, 
+  HelpCircle,
+  Layers,
+  X,
+  AlertCircle,
+  Package
+} from 'lucide-react';
+
+import { useModuleData, ModuleFilters } from '@/lib/useModuleData';
+import { useDebounce } from '@/hooks/useDebounce';
+import { exportToPng } from '@/utils/exportPng';
 
 interface ModulesTreeProps {
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void;
 }
 
-const ModulesTree: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsCollapsed }) => {
+// Main component wrapper for ReactFlow
+const ModulesTreeContent: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsCollapsed }) => {
   const navigate = useNavigate();
-  const [selectedModule, setSelectedModule] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<string[]>([]);
+  const reactFlowInstance = useReactFlow();
   
-  // Define node-to-route mapping
-  const nodeRoutes: Record<string, string> = {
-    'crm-customers': '/contacts',
-    'crm-opportunities': '/opportunities',
-    'crm-proposals': '/proposals',
-    'erp-purchasing': '/purchase',
-    'erp-cashflow': '/cashflow',
-    'hr-employees': '/employees',
-  };
+  const {
+    modules,
+    loading,
+    error,
+    searchTerm,
+    setSearchTerm,
+    filters,
+    setFilters,
+    maxDepth,
+    setMaxDepth,
+    nodes,
+    edges,
+    allTags,
+    getBreadcrumbs,
+    refetch
+  } = useModuleData();
 
-  // Define nodes
-  const initialNodes: Node[] = [
-    {
-      id: 'root',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'Pafta.app', isRoot: true },
-    },
-    // First level children
-    {
-      id: 'crm',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'CRM', isRoot: false, isMainModule: true },
-    },
-    {
-      id: 'erp',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'ERP', isRoot: false, isMainModule: true },
-    },
-    {
-      id: 'hr',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'HR', isRoot: false, isMainModule: true },
-    },
-    // CRM children
-    {
-      id: 'crm-customers',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'Müşteri Yönetimi', isRoot: false, hasRoute: true },
-    },
-    {
-      id: 'crm-opportunities',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'Fırsatlar', isRoot: false, hasRoute: true },
-    },
-    {
-      id: 'crm-proposals',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'Teklifler', isRoot: false, hasRoute: true },
-    },
-    // ERP children
-    {
-      id: 'erp-purchasing',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'Satın Alma', isRoot: false, hasRoute: true },
-    },
-    {
-      id: 'erp-inventory',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'Stok/Depo', isRoot: false, hasRoute: false },
-    },
-    {
-      id: 'erp-cashflow',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'Nakit Akış', isRoot: false, hasRoute: true },
-    },
-    // HR children
-    {
-      id: 'hr-employees',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'Çalışanlar', isRoot: false, hasRoute: true },
-    },
-    {
-      id: 'hr-leaves',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'İzinler', isRoot: false, hasRoute: false },
-    },
-    {
-      id: 'hr-payroll',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { label: 'Bordro', isRoot: false, hasRoute: false },
-    },
-  ];
+  const [selectedModule, setSelectedModule] = useState<any>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
+  
+  const debouncedSearchTerm = useDebounce(localSearchTerm, 300);
 
-  // Define edges with custom styling and labels
-  const initialEdges: Edge[] = [
-    // Root to first level - Ana sistem bağlantıları
-    { 
-      id: 'root-crm', 
-      source: 'root', 
-      target: 'crm',
-      label: 'Müşteri İlişkileri',
-      style: { stroke: 'hsl(var(--primary))', strokeWidth: 3 },
-      animated: true,
-      labelStyle: { fontSize: 12, fontWeight: 600, fill: 'hsl(var(--primary))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
-    },
-    { 
-      id: 'root-erp', 
-      source: 'root', 
-      target: 'erp',
-      label: 'Kaynak Planlaması',
-      style: { stroke: 'hsl(var(--primary))', strokeWidth: 3 },
-      animated: true,
-      labelStyle: { fontSize: 12, fontWeight: 600, fill: 'hsl(var(--primary))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
-    },
-    { 
-      id: 'root-hr', 
-      source: 'root', 
-      target: 'hr',
-      label: 'İnsan Kaynakları',
-      style: { stroke: 'hsl(var(--primary))', strokeWidth: 3 },
-      animated: true,
-      labelStyle: { fontSize: 12, fontWeight: 600, fill: 'hsl(var(--primary))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
-    },
-    // CRM children - Müşteri süreçleri
-    { 
-      id: 'crm-customers', 
-      source: 'crm', 
-      target: 'crm-customers',
-      label: 'Yönetim',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
-      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
-    },
-    { 
-      id: 'crm-opportunities', 
-      source: 'crm', 
-      target: 'crm-opportunities',
-      label: 'Satış',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
-      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
-    },
-    { 
-      id: 'crm-proposals', 
-      source: 'crm', 
-      target: 'crm-proposals',
-      label: 'Teklif',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
-      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
-    },
-    // ERP children - İş süreçleri
-    { 
-      id: 'erp-purchasing', 
-      source: 'erp', 
-      target: 'erp-purchasing',
-      label: 'Tedarik',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
-      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
-    },
-    { 
-      id: 'erp-inventory', 
-      source: 'erp', 
-      target: 'erp-inventory',
-      label: 'Geliştirilecek',
-      style: { stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '5,5' },
-      labelStyle: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
-    },
-    { 
-      id: 'erp-cashflow', 
-      source: 'erp', 
-      target: 'erp-cashflow',
-      label: 'Finans',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
-      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
-    },
-    // HR children - İnsan kaynakları süreçleri
-    { 
-      id: 'hr-employees', 
-      source: 'hr', 
-      target: 'hr-employees',
-      label: 'Personel',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
-      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
-    },
-    { 
-      id: 'hr-leaves', 
-      source: 'hr', 
-      target: 'hr-leaves',
-      label: 'Geliştirilecek',
-      style: { stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '5,5' },
-      labelStyle: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
-    },
-    { 
-      id: 'hr-payroll', 
-      source: 'hr', 
-      target: 'hr-payroll',
-      label: 'Geliştirilecek',
-      style: { stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '5,5' },
-      labelStyle: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
-    },
-    // Cross-module connections - Modüller arası entegrasyonlar
-    { 
-      id: 'crm-customers-to-erp-cashflow', 
-      source: 'crm-customers', 
-      target: 'erp-cashflow',
-      label: 'Tahsilat',
-      style: { stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '3,3' },
-      animated: true,
-      labelStyle: { fontSize: 9, fill: 'hsl(var(--primary))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
-    },
-    { 
-      id: 'crm-proposals-to-erp-purchasing', 
-      source: 'crm-proposals', 
-      target: 'erp-purchasing',
-      label: 'Maliyet',
-      style: { stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '3,3' },
-      animated: true,
-      labelStyle: { fontSize: 9, fill: 'hsl(var(--primary))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
-    },
-    { 
-      id: 'hr-employees-to-erp-cashflow', 
-      source: 'hr-employees', 
-      target: 'erp-cashflow',
-      label: 'Maaş',
-      style: { stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '3,3' },
-      animated: true,
-      labelStyle: { fontSize: 9, fill: 'hsl(var(--primary))' },
-      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
-    },
-  ];
+  // Sync debounced search with global state
+  useEffect(() => {
+    setSearchTerm(debouncedSearchTerm);
+  }, [debouncedSearchTerm, setSearchTerm]);
 
-  // Apply dagre layout with filtering
-  const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
-    let filteredNodes = initialNodes;
-    let filteredEdges = initialEdges;
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Help modal
+      if (event.key === '?' && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        setShortcutsOpen(true);
+        return;
+      }
 
-    // Apply search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const matchingNodeIds = new Set<string>();
-      
-      filteredNodes = initialNodes.filter(node => {
-        const matches = node.data.label.toLowerCase().includes(searchLower);
-        if (matches) {
-          matchingNodeIds.add(node.id);
-          // Also include parent and children
-          const parentEdge = initialEdges.find(edge => edge.target === node.id);
-          if (parentEdge) matchingNodeIds.add(parentEdge.source);
-          
-          const childEdges = initialEdges.filter(edge => edge.source === node.id);
-          childEdges.forEach(edge => matchingNodeIds.add(edge.target));
-        }
-        return matches;
-      });
-      
-      // Include related nodes
-      filteredNodes = initialNodes.filter(node => matchingNodeIds.has(node.id));
-      filteredEdges = initialEdges.filter(edge => 
-        matchingNodeIds.has(edge.source) && matchingNodeIds.has(edge.target)
-      );
-    }
+      // Search focus
+      if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+        event.preventDefault();
+        const searchInput = document.querySelector('input[placeholder*="Modül"]') as HTMLInputElement;
+        searchInput?.focus();
+        return;
+      }
 
-    // Apply status filters
-    if (filters.length > 0) {
-      filteredNodes = filteredNodes.filter(node => {
-        const nodeStatus = getNodeStatus(node);
-        return filters.some(filter => {
-          switch (filter) {
-            case 'active': return nodeStatus === 'active';
-            case 'development': return nodeStatus === 'development';
-            case 'planned': return nodeStatus === 'planned';
-            case 'hasRoute': return node.data.hasRoute;
-            case 'mainModule': return node.data.isMainModule;
-            default: return true;
-          }
+      // Fit view
+      if (event.key === 'f' && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        reactFlowInstance.fitView({ padding: 0.1, duration: 800 });
+        return;
+      }
+
+      // Reset zoom
+      if (event.key === '0' && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        reactFlowInstance.setViewport({ x: 0, y: 0, zoom: 1 });
+        return;
+      }
+
+      // Zoom in/out
+      if (event.key === '+' || event.key === '=') {
+        event.preventDefault();
+        const currentZoom = reactFlowInstance.getZoom();
+        reactFlowInstance.setViewport({ 
+          ...reactFlowInstance.getViewport(), 
+          zoom: Math.min(currentZoom * 1.2, 2) 
         });
-      });
-      
-      const nodeIds = new Set(filteredNodes.map(n => n.id));
-      filteredEdges = filteredEdges.filter(edge => 
-        nodeIds.has(edge.source) && nodeIds.has(edge.target)
-      );
-    }
+        return;
+      }
 
-    return layoutElements(filteredNodes, filteredEdges);
-  }, [searchTerm, filters]);
+      if (event.key === '-') {
+        event.preventDefault();
+        const currentZoom = reactFlowInstance.getZoom();
+        reactFlowInstance.setViewport({ 
+          ...reactFlowInstance.getViewport(), 
+          zoom: Math.max(currentZoom * 0.8, 0.2) 
+        });
+        return;
+      }
 
-  const getNodeStatus = (node: Node) => {
-    if (node.id === 'root' || node.data.isMainModule) return 'active';
-    if (['erp-inventory', 'hr-leaves', 'hr-payroll'].includes(node.id)) return node.id.startsWith('hr-') ? 'development' : 'planned';
-    return 'active';
-  };
+      // Close modals with Escape
+      if (event.key === 'Escape') {
+        setShortcutsOpen(false);
+        setDrawerOpen(false);
+        setSelectedModule(null);
+        return;
+      }
+    };
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [reactFlowInstance]);
 
-  const onConnect = useCallback(
-    (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
-
-  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    console.log('Node clicked:', node.id, node.data.label);
-    setSelectedModule(node);
+  const handleNodeClick = useCallback((node: Node) => {
+    setSelectedModule(node.data);
+    setDrawerOpen(true);
   }, []);
 
-  const handleNavigate = (route: string) => {
-    navigate(route);
-    setSelectedModule(null);
-  };
+  const handleExportPng = useCallback(async () => {
+    try {
+      toast.promise(
+        exportToPng(reactFlowInstance, 'pafta-module-tree'),
+        {
+          loading: 'PNG dışa aktarılıyor...',
+          success: 'Başarıyla dışa aktarıldı!',
+          error: 'Dışa aktarımda hata oluştu'
+        }
+      );
+    } catch (error) {
+      console.error('Export failed:', error);
+    }
+  }, [reactFlowInstance]);
 
-  const handleSearchReset = () => {
-    setSearchTerm('');
-    setFilters([]);
-  };
+  const handleResetView = useCallback(() => {
+    reactFlowInstance.fitView({ padding: 0.1, duration: 800 });
+    localStorage.removeItem('module-tree-viewport');
+  }, [reactFlowInstance]);
+
+  const handleClearFilters = useCallback(() => {
+    setLocalSearchTerm('');
+    setFilters({ kind: [], is_active: null, tags: [] });
+    setMaxDepth(3);
+  }, [setFilters, setMaxDepth]);
+
+  const handleFilterChange = useCallback((newFilters: Partial<ModuleFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, [setFilters]);
+
+  const getChildModules = useCallback((moduleId: string) => {
+    return modules.filter(m => m.parent === moduleId);
+  }, [modules]);
+
+  const hasActiveFilters = searchTerm || filters.kind.length > 0 || filters.is_active !== null || filters.tags.length > 0 || maxDepth < 6;
+
+  if (loading) {
+    return (
+      <DefaultLayout
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        title="Modül Ağacı"
+        subtitle="Pafta.app modülleri yükleniyor..."
+      >
+        <div className="h-full space-y-4">
+          {/* Header skeleton */}
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-10 w-80" />
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-24" />
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-10" />
+            </div>
+          </div>
+          {/* Flow skeleton */}
+          <div className="flex-1 bg-muted/20 rounded-lg animate-pulse" />
+        </div>
+      </DefaultLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DefaultLayout
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        title="Modül Ağacı"
+        subtitle="Hata oluştu"
+      >
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+            <div>
+              <h3 className="font-semibold">Modüller yüklenemedi</h3>
+              <p className="text-sm text-muted-foreground">{error}</p>
+            </div>
+            <Button onClick={refetch} variant="outline">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Tekrar Dene
+            </Button>
+          </div>
+        </div>
+      </DefaultLayout>
+    );
+  }
 
   return (
     <DefaultLayout
       isCollapsed={isCollapsed}
       setIsCollapsed={setIsCollapsed}
-      title="Modül Ağacı"
-      subtitle="Pafta.app modülleri ve ilişkileri"
+      title="Pafta.app Modül Ağacı"
+      subtitle="Modüller ve entegrasyonları"
     >
-      <div className="relative w-full bg-gradient-to-br from-background via-background to-muted/20 rounded-lg border border-border overflow-hidden shadow-xl" style={{ height: '75vh' }}>
-        
-        <ModuleSearch
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          filters={filters}
-          onFiltersChange={setFilters}
-          onReset={handleSearchReset}
-        />
+      <div className="h-full flex flex-col gap-4">
+        {/* Header Bar */}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          {/* Search */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Modül ara... (Ctrl+F)"
+                value={localSearchTerm}
+                onChange={(e) => setLocalSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-card/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-lg">
-          <h3 className="text-sm font-semibold text-foreground text-center">Pafta.app Modül Ağacı</h3>
-          <p className="text-xs text-muted-foreground text-center">Modüller ve entegrasyonları</p>
-          <div className="flex items-center justify-center gap-4 mt-2 text-xs">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-0.5 bg-primary"></div>
-              <span className="text-muted-foreground">Ana Bağlantı</span>
+            {/* Filters Popover */}
+            <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="relative">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filtreler
+                  {hasActiveFilters && (
+                    <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center">
+                      !
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 space-y-4">
+                {/* Type filter */}
+                <div className="space-y-2">
+                  <Label>Modül Türü</Label>
+                  <div className="flex gap-2 flex-wrap">
+                    {['root', 'group', 'leaf'].map(kind => (
+                      <Button
+                        key={kind}
+                        variant={filters.kind.includes(kind) ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => {
+                          const newKinds = filters.kind.includes(kind)
+                            ? filters.kind.filter(k => k !== kind)
+                            : [...filters.kind, kind];
+                          handleFilterChange({ kind: newKinds });
+                        }}
+                      >
+                        {kind === 'root' ? 'Ana Sistem' : kind === 'group' ? 'Grup' : 'Modül'}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Active filter */}
+                <div className="space-y-2">
+                  <Label>Durum</Label>
+                  <Select
+                    value={filters.is_active === null ? 'all' : filters.is_active ? 'true' : 'false'}
+                    onValueChange={(value) => {
+                      const isActive = value === 'all' ? null : value === 'true';
+                      handleFilterChange({ is_active: isActive });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tümü</SelectItem>
+                      <SelectItem value="true">Aktif</SelectItem>
+                      <SelectItem value="false">Geliştirilecek</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Tags filter */}
+                {allTags.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Etiketler</Label>
+                    <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                      {allTags.map(tag => (
+                        <Button
+                          key={tag}
+                          variant={filters.tags.includes(tag) ? 'default' : 'outline'}
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => {
+                            const newTags = filters.tags.includes(tag)
+                              ? filters.tags.filter(t => t !== tag)
+                              : [...filters.tags, tag];
+                            handleFilterChange({ tags: newTags });
+                          }}
+                        >
+                          {tag}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
+
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearFilters}
+                  className="w-full"
+                  disabled={!hasActiveFilters}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Filtreleri Temizle
+                </Button>
+              </PopoverContent>
+            </Popover>
+
+            {/* Level Control */}
+            <div className="flex items-center gap-2 min-w-[140px]">
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              <div className="flex-1">
+                <Slider
+                  value={[maxDepth]}
+                  onValueChange={([value]) => setMaxDepth(value)}
+                  min={1}
+                  max={6}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+              <span className="text-sm text-muted-foreground font-mono w-8">
+                {maxDepth}
+              </span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-0.5 bg-accent"></div>
-              <span className="text-muted-foreground">Modül</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-0.5 bg-primary border-dashed border-t"></div>
-              <span className="text-muted-foreground">Entegrasyon</span>
-            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleResetView}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Sıfırla
+            </Button>
+            
+            <Button variant="outline" onClick={handleExportPng}>
+              <Download className="h-4 w-4 mr-2" />
+              PNG İndir
+            </Button>
+
+            <Button variant="outline" size="icon" onClick={() => setShortcutsOpen(true)}>
+              <HelpCircle className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
-        <ModuleInfoPanel
+        {/* Active Filters Display */}
+        {hasActiveFilters && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-muted-foreground">Aktif filtreler:</span>
+            
+            {searchTerm && (
+              <Badge variant="secondary" className="gap-1">
+                Arama: "{searchTerm}"
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setLocalSearchTerm('')}
+                />
+              </Badge>
+            )}
+            
+            {filters.kind.map(kind => (
+              <Badge key={kind} variant="secondary" className="gap-1">
+                {kind === 'root' ? 'Ana Sistem' : kind === 'group' ? 'Grup' : 'Modül'}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => handleFilterChange({ 
+                    kind: filters.kind.filter(k => k !== kind) 
+                  })}
+                />
+              </Badge>
+            ))}
+            
+            {filters.is_active !== null && (
+              <Badge variant="secondary" className="gap-1">
+                {filters.is_active ? 'Aktif' : 'Geliştirilecek'}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => handleFilterChange({ is_active: null })}
+                />
+              </Badge>
+            )}
+            
+            {filters.tags.map(tag => (
+              <Badge key={tag} variant="secondary" className="gap-1">
+                #{tag}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => handleFilterChange({ 
+                    tags: filters.tags.filter(t => t !== tag) 
+                  })}
+                />
+              </Badge>
+            ))}
+            
+            {maxDepth < 6 && (
+              <Badge variant="secondary" className="gap-1">
+                Seviye ≤ {maxDepth}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => setMaxDepth(6)}
+                />
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Module Flow */}
+        <div className="flex-1 relative bg-gradient-to-br from-background via-background to-muted/10 rounded-lg border overflow-hidden">
+          {nodes.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <Package className="h-12 w-12 text-muted-foreground mx-auto" />
+                <div>
+                  <h3 className="font-semibold">Hiç modül bulunamadı</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Arama terimlerinizi veya filtrelerinizi değiştirmeyi deneyin
+                  </p>
+                </div>
+                <Button variant="outline" onClick={handleClearFilters}>
+                  <X className="h-4 w-4 mr-2" />
+                  Filtreleri Temizle
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <ModuleFlow
+              nodes={nodes}
+              edges={edges}
+              onNodeClick={handleNodeClick}
+              className="w-full h-full"
+            />
+          )}
+        </div>
+
+        {/* Right Drawer */}
+        <RightDrawer
           module={selectedModule}
-          onClose={() => setSelectedModule(null)}
-          onNavigate={handleNavigate}
+          open={drawerOpen}
+          onClose={() => {
+            setDrawerOpen(false);
+            setSelectedModule(null);
+          }}
+          breadcrumbs={selectedModule ? getBreadcrumbs(selectedModule.id) : []}
+          childModules={selectedModule ? getChildModules(selectedModule.id) : []}
         />
-        
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={onNodeClick}
-          nodeTypes={nodeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-          attributionPosition="bottom-left"
-          proOptions={{ hideAttribution: true }}
-          className="animate-fade-in"
-        >
-          <Background 
-            variant={BackgroundVariant.Dots} 
-            gap={20} 
-            size={1}
-            style={{ 
-              backgroundColor: 'hsl(var(--background))',
-            }}
-          />
-          <Controls 
-            position="top-left"
-            style={{
-              backgroundColor: 'hsl(var(--card))',
-              border: '1px solid hsl(var(--border))',
-            }}
-          />
-          <MiniMap
-            nodeColor={(node) => {
-              if (node.data.isRoot) return 'hsl(var(--primary))';
-              if (node.data.isMainModule) return 'hsl(var(--accent))';
-              return 'hsl(var(--muted))';
-            }}
-            style={{
-              backgroundColor: 'hsl(var(--card))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '8px',
-            }}
-            position="bottom-right"
-          />
-        </ReactFlow>
+
+        {/* Shortcuts Modal */}
+        <ShortcutsModal 
+          open={shortcutsOpen} 
+          onClose={() => setShortcutsOpen(false)} 
+        />
       </div>
     </DefaultLayout>
+  );
+};
+
+// Main component with ReactFlow provider
+const ModulesTree: React.FC<ModulesTreeProps> = (props) => {
+  return (
+    <ReactFlowProvider>
+      <ModulesTreeContent {...props} />
+    </ReactFlowProvider>
   );
 };
 

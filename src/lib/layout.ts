@@ -8,7 +8,13 @@ export const layoutElements = (nodes: Node[], edges: Edge[], direction = 'TB') =
   const nodeWidth = 200;
   const nodeHeight = 80;
 
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 50, ranksep: 100 });
+  dagreGraph.setGraph({ 
+    rankdir: direction, 
+    nodesep: 36, 
+    ranksep: 80,
+    marginx: 20,
+    marginy: 20
+  });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });

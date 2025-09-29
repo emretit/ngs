@@ -300,6 +300,7 @@ export type Database = {
           merchant_name: string | null
           reference_number: string | null
           transaction_date: string
+          transaction_type: string | null
           updated_at: string | null
         }
         Insert: {
@@ -315,6 +316,7 @@ export type Database = {
           merchant_name?: string | null
           reference_number?: string | null
           transaction_date?: string
+          transaction_type?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -330,6 +332,7 @@ export type Database = {
           merchant_name?: string | null
           reference_number?: string | null
           transaction_date?: string
+          transaction_type?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -342,6 +345,56 @@ export type Database = {
           },
           {
             foreignKeyName: "card_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_accounts: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          currency: string | null
+          current_balance: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          location: string | null
+          name: string
+          responsible_person: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          current_balance?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          name: string
+          responsible_person?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          current_balance?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          name?: string
+          responsible_person?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_accounts_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -398,6 +451,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "cash_flow_forecasts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          category: string | null
+          company_id: string | null
+          created_at: string | null
+          description: string
+          id: string
+          reference: string | null
+          transaction_date: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          reference?: string | null
+          transaction_date?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          reference?: string | null
+          transaction_date?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "cash_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_transactions_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -636,17 +746,21 @@ export type Database = {
         Row: {
           account_id: string | null
           available_limit: number | null
+          bank_name: string | null
           card_name: string
           card_number: string | null
           card_type: Database["public"]["Enums"]["card_type"]
           company_id: string | null
           created_at: string | null
           credit_limit: number | null
+          currency: string | null
           current_balance: number | null
           expiry_date: string
           id: string
+          is_active: boolean | null
           last_payment_date: string | null
           minimum_payment: number | null
+          notes: string | null
           payment_due_date: string | null
           status: Database["public"]["Enums"]["card_status"] | null
           updated_at: string | null
@@ -654,17 +768,21 @@ export type Database = {
         Insert: {
           account_id?: string | null
           available_limit?: number | null
+          bank_name?: string | null
           card_name: string
           card_number?: string | null
           card_type: Database["public"]["Enums"]["card_type"]
           company_id?: string | null
           created_at?: string | null
           credit_limit?: number | null
+          currency?: string | null
           current_balance?: number | null
           expiry_date: string
           id?: string
+          is_active?: boolean | null
           last_payment_date?: string | null
           minimum_payment?: number | null
+          notes?: string | null
           payment_due_date?: string | null
           status?: Database["public"]["Enums"]["card_status"] | null
           updated_at?: string | null
@@ -672,17 +790,21 @@ export type Database = {
         Update: {
           account_id?: string | null
           available_limit?: number | null
+          bank_name?: string | null
           card_name?: string
           card_number?: string | null
           card_type?: Database["public"]["Enums"]["card_type"]
           company_id?: string | null
           created_at?: string | null
           credit_limit?: number | null
+          currency?: string | null
           current_balance?: number | null
           expiry_date?: string
           id?: string
+          is_active?: boolean | null
           last_payment_date?: string | null
           minimum_payment?: number | null
+          notes?: string | null
           payment_due_date?: string | null
           status?: Database["public"]["Enums"]["card_status"] | null
           updated_at?: string | null
@@ -2605,6 +2727,127 @@ export type Database = {
           },
         ]
       }
+      module_links: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          label: string | null
+          source: string
+          style: Json | null
+          target: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          label?: string | null
+          source: string
+          style?: Json | null
+          target: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          label?: string | null
+          source?: string
+          style?: Json | null
+          target?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_links_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_links_source_fkey"
+            columns: ["source"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_links_target_fkey"
+            columns: ["target"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modules: {
+        Row: {
+          code: string | null
+          color: string | null
+          company_id: string | null
+          created_at: string | null
+          description: string | null
+          href: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          kind: string | null
+          kpi_count: number | null
+          name: string
+          order_no: number | null
+          parent: string | null
+          tags: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          code?: string | null
+          color?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          href?: string | null
+          icon?: string | null
+          id: string
+          is_active?: boolean | null
+          kind?: string | null
+          kpi_count?: number | null
+          name: string
+          order_no?: number | null
+          parent?: string | null
+          tags?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string | null
+          color?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          href?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          kind?: string | null
+          kpi_count?: number | null
+          name?: string
+          order_no?: number | null
+          parent?: string | null
+          tags?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modules_parent_fkey"
+            columns: ["parent"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_financials: {
         Row: {
           amount: number
@@ -3449,6 +3692,122 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_accounts: {
+        Row: {
+          company_id: string | null
+          contact_info: Json | null
+          created_at: string | null
+          currency: string | null
+          current_balance: number | null
+          id: string
+          initial_capital: number | null
+          investment_date: string | null
+          is_active: boolean | null
+          ownership_percentage: number | null
+          partner_name: string
+          partner_type: string
+          profit_share: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          contact_info?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          current_balance?: number | null
+          id?: string
+          initial_capital?: number | null
+          investment_date?: string | null
+          is_active?: boolean | null
+          ownership_percentage?: number | null
+          partner_name: string
+          partner_type: string
+          profit_share?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          contact_info?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          current_balance?: number | null
+          id?: string
+          initial_capital?: number | null
+          investment_date?: string | null
+          is_active?: boolean | null
+          ownership_percentage?: number | null
+          partner_name?: string
+          partner_type?: string
+          profit_share?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_accounts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_transactions: {
+        Row: {
+          amount: number
+          category: string | null
+          company_id: string | null
+          created_at: string | null
+          description: string
+          id: string
+          partner_id: string
+          reference: string | null
+          transaction_date: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          partner_id: string
+          reference?: string | null
+          transaction_date?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          partner_id?: string
+          reference?: string | null
+          transaction_date?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_transactions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -7679,6 +8038,10 @@ export type Database = {
       }
       request_password_reset: {
         Args: { email: string }
+        Returns: undefined
+      }
+      seed_demo_modules: {
+        Args: { p_company_id: string }
         Returns: undefined
       }
       send_push_notification: {

@@ -18,9 +18,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set<string>());
 
   useEffect(() => {
-    // Sayfa yüklendiğinde aktif dropdown menüyü aç
-    const newExpanded = new Set<string>();
-    
+    // Sadece aktif dropdown menüyü aç, diğer açık olanları koru
     navItems.forEach((item: any) => {
       if (item.hasDropdown && item.items) {
         const isParentActive = location.pathname === item.path;
@@ -39,21 +37,12 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
           return false;
         });
         
-        // Aktif olan veya aktif child'ı olan menüyü aç
-        // Zaten açık olanları da koru
-        if (isParentActive || hasActiveChild || expandedMenus.has(item.path)) {
-          newExpanded.add(item.path);
+        // Sadece aktif olan menüyü aç, diğerlerine dokunma
+        if ((isParentActive || hasActiveChild) && !expandedMenus.has(item.path)) {
+          setExpandedMenus(prev => new Set(prev).add(item.path));
         }
       }
     });
-    
-    // Sadece Set içeriği gerçekten değiştiyse güncelle
-    const currentPaths = Array.from(expandedMenus).sort().join(',');
-    const newPaths = Array.from(newExpanded).sort().join(',');
-    
-    if (currentPaths !== newPaths) {
-      setExpandedMenus(newExpanded);
-    }
   }, [location.pathname]);
 
   // Dropdown menüler varsayılan olarak kapalı tutulur

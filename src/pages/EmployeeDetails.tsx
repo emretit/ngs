@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Navbar from "@/components/Navbar";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { EmployeeDetailsView } from "@/components/employees/details/EmployeeDetailsView";
 import { EmployeeDetailsLoading } from "@/components/employees/details/EmployeeDetailsLoading";
 import { EmployeeNotFound } from "@/components/employees/details/EmployeeNotFound";
@@ -12,12 +11,7 @@ import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Employee } from "@/types/employee";
 
-interface EmployeeDetailsProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const EmployeeDetails = ({ isCollapsed, setIsCollapsed }: EmployeeDetailsProps) => {
+const EmployeeDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -54,35 +48,30 @@ const EmployeeDetails = ({ isCollapsed, setIsCollapsed }: EmployeeDetailsProps) 
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-64'}`}>
-        <div className="py-6 px-6">
-          <Button
-            variant="ghost"
-            className="mb-4"
-            onClick={() => navigate("/employees")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Çalışanlara Dön
-          </Button>
+    <DefaultLayout>
+      <Button
+        variant="ghost"
+        className="mb-4"
+        onClick={() => navigate("/employees")}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Çalışanlara Dön
+      </Button>
 
-          {isLoading ? (
-            <EmployeeDetailsLoading />
-          ) : employee ? (
-            <EmployeeDetailsView 
-              employee={employee}
-              isLoading={isLoading}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              refetch={handleRefetch}
-            />
-          ) : (
-            <EmployeeNotFound />
-          )}
-        </div>
-      </main>
-    </div>
+      {isLoading ? (
+        <EmployeeDetailsLoading />
+      ) : employee ? (
+        <EmployeeDetailsView 
+          employee={employee}
+          isLoading={isLoading}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          refetch={handleRefetch}
+        />
+      ) : (
+        <EmployeeNotFound />
+      )}
+    </DefaultLayout>
   );
 };
 

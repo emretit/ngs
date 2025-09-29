@@ -1,22 +1,15 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomerFormData } from "@/types/customer";
-import Navbar from "@/components/Navbar";
-import TopBar from "@/components/TopBar";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import CustomerFormHeader from "@/components/customers/CustomerFormHeader";
 import CustomerFormContent from "@/components/customers/CustomerFormContent";
 import { useEinvoiceMukellefCheck } from "@/hooks/useEinvoiceMukellefCheck";
 
-interface CustomerNewProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const CustomerNew = ({ isCollapsed, setIsCollapsed }: CustomerNewProps) => {
+const CustomerNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -55,7 +48,6 @@ const CustomerNew = ({ isCollapsed, setIsCollapsed }: CustomerNewProps) => {
         address: data.address || null,
         tax_number: data.type === 'kurumsal' ? data.tax_number || null : null,
         tax_office: data.type === 'kurumsal' ? data.tax_office || null : null,
-        // E-fatura mükellefi bilgileri
         is_einvoice_mukellef: einvoiceResult?.isEinvoiceMukellef || false,
         einvoice_alias_name: einvoiceResult?.data?.aliasName || null,
         einvoice_company_name: einvoiceResult?.data?.companyName || null,
@@ -109,30 +101,18 @@ const CustomerNew = ({ isCollapsed, setIsCollapsed }: CustomerNewProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}
-      >
-        <TopBar />
-        <div className="p-4 sm:p-6 lg:p-8">
-          <div className="w-full">
-            <CustomerFormHeader />
+    <DefaultLayout>
+      <CustomerFormHeader />
 
-            <CustomerFormContent 
-              formData={formData}
-              setFormData={setFormData}
-              handleSubmit={handleSubmit}
-              isPending={mutation.isPending}
-              isEdit={false}
-              onCancel={() => navigate('/contacts')}
-            />
-          </div>
-        </div>
-      </main>
-    </div>
+      <CustomerFormContent 
+        formData={formData}
+        setFormData={setFormData}
+        handleSubmit={handleSubmit}
+        isPending={mutation.isPending}
+        isEdit={false}
+        onCancel={() => navigate('/contacts')}
+      />
+    </DefaultLayout>
   );
 };
 

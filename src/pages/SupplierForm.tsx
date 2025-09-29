@@ -2,8 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +10,7 @@ import SupplierFormHeader from "@/components/suppliers/SupplierFormHeader";
 import SupplierFormContent from "@/components/suppliers/SupplierFormContent";
 import { SupplierFormData } from "@/types/supplier";
 
-interface SupplierFormProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const SupplierForm = ({ isCollapsed, setIsCollapsed }: SupplierFormProps) => {
+const SupplierForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -217,34 +211,22 @@ const SupplierForm = ({ isCollapsed, setIsCollapsed }: SupplierFormProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}
-      >
-        <TopBar />
-        <div className="p-4 sm:p-6 lg:p-8">
-          <div className="w-full">
-            <SupplierFormHeader id={id} />
+    <DefaultLayout>
+      <SupplierFormHeader id={id} />
 
-            {isLoadingSupplier && id ? (
-              <div className="text-center py-8">Yükleniyor...</div>
-            ) : (
-              <SupplierFormContent 
-                formData={formData}
-                setFormData={setFormData}
-                handleSubmit={handleSubmit}
-                isPending={mutation.isPending}
-                isEdit={!!id}
-                onCancel={() => navigate('/suppliers')}
-              />
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
+      {isLoadingSupplier && id ? (
+        <div className="text-center py-8">Yükleniyor...</div>
+      ) : (
+        <SupplierFormContent 
+          formData={formData}
+          setFormData={setFormData}
+          handleSubmit={handleSubmit}
+          isPending={mutation.isPending}
+          isEdit={!!id}
+          onCancel={() => navigate('/suppliers')}
+        />
+      )}
+    </DefaultLayout>
   );
 };
 

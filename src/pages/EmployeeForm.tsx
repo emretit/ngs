@@ -1,21 +1,15 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { EditableEmployeeDetails } from "@/components/employees/details/form/EditableEmployeeDetails";
 import { Employee } from "@/types/employee";
 import { useToast } from "@/components/ui/use-toast";
 
-interface EmployeeFormProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const EmployeeForm = ({ isCollapsed, setIsCollapsed }: EmployeeFormProps) => {
+const EmployeeForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -56,38 +50,33 @@ const EmployeeForm = ({ isCollapsed, setIsCollapsed }: EmployeeFormProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-64'}`}>
-        <div className="py-6 px-6">
-          <Button
-            variant="ghost"
-            className="mb-4"
-            onClick={() => navigate(`/employees/${id}`)}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Çalışan Detaylarına Dön
-          </Button>
+    <DefaultLayout>
+      <Button
+        variant="ghost"
+        className="mb-4"
+        onClick={() => navigate(`/employees/${id}`)}
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Çalışan Detaylarına Dön
+      </Button>
 
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">Çalışan Düzenle</h1>
-            <p className="text-gray-500">Çalışan bilgilerini güncelle</p>
-          </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Çalışan Düzenle</h1>
+        <p className="text-gray-500">Çalışan bilgilerini güncelle</p>
+      </div>
 
-          {isLoading ? (
-            <div className="py-10 text-center">Çalışan bilgileri yükleniyor...</div>
-          ) : employee ? (
-            <EditableEmployeeDetails
-              employee={employee}
-              onCancel={() => navigate(`/employees/${id}`)}
-              onSuccess={handleSuccess}
-            />
-          ) : (
-            <div className="py-10 text-center">Çalışan bulunamadı</div>
-          )}
-        </div>
-      </main>
-    </div>
+      {isLoading ? (
+        <div className="py-10 text-center">Çalışan bilgileri yükleniyor...</div>
+      ) : employee ? (
+        <EditableEmployeeDetails
+          employee={employee}
+          onCancel={() => navigate(`/employees/${id}`)}
+          onSuccess={handleSuccess}
+        />
+      ) : (
+        <div className="py-10 text-center">Çalışan bulunamadı</div>
+      )}
+    </DefaultLayout>
   );
 };
 

@@ -1,50 +1,38 @@
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import EmployeeCosts from "@/components/cashflow/EmployeeCosts";
 import { Users2 } from "lucide-react";
 
-interface CashflowEmployeeCostsProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const CashflowEmployeeCosts = ({ isCollapsed, setIsCollapsed }: CashflowEmployeeCostsProps) => {
+const CashflowEmployeeCosts = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-56'}`}>
-        <TopBar />
-        <div className="p-8">
-          <div className="w-full">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-white shadow-lg">
-                  <Users2 className="h-5 w-5" />
-                </div>
-                <div className="space-y-0.5">
-                  <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                    Çalışan Maliyetleri
-                  </h1>
-                  <p className="text-xs text-muted-foreground/70">
-                    Çalışan maliyetlerinizi hesaplayın ve takip edin.
-                  </p>
-                </div>
-              </div>
+    <DefaultLayout>
+      <div className="w-full">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-white shadow-lg">
+              <Users2 className="h-5 w-5" />
             </div>
-
-            {/* Content Section */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
-              <div className="p-6">
-                <div className="space-y-6">
-                  <EmployeeCosts />
-                </div>
-              </div>
+            <div className="space-y-0.5">
+              <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                Çalışan Maliyetleri
+              </h1>
+              <p className="text-xs text-muted-foreground/70">
+                Çalışan maliyetlerinizi hesaplayın ve takip edin.
+              </p>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* Content Section */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
+          <div className="p-6">
+            <div className="space-y-6">
+              <EmployeeCosts />
+            </div>
+          </div>
+        </div>
+      </div>
+    </DefaultLayout>
   );
 };
 

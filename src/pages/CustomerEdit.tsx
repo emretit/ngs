@@ -1,21 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomerFormData } from "@/types/customer";
-import Navbar from "@/components/Navbar";
-import TopBar from "@/components/TopBar";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import CustomerFormHeader from "@/components/customers/CustomerFormHeader";
 import CustomerFormContent from "@/components/customers/CustomerFormContent";
 
-interface CustomerEditProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const CustomerEdit = ({ isCollapsed, setIsCollapsed }: CustomerEditProps) => {
+const CustomerEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -145,47 +138,25 @@ const CustomerEdit = ({ isCollapsed, setIsCollapsed }: CustomerEditProps) => {
 
   if (isLoadingCustomer) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}>
-          <TopBar />
-          <div className="p-4 sm:p-8">
-            <div className="max-w-[1600px] mx-auto">
-              <div className="text-center py-8">Müşteri bilgileri yükleniyor...</div>
-            </div>
-          </div>
-        </main>
-      </div>
+      <DefaultLayout>
+        <div className="text-center py-8">Müşteri bilgileri yükleniyor...</div>
+      </DefaultLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}
-      >
-        <TopBar />
-        <div className="p-4 sm:p-8">
-          <div className="max-w-[1600px] mx-auto">
-            <CustomerFormHeader id={id} />
+    <DefaultLayout>
+      <CustomerFormHeader id={id} />
 
-            <CustomerFormContent 
-              formData={formData}
-              setFormData={setFormData}
-              handleSubmit={handleSubmit}
-              isPending={mutation.isPending}
-              isEdit={true}
-              onCancel={() => navigate('/contacts')}
-            />
-          </div>
-        </div>
-      </main>
-    </div>
+      <CustomerFormContent 
+        formData={formData}
+        setFormData={setFormData}
+        handleSubmit={handleSubmit}
+        isPending={mutation.isPending}
+        isEdit={true}
+        onCancel={() => navigate('/contacts')}
+      />
+    </DefaultLayout>
   );
 };
 

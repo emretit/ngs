@@ -1,21 +1,13 @@
-
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import ProductDetailsHeader from "@/components/products/details/ProductDetailsHeader";
 import ProductDetailsTabs from "@/components/products/details/ProductDetailsTabs";
-import ProductDetailsLoading from "@/components/products/details/ProductDetailsLoading";
 import { showSuccess, showError } from "@/utils/toastUtils";
 
-interface ProductDetailsProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const ProductDetails = ({ isCollapsed, setIsCollapsed }: ProductDetailsProps) => {
+const ProductDetails = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
 
@@ -77,31 +69,36 @@ const ProductDetails = ({ isCollapsed, setIsCollapsed }: ProductDetailsProps) =>
   });
 
   if (isLoading) {
-    return <ProductDetailsLoading isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />;
+    return (
+      <DefaultLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </DefaultLayout>
+    );
   }
 
   if (!product) {
-    return <ProductDetailsLoading isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} isError />;
+    return (
+      <DefaultLayout>
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Ürün bulunamadı</h2>
+          <p className="text-gray-600">Bu ürün mevcut değil veya silinmiş olabilir.</p>
+        </div>
+      </DefaultLayout>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 transition-all duration-300 ${
-        isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-      }`}>
-        <TopBar />
-        <ProductDetailsHeader product={product} isLoading={isLoading} />
-        <div className="container">
-          <div className="flex flex-col">
-            <ProductDetailsTabs 
-              product={product} 
-              onUpdate={updateProductMutation.mutate} 
-            />
-          </div>
-        </div>
-      </main>
-    </div>
+    <DefaultLayout>
+      <ProductDetailsHeader product={product} isLoading={isLoading} />
+      <div className="mt-4">
+        <ProductDetailsTabs 
+          product={product} 
+          onUpdate={updateProductMutation.mutate} 
+        />
+      </div>
+    </DefaultLayout>
   );
 };
 

@@ -4,17 +4,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SupplierFormData } from "@/types/supplier";
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import SupplierFormHeader from "@/components/suppliers/SupplierFormHeader";
 import SupplierFormContent from "@/components/suppliers/SupplierFormContent";
 
-interface SupplierNewProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const SupplierNew = ({ isCollapsed, setIsCollapsed }: SupplierNewProps) => {
+const SupplierNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -136,30 +130,18 @@ const SupplierNew = ({ isCollapsed, setIsCollapsed }: SupplierNewProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}
-      >
-        <TopBar />
-        <div className="p-4 sm:p-6 w-full">
-          <div className="w-full">
-            <SupplierFormHeader />
+    <DefaultLayout>
+      <SupplierFormHeader />
 
-            <SupplierFormContent 
-              formData={formData}
-              setFormData={setFormData}
-              handleSubmit={handleSubmit}
-              isPending={mutation.isPending}
-              isEdit={false}
-              onCancel={() => navigate('/suppliers')}
-            />
-          </div>
-        </div>
-      </main>
-    </div>
+      <SupplierFormContent 
+        formData={formData}
+        setFormData={setFormData}
+        handleSubmit={handleSubmit}
+        isPending={mutation.isPending}
+        isEdit={false}
+        onCancel={() => navigate('/suppliers')}
+      />
+    </DefaultLayout>
   );
 };
 

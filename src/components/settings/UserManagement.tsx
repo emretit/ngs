@@ -5,10 +5,10 @@ import { useToast } from "@/hooks/use-toast";
 import { UserFilters } from "./UserFilters";
 import { UserList } from "./UserList";
 import { InviteUserDialog } from "./InviteUserDialog";
-import { EmployeeManagement } from "./components/EmployeeManagement";
+import { RoleManagement } from "./RoleManagement";
 import { UserWithRoles } from "./types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, UserCog } from "lucide-react";
+import { Users, Shield } from "lucide-react";
 
 export const UserManagement = () => {
   const { toast } = useToast();
@@ -121,24 +121,19 @@ export const UserManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Kullanıcı & Çalışan Yönetimi</h2>
-          <p className="text-muted-foreground">Sistem kullanıcılarını ve çalışanları yönetin</p>
-        </div>
-      </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="users" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Kullanıcılar
-          </TabsTrigger>
-          <TabsTrigger value="employees" className="flex items-center gap-2">
-            <UserCog className="h-4 w-4" />
-            Çalışanlar
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex justify-center">
+          <TabsList className="grid grid-cols-2 h-8 w-auto border-none bg-transparent p-0">
+            <TabsTrigger value="users" className="flex items-center gap-1.5 text-xs px-4 py-1 rounded-md border border-gray-200 bg-white data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:border-primary">
+              <Users className="h-3 w-3" />
+              Kullanıcılar
+            </TabsTrigger>
+            <TabsTrigger value="roles" className="flex items-center gap-1.5 text-xs px-4 py-1 rounded-md border border-gray-200 bg-white data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:border-primary">
+              <Shield className="h-3 w-3" />
+              Roller & İzinler
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="users" className="mt-6 space-y-6">
           <div className="bg-white rounded-lg border shadow-sm">
@@ -162,9 +157,9 @@ export const UserManagement = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="employees" className="mt-6">
+        <TabsContent value="roles" className="mt-6">
           <div className="bg-white rounded-lg border shadow-sm p-6">
-            <EmployeeManagement />
+            <RoleManagement />
           </div>
         </TabsContent>
       </Tabs>

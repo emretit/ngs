@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Edit, Trash2, Eye, EyeOff, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import PartnerAccountModal from "./modals/PartnerAccountModal";
 
 interface PartnerAccount {
   id: string;
@@ -29,6 +30,7 @@ interface PartnerAccountsProps {
 const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
   const [partnerAccounts, setPartnerAccounts] = useState<PartnerAccount[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchPartnerAccounts = async () => {
@@ -114,6 +116,10 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
     navigate(`/cashflow/partner-accounts/${partnerId}`);
   };
 
+  const handleModalSuccess = () => {
+    fetchPartnerAccounts();
+  };
+
   const totalCapital = partnerAccounts.reduce((sum, partner) => sum + partner.initial_capital, 0);
   const totalCurrentBalance = partnerAccounts.reduce((sum, partner) => sum + partner.current_balance, 0);
   const totalProfitShare = partnerAccounts.reduce((sum, partner) => sum + partner.profit_share, 0);
@@ -154,7 +160,11 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
 
       {/* Quick Actions */}
       <div className="flex gap-2 mb-4">
-        <Button size="sm" className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1">
+        <Button 
+          size="sm" 
+          className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1"
+          onClick={() => setIsModalOpen(true)}
+        >
           <Plus className="h-3 w-3" />
           Yeni
         </Button>
@@ -170,7 +180,11 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
             <Users className="h-6 w-6 mx-auto mb-2 text-gray-300" />
             <p className="text-xs font-medium text-gray-700 mb-1">Henüz ortak hesabı yok</p>
             <p className="text-xs text-gray-500 mb-2">İlk ortak hesabınızı oluşturun</p>
-            <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1">
+            <Button 
+              size="sm" 
+              className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1"
+              onClick={() => setIsModalOpen(true)}
+            >
               <Plus className="h-3 w-3 mr-1" />
               Oluştur
             </Button>
@@ -232,6 +246,12 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
           ))
         )}
       </div>
+
+      <PartnerAccountModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };

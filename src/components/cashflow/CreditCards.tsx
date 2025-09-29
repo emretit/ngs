@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Plus, Edit, Trash2, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import CreditCardModal from "./modals/CreditCardModal";
 
 interface CreditCardAccount {
   id: string;
@@ -30,6 +31,7 @@ interface CreditCardsProps {
 const CreditCards = ({ showBalances }: CreditCardsProps) => {
   const [creditCards, setCreditCards] = useState<CreditCardAccount[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchCreditCards = async () => {
@@ -121,6 +123,10 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
     navigate(`/cashflow/credit-cards/${cardId}`);
   };
 
+  const handleModalSuccess = () => {
+    fetchCreditCards();
+  };
+
   const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.credit_limit, 0);
   const totalCurrentBalance = creditCards.reduce((sum, card) => sum + card.current_balance, 0);
   const totalAvailableLimit = creditCards.reduce((sum, card) => sum + card.available_limit, 0);
@@ -160,7 +166,11 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
 
       {/* Compact Quick Actions */}
       <div className="flex gap-2 mb-4">
-        <Button size="sm" className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1">
+        <Button 
+          size="sm" 
+          className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
+          onClick={() => setIsModalOpen(true)}
+        >
           <Plus className="h-3 w-3" />
           Yeni
         </Button>
@@ -176,7 +186,11 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
             <CreditCard className="h-6 w-6 mx-auto mb-2 text-gray-300" />
             <p className="text-xs font-medium text-gray-700 mb-1">Henüz kredi kartı yok</p>
             <p className="text-xs text-gray-500 mb-2">İlk kredi kartınızı ekleyin</p>
-            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1">
+            <Button 
+              size="sm" 
+              className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
+              onClick={() => setIsModalOpen(true)}
+            >
               <Plus className="h-3 w-3 mr-1" />
               Ekle
             </Button>
@@ -244,6 +258,12 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
           ))
         )}
       </div>
+
+      <CreditCardModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };

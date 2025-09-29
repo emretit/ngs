@@ -1,20 +1,7 @@
-
-import { useState } from "react";
-import Navbar from "@/components/Navbar";
-import TopBar from "@/components/TopBar";
-import {
-  CustomTabs,
-  CustomTabsContent,
-  CustomTabsList,
-  CustomTabsTrigger
-} from "@/components/ui/custom-tabs";
-import { UserManagement } from "@/components/settings/UserManagement";
-import { RoleManagement } from "@/components/settings/RoleManagement";
-import { SystemSettings } from "@/components/settings/SystemSettings";
-import { NilveraSettings } from "@/components/settings/NilveraSettings";
-import PdfTemplates from "@/pages/PdfTemplates";
-import { Settings2, Users, Shield, Plug, Wrench, FileText } from "lucide-react";
-
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
+import { Settings2, Users, UserCheck, Zap, Wrench, FileText } from "lucide-react";
 
 interface SettingsProps {
   isCollapsed: boolean;
@@ -22,114 +9,182 @@ interface SettingsProps {
 }
 
 const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
-  const [activeTab, setActiveTab] = useState("users");
-  
-  console.log("Settings page loaded successfully");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Varsayılan olarak kullanıcılar sayfasına yönlendir
+    navigate("/settings/users", { replace: true });
+  }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-64'}`}>
-        <TopBar />
-        <div className="p-8">
-          <div className="w-full">
-            {/* Header Section */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-gradient-to-r from-red-500 to-red-600 rounded-xl text-white shadow-lg">
-                  <Settings2 className="h-6 w-6" />
+    <DefaultLayout
+      isCollapsed={isCollapsed}
+      setIsCollapsed={setIsCollapsed}
+      title="Ayarlar & Yönetim"
+      subtitle="Sistem ayarlarını yönetin ve kullanıcı izinlerini düzenleyin"
+    >
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+          {/* Sol taraf - Başlık */}
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-lg text-white shadow-lg">
+              <Settings2 className="h-5 w-5" />
+            </div>
+            <div className="space-y-0.5">
+              <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                Ayarlar & Yönetim
+              </h1>
+              <p className="text-xs text-muted-foreground/70">
+                Sistem ayarlarını yönetin ve kullanıcı izinlerini düzenleyin.
+              </p>
+            </div>
+          </div>
+          
+          {/* Orta - İstatistik Kartları */}
+          <div className="flex flex-wrap gap-1.5 justify-center flex-1 items-center">
+            {/* Sistem Durumu */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-gradient-to-r from-green-600 to-green-700 text-white border border-green-600 shadow-sm">
+              <Settings2 className="h-3 w-3" />
+              <span className="font-bold">Sistem Durumu</span>
+              <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">
+                Aktif
+              </span>
+            </div>
+
+            {/* Toplam Kullanıcı */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">
+              <Users className="h-3 w-3" />
+              <span className="font-medium">Kullanıcılar</span>
+              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                -
+              </span>
+            </div>
+
+            {/* Entegrasyonlar */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300">
+              <Zap className="h-3 w-3" />
+              <span className="font-medium">Entegrasyonlar</span>
+              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                -
+              </span>
+            </div>
+          </div>
+          
+          {/* Sağ taraf - Boş alan (gelecekte butonlar eklenebilir) */}
+          <div className="flex items-center gap-2">
+            {/* Gelecekte butonlar buraya eklenebilir */}
+          </div>
+        </div>
+
+        {/* Ayarlar Menüsü */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Kullanıcılar */}
+              <div 
+                onClick={() => navigate("/settings/users")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      Kullanıcılar
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Sistem kullanıcılarını yönetin
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Ayarlar & Yönetim</h1>
-                  <p className="text-gray-600 mt-1">Sistem ayarlarını yönetin ve kullanıcı izinlerini düzenleyin</p>
+              </div>
+
+              {/* Roller & İzinler */}
+              <div 
+                onClick={() => navigate("/settings/roles")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <UserCheck className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                      Roller & İzinler
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Kullanıcı rollerini düzenleyin
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nilvera E-Fatura */}
+              <div 
+                onClick={() => navigate("/settings/nilvera")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <Zap className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
+                      Nilvera E-Fatura
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      E-fatura entegrasyonu ayarları
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sistem Ayarları */}
+              <div 
+                onClick={() => navigate("/settings/system")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-gray-400 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <Wrench className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
+                      Sistem Ayarları
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Genel sistem ayarları
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* PDF Şablonları */}
+              <div 
+                onClick={() => navigate("/settings/pdf-templates")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-green-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                      PDF Şablonları
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      PDF şablonlarını yönetin
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Tabs Section */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
-              <CustomTabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="border-b border-gray-200/80 bg-gray-50/50 px-6 py-4">
-                  <CustomTabsList className="bg-white shadow-sm border border-gray-200/60 rounded-xl p-1 grid grid-cols-5 w-full">
-                    <CustomTabsTrigger
-                      value="users"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-50"
-                    >
-                      <Users className="h-4 w-4" />
-                      Kullanıcılar
-                    </CustomTabsTrigger>
-                    <CustomTabsTrigger
-                      value="roles"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-50"
-                    >
-                      <Shield className="h-4 w-4" />
-                      Roller & İzinler
-                    </CustomTabsTrigger>
-                    <CustomTabsTrigger
-                      value="nilvera"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-50"
-                    >
-                      <Plug className="h-4 w-4" />
-                      Nilvera E-Fatura
-                    </CustomTabsTrigger>
-                    <CustomTabsTrigger
-                      value="system"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-50"
-                    >
-                      <Wrench className="h-4 w-4" />
-                      Sistem Ayarları
-                    </CustomTabsTrigger>
-                    <CustomTabsTrigger
-                      value="pdf-templates"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-50"
-                    >
-                      <FileText className="h-4 w-4" />
-                      PDF Şablonları
-                    </CustomTabsTrigger>
-                  </CustomTabsList>
-                </div>
-
-                <div className="p-6">
-                  <CustomTabsContent value="users" className="mt-0">
-                    <div className="space-y-6">
-                      <UserManagement />
-                    </div>
-                  </CustomTabsContent>
-
-                  <CustomTabsContent value="roles" className="mt-0">
-                    <div className="space-y-6">
-                      <RoleManagement />
-                    </div>
-                  </CustomTabsContent>
-
-                  <CustomTabsContent value="nilvera" className="mt-0">
-                    <div className="space-y-6">
-                      <NilveraSettings />
-                    </div>
-                  </CustomTabsContent>
-
-
-
-
-
-                  <CustomTabsContent value="system" className="mt-0">
-                    <div className="space-y-6">
-                      <SystemSettings />
-                    </div>
-                  </CustomTabsContent>
-
-                  <CustomTabsContent value="pdf-templates" className="mt-0">
-                    <div className="space-y-6">
-                      <PdfTemplates />
-                    </div>
-                  </CustomTabsContent>
-                </div>
-              </CustomTabs>
-            </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </DefaultLayout>
   );
 };
 

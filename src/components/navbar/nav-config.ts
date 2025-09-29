@@ -220,10 +220,34 @@ export const navItems = [
     icon: Workflow,
     label: "Modül Ağacı",
   },
+  // 14. Ayarlar
+  {
+    path: "/settings",
+    icon: Settings,
+    label: "Ayarlar",
+    hasDropdown: true,
+    items: [
+      {
+        path: "/settings/users",
+        icon: Users,
+        label: "Kullanıcı Yönetimi",
+      },
+      {
+        path: "/settings/nilvera",
+        icon: Zap,
+        label: "Nilvera E-Fatura",
+      },
+      {
+        path: "/settings/system",
+        icon: Wrench,
+        label: "Sistem Ayarları",
+      },
+      {
+        path: "/settings/pdf-templates",
+        icon: FileText,
+        label: "PDF Şablonları",
+      },
+    ],
+  },
 ];
 
-export const settingsItem = {
-  path: "/settings",
-  icon: Settings,
-  label: "Ayarlar",
-};

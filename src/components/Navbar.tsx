@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NavHeader from "./navbar/NavHeader";
 import NavLink from "./navbar/NavLink";
-import { navItems, settingsItem } from "./navbar/nav-config";
+import { navItems } from "./navbar/nav-config";
 
 interface NavbarProps {
   isCollapsed: boolean;
@@ -14,6 +14,7 @@ interface NavbarProps {
 const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const navRef = useRef<HTMLElement>(null);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem("sidebarExpandedMenus");
@@ -25,16 +26,23 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
 
   useEffect(() => {
     const newExpanded = new Set<string>(expandedMenus);
+    let hasChanges = false;
+    
     navItems.forEach((item: any) => {
       if (item.hasDropdown && item.items) {
         const isParentActive = location.pathname === item.path;
         const hasActiveChild = item.items.some((s: any) => location.pathname === s.path);
-        if (isParentActive || hasActiveChild) {
+        if ((isParentActive || hasActiveChild) && !newExpanded.has(item.path)) {
           newExpanded.add(item.path);
+          hasChanges = true;
         }
       }
     });
-    setExpandedMenus(newExpanded);
+    
+    // Sadece değişiklik varsa state'i güncelle
+    if (hasChanges) {
+      setExpandedMenus(newExpanded);
+    }
   }, [location.pathname]);
 
   // Persist expanded menus between page navigations
@@ -45,6 +53,23 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
       // ignore
     }
   }, [expandedMenus]);
+
+  // Scroll pozisyonunu koru
+  useEffect(() => {
+    if (navRef.current) {
+      const savedScrollTop = localStorage.getItem("sidebarScrollTop");
+      if (savedScrollTop) {
+        navRef.current.scrollTop = parseInt(savedScrollTop, 10);
+      }
+    }
+  }, []);
+
+  // Scroll pozisyonunu kaydet
+  const handleScroll = () => {
+    if (navRef.current) {
+      localStorage.setItem("sidebarScrollTop", navRef.current.scrollTop.toString());
+    }
+  };
 
   const toggleMenu = (path: string) => {
     const newExpanded = new Set(expandedMenus);
@@ -147,25 +172,19 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
 
   return (
     <div className={cn(
-      "fixed left-0 top-0 z-40 h-screen bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 transition-all duration-300",
+      "fixed left-0 top-0 z-40 h-screen bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col",
       isCollapsed ? "w-[60px]" : "w-64"
     )}>
       <NavHeader isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       
-      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
+      {/* Scrollable content area */}
+      <nav 
+        ref={navRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-2 py-4 space-y-1 scrollbar-hide"
+      >
         {navItems.map(renderNavItem)}
       </nav>
-
-      {/* Settings at bottom */}
-      <div className="p-2 border-t border-gray-800">
-        <NavLink
-          to={settingsItem.path}
-          icon={settingsItem.icon}
-          label={settingsItem.label}
-          isActive={location.pathname === settingsItem.path}
-          isCollapsed={isCollapsed}
-        />
-      </div>
     </div>
   );
 };

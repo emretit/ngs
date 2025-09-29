@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import BankAccountModal from "./modals/BankAccountModal";
 
 interface BankAccount {
   id: string;
@@ -31,6 +32,7 @@ interface BankAccountsProps {
 const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchBankAccounts = async () => {
@@ -80,6 +82,10 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
     navigate(`/cashflow/bank-accounts/${accountId}`);
   };
 
+  const handleModalSuccess = () => {
+    fetchBankAccounts();
+  };
+
   const totalBankBalance = bankAccounts.reduce((sum, account) => {
     if (account.currency === 'TRY') {
       return sum + (account.current_balance || 0);
@@ -124,7 +130,11 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
 
       {/* Quick Actions */}
       <div className="flex gap-2 mb-4">
-        <Button size="sm" className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1">
+        <Button 
+          size="sm" 
+          className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1"
+          onClick={() => setIsModalOpen(true)}
+        >
           <Plus className="h-3 w-3" />
           Yeni
         </Button>
@@ -140,7 +150,11 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
             <Building2 className="h-6 w-6 mx-auto mb-2 text-gray-300" />
             <p className="text-xs font-medium text-gray-700 mb-1">Henüz banka hesabı yok</p>
             <p className="text-xs text-gray-500 mb-2">İlk banka hesabınızı ekleyin</p>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1">
+            <Button 
+              size="sm" 
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1"
+              onClick={() => setIsModalOpen(true)}
+            >
               <Plus className="h-3 w-3 mr-1" />
               Ekle
             </Button>
@@ -202,6 +216,12 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
           ))
         )}
       </div>
+
+      <BankAccountModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Wallet, Plus, Edit, Trash2, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import CashAccountModal from "./modals/CashAccountModal";
 
 interface CashAccount {
   id: string;
@@ -25,6 +26,7 @@ interface CashAccountsProps {
 const CashAccounts = ({ showBalances }: CashAccountsProps) => {
   const [cashAccounts, setCashAccounts] = useState<CashAccount[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchCashAccounts = async () => {
@@ -84,6 +86,10 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
     navigate(`/cashflow/cash-accounts/${accountId}`);
   };
 
+  const handleModalSuccess = () => {
+    fetchCashAccounts();
+  };
+
   const totalBalance = cashAccounts.reduce((sum, account) => sum + account.current_balance, 0);
 
   if (loading) {
@@ -121,7 +127,11 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
 
       {/* Compact Quick Actions */}
       <div className="flex gap-2 mb-4">
-        <Button size="sm" className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1">
+        <Button 
+          size="sm" 
+          className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1"
+          onClick={() => setIsModalOpen(true)}
+        >
           <Plus className="h-3 w-3" />
           Yeni
         </Button>
@@ -137,7 +147,11 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
             <Wallet className="h-6 w-6 mx-auto mb-2 text-gray-300" />
             <p className="text-xs font-medium text-gray-700 mb-1">Henüz kasa hesabı yok</p>
             <p className="text-xs text-gray-500 mb-2">İlk kasa hesabınızı oluşturun</p>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1">
+            <Button 
+              size="sm" 
+              className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1"
+              onClick={() => setIsModalOpen(true)}
+            >
               <Plus className="h-3 w-3 mr-1" />
               Oluştur
             </Button>
@@ -199,6 +213,12 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
           ))
         )}
       </div>
+
+      <CashAccountModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };

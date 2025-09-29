@@ -1,4 +1,4 @@
-import { getRectOfNodes, getTransformForBounds } from 'reactflow';
+import { getNodesBounds, getViewportForBounds } from '@xyflow/react';
 import { toPng } from 'html-to-image';
 
 export const exportToPng = async (
@@ -6,8 +6,8 @@ export const exportToPng = async (
   filename: string = 'pafta-module-tree'
 ) => {
   try {
-    const nodesBounds = getRectOfNodes(reactFlowInstance.getNodes());
-    const transform = getTransformForBounds(
+    const nodesBounds = getNodesBounds(reactFlowInstance.getNodes());
+    const transform = getViewportForBounds(
       nodesBounds,
       1920, // max width
       1080, // max height

@@ -362,11 +362,11 @@ const ServicePage = () => {
           viewType={activeView} 
         />
 
-            {/* Content based on view */}
-            {activeView === "calendar" ? (
-              /* React Big Calendar */
-              <>
-                {/* Filters for Calendar View */}
+        {/* Content based on view */}
+        {activeView === "calendar" ? (
+          /* React Big Calendar */
+          <>
+            {/* Filters for Calendar View */}
                 <div className="flex flex-col sm:flex-row gap-4 p-6 bg-gradient-to-r from-card/80 to-muted/40 rounded-xl border border-border/30 shadow-lg backdrop-blur-sm">
                   <div className="relative w-[400px]">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -1153,46 +1153,45 @@ const ServicePage = () => {
         <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-red-600">
-                  <Trash2 className="h-5 w-5" />
-                  Servis Talebini Sil
-                </DialogTitle>
-              </DialogHeader>
-              <div className="py-4">
-                <p className="text-sm text-gray-600 mb-2">
-                  Bu servis talebini silmek istediğinizden emin misiniz?
-                </p>
-                {serviceToDelete && (
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="font-medium text-gray-900">{serviceToDelete.service_title}</p>
-                    <p className="text-sm text-gray-600">
-                      Servis No: {serviceToDelete.service_number || 'SR-' + serviceToDelete.id.slice(-6).toUpperCase()}
-                    </p>
-                  </div>
-                )}
-                <p className="text-xs text-red-600 mt-2">
-                  ⚠️ Bu işlem geri alınamaz. Servis talebi ve ilgili tüm veriler kalıcı olarak silinecektir.
-                </p>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setDeleteConfirmOpen(false)}
-                >
-                  İptal
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={confirmDelete}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Sil
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-      </div>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="h-5 w-5" />
+                Servis Talebini Sil
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Bu servis talebini silmek istediğinizden emin misiniz?
+              </p>
+              {serviceToDelete && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="font-medium text-gray-900">{serviceToDelete.service_title}</p>
+                  <p className="text-sm text-gray-600">
+                    Servis No: {serviceToDelete.service_number || 'SR-' + serviceToDelete.id.slice(-6).toUpperCase()}
+                  </p>
+                </div>
+              )}
+              <p className="text-xs text-red-600 mt-2">
+                ⚠️ Bu işlem geri alınamaz. Servis talebi ve ilgili tüm veriler kalıcı olarak silinecektir.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteConfirmOpen(false)}
+              >
+                İptal
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Sil
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
     </DefaultLayout>
   );
 };

@@ -85,7 +85,7 @@ export const ModuleFlow: React.FC<ModuleFlowProps> = ({
   }, [initialNodes.length, handleFitView]);
 
   return (
-    <div className={className}>
+    <div className={className} style={{ width: '100%', height: '100%' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

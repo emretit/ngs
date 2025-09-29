@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,8 @@ import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import CashIncomeModal from "@/components/cashflow/modals/CashIncomeModal";
 import CashExpenseModal from "@/components/cashflow/modals/CashExpenseModal";
-import { supabase } from "@/integrations/supabase/client";
+import { useCashAccountDetail, useCashAccountTransactions } from "@/hooks/useAccountDetail";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CashAccount {
   id: string;

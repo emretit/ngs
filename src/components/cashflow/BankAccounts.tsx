@@ -1,9 +1,5 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { 
   Building2, 
   Plus, 
@@ -16,6 +12,8 @@ import {
   Trash2
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { useBankAccounts, useCreditCards } from "@/hooks/useAccountsData";
+import AccountsSkeleton from "./AccountsSkeleton";
 
 interface BankAccount {
   id: string;
@@ -45,49 +43,10 @@ interface BankAccountsProps {
 }
 
 const BankAccounts = ({ showBalances }: BankAccountsProps) => {
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
-  const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchBankAccounts = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('bank_accounts')
-        .select('*')
-        .eq('is_active', true)
-        .order('bank_name', { ascending: true });
-
-      if (error) throw error;
-      setBankAccounts((data as unknown as BankAccount[]) || []);
-    } catch (error) {
-      console.error('Error fetching bank accounts:', error);
-      toast.error('Banka hesapları yüklenirken hata oluştu');
-    }
-  };
-
-  const fetchCreditCards = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('credit_cards')
-        .select('*')
-        .eq('status', 'active')
-        .order('card_name', { ascending: true });
-
-      if (error) throw error;
-      setCreditCards((data as unknown as CreditCard[]) || []);
-    } catch (error) {
-      console.error('Error fetching credit cards:', error);
-      toast.error('Kredi kartları yüklenirken hata oluştu');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBankAccounts();
-    fetchCreditCards();
-  }, []);
+  const { data: bankAccounts = [], isLoading: isLoadingBanks } = useBankAccounts();
+  const { data: creditCards = [], isLoading: isLoadingCards } = useCreditCards();
+  
+  const loading = isLoadingBanks || isLoadingCards;
 
   const getAccountTypeLabel = (type: string) => {
     const types: Record<string, string> = {
@@ -124,6 +83,9 @@ const BankAccounts = ({ showBalances }: BankAccountsProps) => {
   const totalCreditLimit = creditCards.reduce((sum, card) => sum + (card.credit_limit || 0), 0);
   const totalCreditUsed = creditCards.reduce((sum, card) => sum + (card.current_balance || 0), 0);
 
+  if (loading) {
+    return <AccountsSkeleton />;
+  }
 
   return (
     <div className="space-y-8">

@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Edit, Trash2, Eye, EyeOff, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Users, Plus, Edit, Trash2, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PartnerAccountModal from "./modals/PartnerAccountModal";
+import { usePartnerAccounts } from "@/hooks/useAccountsData";
+import AccountsSkeleton from "./AccountsSkeleton";
 
 interface PartnerAccount {
   id: string;

@@ -1,72 +1,20 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Plus, Edit, Trash2, Eye, EyeOff, ExternalLink } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Wallet, Plus, Edit, Trash2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import CashAccountModal from "./modals/CashAccountModal";
-import { supabase } from "@/integrations/supabase/client";
-
-interface CashAccount {
-  id: string;
-  name: string;
-  description?: string;
-  current_balance: number;
-  currency: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { useCashAccounts } from "@/hooks/useAccountsData";
+import AccountsSkeleton from "./AccountsSkeleton";
 
 interface CashAccountsProps {
   showBalances: boolean;
 }
 
 const CashAccounts = ({ showBalances }: CashAccountsProps) => {
-  const [cashAccounts, setCashAccounts] = useState<CashAccount[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-
-  const fetchCashAccounts = async () => {
-    try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.company_id) return;
-
-      const { data: accountsData, error } = await supabase
-        .from('cash_accounts')
-        .select('*')
-        .eq('company_id', profile.company_id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setCashAccounts(accountsData || []);
-    } catch (error) {
-      console.error('Error fetching cash accounts:', error);
-      toast({
-        title: "Hata",
-        description: "Nakit kasa hesapları yüklenirken hata oluştu",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCashAccounts();
-  }, []);
+  const { data: cashAccounts = [], isLoading, refetch } = useCashAccounts();
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -82,18 +30,13 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
   };
 
   const handleModalSuccess = () => {
-    fetchCashAccounts();
+    refetch();
   };
 
   const totalBalance = cashAccounts.reduce((sum, account) => sum + account.current_balance, 0);
 
-  if (loading) {
-    return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
-        <p className="mt-2 text-muted-foreground">Yükleniyor...</p>
-      </div>
-    );
+  if (isLoading) {
+    return <AccountsSkeleton />;
   }
 
   return (

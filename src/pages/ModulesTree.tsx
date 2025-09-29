@@ -177,86 +177,153 @@ const ModulesTree: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsCollapsed }
     },
   ];
 
-  // Define edges with custom styling
+  // Define edges with custom styling and labels
   const initialEdges: Edge[] = [
-    // Root to first level
+    // Root to first level - Ana sistem bağlantıları
     { 
       id: 'root-crm', 
       source: 'root', 
       target: 'crm',
+      label: 'Müşteri İlişkileri',
       style: { stroke: 'hsl(var(--primary))', strokeWidth: 3 },
-      animated: true
+      animated: true,
+      labelStyle: { fontSize: 12, fontWeight: 600, fill: 'hsl(var(--primary))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
     },
     { 
       id: 'root-erp', 
       source: 'root', 
       target: 'erp',
+      label: 'Kaynak Planlaması',
       style: { stroke: 'hsl(var(--primary))', strokeWidth: 3 },
-      animated: true
+      animated: true,
+      labelStyle: { fontSize: 12, fontWeight: 600, fill: 'hsl(var(--primary))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
     },
     { 
       id: 'root-hr', 
       source: 'root', 
       target: 'hr',
+      label: 'İnsan Kaynakları',
       style: { stroke: 'hsl(var(--primary))', strokeWidth: 3 },
-      animated: true
+      animated: true,
+      labelStyle: { fontSize: 12, fontWeight: 600, fill: 'hsl(var(--primary))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
     },
-    // CRM children
+    // CRM children - Müşteri süreçleri
     { 
       id: 'crm-customers', 
       source: 'crm', 
       target: 'crm-customers',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 }
+      label: 'Yönetim',
+      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
+      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
     },
     { 
       id: 'crm-opportunities', 
       source: 'crm', 
       target: 'crm-opportunities',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 }
+      label: 'Satış',
+      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
+      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
     },
     { 
       id: 'crm-proposals', 
       source: 'crm', 
       target: 'crm-proposals',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 }
+      label: 'Teklif',
+      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
+      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
     },
-    // ERP children
+    // ERP children - İş süreçleri
     { 
       id: 'erp-purchasing', 
       source: 'erp', 
       target: 'erp-purchasing',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 }
+      label: 'Tedarik',
+      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
+      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
     },
     { 
       id: 'erp-inventory', 
       source: 'erp', 
       target: 'erp-inventory',
-      style: { stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '5,5' }
+      label: 'Geliştirilecek',
+      style: { stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '5,5' },
+      labelStyle: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
     },
     { 
       id: 'erp-cashflow', 
       source: 'erp', 
       target: 'erp-cashflow',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 }
+      label: 'Finans',
+      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
+      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
     },
-    // HR children
+    // HR children - İnsan kaynakları süreçleri
     { 
       id: 'hr-employees', 
       source: 'hr', 
       target: 'hr-employees',
-      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 }
+      label: 'Personel',
+      style: { stroke: 'hsl(var(--accent))', strokeWidth: 2 },
+      labelStyle: { fontSize: 10, fill: 'hsl(var(--accent))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
     },
     { 
       id: 'hr-leaves', 
       source: 'hr', 
       target: 'hr-leaves',
-      style: { stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '5,5' }
+      label: 'Geliştirilecek',
+      style: { stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '5,5' },
+      labelStyle: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
     },
     { 
       id: 'hr-payroll', 
       source: 'hr', 
       target: 'hr-payroll',
-      style: { stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '5,5' }
+      label: 'Geliştirilecek',
+      style: { stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '5,5' },
+      labelStyle: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.8 }
+    },
+    // Cross-module connections - Modüller arası entegrasyonlar
+    { 
+      id: 'crm-customers-to-erp-cashflow', 
+      source: 'crm-customers', 
+      target: 'erp-cashflow',
+      label: 'Tahsilat',
+      style: { stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '3,3' },
+      animated: true,
+      labelStyle: { fontSize: 9, fill: 'hsl(var(--primary))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
+    },
+    { 
+      id: 'crm-proposals-to-erp-purchasing', 
+      source: 'crm-proposals', 
+      target: 'erp-purchasing',
+      label: 'Maliyet',
+      style: { stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '3,3' },
+      animated: true,
+      labelStyle: { fontSize: 9, fill: 'hsl(var(--primary))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
+    },
+    { 
+      id: 'hr-employees-to-erp-cashflow', 
+      source: 'hr-employees', 
+      target: 'erp-cashflow',
+      label: 'Maaş',
+      style: { stroke: 'hsl(var(--primary))', strokeWidth: 1, strokeDasharray: '3,3' },
+      animated: true,
+      labelStyle: { fontSize: 9, fill: 'hsl(var(--primary))' },
+      labelBgStyle: { fill: 'hsl(var(--background))', fillOpacity: 0.9 }
     },
   ];
 
@@ -364,7 +431,21 @@ const ModulesTree: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsCollapsed }
 
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-card/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-lg">
           <h3 className="text-sm font-semibold text-foreground text-center">Pafta.app Modül Ağacı</h3>
-          <p className="text-xs text-muted-foreground text-center">Modüllere tıklayarak detayları görüntüleyin</p>
+          <p className="text-xs text-muted-foreground text-center">Modüller ve entegrasyonları</p>
+          <div className="flex items-center justify-center gap-4 mt-2 text-xs">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-0.5 bg-primary"></div>
+              <span className="text-muted-foreground">Ana Bağlantı</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-0.5 bg-accent"></div>
+              <span className="text-muted-foreground">Modül</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-0.5 bg-primary border-dashed border-t"></div>
+              <span className="text-muted-foreground">Entegrasyon</span>
+            </div>
+          </div>
         </div>
 
         <ModuleInfoPanel

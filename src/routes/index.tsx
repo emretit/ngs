@@ -3,13 +3,9 @@ import React, { Suspense } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { PublicRoute, ProtectedRoute } from "./RouteGuards";
 import { appRoutes } from "./appRoutes";
+import ProtectedLayout from "@/components/layouts/ProtectedLayout";
 
-interface AppRoutesProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-export const AppRoutes: React.FC<AppRoutesProps> = ({ isCollapsed, setIsCollapsed }) => {
+export const AppRoutes: React.FC = () => {
   return (
     <Router>
       <Suspense fallback={
@@ -18,20 +14,21 @@ export const AppRoutes: React.FC<AppRoutesProps> = ({ isCollapsed, setIsCollapse
         </div>
       }>
         <Routes>
-          {appRoutes.map((route) => {
-            // Create route element with props for protected routes
-            const RouteElement = route.protected ? (
-              <ProtectedRoute>
-                <route.component key={route.path} isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-              </ProtectedRoute>
-            ) : (
-              <PublicRoute>
-                <route.component key={route.path} />
-              </PublicRoute>
-            );
+          {/* Protected routes with layout */}
+          <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
+            {appRoutes.filter(route => route.protected).map((route) => (
+              <Route key={route.path} path={route.path} element={<route.component />} />
+            ))}
+          </Route>
 
-            return <Route key={route.path} path={route.path} element={RouteElement} />;
-          })}
+          {/* Public routes */}
+          {appRoutes.filter(route => !route.protected).map((route) => (
+            <Route 
+              key={route.path} 
+              path={route.path} 
+              element={<PublicRoute><route.component /></PublicRoute>} 
+            />
+          ))}
         </Routes>
       </Suspense>
     </Router>

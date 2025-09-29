@@ -1,6 +1,4 @@
 
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
 import FinanceHeader from "@/components/finance/FinanceHeader";
 import AccountSummary from "@/components/finance/bank-accounts/AccountSummary";
 import GeneralLedger from "@/components/finance/GeneralLedger";
@@ -15,22 +13,9 @@ import {
   CustomTabsTrigger 
 } from "@/components/ui/custom-tabs";
 
-interface FinanceProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const Finance = ({ isCollapsed, setIsCollapsed }: FinanceProps) => {
+const Finance = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}
-      >
-        <TopBar />
-        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-[1600px] mx-auto space-y-6 animate-fade-in">
           <FinanceHeader />
 
           {/* Ana İçerik Sekmeleri */}
@@ -79,8 +64,6 @@ const Finance = ({ isCollapsed, setIsCollapsed }: FinanceProps) => {
             </CustomTabsContent>
           </CustomTabs>
         </div>
-      </main>
-    </div>
   );
 };
 

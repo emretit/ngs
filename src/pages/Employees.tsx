@@ -1,6 +1,4 @@
 
-import Navbar from "@/components/Navbar";
-import TopBar from "@/components/TopBar";
 import { EmployeeList } from "@/components/employees/EmployeeList";
 import { EmployeeSummaryStats } from "@/components/employees/stats/EmployeeSummaryStats";
 import { SalaryOverviewCards } from "@/components/employees/SalaryOverviewCards";
@@ -8,21 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Plus, Users, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-interface EmployeesPageProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const Employees = ({ isCollapsed, setIsCollapsed }: EmployeesPageProps) => {
+const Employees = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-64'}`}>
-        <TopBar />
-        <div className="p-8">
-          <div className="w-full">
+    <div className="w-full">
             {/* Header Section */}
             <div className="mb-8">
               <div className="flex items-start justify-between">
@@ -66,9 +54,6 @@ const Employees = ({ isCollapsed, setIsCollapsed }: EmployeesPageProps) => {
               </div>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
   );
 };
 

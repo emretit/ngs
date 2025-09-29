@@ -1,22 +1,9 @@
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
 import CashflowOverview from "@/components/cashflow/CashflowOverview";
 import { DollarSign } from "lucide-react";
 
-interface CashflowProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const Cashflow = ({ isCollapsed, setIsCollapsed }: CashflowProps) => {
-
+const Cashflow = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-56'}`}>
-        <TopBar />
-        <div className="p-8">
-          <div className="w-full">
+    <div className="w-full">
             {/* Header - Fırsatlar gibi */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
               {/* Sol taraf - Başlık */}
@@ -49,9 +36,6 @@ const Cashflow = ({ isCollapsed, setIsCollapsed }: CashflowProps) => {
               </div>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
   );
 };
 

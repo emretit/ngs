@@ -35,7 +35,8 @@ import {
   DollarSign,
   MapPin,
   Gauge,
-  CheckSquare
+  CheckSquare,
+  Workflow
 } from "lucide-react";
 
 export const navItems = [
@@ -212,6 +213,12 @@ export const navItems = [
     path: "/reports",
     icon: BarChart2,
     label: "Raporlar",
+  },
+  // 13. Modül Ağacı
+  {
+    path: "/modules-tree",
+    icon: Workflow,
+    label: "Modül Ağacı",
   },
 ];
 

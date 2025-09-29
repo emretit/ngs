@@ -27,8 +27,8 @@ const NavLink = ({
       to={to}
       className={cn(
         "flex items-center transition-all duration-200 rounded-lg group",
-        isCollapsed ? "justify-center px-3 h-10" : "px-3 space-x-3",
-        isSubItem ? "h-8 text-xs" : "h-10",
+        isCollapsed ? "justify-center px-2 h-8" : "px-2 space-x-2",
+        isSubItem ? "h-6 text-xs" : "h-8",
         isActive 
           ? isSubItem 
             ? "bg-primary/20 text-primary font-medium border-l-2 border-primary" 
@@ -43,9 +43,7 @@ const NavLink = ({
         isSubItem ? "h-3 w-3" : "h-4 w-4"
       )} />
       {!isCollapsed && (
-        <span className={cn(
-          isSubItem ? "text-xs font-medium" : "text-sm font-medium"
-        )}>
+        <span className="text-xs font-medium">
           {label}
         </span>
       )}

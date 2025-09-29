@@ -12,7 +12,7 @@ const CashflowExpenses = ({ isCollapsed, setIsCollapsed }: CashflowExpensesProps
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-64'}`}>
+      <main className={`transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-56'}`}>
         <TopBar />
         <div className="p-8">
           <div className="w-full">

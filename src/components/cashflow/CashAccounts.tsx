@@ -7,6 +7,7 @@ import { Wallet, Plus, Edit, Trash2, Eye, EyeOff, ExternalLink } from "lucide-re
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import CashAccountModal from "./modals/CashAccountModal";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CashAccount {
   id: string;
@@ -32,31 +33,25 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
   const fetchCashAccounts = async () => {
     try {
       setLoading(true);
-      // TODO: Supabase'den nakit kasa hesaplarını çek
-      // Şimdilik mock data
-      const mockData: CashAccount[] = [
-        {
-          id: "1",
-          name: "Ana Kasa",
-          description: "Günlük nakit işlemler",
-          current_balance: 15000,
-          currency: "TRY",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: "2", 
-          name: "Petrol Kasa",
-          description: "Araç yakıt giderleri",
-          current_balance: 5000,
-          currency: "TRY",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
-      setCashAccounts(mockData);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      const { data: accountsData, error } = await supabase
+        .from('cash_accounts')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCashAccounts(accountsData || []);
     } catch (error) {
       console.error('Error fetching cash accounts:', error);
       toast({

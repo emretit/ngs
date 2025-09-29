@@ -154,11 +154,6 @@ export const navItems = [
     hasDropdown: true,
     items: [
       {
-        path: "/cashflow",
-        icon: BarChart2,
-        label: "Genel Bakış",
-      },
-      {
         path: "/cashflow/opex-entry",
         icon: FileText,
         label: "OPEX Girişi",

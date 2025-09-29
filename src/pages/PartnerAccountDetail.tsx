@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,20 +12,32 @@ import {
   Calendar,
   Filter,
   Download,
+  ArrowLeft,
+  Pencil,
   Users,
-  Percent
+  Activity,
+  Receipt,
+  FileText,
+  Settings
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import AccountDetailLayout from "@/components/layouts/AccountDetailLayout";
 import Navbar from "@/components/Navbar";
+import { TopBar } from "@/components/TopBar";
+import { 
+  CustomTabs, 
+  CustomTabsContent, 
+  CustomTabsList, 
+  CustomTabsTrigger 
+} from "@/components/ui/custom-tabs";
 
 interface PartnerAccount {
   id: string;
   partner_name: string;
-  partner_type: "ortak" | "yatırımcı" | "müdür" | "diğer";
+  partner_type: string;
   ownership_percentage: number;
   initial_capital: number;
+  current_capital: number;
   currency: string;
   is_active: boolean;
   created_at: string;
@@ -36,7 +48,7 @@ interface Transaction {
   id: string;
   account_id: string;
   amount: number;
-  type: "capital_increase" | "capital_decrease" | "profit_distribution" | "loss_share";
+  type: "capital_increase" | "capital_withdrawal" | "profit_distribution" | "loss_share";
   description: string;
   category: string;
   date: string;
@@ -50,11 +62,12 @@ interface PartnerAccountDetailProps {
 
 const PartnerAccountDetail = ({ isCollapsed, setIsCollapsed }: PartnerAccountDetailProps) => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [account, setAccount] = useState<PartnerAccount | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBalances, setShowBalances] = useState(true);
-  const [filterType, setFilterType] = useState<"all" | "capital_increase" | "capital_decrease" | "profit_distribution" | "loss_share">("all");
+  const [filterType, setFilterType] = useState<"all" | "capital" | "profit_loss">("all");
 
   useEffect(() => {
     if (id) {
@@ -71,13 +84,14 @@ const PartnerAccountDetail = ({ isCollapsed, setIsCollapsed }: PartnerAccountDet
       const mockAccount: PartnerAccount = {
         id: id!,
         partner_name: "Ahmet Yılmaz",
-        partner_type: "ortak",
-        ownership_percentage: 60,
-        initial_capital: 1000000,
+        partner_type: "Ortak",
+        ownership_percentage: 30,
+        initial_capital: 100000,
+        current_capital: 150000,
         currency: "TRY",
         is_active: true,
-        created_at: "2024-01-15T10:00:00Z",
-        updated_at: "2024-01-20T15:30:00Z"
+        created_at: "2024-01-01T09:00:00Z",
+        updated_at: "2024-01-20T16:45:00Z"
       };
       setAccount(mockAccount);
     } catch (error) {
@@ -95,9 +109,9 @@ const PartnerAccountDetail = ({ isCollapsed, setIsCollapsed }: PartnerAccountDet
         {
           id: "1",
           account_id: id!,
-          amount: 50000,
+          amount: 25000,
           type: "capital_increase",
-          description: "Sermaye artırımı",
+          description: "Sermaye artışı",
           category: "Sermaye",
           date: "2024-01-20T14:30:00Z",
           reference: "CAP-2024-001"
@@ -105,7 +119,7 @@ const PartnerAccountDetail = ({ isCollapsed, setIsCollapsed }: PartnerAccountDet
         {
           id: "2",
           account_id: id!,
-          amount: 25000,
+          amount: 10000,
           type: "profit_distribution",
           description: "Kar dağıtımı",
           category: "Kar",
@@ -115,12 +129,12 @@ const PartnerAccountDetail = ({ isCollapsed, setIsCollapsed }: PartnerAccountDet
         {
           id: "3",
           account_id: id!,
-          amount: 10000,
-          type: "capital_decrease",
+          amount: 5000,
+          type: "capital_withdrawal",
           description: "Sermaye çekimi",
           category: "Sermaye",
           date: "2024-01-18T16:45:00Z",
-          reference: "CAP-2024-003"
+          reference: "WTH-2024-003"
         }
       ];
       setTransactions(mockTransactions);
@@ -129,32 +143,23 @@ const PartnerAccountDetail = ({ isCollapsed, setIsCollapsed }: PartnerAccountDet
     }
   };
 
-  const getPartnerTypeLabel = (type: string) => {
-    switch (type) {
-      case "ortak":
-        return "Ortak";
-      case "yatırımcı":
-        return "Yatırımcı";
-      case "müdür":
-        return "Müdür";
-      case "diğer":
-        return "Diğer";
-      default:
-        return type;
-    }
-  };
-
   const filteredTransactions = transactions.filter(transaction => {
     if (filterType === "all") return true;
-    return transaction.type === filterType;
+    if (filterType === "capital") {
+      return transaction.type === "capital_increase" || transaction.type === "capital_withdrawal";
+    }
+    if (filterType === "profit_loss") {
+      return transaction.type === "profit_distribution" || transaction.type === "loss_share";
+    }
+    return true;
   });
 
   const totalCapitalIncrease = transactions
     .filter(t => t.type === "capital_increase")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalCapitalDecrease = transactions
-    .filter(t => t.type === "capital_decrease")
+  const totalCapitalWithdrawal = transactions
+    .filter(t => t.type === "capital_withdrawal")
     .reduce((sum, t) => sum + t.amount, 0);
 
   const totalProfitDistribution = transactions
@@ -165,23 +170,27 @@ const PartnerAccountDetail = ({ isCollapsed, setIsCollapsed }: PartnerAccountDet
     .filter(t => t.type === "loss_share")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const netCapitalChange = totalCapitalIncrease - totalCapitalDecrease;
-  const currentCapital = account ? account.initial_capital + netCapitalChange : 0;
+  const netCapitalChange = totalCapitalIncrease - totalCapitalWithdrawal;
+
+  const handleEdit = () => {
+    toast.info("Düzenleme özelliği yakında eklenecek");
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
         <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
         <main className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-64"
+          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
         }`}>
-          <div className="p-6">
-            <div className="animate-pulse space-y-6">
-              <div className="h-8 w-48 bg-gray-200 rounded" />
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-32 bg-gray-200 rounded-lg" />
-                ))}
+          <TopBar />
+          <div className="p-4 sm:p-8">
+            <div className="max-w-[1600px] mx-auto">
+              <div className="flex items-center justify-center h-64">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 border-4 border-t-blue-600 border-blue-200 rounded-full animate-spin"></div>
+                  <span className="text-gray-600">Hesap bilgileri yükleniyor...</span>
+                </div>
               </div>
             </div>
           </div>
@@ -192,15 +201,18 @@ const PartnerAccountDetail = ({ isCollapsed, setIsCollapsed }: PartnerAccountDet
 
   if (!account) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
         <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
         <main className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-64"
+          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
         }`}>
-          <div className="p-6 text-center py-12">
-            <div className="text-6xl mb-4">👥</div>
-            <h2 className="text-xl font-semibold mb-2">Ortak bulunamadı</h2>
-            <p className="text-gray-600 mb-4">Aradığınız şirket ortağı bulunamadı.</p>
+          <TopBar />
+          <div className="p-4 sm:p-8">
+            <div className="max-w-[1600px] mx-auto">
+              <div className="text-center py-8">
+                <p className="text-gray-500">Hesap bilgileri yüklenemedi.</p>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -208,272 +220,239 @@ const PartnerAccountDetail = ({ isCollapsed, setIsCollapsed }: PartnerAccountDet
   }
 
   return (
-    <AccountDetailLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      account={{
-        id: account.id,
-        name: account.partner_name,
-        type: `${getPartnerTypeLabel(account.partner_type)} • %${account.ownership_percentage} hisse`,
-        current_balance: currentCapital,
-        currency: account.currency,
-        is_active: account.is_active,
-        created_at: account.created_at
-      }}
-      showBalances={showBalances}
-      setShowBalances={setShowBalances}
-      onAddTransaction={() => {
-        // TODO: Yeni işlem modal'ını aç
-        toast.success("Yeni işlem özelliği yakında eklenecek");
-      }}
-      accountType="partner"
-    >
-      {/* Partner Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Ortak Adı</span>
-                <span className="text-sm font-semibold">{account.partner_name}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Ortak Türü</span>
-                <Badge variant="outline">{getPartnerTypeLabel(account.partner_type)}</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Hisse Oranı</span>
-                <div className="flex items-center gap-2">
-                  <Percent className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-semibold">%{account.ownership_percentage}</span>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
+      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+      <main className={`flex-1 transition-all duration-300 ${
+        isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
+      }`}>
+        <TopBar />
+        
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+          {/* Sol taraf - Başlık */}
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div className="p-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg text-white shadow-lg">
+              <Users className="h-5 w-5" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Başlangıç Sermayesi</span>
-                <span className="text-sm font-semibold">
-                  {showBalances ? formatCurrency(account.initial_capital, account.currency) : "••••••"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Para Birimi</span>
-                <span className="text-sm font-semibold">{account.currency}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-600">Son Güncelleme</span>
-                <span className="text-sm text-gray-500">
-                  {new Date(account.updated_at).toLocaleDateString('tr-TR')}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Capital Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Güncel Sermaye</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {showBalances ? formatCurrency(currentCapital, account.currency) : "••••••"}
-                </p>
-              </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Sermaye Artışı</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {showBalances ? formatCurrency(totalCapitalIncrease, account.currency) : "••••••"}
-                </p>
-              </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Sermaye Çekimi</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {showBalances ? formatCurrency(totalCapitalDecrease, account.currency) : "••••••"}
-                </p>
-              </div>
-              <div className="p-2 bg-red-100 rounded-lg">
-                <TrendingDown className="h-6 w-6 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Net Değişim</p>
-                <p className={`text-2xl font-bold ${netCapitalChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {showBalances ? formatCurrency(netCapitalChange, account.currency) : "••••••"}
-                </p>
-              </div>
-              <div className={`p-2 rounded-lg ${netCapitalChange >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                {netCapitalChange >= 0 ? (
-                  <TrendingUp className="h-6 w-6 text-green-600" />
-                ) : (
-                  <TrendingDown className="h-6 w-6 text-red-600" />
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Profit/Loss Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Kar Dağıtımı</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {showBalances ? formatCurrency(totalProfitDistribution, account.currency) : "••••••"}
-                </p>
-              </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Plus className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Zarar Payı</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {showBalances ? formatCurrency(totalLossShare, account.currency) : "••••••"}
-                </p>
-              </div>
-              <div className="p-2 bg-red-100 rounded-lg">
-                <Minus className="h-6 w-6 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Transaction History */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>İşlem Geçmişi</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={filterType === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterType("all")}
-              >
-                Tümü
-              </Button>
-              <Button
-                variant={filterType === "capital_increase" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterType("capital_increase")}
-              >
-                Sermaye Artışı
-              </Button>
-              <Button
-                variant={filterType === "capital_decrease" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterType("capital_decrease")}
-              >
-                Sermaye Çekimi
-              </Button>
-              <Button
-                variant={filterType === "profit_distribution" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterType("profit_distribution")}
-              >
-                Kar Dağıtımı
-              </Button>
+            <div className="space-y-0.5">
+              <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                {account.partner_name}
+              </h1>
+              <p className="text-xs text-muted-foreground/70">
+                {account.partner_type} - %{account.ownership_percentage} hisse
+              </p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tarih</TableHead>
-                <TableHead>Açıklama</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead>Referans</TableHead>
-                <TableHead className="text-right">Tutar</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTransactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>
-                    {new Date(transaction.date).toLocaleDateString('tr-TR')}
-                  </TableCell>
-                  <TableCell>{transaction.description}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{transaction.category}</Badge>
-                  </TableCell>
-                  <TableCell className="text-gray-500">
-                    {transaction.reference || "-"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className={`font-semibold ${
-                      transaction.type === "capital_increase" || transaction.type === "profit_distribution" 
-                        ? "text-green-600" 
-                        : "text-red-600"
-                    }`}>
-                      {showBalances ? (
-                        <>
-                          {transaction.type === "capital_increase" || transaction.type === "profit_distribution" ? "+" : "-"}
-                          {formatCurrency(transaction.amount, account.currency)}
-                        </>
-                      ) : (
-                        "••••••"
-                      )}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredTransactions.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    {filterType === "all" ? "Henüz işlem bulunmuyor" : 
-                     "Bu türde işlem bulunmuyor"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </AccountDetailLayout>
+          
+          {/* Orta - İstatistik Kartları */}
+          <div className="flex flex-wrap gap-1.5 justify-center flex-1 items-center">
+            {/* Güncel Sermaye */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-gradient-to-r from-orange-600 to-orange-700 text-white border border-orange-600 shadow-sm">
+              <span className="font-bold">Sermaye</span>
+              <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">
+                {showBalances ? formatCurrency(account.current_capital, account.currency) : "••••••"}
+              </span>
+            </div>
+
+            {/* Durum */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border border-emerald-300">
+              <span className="font-medium">Durum</span>
+              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                {account.is_active ? 'Aktif' : 'Pasif'}
+              </span>
+            </div>
+
+            {/* Sermaye Artışı */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300">
+              <TrendingUp className="h-3 w-3" />
+              <span className="font-medium">Artış</span>
+              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                {showBalances ? formatCurrency(totalCapitalIncrease, account.currency) : "••••••"}
+              </span>
+            </div>
+
+            {/* Kar Dağıtımı */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">
+              <TrendingDown className="h-3 w-3" />
+              <span className="font-medium">Kar</span>
+              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                {showBalances ? formatCurrency(totalProfitDistribution, account.currency) : "••••••"}
+              </span>
+            </div>
+          </div>
+          
+          {/* Sağ taraf - Butonlar */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBalances(!showBalances)}
+              className="flex items-center gap-2"
+            >
+              {showBalances ? 'Bakiyeleri Gizle' : 'Bakiyeleri Göster'}
+            </Button>
+            <Button 
+              className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
+              onClick={handleEdit}
+            >
+              <Pencil className="h-4 w-4" />
+              <span>Düzenle</span>
+            </Button>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-8">
+          <div className="max-w-[1600px] mx-auto space-y-4">
+            {/* Tabs Section */}
+            <CustomTabs defaultValue="transactions" className="space-y-4">
+              <CustomTabsList className="grid grid-cols-4 w-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-1 shadow-sm">
+                <CustomTabsTrigger 
+                  value="transactions" 
+                  className="flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                >
+                  <Activity className="h-4 w-4" />
+                  <span className="hidden md:inline">İşlemler</span>
+                </CustomTabsTrigger>
+                <CustomTabsTrigger 
+                  value="reports" 
+                  className="flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden md:inline">Raporlar</span>
+                </CustomTabsTrigger>
+                <CustomTabsTrigger 
+                  value="statements" 
+                  className="flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                >
+                  <Receipt className="h-4 w-4" />
+                  <span className="hidden md:inline">Ekstreler</span>
+                </CustomTabsTrigger>
+                <CustomTabsTrigger 
+                  value="settings" 
+                  className="flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden md:inline">Ayarlar</span>
+                </CustomTabsTrigger>
+              </CustomTabsList>
+
+              <CustomTabsContent value="transactions">
+                <Card className="p-6">
+                  <div className="space-y-6">
+                    {/* İşlem Geçmişi */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold">İşlem Geçmişi</h3>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value as "all" | "capital" | "profit_loss")}
+                            className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                          >
+                            <option value="all">Tümü</option>
+                            <option value="capital">Sermaye İşlemleri</option>
+                            <option value="profit_loss">Kar/Zarar İşlemleri</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Tarih</TableHead>
+                              <TableHead>Açıklama</TableHead>
+                              <TableHead>Kategori</TableHead>
+                              <TableHead>Referans</TableHead>
+                              <TableHead className="text-right">Tutar</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredTransactions.map((transaction) => (
+                              <TableRow key={transaction.id}>
+                                <TableCell>
+                                  {new Date(transaction.date).toLocaleDateString('tr-TR')}
+                                </TableCell>
+                                <TableCell>{transaction.description}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">{transaction.category}</Badge>
+                                </TableCell>
+                                <TableCell className="text-gray-500">
+                                  {transaction.reference || "-"}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <span className={`font-medium ${
+                                    transaction.type === "capital_increase" || transaction.type === "profit_distribution" 
+                                      ? "text-green-600" 
+                                      : "text-red-600"
+                                  }`}>
+                                    {transaction.type === "capital_increase" || transaction.type === "profit_distribution" ? "+" : "-"}
+                                    {showBalances ? formatCurrency(transaction.amount, account.currency) : "••••••"}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                            {filteredTransactions.length === 0 && (
+                              <TableRow>
+                                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                                  Bu filtreye uygun işlem bulunamadı
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </CustomTabsContent>
+
+              <CustomTabsContent value="reports">
+                <Card className="p-8">
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <FileText className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Raporlar</h3>
+                    <p className="text-gray-600">Ortak raporları yakında eklenecek.</p>
+                  </div>
+                </Card>
+              </CustomTabsContent>
+
+              <CustomTabsContent value="statements">
+                <Card className="p-8">
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Receipt className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Ekstreler</h3>
+                    <p className="text-gray-600">Ortak ekstreleri yakında eklenecek.</p>
+                  </div>
+                </Card>
+              </CustomTabsContent>
+
+              <CustomTabsContent value="settings">
+                <Card className="p-8">
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Settings className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Ayarlar</h3>
+                    <p className="text-gray-600">Ortak ayarları yakında eklenecek.</p>
+                  </div>
+                </Card>
+              </CustomTabsContent>
+            </CustomTabs>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 

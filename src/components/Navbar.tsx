@@ -15,23 +15,31 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const navRef = useRef<HTMLElement>(null);
-  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem("sidebarExpandedMenus");
-      return saved ? new Set<string>(JSON.parse(saved)) : new Set<string>();
-    } catch {
-      return new Set<string>();
-    }
-  });
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set<string>());
 
   useEffect(() => {
+    // Sayfa yüklendiğinde aktif dropdown menüyü aç
     const newExpanded = new Set<string>(expandedMenus);
     let hasChanges = false;
     
     navItems.forEach((item: any) => {
       if (item.hasDropdown && item.items) {
         const isParentActive = location.pathname === item.path;
-        const hasActiveChild = item.items.some((s: any) => location.pathname === s.path);
+        const hasActiveChild = item.items.some((s: any) => {
+          // Exact match
+          if (location.pathname === s.path) return true;
+          // Check if current path starts with sub-item path (for detail pages)
+          // But make sure it's not matching parent paths
+          if (s.path !== '/' && s.path !== item.path && location.pathname.startsWith(s.path + '/')) return true;
+          // Special case: cash-accounts detail pages should also match bank-accounts nav item
+          if (s.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/cash-accounts/')) return true;
+          if (s.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/credit-cards/')) return true;
+          if (s.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/partner-accounts/')) return true;
+          // Special case: proposal pages should match proposals nav item
+          if (s.path === '/proposals' && location.pathname.startsWith('/proposal/')) return true;
+          return false;
+        });
+        
         if ((isParentActive || hasActiveChild) && !newExpanded.has(item.path)) {
           newExpanded.add(item.path);
           hasChanges = true;
@@ -45,14 +53,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
     }
   }, [location.pathname]);
 
-  // Persist expanded menus between page navigations
-  useEffect(() => {
-    try {
-      localStorage.setItem("sidebarExpandedMenus", JSON.stringify(Array.from(expandedMenus)));
-    } catch {
-      // ignore
-    }
-  }, [expandedMenus]);
+  // Dropdown menüler varsayılan olarak kapalı tutulur
 
   // Scroll pozisyonunu koru
   useEffect(() => {
@@ -83,7 +84,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
 
   const handleParentClick = (item: any) => {
     if (item.hasDropdown && item.items) {
-      // Toggle the menu when clicked and navigate to the parent page
+      // Toggle the menu when clicked
       const newExpanded = new Set(expandedMenus);
       if (newExpanded.has(item.path)) {
         newExpanded.delete(item.path);
@@ -91,6 +92,8 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
         newExpanded.add(item.path);
       }
       setExpandedMenus(newExpanded);
+      
+      // Always navigate to parent page
       navigate(item.path);
     } else {
       navigate(item.path);
@@ -101,24 +104,37 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
     if (item.hasDropdown && item.items) {
       const isExpanded = expandedMenus.has(item.path);
       const isActive = location.pathname === item.path;
-      const hasActiveChild = item.items.some((subItem: any) => location.pathname === subItem.path);
+      const hasActiveChild = item.items.some((subItem: any) => {
+        // Exact match
+        if (location.pathname === subItem.path) return true;
+        // Check if current path starts with sub-item path (for detail pages)
+        // But make sure it's not matching parent paths
+        if (subItem.path !== '/' && subItem.path !== item.path && location.pathname.startsWith(subItem.path + '/')) return true;
+        // Special case: cash-accounts detail pages should also match bank-accounts nav item
+        if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/cash-accounts/')) return true;
+        if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/credit-cards/')) return true;
+        if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/partner-accounts/')) return true;
+        // Special case: proposal pages should match proposals nav item
+        if (subItem.path === '/proposals' && location.pathname.startsWith('/proposal/')) return true;
+        return false;
+      });
       
       return (
-        <div key={item.path} className="space-y-1">
+        <div key={item.path} className="space-y-0.5">
           {/* Parent item */}
           <div
             onClick={() => handleParentClick(item)}
             className={cn(
               "flex items-center justify-between transition-all duration-200 rounded-lg group cursor-pointer",
-              isCollapsed ? "justify-center px-3 h-10" : "px-3 h-10",
+              isCollapsed ? "justify-center px-2 h-8" : "px-2 h-8",
               isActive || hasActiveChild
                 ? "bg-primary/15 text-primary font-semibold shadow-sm"
                 : "text-gray-300 hover:bg-gray-800/70 hover:text-white"
             )}
           >
-            <div className="flex items-center space-x-3">
-              <item.icon className="h-4 w-4 flex-shrink-0" />
-              {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+            <div className="flex items-center space-x-2">
+              <item.icon className="h-3.5 w-3.5 flex-shrink-0" />
+              {!isCollapsed && <span className="text-xs font-medium">{item.label}</span>}
             </div>
             {!isCollapsed && (
               <div
@@ -139,14 +155,21 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
           
           {/* Sub-items */}
           {!isCollapsed && isExpanded && (
-            <div className="ml-4 space-y-1 border-l border-gray-700 pl-4">
+            <div className="ml-3 space-y-0.5 border-l border-gray-700 pl-3">
               {item.items.map((subItem: any) => (
                 <NavLink
                   key={subItem.path}
                   to={subItem.path}
                   icon={subItem.icon}
                   label={subItem.label}
-                  isActive={location.pathname === subItem.path}
+                  isActive={
+                    location.pathname === subItem.path || 
+                    (subItem.path !== '/' && subItem.path !== item.path && location.pathname.startsWith(subItem.path + '/')) ||
+                    (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/cash-accounts/')) ||
+                    (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/credit-cards/')) ||
+                    (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/partner-accounts/')) ||
+                    (subItem.path === '/proposals' && location.pathname.startsWith('/proposal/'))
+                  }
                   isCollapsed={false}
                   isSubItem={true}
                 />
@@ -163,7 +186,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
           to={item.path}
           icon={item.icon}
           label={item.label}
-          isActive={location.pathname === item.path}
+          isActive={location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path + '/'))}
           isCollapsed={isCollapsed}
         />
       );
@@ -173,7 +196,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   return (
     <div className={cn(
       "fixed left-0 top-0 z-40 h-screen bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col",
-      isCollapsed ? "w-[60px]" : "w-64"
+      isCollapsed ? "w-[60px]" : "w-56"
     )}>
       <NavHeader isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
       

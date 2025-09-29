@@ -25,7 +25,7 @@ const DefaultLayout = ({
       
       <div 
         className={`flex-1 transition-all duration-300 ease-in-out overflow-auto ${
-          isCollapsed ? "ml-[60px]" : "ml-64"
+          isCollapsed ? "ml-[60px]" : "ml-56"
         }`}
       >
         <TopBar />

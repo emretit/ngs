@@ -10,12 +10,7 @@ import CustomersBulkActions from "@/components/customers/CustomersBulkActions";
 import { Customer } from "@/types/customer";
 import { toast } from "sonner";
 
-interface ContactsProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const Contacts = ({ isCollapsed, setIsCollapsed }: ContactsProps) => {
+const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -58,12 +53,7 @@ const Contacts = ({ isCollapsed, setIsCollapsed }: ContactsProps) => {
   };
 
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="Müşteriler"
-      subtitle="Müşterilerinizi yönetin ve takip edin"
-    >
+    <DefaultLayout>
       <div className="space-y-2">
         {/* Header */}
         <CustomersHeader 

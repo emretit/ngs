@@ -14,12 +14,7 @@ import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 import { Product } from "@/types/product";
 
-interface ProductsProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const Products = ({ isCollapsed, setIsCollapsed }: ProductsProps) => {
+const Products = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<"grid" | "table">("table");
@@ -178,12 +173,7 @@ const Products = ({ isCollapsed, setIsCollapsed }: ProductsProps) => {
   };
 
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="Ürünler"
-      subtitle="Envanter ve ürün katalogunu yönetin"
-    >
+    <DefaultLayout>
       <div className="space-y-2">
         {/* Header */}
         <ProductListHeader

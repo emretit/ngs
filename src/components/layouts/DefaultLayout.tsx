@@ -1,41 +1,25 @@
-
 import React from "react";
-import Navbar from "@/components/Navbar";
-import { Separator } from "@/components/ui/separator";
-import TopBar from "@/components/TopBar";
 
 interface DefaultLayoutProps {
   children: React.ReactNode;
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-  title: string;
+  title?: string;
   subtitle?: string;
+  isCollapsed?: boolean;
+  setIsCollapsed?: (value: boolean) => void;
 }
 
 const DefaultLayout = ({
   children,
-  isCollapsed,
-  setIsCollapsed,
   title,
-  subtitle
+  subtitle,
+  isCollapsed,
+  setIsCollapsed
 }: DefaultLayoutProps) => {
+  // Props are optional for backward compatibility but not used
+  // since ProtectedLayout now handles Navbar and TopBar
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      
-      <div 
-        className={`flex-1 transition-all duration-300 ease-in-out overflow-auto ${
-          isCollapsed ? "ml-[60px]" : "ml-56"
-        }`}
-      >
-        <TopBar />
-        
-        <Separator />
-        
-        <main className="p-6">
-          {children}
-        </main>
-      </div>
+    <div className="w-full">
+      {children}
     </div>
   );
 };

@@ -17,12 +17,7 @@ import ProposalsContent from "@/components/proposals/ProposalsContent";
 import ProposalsBulkActions from "@/components/proposals/ProposalsBulkActions";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
-interface ProposalsPageProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const Proposals = ({ isCollapsed, setIsCollapsed }: ProposalsPageProps) => {
+const Proposals = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
@@ -118,12 +113,7 @@ const Proposals = ({ isCollapsed, setIsCollapsed }: ProposalsPageProps) => {
   };
 
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="Teklifler"
-      subtitle="Müşterilerinize gönderdiğiniz teklifleri yönetin"
-    >
+    <DefaultLayout>
       <div className="space-y-2">
         {/* Header */}
         <ProposalsHeader 

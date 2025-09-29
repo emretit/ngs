@@ -1,8 +1,6 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Navbar from "@/components/Navbar";
-import TopBar from "@/components/TopBar";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import ServicePageHeader from "@/components/service/ServicePageHeader";
 import ServiceStatsCards from "@/components/service/ServiceStatsCards";
@@ -33,12 +31,7 @@ const localizer = momentLocalizer(moment);
 
 // Custom Resource View - React Big Calendar'da resource view için özel view gerekli
 
-interface ServicePageProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
+const ServicePage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
@@ -356,12 +349,8 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-64'}`}>
-        <TopBar />
-        <div className="w-full p-6">
-          <div className="space-y-6">
+    <div className="w-full">
+      <div className="space-y-6">
             <ServicePageHeader 
               activeView={activeView} 
               setActiveView={setActiveView}
@@ -1207,9 +1196,9 @@ const ServicePage = ({ isCollapsed, setIsCollapsed }: ServicePageProps) => {
           </Dialog>
 
         </div>
-      </main>
     </div>
   );
 };
 
 export default ServicePage;
+

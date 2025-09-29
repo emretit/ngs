@@ -9,12 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrderForm from "@/components/orders/OrderForm";
 import InvoiceView from "@/components/orders/InvoiceView";
 
-interface OrdersProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const Orders = ({ isCollapsed, setIsCollapsed }: OrdersProps) => {
+const Orders = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("order");
@@ -37,12 +32,7 @@ const Orders = ({ isCollapsed, setIsCollapsed }: OrdersProps) => {
     : "Satın alma süreçlerini yönetin ve takip edin";
 
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title={pageTitle}
-      subtitle={pageSubtitle}
-    >
+    <DefaultLayout>
       <div className="mb-6">
         <Button variant="outline" size="sm" onClick={handleBack}>
           <ArrowLeft className="h-4 w-4 mr-2" />

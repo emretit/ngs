@@ -15,12 +15,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface OpportunitiesProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
+const Opportunities = () => {
   const { toast } = useToast();
   const [selectedOpportunities, setSelectedOpportunities] = useState<Opportunity[]>([]);
   const [filterKeyword, setFilterKeyword] = useState("");
@@ -151,12 +146,7 @@ const Opportunities = ({ isCollapsed, setIsCollapsed }: OpportunitiesProps) => {
   const allOpportunities = opportunitiesData || [];
 
   return (
-    <DefaultLayout 
-      isCollapsed={isCollapsed} 
-      setIsCollapsed={setIsCollapsed}
-      title="Fırsatlar"
-      subtitle="Tüm satış fırsatlarını yönetin"
-    >
+    <DefaultLayout>
       <div className="space-y-2">
         <OpportunitiesHeader 
           activeView={activeView} 

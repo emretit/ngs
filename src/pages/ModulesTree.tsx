@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -16,6 +16,8 @@ import 'reactflow/dist/style.css';
 import { useNavigate } from 'react-router-dom';
 import { layoutElements } from '@/lib/layout';
 import DefaultLayout from '@/components/layouts/DefaultLayout';
+import { ModuleInfoPanel } from '@/components/modules/ModuleInfoPanel';
+import { ModuleSearch } from '@/components/modules/ModuleSearch';
 
 // Custom node component
 const CustomNode = ({ data, selected }: NodeProps) => {
@@ -75,6 +77,9 @@ interface ModulesTreeProps {
 
 const ModulesTree: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsCollapsed }) => {
   const navigate = useNavigate();
+  const [selectedModule, setSelectedModule] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<string[]>([]);
   
   // Define node-to-route mapping
   const nodeRoutes: Record<string, string> = {
@@ -255,10 +260,67 @@ const ModulesTree: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsCollapsed }
     },
   ];
 
-  // Apply dagre layout
+  // Apply dagre layout with filtering
   const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
-    return layoutElements(initialNodes, initialEdges);
-  }, []);
+    let filteredNodes = initialNodes;
+    let filteredEdges = initialEdges;
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const matchingNodeIds = new Set<string>();
+      
+      filteredNodes = initialNodes.filter(node => {
+        const matches = node.data.label.toLowerCase().includes(searchLower);
+        if (matches) {
+          matchingNodeIds.add(node.id);
+          // Also include parent and children
+          const parentEdge = initialEdges.find(edge => edge.target === node.id);
+          if (parentEdge) matchingNodeIds.add(parentEdge.source);
+          
+          const childEdges = initialEdges.filter(edge => edge.source === node.id);
+          childEdges.forEach(edge => matchingNodeIds.add(edge.target));
+        }
+        return matches;
+      });
+      
+      // Include related nodes
+      filteredNodes = initialNodes.filter(node => matchingNodeIds.has(node.id));
+      filteredEdges = initialEdges.filter(edge => 
+        matchingNodeIds.has(edge.source) && matchingNodeIds.has(edge.target)
+      );
+    }
+
+    // Apply status filters
+    if (filters.length > 0) {
+      filteredNodes = filteredNodes.filter(node => {
+        const nodeStatus = getNodeStatus(node);
+        return filters.some(filter => {
+          switch (filter) {
+            case 'active': return nodeStatus === 'active';
+            case 'development': return nodeStatus === 'development';
+            case 'planned': return nodeStatus === 'planned';
+            case 'hasRoute': return node.data.hasRoute;
+            case 'mainModule': return node.data.isMainModule;
+            default: return true;
+          }
+        });
+      });
+      
+      const nodeIds = new Set(filteredNodes.map(n => n.id));
+      filteredEdges = filteredEdges.filter(edge => 
+        nodeIds.has(edge.source) && nodeIds.has(edge.target)
+      );
+    }
+
+    return layoutElements(filteredNodes, filteredEdges);
+  }, [searchTerm, filters]);
+
+  const getNodeStatus = (node: Node) => {
+    if (node.id === 'root' || node.data.isMainModule) return 'active';
+    if (['erp-inventory', 'hr-leaves', 'hr-payroll'].includes(node.id)) return node.id.startsWith('hr-') ? 'development' : 'planned';
+    return 'active';
+  };
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
@@ -270,12 +332,18 @@ const ModulesTree: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsCollapsed }
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     console.log('Node clicked:', node.id, node.data.label);
-    
-    // Navigate to the corresponding route if it exists
-    if (nodeRoutes[node.id]) {
-      navigate(nodeRoutes[node.id]);
-    }
-  }, [navigate]);
+    setSelectedModule(node);
+  }, []);
+
+  const handleNavigate = (route: string) => {
+    navigate(route);
+    setSelectedModule(null);
+  };
+
+  const handleSearchReset = () => {
+    setSearchTerm('');
+    setFilters([]);
+  };
 
   return (
     <DefaultLayout
@@ -284,11 +352,27 @@ const ModulesTree: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsCollapsed }
       title="Modül Ağacı"
       subtitle="Pafta.app modülleri ve ilişkileri"
     >
-      <div className="w-full bg-gradient-to-br from-background via-background to-muted/20 rounded-lg border border-border overflow-hidden shadow-xl" style={{ height: '75vh' }}>
-        <div className="absolute top-4 left-4 z-10 bg-card/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-lg">
-          <h3 className="text-sm font-semibold text-foreground">Modül Ağacı</h3>
-          <p className="text-xs text-muted-foreground">Tıklanabilir modüller mavi, geliştirilmekte olanlar gri</p>
+      <div className="relative w-full bg-gradient-to-br from-background via-background to-muted/20 rounded-lg border border-border overflow-hidden shadow-xl" style={{ height: '75vh' }}>
+        
+        <ModuleSearch
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filters={filters}
+          onFiltersChange={setFilters}
+          onReset={handleSearchReset}
+        />
+
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-card/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-lg">
+          <h3 className="text-sm font-semibold text-foreground text-center">Pafta.app Modül Ağacı</h3>
+          <p className="text-xs text-muted-foreground text-center">Modüllere tıklayarak detayları görüntüleyin</p>
         </div>
+
+        <ModuleInfoPanel
+          module={selectedModule}
+          onClose={() => setSelectedModule(null)}
+          onNavigate={handleNavigate}
+        />
+        
         <ReactFlow
           nodes={nodes}
           edges={edges}

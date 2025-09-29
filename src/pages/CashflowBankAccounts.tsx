@@ -1,7 +1,10 @@
 import Navbar from "@/components/Navbar";
 import { TopBar } from "@/components/TopBar";
-import BankAccounts from "@/components/cashflow/BankAccounts";
-import { Building, Eye, EyeOff } from "lucide-react";
+import BankAccountsSimple from "@/components/cashflow/BankAccountsSimple";
+import CashAccounts from "@/components/cashflow/CashAccounts";
+import CreditCards from "@/components/cashflow/CreditCards";
+import PartnerAccounts from "@/components/cashflow/PartnerAccounts";
+import { Building, Eye, EyeOff, Wallet, CreditCard, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
@@ -31,7 +34,7 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                     Hesaplar
                   </h1>
                   <p className="text-xs text-muted-foreground/70">
-                    Banka hesaplarınızı yönetin ve takip edin.
+                    Tüm hesaplarınızı tek yerden yönetin ve takip edin.
                   </p>
                 </div>
               </div>
@@ -46,11 +49,81 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
               </Button>
             </div>
 
-            {/* Content Section */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
-              <div className="p-6">
-                <div className="space-y-6">
-                  <BankAccounts showBalances={showBalances} />
+            {/* Content Section - Compact Grid Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {/* Nakit Kasa Hesapları */}
+              <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-green-200">
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                        <Wallet className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-bold text-gray-900">Nakit Kasa</h2>
+                        <p className="text-xs text-gray-500">Kasa işlemleri</p>
+                      </div>
+                    </div>
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  </div>
+                  <CashAccounts showBalances={showBalances} />
+                </div>
+              </div>
+
+              {/* Banka Hesapları */}
+              <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-blue-200">
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                        <Building className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-bold text-gray-900">Banka Hesapları</h2>
+                        <p className="text-xs text-gray-500">Banka işlemleri</p>
+                      </div>
+                    </div>
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  </div>
+                  <BankAccountsSimple showBalances={showBalances} />
+                </div>
+              </div>
+
+              {/* Kredi Kartları */}
+              <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200">
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                        <CreditCard className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-bold text-gray-900">Kredi Kartları</h2>
+                        <p className="text-xs text-gray-500">Kart limitleri</p>
+                      </div>
+                    </div>
+                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                  </div>
+                  <CreditCards showBalances={showBalances} />
+                </div>
+              </div>
+
+              {/* Şirket Ortakları Hesabı */}
+              <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-orange-200">
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                        <Users className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-bold text-gray-900">Şirket Ortakları</h2>
+                        <p className="text-xs text-gray-500">Ortak hesapları</p>
+                      </div>
+                    </div>
+                    <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                  </div>
+                  <PartnerAccounts showBalances={showBalances} />
                 </div>
               </div>
             </div>

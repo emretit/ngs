@@ -12,6 +12,10 @@ import SalesInvoices from "@/pages/SalesInvoices";
 import CreateSalesInvoice from "@/pages/CreateSalesInvoice";
 import SalesInvoiceDetail from "@/pages/SalesInvoiceDetail";
 import FinancialOverview from "@/pages/FinancialOverview";
+import CashAccountDetail from "@/pages/CashAccountDetail";
+import CreditCardDetail from "@/pages/CreditCardDetail";
+import BankAccountDetail from "@/pages/BankAccountDetail";
+import PartnerAccountDetail from "@/pages/PartnerAccountDetail";
 import { RouteConfig } from "./types";
 
 // Define cashflow routes
@@ -24,6 +28,11 @@ export const cashflowRoutes: RouteConfig[] = [
   { path: "/cashflow/invoices", component: CashflowInvoices, protected: true },
   { path: "/cashflow/bank-accounts", component: CashflowBankAccounts, protected: true },
   { path: "/cashflow/categories", component: CashflowCategoriesWrapper, protected: true },
+  // Account detail routes
+  { path: "/cashflow/cash-accounts/:id", component: CashAccountDetail, protected: true },
+  { path: "/cashflow/credit-cards/:id", component: CreditCardDetail, protected: true },
+  { path: "/cashflow/bank-accounts/:id", component: BankAccountDetail, protected: true },
+  { path: "/cashflow/partner-accounts/:id", component: PartnerAccountDetail, protected: true },
 ];
 
 // Define finance routes (keeping existing purchase/sales invoice routes)

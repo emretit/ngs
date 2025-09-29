@@ -1,9 +1,11 @@
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import CashflowOverview from "@/components/cashflow/CashflowOverview";
 import { DollarSign } from "lucide-react";
 
 const Cashflow = () => {
   return (
-    <div className="w-full">
+    <DefaultLayout>
+      <div className="w-full">
             {/* Header - Fırsatlar gibi */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
               {/* Sol taraf - Başlık */}
@@ -36,6 +38,7 @@ const Cashflow = () => {
               </div>
             </div>
           </div>
+    </DefaultLayout>
   );
 };
 

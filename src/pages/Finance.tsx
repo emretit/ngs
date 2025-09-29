@@ -1,4 +1,5 @@
 
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import FinanceHeader from "@/components/finance/FinanceHeader";
 import AccountSummary from "@/components/finance/bank-accounts/AccountSummary";
 import GeneralLedger from "@/components/finance/GeneralLedger";
@@ -15,7 +16,8 @@ import {
 
 const Finance = () => {
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 animate-fade-in">
+    <DefaultLayout>
+      <div className="max-w-[1600px] mx-auto space-y-6 animate-fade-in">
           <FinanceHeader />
 
           {/* Ana İçerik Sekmeleri */}
@@ -64,6 +66,7 @@ const Finance = () => {
             </CustomTabsContent>
           </CustomTabs>
         </div>
+    </DefaultLayout>
   );
 };
 

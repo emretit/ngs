@@ -1,9 +1,11 @@
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import ExpensesManager from "@/components/cashflow/ExpensesManager";
 import { Receipt } from "lucide-react";
 
 const CashflowExpenses = () => {
   return (
-    <div className="w-full">
+    <DefaultLayout>
+      <div className="w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
         <div className="flex items-center gap-3">
@@ -28,8 +30,9 @@ const CashflowExpenses = () => {
             <ExpensesManager />
           </div>
         </div>
-      </div>
-    </div>
+          </div>
+        </div>
+    </DefaultLayout>
   );
 };
 

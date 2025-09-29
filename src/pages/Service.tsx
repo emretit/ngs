@@ -1,6 +1,6 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import ServicePageHeader from "@/components/service/ServicePageHeader";
 import ServiceStatsCards from "@/components/service/ServiceStatsCards";
@@ -349,18 +349,18 @@ const ServicePage = () => {
   };
 
   return (
-    <div className="w-full">
+    <DefaultLayout>
       <div className="space-y-6">
-            <ServicePageHeader 
-              activeView={activeView} 
-              setActiveView={setActiveView}
-              onCreateRequest={() => navigate("/service/new")}
-            />
+        <ServicePageHeader 
+          activeView={activeView} 
+          setActiveView={setActiveView}
+          onCreateRequest={() => navigate("/service/new")}
+        />
 
-            <ServiceStatsCards 
-              stats={stats} 
-              viewType={activeView} 
-            />
+        <ServiceStatsCards 
+          stats={stats} 
+          viewType={activeView} 
+        />
 
             {/* Content based on view */}
             {activeView === "calendar" ? (
@@ -1147,14 +1147,12 @@ const ServicePage = () => {
                 </div>
               </>
             )}
-          </div>
+        </div>
 
-
-
-          {/* Silme Onay Dialog'u */}
-          <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
+        {/* Silme Onay Dialog'u */}
+        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-red-600">
                   <Trash2 className="h-5 w-5" />
                   Servis Talebini Sil
@@ -1194,9 +1192,8 @@ const ServicePage = () => {
               </div>
             </DialogContent>
           </Dialog>
-
-        </div>
-    </div>
+      </div>
+    </DefaultLayout>
   );
 };
 

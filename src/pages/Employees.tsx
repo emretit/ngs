@@ -1,4 +1,5 @@
 
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { EmployeeList } from "@/components/employees/EmployeeList";
 import { EmployeeSummaryStats } from "@/components/employees/stats/EmployeeSummaryStats";
 import { SalaryOverviewCards } from "@/components/employees/SalaryOverviewCards";
@@ -10,7 +11,8 @@ const Employees = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="w-full">
+    <DefaultLayout>
+      <div className="w-full">
             {/* Header Section */}
             <div className="mb-8">
               <div className="flex items-start justify-between">
@@ -54,6 +56,7 @@ const Employees = () => {
               </div>
             </div>
           </div>
+    </DefaultLayout>
   );
 };
 

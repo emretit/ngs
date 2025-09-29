@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,9 +59,10 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="max-w-[1800px] mx-auto space-y-8 animate-fade-in">
-      {/* Header with Quick Stats */}
-      <div className="space-y-6">
+    <DefaultLayout>
+      <div className="max-w-[1800px] mx-auto space-y-8 animate-fade-in">
+        {/* Header with Quick Stats */}
+        <div className="space-y-6">
         <div className="flex items-center justify-between p-6 bg-gradient-to-r from-primary/5 via-primary/10 to-accent/5 rounded-2xl border border-primary/10 backdrop-blur-sm shadow-lg">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
@@ -324,7 +326,8 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </DefaultLayout>
   );
 };
 

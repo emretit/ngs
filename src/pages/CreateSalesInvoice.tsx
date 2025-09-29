@@ -11,7 +11,6 @@ import { ArrowLeft, Plus, Trash2, Save, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useEInvoice } from "@/hooks/useEInvoice";
-import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
@@ -132,8 +131,6 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
       setLoading(false);
     }
   };
-
-
 
   const calculateItemTotals = (item: InvoiceItem) => {
     const subtotal = item.miktar * item.birim_fiyat;
@@ -396,13 +393,8 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     }, 3000); // 3 saniye bekle
   };
 
-
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 transition-all duration-300 ${isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"}`}>
-        <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
+    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
           <div className="flex items-center gap-4 mb-8">
             <Button variant="outline" size="sm" onClick={() => navigate("/sales-invoices")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -735,8 +727,6 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
             )}
           </form>
         </div>
-      </main>
-    </div>
   );
 };
 

@@ -6,7 +6,6 @@ import { DollarSign, Fuel, Wrench, FileText, TrendingUp, Calendar } from "lucide
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
 // Schema mapping: Using cashflow_transactions for all vehicle costs
 // - category_id: fuel, maintenance, insurance, etc.
 // - amount: cost amount
@@ -14,7 +13,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 // - description: cost details, vehicle info
 // - type: expense
 // - company_id: company filter
-
 interface CostEntry {
   id: string;
   amount: number;
@@ -23,24 +21,20 @@ interface CostEntry {
   category: string;
   company_id: string;
 }
-
 interface Vehicle {
   id: string;
   name: string;
   model: string;
   manufacturer: string;
 }
-
 interface CostCategory {
   id: string;
   name: string;
   type: string;
 }
-
 export default function VehicleCosts() {
   const [selectedPeriod, setSelectedPeriod] = useState("6");
   const [selectedVehicle, setSelectedVehicle] = useState<string>("all");
-
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles-for-costs'],
     queryFn: async () => {
@@ -49,12 +43,10 @@ export default function VehicleCosts() {
         .select('id, name, model, manufacturer')
         .eq('category', 'vehicle')
         .order('name');
-
       if (error) throw error;
       return data as Vehicle[];
     },
   });
-
   const { data: categories } = useQuery({
     queryKey: ['cost-categories'],
     queryFn: async () => {
@@ -64,20 +56,16 @@ export default function VehicleCosts() {
         .eq('type', 'expense')
         .in('name', ['Yakıt', 'Bakım', 'Sigorta', 'Lastik', 'Ceza'])
         .order('name');
-
       if (error) throw error;
       return data as CostCategory[];
     },
   });
-
   const { data: costs, isLoading } = useQuery({
     queryKey: ['vehicle-costs', selectedPeriod],
     queryFn: async () => {
       if (!categories?.length) return [];
-
       const monthsAgo = new Date();
       monthsAgo.setMonth(monthsAgo.getMonth() - parseInt(selectedPeriod));
-
       const { data, error } = await supabase
         .from('cashflow_transactions')
         .select(`
@@ -87,28 +75,22 @@ export default function VehicleCosts() {
         .in('category_id', categories.map(c => c.id))
         .gte('date', monthsAgo.toISOString().split('T')[0])
         .order('date', { ascending: false });
-
       if (error) throw error;
-
       return data.map(item => ({
         ...item,
         category: item.category?.name || 'Diğer'
       })) as CostEntry[];
     },
   });
-
   const monthlyData = costs?.reduce((acc, cost) => {
     const month = new Date(cost.date).toLocaleDateString('tr-TR', { 
       year: 'numeric', 
       month: 'short' 
     });
-    
     if (!acc[month]) {
       acc[month] = { month, total: 0, fuel: 0, maintenance: 0, insurance: 0, other: 0 };
     }
-    
     acc[month].total += cost.amount;
-    
     switch (cost.category.toLowerCase()) {
       case 'yakıt':
         acc[month].fuel += cost.amount;
@@ -122,17 +104,13 @@ export default function VehicleCosts() {
       default:
         acc[month].other += cost.amount;
     }
-    
     return acc;
   }, {} as Record<string, any>) || {};
-
   const chartData = Object.values(monthlyData);
-
   const categoryData = categories?.map(category => {
     const categoryTotal = costs
       ?.filter(cost => cost.category === category.name)
       .reduce((sum, cost) => sum + cost.amount, 0) || 0;
-    
     return {
       name: category.name,
       value: categoryTotal,
@@ -145,20 +123,16 @@ export default function VehicleCosts() {
       }[category.name] || '#6b7280'
     };
   }).filter(item => item.value > 0) || [];
-
   const totalCosts = costs?.reduce((sum, cost) => sum + cost.amount, 0) || 0;
   const avgMonthlyCost = totalCosts / parseInt(selectedPeriod);
-
   const getVehicleFromDescription = (description: string) => {
     // Try to extract vehicle plate from description
     const vehicle = vehicles?.find(v => description.includes(v.name));
     return vehicle?.name || 'Genel';
   };
-
   if (isLoading) {
     return <div className="flex justify-center p-8">Yükleniyor...</div>;
   }
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -179,7 +153,6 @@ export default function VehicleCosts() {
           </Select>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-3">
@@ -194,7 +167,6 @@ export default function VehicleCosts() {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -208,7 +180,6 @@ export default function VehicleCosts() {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -225,7 +196,6 @@ export default function VehicleCosts() {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -243,7 +213,6 @@ export default function VehicleCosts() {
           </CardContent>
         </Card>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -264,7 +233,6 @@ export default function VehicleCosts() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Kategori Dağılımı</CardTitle>
@@ -291,7 +259,6 @@ export default function VehicleCosts() {
           </CardContent>
         </Card>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -337,7 +304,6 @@ export default function VehicleCosts() {
               ))}
             </TableBody>
           </Table>
-
           {costs?.length === 0 && (
             <div className="text-center py-8">
               <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

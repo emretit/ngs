@@ -1,16 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import CategoryManagement from "@/components/cashflow/CategoryManagement";
 import { ArrowLeft, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 const CashflowCategories = () => {
   const navigate = useNavigate();
-
   return (
-    <DefaultLayout>
-      <div className="w-full">
+    <div className="w-full">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
@@ -32,14 +28,11 @@ const CashflowCategories = () => {
             </div>
           </div>
         </div>
-
         {/* Kategori Yönetimi */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
           <CategoryManagement />
         </div>
       </div>
-    </DefaultLayout>
   );
 };
-
 export default CashflowCategories;

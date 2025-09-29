@@ -1,5 +1,3 @@
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { Plus, TrendingUp, DollarSign } from "lucide-react";
 
-interface IncomeManagementProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-const IncomeManagement = ({ isCollapsed, setIsCollapsed }: IncomeManagementProps) => {
+const IncomeManagement = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<string>("2024");
   const [amount, setAmount] = useState<string>("");
@@ -43,15 +36,7 @@ const IncomeManagement = ({ isCollapsed, setIsCollapsed }: IncomeManagementProps
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}
-      >
-        <TopBar />
-        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6 animate-fade-in">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6 animate-fade-in">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">Operasyonel Gelir Yönetimi</h1>
@@ -229,8 +214,6 @@ const IncomeManagement = ({ isCollapsed, setIsCollapsed }: IncomeManagementProps
             </CardContent>
           </Card>
         </div>
-      </main>
-    </div>
   );
 };
 

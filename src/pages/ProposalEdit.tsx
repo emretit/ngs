@@ -16,7 +16,6 @@ import { useProposalEdit } from "@/hooks/useProposalEdit";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { ProposalItem } from "@/types/proposal";
 
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -54,7 +53,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   // Global discount state
   const [globalDiscountType, setGlobalDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [globalDiscountValue, setGlobalDiscountValue] = useState<number>(0);
-
 
   // Form state matching the proposal edit format
   const [formData, setFormData] = useState({
@@ -430,41 +428,25 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
 
   if (loading) {
     return (
-      <DefaultLayout
-        isCollapsed={isCollapsed}
-        setIsCollapsed={setIsCollapsed}
-        title="Teklif Yükleniyor"
-        subtitle="Lütfen bekleyin..."
-      >
-        <div className="flex items-center justify-center h-[600px]">
+    <div className="flex items-center justify-center h-[600px]">
           <div className="w-8 h-8 border-4 border-t-blue-600 border-b-blue-600 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
         </div>
-      </DefaultLayout>
-    );
+  );
   }
 
   if (!proposal) {
     return (
-      <DefaultLayout
-        isCollapsed={isCollapsed}
-        setIsCollapsed={setIsCollapsed}
-        title="Teklif Bulunamadı"
-        subtitle="İstediğiniz teklif mevcut değil"
-      >
-        <div className="flex flex-col items-center justify-center h-[600px]">
+    <div className="flex flex-col items-center justify-center h-[600px]">
           <h2 className="text-xl font-semibold mb-2">Teklif Bulunamadı</h2>
           <p className="text-muted-foreground mb-6">İstediğiniz teklif mevcut değil veya erişim izniniz yok.</p>
           <Button onClick={handleBack}>Teklifler Sayfasına Dön</Button>
         </div>
-      </DefaultLayout>
-    );
+  );
   }
 
   const handlePreview = () => {
     toast.info("Önizleme özelliği yakında eklenecek");
   };
-
-
 
   const handleStatusChange = async (newStatus: ProposalStatus) => {
     if (!proposal) return;
@@ -506,11 +488,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
     }
   };
-
-
-
-
-
 
   const handleSendEmail = () => {
     toast.success("E-posta gönderme penceresi açıldı");
@@ -586,14 +563,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     ) : null;
   };
 
-
   return (
-    <DefaultLayout 
-      isCollapsed={isCollapsed} 
-      setIsCollapsed={setIsCollapsed}
-      title="Teklif Düzenle"
-      subtitle="Hızlı ve kolay teklif düzenleme"
-    >
+    <div>
       {/* Header Actions */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -1103,7 +1074,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           existingData={editingItemData}
         />
       </div>
-    </DefaultLayout>
+    </div>
   );
 };
 

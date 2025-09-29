@@ -5,24 +5,14 @@ import PartnerAccounts from "@/components/cashflow/PartnerAccounts";
 import { Building, Eye, EyeOff, Wallet, CreditCard, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
-
 interface CashflowBankAccountsProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccountsProps) => {
   const [showBalances, setShowBalances] = useState(false);
-
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="Hesaplar"
-      subtitle="Tüm hesaplarınızı tek yerden yönetin ve takip edin"
-    >
-      <div className="space-y-2">
+    <div className="space-y-2">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
           {/* Sol taraf - Başlık */}
@@ -39,7 +29,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
               </p>
             </div>
           </div>
-          
           {/* Orta - Hesap Türü Kartları */}
           <div className="flex flex-wrap gap-1.5 justify-center flex-1 items-center">
             {/* Toplam hesap sayısı */}
@@ -49,7 +38,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                 4
               </span>
             </div>
-            
             {/* Hesap türü kartları */}
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-green-100 text-green-800 border-gray-200">
               <Wallet className="h-3 w-3" />
@@ -58,7 +46,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                 2
               </span>
             </div>
-            
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-blue-100 text-blue-800 border-gray-200">
               <Building className="h-3 w-3" />
               <span className="font-medium">Banka</span>
@@ -66,7 +53,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                 1
               </span>
             </div>
-            
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-purple-100 text-purple-800 border-gray-200">
               <CreditCard className="h-3 w-3" />
               <span className="font-medium">Kredi Kartı</span>
@@ -74,7 +60,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                 2
               </span>
             </div>
-            
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-orange-100 text-orange-800 border-gray-200">
               <Users className="h-3 w-3" />
               <span className="font-medium">Ortaklar</span>
@@ -83,7 +68,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
               </span>
             </div>
           </div>
-          
           {/* Sağ taraf - Butonlar */}
           <div className="flex items-center gap-2">
             <Button
@@ -97,7 +81,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
             </Button>
           </div>
         </div>
-
         {/* Content Section - Responsive Grid Layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Nakit Kasa Hesapları */}
@@ -118,7 +101,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
               <CashAccounts showBalances={showBalances} />
             </div>
           </div>
-
           {/* Banka Hesapları */}
           <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-blue-200">
             <div className="p-5">
@@ -137,7 +119,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
               <BankAccountsSimple showBalances={showBalances} />
             </div>
           </div>
-
           {/* Kredi Kartları */}
           <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200">
             <div className="p-5">
@@ -156,7 +137,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
               <CreditCards showBalances={showBalances} />
             </div>
           </div>
-
           {/* Şirket Ortakları Hesabı */}
           <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-orange-200">
             <div className="p-5">
@@ -177,8 +157,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
           </div>
         </div>
       </div>
-    </DefaultLayout>
   );
 };
-
 export default CashflowBankAccounts;

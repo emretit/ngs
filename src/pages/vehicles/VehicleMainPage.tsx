@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Car, Settings, FileText, BarChart3 } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import TopBar from "@/components/TopBar";
 
 // Import individual tab components
 import VehicleListTab from "@/components/vehicles/VehicleListTab";
@@ -10,22 +8,11 @@ import VehicleOperationsTab from "@/components/vehicles/VehicleOperationsTab";
 import VehicleDocumentsContractsTab from "@/components/vehicles/VehicleDocumentsContractsTab";
 import VehicleAnalyticsTab from "@/components/vehicles/VehicleAnalyticsTab";
 
-interface VehicleMainPageProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
-}
-
-export default function VehicleMainPage({ isCollapsed, setIsCollapsed }: VehicleMainPageProps) {
+export default function VehicleMainPage() {
   const [activeTab, setActiveTab] = useState("vehicles");
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 transition-all duration-300 ${
-        isCollapsed ? "ml-[60px]" : "ml-64"
-      }`}>
-        <TopBar />
-        <div className="p-6">
+    <div className="space-y-6">
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <div>
@@ -71,8 +58,6 @@ export default function VehicleMainPage({ isCollapsed, setIsCollapsed }: Vehicle
               </TabsContent>
             </Tabs>
           </div>
-        </div>
-      </main>
     </div>
   );
 }

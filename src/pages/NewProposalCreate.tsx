@@ -16,7 +16,6 @@ import { proposalStatusLabels, proposalStatusColors, ProposalStatus } from "@/ty
 import { Badge } from "@/components/ui/badge";
 import { useProposalCreation } from "@/hooks/proposals/useProposalCreation";
 import { ProposalItem } from "@/types/proposal";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 // import { PdfDownloadDropdown } from "@/components/proposals/PdfDownloadDropdown";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,7 +47,6 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
   // Global discount state
   const [globalDiscountType, setGlobalDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [globalDiscountValue, setGlobalDiscountValue] = useState<number>(0);
-
 
   // Form state matching the sample format
   const [formData, setFormData] = useState({
@@ -335,8 +333,6 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         grand: 0
       };
 
-
-
       // Prepare data for backend
       const proposalData = {
         title: `${formData.customer_company} - Teklif`,
@@ -375,15 +371,8 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
     }
   };
 
-
-
   return (
-    <DefaultLayout 
-      isCollapsed={isCollapsed} 
-      setIsCollapsed={setIsCollapsed}
-      title="World-Class Teklif Oluşturma"
-      subtitle="Enterprise-grade B2B teklif sistemi"
-    >
+    <div>
       {/* Enhanced Sticky Header with Progress */}
       <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
         <div className="flex items-center justify-between p-3 pl-12">
@@ -847,7 +836,7 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
           existingData={editingItemData}
         />
       </div>
-    </DefaultLayout>
+    </div>
   );
 };
 

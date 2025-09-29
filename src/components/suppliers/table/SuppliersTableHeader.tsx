@@ -31,7 +31,7 @@ const SuppliersTableHeader = ({ columns, sortField, sortDirection, onSort, hasSe
   };
 
   return (
-    <TableRow className="bg-gray-50 border-b">
+    <>
       {hasSelection && (
         <TableHead className="w-[40px] py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
           <Checkbox
@@ -64,7 +64,7 @@ const SuppliersTableHeader = ({ columns, sortField, sortDirection, onSort, hasSe
           </div>
         </TableHead>
       ))}
-    </TableRow>
+    </>
   );
 };
 

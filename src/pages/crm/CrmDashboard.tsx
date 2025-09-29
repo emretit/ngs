@@ -1,7 +1,5 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ActivitiesSummary from "@/components/crm/ActivitiesSummary";
 import ProposalsSummary from "@/components/crm/ProposalsSummary";
@@ -12,24 +10,16 @@ import { ChevronRight, Calendar, FileText, BarChart3, ShoppingCart, Plus } from 
 import { useState } from "react";
 import NewActivityDialog from "@/components/activities/NewActivityDialog";
 import OpportunityForm from "@/components/opportunities/OpportunityForm";
-
 interface CrmDashboardProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed }) => {
   const navigate = useNavigate();
   const [isNewActivityDialogOpen, setIsNewActivityDialogOpen] = useState(false);
   const [isNewOpportunityDialogOpen, setIsNewOpportunityDialogOpen] = useState(false);
-
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="CRM Özeti"
-      subtitle="Aktiviteler, fırsatlar, teklifler ve siparişlerin genel durumu"
-    >
+    <>
       {/* Clean Header Section */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -47,7 +37,6 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
           </div>
         </div>
       </div>
-
       <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {/* Activities Card */}
@@ -79,7 +68,6 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
               <ActivitiesSummary />
             </CardContent>
           </Card>
-
           {/* Opportunities Card */}
           <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
             <CardHeader className="pb-4">
@@ -109,7 +97,6 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
               <OpportunitiesSummary />
             </CardContent>
           </Card>
-
           {/* Proposals Card */}
           <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
             <CardHeader className="pb-4">
@@ -139,7 +126,6 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
               <ProposalsSummary />
             </CardContent>
           </Card>
-
           {/* Orders Card */}
           <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
             <CardHeader className="pb-4">
@@ -170,7 +156,6 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
             </CardContent>
           </Card>
         </div>
-
         <NewActivityDialog
           isOpen={isNewActivityDialogOpen}
           onClose={() => setIsNewActivityDialogOpen(false)}
@@ -179,14 +164,12 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
             setIsNewActivityDialogOpen(false);
           }}
         />
-        
         <OpportunityForm
           isOpen={isNewOpportunityDialogOpen}
           onClose={() => setIsNewOpportunityDialogOpen(false)}
         />
       </div>
-    </DefaultLayout>
+    </>
   );
 };
-
 export default CrmDashboard;

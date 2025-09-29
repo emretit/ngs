@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,29 +8,24 @@ import FaqSection from "@/components/landing/FaqSection";
 import FooterSection from "@/components/landing/FooterSection";
 import LoginButton from "@/components/navbar/LoginButton";
 import MobileMenu from "@/components/landing/MobileMenu";
-
 const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   // Kullanıcı giriş durumunu kontrol et
   useEffect(() => {
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
         // Eğer invite-setup sayfasına yönlendirme varsa (URL'de access_token), bekle
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const hasInviteToken = hashParams.get("access_token") && hashParams.get("type");
         const isInviteSetupPath = window.location.pathname === '/invite-setup';
-        
         if (hasInviteToken || isInviteSetupPath) {
           console.log('Invite token detected or on invite-setup page, not redirecting to dashboard');
           setLoading(false);
           return;
         }
-        
         if (session) {
           // Kullanıcı giriş yapmışsa dashboard'a yönlendir
           navigate("/dashboard");
@@ -43,9 +37,7 @@ const Index = () => {
         setLoading(false);
       }
     };
-
     checkSession();
-
     // Auth state değişikliklerini dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -53,7 +45,6 @@ const Index = () => {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const hasInviteToken = hashParams.get("access_token");
         const isInviteSetupPath = window.location.pathname === '/invite-setup';
-        
         if (event === 'SIGNED_IN' && session && !hasInviteToken && !isInviteSetupPath) {
           // Giriş yapıldığında dashboard'a yönlendir (invite setup değilse)
           navigate("/dashboard");
@@ -63,10 +54,8 @@ const Index = () => {
         }
       }
     );
-
     return () => subscription.unsubscribe();
   }, [navigate]);
-
   // Loading sırasında boş sayfa göster
   if (loading) {
     return (
@@ -78,28 +67,23 @@ const Index = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-gray-900 to-red-900/40">
       {/* Dynamic dark background elements */}
       <div className="fixed inset-0 pointer-events-none">
         {/* Animated grid pattern */}
         <div className="absolute top-0 left-0 w-full h-full bg-grid-pattern opacity-[0.05]"></div>
-        
         {/* Large dynamic gradient orbs */}
         <div className="absolute top-1/4 -left-1/3 w-[800px] h-[800px] bg-gradient-to-br from-red-500/30 to-rose-600/20 rounded-full blur-3xl animate-pulse opacity-70"></div>
         <div className="absolute top-3/4 -right-1/3 w-[700px] h-[700px] bg-gradient-to-bl from-red-400/25 to-gray-600/20 rounded-full blur-3xl animate-pulse delay-1000 opacity-70"></div>
-        
         {/* Center dynamic accent */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <div className="w-[500px] h-[500px] bg-gradient-to-r from-red-400/20 to-gray-500/15 rounded-full blur-2xl animate-pulse delay-2000"></div>
         </div>
-        
         {/* Dynamic lines */}
         <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent"></div>
         <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-400/20 to-transparent"></div>
         <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-400/25 to-transparent"></div>
-        
         {/* Floating dynamic particles */}
         <div className="absolute top-20 left-20 w-4 h-4 bg-red-500/30 rounded-full animate-pulse delay-500"></div>
         <div className="absolute top-40 right-32 w-3 h-3 bg-red-400/35 rounded-full animate-pulse delay-1000"></div>
@@ -109,13 +93,11 @@ const Index = () => {
         <div className="absolute bottom-60 right-1/3 w-3 h-3 bg-gray-400/20 rounded-full animate-pulse delay-4000"></div>
         <div className="absolute top-80 left-1/4 w-2 h-2 bg-red-500/20 rounded-full animate-pulse delay-5000"></div>
         <div className="absolute bottom-80 right-1/4 w-2 h-2 bg-gray-500/15 rounded-full animate-pulse delay-6000"></div>
-        
         {/* Animated geometric shapes */}
         <div className="absolute top-1/3 right-1/4 w-16 h-16 border border-red-500/20 rotate-45 animate-spin delay-7000"></div>
         <div className="absolute bottom-1/3 left-1/4 w-12 h-12 border border-gray-400/20 rotate-12 animate-pulse delay-8000"></div>
         <div className="absolute top-2/3 left-1/3 w-8 h-8 bg-red-500/10 rounded-full animate-bounce delay-9000"></div>
       </div>
-
       <header className="fixed top-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl shadow-2xl z-50 border-b border-red-500/20">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -130,7 +112,6 @@ const Index = () => {
                 <div className="absolute -inset-1 bg-red-100/50 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
             </div>
-
             {/* Navigation */}
             <nav className="hidden lg:flex items-center space-x-1">
               <a href="#modules" className="relative px-4 py-2.5 text-gray-300 hover:text-red-400 transition-all duration-200 font-medium rounded-lg hover:bg-red-500/10 group">
@@ -150,7 +131,6 @@ const Index = () => {
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </a>
             </nav>
-
             {/* CTA Section */}
             <div className="flex items-center space-x-4">
               {/* Desktop CTA */}
@@ -163,7 +143,6 @@ const Index = () => {
                 </a>
                 <LoginButton />
               </div>
-
               {/* Mobile Menu Button */}
               <button 
                 onClick={() => setMobileMenuOpen(true)}
@@ -177,7 +156,6 @@ const Index = () => {
           </div>
         </div>
       </header>
-      
       <main className="relative z-10 pt-20">
         <HeroSection />
         <ModuleShowcaseSection />
@@ -185,7 +163,6 @@ const Index = () => {
         <FaqSection />
         <FooterSection />
       </main>
-
       {/* Mobile Menu */}
       <MobileMenu 
         isOpen={mobileMenuOpen} 
@@ -194,5 +171,4 @@ const Index = () => {
     </div>
   );
 };
-
 export default Index;

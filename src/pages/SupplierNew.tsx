@@ -4,16 +4,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SupplierFormData } from "@/types/supplier";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import SupplierFormHeader from "@/components/suppliers/SupplierFormHeader";
 import SupplierFormContent from "@/components/suppliers/SupplierFormContent";
-
 const SupplierNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  
   const [formData, setFormData] = useState<SupplierFormData>({
     name: "",
     email: "",
@@ -40,14 +37,12 @@ const SupplierNew = () => {
     aliases: [],
     einvoice_alias_name: "",
   });
-
   // URL parametrelerinden form verilerini doldur
   useEffect(() => {
     const name = searchParams.get('name');
     const tax_number = searchParams.get('tax_number');
     const type = searchParams.get('type') as 'bireysel' | 'kurumsal' | null;
     const status = searchParams.get('status') as 'aktif' | 'pasif' | 'potansiyel' | null;
-
     if (name || tax_number || type || status) {
       setFormData(prev => ({
         ...prev,
@@ -59,7 +54,6 @@ const SupplierNew = () => {
       }));
     }
   }, [searchParams]);
-
   const mutation = useMutation({
     mutationFn: async (data: SupplierFormData) => {
       const sanitizedData = {
@@ -88,18 +82,15 @@ const SupplierNew = () => {
         aliases: data.aliases.length > 0 ? data.aliases : null,
         einvoice_alias_name: data.einvoice_alias_name || null,
       };
-
       const { data: newSupplier, error } = await supabase
         .from('suppliers')
         .insert([sanitizedData])
         .select()
         .single();
-
       if (error) {
         console.error('Supplier add error:', error);
         throw error;
       }
-
       return newSupplier;
     },
     onSuccess: () => {
@@ -119,7 +110,6 @@ const SupplierNew = () => {
       });
     },
   });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -128,12 +118,10 @@ const SupplierNew = () => {
       console.error('Form submission error:', error);
     }
   };
-
   return (
-    <DefaultLayout>
+    <>
       <SupplierFormHeader />
-
-      <SupplierFormContent 
+      <SupplierFormContent
         formData={formData}
         setFormData={setFormData}
         handleSubmit={handleSubmit}
@@ -141,8 +129,7 @@ const SupplierNew = () => {
         isEdit={false}
         onCancel={() => navigate('/suppliers')}
       />
-    </DefaultLayout>
+    </>
   );
 };
-
 export default SupplierNew;

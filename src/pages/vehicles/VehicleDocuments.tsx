@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Plus, FileText, Calendar, AlertTriangle, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
 // Schema mapping: Using employee_documents table for vehicle documents
 // - employee_id: maps to vehicle_id (equipment.id)
 // - document_type: registration, insurance, inspection, emission, etc.
@@ -15,7 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 // - file_url: document URL in storage
 // - upload_date: document date
 // - company_id: company filter
-
 interface VehicleDocument {
   id: string;
   employee_id: string; // vehicle_id in context
@@ -25,19 +23,16 @@ interface VehicleDocument {
   upload_date: string;
   company_id: string;
 }
-
 interface Vehicle {
   id: string;
   name: string; // plate
   model: string;
   manufacturer: string;
 }
-
 export default function VehicleDocuments() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [selectedVehicle, setSelectedVehicle] = useState<string>("all");
-
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles-for-docs'],
     queryFn: async () => {
@@ -46,12 +41,10 @@ export default function VehicleDocuments() {
         .select('id, name, model, manufacturer')
         .eq('category', 'vehicle')
         .order('name');
-
       if (error) throw error;
       return data as Vehicle[];
     },
   });
-
   const { data: documents, isLoading } = useQuery({
     queryKey: ['vehicle-documents', selectedVehicle],
     queryFn: async () => {
@@ -59,22 +52,18 @@ export default function VehicleDocuments() {
         .from('employee_documents')
         .select('*')
         .order('upload_date', { ascending: false });
-
       if (selectedVehicle !== 'all') {
         query = query.eq('employee_id', selectedVehicle);
       }
-
       const { data, error } = await query;
       if (error) throw error;
       return data as VehicleDocument[];
     },
   });
-
   const documentTypes = [
     'registration', 'insurance', 'inspection', 'emission', 
     'license', 'hgs', 'ogs', 'warranty', 'lease_contract'
   ];
-
   const getDocumentTypeLabel = (type: string) => {
     const labels = {
       'registration': 'Ruhsat',
@@ -89,10 +78,8 @@ export default function VehicleDocuments() {
     };
     return labels[type] || type;
   };
-
   const isDocumentExpiring = (uploadDate: string, type: string) => {
     if (!uploadDate) return false;
-    
     // Estimate expiry based on document type
     const expiryMonths = {
       'registration': 12,
@@ -102,34 +89,27 @@ export default function VehicleDocuments() {
       'license': 60,
       'warranty': 36
     };
-    
     const months = expiryMonths[type] || 12;
     const expiryDate = new Date(uploadDate);
     expiryDate.setMonth(expiryDate.getMonth() + months);
-    
     const today = new Date();
     const diffTime = expiryDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
     return diffDays <= 30 && diffDays > 0;
   };
-
   const filteredDocuments = documents?.filter(doc => {
     const matchesSearch = doc.file_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.document_type?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || doc.document_type === filterType;
     return matchesSearch && matchesType;
   });
-
   const getVehicleName = (vehicleId: string) => {
     const vehicle = vehicles?.find(v => v.id === vehicleId);
     return vehicle ? `${vehicle.name} - ${vehicle.manufacturer} ${vehicle.model}` : 'Bilinmeyen Araç';
   };
-
   if (isLoading) {
     return <div className="flex justify-center p-8">Yükleniyor...</div>;
   }
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -142,7 +122,6 @@ export default function VehicleDocuments() {
           Belge Ekle
         </Button>
       </div>
-
       <div className="flex gap-4 items-center flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -153,7 +132,6 @@ export default function VehicleDocuments() {
             className="pl-8"
           />
         </div>
-        
         <select
           value={selectedVehicle}
           onChange={(e) => setSelectedVehicle(e.target.value)}
@@ -166,7 +144,6 @@ export default function VehicleDocuments() {
             </option>
           ))}
         </select>
-
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
@@ -180,7 +157,6 @@ export default function VehicleDocuments() {
           ))}
         </select>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -238,7 +214,6 @@ export default function VehicleDocuments() {
               ))}
             </TableBody>
           </Table>
-
           {filteredDocuments?.length === 0 && (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

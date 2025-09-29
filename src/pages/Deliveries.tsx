@@ -1,21 +1,12 @@
 import { useState } from "react";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { Package, Calendar, MapPin, CheckCircle } from "lucide-react";
-
 interface DeliveriesProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
   return (
-    <DefaultLayout
-      title="Teslimatlar"
-      subtitle="Sipariş teslimatlarını takip edin ve yönetin"
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-card rounded-lg p-6 border">
             <div className="flex items-center justify-between">
@@ -26,7 +17,6 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
               <Package className="h-8 w-8 text-orange-500" />
             </div>
           </div>
-          
           <div className="bg-card rounded-lg p-6 border">
             <div className="flex items-center justify-between">
               <div>
@@ -36,7 +26,6 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
               <Calendar className="h-8 w-8 text-blue-500" />
             </div>
           </div>
-          
           <div className="bg-card rounded-lg p-6 border">
             <div className="flex items-center justify-between">
               <div>
@@ -47,7 +36,6 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
             </div>
           </div>
         </div>
-
         <div className="bg-card rounded-lg border">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Son Teslimatlar</h3>
@@ -74,8 +62,6 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
           </div>
         </div>
       </div>
-    </DefaultLayout>
   );
 };
-
 export default Deliveries;

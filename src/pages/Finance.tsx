@@ -1,5 +1,3 @@
-
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import FinanceHeader from "@/components/finance/FinanceHeader";
 import AccountSummary from "@/components/finance/bank-accounts/AccountSummary";
 import GeneralLedger from "@/components/finance/GeneralLedger";
@@ -13,13 +11,10 @@ import {
   CustomTabsList, 
   CustomTabsTrigger 
 } from "@/components/ui/custom-tabs";
-
 const Finance = () => {
   return (
-    <DefaultLayout>
-      <div className="max-w-[1600px] mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-[1600px] mx-auto space-y-6 animate-fade-in">
           <FinanceHeader />
-
           {/* Ana İçerik Sekmeleri */}
           <CustomTabs defaultValue="bank-accounts" className="space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2">
@@ -41,33 +36,26 @@ const Finance = () => {
                 </CustomTabsTrigger>
               </CustomTabsList>
             </div>
-
             <CustomTabsContent value="bank-accounts" className="mt-6 animate-fade-in">
               <AccountSummary />
               <div className="mt-6">
                 <BankAccounts />
               </div>
             </CustomTabsContent>
-
             <CustomTabsContent value="cash-flow" className="mt-6 animate-fade-in">
               <CashFlow />
             </CustomTabsContent>
-
             <CustomTabsContent value="financial-instruments" className="mt-6 animate-fade-in">
               <FinancialInstruments />
             </CustomTabsContent>
-
             <CustomTabsContent value="general-ledger" className="mt-6 animate-fade-in">
               <GeneralLedger />
             </CustomTabsContent>
-
             <CustomTabsContent value="reports" className="mt-6 animate-fade-in">
               <Reports />
             </CustomTabsContent>
           </CustomTabs>
         </div>
-    </DefaultLayout>
   );
 };
-
 export default Finance;

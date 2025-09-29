@@ -4,17 +4,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomerFormData } from "@/types/customer";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import CustomerFormHeader from "@/components/customers/CustomerFormHeader";
 import CustomerFormContent from "@/components/customers/CustomerFormContent";
 import { useEinvoiceMukellefCheck } from "@/hooks/useEinvoiceMukellefCheck";
-
 const CustomerNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { result: einvoiceResult } = useEinvoiceMukellefCheck();
-  
   const [formData, setFormData] = useState<CustomerFormData>({
     name: "",
     email: "",
@@ -32,7 +29,6 @@ const CustomerNew = () => {
     district: "",
     einvoice_alias_name: "",
   });
-
   const mutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {
       const sanitizedData = {
@@ -59,18 +55,15 @@ const CustomerNew = () => {
         einvoice_sicil_no: einvoiceResult?.data?.sicilNo || null,
         einvoice_checked_at: einvoiceResult?.isEinvoiceMukellef ? new Date().toISOString() : null,
       };
-
       const { data: newCustomer, error } = await supabase
         .from('customers')
         .insert([sanitizedData])
         .select()
         .single();
-
       if (error) {
         console.error('Customer add error:', error);
         throw error;
       }
-
       return newCustomer;
     },
     onSuccess: () => {
@@ -90,7 +83,6 @@ const CustomerNew = () => {
       });
     },
   });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -99,11 +91,8 @@ const CustomerNew = () => {
       console.error('Form submission error:', error);
     }
   };
-
   return (
-    <DefaultLayout>
-      <CustomerFormHeader />
-
+    <CustomerFormHeader />
       <CustomerFormContent 
         formData={formData}
         setFormData={setFormData}
@@ -112,8 +101,6 @@ const CustomerNew = () => {
         isEdit={false}
         onCancel={() => navigate('/contacts')}
       />
-    </DefaultLayout>
   );
 };
-
 export default CustomerNew;

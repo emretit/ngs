@@ -1,6 +1,4 @@
 
-import Navbar from "@/components/Navbar";
-import TopBar from "@/components/TopBar";
 import CustomerFormHeader from "@/components/customers/CustomerFormHeader";
 import CustomerFormContent from "@/components/customers/CustomerFormContent";
 import { useCustomerForm } from "@/hooks/useCustomerForm";
@@ -27,33 +25,23 @@ const CustomerForm = ({ isCollapsed, setIsCollapsed }: CustomerFormProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}
-      >
-        <TopBar />
-        <div className="p-4 sm:p-6 lg:p-8">
-          <div className="w-full">
-            <CustomerFormHeader id={id} />
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="w-full">
+        <CustomerFormHeader id={id} />
 
-            {isLoadingCustomer && id ? (
-              <div className="text-center py-8">Yükleniyor...</div>
-            ) : (
-              <CustomerFormContent 
-                formData={formData}
-                setFormData={setFormData}
-                handleSubmit={handleSubmit}
-                isPending={mutation.isPending}
-                isEdit={!!id}
-                onCancel={() => navigate('/contacts')}
-              />
-            )}
-          </div>
-        </div>
-      </main>
+        {isLoadingCustomer && id ? (
+          <div className="text-center py-8">Yükleniyor...</div>
+        ) : (
+          <CustomerFormContent 
+            formData={formData}
+            setFormData={setFormData}
+            handleSubmit={handleSubmit}
+            isPending={mutation.isPending}
+            isEdit={!!id}
+            onCancel={() => navigate('/contacts')}
+          />
+        )}
+      </div>
     </div>
   );
 };

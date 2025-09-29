@@ -22,8 +22,6 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
 import { 
   CustomTabs, 
   CustomTabsContent, 
@@ -172,54 +170,33 @@ const BankAccountDetail = ({ isCollapsed, setIsCollapsed }: BankAccountDetailPro
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}>
-          <TopBar />
-          <div className="p-4 sm:p-8">
-            <div className="max-w-[1600px] mx-auto">
-              <div className="flex items-center justify-center h-64">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 border-4 border-t-blue-600 border-blue-200 rounded-full animate-spin"></div>
-                  <span className="text-gray-600">Hesap bilgileri yükleniyor...</span>
-                </div>
-              </div>
+      <div className="p-4 sm:p-8">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 border-4 border-t-blue-600 border-blue-200 rounded-full animate-spin"></div>
+              <span className="text-gray-600">Hesap bilgileri yükleniyor...</span>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
   if (!account) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}>
-          <TopBar />
-          <div className="p-4 sm:p-8">
-            <div className="max-w-[1600px] mx-auto">
-              <div className="text-center py-8">
-                <p className="text-gray-500">Hesap bilgileri yüklenemedi.</p>
-              </div>
-            </div>
+      <div className="p-4 sm:p-8">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="text-center py-8">
+            <p className="text-gray-500">Hesap bilgileri yüklenemedi.</p>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 transition-all duration-300 ${
-        isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-      }`}>
-        <TopBar />
+    <div className="p-6">
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
@@ -450,8 +427,7 @@ const BankAccountDetail = ({ isCollapsed, setIsCollapsed }: BankAccountDetailPro
             </CustomTabs>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
   );
 };
 

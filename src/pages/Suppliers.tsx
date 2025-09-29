@@ -1,49 +1,39 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import SuppliersHeader from "@/components/suppliers/SuppliersHeader";
 import SuppliersFilterBar from "@/components/suppliers/SuppliersFilterBar";
 import SuppliersContent from "@/components/suppliers/SuppliersContent";
 import SuppliersBulkActions from "@/components/suppliers/SuppliersBulkActions";
 import { Supplier } from "@/types/supplier";
 import { toast } from "sonner";
-
 interface SuppliersProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSuppliers, setSelectedSuppliers] = useState<Supplier[]>([]);
   const pageSize = 20;
-
   const { data: suppliers, isLoading, error } = useQuery({
     queryKey: ['suppliers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*');
-      
       if (error) {
         console.error('Error fetching suppliers:', error);
         throw error;
       }
-      
       return data as Supplier[];
     }
   });
-
   if (error) {
     toast.error("Tedarikçiler yüklenirken bir hata oluştu");
     console.error("Error loading suppliers:", error);
   }
-
-
   const handleSupplierSelect = (supplier: Supplier) => {
     setSelectedSuppliers(prev => {
       const isSelected = prev.some(s => s.id === supplier.id);
@@ -52,24 +42,15 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         : [...prev, supplier];
     });
   };
-  
   const handleClearSelection = () => {
     setSelectedSuppliers([]);
   };
-
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="Tedarikçiler"
-      subtitle="Tedarikçilerinizi yönetin ve takip edin"
-    >
-      <div className="space-y-2">
+    <div className="space-y-2">
         {/* Header */}
         <SuppliersHeader 
           suppliers={suppliers || []}
         />
-
         {/* Filters */}
         <SuppliersFilterBar
           searchQuery={searchQuery}
@@ -79,14 +60,12 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
           selectedType={selectedType}
           setSelectedType={setSelectedType}
         />
-        
         {selectedSuppliers.length > 0 && (
           <SuppliersBulkActions 
             selectedSuppliers={selectedSuppliers}
             onClearSelection={handleClearSelection}
           />
         )}
-
         {isLoading ? (
           <div className="flex items-center justify-center h-[400px]">
             <div className="text-center space-y-4">
@@ -114,8 +93,6 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
           />
         )}
       </div>
-    </DefaultLayout>
   );
 };
-
 export default Suppliers;

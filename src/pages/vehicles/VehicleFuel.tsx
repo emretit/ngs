@@ -6,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Plus, Fuel, Gauge, TrendingUp, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
 // Schema mapping: Using cashflow_transactions for fuel entries
 // - category_id: fuel category
 // - amount: fuel cost
@@ -14,13 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 // - description: station, liters, odometer reading
 // - attachment_url: receipt
 // - company_id: company filter
-
 // Using service_activities for odometer entries
 // - title: "Odometer Reading"
 // - description: current km
 // - related_item_id: vehicle_id (equipment.id)
 // - related_item_type: "vehicle"
-
 interface FuelEntry {
   id: string;
   amount: number;
@@ -29,7 +26,6 @@ interface FuelEntry {
   attachment_url?: string;
   company_id: string;
 }
-
 interface OdometerEntry {
   id: string;
   title: string;
@@ -37,23 +33,19 @@ interface OdometerEntry {
   related_item_id: string;
   created_at: string;
 }
-
 interface Vehicle {
   id: string;
   name: string;
   model: string;
   manufacturer: string;
 }
-
 interface VehicleFuelProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState<string>("all");
-
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles-for-fuel'],
     queryFn: async () => {
@@ -62,12 +54,10 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
         .select('id, name, model, manufacturer')
         .eq('category', 'vehicle')
         .order('name');
-
       if (error) throw error;
       return data as Vehicle[];
     },
   });
-
   const { data: fuelEntries, isLoading: loadingFuel } = useQuery({
     queryKey: ['fuel-entries'],
     queryFn: async () => {
@@ -78,20 +68,16 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
         .eq('name', 'Yakıt')
         .eq('type', 'expense')
         .single();
-
       if (!fuelCategory) return [];
-
       const { data, error } = await supabase
         .from('cashflow_transactions')
         .select('*')
         .eq('category_id', fuelCategory.id)
         .order('date', { ascending: false });
-
       if (error) throw error;
       return data as FuelEntry[];
     },
   });
-
   const { data: odometerEntries, isLoading: loadingOdometer } = useQuery({
     queryKey: ['odometer-entries', selectedVehicle],
     queryFn: async () => {
@@ -101,17 +87,14 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
         .eq('title', 'Odometer Reading')
         .eq('related_item_type', 'vehicle')
         .order('created_at', { ascending: false });
-
       if (selectedVehicle !== 'all') {
         query = query.eq('related_item_id', selectedVehicle);
       }
-
       const { data, error } = await query;
       if (error) throw error;
       return data as OdometerEntry[];
     },
   });
-
   const parseFuelData = (description: string) => {
     // Parse description like "Shell - 45.5L - 152,340 km"
     const match = description.match(/(.+?)\s*-\s*([\d,\.]+)L\s*-\s*([\d,\.]+)\s*km/);
@@ -124,15 +107,12 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
     }
     return { station: description, liters: 0, odometer: 0 };
   };
-
   const getVehicleName = (vehicleId: string) => {
     const vehicle = vehicles?.find(v => v.id === vehicleId);
     return vehicle ? `${vehicle.name}` : 'Bilinmeyen Araç';
   };
-
   const calculateFuelEfficiency = (entries: FuelEntry[]) => {
     if (entries.length < 2) return 0;
-    
     const sortedEntries = entries
       .map(entry => ({
         ...entry,
@@ -140,27 +120,20 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
       }))
       .filter(entry => entry.parsed.liters > 0 && entry.parsed.odometer > 0)
       .sort((a, b) => a.parsed.odometer - b.parsed.odometer);
-
     if (sortedEntries.length < 2) return 0;
-
     const totalDistance = sortedEntries[sortedEntries.length - 1].parsed.odometer - sortedEntries[0].parsed.odometer;
     const totalFuel = sortedEntries.reduce((sum, entry) => sum + entry.parsed.liters, 0);
-
     return totalDistance / totalFuel; // km/L
   };
-
   const filteredFuelEntries = fuelEntries?.filter(entry => {
     const parsed = parseFuelData(entry.description);
     return entry.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
            parsed.station?.toLowerCase().includes(searchTerm.toLowerCase());
   });
-
   const efficiency = fuelEntries ? calculateFuelEfficiency(fuelEntries) : 0;
-
   if (loadingFuel || loadingOdometer) {
     return <div className="flex justify-center p-8">Yükleniyor...</div>;
   }
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -179,7 +152,6 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
           </Button>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-3">
@@ -194,7 +166,6 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -216,7 +187,6 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -231,7 +201,6 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
           </CardContent>
         </Card>
       </div>
-
       <div className="flex gap-4 items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -242,7 +211,6 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
             className="pl-8"
           />
         </div>
-        
         <select
           value={selectedVehicle}
           onChange={(e) => setSelectedVehicle(e.target.value)}
@@ -256,7 +224,6 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
           ))}
         </select>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -296,7 +263,6 @@ export default function VehicleFuel({ isCollapsed, setIsCollapsed }: VehicleFuel
             </Table>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

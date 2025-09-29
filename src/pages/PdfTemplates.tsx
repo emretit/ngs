@@ -26,16 +26,13 @@ import { PdfTemplate } from '@/types/pdf-template';
 import { PdfExportService } from '@/services/pdf/pdfExportService';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
-
 const PdfTemplates: React.FC = () => {
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-
   useEffect(() => {
     loadTemplates();
   }, []);
-
   const loadTemplates = async () => {
     setIsLoading(true);
     try {
@@ -48,15 +45,12 @@ const PdfTemplates: React.FC = () => {
       setIsLoading(false);
     }
   };
-
   const handleCreateTemplate = () => {
     navigate('/pdf-templates/new');
   };
-
   const handleEditTemplate = (templateId: string) => {
     navigate(`/pdf-templates/edit/${templateId}`);
   };
-
   const handleDuplicateTemplate = async (template: PdfTemplate) => {
     try {
       const newTemplate = {
@@ -68,7 +62,6 @@ const PdfTemplates: React.FC = () => {
       delete (newTemplate as any).id;
       delete (newTemplate as any).created_at;
       delete (newTemplate as any).updated_at;
-
       await PdfExportService.saveTemplate(newTemplate);
       toast.success('Şablon başarıyla kopyalandı');
       loadTemplates();
@@ -77,7 +70,6 @@ const PdfTemplates: React.FC = () => {
       toast.error('Şablon kopyalanırken hata oluştu');
     }
   };
-
   const handleSetAsDefault = async (templateId: string) => {
     try {
       await PdfExportService.setAsDefault(templateId, 'quote');
@@ -88,12 +80,10 @@ const PdfTemplates: React.FC = () => {
       toast.error('Varsayılan şablon ayarlanırken hata oluştu');
     }
   };
-
   const handleDeleteTemplate = async (templateId: string) => {
     if (!confirm('Bu şablonu silmek istediğinizden emin misiniz?')) {
       return;
     }
-
     try {
       await PdfExportService.deleteTemplate(templateId);
       toast.success('Şablon başarıyla silindi');
@@ -103,7 +93,6 @@ const PdfTemplates: React.FC = () => {
       toast.error('Şablon silinirken hata oluştu');
     }
   };
-
   if (isLoading) {
     return (
       <div className="bg-background">
@@ -118,7 +107,6 @@ const PdfTemplates: React.FC = () => {
       </div>
     );
   }
-
   return (
     <div className="bg-background">
       <div className="max-w-7xl mx-auto">
@@ -130,15 +118,11 @@ const PdfTemplates: React.FC = () => {
               Teklif, fatura ve diğer belgeler için PDF şablonlarını yönetin
             </p>
           </div>
-          
           <Button onClick={handleCreateTemplate} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Yeni Şablon
           </Button>
         </div>
-
-
-
         {/* Templates List */}
         {templates.length === 0 ? (
           <Card>
@@ -201,7 +185,6 @@ const PdfTemplates: React.FC = () => {
                         </div>
                       </div>
                     </div>
-
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
@@ -211,7 +194,6 @@ const PdfTemplates: React.FC = () => {
                         <Edit className="h-4 w-4 mr-2" />
                         Düzenle
                       </Button>
-                      
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">
@@ -256,5 +238,4 @@ const PdfTemplates: React.FC = () => {
     </div>
   );
 };
-
 export default PdfTemplates;

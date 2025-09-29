@@ -1,18 +1,13 @@
-
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { EmployeeList } from "@/components/employees/EmployeeList";
 import { EmployeeSummaryStats } from "@/components/employees/stats/EmployeeSummaryStats";
 import { SalaryOverviewCards } from "@/components/employees/SalaryOverviewCards";
 import { Button } from "@/components/ui/button";
 import { Plus, Users, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
 const Employees = () => {
   const navigate = useNavigate();
-  
   return (
-    <DefaultLayout>
-      <div className="w-full">
+    <div className="w-full">
             {/* Header Section */}
             <div className="mb-8">
               <div className="flex items-start justify-between">
@@ -36,13 +31,10 @@ const Employees = () => {
                 </div>
               </div>
             </div>
-
             {/* Content Section */}
             <div className="space-y-8">
               <EmployeeSummaryStats />
-
               <SalaryOverviewCards />
-
               <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
                 <div className="border-b border-gray-200/80 bg-gray-50/50 px-6 py-4">
                   <div className="flex items-center gap-2">
@@ -56,8 +48,6 @@ const Employees = () => {
               </div>
             </div>
           </div>
-    </DefaultLayout>
   );
 };
-
 export default Employees;

@@ -5,38 +5,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Edit, Download, FileText, Calendar, User, Building2 } from "lucide-react";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { useSalesInvoices } from "@/hooks/useSalesInvoices";
 import { useInvoiceTags } from "@/hooks/useInvoiceTags";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, Tag } from "lucide-react";
-
 interface SalesInvoiceDetailProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { fetchInvoiceById } = useSalesInvoices();
   const [invoice, setInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
   // Sadece Nilvera'ya gönderilmiş faturalar için etiketleri yükle
   const { tags, isLoading: tagsLoading, refreshTags, isRefreshing } = useInvoiceTags(
     id, 
     invoice?.nilvera_invoice_id && invoice?.einvoice_status && invoice?.einvoice_status !== 'draft'
   );
-
   useEffect(() => {
     if (id) {
       loadInvoice();
     }
   }, [id]);
-
   const loadInvoice = async () => {
     try {
       setLoading(true);
@@ -48,7 +42,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
       setLoading(false);
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -56,7 +49,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
       minimumFractionDigits: 2
     }).format(amount);
   };
-
   const getDocumentTypeBadge = (type: any) => {
     switch (type) {
       case 'e_fatura':
@@ -75,32 +67,17 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
         return <Badge variant="outline">{type}</Badge>;
     }
   };
-
   if (loading) {
     return (
-      <DefaultLayout 
-        isCollapsed={isCollapsed} 
-        setIsCollapsed={setIsCollapsed}
-        title="Fatura Detayı"
-        subtitle="Fatura bilgileri yükleniyor..."
-      >
-        <div className="space-y-6">
+    <div className="space-y-6">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-64 w-full" />
         </div>
-      </DefaultLayout>
-    );
+  );
   }
-
   if (!invoice) {
     return (
-      <DefaultLayout 
-        isCollapsed={isCollapsed} 
-        setIsCollapsed={setIsCollapsed}
-        title="Fatura Bulunamadı"
-        subtitle="Aradığınız fatura bulunamadı"
-      >
-        <div className="text-center py-8">
+    <div className="text-center py-8">
           <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
           <p className="text-gray-500">Fatura bulunamadı</p>
           <Button 
@@ -112,18 +89,10 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
             Faturalara Dön
           </Button>
         </div>
-      </DefaultLayout>
-    );
+  );
   }
-
   return (
-    <DefaultLayout 
-      isCollapsed={isCollapsed} 
-      setIsCollapsed={setIsCollapsed}
-      title="Fatura Detayı"
-      subtitle={`Fatura No: ${invoice.fatura_no || 'Henüz atanmadı'}`}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header Actions */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <Button
@@ -133,7 +102,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
             <ArrowLeft className="h-4 w-4 mr-2" />
             Geri
           </Button>
-
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
@@ -159,7 +127,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
             </Button>
           </div>
         </div>
-
         {/* Invoice Info Card */}
         <Card>
           <CardHeader>
@@ -188,7 +155,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                     {invoice.fatura_no || 'Henüz atanmadı'}
                   </p>
                 </div>
-                
                 <div>
                   <label className="text-sm font-medium text-gray-500">Fatura Tarihi</label>
                   <p className="flex items-center gap-2">
@@ -196,7 +162,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                     {format(new Date(invoice.fatura_tarihi), "dd MMMM yyyy", { locale: tr })}
                   </p>
                 </div>
-
                 {invoice.vade_tarihi && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Vade Tarihi</label>
@@ -206,13 +171,11 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                     </p>
                   </div>
                 )}
-
                 <div>
                   <label className="text-sm font-medium text-gray-500">Para Birimi</label>
                   <p>{invoice.para_birimi}</p>
                 </div>
               </div>
-
               {/* Sağ Kolon - Müşteri Bilgileri */}
               <div className="space-y-4">
                 <div>
@@ -230,14 +193,12 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                     </div>
                   </div>
                 </div>
-
                 {invoice.customer?.tax_number && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Vergi No</label>
                     <p>{invoice.customer.tax_number}</p>
                   </div>
                 )}
-
                 {invoice.aciklama && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Açıklama</label>
@@ -246,9 +207,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                 )}
               </div>
             </div>
-
             <Separator />
-
             {/* Tutar Bilgileri */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -274,7 +233,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                 </div>
               </div>
             </div>
-
             {invoice.notlar && (
               <>
                 <Separator />
@@ -286,7 +244,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
             )}
           </CardContent>
         </Card>
-
         {/* Fatura Kalemleri */}
         <Card>
           <CardHeader>
@@ -303,7 +260,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
             </div>
           </CardContent>
         </Card>
-
         {/* E-Fatura Bilgileri */}
         {(invoice.einvoice_status || invoice.nilvera_invoice_id) && (
           <Card>
@@ -338,7 +294,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
             </CardContent>
           </Card>
         )}
-
         {/* Fatura Etiketleri - Sadece Nilvera'ya gönderilmiş faturalar için */}
         {invoice.nilvera_invoice_id && invoice.einvoice_status && invoice.einvoice_status !== 'draft' && (
           <Card>
@@ -399,7 +354,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
             </CardContent>
           </Card>
         )}
-
         {/* Fatura henüz Nilvera'ya gönderilmemişse bilgilendirme */}
         {(!invoice.nilvera_invoice_id || invoice.einvoice_status === 'draft') && (
           <Card>
@@ -426,8 +380,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
           </Card>
         )}
       </div>
-    </DefaultLayout>
   );
 };
-
 export default SalesInvoiceDetail;

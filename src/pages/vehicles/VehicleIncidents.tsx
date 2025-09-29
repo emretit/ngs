@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Plus, AlertTriangle, Calendar, DollarSign, FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
 // Schema mapping: Using activities table for incidents and fines
 // - title: incident type (accident, fine, damage)
 // - description: incident details
@@ -17,7 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 // - status: pending, resolved, paid
 // - priority: low, medium, high
 // - due_date: payment due date for fines
-
 interface Incident {
   id: string;
   title: string;
@@ -31,20 +29,17 @@ interface Incident {
   type: string;
   company_id: string;
 }
-
 interface Vehicle {
   id: string;
   name: string;
   model: string;
   manufacturer: string;
 }
-
 export default function VehicleIncidents() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [selectedVehicle, setSelectedVehicle] = useState<string>("all");
-
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles-for-incidents'],
     queryFn: async () => {
@@ -53,12 +48,10 @@ export default function VehicleIncidents() {
         .select('id, name, model, manufacturer')
         .eq('category', 'vehicle')
         .order('name');
-
       if (error) throw error;
       return data as Vehicle[];
     },
   });
-
   const { data: incidents, isLoading } = useQuery({
     queryKey: ['vehicle-incidents', selectedVehicle],
     queryFn: async () => {
@@ -68,22 +61,18 @@ export default function VehicleIncidents() {
         .eq('type', 'incident')
         .eq('related_item_type', 'vehicle')
         .order('created_at', { ascending: false });
-
       if (selectedVehicle !== 'all') {
         query = query.eq('related_item_id', selectedVehicle);
       }
-
       const { data, error } = await query;
       if (error) throw error;
       return data as Incident[];
     },
   });
-
   const incidentTypes = [
     'accident', 'traffic_fine', 'parking_fine', 'damage', 
     'theft', 'breakdown', 'inspection_failure'
   ];
-
   const getIncidentTypeLabel = (type: string) => {
     const labels = {
       'accident': 'Kaza',
@@ -96,7 +85,6 @@ export default function VehicleIncidents() {
     };
     return labels[type] || type;
   };
-
   const getStatusBadge = (status: string) => {
     const statusColors = {
       'pending': 'bg-yellow-100 text-yellow-800',
@@ -106,7 +94,6 @@ export default function VehicleIncidents() {
     };
     return statusColors[status] || 'bg-gray-100 text-gray-800';
   };
-
   const getPriorityBadge = (priority: string) => {
     const priorityColors = {
       'high': 'bg-red-100 text-red-800',
@@ -115,18 +102,15 @@ export default function VehicleIncidents() {
     };
     return priorityColors[priority] || 'bg-gray-100 text-gray-800';
   };
-
   const extractAmount = (description: string) => {
     // Extract amount from description like "Traffic fine - 234 TL"
     const match = description.match(/(\d+(?:[\.,]\d+)?)\s*(?:TL|₺|lira)/i);
     return match ? parseFloat(match[1].replace(',', '.')) : 0;
   };
-
   const getVehicleName = (vehicleId: string) => {
     const vehicle = vehicles?.find(v => v.id === vehicleId);
     return vehicle ? `${vehicle.name}` : 'Bilinmeyen Araç';
   };
-
   const filteredIncidents = incidents?.filter(incident => {
     const matchesSearch = incident.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          incident.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -134,11 +118,9 @@ export default function VehicleIncidents() {
     const matchesType = filterType === 'all' || incident.title.toLowerCase().includes(filterType);
     return matchesSearch && matchesStatus && matchesType;
   });
-
   const totalPendingAmount = incidents
     ?.filter(inc => inc.status === 'pending')
     .reduce((sum, inc) => sum + extractAmount(inc.description), 0) || 0;
-
   const thisMonthIncidents = incidents
     ?.filter(inc => {
       const incDate = new Date(inc.created_at);
@@ -146,11 +128,9 @@ export default function VehicleIncidents() {
       return incDate.getMonth() === now.getMonth() && 
              incDate.getFullYear() === now.getFullYear();
     }).length || 0;
-
   if (isLoading) {
     return <div className="flex justify-center p-8">Yükleniyor...</div>;
   }
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -163,7 +143,6 @@ export default function VehicleIncidents() {
           Olay Ekle
         </Button>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="pb-3">
@@ -178,7 +157,6 @@ export default function VehicleIncidents() {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -192,7 +170,6 @@ export default function VehicleIncidents() {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -207,7 +184,6 @@ export default function VehicleIncidents() {
           </CardContent>
         </Card>
       </div>
-
       <div className="flex gap-4 items-center flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -218,7 +194,6 @@ export default function VehicleIncidents() {
             className="pl-8"
           />
         </div>
-        
         <select
           value={selectedVehicle}
           onChange={(e) => setSelectedVehicle(e.target.value)}
@@ -231,7 +206,6 @@ export default function VehicleIncidents() {
             </option>
           ))}
         </select>
-
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
@@ -244,7 +218,6 @@ export default function VehicleIncidents() {
             </option>
           ))}
         </select>
-
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
@@ -257,7 +230,6 @@ export default function VehicleIncidents() {
           <option value="investigating">İnceleme</option>
         </select>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -331,7 +303,6 @@ export default function VehicleIncidents() {
               })}
             </TableBody>
           </Table>
-
           {filteredIncidents?.length === 0 && (
             <div className="text-center py-8">
               <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

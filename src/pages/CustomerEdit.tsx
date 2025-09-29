@@ -4,16 +4,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomerFormData } from "@/types/customer";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import CustomerFormHeader from "@/components/customers/CustomerFormHeader";
 import CustomerFormContent from "@/components/customers/CustomerFormContent";
-
 const CustomerEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
   const [formData, setFormData] = useState<CustomerFormData>({
     name: "",
     email: "",
@@ -31,27 +28,22 @@ const CustomerEdit = () => {
     district: "",
     einvoice_alias_name: "",
   });
-
   const { data: customer, isLoading: isLoadingCustomer } = useQuery({
     queryKey: ['customer', id],
     queryFn: async () => {
       if (!id) throw new Error('Müşteri ID\'si bulunamadı');
-      
       const { data, error } = await supabase
         .from('customers')
         .select('*')
         .eq('id', id)
         .single();
-
       if (error) {
         console.error('Error fetching customer:', error);
         throw error;
       }
-
       return data;
     },
   });
-
   useEffect(() => {
     if (customer) {
       setFormData({
@@ -73,11 +65,9 @@ const CustomerEdit = () => {
       });
     }
   }, [customer]);
-
   const mutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {
       if (!id) throw new Error('Müşteri ID\'si bulunamadı');
-
       const sanitizedData = {
         name: data.name,
         email: data.email || null,
@@ -95,17 +85,14 @@ const CustomerEdit = () => {
         district: data.district || null,
         einvoice_alias_name: data.einvoice_alias_name || null,
       };
-
       const { error } = await supabase
         .from('customers')
         .update(sanitizedData)
         .eq('id', id);
-
       if (error) {
         console.error('Error updating customer:', error);
         throw error;
       }
-
       return true;
     },
     onSuccess: () => {
@@ -126,7 +113,6 @@ const CustomerEdit = () => {
       });
     },
   });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -135,20 +121,15 @@ const CustomerEdit = () => {
       console.error('Form submission error:', error);
     }
   };
-
   if (isLoadingCustomer) {
     return (
-      <DefaultLayout>
-        <div className="text-center py-8">Müşteri bilgileri yükleniyor...</div>
-      </DefaultLayout>
-    );
+    <div className="text-center py-8">Müşteri bilgileri yükleniyor...</div>
+  );
   }
-
   return (
-    <DefaultLayout>
+    <>
       <CustomerFormHeader id={id} />
-
-      <CustomerFormContent 
+      <CustomerFormContent
         formData={formData}
         setFormData={setFormData}
         handleSubmit={handleSubmit}
@@ -156,8 +137,7 @@ const CustomerEdit = () => {
         isEdit={true}
         onCancel={() => navigate('/contacts')}
       />
-    </DefaultLayout>
+    </>
   );
 };
-
 export default CustomerEdit;

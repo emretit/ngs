@@ -1,29 +1,18 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { Settings2, Users, UserCheck, Zap, Wrench, FileText } from "lucide-react";
-
 interface SettingsProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
   const navigate = useNavigate();
-
   useEffect(() => {
     // Varsayılan olarak kullanıcılar sayfasına yönlendir
     navigate("/settings/users", { replace: true });
   }, [navigate]);
-
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="Ayarlar & Yönetim"
-      subtitle="Sistem ayarlarını yönetin ve kullanıcı izinlerini düzenleyin"
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
           {/* Sol taraf - Başlık */}
@@ -40,7 +29,6 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
               </p>
             </div>
           </div>
-          
           {/* Orta - İstatistik Kartları */}
           <div className="flex flex-wrap gap-1.5 justify-center flex-1 items-center">
             {/* Sistem Durumu */}
@@ -51,7 +39,6 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                 Aktif
               </span>
             </div>
-
             {/* Toplam Kullanıcı */}
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">
               <Users className="h-3 w-3" />
@@ -60,7 +47,6 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                 -
               </span>
             </div>
-
             {/* Entegrasyonlar */}
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300">
               <Zap className="h-3 w-3" />
@@ -70,13 +56,11 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
               </span>
             </div>
           </div>
-          
           {/* Sağ taraf - Boş alan (gelecekte butonlar eklenebilir) */}
           <div className="flex items-center gap-2">
             {/* Gelecekte butonlar buraya eklenebilir */}
           </div>
         </div>
-
         {/* Ayarlar Menüsü */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
           <div className="p-6">
@@ -100,7 +84,6 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                 </div>
               </div>
-
               {/* Roller & İzinler */}
               <div 
                 onClick={() => navigate("/settings/roles")}
@@ -120,7 +103,6 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                 </div>
               </div>
-
               {/* Nilvera E-Fatura */}
               <div 
                 onClick={() => navigate("/settings/nilvera")}
@@ -140,7 +122,6 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                 </div>
               </div>
-
               {/* Sistem Ayarları */}
               <div 
                 onClick={() => navigate("/settings/system")}
@@ -160,7 +141,6 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                 </div>
               </div>
-
               {/* PDF Şablonları */}
               <div 
                 onClick={() => navigate("/settings/pdf-templates")}
@@ -184,8 +164,6 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
           </div>
         </div>
       </div>
-    </DefaultLayout>
   );
 };
-
 export default Settings;

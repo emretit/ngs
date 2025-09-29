@@ -287,23 +287,27 @@ const SuppliersTable = ({
 
   return (
     <Table>
-      <SuppliersTableHeader 
-        columns={columns} 
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        hasSelection={true}
-        onSelectAll={(checked) => {
-          if (setSelectedSuppliers) {
-            if (checked) {
-              setSelectedSuppliers(filteredSuppliers);
-            } else {
-              setSelectedSuppliers([]);
-            }
-          }
-        }}
-        isAllSelected={selectedSuppliers.length === filteredSuppliers.length && filteredSuppliers.length > 0}
-      />
+      <TableHeader>
+        <TableRow className="bg-gray-50 border-b">
+          <SuppliersTableHeader 
+            columns={columns} 
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            hasSelection={true}
+            onSelectAll={(checked) => {
+              if (setSelectedSuppliers) {
+                if (checked) {
+                  setSelectedSuppliers(filteredSuppliers);
+                } else {
+                  setSelectedSuppliers([]);
+                }
+              }
+            }}
+            isAllSelected={selectedSuppliers.length === filteredSuppliers.length && filteredSuppliers.length > 0}
+          />
+        </TableRow>
+      </TableHeader>
       <TableBody>
         {filteredSuppliers.length === 0 ? (
           <TableRow>

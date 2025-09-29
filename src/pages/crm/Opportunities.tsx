@@ -1,10 +1,8 @@
-
 import { useState } from "react";
 import { DropResult } from "@hello-pangea/dnd";
 import { Opportunity, OpportunityStatus } from "@/types/crm";
 import { useOpportunities } from "@/hooks/useOpportunities";
 import { useToast } from "@/components/ui/use-toast";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import OpportunityKanbanBoard from "@/components/opportunities/OpportunityKanbanBoard";
 import OpportunitiesHeader from "@/components/opportunities/OpportunitiesHeader";
 import OpportunityFilterBar from "@/components/opportunities/OpportunityFilterBar";
@@ -14,7 +12,6 @@ import OpportunitiesContent from "@/components/opportunities/OpportunitiesConten
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
 const Opportunities = () => {
   const { toast } = useToast();
   const [selectedOpportunities, setSelectedOpportunities] = useState<Opportunity[]>([]);
@@ -25,7 +22,6 @@ const Opportunities = () => {
   const [activeView, setActiveView] = useState<"kanban" | "list">("list");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-
   // Fetch employees data
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
@@ -35,12 +31,10 @@ const Opportunities = () => {
         .select('id, first_name, last_name')
         .eq('status', 'aktif')
         .order('first_name');
-      
       if (error) throw error;
       return data;
     }
   });
-
   // Use opportunities with filters
   const { 
     opportunities,
@@ -67,20 +61,16 @@ const Opportunities = () => {
     startDate: startDate,
     endDate: endDate
   });
-  
   // Group opportunities by status (6-stage system) - sorted by creation date only
   const sortByCreatedAt = (a: any, b: any) => {
     const dateA = new Date(a.created_at).getTime();
     const dateB = new Date(b.created_at).getTime();
-    
     // If dates are the same, sort by ID to maintain consistent order
     if (dateA === dateB) {
       return a.id.localeCompare(b.id);
     }
-    
     return dateB - dateA; // Newest first
   };
-
   const groupedOpportunities = {
     new: (opportunities.new || []).sort(sortByCreatedAt),
     meeting_visit: (opportunities.meeting_visit || []).sort(sortByCreatedAt),
@@ -89,12 +79,10 @@ const Opportunities = () => {
     won: (opportunities.won || []).sort(sortByCreatedAt),
     lost: (opportunities.lost || []).sort(sortByCreatedAt),
   };
-
   const handleOpportunityClick = (opportunity: Opportunity) => {
     setSelectedOpportunity(opportunity);
     setIsDetailOpen(true);
   };
-  
   const handleOpportunitySelect = (opportunity: Opportunity) => {
     setSelectedOpportunities(prev => {
       const isSelected = prev.some(o => o.id === opportunity.id);
@@ -103,17 +91,14 @@ const Opportunities = () => {
         : [...prev, opportunity];
     });
   };
-  
   const handleClearSelection = () => {
     setSelectedOpportunities([]);
   };
-
   // 3 Nokta Menü Fonksiyonları
   const handleEditOpportunity = (opportunity: Opportunity) => {
     setSelectedOpportunity(opportunity);
     setIsDetailOpen(true);
   };
-
   const handleDeleteOpportunity = async (opportunity: Opportunity) => {
     if (confirm(`${opportunity.title} fırsatını silmek istediğinizden emin misiniz?`)) {
       try {
@@ -125,35 +110,29 @@ const Opportunities = () => {
       }
     }
   };
-
   const handleConvertToProposal = (opportunity: Opportunity) => {
     // Teklif sayfasına yönlendir
     console.log('Converting to proposal:', opportunity.id);
     // TODO: Navigate to new proposal page with opportunity data
   };
-
   const handlePlanMeeting = (opportunity: Opportunity) => {
     // Yeni aktivite ekranına geçiş
     console.log('Planning meeting for opportunity:', opportunity.id);
     // TODO: Navigate to new activity page with opportunity data
     // window.location.href = `/activities/new?opportunity_id=${opportunity.id}&type=meeting`;
   };
-
   // Convert grouped opportunities to flat array for list view
   const flattenedOpportunities = Object.values(groupedOpportunities).flat();
-  
   // Infinite scroll için tüm fırsatları kullan
   const allOpportunities = opportunitiesData || [];
-
   return (
-    <DefaultLayout>
+    <>
       <div className="space-y-2">
         <OpportunitiesHeader 
           activeView={activeView} 
           setActiveView={setActiveView}
           opportunities={opportunities}
         />
-        
         <OpportunityFilterBar 
           filterKeyword={filterKeyword}
           setFilterKeyword={setFilterKeyword}
@@ -169,14 +148,12 @@ const Opportunities = () => {
           endDate={endDate}
           setEndDate={setEndDate}
         />
-        
         {selectedOpportunities.length > 0 && (
           <OpportunityBulkActions 
             selectedOpportunities={selectedOpportunities}
             onClearSelection={handleClearSelection}
           />
         )}
-        
         {isLoading ? (
           <div className="flex items-center justify-center h-[400px]">
             <div className="text-center space-y-4">
@@ -222,7 +199,6 @@ const Opportunities = () => {
           </Tabs>
         )}
       </div>
-      
       {selectedOpportunity && (
         <OpportunityDetailSheet
           opportunity={selectedOpportunity}
@@ -233,8 +209,7 @@ const Opportunities = () => {
           }}
         />
       )}
-    </DefaultLayout>
+    </>
   );
 };
-
 export default Opportunities;

@@ -1,22 +1,13 @@
 import React from "react";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import PdfTemplates from "@/pages/PdfTemplates";
 import { Settings2, FileText } from "lucide-react";
-
 interface PdfTemplatesSettingsProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 const PdfTemplatesSettings = ({ isCollapsed, setIsCollapsed }: PdfTemplatesSettingsProps) => {
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="PDF Şablonları"
-      subtitle="PDF şablonlarını yönetin ve düzenleyin"
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
           {/* Sol taraf - Başlık */}
@@ -34,7 +25,6 @@ const PdfTemplatesSettings = ({ isCollapsed, setIsCollapsed }: PdfTemplatesSetti
             </div>
           </div>
         </div>
-
         {/* Content */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
           <div className="p-6">
@@ -42,8 +32,6 @@ const PdfTemplatesSettings = ({ isCollapsed, setIsCollapsed }: PdfTemplatesSetti
           </div>
         </div>
       </div>
-    </DefaultLayout>
   );
 };
-
 export default PdfTemplatesSettings;

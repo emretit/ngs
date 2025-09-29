@@ -112,8 +112,7 @@ const Proposals = () => {
   };
 
   return (
-    <>
-      <div className="space-y-2">
+    <div className="space-y-2">
         {/* Header */}
         <ProposalsHeader 
           activeView={activeView} 
@@ -185,13 +184,13 @@ const Proposals = () => {
 
       {/* Detail Sheet */}
       {selectedProposal && (
-        <ProposalDetailSheet
-          proposal={selectedProposal}
-          open={!!selectedProposal}
-          onOpenChange={handleCloseDetail}
+        <ProposalDetailSheet 
+          proposal={selectedProposal} 
+          open={!!selectedProposal} 
+          onOpenChange={handleCloseDetail} 
         />
       )}
-    </>
+    </div>
   );
 };
 

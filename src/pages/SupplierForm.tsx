@@ -2,20 +2,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SupplierFormHeader from "@/components/suppliers/SupplierFormHeader";
 import SupplierFormContent from "@/components/suppliers/SupplierFormContent";
 import { SupplierFormData } from "@/types/supplier";
-
 const SupplierForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
   const [formData, setFormData] = useState<SupplierFormData>({
     name: "",
     email: "",
@@ -42,7 +39,6 @@ const SupplierForm = () => {
     aliases: [],
     einvoice_alias_name: "",
   });
-
   const { data: supplier, isLoading: isLoadingSupplier, error: supplierError } = useQuery({
     queryKey: ['supplier', id],
     queryFn: async () => {
@@ -52,22 +48,18 @@ const SupplierForm = () => {
         .select('*')
         .eq('id', id)
         .maybeSingle();
-      
       if (error) {
         console.error('Error fetching supplier:', error);
         throw error;
       }
-
       if (!data) {
         throw new Error('Tedarikçi bulunamadı');
       }
-
       return data;
     },
     enabled: !!id,
     retry: false,
   });
-
   useEffect(() => {
     if (supplier) {
       setFormData({
@@ -98,7 +90,6 @@ const SupplierForm = () => {
       });
     }
   }, [supplier]);
-
   useEffect(() => {
     if (supplierError) {
       toast({
@@ -109,7 +100,6 @@ const SupplierForm = () => {
       navigate('/suppliers');
     }
   }, [supplierError, navigate, toast]);
-
   const mutation = useMutation({
     mutationFn: async (data: SupplierFormData) => {
       const sanitizedData = {
@@ -128,34 +118,28 @@ const SupplierForm = () => {
         city: data.city || null,
         district: data.district || null,
       };
-
       if (id) {
         const { error: updateError } = await supabase
           .from('suppliers')
           .update(sanitizedData)
           .eq('id', id);
-        
         if (updateError) {
           console.error('Güncelleme hatası:', updateError);
           throw updateError;
         }
-
         const { data: updatedData, error: fetchError } = await supabase
           .from('suppliers')
           .select('*')
           .eq('id', id)
           .maybeSingle();
-        
         if (fetchError) {
           console.error('Veri getirme hatası:', fetchError);
           throw fetchError;
         }
-
         if (!updatedData) {
           console.error('Güncellenmiş veri bulunamadı');
           throw new Error('Güncellenmiş tedarikçi bulunamadı');
         }
-
         return updatedData;
       } else {
         const { data: newData, error } = await supabase
@@ -163,17 +147,14 @@ const SupplierForm = () => {
           .insert([sanitizedData])
           .select()
           .maybeSingle();
-        
         if (error) {
           console.error('Ekleme hatası:', error);
           throw error;
         }
-
         if (!newData) {
           console.error('Yeni eklenen veri bulunamadı');
           throw new Error('Tedarikçi eklenemedi');
         }
-
         return newData;
       }
     },
@@ -182,12 +163,10 @@ const SupplierForm = () => {
       if (id) {
         queryClient.invalidateQueries({ queryKey: ['supplier', id] });
       }
-
       toast({
         title: id ? "Tedarikçi güncellendi" : "Tedarikçi eklendi",
         description: id ? "Tedarikçi bilgileri başarıyla güncellendi." : "Yeni tedarikçi başarıyla eklendi.",
       });
-
       navigate('/suppliers');
     },
     onError: (error) => {
@@ -199,7 +178,6 @@ const SupplierForm = () => {
       });
     },
   });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form gönderiliyor:', formData);
@@ -209,15 +187,13 @@ const SupplierForm = () => {
       console.error('Form submission error:', error);
     }
   };
-
   return (
-    <DefaultLayout>
+    <>
       <SupplierFormHeader id={id} />
-
       {isLoadingSupplier && id ? (
         <div className="text-center py-8">Yükleniyor...</div>
       ) : (
-        <SupplierFormContent 
+        <SupplierFormContent
           formData={formData}
           setFormData={setFormData}
           handleSubmit={handleSubmit}
@@ -226,8 +202,7 @@ const SupplierForm = () => {
           onCancel={() => navigate('/suppliers')}
         />
       )}
-    </DefaultLayout>
+    </>
   );
 };
-
 export default SupplierForm;

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import ProductListHeader from "@/components/products/ProductListHeader";
 import ProductListFilters from "@/components/products/ProductListFilters";
 import ProductListTable from "@/components/products/ProductListTable";
@@ -27,7 +26,6 @@ const Products = () => {
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const pageSize = 20;
-
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -86,7 +84,6 @@ const Products = () => {
             break;
         }
       }
-
 
       // Apply sorting
       const orderField = sortField === "category" ? "product_categories(name)" : sortField;
@@ -173,7 +170,7 @@ const Products = () => {
   };
 
   return (
-    <DefaultLayout>
+    <>
       <div className="space-y-2">
         {/* Header */}
         <ProductListHeader
@@ -279,13 +276,12 @@ const Products = () => {
           </Tabs>
         )}
       </div>
-
       <ProductImportDialog
         isOpen={isImportDialogOpen}
         setIsOpen={setIsImportDialogOpen}
         onImportSuccess={handleImportSuccess}
       />
-    </DefaultLayout>
+    </>
   );
 };
 

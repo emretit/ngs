@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff, Lock, Mail, User, Home } from "lucide-react";
 import { AlertCircle } from "lucide-react";
-
 const InviteSetup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -19,14 +18,12 @@ const InviteSetup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [inviteToken, setInviteToken] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
-
   useEffect(() => {
     // Parse URL hash parameters directly
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get("access_token");
     const type = hashParams.get("type");
     const emailParam = hashParams.get("email") || searchParams.get('email');
-    
     console.log('InviteSetup URL params:', { 
       accessToken, 
       type, 
@@ -34,7 +31,6 @@ const InviteSetup = () => {
       hashString: window.location.hash,
       searchParams: window.location.search 
     });
-    
     // Accept invite if we have access_token, regardless of type
     if (accessToken) {
       setInviteToken(accessToken);
@@ -48,51 +44,41 @@ const InviteSetup = () => {
       navigate("/signup");
     }
   }, [navigate, searchParams]);
-
   const handlePasswordSetup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
     if (!password || !fullName) {
       setError("Şifre ve ad soyad gereklidir.");
       setLoading(false);
       return;
     }
-
     if (password.length < 10) {
       setError("Şifre en az 10 karakter olmalıdır.");
       setLoading(false);
       return;
     }
-    
     try {
       console.log('Starting invite setup process...');
-      
       // Önce mevcut session'ı kontrol et
       const { data: { session: existingSession } } = await supabase.auth.getSession();
-      
       if (!existingSession) {
         console.log('No existing session, setting session with access token:', inviteToken);
-        
         // Session yoksa, access token ile session kur
         const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
           access_token: inviteToken!,
           refresh_token: ''
         });
-
         if (sessionError) {
           console.error('Session setup error:', sessionError);
           setError("Davet bağlantısı geçersiz veya süresi dolmuş.");
           setLoading(false);
           return;
         }
-        
         console.log('Session successfully set:', sessionData.session?.user?.email);
       } else {
         console.log('Existing session found:', existingSession.user?.email);
       }
-
       // Kullanıcının şifresini ve profilini güncelle
       console.log('Updating user password and profile...');
       const { error: updateError } = await supabase.auth.updateUser({
@@ -101,25 +87,20 @@ const InviteSetup = () => {
           full_name: fullName.trim() 
         }
       });
-
       if (updateError) {
         console.error('User update error:', updateError);
         throw updateError;
       }
-
       console.log('User successfully updated');
-
       toast({
         title: "Hesap Kuruldu",
         description: "Şifreniz başarıyla oluşturuldu. Dashboard'a yönlendiriliyorsunuz.",
       });
-
       // Kısa bir delay sonra dashboard'a yönlendir
       console.log('Redirecting to dashboard in 1 second...');
       setTimeout(() => {
         navigate("/dashboard");
       }, 1000);
-
     } catch (error: any) {
       console.error('Account setup error:', error);
       setError(error.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
@@ -127,7 +108,6 @@ const InviteSetup = () => {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -141,7 +121,6 @@ const InviteSetup = () => {
             <Home className="w-4 h-4 mr-2" />
             Ana Sayfa
           </Button>
-          
           <div className="flex justify-center">
             <img 
               src="/logo.svg" 
@@ -149,7 +128,6 @@ const InviteSetup = () => {
               className="h-12 w-auto"
             />
           </div>
-          
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
               Hesabınızı Kurun
@@ -159,7 +137,6 @@ const InviteSetup = () => {
             </p>
           </div>
         </div>
-
         {/* Form Card */}
         <Card className="border border-border/50 shadow-lg">
           <CardHeader className="space-y-1">
@@ -186,7 +163,6 @@ const InviteSetup = () => {
                   />
                 </div>
               </div>
-
               {/* Full Name */}
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -204,7 +180,6 @@ const InviteSetup = () => {
                   />
                 </div>
               </div>
-
               {/* Password */}
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -237,7 +212,6 @@ const InviteSetup = () => {
                   Şifreniz en az 10 karakter içermelidir
                 </p>
               </div>
-
               {/* Error Display */}
               {error && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
@@ -247,7 +221,6 @@ const InviteSetup = () => {
                   </div>
                 </div>
               )}
-
               {/* Submit Button */}
               <Button
                 type="submit"
@@ -266,13 +239,11 @@ const InviteSetup = () => {
             </form>
           </CardContent>
         </Card>
-
         {/* Security Info */}
         <div className="text-center space-y-4">
           <p className="text-xs text-muted-foreground">
             Bu bağlantı güvenli ve şifrelenmiş bir bağlantıdır
           </p>
-          
           <div className="text-xs text-muted-foreground">
             Zaten hesabınız var mı?{" "}
             <button
@@ -287,5 +258,4 @@ const InviteSetup = () => {
     </div>
   );
 };
-
 export default InviteSetup;

@@ -28,8 +28,7 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import DefaultLayout from '@/components/layouts/DefaultLayout';
-
+import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 interface EInvoiceItem {
   id: string;
   line_number: number;
@@ -45,7 +44,6 @@ interface EInvoiceItem {
   gtip_code?: string;
   description?: string;
 }
-
 interface EInvoiceDetails {
   id: string;
   invoice_number: string;
@@ -82,7 +80,6 @@ interface EInvoiceDetails {
     };
   };
 }
-
 interface Product {
   id: string;
   name: string;
@@ -92,40 +89,34 @@ interface Product {
   tax_rate: number;
   category_type?: string;
 }
-
 interface ProductMatchingItem {
   invoice_item: EInvoiceItem;
   matched_product_id?: string;
   notes?: string;
 }
-
 interface Supplier {
   id: string;
   name: string;
   tax_number?: string;
   email?: string;
 }
-
 export default function EInvoiceProcess() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [invoice, setInvoice] = useState<EInvoiceDetails | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [matchingItems, setMatchingItems] = useState<ProductMatchingItem[]>([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
-  
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isCreatingSupplier, setIsCreatingSupplier] = useState(false);
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(-1);
   const [supplierMatchStatus, setSupplierMatchStatus] = useState<'searching' | 'found' | 'not_found' | null>(null);
-  
   // Form fields for purchase invoice
   const [formData, setFormData] = useState({
     invoice_date: '',
@@ -135,20 +126,17 @@ export default function EInvoiceProcess() {
     project_id: '',
     expense_category_id: ''
   });
-
   useEffect(() => {
     if (invoiceId) {
       loadAllData();
     }
   }, [invoiceId]);
-
   // Tedarikçi eşleştirmesi için useEffect
   useEffect(() => {
     if (invoice && suppliers.length > 0) {
       matchSupplier();
     }
   }, [invoice, suppliers]);
-
   const loadAllData = async () => {
     setIsLoading(true);
     try {
@@ -168,11 +156,9 @@ export default function EInvoiceProcess() {
       setIsLoading(false);
     }
   };
-
   const loadInvoiceDetails = async () => {
     try {
       console.log('🔄 Loading invoice details for:', invoiceId);
-
       // First get the invoice from incoming invoices
       const { data: invoicesData, error: invoicesError } = await supabase.functions.invoke('nilvera-incoming-invoices', {
         body: { 
@@ -182,14 +168,11 @@ export default function EInvoiceProcess() {
           }
         }
       });
-
       if (invoicesError) throw invoicesError;
-      
       const invoiceData = invoicesData?.invoices?.find((inv: any) => inv.id === invoiceId);
       if (!invoiceData) {
         throw new Error('Fatura bulunamadı');
       }
-
       // Then get detailed invoice items
       const { data: detailsData, error: detailsError } = await supabase.functions.invoke('nilvera-invoice-details', {
         body: {
@@ -197,12 +180,10 @@ export default function EInvoiceProcess() {
           envelopeUUID: invoiceData.envelopeUUID
         }
       });
-
       if (detailsError) throw detailsError;
       if (!detailsData?.success) {
         throw new Error(detailsData?.error || 'Fatura detayları alınamadı');
       }
-
       const items: EInvoiceItem[] = detailsData.invoiceDetails?.items?.map((item: any, index: number) => ({
         id: `item-${index}`,
         line_number: index + 1,
@@ -218,13 +199,10 @@ export default function EInvoiceProcess() {
         gtip_code: item.gtipCode,
         description: item.description
       })) || [];
-
       // Detaylı tedarikçi bilgilerini çıkar
       const supplierDetails = detailsData.invoiceDetails?.supplierInfo || detailsData.invoiceDetails?.companyInfo || {};
-      
       console.log('🔍 Raw supplier details from API:', supplierDetails);
       console.log('🔍 Full invoice details:', detailsData.invoiceDetails);
-      
       const invoiceDetails: EInvoiceDetails = {
         id: invoiceData.id,
         invoice_number: invoiceData.invoiceNumber,
@@ -260,9 +238,7 @@ export default function EInvoiceProcess() {
           }
         }
       };
-
       setInvoice(invoiceDetails);
-
       // Set default form values
       setFormData({
         invoice_date: invoiceDetails.invoice_date.split('T')[0],
@@ -272,21 +248,16 @@ export default function EInvoiceProcess() {
         project_id: '',
         expense_category_id: ''
       });
-
       // Initialize matching items
       const initialMatching: ProductMatchingItem[] = invoiceDetails.items.map(item => ({
         invoice_item: item
       }));
-
       setMatchingItems(initialMatching);
-
       console.log('✅ Invoice details loaded:', invoiceDetails);
-
     } catch (error: any) {
       throw new Error(error.message || 'Fatura detayları yüklenirken hata oluştu');
     }
   };
-
   const loadProducts = async () => {
     try {
       const { data: productsData, error: productsError } = await supabase
@@ -294,15 +265,12 @@ export default function EInvoiceProcess() {
         .select('id, name, sku, price, unit, tax_rate, category_type')
         .eq('is_active', true)
         .order('name');
-
       if (productsError) throw productsError;
       setProducts(productsData || []);
-
     } catch (error: any) {
       console.error('❌ Error loading products:', error);
     }
   };
-
   const loadSuppliers = async () => {
     try {
       // Load all suppliers from suppliers table with company_id filter for RLS
@@ -311,24 +279,19 @@ export default function EInvoiceProcess() {
         .select('id, name, tax_number, email, company_id')
         .eq('status', 'aktif') // Only active suppliers
         .order('name');
-
       if (suppliersError) throw suppliersError;
       setSuppliers(suppliersData || []);
-
     } catch (error: any) {
       console.error('❌ Error loading suppliers:', error);
     }
   };
-
   // Tedarikçi eşleştirmesi için ayrı fonksiyon
   const matchSupplier = async () => {
     if (!invoice || !suppliers.length) return;
-
     setSupplierMatchStatus('searching');
     const matchingSupplier = suppliers.find(s => 
       s.tax_number === invoice.supplier_tax_number
     );
-    
     if (matchingSupplier) {
       setSelectedSupplierId(matchingSupplier.id);
       setSupplierMatchStatus('found');
@@ -338,8 +301,6 @@ export default function EInvoiceProcess() {
       console.log('⚠️ Tedarikçi bulunamadı:', invoice.supplier_tax_number);
     }
   };
-
-
   const handleManualMatch = (itemIndex: number, productId: string) => {
     const updatedMatching = [...matchingItems];
     updatedMatching[itemIndex] = {
@@ -348,23 +309,18 @@ export default function EInvoiceProcess() {
     };
     setMatchingItems(updatedMatching);
   };
-
   const handleProductSelect = (itemIndex: number, product: Product) => {
     handleManualMatch(itemIndex, product.id);
   };
-
   const handleCreateNewProduct = (itemIndex: number) => {
     setCurrentItemIndex(itemIndex);
     setIsProductFormOpen(true);
   };
-
   const handleProductCreated = async (newProduct: Product) => {
     // Add to products list
     setProducts(prev => [...prev, newProduct]);
-    
     // Invalidate products query so all dropdowns refresh
     await queryClient.invalidateQueries({ queryKey: ["products"] });
-    
     // Match with current item
     if (currentItemIndex >= 0) {
       const updatedMatching = [...matchingItems];
@@ -374,18 +330,14 @@ export default function EInvoiceProcess() {
       };
       setMatchingItems(updatedMatching);
     }
-    
     // Reset form state
     setCurrentItemIndex(-1);
     setIsProductFormOpen(false);
-    
     toast({
       title: "Başarılı",
       description: "Ürün oluşturuldu ve eşleştirildi",
     });
   };
-
-
   const handleRemoveMatch = (itemIndex: number) => {
     const updatedMatching = [...matchingItems];
     updatedMatching[itemIndex] = {
@@ -394,10 +346,8 @@ export default function EInvoiceProcess() {
     };
     setMatchingItems(updatedMatching);
   };
-
   const handleCreateNewSupplier = async () => {
     if (!invoice) return;
-    
     setIsCreatingSupplier(true);
     try {
       // Mevcut kullanıcının company_id'sini al
@@ -405,18 +355,15 @@ export default function EInvoiceProcess() {
       if (!user) {
         throw new Error('Kullanıcı oturumu bulunamadı');
       }
-
       // Kullanıcının company_id'sini al
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
         .select('company_id')
         .eq('id', user.id)
         .single();
-
       if (profileError || !userProfile?.company_id) {
         throw new Error('Şirket bilgisi bulunamadı');
       }
-
       // E-faturadan gelen detaylı bilgilerle yeni tedarikçi oluştur
       const supplierData = {
         name: invoice.supplier_details?.company_name || invoice.supplier_name,
@@ -443,32 +390,24 @@ export default function EInvoiceProcess() {
         balance: 0,
         company_id: userProfile.company_id // RLS için company_id ekle
       };
-
       console.log('🔍 Tedarikçi kaydedilecek bilgiler:', supplierData);
       console.log('🔍 E-fatura tedarikçi detayları:', invoice.supplier_details);
-
       const { data: newSupplier, error } = await supabase
         .from('suppliers')
         .insert([supplierData])
         .select()
         .single();
-
       if (error) throw error;
-
       console.log('✅ Tedarikçi başarıyla oluşturuldu:', newSupplier);
-
       // Tedarikçi listesini güncelle
       setSuppliers(prev => [...prev, newSupplier]);
-      
       // Yeni tedarikçiyi seç
       setSelectedSupplierId(newSupplier.id);
       setSupplierMatchStatus('found');
-
       toast({
         title: "Başarılı",
         description: `Tedarikçi "${supplierData.name}" detaylı bilgilerle oluşturuldu ve seçildi`,
       });
-
     } catch (error: any) {
       console.error('❌ Error creating supplier:', error);
       toast({
@@ -480,7 +419,6 @@ export default function EInvoiceProcess() {
       setIsCreatingSupplier(false);
     }
   };
-
   const handleCreatePurchaseInvoice = async () => {
     if (!invoice || !selectedSupplierId || matchingItems.length === 0) {
       toast({
@@ -490,7 +428,6 @@ export default function EInvoiceProcess() {
       });
       return;
     }
-
     setIsCreating(true);
     try {
       // Mevcut kullanıcının company_id'sini al
@@ -498,30 +435,24 @@ export default function EInvoiceProcess() {
       if (!user) {
         throw new Error('Kullanıcı oturumu bulunamadı');
       }
-
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
         .select('company_id')
         .eq('id', user.id)
         .single();
-
       if (profileError || !userProfile?.company_id) {
         throw new Error('Şirket bilgisi bulunamadı');
       }
-
       // First, check if invoice exists in einvoices table, if not create it
       let einvoiceId = invoice.id;
-      
       const { data: existingInvoice, error: checkError } = await supabase
         .from('einvoices')
         .select('id')
         .eq('id', invoice.id)
         .single();
-
       if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
         throw checkError;
       }
-
       if (!existingInvoice) {
         // Create invoice in einvoices table first
         console.log('🔄 Creating invoice in einvoices table...');
@@ -549,18 +480,15 @@ export default function EInvoiceProcess() {
           })
           .select()
           .single();
-
         if (createInvoiceError) {
           console.error('❌ Error creating invoice:', createInvoiceError);
           throw createInvoiceError;
         }
-
         einvoiceId = newInvoice.id;
         console.log('✅ Invoice created in einvoices table:', einvoiceId);
       } else {
         console.log('✅ Invoice already exists in einvoices table:', einvoiceId);
       }
-
       // Save matching results to database
       const matchingRecords = matchingItems.map(item => ({
         invoice_id: einvoiceId,
@@ -579,16 +507,12 @@ export default function EInvoiceProcess() {
         notes: item.notes,
         company_id: userProfile.company_id // RLS için company_id ekle
       }));
-
       const { error: insertError } = await supabase
         .from('e_fatura_stok_eslestirme')
         .insert(matchingRecords);
-
       if (insertError) throw insertError;
-
       // Create new products if needed
       const newProductItems = matchingItems.filter(item => !item.matched_product_id);
-      
       for (const item of newProductItems) {
         const { data: newProduct, error: productError } = await supabase
           .from('products')
@@ -609,12 +533,10 @@ export default function EInvoiceProcess() {
           })
           .select()
           .single();
-
         if (productError) {
           console.error('❌ Error creating product:', productError);
           continue;
         }
-
         // Update matching record with new product ID
         await supabase
           .from('e_fatura_stok_eslestirme')
@@ -622,12 +544,10 @@ export default function EInvoiceProcess() {
           .eq('invoice_id', invoice.id)
           .eq('invoice_line_id', item.invoice_item.id);
       }
-
       // Get only valid items for purchase invoice
       const validItems = matchingItems.filter(item => 
         item.matched_product_id
       );
-
       const subtotal = validItems.reduce((sum, item) => 
         sum + (item.invoice_item.line_total - (item.invoice_item.line_total * item.invoice_item.tax_rate / 100)), 0
       );
@@ -635,7 +555,6 @@ export default function EInvoiceProcess() {
         sum + (item.invoice_item.line_total * item.invoice_item.tax_rate / 100), 0
       );
       const total = subtotal + taxTotal;
-
       // Create purchase invoice
       const { data: purchaseInvoice, error: invoiceError } = await supabase
         .from('purchase_invoices')
@@ -656,9 +575,7 @@ export default function EInvoiceProcess() {
         })
         .select()
         .single();
-
       if (invoiceError) throw invoiceError;
-
       // Create purchase invoice items
       const purchaseInvoiceItems = validItems.map(item => ({
         purchase_invoice_id: purchaseInvoice.id,
@@ -673,20 +590,15 @@ export default function EInvoiceProcess() {
         line_total: item.invoice_item.line_total,
         company_id: userProfile.company_id // RLS için company_id ekle
       }));
-
       const { error: itemsError } = await supabase
         .from('purchase_invoice_items')
         .insert(purchaseInvoiceItems);
-
       if (itemsError) throw itemsError;
-
       toast({
         title: "Başarılı",
         description: `Alış faturası başarıyla oluşturuldu. ${newProductItems.length} yeni ürün eklendi.`,
       });
-
       navigate('/purchase/e-invoice');
-
     } catch (error: any) {
       console.error('❌ Error creating purchase invoice:', error);
       toast({
@@ -698,29 +610,17 @@ export default function EInvoiceProcess() {
       setIsCreating(false);
     }
   };
-
-
-
   const getMatchedProduct = (productId?: string) => {
     return products.find(p => p.id === productId);
   };
-
   const matchedCount = matchingItems.filter(item => 
     item.matched_product_id
   ).length;
-
   const allMatched = matchedCount === matchingItems.length && matchingItems.length > 0;
   const canCreateInvoice = selectedSupplierId && matchedCount > 0;
-
   if (isLoading) {
     return (
-      <DefaultLayout 
-        isCollapsed={isCollapsed} 
-        setIsCollapsed={setIsCollapsed}
-        title="E-Fatura İşleme"
-        subtitle="Yükleniyor..."
-      >
-        <Card>
+    <Card>
           <CardContent className="flex items-center justify-center py-12">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
@@ -728,19 +628,11 @@ export default function EInvoiceProcess() {
             </div>
           </CardContent>
         </Card>
-      </DefaultLayout>
-    );
+  );
   }
-
   if (!invoice) {
     return (
-      <DefaultLayout 
-        isCollapsed={isCollapsed} 
-        setIsCollapsed={setIsCollapsed}
-        title="E-Fatura İşleme"
-        subtitle="Hata"
-      >
-        <Card>
+    <Card>
           <CardContent className="flex items-center justify-center py-12">
             <div className="text-center">
               <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
@@ -752,17 +644,10 @@ export default function EInvoiceProcess() {
             </div>
           </CardContent>
         </Card>
-      </DefaultLayout>
-    );
+  );
   }
-
   return (
-    <DefaultLayout 
-      isCollapsed={isCollapsed} 
-      setIsCollapsed={setIsCollapsed}
-      title="E-Fatura İşleme"
-      subtitle={`Fatura No: ${invoice.invoice_number}`}
-    >
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -774,14 +659,11 @@ export default function EInvoiceProcess() {
             <ArrowLeft className="h-4 w-4" />
             E-faturalar
           </Button>
-          
           <div className="flex items-center gap-4">
             <Badge variant="outline">{invoice.invoice_number}</Badge>
             <Badge variant="secondary">{invoice.supplier_name}</Badge>
           </div>
         </div>
-
-
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column - Invoice Info */}
@@ -800,19 +682,16 @@ export default function EInvoiceProcess() {
                     <span className="text-sm text-gray-500">Fatura No:</span>
                     <span className="font-semibold text-sm">{invoice.invoice_number}</span>
                   </div>
-                  
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">Tarih:</span>
                     <span className="text-sm">
                       {format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale: tr })}
                     </span>
                   </div>
-                  
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">Kalem:</span>
                     <span className="text-sm font-medium">{invoice.items.length}</span>
                   </div>
-                  
                   <div className="flex justify-between items-center pt-2 border-t">
                     <span className="text-sm text-gray-500">Toplam:</span>
                     <span className="text-lg font-bold text-primary">
@@ -820,7 +699,6 @@ export default function EInvoiceProcess() {
                     </span>
                   </div>
                 </div>
-
                 {/* Tedarikçi Bilgileri ve Durumu */}
                 <div className="space-y-3">
                   <div>
@@ -841,7 +719,6 @@ export default function EInvoiceProcess() {
                           <div className="text-gray-500 text-xs mt-1">📞 {invoice.supplier_details.phone}</div>
                         )}
                       </div>
-
                       {/* Durum ve İşlemler */}
                       <div className="pt-2 border-t border-gray-200">
                         {supplierMatchStatus === 'searching' && (
@@ -850,14 +727,12 @@ export default function EInvoiceProcess() {
                             <span className="text-blue-700 text-sm">Tedarikçi aranıyor...</span>
                           </div>
                         )}
-
                         {supplierMatchStatus === 'found' && selectedSupplierId && (
                           <div className="flex items-center gap-2">
                             <Check className="h-4 w-4 text-green-600" />
                             <span className="text-green-700 font-medium text-sm">✅ Sistemimizde kayıtlı</span>
                           </div>
                         )}
-
                         {supplierMatchStatus === 'not_found' && (
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -888,7 +763,6 @@ export default function EInvoiceProcess() {
                     </div>
                   </div>
                 </div>
-
                 {/* Fatura Tarihi ve Notlar */}
                 <div className="mt-4 pt-4 border-t space-y-3">
                   <div>
@@ -901,7 +775,6 @@ export default function EInvoiceProcess() {
                       className="mt-1"
                     />
                   </div>
-
                   <div>
                     <Label htmlFor="notes" className="text-sm font-medium">Notlar</Label>
                     <Textarea
@@ -917,7 +790,6 @@ export default function EInvoiceProcess() {
               </CardContent>
             </Card>
           </div>
-
           {/* Right Column - Product Matching */}
           <div className="lg:col-span-3">
             <Card>
@@ -945,7 +817,6 @@ export default function EInvoiceProcess() {
                     <TableBody>
                       {matchingItems.map((item, index) => {
                         const matchedProduct = getMatchedProduct(item.matched_product_id);
-                        
                         return (
                           <TableRow key={item.invoice_item.id} className="hover:bg-gray-50">
                             <TableCell className="font-medium text-center">
@@ -1011,7 +882,6 @@ export default function EInvoiceProcess() {
             </Card>
           </div>
         </div>
-
         {/* Action Buttons */}
         <div className="flex justify-between items-center">
           <div className="text-sm text-gray-600">
@@ -1031,7 +901,6 @@ export default function EInvoiceProcess() {
               </span>
             )}
           </div>
-          
           <Button
             onClick={handleCreatePurchaseInvoice}
             disabled={!canCreateInvoice || isCreating}
@@ -1046,7 +915,6 @@ export default function EInvoiceProcess() {
           </Button>
         </div>
       </div>
-
       {/* Compact Product Form Modal */}
       <CompactProductForm
         isOpen={isProductFormOpen}
@@ -1065,7 +933,6 @@ export default function EInvoiceProcess() {
           } : undefined
         }
       />
-
-    </DefaultLayout>
+    </>
   );
 }

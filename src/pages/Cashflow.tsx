@@ -1,11 +1,8 @@
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import CashflowOverview from "@/components/cashflow/CashflowOverview";
 import { DollarSign } from "lucide-react";
-
 const Cashflow = () => {
   return (
-    <DefaultLayout>
-      <div className="w-full">
+    <div className="w-full">
             {/* Header - Fırsatlar gibi */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
               {/* Sol taraf - Başlık */}
@@ -22,13 +19,11 @@ const Cashflow = () => {
                   </p>
                 </div>
               </div>
-              
               {/* Sağ taraf - Boş (kartlar kaldırıldı) */}
               <div className="flex items-center gap-2">
                 {/* İleride butonlar eklenebilir */}
               </div>
             </div>
-
             {/* Content Section */}
             <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
               <div className="p-6">
@@ -38,8 +33,6 @@ const Cashflow = () => {
               </div>
             </div>
           </div>
-    </DefaultLayout>
   );
 };
-
 export default Cashflow;

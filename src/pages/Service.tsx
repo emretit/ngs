@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import ServicePageHeader from "@/components/service/ServicePageHeader";
 import ServiceStatsCards from "@/components/service/ServiceStatsCards";
@@ -19,7 +18,6 @@ import { Calendar as BigCalendar, momentLocalizer, Views } from 'react-big-calen
 import moment from 'moment';
 import 'moment/locale/tr';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-
 moment.locale('tr');
 // Haftanın Pazartesi'den başlaması için
 moment.updateLocale('tr', {
@@ -28,17 +26,13 @@ moment.updateLocale('tr', {
   }
 });
 const localizer = momentLocalizer(moment);
-
 // Custom Resource View - React Big Calendar'da resource view için özel view gerekli
-
 const ServicePage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
   // Silme onayı için state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<ServiceRequest | null>(null);
-
   // Calendar state'leri
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState(Views.WEEK);
@@ -46,7 +40,6 @@ const ServicePage = () => {
   const [showResourceView, setShowResourceView] = useState(true);
   const [assignedServices, setAssignedServices] = useState<Map<string, string>>(new Map());
   const [activeView, setActiveView] = useState<"calendar" | "list">("calendar");
-
   // URL parametresinden view'ı kontrol et
   useEffect(() => {
     const viewParam = searchParams.get('view');
@@ -54,16 +47,13 @@ const ServicePage = () => {
       setActiveView('list');
     }
   }, [searchParams]);
-  
   // Liste görünümü için state'ler
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<"title" | "priority" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-
   const { data: serviceRequests, isLoading, error, deleteServiceRequest } = useServiceRequests();
-
   // Teknisyenleri getir
   const { data: technicians } = useQuery({
     queryKey: ['technicians'],
@@ -73,12 +63,10 @@ const ServicePage = () => {
         .select('*')
         .eq('department', 'Teknik')
         .eq('status', 'aktif');
-      
       if (error) throw error;
       return data;
     },
   });
-
   // Müşteri verilerini getir
   const { data: customers } = useQuery({
     queryKey: ['customers'],
@@ -86,22 +74,18 @@ const ServicePage = () => {
       const { data, error } = await supabase
         .from('customers')
         .select('id, name, company');
-      
       if (error) throw error;
       return data;
     },
   });
-
   const handleSelectRequest = (request: ServiceRequest) => {
     navigate(`/service/edit/${request.id}`);
   };
-
   // Silme fonksiyonu
   const handleDeleteService = (service: ServiceRequest) => {
     setServiceToDelete(service);
     setDeleteConfirmOpen(true);
   };
-
   const confirmDelete = () => {
     if (serviceToDelete) {
       deleteServiceRequest(serviceToDelete.id);
@@ -109,8 +93,6 @@ const ServicePage = () => {
       setServiceToDelete(null);
     }
   };
-
-
   // Öncelik renklerini belirle
   const getPriorityColor = (priority: string) => {
     const colors = {
@@ -121,7 +103,6 @@ const ServicePage = () => {
     };
     return colors[priority as keyof typeof colors] || '#6b7280';
   };
-
   // Test verisi - sadece atanmış servisler
   const testEvents = [
     {
@@ -161,7 +142,6 @@ const ServicePage = () => {
       description: 'Yeni ofis için network altyapısı kurulumu',
     }
   ];
-
   const testTechnicians = [
     { id: 'tech1', first_name: 'Can', last_name: 'Öztürk' },
     { id: 'tech2', first_name: 'Zeynep', last_name: 'Arslan' },
@@ -169,11 +149,9 @@ const ServicePage = () => {
     { id: 'tech4', first_name: 'Mehmet', last_name: 'Kaya' },
     { id: 'tech5', first_name: 'Ali', last_name: 'Demir' },
   ];
-
   // Calendar events'leri oluştur
   const calendarEvents = useMemo(() => {
     const allEvents = [...testEvents];
-    
     // Gerçek servis taleplerini de ekle
     if (serviceRequests && serviceRequests.length > 0) {
       const realEvents = serviceRequests.map(request => ({
@@ -190,14 +168,12 @@ const ServicePage = () => {
       }));
       allEvents.push(...realEvents);
     }
-    
     return allEvents
       .filter(event => {
         // Tamamlanan servisleri filtrele
         if (!showCompletedServices && event.status === 'completed') {
           return false;
         }
-        
         // Arama filtresi
         if (searchQuery) {
           const searchLower = searchQuery.toLowerCase();
@@ -207,7 +183,6 @@ const ServicePage = () => {
             event.description?.toLowerCase().includes(searchLower);
           if (!matchesSearch) return false;
         }
-        
         // Durum filtresi
         if (statusFilter !== 'all') {
           if (statusFilter === 'new' && event.status !== 'new' && event.status !== 'assigned') {
@@ -216,19 +191,16 @@ const ServicePage = () => {
             return false;
           }
         }
-        
         // Öncelik filtresi
         if (priorityFilter !== 'all' && event.priority !== priorityFilter) {
           return false;
         }
-        
         return true;
       })
       .map(event => {
         // Eğer bu servis atanmışsa, assignedServices state'inden resourceId'yi al
         const assignedResourceId = assignedServices.get(event.id);
         const finalResourceId = assignedResourceId || event.resourceId;
-        
         return {
           id: event.id,
           title: event.title,
@@ -251,31 +223,25 @@ const ServicePage = () => {
         };
       });
   }, [showCompletedServices, serviceRequests, assignedServices, searchQuery, statusFilter, priorityFilter]);
-
   // Resources'ları oluştur
   const resources = useMemo(() => {
     // Veritabanından gelen teknisyenler varsa onları kullan, yoksa test verilerini kullan
     const techList = technicians && technicians.length > 0 ? technicians : testTechnicians;
-    
     return techList.map(tech => ({
       resourceId: tech.id,
       title: `${tech.first_name} ${tech.last_name}`,
     }));
   }, [technicians]);
-
   // Event handlers
   const handleSelectEvent = useCallback((event: any) => {
     navigate(`/service/edit/${event.id}`);
   }, [navigate]);
-
   const handleEventDrop = useCallback(({ event, start, end }: any) => {
     console.log('Event moved:', event, start, end);
   }, []);
-
   const handleEventResize = useCallback(({ event, start, end }: any) => {
     console.log('Event resized:', event, start, end);
   }, []);
-
   const eventStyleGetter = useCallback((event: any) => {
     return {
       style: {
@@ -290,26 +256,21 @@ const ServicePage = () => {
       }
     };
   }, []);
-
   // Liste görünümü için filtreleme
   const filteredServices = serviceRequests?.filter(request => {
     const matchesSearch = !searchQuery || 
       request.service_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       request.service_location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       request.service_request_description?.toLowerCase().includes(searchQuery.toLowerCase());
-    
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'new' && (request.service_status === 'new' || request.service_status === 'assigned')) ||
       (statusFilter !== 'new' && request.service_status === statusFilter);
     const matchesPriority = priorityFilter === 'all' || request.service_priority === priorityFilter;
-    
     return matchesSearch && matchesStatus && matchesPriority;
   }) || [];
-
   // Sıralama
   const sortedServices = [...filteredServices].sort((a, b) => {
     let valueA, valueB;
-    
     if (sortField === "title") {
       valueA = (a.service_title || '').toLowerCase();
       valueB = (b.service_title || '').toLowerCase();
@@ -321,14 +282,12 @@ const ServicePage = () => {
       valueA = new Date(a.created_at || 0).getTime();
       valueB = new Date(b.created_at || 0).getTime();
     }
-    
     if (sortDirection === "asc") {
       return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
     } else {
       return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
     }
   });
-
   const handleSort = (field: "title" | "priority" | "created_at") => {
     if (field === sortField) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -337,7 +296,6 @@ const ServicePage = () => {
       setSortDirection(field === "created_at" ? "desc" : "asc");
     }
   };
-
   // İstatistikleri hesapla
   const stats = {
     total: serviceRequests?.length || 0,
@@ -347,21 +305,18 @@ const ServicePage = () => {
     urgent: serviceRequests?.filter(r => r.service_priority === 'urgent').length || 0,
     unassigned: serviceRequests?.filter(r => !r.assigned_technician).length || 0,
   };
-
   return (
-    <DefaultLayout>
+    <>
       <div className="space-y-6">
         <ServicePageHeader 
           activeView={activeView} 
           setActiveView={setActiveView}
           onCreateRequest={() => navigate("/service/new")}
         />
-
         <ServiceStatsCards 
           stats={stats} 
           viewType={activeView} 
         />
-
         {/* Content based on view */}
         {activeView === "calendar" ? (
           /* React Big Calendar */
@@ -404,7 +359,6 @@ const ServicePage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
@@ -412,7 +366,6 @@ const ServicePage = () => {
                     <CalendarDays className="h-5 w-5 text-blue-600" />
                     Servis Takvimi
                   </h3>
-                  
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -441,7 +394,6 @@ const ServicePage = () => {
                     </Button>
                   </div>
                 </div>
-
                 {/* Kontrol Paneli */}
                 <div className="flex items-center justify-between gap-4">
                   {/* Görünüm Seçici */}
@@ -474,7 +426,6 @@ const ServicePage = () => {
                       </Button>
                     </div>
                   </div>
-
                   {/* Filtre Kontrolü */}
                   <div className="flex items-center gap-2">
                     <Button
@@ -486,7 +437,6 @@ const ServicePage = () => {
                       <Users className="h-4 w-4 mr-1" />
                       Teknisyen Görünümü
                     </Button>
-                    
                     <Button
                       variant="outline"
                       size="sm"
@@ -496,7 +446,6 @@ const ServicePage = () => {
                       {showCompletedServices ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
                       Tamamlanan
                     </Button>
-                    
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Users className="h-4 w-4" />
                       <span>{resources.length} teknisyen</span>
@@ -506,7 +455,6 @@ const ServicePage = () => {
                   </div>
                 </div>
               </div>
-
               {/* Modern Servis Takvimi */}
               <div className="flex rounded-xl overflow-hidden shadow-lg border border-gray-200" style={{ height: 'calc(100vh - 200px)' }}>
                 {/* Ana Takvim Alanı */}
@@ -526,7 +474,6 @@ const ServicePage = () => {
                           </div>
                         </div>
                       </div>
-                      
                       {/* Gün sütunları Container - Teknisyen Satırlarıyla Aynı Yapı */}
                       <div className="flex flex-1">
                       {Array.from({ length: 7 }, (_, i) => {
@@ -544,7 +491,6 @@ const ServicePage = () => {
                         const turkishDay = turkishDays[dayName as keyof typeof turkishDays] || dayName;
                         const isToday = date.isSame(moment(), 'day');
                         const isWeekend = i === 5 || i === 6; // Cumartesi & Pazar
-                        
                         return (
                           <div 
                             key={i} 
@@ -592,7 +538,6 @@ const ServicePage = () => {
                             </p>
                           </div>
                         </div>
-                        
                         {/* Gün Hücreleri Container - Eşit Dağılım */}
                         <div className="flex flex-1">
                         {/* Gün hücreleri - Modern Drag & Drop */}
@@ -600,13 +545,11 @@ const ServicePage = () => {
                           const date = moment(currentDate).startOf('week').add(i, 'days');
                           const isToday = date.isSame(moment(), 'day');
                           const isWeekend = i === 5 || i === 6;
-                          
                           // Bu teknisyen ve günde servis var mı kontrol et
                           const dayServices = calendarEvents.filter(event => {
                             const eventDate = moment(event.start);
                             return eventDate.isSame(date, 'day') && event.resourceId === tech.resourceId;
                           });
-
                           return (
                         <div 
                           key={i} 
@@ -621,31 +564,26 @@ const ServicePage = () => {
                             e.preventDefault();
                             e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300', 'border-2', 'border-dashed');
                             e.currentTarget.classList.add('bg-green-100');
-                            
                             const serviceData = e.dataTransfer.getData('text/plain');
                             if (serviceData) {
                               const service = JSON.parse(serviceData);
                               console.log('✅ Servis atandı:', service.title, '→ Teknisyen:', tech.title, 'Gün:', i);
-                              
                               // State'i güncelle - servisi teknisyene ata
                               setAssignedServices(prev => {
                                 const newMap = new Map(prev);
                                 newMap.set(service.id, tech.resourceId);
                                 return newMap;
                               });
-                              
                               // Animasyonlu başarı mesajı
                               const successMessage = document.createElement('div');
                               successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white p-3 rounded-lg shadow-lg z-50 animate-pulse';
                               successMessage.innerHTML = `✅ ${service.title} başarıyla ${tech.title} teknisyenine atandı!`;
                               document.body.appendChild(successMessage);
                               setTimeout(() => successMessage.remove(), 3000);
-                              
                               // Hücreyi normal haline döndür
                               setTimeout(() => {
                                 e.currentTarget.classList.remove('bg-green-100');
                               }, 1000);
-                              
                               // Burada gerçek atama işlemi yapılacak
                               // TODO: Supabase'e servisi teknisyene atama
                             }
@@ -687,12 +625,10 @@ const ServicePage = () => {
                                     {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
                                     </span>
                                   </div>
-                                  
                                   {/* Hover overlay */}
                                   <div className="absolute inset-0 bg-white/10 rounded-md opacity-0 group-hover/service:opacity-100 transition-opacity duration-200"></div>
                                 </div>
                               ))}
-                              
                               {/* Boş gün için placeholder - Responsive */}
                               {dayServices.length === 0 && (
                                 <div className="opacity-0 group-hover:opacity-30 transition-opacity duration-300 text-center py-3 w-full">
@@ -710,7 +646,6 @@ const ServicePage = () => {
                     ))}
                   </div>
                 </div>
-
                 {/* Modern Atanmamış Servisler Sidebar */}
                 <div className="w-80 bg-gradient-to-b from-orange-50 to-red-50 flex flex-col border-l border-orange-200 shadow-inner">
                   {/* Header - Modern Gradient */}
@@ -724,7 +659,6 @@ const ServicePage = () => {
                         <p className="text-xs opacity-90">Teknisyenlere sürükleyip bırakın</p>
                       </div>
                   </div>
-                  
                     {/* Count Badge */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-xs">
@@ -738,7 +672,6 @@ const ServicePage = () => {
                       </div>
                     </div>
                   </div>
-                  
                   {/* Servis Listesi */}
                   <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
                     {/* Atanmamış servisleri filtrele */}
@@ -772,7 +705,6 @@ const ServicePage = () => {
                                 {service.title}
                               </h4>
                             </div>
-                            
                             {/* Kompakt Öncelik Badge */}
                             <div className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium ${
                               service.priority === 'urgent' ? 'bg-red-100 text-red-700' :
@@ -791,7 +723,6 @@ const ServicePage = () => {
                                service.priority === 'medium' ? 'Orta' : 'Düşük'}
                             </div>
                           </div>
-                          
                           {/* Kompakt Lokasyon */}
                           {service.location && (
                             <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
@@ -799,7 +730,6 @@ const ServicePage = () => {
                               <span className="truncate">{service.location}</span>
                             </div>
                           )}
-                          
                           {/* Kompakt Alt Bilgi - Zaman ve Durum */}
                           <div className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-1 text-gray-600">
@@ -808,13 +738,11 @@ const ServicePage = () => {
                                 {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
                               </span>
                             </div>
-                            
                             <div className="flex items-center gap-1 text-orange-600">
                               <User className="h-2.5 w-2.5" />
                               <span className="font-medium">Atanmamış</span>
                             </div>
                           </div>
-                          
                           {/* Kompakt Drag Handle */}
                           <div className="absolute top-1 right-1 opacity-20 group-hover:opacity-40 transition-opacity">
                             <div className="grid grid-cols-2 gap-0.5">
@@ -826,7 +754,6 @@ const ServicePage = () => {
                           </div>
                         </div>
                       ))}
-                    
                     {/* Atanmamış servis yoksa - Modern Empty State */}
                     {calendarEvents.filter(event => !event.resourceId || event.resourceId === 'unassigned').length === 0 && (
                       <div className="text-center py-12 px-4">
@@ -834,15 +761,12 @@ const ServicePage = () => {
                           <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg">
                             <CheckCircle className="h-8 w-8 text-white" />
                           </div>
-                          
                           {/* Success animation rings */}
                           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-16 border-2 border-green-300 rounded-full animate-ping opacity-20"></div>
                           <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-14 h-14 border-2 border-green-400 rounded-full animate-ping opacity-30 animation-delay-150"></div>
                         </div>
-                        
                         <h3 className="text-lg font-bold text-gray-800 mb-2">Harika İş! 🎉</h3>
                         <p className="text-sm text-gray-600 mb-4">Tüm servisler teknisyenlere atanmış durumda.</p>
-                        
                         <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-xs text-green-700">
                           ✨ Servis takiminiz verimli çalışıyor!
                         </div>
@@ -851,7 +775,6 @@ const ServicePage = () => {
                   </div>
                 </div>
               </div>
-
               {/* Modern Alt Bilgi Paneli */}
               <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-t border-slate-200 p-4 shadow-inner">
                 <div className="flex items-center justify-between">
@@ -865,7 +788,6 @@ const ServicePage = () => {
                       <p className="text-gray-500 mt-1">Atanmamış servisleri teknisyenlere ve tarih hücrelerine sürükleyin</p>
                         </div>
                         </div>
-                  
                   {/* Sağ taraf - Öncelik Legendası */}
                   <div className="flex items-center gap-6">
                     <div className="text-xs text-gray-700">
@@ -935,7 +857,6 @@ const ServicePage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                   <Table>
@@ -1109,7 +1030,6 @@ const ServicePage = () => {
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>
-                                  
                                   {/* Detay Butonu */}
                                   <Button
                                     variant="ghost"
@@ -1122,7 +1042,6 @@ const ServicePage = () => {
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
-                                  
                                   {/* Silme Butonu */}
                                   <Button
                                     variant="ghost"
@@ -1148,7 +1067,6 @@ const ServicePage = () => {
               </>
             )}
         </div>
-
         {/* Silme Onay Dialog'u */}
         <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
           <DialogContent className="max-w-md">
@@ -1192,9 +1110,7 @@ const ServicePage = () => {
             </div>
           </DialogContent>
         </Dialog>
-    </DefaultLayout>
+    </>
   );
 };
-
 export default ServicePage;
-

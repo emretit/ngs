@@ -20,7 +20,6 @@ import { PdfExportService } from '@/services/pdf/pdfExportService';
 import { LogoUploadField } from '@/components/templates/LogoUploadField';
 import { CustomTextFields } from '@/components/templates/CustomTextFields';
 import { toast } from 'sonner';
-import Navbar from '@/components/Navbar';
 
 interface PdfTemplateEditorProps {
   isCollapsed?: boolean;
@@ -369,8 +368,6 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
     }
   };
 
-
-
   const handleDownloadPdf = async () => {
     if (!previewData || !selectedTemplate) return;
     
@@ -386,15 +383,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
     }
   };
 
-
-
-
   const watchedValues = form.watch();
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`transition-all duration-300 ${isCollapsed ? 'ml-[60px]' : 'ml-64'} h-screen flex flex-col`}>
+    <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="border-b bg-background p-4">
         <div className="flex items-center justify-between">
@@ -902,7 +894,6 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
-      </main>
     </div>
   );
 };

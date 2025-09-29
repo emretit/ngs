@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { ErrorDisplay } from "@/components/auth/ErrorDisplay";
 import { Home } from "lucide-react";
-
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -14,7 +13,6 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
-
   // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
@@ -23,19 +21,15 @@ const ForgotPassword = () => {
         navigate("/dashboard");
       }
     };
-    
     checkSession();
   }, [navigate]);
-
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-
     if (error) {
       setError(error.message);
       toast({
@@ -50,10 +44,8 @@ const ForgotPassword = () => {
         description: "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.",
       });
     }
-    
     setLoading(false);
   };
-
   return (
     <div className="min-h-screen flex">
       {/* Ana sayfa ikonu - Sol üst */}
@@ -63,7 +55,6 @@ const ForgotPassword = () => {
       >
         <Home className="h-6 w-6 text-gray-600 group-hover:text-primary transition-colors" />
       </button>
-
       {/* Sol taraf - Form */}
       <div className="flex-1 flex items-center justify-center px-8 py-12 bg-white">
         <div className="w-full max-w-md space-y-8">
@@ -88,7 +79,6 @@ const ForgotPassword = () => {
               E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.
             </p>
           </div>
-
           {!emailSent ? (
             <form onSubmit={handleResetPassword} className="space-y-6">
               <div>
@@ -101,7 +91,6 @@ const ForgotPassword = () => {
                   required
                 />
               </div>
-              
               <Button 
                 type="submit"
                 disabled={!email || loading}
@@ -117,7 +106,6 @@ const ForgotPassword = () => {
                 <p>Şifre sıfırlama bağlantısı <strong>{email}</strong> adresine gönderildi.</p>
                 <p className="mt-2">E-posta kutunuzu kontrol edin ve bağlantıya tıklayın.</p>
               </div>
-              
               <Button 
                 onClick={() => setEmailSent(false)}
                 variant="outline"
@@ -127,12 +115,8 @@ const ForgotPassword = () => {
               </Button>
             </div>
           )}
-
           {/* Hata gösterimi */}
           <ErrorDisplay error={error} />
-
-
-
           {/* Alt linkler */}
           <div className="text-center space-y-4">
             <p className="text-gray-600">
@@ -144,7 +128,6 @@ const ForgotPassword = () => {
                 Giriş yapın
               </button>
             </p>
-            
             <p className="text-gray-600">
               Hesabınız yok mu?{" "}
               <button 
@@ -157,11 +140,9 @@ const ForgotPassword = () => {
           </div>
         </div>
       </div>
-
       {/* Sağ taraf - Görsel */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-blue-600 to-blue-800 relative overflow-hidden">
         <div className="absolute inset-0 bg-blue-600/90"></div>
-        
         {/* Ana görsel - CRM/ERP arayüzü */}
         <div className="relative z-10 flex items-center justify-center w-full">
           <div className="bg-white rounded-xl shadow-2xl p-8 transform rotate-3 scale-90">
@@ -173,7 +154,6 @@ const ForgotPassword = () => {
                 <div className="w-24 h-3 bg-blue-200 rounded"></div>
                 <div className="w-16 h-3 bg-blue-200 rounded"></div>
               </div>
-              
               {/* Tablo satırları */}
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="flex space-x-2 mb-2">
@@ -183,7 +163,6 @@ const ForgotPassword = () => {
                   <div className="w-16 h-2 bg-gray-200 rounded"></div>
                 </div>
               ))}
-              
               {/* Progress bar */}
               <div className="mt-4">
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -193,12 +172,10 @@ const ForgotPassword = () => {
             </div>
           </div>
         </div>
-
         {/* Dekoratif elementler */}
         <div className="absolute top-10 right-10 w-20 h-20 bg-white/10 rounded-full"></div>
         <div className="absolute bottom-20 left-16 w-16 h-16 bg-white/10 rounded-full"></div>
         <div className="absolute top-1/2 right-20 w-12 h-12 bg-white/5 rounded-full"></div>
-        
         {/* Alt bilgi */}
         <div className="absolute bottom-8 right-8 text-white/60 text-sm">
           Gizlilik - Şartlar
@@ -207,5 +184,4 @@ const ForgotPassword = () => {
     </div>
   );
 };
-
 export default ForgotPassword;

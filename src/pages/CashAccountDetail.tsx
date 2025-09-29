@@ -18,8 +18,6 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import Navbar from "@/components/Navbar";
-import { TopBar } from "@/components/TopBar";
 import CashIncomeModal from "@/components/cashflow/modals/CashIncomeModal";
 import CashExpenseModal from "@/components/cashflow/modals/CashExpenseModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -149,23 +147,15 @@ const CashAccountDetail = ({ isCollapsed, setIsCollapsed }: CashAccountDetailPro
 
   if (loading || !account) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-        }`}>
-          <TopBar />
-          <div className="p-4 sm:p-8">
-            <div className="max-w-[1600px] mx-auto">
-              <div className="flex items-center justify-center h-64">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 border-4 border-t-green-600 border-green-200 rounded-full animate-spin"></div>
-                  <span className="text-gray-600">Nakit kasa bilgileri yükleniyor...</span>
-                </div>
-              </div>
+      <div className="p-4 sm:p-8">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 border-4 border-t-green-600 border-green-200 rounded-full animate-spin"></div>
+              <span className="text-gray-600">Nakit kasa bilgileri yükleniyor...</span>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
@@ -176,13 +166,7 @@ const CashAccountDetail = ({ isCollapsed, setIsCollapsed }: CashAccountDetailPro
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex relative">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 transition-all duration-300 ${
-        isCollapsed ? "ml-[60px]" : "ml-[60px] sm:ml-64"
-      }`}>
-        <TopBar />
-        
+    <div className="p-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
           {/* Sol taraf - Başlık */}
@@ -401,8 +385,7 @@ const CashAccountDetail = ({ isCollapsed, setIsCollapsed }: CashAccountDetailPro
             />
           </>
         )}
-      </main>
-    </div>
+      </div>
   );
 };
 

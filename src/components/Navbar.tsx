@@ -17,33 +17,6 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const navRef = useRef<HTMLElement>(null);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set<string>());
 
-  useEffect(() => {
-    // Sadece aktif dropdown menüyü aç, diğer açık olanları koru
-    navItems.forEach((item: any) => {
-      if (item.hasDropdown && item.items) {
-        const isParentActive = location.pathname === item.path;
-        const hasActiveChild = item.items.some((s: any) => {
-          // Exact match
-          if (location.pathname === s.path) return true;
-          // Check if current path starts with sub-item path (for detail pages)
-          // But make sure it's not matching parent paths
-          if (s.path !== '/' && s.path !== item.path && location.pathname.startsWith(s.path + '/')) return true;
-          // Special case: cash-accounts detail pages should also match bank-accounts nav item
-          if (s.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/cash-accounts/')) return true;
-          if (s.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/credit-cards/')) return true;
-          if (s.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/partner-accounts/')) return true;
-          // Special case: proposal pages should match proposals nav item
-          if (s.path === '/proposals' && location.pathname.startsWith('/proposal/')) return true;
-          return false;
-        });
-        
-        // Sadece aktif olan menüyü aç, diğerlerine dokunma
-        if ((isParentActive || hasActiveChild) && !expandedMenus.has(item.path)) {
-          setExpandedMenus(prev => new Set(prev).add(item.path));
-        }
-      }
-    });
-  }, [location.pathname]);
 
   // Dropdown menüler varsayılan olarak kapalı tutulur
 

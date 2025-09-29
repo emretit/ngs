@@ -19,8 +19,7 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
-import DefaultLayout from '@/components/layouts/DefaultLayout';
-
+import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 interface ParsedProduct {
   name: string;
   sku: string | null;
@@ -32,7 +31,6 @@ interface ParsedProduct {
   tax_amount?: number;
   discount_amount?: number;
 }
-
 interface ExistingProduct {
   id: string;
   name: string;
@@ -43,13 +41,11 @@ interface ExistingProduct {
   unit: string;
   tax_rate: number;
 }
-
 interface ProductMapping {
   parsedProduct: ParsedProduct;
   selectedProductId: string | null;
   action: 'create' | 'update' | 'skip';
 }
-
 interface Invoice {
   id: string;
   invoiceNumber: string;
@@ -61,24 +57,20 @@ interface Invoice {
   taxAmount: number;
   status: string;
 }
-
 interface ProductMappingProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
-
 export default function ProductMapping({ isCollapsed = false, setIsCollapsed = () => {} }: ProductMappingProps) {
   const { invoiceId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
   const [existingProducts, setExistingProducts] = useState<ExistingProduct[]>([]);
   const [productMappings, setProductMappings] = useState<ProductMapping[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-
   // Mevcut ürünleri yükle
   const loadExistingProducts = async () => {
     try {
@@ -88,7 +80,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
         .select('id, name, sku, price, category_type, stock_quantity, unit, tax_rate')
         .eq('is_active', true)
         .order('name');
-
       if (error) throw error;
       console.log('✅ Mevcut ürünler yüklendi:', data?.length || 0);
       setExistingProducts(data || []);
@@ -103,7 +94,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       return [];
     }
   };
-
   // Fatura ve ürün verilerini yükle
   const loadInvoiceData = async () => {
     if (!invoiceId) {
@@ -115,11 +105,9 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       navigate('/orders/purchase');
       return;
     }
-    
     setIsLoading(true);
     try {
       console.log('🔄 Fatura verileri yükleniyor...', invoiceId);
-      
       // Fatura verilerini session storage'dan al
       const invoiceData = sessionStorage.getItem(`invoice_${invoiceId}`);
       if (invoiceData) {
@@ -127,10 +115,8 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
         setInvoice(parsedInvoice);
         console.log('✅ Fatura bilgileri session storage\'dan alındı:', parsedInvoice.invoiceNumber);
       }
-
       // Önce mevcut ürünleri yükle
       const existingProductsData = await loadExistingProducts();
-
       // XML'den ürünleri parse et
       console.log('🔄 XML\'den ürünler parse ediliyor...');
       const { data, error } = await supabase.functions.invoke('nilvera-invoices', {
@@ -139,30 +125,23 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
           invoiceId: invoiceId
         }
       });
-
       console.log('📥 XML Parse API Response:', data);
-
       if (error) {
         console.error('❌ Supabase function error:', error);
         throw error;
       }
-
       if (data && data.success) {
         const products = data.xmlParsed || [];
         console.log('✅ Parse edilen ürünler:', products.length);
         console.log('🎯 İlk ürün örneği:', products[0]);
-        
         setParsedProducts(products);
-        
         // Otomatik eşleştirme önerileri oluştur
         const mappings = products.map((product: ParsedProduct) => {
           let suggestedProduct = null;
-          
           // SKU ile eşleştirme
           if (product.sku) {
             suggestedProduct = existingProductsData.find((p: ExistingProduct) => p.sku === product.sku);
           }
-
           // İsim ile eşleştirme
           if (!suggestedProduct && product.name) {
             suggestedProduct = existingProductsData.find((p: ExistingProduct) =>
@@ -170,17 +149,14 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
               product.name.toLowerCase().includes(p.name.toLowerCase())
             );
           }
-          
           return {
             parsedProduct: product,
             selectedProductId: suggestedProduct?.id || null,
             action: 'create' // Varsayılan olarak yeni ürün oluştur
           } as ProductMapping;
         });
-        
         setProductMappings(mappings);
         console.log('✅ Eşleştirme önerileri oluşturuldu:', mappings.length);
-        
         if (products.length === 0) {
           toast({
             title: "⚠️ Uyarı",
@@ -208,11 +184,9 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     loadInvoiceData();
   }, [invoiceId]);
-
   // Ürün seçimi
   const handleProductSelect = (index: number, product: any) => {
     const newMappings = [...productMappings];
@@ -223,7 +197,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
     };
     setProductMappings(newMappings);
   };
-
   // Yeni ürün oluşturma
   const handleCreateNewProduct = (index: number) => {
     const newMappings = [...productMappings];
@@ -234,7 +207,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
     };
     setProductMappings(newMappings);
   };
-
   // Ürün eşleştirmesini atla
   const handleSkipProduct = (index: number) => {
     const newMappings = [...productMappings];
@@ -245,22 +217,17 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
     };
     setProductMappings(newMappings);
   };
-
   // Geri dön
   const handleBack = () => {
     navigate('/orders/purchase');
   };
-
   // Eşleştirmeleri kaydet
   const saveMappings = async () => {
     if (!invoice) return;
-    
     setIsSaving(true);
-    
     try {
       const processedMappings = productMappings.filter(m => m.action !== 'skip');
       const results = [];
-      
       for (const mapping of processedMappings) {
         try {
           if (mapping.action === 'create') {
@@ -285,7 +252,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
               })
               .select()
               .single();
-
             if (error) throw error;
             results.push({ type: 'created', product: newProduct });
           } else if (mapping.action === 'update' && mapping.selectedProductId) {
@@ -300,7 +266,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
               .eq('id', mapping.selectedProductId)
               .select()
               .single();
-
             if (error) throw error;
             results.push({ type: 'updated', product: updatedProduct });
           }
@@ -309,23 +274,19 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
           results.push({ type: 'error', error: error });
         }
       }
-
       const createdCount = results.filter(r => r.type === 'created').length;
       const updatedCount = results.filter(r => r.type === 'updated').length;
       const errorCount = results.filter(r => r.type === 'error').length;
-
       toast({
         title: "✅ Eşleştirme Tamamlandı",
         description: `${createdCount} ürün oluşturuldu, ${updatedCount} ürün güncellendi${errorCount > 0 ? `, ${errorCount} hata` : ''}`,
       });
-
       // Başarılı ise geri dön
       if (errorCount === 0) {
         setTimeout(() => {
           handleBack();
         }, 2000);
       }
-
     } catch (error: any) {
       console.error('❌ Kaydetme hatası:', error);
       toast({
@@ -337,15 +298,8 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       setIsSaving(false);
     }
   };
-
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="Ürün Eşleştirme"
-      subtitle={`Fatura No: ${invoice?.invoiceNumber || 'Yükleniyor...'} - ${invoice?.supplierName || ''}`}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <Button
@@ -356,7 +310,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
             <ArrowLeft className="w-4 h-4" />
             Geri Dön
           </Button>
-          
           {!isLoading && productMappings.length > 0 && (
             <div className="flex items-center gap-4">
               <div className="text-sm text-gray-600">
@@ -377,7 +330,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
             </div>
           )}
         </div>
-
         {/* Loading State */}
         {isLoading ? (
           <Card>
@@ -429,7 +381,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                       <p className="font-semibold">{invoice?.supplierName}</p>
                     </div>
                   </div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Adres</label>
@@ -440,7 +391,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                       <p className="font-semibold">{invoice?.supplierTaxNumber}</p>
                     </div>
                   </div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Belge No</label>
@@ -453,7 +403,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                       </p>
                     </div>
                   </div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Vadesi</label>
@@ -468,7 +417,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                       </select>
                     </div>
                   </div>
-                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Masraf Kalemi</label>
@@ -478,7 +426,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                     </div>
                     <div></div>
                   </div>
-                  
                   <div>
                     <label className="text-sm font-medium text-gray-600">Açıklama</label>
                     <textarea 
@@ -489,7 +436,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                 </CardContent>
               </Card>
             </div>
-
             {/* Sağ Panel - Ürün/Hizmetler */}
             <div className="col-span-7">
               <Card>
@@ -620,7 +566,6 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                       </tbody>
                     </table>
                   </div>
-                  
                   {/* Toplam Alanı */}
                   <div className="border-t bg-gray-50 p-4">
                     <div className="flex justify-end">
@@ -669,6 +614,5 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
           </div>
         )}
       </div>
-    </DefaultLayout>
   );
 } 

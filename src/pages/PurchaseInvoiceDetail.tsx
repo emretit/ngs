@@ -5,36 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Edit, Download, FileText, Calendar, User, Building2 } from "lucide-react";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
-
 interface PurchaseInvoiceDetailProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceDetailProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { fetchInvoiceById } = usePurchaseInvoices();
   const [invoice, setInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     if (id) {
       loadInvoice();
     }
   }, [id]);
-
   const loadInvoice = async () => {
     try {
       setLoading(true);
       const invoiceData = await fetchInvoiceById(id!);
-
       // Supplier bilgisini al
       if (invoiceData.supplier_id) {
         const { data: supplier } = await supabase
@@ -42,7 +36,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
           .select("id, name, company, tax_number")
           .eq("id", invoiceData.supplier_id)
           .single();
-
         setInvoice({ ...invoiceData, supplier });
       } else {
         setInvoice(invoiceData);
@@ -53,7 +46,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
       setLoading(false);
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -61,7 +53,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
       minimumFractionDigits: 2
     }).format(amount);
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -76,32 +67,17 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-
   if (loading) {
     return (
-      <DefaultLayout
-        isCollapsed={isCollapsed}
-        setIsCollapsed={setIsCollapsed}
-        title="Fatura Detayı"
-        subtitle="Fatura bilgileri yükleniyor..."
-      >
-        <div className="space-y-6">
+    <div className="space-y-6">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-64 w-full" />
         </div>
-      </DefaultLayout>
-    );
+  );
   }
-
   if (!invoice) {
     return (
-      <DefaultLayout
-        isCollapsed={isCollapsed}
-        setIsCollapsed={setIsCollapsed}
-        title="Fatura Bulunamadı"
-        subtitle="Aradığınız fatura bulunamadı"
-      >
-        <div className="text-center py-8">
+    <div className="text-center py-8">
           <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
           <p className="text-gray-500">Fatura bulunamadı</p>
           <Button
@@ -113,18 +89,10 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
             Faturalara Dön
           </Button>
         </div>
-      </DefaultLayout>
-    );
+  );
   }
-
   return (
-    <DefaultLayout
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-      title="Alış Faturası Detayı"
-      subtitle={`Fatura No: ${invoice.invoice_number || 'Henüz atanmadı'}`}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header Actions */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <Button
@@ -134,7 +102,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
             <ArrowLeft className="h-4 w-4 mr-2" />
             Geri
           </Button>
-
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
@@ -155,7 +122,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
             </Button>
           </div>
         </div>
-
         {/* Invoice Info Card */}
         <Card>
           <CardHeader>
@@ -179,7 +145,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                     {invoice.invoice_number || 'Henüz atanmadı'}
                   </p>
                 </div>
-
                 <div>
                   <label className="text-sm font-medium text-gray-500">Fatura Tarihi</label>
                   <p className="flex items-center gap-2">
@@ -187,7 +152,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                     {invoice.invoice_date ? format(new Date(invoice.invoice_date), "dd MMMM yyyy", { locale: tr }) : 'Belirtilmemiş'}
                   </p>
                 </div>
-
                 {invoice.due_date && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Vade Tarihi</label>
@@ -197,13 +161,11 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                     </p>
                   </div>
                 )}
-
                 <div>
                   <label className="text-sm font-medium text-gray-500">Para Birimi</label>
                   <p>{invoice.currency || 'TRY'}</p>
                 </div>
               </div>
-
               {/* Sağ Kolon - Tedarikçi Bilgileri */}
               <div className="space-y-4">
                 <div>
@@ -221,14 +183,12 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                     </div>
                   </div>
                 </div>
-
                 {invoice.supplier?.tax_number && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Vergi No</label>
                     <p>{invoice.supplier.tax_number}</p>
                   </div>
                 )}
-
                 {invoice.description && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Açıklama</label>
@@ -237,9 +197,7 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                 )}
               </div>
             </div>
-
             <Separator />
-
             {/* Tutar Bilgileri */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -263,7 +221,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                 </div>
               </div>
             </div>
-
             {invoice.notes && (
               <>
                 <Separator />
@@ -275,7 +232,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
             )}
           </CardContent>
         </Card>
-
         {/* Fatura Kalemleri */}
         <Card>
           <CardHeader>
@@ -292,7 +248,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
             </div>
           </CardContent>
         </Card>
-
         {/* Ödeme Geçmişi */}
         <Card>
           <CardHeader>
@@ -307,8 +262,6 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
           </CardContent>
         </Card>
       </div>
-    </DefaultLayout>
   );
 };
-
 export default PurchaseInvoiceDetail;

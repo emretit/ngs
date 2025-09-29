@@ -3,8 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Vehicle } from "@/types/vehicle";
-import Navbar from "@/components/Navbar";
-import TopBar from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,53 +71,27 @@ const VehicleDetails = ({ isCollapsed, setIsCollapsed }: VehicleDetailsProps) =>
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-64"
-        }`}>
-          <TopBar />
-          <div className="p-6">
-            <div className="flex justify-center items-center h-64">
-              <div className="text-lg">Yükleniyor...</div>
-            </div>
-          </div>
-        </main>
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg">Yükleniyor...</div>
       </div>
     );
   }
 
   if (error || !vehicle) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-        <main className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-[60px]" : "ml-64"
-        }`}>
-          <TopBar />
-          <div className="p-6">
-            <div className="flex flex-col items-center justify-center h-64 space-y-4">
-              <Car className="h-16 w-16 text-muted-foreground" />
-              <div className="text-xl font-semibold">Araç bulunamadı</div>
-              <Button onClick={() => navigate('/vehicles')} variant="outline">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Araç Listesine Dön
-              </Button>
-            </div>
-          </div>
-        </main>
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <Car className="h-16 w-16 text-muted-foreground" />
+        <div className="text-xl font-semibold">Araç bulunamadı</div>
+        <Button onClick={() => navigate('/vehicles')} variant="outline">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Araç Listesine Dön
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      <main className={`flex-1 transition-all duration-300 ${
-        isCollapsed ? "ml-[60px]" : "ml-64"
-      }`}>
-        <TopBar />
-        <div className="p-6">
+    <div className="p-6">
           <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -422,8 +394,6 @@ const VehicleDetails = ({ isCollapsed, setIsCollapsed }: VehicleDetailsProps) =>
             </Tabs>
           </div>
         </div>
-      </main>
-    </div>
   );
 };
 

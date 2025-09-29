@@ -1,21 +1,12 @@
 import { useState } from "react";
-import DefaultLayout from "@/components/layouts/DefaultLayout";
 import { RotateCcw, AlertCircle, CheckCircle, Clock } from "lucide-react";
-
 interface ReturnsProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+  
+  
 }
-
 const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
   return (
-    <DefaultLayout
-      title="İadeler"
-      subtitle="Ürün iadelerini takip edin ve yönetin"
-      isCollapsed={isCollapsed}
-      setIsCollapsed={setIsCollapsed}
-    >
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-card rounded-lg p-6 border">
             <div className="flex items-center justify-between">
@@ -26,7 +17,6 @@ const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
               <Clock className="h-8 w-8 text-orange-500" />
             </div>
           </div>
-          
           <div className="bg-card rounded-lg p-6 border">
             <div className="flex items-center justify-between">
               <div>
@@ -36,7 +26,6 @@ const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
               <AlertCircle className="h-8 w-8 text-blue-500" />
             </div>
           </div>
-          
           <div className="bg-card rounded-lg p-6 border">
             <div className="flex items-center justify-between">
               <div>
@@ -46,7 +35,6 @@ const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
           </div>
-          
           <div className="bg-card rounded-lg p-6 border">
             <div className="flex items-center justify-between">
               <div>
@@ -57,7 +45,6 @@ const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
             </div>
           </div>
         </div>
-
         <div className="bg-card rounded-lg border">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">Son İade Talepleri</h3>
@@ -84,8 +71,6 @@ const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
           </div>
         </div>
       </div>
-    </DefaultLayout>
   );
 };
-
 export default Returns;

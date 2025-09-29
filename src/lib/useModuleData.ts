@@ -468,6 +468,8 @@ export const useModuleData = () => {
             id: edgeId,
             source: module.parent,
             target: module.id,
+            sourceHandle: `${module.parent}-source`,
+            targetHandle: `${module.id}-target`,
             type: 'smoothstep',
             style: { stroke: 'hsl(var(--border))', strokeWidth: 2 },
             markerEnd: { type: MarkerType.Arrow, color: 'hsl(var(--border))' }
@@ -479,23 +481,33 @@ export const useModuleData = () => {
     // Add custom module links
     moduleLinks.forEach(link => {
       if (nodeMap.has(link.source) && nodeMap.has(link.target)) {
-        const edgeId = `link-${link.source}-${link.target}`;
-        if (!edgeSet.has(edgeId)) {
-          edgeSet.add(edgeId);
-          edgeArray.push({
-            id: edgeId,
-            source: link.source,
-            target: link.target,
-            type: 'smoothstep',
-            label: link.label,
-            style: {
-              stroke: link.style?.stroke || 'hsl(var(--primary))',
-              strokeWidth: link.style?.strokeWidth || 2,
-              strokeDasharray: link.style?.strokeDasharray || undefined
-            },
-            markerEnd: { type: MarkerType.Arrow, color: link.style?.stroke || 'hsl(var(--primary))' },
-            animated: true
-          });
+        // Only add cross-module links for nodes that are both visible
+        // and the source node is either a non-leaf or a specific leaf that should have output handles
+        const sourceNode = filteredModules.find(m => m.id === link.source);
+        if (sourceNode && (
+          sourceNode.kind !== 'leaf' || 
+          ['crm-customers', 'crm-proposals', 'hr-employees'].includes(sourceNode.id)
+        )) {
+          const edgeId = `link-${link.source}-${link.target}`;
+          if (!edgeSet.has(edgeId)) {
+            edgeSet.add(edgeId);
+            edgeArray.push({
+              id: edgeId,
+              source: link.source,
+              target: link.target,
+              sourceHandle: `${link.source}-source`,
+              targetHandle: `${link.target}-target`,
+              type: 'smoothstep',
+              label: link.label,
+              style: {
+                stroke: link.style?.stroke || 'hsl(var(--primary))',
+                strokeWidth: link.style?.strokeWidth || 2,
+                strokeDasharray: link.style?.strokeDasharray || undefined
+              },
+              markerEnd: { type: MarkerType.Arrow, color: link.style?.stroke || 'hsl(var(--primary))' },
+              animated: true
+            });
+          }
         }
       }
     });

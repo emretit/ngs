@@ -69,6 +69,7 @@ export const ModuleNode: React.FC<NodeProps<ModuleNodeData>> = ({ data, selected
         {/* Input handle for non-root nodes */}
         {data.kind !== 'root' && (
           <Handle 
+            id={`${data.id}-target`}
             type="target" 
             position={Position.Top} 
             className="!w-2 !h-2 !bg-primary !border-2 !border-background"
@@ -107,9 +108,10 @@ export const ModuleNode: React.FC<NodeProps<ModuleNodeData>> = ({ data, selected
           </div>
         </div>
 
-        {/* Output handle for non-leaf nodes */}
-        {data.kind !== 'leaf' && (
+        {/* Output handle for nodes that have children or can be sources */}
+        {(data.kind !== 'leaf' || data.id === 'crm-customers' || data.id === 'crm-proposals' || data.id === 'hr-employees') && (
           <Handle 
+            id={`${data.id}-source`}
             type="source" 
             position={Position.Bottom} 
             className="!w-2 !h-2 !bg-primary !border-2 !border-background"

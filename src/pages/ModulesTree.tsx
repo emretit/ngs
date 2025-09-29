@@ -458,7 +458,7 @@ const ModulesTreeContent: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsColl
         )}
 
         {/* Module Flow */}
-        <div className="flex-1 relative bg-gradient-to-br from-background via-background to-muted/10 rounded-lg border overflow-hidden">
+        <div className="flex-1 relative bg-gradient-to-br from-background via-background to-muted/10 rounded-lg border overflow-hidden" style={{ height: '70vh' }}>
           {nodes.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center space-y-4">
@@ -480,7 +480,7 @@ const ModulesTreeContent: React.FC<ModulesTreeProps> = ({ isCollapsed, setIsColl
               nodes={nodes}
               edges={edges}
               onNodeClick={handleNodeClick}
-              className="w-full h-full"
+              className="w-full h-full min-h-[500px]"
             />
           )}
         </div>

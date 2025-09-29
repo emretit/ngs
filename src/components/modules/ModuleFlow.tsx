@@ -30,7 +30,7 @@ export const ModuleFlow: React.FC<ModuleFlowProps> = ({
   nodes: initialNodes,
   edges: initialEdges,
   onNodeClick,
-  className = "w-full h-full"
+  className = "w-full min-h-[600px] h-full"
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);

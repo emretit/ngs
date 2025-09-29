@@ -19,8 +19,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
 
   useEffect(() => {
     // Sayfa yüklendiğinde aktif dropdown menüyü aç
-    const newExpanded = new Set<string>(expandedMenus);
-    let hasChanges = false;
+    const newExpanded = new Set<string>();
     
     navItems.forEach((item: any) => {
       if (item.hasDropdown && item.items) {
@@ -40,15 +39,19 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
           return false;
         });
         
-        if ((isParentActive || hasActiveChild) && !newExpanded.has(item.path)) {
+        // Aktif olan veya aktif child'ı olan menüyü aç
+        // Zaten açık olanları da koru
+        if (isParentActive || hasActiveChild || expandedMenus.has(item.path)) {
           newExpanded.add(item.path);
-          hasChanges = true;
         }
       }
     });
     
-    // Sadece değişiklik varsa state'i güncelle
-    if (hasChanges) {
+    // Sadece Set içeriği gerçekten değiştiyse güncelle
+    const currentPaths = Array.from(expandedMenus).sort().join(',');
+    const newPaths = Array.from(newExpanded).sort().join(',');
+    
+    if (currentPaths !== newPaths) {
       setExpandedMenus(newExpanded);
     }
   }, [location.pathname]);

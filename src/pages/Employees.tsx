@@ -7,14 +7,14 @@ import EmployeesFilterBar from "@/components/employees/EmployeesFilterBar";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
-type ViewType = "table" | "grid";
+type ViewType = "table";
 
 const Employees = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedPosition, setSelectedPosition] = useState<string>('all');
-  const [activeView, setActiveView] = useState<ViewType>("table");
+  const [activeView] = useState<ViewType>("table");
 
   // Fetch employees with stats
   const { data: employees = [], isLoading, error } = useQuery({
@@ -87,7 +87,7 @@ const Employees = () => {
       {/* Header */}
       <EmployeesHeader 
         activeView={activeView} 
-        setActiveView={setActiveView}
+        setActiveView={() => {}}
         employeeStats={employeeStats}
       />
 
@@ -119,32 +119,17 @@ const Employees = () => {
           <div className="text-red-500">Çalışanlar yüklenirken bir hata oluştu</div>
         </div>
       ) : (
-        <Tabs value={activeView} className="w-full">
-          <TabsContent value="table" className="mt-0">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div className="p-6 bg-white rounded-xl relative overflow-hidden">
-                <div className="relative z-10">
-                  <EmployeeList 
-                    employees={employees}
-                    isLoading={isLoading}
-                    onRefresh={() => window.location.reload()}
-                  />
-                </div>
-              </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="p-6 bg-white rounded-xl relative overflow-hidden">
+            <div className="relative z-10">
+              <EmployeeList 
+                employees={employees}
+                isLoading={isLoading}
+                onRefresh={() => window.location.reload()}
+              />
             </div>
-          </TabsContent>
-          <TabsContent value="grid" className="mt-0">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div className="p-6 bg-white rounded-xl relative overflow-hidden">
-                <div className="relative z-10">
-                  <div className="text-center py-12">
-                    <p className="text-muted-foreground">Grid görünümü yakında eklenecek</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       )}
     </div>
   );

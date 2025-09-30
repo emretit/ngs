@@ -4,7 +4,7 @@ import { Plus, Users, UserCheck, UserX, UserCog, Briefcase, Clock } from "lucide
 import { useNavigate } from "react-router-dom";
 import EmployeesViewToggle from "./header/EmployeesViewToggle";
 
-type ViewType = "table" | "grid";
+type ViewType = "table";
 
 interface EmployeesHeaderProps {
   activeView: ViewType;

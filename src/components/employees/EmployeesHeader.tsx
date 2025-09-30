@@ -3,12 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Plus, Users, UserCheck, UserX, UserCog, Briefcase, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import EmployeesViewToggle from "./header/EmployeesViewToggle";
-
-type ViewType = "table";
+import type { ViewMode } from "@/types/employee";
 
 interface EmployeesHeaderProps {
-  activeView: ViewType;
-  setActiveView: (view: ViewType) => void;
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
   employeeStats?: {
     total: number;
     active: number;
@@ -19,7 +18,7 @@ interface EmployeesHeaderProps {
   };
 }
 
-const EmployeesHeader = ({ activeView, setActiveView, employeeStats }: EmployeesHeaderProps) => {
+const EmployeesHeader = ({ viewMode, setViewMode, employeeStats }: EmployeesHeaderProps) => {
   const navigate = useNavigate();
 
   const statusCards = [
@@ -77,19 +76,19 @@ const EmployeesHeader = ({ activeView, setActiveView, employeeStats }: Employees
       </div>
       
       {/* Sağ taraf - Butonlar */}
-      <div className="flex items-center gap-2">
-        <EmployeesViewToggle 
-          activeView={activeView} 
-          setActiveView={setActiveView} 
-        />
-        <Button 
-          className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg transition-all duration-300" 
-          onClick={() => navigate("/add-employee")}
-        >
-          <Plus className="h-4 w-4" />
-          <span>Yeni Çalışan</span>
-        </Button>
-      </div>
+        <div className="flex items-center gap-2">
+          <EmployeesViewToggle 
+            viewMode={viewMode} 
+            setViewMode={setViewMode} 
+          />
+          <Button 
+            className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg transition-all duration-300" 
+            onClick={() => navigate("/add-employee")}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Yeni Çalışan</span>
+          </Button>
+        </div>
     </div>
   );
 };

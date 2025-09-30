@@ -55,7 +55,7 @@ const CreditCardDetail = ({ isCollapsed, setIsCollapsed }: CreditCardDetailProps
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-8">
+          <div className="p-4 sm:p-8">
         <div className="max-w-[1600px] mx-auto space-y-6">
           <Skeleton className="h-20 w-full" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -71,9 +71,9 @@ const CreditCardDetail = ({ isCollapsed, setIsCollapsed }: CreditCardDetailProps
 
   if (cardError || !card) {
     return (
-      <div className="p-4 sm:p-8">
-        <div className="max-w-[1600px] mx-auto">
-          <div className="text-center py-8">
+          <div className="p-4 sm:p-8">
+            <div className="max-w-[1600px] mx-auto">
+              <div className="text-center py-8">
             <p className="text-gray-500">Kart bilgileri yüklenemedi.</p>
             <Button onClick={() => navigate(-1)} className="mt-4">Geri Dön</Button>
           </div>
@@ -129,7 +129,7 @@ const CreditCardDetail = ({ isCollapsed, setIsCollapsed }: CreditCardDetailProps
               <p className="text-gray-600">{card.bank_name} - {getCardTypeLabel(card.card_type)}</p>
             </div>
           </div>
-
+          
           {/* Sağ taraf - Aksiyonlar */}
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowBalances(!showBalances)}>
@@ -266,8 +266,8 @@ const CreditCardDetail = ({ isCollapsed, setIsCollapsed }: CreditCardDetailProps
                 >
                   Giderler
                 </Button>
-              </div>
-            </div>
+                        </div>
+                      </div>
           </CardHeader>
           <CardContent>
             {filteredTransactions.length === 0 ? (
@@ -277,28 +277,28 @@ const CreditCardDetail = ({ isCollapsed, setIsCollapsed }: CreditCardDetailProps
                 <p className="text-sm text-gray-400 mt-1">İlk işleminizi ekleyerek başlayın</p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tarih</TableHead>
-                    <TableHead>Açıklama</TableHead>
-                    <TableHead>Kategori</TableHead>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Tarih</TableHead>
+                              <TableHead>Açıklama</TableHead>
+                              <TableHead>Kategori</TableHead>
                     <TableHead>Tür</TableHead>
-                    <TableHead className="text-right">Tutar</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
+                              <TableHead className="text-right">Tutar</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredTransactions.map((transaction) => (
+                              <TableRow key={transaction.id}>
+                                <TableCell>
                         {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')}
                       </TableCell>
                       <TableCell className="font-medium">
                         {transaction.description}
-                      </TableCell>
-                      <TableCell>
+                                </TableCell>
+                                <TableCell>
                         <Badge variant="secondary">{transaction.category}</Badge>
-                      </TableCell>
+                                </TableCell>
                       <TableCell>
                         <Badge 
                           variant={transaction.type === "income" ? "default" : "destructive"}
@@ -306,21 +306,21 @@ const CreditCardDetail = ({ isCollapsed, setIsCollapsed }: CreditCardDetailProps
                         >
                           {transaction.type === "income" ? "Gelir" : "Gider"}
                         </Badge>
-                      </TableCell>
+                                </TableCell>
                       <TableCell className="text-right font-mono">
                         <span className={transaction.type === "income" ? "text-green-600" : "text-red-600"}>
                           {transaction.type === "income" ? "+" : "-"}
                           {showBalances ? formatCurrency(transaction.amount, "TRY") : "••••••"}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
             )}
           </CardContent>
-        </Card>
-      </div>
+                </Card>
+    </div>
   );
 };
 

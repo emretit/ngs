@@ -4,17 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { EmployeeList } from "@/components/employees/EmployeeList";
 import EmployeesHeader from "@/components/employees/EmployeesHeader";
 import EmployeesFilterBar from "@/components/employees/EmployeesFilterBar";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-
-type ViewType = "table";
+import type { ViewMode } from "@/types/employee";
 
 const Employees = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedPosition, setSelectedPosition] = useState<string>('all');
-  const [activeView] = useState<ViewType>("table");
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   // Fetch employees with stats
   const { data: employees = [], isLoading, error } = useQuery({
@@ -86,8 +84,8 @@ const Employees = () => {
     <div className="space-y-2">
       {/* Header */}
       <EmployeesHeader 
-        activeView={activeView} 
-        setActiveView={() => {}}
+        viewMode={viewMode} 
+        setViewMode={setViewMode}
         employeeStats={employeeStats}
       />
 
@@ -126,6 +124,8 @@ const Employees = () => {
                 employees={employees}
                 isLoading={isLoading}
                 onRefresh={() => window.location.reload()}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
               />
             </div>
           </div>

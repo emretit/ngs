@@ -1,22 +1,34 @@
 import { Button } from "@/components/ui/button";
-import { Table } from "lucide-react";
-
-type ViewType = "table";
+import { List, LayoutGrid } from "lucide-react";
+import type { ViewMode } from "@/types/employee";
 
 interface EmployeesViewToggleProps {
-  activeView: ViewType;
-  setActiveView: (view: ViewType) => void;
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
 }
 
-const EmployeesViewToggle = ({ activeView, setActiveView }: EmployeesViewToggleProps) => {
+const EmployeesViewToggle = ({ viewMode, setViewMode }: EmployeesViewToggleProps) => {
   return (
-    <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
+    <div className="flex rounded-md overflow-hidden border">
       <Button
-        variant="default"
+        type="button"
+        variant={viewMode === "table" ? "default" : "ghost"}
         size="sm"
-        className="shadow-sm"
+        className="rounded-none"
+        onClick={() => setViewMode("table")}
       >
-        <Table className="h-4 w-4" />
+        <List className="h-4 w-4 mr-2" />
+        Liste
+      </Button>
+      <Button
+        type="button"
+        variant={viewMode === "grid" ? "default" : "ghost"}
+        size="sm"
+        className="rounded-none"
+        onClick={() => setViewMode("grid")}
+      >
+        <LayoutGrid className="h-4 w-4 mr-2" />
+        Grid
       </Button>
     </div>
   );

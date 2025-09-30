@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, Table, Kanban } from "lucide-react";
+import { LayoutGrid, Table } from "lucide-react";
 
-type ViewType = "table" | "grid" | "kanban";
+type ViewType = "table" | "grid";
 
 interface EmployeesViewToggleProps {
   activeView: ViewType;
@@ -26,14 +26,6 @@ const EmployeesViewToggle = ({ activeView, setActiveView }: EmployeesViewToggleP
         className={`${activeView === "grid" ? "shadow-sm" : ""}`}
       >
         <LayoutGrid className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={activeView === "kanban" ? "default" : "ghost"}
-        size="sm"
-        onClick={() => setActiveView("kanban")}
-        className={`${activeView === "kanban" ? "shadow-sm" : ""}`}
-      >
-        <Kanban className="h-4 w-4" />
       </Button>
     </div>
   );

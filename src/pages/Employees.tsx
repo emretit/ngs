@@ -7,7 +7,7 @@ import EmployeesFilterBar from "@/components/employees/EmployeesFilterBar";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
-type ViewType = "table" | "grid" | "kanban";
+type ViewType = "table" | "grid";
 
 const Employees = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -121,27 +121,26 @@ const Employees = () => {
       ) : (
         <Tabs value={activeView} className="w-full">
           <TabsContent value="table" className="mt-0">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
-              <div className="p-6">
-                <EmployeeList 
-                  employees={employees}
-                  isLoading={isLoading}
-                  onRefresh={() => window.location.reload()}
-                />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="p-6 bg-white rounded-xl relative overflow-hidden">
+                <div className="relative z-10">
+                  <EmployeeList 
+                    employees={employees}
+                    isLoading={isLoading}
+                    onRefresh={() => window.location.reload()}
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>
           <TabsContent value="grid" className="mt-0">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden p-6">
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Grid görünümü yakında eklenecek</p>
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="kanban" className="mt-0">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden p-6">
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Kanban görünümü yakında eklenecek</p>
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+              <div className="p-6 bg-white rounded-xl relative overflow-hidden">
+                <div className="relative z-10">
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">Grid görünümü yakında eklenecek</p>
+                  </div>
+                </div>
               </div>
             </div>
           </TabsContent>

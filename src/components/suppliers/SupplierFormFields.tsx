@@ -36,7 +36,7 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
               Tedarikçi Bilgileri
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 pt-0">
+          <CardContent className="space-y-2 pt-0">
             <SupplierBasicInfoCompact formData={formData} setFormData={setFormData} />
           </CardContent>
         </Card>
@@ -51,7 +51,7 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
               İletişim Bilgileri
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 pt-0">
+          <CardContent className="space-y-2 pt-0">
             <ContactInformationCompact formData={formData} setFormData={setFormData} />
           </CardContent>
         </Card>
@@ -67,10 +67,10 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
             Finansal ve Ödeme Bilgileri
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 pt-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <CardContent className="space-y-2 pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Sol Sütun - Finansal */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="space-y-1.5">
                 <Label htmlFor="balance" className="text-xs font-medium text-gray-700 mb-1.5 block flex items-center gap-1.5">
                   <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
@@ -106,7 +106,7 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
             </div>
 
             {/* Sağ Sütun - Ödeme */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="space-y-1.5">
                 <Label htmlFor="payee_financial_account_id" className="text-xs font-medium text-gray-700 mb-1.5 block flex items-center gap-1.5">
                   <CreditCard className="w-3.5 h-3.5 text-blue-600" />

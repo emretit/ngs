@@ -1,13 +1,17 @@
 
 import { useState } from "react";
-import { useEmployeeData } from "./hooks/useEmployeeData";
 import { EmployeeActions } from "./components/EmployeeActions";
 import { EmployeeListContent } from "./components/EmployeeListContent";
-import type { ViewMode } from "@/types/employee";
+import type { Employee, ViewMode } from "@/types/employee";
 
-export const EmployeeList = () => {
+interface EmployeeListProps {
+  employees: Employee[];
+  isLoading: boolean;
+  onRefresh: () => void;
+}
+
+export const EmployeeList = ({ employees, isLoading, onRefresh }: EmployeeListProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
-  const { employees, isLoading, refetch } = useEmployeeData();
 
   return (
     <div className="space-y-6">
@@ -16,7 +20,7 @@ export const EmployeeList = () => {
         <EmployeeActions
           viewMode={viewMode}
           setViewMode={setViewMode}
-          onRefresh={refetch}
+          onRefresh={onRefresh}
           hasEmployees={employees.length > 0}
           isLoading={isLoading}
         />

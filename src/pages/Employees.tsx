@@ -123,7 +123,11 @@ const Employees = () => {
           <TabsContent value="table" className="mt-0">
             <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
               <div className="p-6">
-                <EmployeeList />
+                <EmployeeList 
+                  employees={employees}
+                  isLoading={isLoading}
+                  onRefresh={() => window.location.reload()}
+                />
               </div>
             </div>
           </TabsContent>

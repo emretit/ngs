@@ -1,53 +1,157 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { EmployeeList } from "@/components/employees/EmployeeList";
 import { EmployeeSummaryStats } from "@/components/employees/stats/EmployeeSummaryStats";
 import { SalaryOverviewCards } from "@/components/employees/SalaryOverviewCards";
-import { Button } from "@/components/ui/button";
-import { Plus, Users, UserCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import EmployeesHeader from "@/components/employees/EmployeesHeader";
+import EmployeesFilterBar from "@/components/employees/EmployeesFilterBar";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
+
+type ViewType = "table" | "grid" | "kanban";
+
 const Employees = () => {
-  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [selectedPosition, setSelectedPosition] = useState<string>('all');
+  const [activeView, setActiveView] = useState<ViewType>("table");
+
+  // Fetch employees with stats
+  const { data: employees = [], isLoading, error } = useQuery({
+    queryKey: ['employees', selectedStatus, selectedDepartment, selectedPosition, searchQuery],
+    queryFn: async () => {
+      let query = supabase
+        .from('employees')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (selectedStatus !== 'all') {
+        query = query.eq('status', selectedStatus);
+      }
+
+      if (selectedDepartment !== 'all') {
+        query = query.eq('department_id', selectedDepartment);
+      }
+
+      if (selectedPosition !== 'all') {
+        query = query.eq('position', selectedPosition);
+      }
+
+      if (searchQuery) {
+        query = query.or(
+          `first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`
+        );
+      }
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch departments
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Get unique positions
+  const positions = Array.from(new Set(employees.map(emp => emp.position).filter(Boolean)));
+
+  // Calculate employee stats
+  const employeeStats = {
+    total: employees.length,
+    active: employees.filter(emp => emp.status === 'aktif').length,
+    inactive: employees.filter(emp => emp.status === 'pasif').length,
+    onLeave: employees.filter(emp => emp.status === 'izinli').length,
+    fullTime: employees.filter(emp => emp.employment_type === 'tam_zamanli').length,
+    partTime: employees.filter(emp => emp.employment_type === 'yari_zamanli').length,
+  };
+
+  if (error) {
+    toast.error("Çalışanlar yüklenirken bir hata oluştu");
+    console.error("Error loading employees:", error);
+  }
+
   return (
-    <div className="w-full">
-            {/* Header Section */}
-            <div className="mb-8">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-r from-red-500 to-red-600 rounded-xl text-white shadow-lg">
-                    <Users className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Çalışan Yönetimi</h1>
-                    <p className="text-gray-600 mt-1">Tüm çalışanları görüntüle, yönet ve maaş bilgilerini takip et</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg hover:shadow-xl transition-all duration-200 h-12 px-6"
-                    onClick={() => navigate("/add-employee")}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Yeni Çalışan
-                  </Button>
-                </div>
-              </div>
-            </div>
-            {/* Content Section */}
-            <div className="space-y-8">
-              <EmployeeSummaryStats />
-              <SalaryOverviewCards />
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
-                <div className="border-b border-gray-200/80 bg-gray-50/50 px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="h-5 w-5 text-red-600" />
-                    <h2 className="text-lg font-semibold text-gray-900">Çalışan Listesi</h2>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <EmployeeList />
-                </div>
-              </div>
-            </div>
+    <div className="space-y-2">
+      {/* Header */}
+      <EmployeesHeader 
+        activeView={activeView} 
+        setActiveView={setActiveView}
+        employeeStats={employeeStats}
+      />
+
+      {/* Filters */}
+      <EmployeesFilterBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedStatus={selectedStatus}
+        setSelectedStatus={setSelectedStatus}
+        selectedDepartment={selectedDepartment}
+        setSelectedDepartment={setSelectedDepartment}
+        selectedPosition={selectedPosition}
+        setSelectedPosition={setSelectedPosition}
+        departments={departments}
+        positions={positions}
+      />
+
+      {/* Stats Section */}
+      <div className="space-y-4">
+        <EmployeeSummaryStats />
+        <SalaryOverviewCards />
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-[400px]">
+          <div className="text-center space-y-4">
+            <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-muted-foreground">Çalışanlar yükleniyor...</p>
           </div>
+        </div>
+      ) : error ? (
+        <div className="h-96 flex items-center justify-center">
+          <div className="text-red-500">Çalışanlar yüklenirken bir hata oluştu</div>
+        </div>
+      ) : (
+        <Tabs value={activeView} className="w-full">
+          <TabsContent value="table" className="mt-0">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
+              <div className="p-6">
+                <EmployeeList />
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="grid" className="mt-0">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden p-6">
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Grid görünümü yakında eklenecek</p>
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="kanban" className="mt-0">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden p-6">
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Kanban görünümü yakında eklenecek</p>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      )}
+    </div>
   );
 };
+
 export default Employees;

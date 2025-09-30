@@ -123,9 +123,7 @@ const Employees = () => {
               <EmployeeList 
                 employees={employees}
                 isLoading={isLoading}
-                onRefresh={() => window.location.reload()}
                 viewMode={viewMode}
-                setViewMode={setViewMode}
               />
             </div>
           </div>

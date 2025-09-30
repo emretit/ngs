@@ -1,6 +1,8 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Phone } from "lucide-react";
 import { Control } from "react-hook-form";
 
 interface EmergencyContactSectionProps {
@@ -9,17 +11,24 @@ interface EmergencyContactSectionProps {
 
 export const EmergencyContactSection = ({ control }: EmergencyContactSectionProps) => {
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-4">Acil Durum İletişim Bilgileri</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Card className="shadow-lg border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-xl">
+      <CardHeader className="pb-2 pt-3 px-4">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <div className="p-1 rounded-md bg-gradient-to-br from-red-50 to-red-50/50 border border-red-200/50">
+            <Phone className="h-3.5 w-3.5 text-red-600" />
+          </div>
+          Acil Durum İletişim Bilgileri
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-0 px-4 pb-4">
         <FormField
           control={control}
           name="emergency_contact_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>İletişim Kişisi</FormLabel>
+              <FormLabel className="text-xs font-medium text-gray-700">İletişim Kişisi</FormLabel>
               <FormControl>
-                <Input placeholder="Acil durumda aranacak kişi" {...field} />
+                <Input placeholder="Acil durumda aranacak kişi" className="h-9" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -31,9 +40,9 @@ export const EmergencyContactSection = ({ control }: EmergencyContactSectionProp
           name="emergency_contact_relation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Yakınlık Derecesi</FormLabel>
+              <FormLabel className="text-xs font-medium text-gray-700">Yakınlık Derecesi</FormLabel>
               <FormControl>
-                <Input placeholder="Yakınlık derecesi" {...field} />
+                <Input placeholder="Yakınlık derecesi" className="h-9" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -45,15 +54,15 @@ export const EmergencyContactSection = ({ control }: EmergencyContactSectionProp
           name="emergency_contact_phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>İletişim Telefonu</FormLabel>
+              <FormLabel className="text-xs font-medium text-gray-700">İletişim Telefonu</FormLabel>
               <FormControl>
-                <Input placeholder="Acil durum telefon numarası" {...field} />
+                <Input placeholder="Acil durum telefon numarası" className="h-9" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

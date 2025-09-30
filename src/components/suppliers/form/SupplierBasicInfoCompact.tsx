@@ -41,10 +41,10 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
 
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Vergi Bilgileri - En Üstte */}
       <div className="space-y-1">
-        <Label htmlFor="tax_number" className="text-sm font-medium text-foreground flex items-center gap-2">
+        <Label htmlFor="tax_number" className="text-sm font-medium text-gray-700 flex items-center gap-2">
           <FileText className="w-4 h-4 text-blue-600" />
           <span>Vergi Numarası *</span>
         </Label>
@@ -54,7 +54,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.tax_number}
             onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
             placeholder="Vergi Numarası"
-            className="h-10 text-sm flex-1"
+            className="text-sm flex-1"
             required
           />
           <Button
@@ -167,7 +167,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
               }}
               className="h-8 px-4 text-xs bg-green-600 hover:bg-green-700 text-white shadow-sm"
             >
-              <CheckCircle className="w-3 h-3 mr-1" />
+              <CheckCircle className="w-4 h-4 mr-1" />
               Bilgileri Otomatik Doldur
             </Button>
           </div>
@@ -187,10 +187,10 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
       )}
 
       {/* Temel Bilgiler - Geniş */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label htmlFor="name" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <User className="w-3 h-3 text-blue-600" />
+          <Label htmlFor="name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <User className="w-4 h-4 text-blue-600" />
             <span>Ad Soyad / Yetkili Kişi *</span>
           </Label>
           <Input
@@ -198,14 +198,14 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Ad Soyad veya Yetkili Kişi"
-            className="h-9 text-sm"
+            className="text-sm"
             required
           />
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="company" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <Building className="w-3 h-3 text-blue-600" />
+          <Label htmlFor="company" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Building className="w-4 h-4 text-blue-600" />
             <span>Şirket Adı *</span>
           </Label>
           <Input
@@ -213,7 +213,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
             placeholder="Şirket Adı"
-            className="h-9 text-sm"
+            className="text-sm"
             required
           />
         </div>
@@ -221,8 +221,8 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
 
       {/* Vergi Dairesi */}
       <div className="space-y-1">
-        <Label htmlFor="tax_office" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-          <Building2 className="w-3 h-3 text-blue-600" />
+        <Label htmlFor="tax_office" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-blue-600" />
           <span>Vergi Dairesi *</span>
         </Label>
         <Input
@@ -237,8 +237,8 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
 
       {/* Adres Bilgileri - Kompakt */}
       <div className="space-y-1">
-        <Label htmlFor="address" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-          <MapPin className="w-3 h-3 text-blue-600" />
+        <Label htmlFor="address" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-blue-600" />
           <span>Adres *</span>
         </Label>
         <Textarea
@@ -257,10 +257,10 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="space-y-1">
-          <Label htmlFor="city" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-blue-600" />
+          <Label htmlFor="city" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-blue-600" />
             <span>Şehir *</span>
           </Label>
           <Input
@@ -268,14 +268,14 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.city}
             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
             placeholder="Şehir"
-            className="h-9 text-sm"
+            className="text-sm"
             required
           />
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="district" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-blue-600" />
+          <Label htmlFor="district" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-blue-600" />
             <span>İlçe *</span>
           </Label>
           <Input
@@ -283,14 +283,14 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.district}
             onChange={(e) => setFormData({ ...formData, district: e.target.value })}
             placeholder="İlçe"
-            className="h-9 text-sm"
+            className="text-sm"
             required
           />
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="type" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <Users className="w-3 h-3 text-blue-600" />
+          <Label htmlFor="type" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-600" />
             <span>Tür *</span>
           </Label>
           <Select
@@ -310,10 +310,10 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="space-y-1">
-          <Label htmlFor="representative" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <User className="w-3 h-3 text-blue-600" />
+          <Label htmlFor="representative" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <User className="w-4 h-4 text-blue-600" />
             <span>Yetkili Kişi</span>
           </Label>
           <Input
@@ -321,13 +321,13 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.representative}
             onChange={(e) => setFormData({ ...formData, representative: e.target.value })}
             placeholder="Yetkili Kişi"
-            className="h-9 text-sm"
+            className="text-sm"
           />
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="status" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <Users className="w-3 h-3 text-blue-600" />
+          <Label htmlFor="status" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-600" />
             <span>Durum *</span>
           </Label>
           <Select
@@ -348,8 +348,8 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="country" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-blue-600" />
+          <Label htmlFor="country" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-blue-600" />
             <span>Ülke</span>
           </Label>
           <Input
@@ -357,15 +357,15 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.country}
             onChange={(e) => setFormData({ ...formData, country: e.target.value })}
             placeholder="Türkiye"
-            className="h-9 text-sm"
+            className="text-sm"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <Label htmlFor="postal_code" className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-blue-600" />
+          <Label htmlFor="postal_code" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-blue-600" />
             <span>Posta Kodu</span>
           </Label>
           <Input
@@ -373,7 +373,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.postal_code}
             onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
             placeholder="34000"
-            className="h-9 text-sm"
+            className="text-sm"
           />
         </div>
       </div>

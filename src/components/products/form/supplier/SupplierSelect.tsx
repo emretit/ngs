@@ -31,13 +31,13 @@ const SupplierSelect = ({ form }: SupplierSelectProps) => {
       name="supplier_id"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Tedarikçi</FormLabel>
+          <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">Tedarikçi</FormLabel>
           <Select
             onValueChange={field.onChange}
             value={field.value || "none"}
           >
             <FormControl>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Tedarikçi seçiniz" />
               </SelectTrigger>
             </FormControl>
@@ -50,10 +50,10 @@ const SupplierSelect = ({ form }: SupplierSelectProps) => {
               ))}
             </SelectContent>
           </Select>
-          <FormDescription>
+          <FormDescription className="text-xs text-gray-500 mt-1">
             Bu ürünü sağlayan tedarikçiyi seçin
           </FormDescription>
-          <FormMessage />
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />

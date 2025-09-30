@@ -80,19 +80,37 @@ export function useInfiniteScroll<T>(
     abortControllerRef.current = new AbortController();
 
     try {
-      const result = await queryClient.fetchQuery({
-        queryKey: [...memoizedQueryKey, 'page', nextPage, 'size', pageSize],
-        queryFn: () => queryFn(nextPage, pageSize),
-        staleTime,
-        gcTime,
-      });
+      // Önce cache'den kontrol et
+      const cacheKey = [...memoizedQueryKey, 'page', nextPage, 'size', pageSize];
+      const cachedData = queryClient.getQueryData(cacheKey);
+      
+      if (cachedData) {
+        // Cache'den veri varsa kullan
+        const result = cachedData as { data: T[]; totalCount?: number; hasNextPage?: boolean };
+        if (result?.data) {
+          setAllData(prev => [...prev, ...result.data]);
+          setCurrentPage(nextPage);
+          setHasNextPage(result.hasNextPage ?? result.data.length === pageSize);
+          if (result.totalCount) {
+            setTotalCount(result.totalCount);
+          }
+        }
+      } else {
+        // Cache'de yoksa API'den çek
+        const result = await queryClient.fetchQuery({
+          queryKey: cacheKey,
+          queryFn: () => queryFn(nextPage, pageSize),
+          staleTime,
+          gcTime,
+        });
 
-      if (result?.data) {
-        setAllData(prev => [...prev, ...result.data]);
-        setCurrentPage(nextPage);
-        setHasNextPage(result.hasNextPage ?? result.data.length === pageSize);
-        if (result.totalCount) {
-          setTotalCount(result.totalCount);
+        if (result?.data) {
+          setAllData(prev => [...prev, ...result.data]);
+          setCurrentPage(nextPage);
+          setHasNextPage(result.hasNextPage ?? result.data.length === pageSize);
+          if (result.totalCount) {
+            setTotalCount(result.totalCount);
+          }
         }
       }
     } catch (err) {
@@ -103,7 +121,7 @@ export function useInfiniteScroll<T>(
     }
   }, [currentPage, hasNextPage, isLoadingMore, queryFn, pageSize, memoizedQueryKey, queryClient, staleTime, gcTime]);
 
-  // Yenileme fonksiyonu
+  // Yenileme fonksiyonu - sadece ilk sayfayı yenile
   const refresh = useCallback(() => {
     // Cancel any ongoing request
     if (abortControllerRef.current) {
@@ -111,13 +129,18 @@ export function useInfiniteScroll<T>(
       abortControllerRef.current = null;
     }
 
+    // Sadece ilk sayfayı invalidate et, diğer sayfalar cache'de kalsın
+    queryClient.invalidateQueries({ 
+      queryKey: [...memoizedQueryKey, 'page', 1, 'size', pageSize] 
+    });
+    
+    // State'i sıfırla
     setAllData([]);
     setCurrentPage(1);
     setHasNextPage(true);
     setIsLoadingMore(false);
     setTotalCount(undefined);
-    queryClient.invalidateQueries({ queryKey: memoizedQueryKey });
-  }, [queryClient, memoizedQueryKey]);
+  }, [queryClient, memoizedQueryKey, pageSize]);
 
   // Cleanup effect for unmounting
   useEffect(() => {

@@ -148,13 +148,13 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
         name="category_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Kategori</FormLabel>
+            <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">Kategori</FormLabel>
             <Select
               onValueChange={handleSelectChange}
               value={field.value || ""}
             >
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="Kategori seçiniz" />
                 </SelectTrigger>
               </FormControl>
@@ -173,7 +173,7 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <FormMessage />
+            <FormMessage className="text-xs" />
           </FormItem>
         )}
       />

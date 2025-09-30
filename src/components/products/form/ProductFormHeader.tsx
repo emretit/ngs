@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save, Plus, Copy } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
+import { Package, Save, Plus, Copy } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import { ProductFormSchema } from "./ProductFormSchema";
 import { useNavigate } from "react-router-dom";
@@ -56,45 +57,58 @@ const ProductFormHeader = ({
   };
 
   return (
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={() => navigate(productId ? `/product-details/${productId}` : "/products")}
-          className="h-10 w-10 rounded-full"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-bold text-primary-dark">
-          {isEditing ? "Ürünü Düzenle" : "Yeni Ürün"}
-        </h1>
-      </div>
-      
-      <div className="flex space-x-3">
-        {isEditing && (
-          <Button variant="outline" onClick={onDuplicate} className="font-medium" disabled={isSubmitting}>
-            <Copy className="h-4 w-4 mr-2" />
-            Ürünü Kopyala
+    <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-4">
+      <div className="flex items-center justify-between p-2 pl-10">
+        <div className="flex items-center gap-3">
+          <BackButton 
+            onClick={() => navigate(productId ? `/product-details/${productId}` : "/products")}
+            variant="ghost"
+            size="sm"
+          >
+            Ürünler
+          </BackButton>
+          
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <h1 className="text-lg font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              {isEditing ? "Ürünü Düzenle" : "Yeni Ürün Ekle"}
+            </h1>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {isEditing && (
+            <Button 
+              variant="outline" 
+              onClick={onDuplicate} 
+              disabled={isSubmitting}
+              size="sm"
+              className="gap-1.5 px-3 rounded-lg hover:bg-gray-50 transition-all"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              <span className="text-sm">Kopyala</span>
+            </Button>
+          )}
+          <Button 
+            onClick={handleSaveAndNew}
+            variant="outline"
+            disabled={isSubmitting}
+            size="sm"
+            className="gap-1.5 px-3 rounded-lg hover:bg-gray-50 transition-all"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span className="text-sm">Kaydet ve Yeni</span>
           </Button>
-        )}
-        <Button 
-          onClick={handleSaveAndNew}
-          variant="secondary"
-          disabled={isSubmitting}
-          className="font-medium"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Kaydet ve Yeni Ekle
-        </Button>
-        <Button 
-          onClick={handleSave}
-          disabled={isSubmitting}
-          className="font-medium"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {isSubmitting ? "Kaydediliyor..." : isEditing ? "Güncelle" : "Kaydet"}
-        </Button>
+          <Button 
+            onClick={handleSave}
+            disabled={isSubmitting}
+            size="sm"
+            className="gap-1.5 px-4 rounded-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow transition-all"
+          >
+            <Save className="h-3.5 w-3.5" />
+            <span className="text-sm">{isSubmitting ? "Kaydediliyor..." : isEditing ? "Güncelle" : "Kaydet"}</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

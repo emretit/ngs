@@ -13,19 +13,19 @@ interface ContactInformationProps {
 
 const ContactInformation = ({ formData, setFormData }: ContactInformationProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* İletişim Bilgileri */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
           <div className="w-1 h-4 bg-primary rounded-full"></div>
           İletişim Bilgileri
         </h3>
         
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* First Row: Contact Person, Email */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Label htmlFor="name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <User className="w-4 h-4 text-primary" />
                 <span>Yetkili Kişi *</span>
               </Label>
@@ -35,12 +35,12 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Yetkili kişi adı giriniz"
-                className="h-11"
+                className="text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Mail className="w-4 h-4 text-blue-500" />
                 <span>E-posta</span>
               </Label>
@@ -50,15 +50,15 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="email@example.com"
-                className="h-11"
+                className="text-sm"
               />
             </div>
           </div>
           
           {/* Second Row: Phone Numbers & Representative */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="mobile_phone" className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Label htmlFor="mobile_phone" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Phone className="w-4 h-4 text-green-500" />
                 <span>Cep Telefonu</span>
               </Label>
@@ -70,7 +70,7 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="office_phone" className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Label htmlFor="office_phone" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Phone className="w-4 h-4 text-orange-500" />
                 <span>İş Telefonu</span>
               </Label>
@@ -82,7 +82,7 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="representative" className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Label htmlFor="representative" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <Users className="w-4 h-4 text-indigo-500" />
                 <span>Temsilci</span>
               </Label>
@@ -91,7 +91,7 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
                 value={formData.representative}
                 onChange={(e) => setFormData({ ...formData, representative: e.target.value })}
                 placeholder="Temsilci adı (opsiyonel)"
-                className="h-11"
+                className="text-sm"
               />
             </div>
           </div>

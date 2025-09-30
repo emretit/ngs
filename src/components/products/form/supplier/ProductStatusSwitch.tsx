@@ -20,10 +20,10 @@ const ProductStatusSwitch = ({ form }: ProductStatusSwitchProps) => {
       control={form.control}
       name="is_active"
       render={({ field }) => (
-        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 bg-gray-50">
           <div className="space-y-0.5">
-            <FormLabel className="text-base">Ürün Durumu</FormLabel>
-            <FormDescription>
+            <FormLabel className="text-xs font-medium text-gray-700">Ürün Durumu</FormLabel>
+            <FormDescription className="text-xs text-gray-500">
               Bu ürün aktif olarak satışta mı?
             </FormDescription>
           </div>

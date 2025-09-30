@@ -47,9 +47,7 @@ const CurrencySelect = ({ form }: CurrencySelectProps) => {
         name="currency"
         render={({ field }) => (
           <FormItem>
-            <div className="flex items-center gap-2">
-              <FormLabel>Para Birimi</FormLabel>
-            </div>
+            <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">Para Birimi</FormLabel>
             <FormControl>
               <CurrencyDropdown
                 value={field.value || "TRY"}
@@ -57,7 +55,7 @@ const CurrencySelect = ({ form }: CurrencySelectProps) => {
                 currencyOptions={currencyOptions}
               />
             </FormControl>
-            <FormMessage />
+            <FormMessage className="text-xs" />
           </FormItem>
         )}
       />

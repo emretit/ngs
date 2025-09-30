@@ -40,13 +40,13 @@ const PricePreviewCard = ({
   const { priceExcludingVat, vatAmount, priceIncludingVat } = calculatePrices();
 
   return (
-    <Card className="p-6 bg-muted/50 flex flex-col justify-center space-y-6">
-      <h3 className="text-lg font-semibold text-center mb-2">
+    <Card className="p-6 bg-muted/50 h-full flex flex-col justify-center space-y-6">
+      <h3 className="text-sm font-semibold text-center mb-2">
         Fiyat Önizleme
       </h3>
       
-      <div className="space-y-4">
-        <div className="flex justify-between">
+      <div className="space-y-3">
+        <div className="flex justify-between text-xs">
           <span className="text-muted-foreground">
             {priceIncludesVat ? "KDV Hariç Fiyat:" : "Satış Fiyatı:"}
           </span>
@@ -55,14 +55,14 @@ const PricePreviewCard = ({
           </span>
         </div>
         
-        <div className="flex justify-between">
+        <div className="flex justify-between text-xs">
           <span className="text-muted-foreground">KDV Tutarı:</span>
           <span className="font-medium">
             {formatPrice(vatAmount, currency)}
           </span>
         </div>
         
-        <div className="flex justify-between pt-2 border-t border-border">
+        <div className="flex justify-between pt-2 border-t border-border text-xs">
           <span className="font-medium">
             {priceIncludesVat ? "Satış Fiyatı:" : "KDV Dahil Fiyat:"}
           </span>

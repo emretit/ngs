@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import ProductListHeader from "@/components/products/ProductListHeader";
@@ -20,12 +20,24 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
+  
+  // Debounced search query
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [sortField, setSortField] = useState<"name" | "price" | "stock_quantity" | "category">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const pageSize = 20;
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -39,7 +51,7 @@ const Products = () => {
     },
   });
 
-  // Use infinite scroll for products
+  // Use infinite scroll for products with optimized caching
   const {
     data: products,
     isLoading,
@@ -50,7 +62,7 @@ const Products = () => {
     refresh,
     totalCount
   } = useInfiniteScroll<Product>(
-    ['products', searchQuery, categoryFilter, stockFilter, sortField, sortDirection],
+    ['products', debouncedSearchQuery, categoryFilter, stockFilter, sortField, sortDirection],
     async (page: number, size: number) => {
       let query = supabase
         .from("products")
@@ -63,8 +75,8 @@ const Products = () => {
         `, { count: 'exact' });
 
       // Apply filters
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,sku.ilike.%${searchQuery}%`);
+      if (debouncedSearchQuery) {
+        query = query.or(`name.ilike.%${debouncedSearchQuery}%,sku.ilike.%${debouncedSearchQuery}%`);
       }
 
       if (categoryFilter && categoryFilter !== "all") {
@@ -103,58 +115,76 @@ const Products = () => {
         hasNextPage: data && data.length === size
       };
     },
-    { pageSize }
+    { 
+      pageSize,
+      staleTime: 10 * 60 * 1000, // 10 dakika cache
+      gcTime: 30 * 60 * 1000, // 30 dakika garbage collection
+      refetchOnWindowFocus: false // Pencere odaklandığında yeniden çekme
+    }
   );
 
-  const handleSort = (field: "name" | "price" | "stock_quantity" | "category") => {
+  const handleSort = useCallback((field: "name" | "price" | "stock_quantity" | "category") => {
     if (field === sortField) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
       setSortDirection(field === "price" || field === "stock_quantity" ? "desc" : "asc");
     }
-  };
+  }, [sortField, sortDirection]);
 
-  const handleProductClick = (product: Product) => {
+  const handleProductClick = useCallback((product: Product) => {
     setSelectedProduct(product);
     // Navigate to product detail page
     navigate(`/products/${product.id}`);
-  };
+  }, [navigate]);
 
-  const handleProductSelect = (product: Product) => {
+  const handleProductSelect = useCallback((product: Product) => {
     setSelectedProducts(prev => {
       const isSelected = prev.some(p => p.id === product.id);
       return isSelected
         ? prev.filter(p => p.id !== product.id)
         : [...prev, product];
     });
-  };
+  }, []);
 
-  const handleClearSelection = () => {
+  const handleClearSelection = useCallback(() => {
     setSelectedProducts([]);
-  };
+  }, []);
 
-  const handleBulkAction = async (action: string) => {
+  const handleBulkAction = useCallback(async (action: string) => {
     console.log('Bulk action:', action, selectedProducts);
     // Implement bulk actions here
-  };
+  }, [selectedProducts]);
 
-  const handleImportSuccess = () => {
+  const handleImportSuccess = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['products'] });
     refresh();
-  };
+  }, [queryClient, refresh]);
 
-  const handleDownloadTemplate = () => {
+  const handleDownloadTemplate = useCallback(() => {
     exportProductTemplateToExcel();
-  };
+  }, []);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = useCallback(() => {
     exportProductsToExcel(products as any);
-  };
+  }, [products]);
 
-  const handleImportExcel = () => {
+  const handleImportExcel = useCallback(() => {
     setIsImportDialogOpen(true);
-  };
+  }, []);
+
+  // Filtre değişikliklerini optimize et
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  const handleCategoryFilterChange = useCallback((category: string) => {
+    setCategoryFilter(category);
+  }, []);
+
+  const handleStockFilterChange = useCallback((stock: string) => {
+    setStockFilter(stock);
+  }, []);
 
   // Flatten products for display
   const flatProducts = products || [];
@@ -187,11 +217,11 @@ const Products = () => {
         {/* Filters */}
         <ProductListFilters
           search={searchQuery}
-          setSearch={setSearchQuery}
+          setSearch={handleSearchChange}
           categoryFilter={categoryFilter}
-          setCategoryFilter={setCategoryFilter}
+          setCategoryFilter={handleCategoryFilterChange}
           stockFilter={stockFilter}
-          setStockFilter={setStockFilter}
+          setStockFilter={handleStockFilterChange}
           categories={categories}
         />
 

@@ -27,13 +27,13 @@ const TaxRateSelect = ({ form }: TaxRateSelectProps) => {
       name="tax_rate"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>KDV Oranı</FormLabel>
+          <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">KDV Oranı</FormLabel>
           <Select
             onValueChange={(value) => field.onChange(parseInt(value))}
             value={field.value.toString()}
           >
             <FormControl>
-              <SelectTrigger>
+              <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="KDV oranı seçiniz" />
               </SelectTrigger>
             </FormControl>
@@ -46,7 +46,7 @@ const TaxRateSelect = ({ form }: TaxRateSelectProps) => {
                 <SelectItem value="0">%0</SelectItem>
             </SelectContent>
           </Select>
-          <FormMessage />
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />

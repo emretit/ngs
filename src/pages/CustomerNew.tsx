@@ -92,7 +92,11 @@ const CustomerNew = () => {
     }
   };
   return (
-    <CustomerFormHeader />
+    <div>
+      <CustomerFormHeader
+        isPending={mutation.isPending}
+        onCancel={() => navigate('/contacts')}
+      />
       <CustomerFormContent 
         formData={formData}
         setFormData={setFormData}
@@ -101,6 +105,7 @@ const CustomerNew = () => {
         isEdit={false}
         onCancel={() => navigate('/contacts')}
       />
+    </div>
   );
 };
 export default CustomerNew;

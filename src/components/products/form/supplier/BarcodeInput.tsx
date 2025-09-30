@@ -21,15 +21,16 @@ const BarcodeInput = ({ form }: BarcodeInputProps) => {
       name="barcode"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Barkod</FormLabel>
+          <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">Barkod</FormLabel>
           <FormControl>
             <Input 
               placeholder="Barkod giriniz (isteğe bağlı)" 
+              className="h-9 text-sm"
               {...field} 
               value={field.value || ''}
             />
           </FormControl>
-          <FormMessage />
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />

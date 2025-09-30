@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BasicInfoSection } from "./sections/BasicInfoSection";
-import { PersonalInfoSection } from "./sections/PersonalInfoSection";
 import { AddressSection } from "./sections/AddressSection";
 import { EmergencyContactSection } from "./sections/EmergencyContactSection";
+import BackButton from "@/components/ui/back-button";
+import { UserPlus, Save } from "lucide-react";
 
 const formSchema = z.object({
   // Basic Information
@@ -128,34 +129,67 @@ const SimpleEmployeeForm = () => {
   };
 
   return (
-    <Card className="max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle>Yeni Çalışan Ekle</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <BasicInfoSection control={form.control} />
-            <PersonalInfoSection control={form.control} />
+    <div>
+      {/* Enhanced Sticky Header */}
+      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-4">
+        <div className="flex items-center justify-between p-2 pl-10">
+          <div className="flex items-center gap-3">
+            {/* Back Button */}
+            <BackButton 
+              onClick={() => navigate("/employees")}
+              variant="ghost"
+              size="sm"
+            >
+              Çalışanlar
+            </BackButton>
+            
+            {/* Title Section with Icon */}
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+              <h1 className="text-lg font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                Yeni Çalışan Ekle
+              </h1>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              type="button"
+              onClick={() => navigate("/employees")}
+              disabled={isSubmitting}
+              size="sm"
+              className="gap-1.5 px-3 rounded-lg hover:bg-gray-50 transition-all"
+            >
+              <span className="text-sm">İptal</span>
+            </Button>
+            <Button 
+              type="submit"
+              form="employee-form"
+              disabled={isSubmitting}
+              size="sm"
+              className="gap-1.5 px-4 rounded-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow transition-all"
+            >
+              <Save className="h-3.5 w-3.5" />
+              <span className="text-sm">{isSubmitting ? "Kaydediliyor..." : "Kaydet"}</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <Form {...form}>
+        <form id="employee-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+          <BasicInfoSection control={form.control} />
+          
+          {/* Adres ve Acil Durum Yan Yana */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <AddressSection control={form.control} />
             <EmergencyContactSection control={form.control} />
-            
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => navigate("/employees")}
-              >
-                İptal
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Kaydediliyor..." : "Çalışan Ekle"}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 };
 

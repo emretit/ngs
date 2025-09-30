@@ -25,23 +25,21 @@ const CustomerForm = ({ isCollapsed, setIsCollapsed }: CustomerFormProps) => {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="w-full">
-        <CustomerFormHeader id={id} />
+    <div>
+      <CustomerFormHeader id={id} />
 
-        {isLoadingCustomer && id ? (
-          <div className="text-center py-8">Yükleniyor...</div>
-        ) : (
-          <CustomerFormContent 
-            formData={formData}
-            setFormData={setFormData}
-            handleSubmit={handleSubmit}
-            isPending={mutation.isPending}
-            isEdit={!!id}
-            onCancel={() => navigate('/contacts')}
-          />
-        )}
-      </div>
+      {isLoadingCustomer && id ? (
+        <div className="text-center py-8">Yükleniyor...</div>
+      ) : (
+        <CustomerFormContent 
+          formData={formData}
+          setFormData={setFormData}
+          handleSubmit={handleSubmit}
+          isPending={mutation.isPending}
+          isEdit={!!id}
+          onCancel={() => navigate('/contacts')}
+        />
+      )}
     </div>
   );
 };

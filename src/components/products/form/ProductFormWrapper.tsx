@@ -72,24 +72,20 @@ const ProductFormWrapper = () => {
 
   return (
     <div className="w-full">
-      <div className="w-full">
-        <ProductFormHeader 
-          isEditing={isEditing}
-          isSubmitting={isSubmitting}
-          productId={productId}
-          form={form}
-          onSubmit={handleSubmit}
-          onDuplicate={handleDuplicate}
-        />
+      <ProductFormHeader 
+        isEditing={isEditing}
+        isSubmitting={isSubmitting}
+        productId={productId}
+        form={form}
+        onSubmit={handleSubmit}
+        onDuplicate={handleDuplicate}
+      />
 
-        <div className="p-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit((values) => handleSubmit(values, false))}>
-              <ProductCompactForm form={form} />
-            </form>
-          </Form>
-        </div>
-      </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit((values) => handleSubmit(values, false))}>
+          <ProductCompactForm form={form} />
+        </form>
+      </Form>
     </div>
   );
 };

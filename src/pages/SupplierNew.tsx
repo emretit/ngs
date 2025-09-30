@@ -119,8 +119,11 @@ const SupplierNew = () => {
     }
   };
   return (
-    <>
-      <SupplierFormHeader />
+    <div>
+      <SupplierFormHeader
+        isPending={mutation.isPending}
+        onCancel={() => navigate('/suppliers')}
+      />
       <SupplierFormContent
         formData={formData}
         setFormData={setFormData}
@@ -129,7 +132,7 @@ const SupplierNew = () => {
         isEdit={false}
         onCancel={() => navigate('/suppliers')}
       />
-    </>
+    </div>
   );
 };
 export default SupplierNew;

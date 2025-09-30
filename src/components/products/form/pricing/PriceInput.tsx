@@ -36,13 +36,14 @@ const PriceInput = ({ form, name, label, description, isRequired = false, showVa
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}{isRequired && " *"}</FormLabel>
+          <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">{label}{isRequired && " *"}</FormLabel>
           <div className="space-y-3">
             <FormControl>
               <Input 
                 type="number" 
                 min="0" 
                 step="0.01"
+                className="h-9 text-sm"
                 {...field}
                 value={field.value || ''}
                 onChange={(e) => {
@@ -58,7 +59,7 @@ const PriceInput = ({ form, name, label, description, isRequired = false, showVa
                 name={vatToggleFieldName as keyof ProductFormSchema}
                 render={({ field: toggleField }) => (
                   <div className="flex flex-row items-center justify-between rounded-lg border p-3 bg-gray-50">
-                    <FormLabel className="text-sm font-medium">
+                    <FormLabel className="text-xs font-medium">
                       KDV Dahil Mi?
                     </FormLabel>
                     <FormControl>
@@ -72,8 +73,8 @@ const PriceInput = ({ form, name, label, description, isRequired = false, showVa
               />
             )}
           </div>
-          {description && <FormDescription>{description}</FormDescription>}
-          <FormMessage />
+          {description && <FormDescription className="text-xs text-gray-500 mt-1">{description}</FormDescription>}
+          <FormMessage className="text-xs" />
         </FormItem>
       )}
     />

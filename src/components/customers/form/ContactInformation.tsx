@@ -16,18 +16,16 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
     <div className="space-y-3">
       {/* İletişim Bilgileri */}
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
-          <div className="w-1 h-4 bg-primary rounded-full"></div>
+        <h3 className="text-sm font-medium text-foreground">
           İletişim Bilgileri
         </h3>
         
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* First Row: Contact Person, Email */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <User className="w-4 h-4 text-primary" />
-                <span>Yetkili Kişi *</span>
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-xs font-medium text-gray-700">
+                Yetkili Kişi *
               </Label>
               <Input
                 id="name"
@@ -35,14 +33,13 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Yetkili kişi adı giriniz"
-                className="text-sm"
+                className="text-sm h-9"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <Mail className="w-4 h-4 text-blue-500" />
-                <span>E-posta</span>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs font-medium text-gray-700">
+                E-posta
               </Label>
               <Input
                 id="email"
@@ -50,17 +47,16 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="email@example.com"
-                className="text-sm"
+                className="text-sm h-9"
               />
             </div>
           </div>
           
           {/* Second Row: Phone Numbers & Representative */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="mobile_phone" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <Phone className="w-4 h-4 text-green-500" />
-                <span>Cep Telefonu</span>
+            <div className="space-y-1.5">
+              <Label htmlFor="mobile_phone" className="text-xs font-medium text-gray-700">
+                Cep Telefonu
               </Label>
               <PhoneInput
                 id="mobile_phone"
@@ -69,10 +65,9 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="office_phone" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <Phone className="w-4 h-4 text-orange-500" />
-                <span>İş Telefonu</span>
+            <div className="space-y-1.5">
+              <Label htmlFor="office_phone" className="text-xs font-medium text-gray-700">
+                İş Telefonu
               </Label>
               <PhoneInput
                 id="office_phone"
@@ -81,17 +76,16 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="representative" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <Users className="w-4 h-4 text-indigo-500" />
-                <span>Temsilci</span>
+            <div className="space-y-1.5">
+              <Label htmlFor="representative" className="text-xs font-medium text-gray-700">
+                Temsilci
               </Label>
               <Input
                 id="representative"
                 value={formData.representative}
                 onChange={(e) => setFormData({ ...formData, representative: e.target.value })}
                 placeholder="Temsilci adı (opsiyonel)"
-                className="text-sm"
+                className="text-sm h-9"
               />
             </div>
           </div>
@@ -102,10 +96,9 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
       <div className="space-y-4 pt-4 border-t border-gray-100">
         <RepresentativeSelect formData={formData} setFormData={setFormData} />
         
-        <div className="space-y-2">
-          <Label htmlFor="balance" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-gray-600" />
-            <span>Başlangıç Bakiyesi</span>
+        <div className="space-y-1.5">
+          <Label htmlFor="balance" className="text-xs font-medium text-gray-700">
+            Başlangıç Bakiyesi
           </Label>
           <Input
             id="balance"
@@ -114,7 +107,7 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
             value={formData.balance}
             onChange={(e) => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })}
             placeholder="0.00"
-            className="text-sm h-11"
+            className="text-sm h-9"
           />
           <p className="text-xs text-gray-500">
             Pozitif: alacak, negatif: borç

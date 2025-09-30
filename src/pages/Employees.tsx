@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeList } from "@/components/employees/EmployeeList";
-import { EmployeeSummaryStats } from "@/components/employees/stats/EmployeeSummaryStats";
-import { SalaryOverviewCards } from "@/components/employees/SalaryOverviewCards";
 import EmployeesHeader from "@/components/employees/EmployeesHeader";
 import EmployeesFilterBar from "@/components/employees/EmployeesFilterBar";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -107,11 +105,6 @@ const Employees = () => {
         positions={positions}
       />
 
-      {/* Stats Section */}
-      <div className="space-y-4">
-        <EmployeeSummaryStats />
-        <SalaryOverviewCards />
-      </div>
 
       {/* Content */}
       {isLoading ? (

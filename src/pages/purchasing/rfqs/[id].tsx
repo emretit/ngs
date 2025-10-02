@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +11,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, FileText } from "lucide-react";
-import { useRFQ, useSelectQuote, useUpdateRFQStatus } from "@/hooks/useRFQs";
+import { ArrowLeft, Award, Send, CheckCircle } from "lucide-react";
+import { useRFQ, useSelectQuote, useUpdateRFQStatus, useInviteVendors } from "@/hooks/useRFQs";
+import { useVendors } from "@/hooks/useVendors";
 import { format } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -30,8 +42,13 @@ export default function RFQDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: rfq, isLoading } = useRFQ(id!);
+  const { data: vendors } = useVendors({ is_active: true });
   const selectQuote = useSelectQuote();
   const updateStatus = useUpdateRFQStatus();
+  const inviteVendors = useInviteVendors();
+  
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
 
   if (isLoading) {
     return <div className="container mx-auto p-6">Yükleniyor...</div>;
@@ -41,11 +58,18 @@ export default function RFQDetail() {
     return <div className="container mx-auto p-6">RFQ bulunamadı</div>;
   }
 
+  const invitedVendorIds = new Set(rfq.vendors?.map(v => v.vendor_id) || []);
+  const availableVendors = vendors?.filter(v => !invitedVendorIds.has(v.id)) || [];
+
   const handleSelectQuote = async (quoteId: string) => {
-    try {
-      await selectQuote.mutateAsync({ rfqId: rfq.id, quoteId });
-    } catch (error) {
-      console.error('Error selecting quote:', error);
+    await selectQuote.mutateAsync({ rfqId: rfq.id, quoteId });
+  };
+
+  const handleInviteVendors = async () => {
+    if (selectedVendorIds.length > 0) {
+      await inviteVendors.mutateAsync({ rfqId: rfq.id, vendorIds: selectedVendorIds });
+      setShowInviteDialog(false);
+      setSelectedVendorIds([]);
     }
   };
 
@@ -56,6 +80,16 @@ export default function RFQDetail() {
     }
   };
 
+  const calculateScore = (quote: any) => {
+    const priceScore = quote.grand_total > 0 ? (1 / quote.grand_total) * 0.6 : 0;
+    const deliveryScore = quote.delivery_days > 0 ? (1 / quote.delivery_days) * 0.25 : 0;
+    const otherScore = (quote.vendor?.rating || 0) * 0.15;
+    return ((priceScore + deliveryScore + otherScore) * 100).toFixed(1);
+  };
+
+  const hasCompleteQuote = rfq.quotes && rfq.quotes.length > 0;
+  const selectedQuote = rfq.quotes?.find(q => q.is_selected);
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4">
@@ -63,33 +97,45 @@ export default function RFQDetail() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">RFQ Detayı</h1>
+          <h1 className="text-3xl font-bold">RFQ Karşılaştırma</h1>
           <p className="text-muted-foreground">{rfq.rfq_number}</p>
         </div>
         <div className="flex gap-2">
           {rfq.status === 'draft' && (
-            <Button onClick={() => updateStatus.mutateAsync({ id: rfq.id, status: 'sent' })}>
-              Gönder
+            <>
+              <Button variant="outline" onClick={() => setShowInviteDialog(true)}>
+                Tedarikçi Davet Et
+              </Button>
+              <Button onClick={() => updateStatus.mutateAsync({ id: rfq.id, status: 'sent' })}>
+                <Send className="h-4 w-4 mr-2" />
+                Gönder
+              </Button>
+            </>
+          )}
+          {rfq.status === 'sent' && (
+            <Button onClick={() => updateStatus.mutateAsync({ id: rfq.id, status: 'received' })}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Teklif Alındı
             </Button>
           )}
-          {rfq.quotes?.some(q => q.is_selected) && (
+          {selectedQuote && hasCompleteQuote && (
             <Button onClick={handleCreatePO}>
+              <Award className="h-4 w-4 mr-2" />
               Sipariş Oluştur
             </Button>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <Card className="p-6 space-y-4">
-          <h3 className="font-semibold">RFQ Bilgileri</h3>
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="p-4">
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Durum:</span>
               <span>{getStatusBadge(rfq.status)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Son Teklif Tarihi:</span>
+              <span className="text-muted-foreground">Son Teklif:</span>
               <span>{rfq.due_date ? format(new Date(rfq.due_date), 'dd.MM.yyyy') : '-'}</span>
             </div>
             <div className="flex justify-between">
@@ -98,110 +144,199 @@ export default function RFQDetail() {
             </div>
           </div>
         </Card>
-
-        <Card className="p-6 space-y-4">
-          <h3 className="font-semibold">Notlar</h3>
-          <p className="text-sm">{rfq.notes || 'Not yok'}</p>
+        <Card className="p-4">
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Davet Edilen:</span>
+              <span>{invitedVendorIds.size}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Teklif Sayısı:</span>
+              <span>{rfq.quotes?.length || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Para Birimi:</span>
+              <span>{rfq.currency}</span>
+            </div>
+          </div>
         </Card>
       </div>
 
-      <Card className="p-6">
-        <h3 className="font-semibold mb-4">Talep Edilen Ürünler</h3>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Açıklama</TableHead>
-              <TableHead>Miktar</TableHead>
-              <TableHead>Birim</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rfq.lines?.map((line) => (
-              <TableRow key={line.id}>
-                <TableCell>{line.description}</TableCell>
-                <TableCell>{line.quantity}</TableCell>
-                <TableCell>{line.uom}</TableCell>
-              </TableRow>
+      <div className="grid grid-cols-5 gap-6">
+        <Card className="col-span-2 p-4">
+          <h3 className="font-semibold mb-3">RFQ Kalemleri</h3>
+          <div className="space-y-2">
+            {rfq.lines?.map((line, idx) => (
+              <div key={line.id} className="p-3 border rounded text-sm">
+                <div className="font-medium">{line.description}</div>
+                <div className="text-muted-foreground">
+                  {line.quantity} {line.uom}
+                  {line.target_price && ` • Hedef: ${line.target_price.toFixed(2)}`}
+                </div>
+              </div>
             ))}
-          </TableBody>
-        </Table>
-      </Card>
+          </div>
+        </Card>
 
-      <Card className="p-6">
-        <h3 className="font-semibold mb-4">Tedarikçi Teklifleri</h3>
-        {rfq.quotes?.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Henüz teklif alınmadı</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {rfq.quotes?.map((quote) => (
-              <Card key={quote.id} className={`p-4 ${quote.is_selected ? 'border-primary' : ''}`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="font-medium">{quote.vendor?.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Geçerlilik: {quote.valid_until ? format(new Date(quote.valid_until), 'dd.MM.yyyy') : '-'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {quote.is_selected && <Badge>Seçildi</Badge>}
-                    {!quote.is_selected && rfq.status !== 'closed' && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleSelectQuote(quote.id)}
-                        disabled={selectQuote.isPending}
-                      >
-                        Seç
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Ürün</TableHead>
-                      <TableHead className="text-right">Birim Fiyat</TableHead>
-                      <TableHead className="text-right">KDV %</TableHead>
-                      <TableHead className="text-right">Toplam</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {quote.lines?.map((line) => (
-                      <TableRow key={line.id}>
-                        <TableCell>{line.rfq_line?.description}</TableCell>
-                        <TableCell className="text-right">
-                          {new Intl.NumberFormat('tr-TR', {
-                            style: 'currency',
-                            currency: quote.currency,
-                          }).format(line.unit_price)}
-                        </TableCell>
-                        <TableCell className="text-right">{line.tax_rate}%</TableCell>
-                        <TableCell className="text-right font-medium">
-                          {new Intl.NumberFormat('tr-TR', {
-                            style: 'currency',
-                            currency: quote.currency,
-                          }).format(line.line_total)}
-                        </TableCell>
-                      </TableRow>
+        <Card className="col-span-3 p-4">
+          <h3 className="font-semibold mb-3">Tedarikçi Teklifleri (Matris)</h3>
+          
+          {!hasCompleteQuote ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Award className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Henüz teklif alınmadı</p>
+            </div>
+          ) : (
+            <ScrollArea className="h-[600px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="sticky top-0 bg-background">Kalem</TableHead>
+                    {rfq.quotes?.map((quote) => (
+                      <TableHead key={quote.id} className="sticky top-0 bg-background text-center min-w-[180px]">
+                        <div className="font-medium">{quote.vendor?.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Skor: {calculateScore(quote)}
+                        </div>
+                      </TableHead>
                     ))}
-                  </TableBody>
-                </Table>
-                <div className="mt-4 flex justify-between text-sm">
-                  <span>Teslimat Süresi: {quote.delivery_days || '-'} gün</span>
-                  <span className="font-semibold">
-                    Toplam: {new Intl.NumberFormat('tr-TR', {
-                      style: 'currency',
-                      currency: quote.currency,
-                    }).format(quote.grand_total)}
-                  </span>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rfq.lines?.map((line) => {
+                    const quoteLinesForItem = rfq.quotes?.map(quote => 
+                      quote.lines?.find(ql => ql.rfq_line_id === line.id)
+                    );
+                    
+                    return (
+                      <TableRow key={line.id}>
+                        <TableCell className="font-medium">
+                          <div>{line.description}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {line.quantity} {line.uom}
+                          </div>
+                        </TableCell>
+                        {quoteLinesForItem?.map((quoteLine, idx) => {
+                          const quote = rfq.quotes?.[idx];
+                          return (
+                            <TableCell key={idx} className="text-center">
+                              {quoteLine ? (
+                                <div className="space-y-1 text-xs">
+                                  <div className="font-semibold text-sm">
+                                    {new Intl.NumberFormat('tr-TR', {
+                                      style: 'currency',
+                                      currency: quote?.currency || 'TRY',
+                                    }).format(quoteLine.unit_price)}
+                                  </div>
+                                  <div className="text-muted-foreground">
+                                    KDV: {quoteLine.tax_rate}%
+                                  </div>
+                                  {quoteLine.delivery_days && (
+                                    <div className="text-muted-foreground">
+                                      Teslimat: {quoteLine.delivery_days}g
+                                    </div>
+                                  )}
+                                  <div className="font-medium">
+                                    Toplam: {new Intl.NumberFormat('tr-TR', {
+                                      style: 'currency',
+                                      currency: quote?.currency || 'TRY',
+                                    }).format(quoteLine.line_total)}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  })}
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-semibold">GENEL TOPLAM</TableCell>
+                    {rfq.quotes?.map((quote) => (
+                      <TableCell key={quote.id} className="text-center">
+                        <div className="space-y-1">
+                          <div className="font-bold text-lg">
+                            {new Intl.NumberFormat('tr-TR', {
+                              style: 'currency',
+                              currency: quote.currency,
+                            }).format(quote.grand_total)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {quote.delivery_days}g teslimat
+                          </div>
+                          {!quote.is_selected && rfq.status !== 'closed' && (
+                            <Button
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => handleSelectQuote(quote.id)}
+                              disabled={selectQuote.isPending}
+                            >
+                              <Award className="h-3 w-3 mr-1" />
+                              Seç
+                            </Button>
+                          )}
+                          {quote.is_selected && (
+                            <Badge className="mt-2">Kazanan</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          )}
+        </Card>
+      </div>
+
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tedarikçi Davet Et</DialogTitle>
+            <DialogDescription>
+              RFQ'ya eklemek istediğiniz tedarikçileri seçin
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[300px] pr-4">
+            <div className="space-y-2">
+              {availableVendors.map((vendor) => (
+                <div key={vendor.id} className="flex items-center space-x-2 p-2 border rounded">
+                  <Checkbox
+                    id={`invite-${vendor.id}`}
+                    checked={selectedVendorIds.includes(vendor.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedVendorIds(prev =>
+                        checked
+                          ? [...prev, vendor.id]
+                          : prev.filter(id => id !== vendor.id)
+                      );
+                    }}
+                  />
+                  <label
+                    htmlFor={`invite-${vendor.id}`}
+                    className="text-sm cursor-pointer flex-1"
+                  >
+                    {vendor.name} ({vendor.city || vendor.country})
+                  </label>
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </Card>
+              ))}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
+              İptal
+            </Button>
+            <Button
+              onClick={handleInviteVendors}
+              disabled={selectedVendorIds.length === 0 || inviteVendors.isPending}
+            >
+              Davet Et ({selectedVendorIds.length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

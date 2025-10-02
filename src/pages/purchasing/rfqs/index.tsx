@@ -75,47 +75,56 @@ export default function RFQsList() {
               <TableHead>RFQ No</TableHead>
               <TableHead>Durum</TableHead>
               <TableHead>Son Teklif Tarihi</TableHead>
-              <TableHead>Tedarikçi Sayısı</TableHead>
-              <TableHead>Oluşturma Tarihi</TableHead>
+              <TableHead>Davet Edilen</TableHead>
+              <TableHead>Teklif Sayısı</TableHead>
+              <TableHead>Güncelleme</TableHead>
               <TableHead className="w-[100px]">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredRFQs?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>Henüz RFQ bulunmuyor</p>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredRFQs?.map((rfq) => (
-                <TableRow
-                  key={rfq.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`/purchasing/rfqs/${rfq.id}`)}
-                >
-                  <TableCell className="font-medium">{rfq.rfq_number}</TableCell>
-                  <TableCell>{getStatusBadge(rfq.status)}</TableCell>
-                  <TableCell>
-                    {rfq.due_date ? format(new Date(rfq.due_date), 'dd.MM.yyyy') : '-'}
-                  </TableCell>
-                  <TableCell>{rfq.vendors?.length || 0}</TableCell>
-                  <TableCell>{format(new Date(rfq.created_at), 'dd.MM.yyyy')}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/purchasing/rfqs/${rfq.id}`);
-                      }}
-                    >
-                      Detay
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              filteredRFQs?.map((rfq) => {
+                const quotesCount = rfq.quotes?.length || 0;
+                const vendorsCount = rfq.vendors?.length || 0;
+                
+                return (
+                  <TableRow
+                    key={rfq.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/purchasing/rfqs/${rfq.id}`)}
+                  >
+                    <TableCell className="font-medium">{rfq.rfq_number}</TableCell>
+                    <TableCell>{getStatusBadge(rfq.status)}</TableCell>
+                    <TableCell>
+                      {rfq.due_date ? format(new Date(rfq.due_date), 'dd.MM.yyyy') : '-'}
+                    </TableCell>
+                    <TableCell>{vendorsCount}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{quotesCount} / {vendorsCount}</Badge>
+                    </TableCell>
+                    <TableCell>{format(new Date(rfq.updated_at), 'dd.MM.yyyy')}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/purchasing/rfqs/${rfq.id}`);
+                        }}
+                      >
+                        Detay
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

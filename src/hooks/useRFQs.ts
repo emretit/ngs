@@ -309,9 +309,48 @@ export const useUpdateRFQStatus = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
+      queryClient.invalidateQueries({ queryKey: ['rfq'] });
       toast({
         title: "Başarılı",
         description: "Durum güncellendi.",
+      });
+    },
+  });
+};
+
+// Invite additional vendors
+export const useInviteVendors = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ rfqId, vendorIds }: { rfqId: string; vendorIds: string[] }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      const invites = vendorIds.map(vendor_id => ({
+        rfq_id: rfqId,
+        vendor_id,
+        company_id: profile?.company_id,
+      }));
+
+      const { error } = await supabase
+        .from('rfq_vendors')
+        .insert(invites);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rfqs'] });
+      queryClient.invalidateQueries({ queryKey: ['rfq'] });
+      toast({
+        title: "Başarılı",
+        description: "Tedarikçiler davet edildi.",
       });
     },
   });

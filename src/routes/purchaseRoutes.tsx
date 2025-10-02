@@ -17,6 +17,7 @@ const NewPurchaseOrder = lazy(() => import("@/pages/purchasing/orders/new"));
 const PurchaseOrderDetail = lazy(() => import("@/pages/purchasing/orders/[id]"));
 const ReceivePurchaseOrder = lazy(() => import("@/pages/purchasing/orders/receive"));
 const RFQsList = lazy(() => import("@/pages/purchasing/rfqs/index"));
+const NewRFQ = lazy(() => import("@/pages/purchasing/rfqs/new"));
 const RFQDetail = lazy(() => import("@/pages/purchasing/rfqs/[id]"));
 const GRNsList = lazy(() => import("@/pages/purchasing/grns/index"));
 const GRNDetail = lazy(() => import("@/pages/purchasing/grns/[id]"));
@@ -108,6 +109,11 @@ export const purchaseRoutes: RouteConfig[] = [
   {
     path: "/purchasing/rfqs",
     component: RFQsList,
+    protected: true,
+  },
+  {
+    path: "/purchasing/rfqs/new",
+    component: NewRFQ,
     protected: true,
   },
   {

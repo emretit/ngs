@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreatePurchaseRequest } from "@/hooks/usePurchasing";
 import { PurchaseRequestFormData, PurchaseRequestPriority } from "@/types/purchasing";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FormItem {
   description: string;
@@ -23,8 +24,18 @@ export default function NewPurchaseRequest() {
   const { register, handleSubmit, setValue, watch } = useForm<PurchaseRequestFormData>();
   const createMutation = useCreatePurchaseRequest();
   const [items, setItems] = useState<FormItem[]>([{ description: "", quantity: 1, estimated_price: 0, uom: "Adet" }]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
   const priority = watch("priority");
+
+  // Get current user ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setCurrentUserId(data.user.id);
+      }
+    });
+  }, []);
 
   const addItem = () => {
     setItems([...items, { description: "", quantity: 1, estimated_price: 0, uom: "Adet" }]);
@@ -42,7 +53,7 @@ export default function NewPurchaseRequest() {
 
   const onSubmit = (data: PurchaseRequestFormData) => {
     createMutation.mutate(
-      { ...data, items },
+      { ...data, requester_id: currentUserId, items },
       {
         onSuccess: () => {
           navigate("/purchasing/requests");

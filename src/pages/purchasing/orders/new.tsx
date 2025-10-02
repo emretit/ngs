@@ -21,12 +21,14 @@ export default function NewPurchaseOrder() {
   const navigate = useNavigate();
   const createOrder = useCreatePurchaseOrderNew();
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
     supplier_id: "",
     order_date: new Date().toISOString().split('T')[0],
     priority: "normal",
     items: [
       {
+        product_id: "",
         description: "",
         quantity: 1,
         unit_price: 0,
@@ -39,6 +41,7 @@ export default function NewPurchaseOrder() {
 
   useEffect(() => {
     fetchSuppliers();
+    fetchProducts();
   }, []);
 
   const fetchSuppliers = async () => {
@@ -50,12 +53,22 @@ export default function NewPurchaseOrder() {
     if (data) setSuppliers(data);
   };
 
+  const fetchProducts = async () => {
+    const { data } = await supabase
+      .from('products')
+      .select('id, name, sku, price, tax_rate, unit, currency')
+      .eq('is_active', true)
+      .order('name');
+    if (data) setProducts(data);
+  };
+
   const addItem = () => {
     setFormData({
       ...formData,
       items: [
         ...formData.items,
         {
+          product_id: "",
           description: "",
           quantity: 1,
           unit_price: 0,
@@ -77,6 +90,21 @@ export default function NewPurchaseOrder() {
   const updateItem = (index: number, field: string, value: any) => {
     const items = [...formData.items];
     items[index] = { ...items[index], [field]: value };
+    
+    // Auto-fill product details when product is selected
+    if (field === 'product_id' && value) {
+      const product = products.find(p => p.id === value);
+      if (product) {
+        items[index] = {
+          ...items[index],
+          description: product.name,
+          unit_price: product.price || 0,
+          tax_rate: product.tax_rate || 18,
+          uom: product.unit || 'Adet',
+        };
+      }
+    }
+    
     setFormData({ ...formData, items });
   };
 
@@ -209,6 +237,26 @@ export default function NewPurchaseOrder() {
 
                 <div className="grid grid-cols-6 gap-3">
                   <div className="col-span-2 space-y-2">
+                    <Label>Ürün</Label>
+                    <Select
+                      value={item.product_id || ""}
+                      onValueChange={(value) => updateItem(index, 'product_id', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Ürün seçin (opsiyonel)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Manuel Giriş</SelectItem>
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} {product.sku && `(${product.sku})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label>Açıklama *</Label>
                     <Input
                       value={item.description}
@@ -227,14 +275,6 @@ export default function NewPurchaseOrder() {
                       required
                       min="0.001"
                       step="0.001"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Birim</Label>
-                    <Input
-                      value={item.uom}
-                      onChange={(e) => updateItem(index, 'uom', e.target.value)}
                     />
                   </div>
 

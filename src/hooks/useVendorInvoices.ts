@@ -3,22 +3,49 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { VendorInvoice, VendorInvoiceFormData, ThreeWayMatch } from '@/types/purchasing-extended';
 
-// Fetch all vendor invoices
-export const useVendorInvoices = () => {
+// Fetch all vendor invoices with filters
+export const useVendorInvoices = (filters?: {
+  search?: string;
+  status?: string;
+  vendor_id?: string;
+  startDate?: string;
+  endDate?: string;
+}) => {
   return useQuery({
-    queryKey: ['vendor-invoices'],
+    queryKey: ['vendor-invoices', filters],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('vendor_invoices')
         .select(`
           *,
           vendor:customers!vendor_invoices_vendor_id_fkey(name, tax_number),
-          purchase_order:purchase_orders(order_number),
+          po:purchase_orders(order_number),
           grn:grns(grn_number),
           lines:vendor_invoice_lines(*)
         `)
         .order('created_at', { ascending: false });
 
+      if (filters?.search) {
+        query = query.ilike('invoice_number', `%${filters.search}%`);
+      }
+
+      if (filters?.status && filters.status !== ' ') {
+        query = query.eq('status', filters.status);
+      }
+
+      if (filters?.vendor_id && filters.vendor_id !== ' ') {
+        query = query.eq('vendor_id', filters.vendor_id);
+      }
+
+      if (filters?.startDate) {
+        query = query.gte('invoice_date', filters.startDate);
+      }
+
+      if (filters?.endDate) {
+        query = query.lte('invoice_date', filters.endDate);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as VendorInvoice[];
     },
@@ -157,34 +184,39 @@ export const useCreateVendorInvoice = () => {
   });
 };
 
-// Update invoice status
-export const useUpdateInvoiceStatus = () => {
+// Update invoice status with AP integration stub
+export const useUpdateVendorInvoiceStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-      const updateData: any = { status };
+      const updates: any = { status };
 
       if (status === 'approved') {
-        updateData.approved_by = user?.id;
-        updateData.approved_at = new Date().toISOString();
-      } else if (status === 'posted') {
-        updateData.posted_at = new Date().toISOString();
+        updates.approved_by = user.id;
+        updates.approved_at = new Date().toISOString();
+      }
+
+      if (status === 'posted') {
+        updates.posted_at = new Date().toISOString();
+        
+        // TODO: Create AP bill in cashflow ledger
+        // This would:
+        // 1. Create a payable entry in cashflow
+        // 2. Generate payment schedule based on payment terms
+        // 3. Link to the invoice for reconciliation
+        console.log('TODO: Create AP bill for invoice', id);
       }
 
       const { error } = await supabase
         .from('vendor_invoices')
-        .update(updateData)
+        .update(updates)
         .eq('id', id);
 
       if (error) throw error;
-
-      // If posting, create cashflow entry (TODO: implement)
-      if (status === 'posted') {
-        // await createCashflowAPEntry(id);
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendor-invoices'] });
@@ -193,28 +225,80 @@ export const useUpdateInvoiceStatus = () => {
         description: "Durum güncellendi.",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message || "Durum güncellenirken bir hata oluştu.",
+        variant: "destructive",
+      });
+    },
   });
 };
 
-// Fetch 3-way match data
-export const useThreeWayMatch = (poId?: string) => {
+// Fetch 3-way match data directly from invoice lines
+export const useThreeWayMatch = (invoiceId: string) => {
   return useQuery({
-    queryKey: ['three-way-match', poId],
+    queryKey: ['three-way-match', invoiceId],
     queryFn: async () => {
-      let query = supabase
-        .from('three_way_match')
-        .select('*');
-
-      if (poId) {
-        query = query.eq('po_id', poId);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from('vendor_invoice_lines')
+        .select(`
+          id,
+          description,
+          quantity as invoiced_qty,
+          unit_price as invoice_unit_price,
+          line_total as invoice_line_total,
+          po_line_id,
+          po_line:purchase_order_items(
+            id,
+            description,
+            quantity as ordered_qty,
+            unit_price as po_unit_price,
+            line_total as po_line_total,
+            received_quantity
+          )
+        `)
+        .eq('vendor_invoice_id', invoiceId);
 
       if (error) throw error;
-      return data as ThreeWayMatch[];
+
+      // Transform data for 3-way match display
+      return data.map(line => {
+        const ordered = line.po_line?.ordered_qty || 0;
+        const received = line.po_line?.received_quantity || 0;
+        const invoiced = line.invoiced_qty;
+        const poPrice = line.po_line?.po_unit_price || 0;
+        const invoicePrice = line.invoice_unit_price;
+
+        let match_status: 'matched' | 'under_received' | 'over_received' | 'over_invoiced' | 'price_variance' | 'partial' = 'matched';
+
+        if (invoiced > received) {
+          match_status = 'over_invoiced';
+        } else if (received > ordered) {
+          match_status = 'over_received';
+        } else if (received < ordered && invoiced <= received) {
+          match_status = 'partial';
+        } else if (Math.abs(poPrice - invoicePrice) > 0.01) {
+          match_status = 'price_variance';
+        } else if (received < ordered) {
+          match_status = 'under_received';
+        }
+
+        return {
+          po_line_id: line.po_line_id,
+          description: line.description,
+          ordered_qty: ordered,
+          received_qty: received,
+          invoiced_qty: invoiced,
+          po_unit_price: poPrice,
+          invoice_unit_price: invoicePrice,
+          po_line_total: line.po_line?.po_line_total || 0,
+          invoice_line_total: line.invoice_line_total,
+          match_status,
+        };
+      });
     },
-    enabled: !!poId,
+    enabled: !!invoiceId,
   });
 };
 

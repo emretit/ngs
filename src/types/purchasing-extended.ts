@@ -139,6 +139,9 @@ export interface RFQQuoteLine {
   notes?: string;
   created_at: string;
   updated_at: string;
+  
+  // Relations
+  rfq_line?: RFQLine;
 }
 
 // ============= GRN (Goods Receipt Note) =============
@@ -160,14 +163,13 @@ export interface GRN {
   updated_at: string;
   
   // Relations
-  purchase_order?: {
+  po?: {
     order_number: string;
     supplier_id: string;
   };
   lines?: GRNLine[];
-  receiver?: {
-    first_name: string;
-    last_name: string;
+  received_by_user?: {
+    email: string;
   };
 }
 
@@ -228,7 +230,7 @@ export interface VendorInvoice {
   
   // Relations
   vendor?: Vendor;
-  purchase_order?: {
+  po?: {
     order_number: string;
   };
   grn?: {

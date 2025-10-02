@@ -46,7 +46,7 @@ export const useVendorInvoice = (id: string) => {
         .single();
 
       if (error) throw error;
-      return data as VendorInvoice[];
+      return data as VendorInvoice;
     },
     enabled: !!id,
   });

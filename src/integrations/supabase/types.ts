@@ -7549,6 +7549,10 @@ export type Database = {
         Args: { "": unknown } | { "": unknown }
         Returns: string
       }
+      check_po_approvals_completed: {
+        Args: { p_order_id: string }
+        Returns: boolean
+      }
       check_purchase_order_company: {
         Args: { p_order_id: string }
         Returns: boolean

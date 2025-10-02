@@ -195,6 +195,15 @@ export const useConfirmPurchaseOrderNew = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Check if all approvals are completed first
+      const { data: isCompleted, error: checkError } = await supabase
+        .rpc('check_po_approvals_completed', { p_order_id: id });
+
+      if (checkError) throw checkError;
+      if (!isCompleted) {
+        throw new Error('Tüm onaylar tamamlanmadan sipariş onaylanamaz');
+      }
+
       const { data, error } = await supabase
         .from('purchase_orders')
         .update({ 
@@ -216,10 +225,10 @@ export const useConfirmPurchaseOrderNew = () => {
         description: "Sipariş onaylandı.",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Hata",
-        description: "Sipariş onaylanırken bir hata oluştu.",
+        description: error.message || "Sipariş onaylanırken bir hata oluştu.",
         variant: "destructive",
       });
     },

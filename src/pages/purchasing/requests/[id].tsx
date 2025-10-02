@@ -9,6 +9,7 @@ import { usePurchaseRequest, useApprovals, useSubmitPurchaseRequest, useConvertP
 import { formatDate } from "@/lib/utils";
 import { PRItemsTab } from "@/components/purchasing/PRItemsTab";
 import { PRApprovalsTab } from "@/components/purchasing/PRApprovalsTab";
+import { AttachmentsTab } from "@/components/purchasing/AttachmentsTab";
 
 const statusConfig = {
   draft: { label: "Taslak", variant: "secondary" as const },
@@ -204,11 +205,7 @@ export default function PurchaseRequestDetail() {
               <PRApprovalsTab approvals={approvals || []} />
             </TabsContent>
             <TabsContent value="attachments">
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  Henüz ek dosya bulunmuyor
-                </CardContent>
-              </Card>
+              <AttachmentsTab objectType="purchase_request" objectId={request.id} />
             </TabsContent>
             <TabsContent value="history">
               <Card>

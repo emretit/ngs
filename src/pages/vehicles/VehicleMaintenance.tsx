@@ -275,8 +275,6 @@ export default function VehicleMaintenance({ isCollapsed, setIsCollapsed }: Vehi
           )}
         </CardContent>
       </Card>
-        </div>
-      </main>
     </div>
   );
 }

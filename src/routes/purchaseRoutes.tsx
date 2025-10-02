@@ -15,6 +15,7 @@ const PurchaseRequestDetail = lazy(() => import("@/pages/purchasing/requests/[id
 const PurchaseOrdersList = lazy(() => import("@/pages/purchasing/orders/index"));
 const NewPurchaseOrder = lazy(() => import("@/pages/purchasing/orders/new"));
 const PurchaseOrderDetail = lazy(() => import("@/pages/purchasing/orders/[id]"));
+const ReceivePurchaseOrder = lazy(() => import("@/pages/purchasing/orders/receive"));
 
 export const purchaseRoutes: RouteConfig[] = [
   {
@@ -90,6 +91,11 @@ export const purchaseRoutes: RouteConfig[] = [
   {
     path: "/purchasing/orders/:id",
     component: PurchaseOrderDetail,
+    protected: true,
+  },
+  {
+    path: "/purchasing/orders/:id/receive",
+    component: ReceivePurchaseOrder,
     protected: true,
   },
 ];

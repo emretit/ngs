@@ -81,6 +81,12 @@ export default function PurchaseOrderDetail() {
               Onayla
             </Button>
           )}
+          {(order.status === 'confirmed' || order.status === 'partial_received') && (
+            <Button onClick={() => navigate(`/purchasing/orders/${order.id}/receive`)}>
+              <Check className="h-4 w-4 mr-2" />
+              Mal Kabul
+            </Button>
+          )}
         </div>
       </div>
 

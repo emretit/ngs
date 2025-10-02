@@ -234,3 +234,80 @@ export const useConfirmPurchaseOrderNew = () => {
     },
   });
 };
+
+// Receive purchase order
+export const useReceivePurchaseOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      orderId: string;
+      received_date: string;
+      notes?: string;
+      items: { item_id: string; received_quantity: number }[];
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Update each item's received quantity
+      for (const item of data.items) {
+        if (item.received_quantity > 0) {
+          const { error: itemError } = await supabase
+            .from('purchase_order_items')
+            .update({
+              received_quantity: supabase.sql`received_quantity + ${item.received_quantity}`,
+            })
+            .eq('id', item.item_id);
+
+          if (itemError) throw itemError;
+        }
+      }
+
+      // Check if all items are fully received
+      const { data: orderItems, error: fetchError } = await supabase
+        .from('purchase_order_items')
+        .select('quantity, received_quantity')
+        .eq('order_id', data.orderId);
+
+      if (fetchError) throw fetchError;
+
+      const allFullyReceived = orderItems?.every(
+        item => item.received_quantity >= item.quantity
+      );
+
+      const partiallyReceived = orderItems?.some(
+        item => item.received_quantity > 0
+      );
+
+      const newStatus = allFullyReceived 
+        ? 'received' 
+        : partiallyReceived 
+        ? 'partial_received' 
+        : 'confirmed';
+
+      // Update order status
+      const { error: orderError } = await supabase
+        .from('purchase_orders')
+        .update({ status: newStatus })
+        .eq('id', data.orderId);
+
+      if (orderError) throw orderError;
+
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders-new'] });
+      toast({
+        title: "Başarılı",
+        description: "Mal kabul işlemi tamamlandı.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message || "Mal kabul sırasında bir hata oluştu.",
+        variant: "destructive",
+      });
+    },
+  });
+};

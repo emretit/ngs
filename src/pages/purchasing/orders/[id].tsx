@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -10,17 +12,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Check, X } from "lucide-react";
-import { usePurchaseOrderNew, useSubmitPurchaseOrderNew, useConfirmPurchaseOrderNew } from "@/hooks/usePurchaseOrdersNew";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { ArrowLeft, Send, CheckCircle, XCircle, FileText, Save } from "lucide-react";
+import { 
+  usePurchaseOrder, 
+  useUpdatePurchaseOrder, 
+  useRequestPOApproval,
+  useUpdatePOStatus,
+  PurchaseOrderItem,
+} from "@/hooks/usePurchaseOrders";
 import { format } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 const getStatusBadge = (status: string) => {
   const variants = {
     draft: { label: "Taslak", variant: "secondary" as const },
-    submitted: { label: "Onay Bekliyor", variant: "default" as const },
-    confirmed: { label: "Onaylandı", variant: "default" as const },
-    partial_received: { label: "Kısmi Alındı", variant: "default" as const },
-    received: { label: "Tamamlandı", variant: "default" as const },
+    submitted: { label: "Onayda", variant: "default" as const },
+    approved: { label: "Onaylandı", variant: "default" as const },
+    sent: { label: "Gönderildi", variant: "default" as const },
+    received: { label: "Teslim Alındı", variant: "default" as const },
+    completed: { label: "Tamamlandı", variant: "default" as const },
     cancelled: { label: "İptal", variant: "destructive" as const },
   };
   const config = variants[status as keyof typeof variants] || variants.draft;
@@ -30,33 +46,71 @@ const getStatusBadge = (status: string) => {
 export default function PurchaseOrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data: order, isLoading } = usePurchaseOrderNew(id!);
-  const submitOrder = useSubmitPurchaseOrderNew();
-  const confirmOrder = useConfirmPurchaseOrderNew();
+  const { data: po, isLoading } = usePurchaseOrder(id!);
+  const updatePO = useUpdatePurchaseOrder();
+  const requestApproval = useRequestPOApproval();
+  const updateStatus = useUpdatePOStatus();
+  
+  const [editableItems, setEditableItems] = useState<PurchaseOrderItem[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   if (isLoading) {
     return <div className="container mx-auto p-6">Yükleniyor...</div>;
   }
 
-  if (!order) {
+  if (!po) {
     return <div className="container mx-auto p-6">Sipariş bulunamadı</div>;
   }
 
-  const handleSubmit = async () => {
-    try {
-      await submitOrder.mutateAsync(order.id);
-    } catch (error) {
-      console.error('Error submitting order:', error);
-    }
+  const handleStartEdit = () => {
+    setEditableItems(po.items || []);
+    setIsEditing(true);
   };
 
-  const handleConfirm = async () => {
-    try {
-      await confirmOrder.mutateAsync(order.id);
-    } catch (error) {
-      console.error('Error confirming order:', error);
-    }
+  const handleSaveEdit = async () => {
+    await updatePO.mutateAsync({
+      id: po.id,
+      data: { items: editableItems },
+    });
+    setIsEditing(false);
   };
+
+  const handleCancelEdit = () => {
+    setEditableItems([]);
+    setIsEditing(false);
+  };
+
+  const updateItem = (index: number, field: keyof PurchaseOrderItem, value: any) => {
+    const newItems = [...editableItems];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setEditableItems(newItems);
+  };
+
+  const calculateLineTotal = (item: PurchaseOrderItem) => {
+    const subtotal = item.quantity * item.unit_price;
+    const discount = subtotal * (item.discount_rate / 100);
+    const taxable = subtotal - discount;
+    const tax = taxable * (item.tax_rate / 100);
+    return taxable + tax;
+  };
+
+  const displayItems = isEditing ? editableItems : (po.items || []);
+  const grandTotal = displayItems.reduce((sum, item) => sum + calculateLineTotal(item), 0);
+  const tryTotal = grandTotal * po.exchange_rate;
+
+  const handleRequestApproval = async () => {
+    await requestApproval.mutateAsync(po.id);
+  };
+
+  const handleSendToVendor = () => {
+    toast({
+      title: "PDF Gönderiliyor",
+      description: "Sipariş PDF'i tedarikçiye email ile gönderilecek.",
+    });
+  };
+
+  const approvalThreshold = 50000;
+  const needsApproval = tryTotal >= approvalThreshold;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -65,151 +119,286 @@ export default function PurchaseOrderDetail() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">Sipariş Detayı</h1>
-          <p className="text-muted-foreground">{order.order_number}</p>
+          <h1 className="text-3xl font-bold">Satın Alma Siparişi</h1>
+          <p className="text-muted-foreground">{po.order_number}</p>
         </div>
         <div className="flex gap-2">
-          {order.status === 'draft' && (
-            <Button onClick={handleSubmit} disabled={submitOrder.isPending}>
-              <Check className="h-4 w-4 mr-2" />
-              Onaya Gönder
+          {po.status === 'draft' && (
+            <>
+              <Button variant="outline" onClick={handleRequestApproval}>
+                <Send className="h-4 w-4 mr-2" />
+                Onay Talebi
+              </Button>
+              {!needsApproval && (
+                <Button onClick={() => updateStatus.mutateAsync({ id: po.id, status: 'approved' })}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Onayla
+                </Button>
+              )}
+            </>
+          )}
+          {po.status === 'submitted' && (
+            <>
+              <Button 
+                variant="outline" 
+                onClick={() => updateStatus.mutateAsync({ id: po.id, status: 'draft' })}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Reddet
+              </Button>
+              <Button onClick={() => updateStatus.mutateAsync({ id: po.id, status: 'approved' })}>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Onayla
+              </Button>
+            </>
+          )}
+          {po.status === 'approved' && (
+            <Button onClick={handleSendToVendor}>
+              <FileText className="h-4 w-4 mr-2" />
+              Tedarikçiye Gönder
             </Button>
           )}
-          {order.status === 'submitted' && (
-            <Button onClick={handleConfirm} disabled={confirmOrder.isPending}>
-              <Check className="h-4 w-4 mr-2" />
-              Onayla
-            </Button>
-          )}
-          {(order.status === 'confirmed' || order.status === 'partial_received') && (
-            <Button onClick={() => navigate(`/purchasing/orders/${order.id}/receive`)}>
-              <Check className="h-4 w-4 mr-2" />
-              Mal Kabul
+          {(po.status === 'draft' || po.status === 'submitted') && (
+            <Button 
+              variant="destructive"
+              onClick={() => updateStatus.mutateAsync({ id: po.id, status: 'cancelled' })}
+            >
+              İptal Et
             </Button>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <Card className="p-6 space-y-4">
-          <h3 className="font-semibold">Sipariş Bilgileri</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Durum:</span>
-              <span>{getStatusBadge(order.status)}</span>
+      <Tabs defaultValue="items" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="items">Kalemler</TabsTrigger>
+          <TabsTrigger value="approvals">Onaylar</TabsTrigger>
+          <TabsTrigger value="info">Bilgiler</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="items" className="space-y-4">
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-lg">Sipariş Kalemleri</h3>
+              {!isEditing && po.status === 'draft' && (
+                <Button variant="outline" size="sm" onClick={handleStartEdit}>
+                  Düzenle
+                </Button>
+              )}
+              {isEditing && (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                    İptal
+                  </Button>
+                  <Button size="sm" onClick={handleSaveEdit}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Kaydet
+                  </Button>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Tedarikçi:</span>
-              <span className="font-medium">{order.supplier?.name || '-'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Sipariş Tarihi:</span>
-              <span>{format(new Date(order.order_date), 'dd.MM.yyyy')}</span>
-            </div>
-            {order.expected_delivery_date && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Teslim Tarihi:</span>
-                <span>{format(new Date(order.expected_delivery_date), 'dd.MM.yyyy')}</span>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Açıklama</TableHead>
+                  <TableHead className="text-right">Miktar</TableHead>
+                  <TableHead>Birim</TableHead>
+                  <TableHead className="text-right">Birim Fiyat</TableHead>
+                  <TableHead className="text-right">KDV %</TableHead>
+                  <TableHead className="text-right">İsk %</TableHead>
+                  <TableHead className="text-right">Satır Toplamı</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {displayItems.map((item, index) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.description}</TableCell>
+                    <TableCell className="text-right">
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                          className="w-20 text-right"
+                        />
+                      ) : (
+                        item.quantity
+                      )}
+                    </TableCell>
+                    <TableCell>{item.uom}</TableCell>
+                    <TableCell className="text-right">
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={item.unit_price}
+                          onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                          className="w-28 text-right"
+                        />
+                      ) : (
+                        item.unit_price.toFixed(2)
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          value={item.tax_rate}
+                          onChange={(e) => updateItem(index, 'tax_rate', parseFloat(e.target.value) || 0)}
+                          className="w-16 text-right"
+                        />
+                      ) : (
+                        item.tax_rate
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          value={item.discount_rate}
+                          onChange={(e) => updateItem(index, 'discount_rate', parseFloat(e.target.value) || 0)}
+                          className="w-16 text-right"
+                        />
+                      ) : (
+                        item.discount_rate
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {calculateLineTotal(item).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="mt-6 flex justify-end">
+              <div className="space-y-2 text-right">
+                <div className="text-lg font-semibold">
+                  Genel Toplam: {grandTotal.toFixed(2)} {po.currency}
+                </div>
+                {po.currency !== 'TRY' && (
+                  <div className="text-sm text-muted-foreground">
+                    TRY Karşılığı (Kur: {po.exchange_rate}): {tryTotal.toFixed(2)} TRY
+                  </div>
+                )}
+                {needsApproval && po.status === 'draft' && (
+                  <div className="text-sm text-amber-600">
+                    ⚠️ Onay gerekli (Eşik: {approvalThreshold.toLocaleString()} TRY)
+                  </div>
+                )}
               </div>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="approvals" className="space-y-4">
+          <Card className="p-6">
+            <h3 className="font-semibold text-lg mb-4">Onay Geçmişi</h3>
+            {po.approvals && po.approvals.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Adım</TableHead>
+                    <TableHead>Durum</TableHead>
+                    <TableHead>Onaylayan</TableHead>
+                    <TableHead>Tarih</TableHead>
+                    <TableHead>Yorum</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {po.approvals.map((approval) => (
+                    <TableRow key={approval.id}>
+                      <TableCell>Seviye {approval.step}</TableCell>
+                      <TableCell>
+                        <Badge variant={approval.status === 'approved' ? 'default' : 'secondary'}>
+                          {approval.status === 'approved' ? 'Onaylandı' : 'Bekliyor'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{approval.approver_id || '-'}</TableCell>
+                      <TableCell>
+                        {approval.decided_at 
+                          ? format(new Date(approval.decided_at), 'dd.MM.yyyy HH:mm')
+                          : '-'}
+                      </TableCell>
+                      <TableCell>{approval.comment || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">
+                Henüz onay süreci başlatılmadı
+              </p>
             )}
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Öncelik:</span>
-              <span className="capitalize">{order.priority}</span>
-            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="info" className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="p-6 space-y-4">
+              <h3 className="font-semibold">Sipariş Bilgileri</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Durum:</span>
+                  <span>{getStatusBadge(po.status)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Sipariş Tarihi:</span>
+                  <span>{format(new Date(po.order_date), 'dd.MM.yyyy')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Beklenen Teslimat:</span>
+                  <span>
+                    {po.expected_delivery_date 
+                      ? format(new Date(po.expected_delivery_date), 'dd.MM.yyyy')
+                      : '-'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Para Birimi:</span>
+                  <span>{po.currency}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Kur:</span>
+                  <span>{po.exchange_rate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Incoterm:</span>
+                  <span>{po.incoterm || '-'}</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 space-y-4">
+              <h3 className="font-semibold">Tedarikçi Bilgileri</h3>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <div className="text-muted-foreground">Firma:</div>
+                  <div className="font-medium">{po.supplier?.name}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Email:</div>
+                  <div>{po.supplier?.email || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Telefon:</div>
+                  <div>{po.supplier?.phone || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Adres:</div>
+                  <div>{po.supplier?.address || '-'}</div>
+                </div>
+              </div>
+            </Card>
           </div>
-        </Card>
 
-        <Card className="p-6 space-y-4">
-          <h3 className="font-semibold">Tutar Bilgileri</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Ara Toplam:</span>
-              <span>
-                {new Intl.NumberFormat('tr-TR', {
-                  style: 'currency',
-                  currency: order.currency,
-                }).format(order.subtotal)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">KDV:</span>
-              <span>
-                {new Intl.NumberFormat('tr-TR', {
-                  style: 'currency',
-                  currency: order.currency,
-                }).format(order.tax_total)}
-              </span>
-            </div>
-            <div className="flex justify-between pt-2 border-t font-semibold">
-              <span>Toplam:</span>
-              <span>
-                {new Intl.NumberFormat('tr-TR', {
-                  style: 'currency',
-                  currency: order.currency,
-                }).format(order.total_amount)}
-              </span>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {(order.delivery_address || order.notes) && (
-        <Card className="p-6 space-y-4">
-          <h3 className="font-semibold">Ek Bilgiler</h3>
-          {order.delivery_address && (
-            <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">Teslimat Adresi:</span>
-              <p className="text-sm">{order.delivery_address}</p>
-            </div>
+          {po.notes && (
+            <Card className="p-6">
+              <h3 className="font-semibold mb-2">Notlar</h3>
+              <p className="text-sm whitespace-pre-wrap">{po.notes}</p>
+            </Card>
           )}
-          {order.notes && (
-            <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">Notlar:</span>
-              <p className="text-sm">{order.notes}</p>
-            </div>
-          )}
-        </Card>
-      )}
-
-      <Card className="p-6">
-        <h3 className="font-semibold mb-4">Ürünler</h3>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Açıklama</TableHead>
-              <TableHead>Miktar</TableHead>
-              <TableHead>Birim</TableHead>
-              <TableHead className="text-right">Birim Fiyat</TableHead>
-              <TableHead className="text-right">İskonto %</TableHead>
-              <TableHead className="text-right">KDV %</TableHead>
-              <TableHead className="text-right">Tutar</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {order.items?.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.description}</TableCell>
-                <TableCell>{item.quantity}</TableCell>
-                <TableCell>{item.uom}</TableCell>
-                <TableCell className="text-right">
-                  {new Intl.NumberFormat('tr-TR', {
-                    style: 'currency',
-                    currency: order.currency,
-                  }).format(item.unit_price)}
-                </TableCell>
-                <TableCell className="text-right">{item.discount_rate}%</TableCell>
-                <TableCell className="text-right">{item.tax_rate}%</TableCell>
-                <TableCell className="text-right font-medium">
-                  {new Intl.NumberFormat('tr-TR', {
-                    style: 'currency',
-                    currency: order.currency,
-                  }).format(item.line_total)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

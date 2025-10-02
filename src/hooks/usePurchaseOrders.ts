@@ -1,340 +1,407 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  PurchaseOrder, 
-  PurchaseOrderStatus, 
-  PurchaseRequestStatus,
-  PurchaseOrderItem 
-} from "@/types/purchase";
-import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
-export const usePurchaseOrders = () => {
-  const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({
-    status: "",
-    search: "",
-    dateRange: { from: null, to: null } as { from: Date | null, to: Date | null }
-  });
-
-  const fetchOrders = async (): Promise<PurchaseOrder[]> => {
-    let query = supabase
-      .from("purchase_orders")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (filters.status) {
-      query = query.eq("status", filters.status as PurchaseOrderStatus);
-    }
-
-    if (filters.search) {
-      query = query.or(`po_number.ilike.%${filters.search}%`);
-    }
-
-    if (filters.dateRange.from) {
-      query = query.gte("created_at", filters.dateRange.from.toISOString());
-    }
-
-    if (filters.dateRange.to) {
-      query = query.lte("created_at", filters.dateRange.to.toISOString());
-    }
-
-    const { data, error } = await query;
-    
-    if (error) {
-      toast.error("Sipariş listesi yüklenirken hata oluştu");
-      throw error;
-    }
-    
-    return data;
+export interface PurchaseOrder {
+  id: string;
+  company_id: string;
+  order_number: string;
+  supplier_id: string;
+  status: string;
+  order_date: string;
+  expected_delivery_date: string | null;
+  warehouse_id: string | null;
+  currency: string;
+  exchange_rate: number;
+  subtotal: number;
+  tax_total: number;
+  discount_total: number;
+  shipping_cost: number;
+  grand_total: number;
+  payment_terms: string | null;
+  incoterm: string | null;
+  notes: string | null;
+  rfq_id: string | null;
+  created_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+  supplier?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
   };
+  items?: PurchaseOrderItem[];
+  approvals?: any[];
+}
 
-  const fetchOrderById = async (id: string): Promise<PurchaseOrder> => {
-    const { data, error } = await supabase
-      .from("purchase_orders")
-      .select("*")
-      .eq("id", id)
-      .single();
+export interface PurchaseOrderItem {
+  id: string;
+  order_id: string;
+  product_id: string | null;
+  description: string;
+  quantity: number;
+  uom: string;
+  unit_price: number;
+  tax_rate: number;
+  discount_rate: number;
+  line_total: number;
+  expected_delivery_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
-    if (error) {
-      toast.error("Sipariş yüklenirken hata oluştu");
-      throw error;
-    }
+export interface POFormData {
+  supplier_id: string;
+  order_date: string;
+  expected_delivery_date?: string;
+  warehouse_id?: string;
+  currency: string;
+  exchange_rate?: number;
+  payment_terms?: string;
+  incoterm?: string;
+  notes?: string;
+  rfq_id?: string;
+  items: {
+    product_id?: string;
+    description: string;
+    quantity: number;
+    uom: string;
+    unit_price: number;
+    tax_rate?: number;
+    discount_rate?: number;
+    notes?: string;
+  }[];
+}
 
-    return data;
-  };
+// Fetch all purchase orders
+export const usePurchaseOrders = (filters?: {
+  search?: string;
+  status?: string;
+  supplier_id?: string;
+  warehouse_id?: string;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  return useQuery({
+    queryKey: ['purchase-orders', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('purchase_orders')
+        .select(`
+          *,
+          supplier:customers!purchase_orders_supplier_id_fkey(id, name, email, mobile_phone),
+          items:purchase_order_items(*)
+        `)
+        .order('created_at', { ascending: false });
 
-  const fetchOrderItems = async (orderId: string): Promise<PurchaseOrderItem[]> => {
-    const { data, error } = await supabase
-      .from("purchase_order_items")
-      .select("*")
-      .eq("po_id", orderId);
-
-    if (error) {
-      toast.error("Sipariş kalemleri yüklenirken hata oluştu");
-      throw error;
-    }
-
-    return data;
-  };
-
-  const fetchOrderWithItems = async (id: string) => {
-    const order = await fetchOrderById(id);
-    const items = await fetchOrderItems(id);
-    return { ...order, items };
-  };
-
-  const createOrderFromRequest = async ({ 
-    requestId, 
-    supplierId, 
-    items 
-  }: { 
-    requestId: string, 
-    supplierId: string, 
-    items: any[] 
-  }) => {
-    const { data, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !data.user) {
-      toast.error("Kullanıcı kimliği alınamadı");
-      throw new Error("User not authenticated");
-    }
-
-    const { data: order, error: orderError } = await supabase
-      .from("purchase_orders")
-      .insert([{
-        request_id: requestId,
-        supplier_id: supplierId,
-        status: 'draft' as PurchaseOrderStatus,
-        issued_by: data.user.id,
-      }])
-      .select()
-      .single();
-
-    if (orderError) {
-      toast.error("Sipariş oluşturulurken hata oluştu");
-      throw orderError;
-    }
-
-    const orderItems = items.map(item => ({
-      po_id: order.id,
-      product_id: item.product_id,
-      description: item.description,
-      quantity: item.quantity,
-      unit: item.unit,
-      unit_price: Number(item.estimated_unit_price) || 0,
-      tax_rate: 18, // Default tax rate
-      total_price: Number(item.quantity || 0) * Number(item.estimated_unit_price || 0)
-    }));
-
-    const { error: itemsError } = await supabase
-      .from("purchase_order_items")
-      .insert(orderItems);
-
-    if (itemsError) {
-      toast.error("Sipariş kalemleri eklenirken hata oluştu");
-      throw itemsError;
-    }
-
-    const { error: requestError } = await supabase
-      .from("purchase_requests")
-      .update({ status: 'converted' as PurchaseRequestStatus })
-      .eq("id", requestId);
-    
-    if (requestError) {
-      toast.error("Talep durumu güncellenirken hata oluştu");
-    }
-
-    toast.success("Sipariş başarıyla oluşturuldu");
-    return order;
-  };
-
-  const updateOrder = async ({ id, data }: { id: string, data: any }) => {
-    const { items, ...orderDetails } = data;
-    
-    const { error: orderError } = await supabase
-      .from("purchase_orders")
-      .update(orderDetails)
-      .eq("id", id);
-
-    if (orderError) {
-      toast.error("Sipariş güncellenirken hata oluştu");
-      throw orderError;
-    }
-
-    if (items && items.length > 0) {
-      const { error: deleteError } = await supabase
-        .from("purchase_order_items")
-        .delete()
-        .eq("po_id", id);
-
-      if (deleteError) {
-        toast.error("Mevcut sipariş kalemleri silinirken hata oluştu");
-        throw deleteError;
+      if (filters?.search) {
+        query = query.or(
+          `order_number.ilike.%${filters.search}%`
+        );
       }
 
-      const orderItems = items.map((item: any) => ({
-        po_id: id,
-        product_id: item.product_id,
-        description: item.description,
-        quantity: item.quantity,
-        unit: item.unit,
-        unit_price: parseFloat(String(item.unit_price)),
-        tax_rate: parseFloat(String(item.tax_rate)),
-        discount_rate: parseFloat(String(item.discount_rate || 0)),
-        total_price: parseFloat(String(item.total_price))
-      }));
+      if (filters?.status) {
+        query = query.eq('status', filters.status);
+      }
+
+      if (filters?.supplier_id) {
+        query = query.eq('supplier_id', filters.supplier_id);
+      }
+
+      if (filters?.warehouse_id) {
+        query = query.eq('warehouse_id', filters.warehouse_id);
+      }
+
+      if (filters?.startDate) {
+        query = query.gte('order_date', filters.startDate);
+      }
+
+      if (filters?.endDate) {
+        query = query.lte('order_date', filters.endDate);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data as PurchaseOrder[];
+    },
+  });
+};
+
+// Fetch single purchase order
+export const usePurchaseOrder = (id: string) => {
+  return useQuery({
+    queryKey: ['purchase-order', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('purchase_orders')
+        .select(`
+          *,
+          supplier:customers!purchase_orders_supplier_id_fkey(id, name, email, mobile_phone, address, city, country, tax_number),
+          items:purchase_order_items(*),
+          approvals:approvals(*)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data as PurchaseOrder;
+    },
+    enabled: !!id,
+  });
+};
+
+// Create purchase order
+export const useCreatePurchaseOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (formData: POFormData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error('No company found');
+
+      // Calculate totals
+      const subtotal = formData.items.reduce((sum, item) => {
+        const lineSubtotal = item.quantity * item.unit_price;
+        const discount = lineSubtotal * ((item.discount_rate || 0) / 100);
+        return sum + (lineSubtotal - discount);
+      }, 0);
+
+      const tax_total = formData.items.reduce((sum, item) => {
+        const lineSubtotal = item.quantity * item.unit_price;
+        const discount = lineSubtotal * ((item.discount_rate || 0) / 100);
+        const taxable = lineSubtotal - discount;
+        return sum + (taxable * ((item.tax_rate || 18) / 100));
+      }, 0);
+
+      const grand_total = subtotal + tax_total;
+
+      // Create PO header (draft, no number yet)
+      const { data: po, error: poError } = await supabase
+        .from('purchase_orders')
+        .insert({
+          company_id: profile.company_id,
+          supplier_id: formData.supplier_id,
+          status: 'draft',
+          order_number: 'DRAFT',
+          order_date: formData.order_date,
+          expected_delivery_date: formData.expected_delivery_date,
+          warehouse_id: formData.warehouse_id,
+          currency: formData.currency,
+          exchange_rate: formData.exchange_rate || 1,
+          payment_terms: formData.payment_terms,
+          incoterm: formData.incoterm,
+          notes: formData.notes,
+          rfq_id: formData.rfq_id,
+          subtotal,
+          tax_total,
+          discount_total: 0,
+          shipping_cost: 0,
+          grand_total,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (poError) throw poError;
+
+      // Create PO items
+      const items = formData.items.map((item) => {
+        const lineSubtotal = item.quantity * item.unit_price;
+        const discount = lineSubtotal * ((item.discount_rate || 0) / 100);
+        const taxable = lineSubtotal - discount;
+        const line_total = taxable + (taxable * ((item.tax_rate || 18) / 100));
+
+        return {
+          order_id: po.id,
+          company_id: profile.company_id,
+          ...item,
+          tax_rate: item.tax_rate || 18,
+          discount_rate: item.discount_rate || 0,
+          line_total,
+        };
+      });
 
       const { error: itemsError } = await supabase
-        .from("purchase_order_items")
-        .insert(orderItems);
+        .from('purchase_order_items')
+        .insert(items);
 
-      if (itemsError) {
-        toast.error("Sipariş kalemleri eklenirken hata oluştu");
-        throw itemsError;
-      }
-    }
+      if (itemsError) throw itemsError;
 
-    toast.success("Sipariş başarıyla güncellendi");
-    return { id };
-  };
+      return po;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      toast({
+        title: "Başarılı",
+        description: "Satın alma siparişi oluşturuldu.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Hata",
+        description: error.message || "Sipariş oluşturulurken bir hata oluştu.",
+        variant: "destructive",
+      });
+    },
+  });
+};
 
-  const updateOrderStatus = async ({ id, status }: { id: string, status: PurchaseOrderStatus }) => {
-    const { error } = await supabase
-      .from("purchase_orders")
-      .update({ status })
-      .eq("id", id);
+// Update purchase order
+export const useUpdatePurchaseOrder = () => {
+  const queryClient = useQueryClient();
 
-    if (error) {
-      toast.error("Sipariş durumu güncellenirken hata oluştu");
-      throw error;
-    }
+  return useMutation({
+    mutationFn: async ({ 
+      id, 
+      data 
+    }: { 
+      id: string; 
+      data: Partial<POFormData> & { items?: PurchaseOrderItem[] };
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-    toast.success("Sipariş durumu başarıyla güncellendi");
-    return { id };
-  };
-
-  const receiveItems = async ({ 
-    orderId, 
-    items 
-  }: { 
-    orderId: string, 
-    items: { id: string, received_quantity: number }[] 
-  }) => {
-    for (const item of items) {
-      const { error } = await supabase
-        .from("purchase_order_items")
-        .update({ received_quantity: item.received_quantity })
-        .eq("id", item.id);
+      // Recalculate totals if items provided
+      let updateData: any = { ...data };
       
-      if (error) {
-        toast.error("Ürün alımı kaydedilirken hata oluştu");
-        throw error;
+      if (data.items) {
+        const subtotal = data.items.reduce((sum, item) => {
+          const lineSubtotal = item.quantity * item.unit_price;
+          const discount = lineSubtotal * (item.discount_rate / 100);
+          return sum + (lineSubtotal - discount);
+        }, 0);
+
+        const tax_total = data.items.reduce((sum, item) => {
+          const lineSubtotal = item.quantity * item.unit_price;
+          const discount = lineSubtotal * (item.discount_rate / 100);
+          const taxable = lineSubtotal - discount;
+          return sum + (taxable * (item.tax_rate / 100));
+        }, 0);
+
+        updateData = {
+          ...updateData,
+          subtotal,
+          tax_total,
+          grand_total: subtotal + tax_total,
+        };
+
+        // Update items
+        for (const item of data.items) {
+          const lineSubtotal = item.quantity * item.unit_price;
+          const discount = lineSubtotal * (item.discount_rate / 100);
+          const taxable = lineSubtotal - discount;
+          const line_total = taxable + (taxable * (item.tax_rate / 100));
+
+          await supabase
+            .from('purchase_order_items')
+            .update({
+              quantity: item.quantity,
+              unit_price: item.unit_price,
+              tax_rate: item.tax_rate,
+              discount_rate: item.discount_rate,
+              line_total,
+            })
+            .eq('id', item.id);
+        }
       }
-    }
-    
-    const { data: orderItems } = await supabase
-      .from("purchase_order_items")
-      .select("quantity, received_quantity")
-      .eq("po_id", orderId);
-    
-    const allReceived = orderItems?.every(item => 
-      parseFloat(String(item.received_quantity)) >= parseFloat(String(item.quantity))
-    );
-    
-    const partiallyReceived = orderItems?.some(item => 
-      parseFloat(String(item.received_quantity)) > 0
-    );
-    
-    let newStatus: PurchaseOrderStatus = 'confirmed';
-    if (allReceived) {
-      newStatus = 'received';
-    } else if (partiallyReceived) {
-      newStatus = 'partially_received';
-    }
-    
-    await updateOrderStatus({ id: orderId, status: newStatus });
-    
-    toast.success("Ürün alımı başarıyla kaydedildi");
-    return { id: orderId };
-  };
 
-  const deleteOrder = async (id: string) => {
-    const { error } = await supabase
-      .from("purchase_orders")
-      .delete()
-      .eq("id", id);
+      delete updateData.items;
 
-    if (error) {
-      toast.error("Sipariş silinirken hata oluştu");
-      throw error;
-    }
+      const { error } = await supabase
+        .from('purchase_orders')
+        .update(updateData)
+        .eq('id', id);
 
-    toast.success("Sipariş başarıyla silindi");
-    return { id };
-  };
-
-  const { data: orders, isLoading, error, refetch } = useQuery({
-    queryKey: ['purchaseOrders', filters],
-    queryFn: fetchOrders,
-  });
-
-  const getOrderWithItems = (id: string) => {
-    return useQuery({
-      queryKey: ['purchaseOrder', id],
-      queryFn: () => fetchOrderWithItems(id),
-    });
-  };
-
-  const createOrderMutation = useMutation({
-    mutationFn: createOrderFromRequest,
+      if (error) throw error;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
-      queryClient.invalidateQueries({ queryKey: ['purchaseRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-order'] });
+      toast({
+        title: "Başarılı",
+        description: "Sipariş güncellendi.",
+      });
     },
   });
+};
 
-  const updateOrderMutation = useMutation({
-    mutationFn: updateOrder,
+// Request approval (assign PO number)
+export const useRequestPOApproval = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      // Generate PO number
+      const { data: poNumber } = await supabase
+        .rpc('generate_document_number', {
+          p_company_id: profile?.company_id,
+          p_doc_type: 'PO'
+        });
+
+      // Update status and assign number
+      const { error } = await supabase
+        .from('purchase_orders')
+        .update({ 
+          order_number: poNumber,
+          status: 'submitted',
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-order'] });
+      toast({
+        title: "Başarılı",
+        description: "Onay talebi gönderildi.",
+      });
     },
   });
+};
 
-  const updateStatusMutation = useMutation({
-    mutationFn: updateOrderStatus,
+// Update PO status
+export const useUpdatePOStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase
+        .from('purchase_orders')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-order'] });
+      toast({
+        title: "Başarılı",
+        description: "Durum güncellendi.",
+      });
     },
   });
-
-  const receiveItemsMutation = useMutation({
-    mutationFn: receiveItems,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    },
-  });
-
-  const deleteOrderMutation = useMutation({
-    mutationFn: deleteOrder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
-    },
-  });
-
-  return {
-    orders,
-    isLoading,
-    error,
-    filters,
-    setFilters,
-    refetch,
-    getOrderWithItems,
-    createOrderMutation,
-    updateOrderMutation,
-    updateStatusMutation,
-    receiveItemsMutation,
-    deleteOrderMutation,
-  };
 };

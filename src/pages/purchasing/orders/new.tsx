@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, Plus, X } from "lucide-react";
+import { useCreatePurchaseOrder } from "@/hooks/usePurchaseOrders";
+import { useVendors } from "@/hooks/useVendors";
+import { useRFQ } from "@/hooks/useRFQs";
 import {
   Select,
   SelectContent,
@@ -12,156 +17,141 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
-import { useCreatePurchaseOrderNew } from "@/hooks/usePurchaseOrdersNew";
-import { supabase } from "@/integrations/supabase/client";
-import type { PurchaseOrderFormData } from "@/types/purchaseOrders";
+
+interface POLine {
+  description: string;
+  quantity: number;
+  uom: string;
+  unit_price: number;
+  tax_rate: number;
+  discount_rate: number;
+}
 
 export default function NewPurchaseOrder() {
   const navigate = useNavigate();
-  const createOrder = useCreatePurchaseOrderNew();
-  const [suppliers, setSuppliers] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [formData, setFormData] = useState<PurchaseOrderFormData>({
-    supplier_id: "",
-    order_date: new Date().toISOString().split('T')[0],
-    priority: "normal",
-    items: [
-      {
-        product_id: "",
-        description: "",
-        quantity: 1,
-        unit_price: 0,
-        tax_rate: 18,
-        discount_rate: 0,
-        uom: "Adet",
-      },
-    ],
+  const [searchParams] = useSearchParams();
+  const rfqId = searchParams.get('rfq_id');
+  const vendorId = searchParams.get('vendor_id');
+
+  const { register, handleSubmit, watch, setValue } = useForm({
+    defaultValues: {
+      supplier_id: vendorId || '',
+      order_date: new Date().toISOString().split('T')[0],
+      currency: 'TRY',
+      exchange_rate: 1,
+    },
   });
 
+  const createPO = useCreatePurchaseOrder();
+  const { data: vendors } = useVendors({ is_active: true });
+  const { data: rfq } = useRFQ(rfqId || '');
+  
+  const [lines, setLines] = useState<POLine[]>([
+    { description: '', quantity: 1, uom: 'adet', unit_price: 0, tax_rate: 18, discount_rate: 0 },
+  ]);
+
+  // Pre-fill from RFQ if available
   useEffect(() => {
-    fetchSuppliers();
-    fetchProducts();
-  }, []);
-
-  const fetchSuppliers = async () => {
-    const { data } = await supabase
-      .from('customers')
-      .select('id, name')
-      .eq('type', 'supplier')
-      .order('name');
-    if (data) setSuppliers(data);
-  };
-
-  const fetchProducts = async () => {
-    const { data } = await supabase
-      .from('products')
-      .select('id, name, sku, price, tax_rate, unit, currency')
-      .eq('is_active', true)
-      .order('name');
-    if (data) setProducts(data);
-  };
-
-  const addItem = () => {
-    setFormData({
-      ...formData,
-      items: [
-        ...formData.items,
-        {
-          product_id: "",
-          description: "",
-          quantity: 1,
-          unit_price: 0,
-          tax_rate: 18,
-          discount_rate: 0,
-          uom: "Adet",
-        },
-      ],
-    });
-  };
-
-  const removeItem = (index: number) => {
-    setFormData({
-      ...formData,
-      items: formData.items.filter((_, i) => i !== index),
-    });
-  };
-
-  const updateItem = (index: number, field: string, value: any) => {
-    const items = [...formData.items];
-    items[index] = { ...items[index], [field]: value };
-    
-    // Auto-fill product details when product is selected
-    if (field === 'product_id' && value) {
-      const product = products.find(p => p.id === value);
-      if (product) {
-        items[index] = {
-          ...items[index],
-          description: product.name,
-          unit_price: product.price || 0,
-          tax_rate: product.tax_rate || 18,
-          uom: product.unit || 'Adet',
-        };
+    if (rfq && vendorId) {
+      const selectedQuote = rfq.quotes?.find(q => q.vendor_id === vendorId && q.is_selected);
+      if (selectedQuote) {
+        setValue('currency', selectedQuote.currency);
+        setValue('exchange_rate', selectedQuote.exchange_rate);
+        
+        const rfqLines = selectedQuote.lines?.map(line => ({
+          description: line.rfq_line?.description || '',
+          quantity: line.rfq_line?.quantity || 1,
+          uom: line.rfq_line?.uom || 'adet',
+          unit_price: line.unit_price,
+          tax_rate: line.tax_rate,
+          discount_rate: line.discount_rate,
+        })) || [];
+        
+        if (rfqLines.length > 0) {
+          setLines(rfqLines);
+        }
       }
     }
-    
-    setFormData({ ...formData, items });
+  }, [rfq, vendorId, setValue]);
+
+  const addLine = () => {
+    setLines([...lines, { description: '', quantity: 1, uom: 'adet', unit_price: 0, tax_rate: 18, discount_rate: 0 }]);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await createOrder.mutateAsync(formData);
-      navigate("/purchasing/orders");
-    } catch (error) {
-      console.error('Error creating order:', error);
+  const removeLine = (index: number) => {
+    if (lines.length > 1) {
+      setLines(lines.filter((_, i) => i !== index));
     }
+  };
+
+  const updateLine = (index: number, field: keyof POLine, value: any) => {
+    const newLines = [...lines];
+    newLines[index] = { ...newLines[index], [field]: value };
+    setLines(newLines);
+  };
+
+  const calculateLineTotal = (line: POLine) => {
+    const subtotal = line.quantity * line.unit_price;
+    const discount = subtotal * (line.discount_rate / 100);
+    const taxable = subtotal - discount;
+    const tax = taxable * (line.tax_rate / 100);
+    return taxable + tax;
+  };
+
+  const grandTotal = lines.reduce((sum, line) => sum + calculateLineTotal(line), 0);
+
+  const onSubmit = async (data: any) => {
+    if (!data.supplier_id) {
+      alert('Tedarikçi seçmelisiniz');
+      return;
+    }
+
+    if (lines.some(line => !line.description)) {
+      alert('Tüm satırlar için açıklama girmelisiniz');
+      return;
+    }
+
+    await createPO.mutateAsync({
+      ...data,
+      rfq_id: rfqId || undefined,
+      items: lines,
+    });
+
+    navigate('/purchasing/orders');
   };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Yeni Satın Alma Siparişi</h1>
-        <p className="text-muted-foreground">Tedarikçiye sipariş oluşturun</p>
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/purchasing/orders")}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Yeni Satın Alma Siparişi</h1>
+          <p className="text-muted-foreground">Tedarikçiye sipariş oluşturun</p>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <h3 className="font-semibold text-lg">Sipariş Bilgileri</h3>
+          
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="supplier">Tedarikçi *</Label>
-              <Select
-                value={formData.supplier_id}
-                onValueChange={(value) => setFormData({ ...formData, supplier_id: value })}
-                required
+              <Label htmlFor="supplier_id">Tedarikçi *</Label>
+              <Select 
+                value={watch('supplier_id')} 
+                onValueChange={(value) => setValue('supplier_id', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Tedarikçi seçin" />
                 </SelectTrigger>
                 <SelectContent>
-                  {suppliers.map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
+                  {vendors?.map((vendor) => (
+                    <SelectItem key={vendor.id} value={vendor.id}>
+                      {vendor.name}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority">Öncelik</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value: any) => setFormData({ ...formData, priority: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Düşük</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="high">Yüksek</SelectItem>
-                  <SelectItem value="urgent">Acil</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -171,147 +161,175 @@ export default function NewPurchaseOrder() {
               <Input
                 id="order_date"
                 type="date"
-                value={formData.order_date}
-                onChange={(e) => setFormData({ ...formData, order_date: e.target.value })}
-                required
+                {...register('order_date', { required: true })}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="expected_delivery_date">Teslim Tarihi</Label>
+              <Label htmlFor="expected_delivery_date">Beklenen Teslimat</Label>
               <Input
                 id="expected_delivery_date"
                 type="date"
-                value={formData.expected_delivery_date || ''}
-                onChange={(e) => setFormData({ ...formData, expected_delivery_date: e.target.value })}
+                {...register('expected_delivery_date')}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="delivery_address">Teslimat Adresi</Label>
-            <Textarea
-              id="delivery_address"
-              value={formData.delivery_address || ''}
-              onChange={(e) => setFormData({ ...formData, delivery_address: e.target.value })}
-              rows={2}
-            />
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="currency">Para Birimi</Label>
+              <Select 
+                value={watch('currency')} 
+                onValueChange={(value) => setValue('currency', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRY">TRY</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="exchange_rate">Kur</Label>
+              <Input
+                id="exchange_rate"
+                type="number"
+                step="0.0001"
+                {...register('exchange_rate')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="incoterm">Incoterm</Label>
+              <Input
+                id="incoterm"
+                placeholder="EXW, FOB, CIF..."
+                {...register('incoterm')}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notlar</Label>
             <Textarea
               id="notes"
-              value={formData.notes || ''}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
+              placeholder="Sipariş notları..."
+              {...register('notes')}
+              rows={2}
             />
           </div>
         </Card>
 
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Ürünler</h3>
-            <Button type="button" variant="outline" size="sm" onClick={addItem}>
+        <Card className="p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-lg">Sipariş Kalemleri</h3>
+            <Button type="button" variant="outline" size="sm" onClick={addLine}>
               <Plus className="h-4 w-4 mr-2" />
-              Ürün Ekle
+              Satır Ekle
             </Button>
           </div>
 
-          <div className="space-y-4">
-            {formData.items.map((item, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Ürün {index + 1}</span>
-                  {formData.items.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeItem(index)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-6 gap-3">
-                  <div className="col-span-2 space-y-2">
-                    <Label>Ürün</Label>
-                    <Select
-                      value={item.product_id || ""}
-                      onValueChange={(value) => updateItem(index, 'product_id', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Ürün seçin (opsiyonel)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">Manuel Giriş</SelectItem>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.name} {product.sku && `(${product.sku})`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Açıklama *</Label>
+          <div className="space-y-3">
+            {lines.map((line, index) => (
+              <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
+                <div className="flex-1 grid grid-cols-12 gap-3">
+                  <div className="col-span-4">
                     <Input
-                      value={item.description}
-                      onChange={(e) => updateItem(index, 'description', e.target.value)}
-                      placeholder="Ürün açıklaması"
-                      required
+                      placeholder="Açıklama *"
+                      value={line.description}
+                      onChange={(e) => updateLine(index, 'description', e.target.value)}
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label>Miktar *</Label>
+                  <div className="col-span-1">
                     <Input
                       type="number"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value))}
-                      required
-                      min="0.001"
-                      step="0.001"
+                      placeholder="Miktar"
+                      value={line.quantity}
+                      onChange={(e) => updateLine(index, 'quantity', parseFloat(e.target.value) || 0)}
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label>Birim Fiyat *</Label>
+                  <div className="col-span-1">
+                    <Input
+                      placeholder="Birim"
+                      value={line.uom}
+                      onChange={(e) => updateLine(index, 'uom', e.target.value)}
+                    />
+                  </div>
+                  <div className="col-span-2">
                     <Input
                       type="number"
-                      value={item.unit_price}
-                      onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value))}
-                      required
-                      min="0"
                       step="0.01"
+                      placeholder="Birim fiyat"
+                      value={line.unit_price}
+                      onChange={(e) => updateLine(index, 'unit_price', parseFloat(e.target.value) || 0)}
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label>KDV %</Label>
+                  <div className="col-span-1">
                     <Input
                       type="number"
-                      value={item.tax_rate}
-                      onChange={(e) => updateItem(index, 'tax_rate', parseFloat(e.target.value))}
-                      min="0"
-                      max="100"
+                      placeholder="KDV%"
+                      value={line.tax_rate}
+                      onChange={(e) => updateLine(index, 'tax_rate', parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <Input
+                      type="number"
+                      placeholder="İsk%"
+                      value={line.discount_rate}
+                      onChange={(e) => updateLine(index, 'discount_rate', parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Input
+                      value={calculateLineTotal(line).toFixed(2)}
+                      disabled
+                      className="bg-muted"
                     />
                   </div>
                 </div>
+                {lines.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeLine(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             ))}
           </div>
+
+          <div className="flex justify-end">
+            <div className="text-right space-y-1">
+              <div className="text-lg font-semibold">
+                Genel Toplam: {grandTotal.toFixed(2)} {watch('currency')}
+              </div>
+              {watch('currency') !== 'TRY' && watch('exchange_rate') > 0 && (
+                <div className="text-sm text-muted-foreground">
+                  ≈ {(grandTotal * watch('exchange_rate')).toFixed(2)} TRY
+                </div>
+              )}
+            </div>
+          </div>
         </Card>
 
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => navigate("/purchasing/orders")}>
+        <div className="flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate('/purchasing/orders')}
+          >
             İptal
           </Button>
-          <Button type="submit" disabled={createOrder.isPending}>
-            {createOrder.isPending ? "Oluşturuluyor..." : "Sipariş Oluştur"}
+          <Button type="submit" disabled={createPO.isPending}>
+            {createPO.isPending ? 'Oluşturuluyor...' : 'Sipariş Oluştur'}
           </Button>
         </div>
       </form>

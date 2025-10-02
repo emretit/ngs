@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,16 +12,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { usePurchaseOrdersNew } from "@/hooks/usePurchaseOrdersNew";
+import { Search, Plus, FileText } from "lucide-react";
+import { usePurchaseOrders } from "@/hooks/usePurchaseOrders";
+import { useVendors } from "@/hooks/useVendors";
 import { format } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const getStatusBadge = (status: string) => {
   const variants = {
     draft: { label: "Taslak", variant: "secondary" as const },
-    submitted: { label: "Onay Bekliyor", variant: "default" as const },
-    confirmed: { label: "Onaylandı", variant: "default" as const },
-    partial_received: { label: "Kısmi Alındı", variant: "default" as const },
-    received: { label: "Tamamlandı", variant: "default" as const },
+    submitted: { label: "Onayda", variant: "default" as const },
+    approved: { label: "Onaylandı", variant: "default" as const },
+    sent: { label: "Gönderildi", variant: "default" as const },
+    received: { label: "Teslim Alındı", variant: "default" as const },
+    completed: { label: "Tamamlandı", variant: "default" as const },
     cancelled: { label: "İptal", variant: "destructive" as const },
   };
   const config = variants[status as keyof typeof variants] || variants.draft;
@@ -29,14 +40,28 @@ const getStatusBadge = (status: string) => {
 
 export default function PurchaseOrdersList() {
   const navigate = useNavigate();
-  const { data: orders, isLoading } = usePurchaseOrdersNew();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [supplierFilter, setSupplierFilter] = useState<string>("");
+
+  const { data: purchaseOrders, isLoading } = usePurchaseOrders({
+    search: searchTerm,
+    status: statusFilter || undefined,
+    supplier_id: supplierFilter || undefined,
+  });
+  
+  const { data: vendors } = useVendors({ is_active: true });
+
+  if (isLoading) {
+    return <div className="container mx-auto p-6">Yükleniyor...</div>;
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Satın Alma Siparişleri</h1>
-          <p className="text-muted-foreground">Tedarikçilerden sipariş yönetimi</p>
+          <p className="text-muted-foreground">Siparişleri yönetin ve takip edin</p>
         </div>
         <Button onClick={() => navigate("/purchasing/orders/new")}>
           <Plus className="h-4 w-4 mr-2" />
@@ -44,53 +69,115 @@ export default function PurchaseOrdersList() {
         </Button>
       </div>
 
-      <Card className="p-6">
-        {isLoading ? (
-          <div className="text-center py-8">Yükleniyor...</div>
-        ) : !orders || orders.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Henüz sipariş bulunmuyor
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Sipariş no veya tedarikçi ile ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Durum" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Tümü</SelectItem>
+            <SelectItem value="draft">Taslak</SelectItem>
+            <SelectItem value="submitted">Onayda</SelectItem>
+            <SelectItem value="approved">Onaylandı</SelectItem>
+            <SelectItem value="sent">Gönderildi</SelectItem>
+            <SelectItem value="received">Teslim Alındı</SelectItem>
+            <SelectItem value="completed">Tamamlandı</SelectItem>
+            <SelectItem value="cancelled">İptal</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Tedarikçi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Tümü</SelectItem>
+            {vendors?.map((vendor) => (
+              <SelectItem key={vendor.id} value={vendor.id}>
+                {vendor.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Sipariş No</TableHead>
+              <TableHead>Tedarikçi</TableHead>
+              <TableHead>Durum</TableHead>
+              <TableHead>Sipariş Tarihi</TableHead>
+              <TableHead>Beklenen Teslimat</TableHead>
+              <TableHead className="text-right">Ara Toplam</TableHead>
+              <TableHead className="text-right">KDV</TableHead>
+              <TableHead className="text-right">Toplam</TableHead>
+              <TableHead>Para Birimi</TableHead>
+              <TableHead>Güncelleme</TableHead>
+              <TableHead className="w-[100px]">İşlemler</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {purchaseOrders?.length === 0 ? (
               <TableRow>
-                <TableHead>Sipariş No</TableHead>
-                <TableHead>Tedarikçi</TableHead>
-                <TableHead>Tarih</TableHead>
-                <TableHead>Teslim Tarihi</TableHead>
-                <TableHead>Durum</TableHead>
-                <TableHead className="text-right">Tutar</TableHead>
+                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Henüz sipariş bulunmuyor</p>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((order) => (
+            ) : (
+              purchaseOrders?.map((po) => (
                 <TableRow
-                  key={order.id}
+                  key={po.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`/purchasing/orders/${order.id}`)}
+                  onClick={() => navigate(`/purchasing/orders/${po.id}`)}
                 >
-                  <TableCell className="font-medium">{order.order_number}</TableCell>
-                  <TableCell>{order.supplier?.name || '-'}</TableCell>
-                  <TableCell>{format(new Date(order.order_date), 'dd.MM.yyyy')}</TableCell>
+                  <TableCell className="font-medium">{po.order_number}</TableCell>
+                  <TableCell>{po.supplier?.name}</TableCell>
+                  <TableCell>{getStatusBadge(po.status)}</TableCell>
+                  <TableCell>{format(new Date(po.order_date), 'dd.MM.yyyy')}</TableCell>
                   <TableCell>
-                    {order.expected_delivery_date 
-                      ? format(new Date(order.expected_delivery_date), 'dd.MM.yyyy')
-                      : '-'
-                    }
+                    {po.expected_delivery_date 
+                      ? format(new Date(po.expected_delivery_date), 'dd.MM.yyyy')
+                      : '-'}
                   </TableCell>
-                  <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell className="text-right">
-                    {new Intl.NumberFormat('tr-TR', {
-                      style: 'currency',
-                      currency: order.currency || 'TRY',
-                    }).format(order.total_amount)}
+                    {po.subtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {po.tax_total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {po.grand_total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell>{po.currency}</TableCell>
+                  <TableCell>{format(new Date(po.updated_at), 'dd.MM.yyyy')}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/purchasing/orders/${po.id}`);
+                      }}
+                    >
+                      Detay
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+              ))
+            )}
+          </TableBody>
+        </Table>
       </Card>
     </div>
   );

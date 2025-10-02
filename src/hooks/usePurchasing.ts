@@ -261,3 +261,67 @@ export const usePurchasingSettings = () => {
     },
   });
 };
+
+// Convert PR to RFQ
+export const useConvertPRToRFQ = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (prId: string) => {
+      // Update PR status to converted
+      const { error } = await supabase
+        .from('purchase_requests')
+        .update({ status: 'converted' })
+        .eq('id', prId);
+
+      if (error) throw error;
+      return prId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests'] });
+      toast({
+        title: "Başarılı",
+        description: "Talep RFQ'ya dönüştürülüyor...",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Hata",
+        description: "Dönüştürme işlemi başarısız.",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// Convert PR to PO
+export const useConvertPRToPO = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (prId: string) => {
+      // Update PR status to converted
+      const { error } = await supabase
+        .from('purchase_requests')
+        .update({ status: 'converted' })
+        .eq('id', prId);
+
+      if (error) throw error;
+      return prId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase-requests'] });
+      toast({
+        title: "Başarılı",
+        description: "Talep PO'ya dönüştürülüyor...",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Hata",
+        description: "Dönüştürme işlemi başarısız.",
+        variant: "destructive",
+      });
+    },
+  });
+};

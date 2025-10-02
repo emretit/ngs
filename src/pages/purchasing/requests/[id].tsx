@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { usePurchaseRequest, useApprovals, useSubmitPurchaseRequest } from "@/hooks/usePurchasing";
+import { usePurchaseRequest, useApprovals, useSubmitPurchaseRequest, useConvertPRToRFQ, useConvertPRToPO } from "@/hooks/usePurchasing";
 import { formatDate } from "@/lib/utils";
 import { PRItemsTab } from "@/components/purchasing/PRItemsTab";
 import { PRApprovalsTab } from "@/components/purchasing/PRApprovalsTab";
@@ -31,6 +31,8 @@ export default function PurchaseRequestDetail() {
   const { data: request, isLoading } = usePurchaseRequest(id!);
   const { data: approvals } = useApprovals("purchase_request", id!);
   const submitMutation = useSubmitPurchaseRequest();
+  const convertToRFQMutation = useConvertPRToRFQ();
+  const convertToPOMutation = useConvertPRToPO();
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Yükleniyor...</div>;
@@ -43,6 +45,48 @@ export default function PurchaseRequestDetail() {
   const handleSubmit = () => {
     if (confirm("Bu talebi onaya göndermek istediğinizden emin misiniz?")) {
       submitMutation.mutate(request.id);
+    }
+  };
+
+  const handleConvertToRFQ = () => {
+    if (confirm("Bu talebi RFQ'ya dönüştürmek istediğinizden emin misiniz?")) {
+      convertToRFQMutation.mutate(request.id, {
+        onSuccess: () => {
+          // Prepare query params with PR items
+          const items = request.items?.map(item => ({
+            description: item.description,
+            quantity: item.quantity,
+            uom: item.uom || 'adet',
+            target_price: item.estimated_price,
+          }));
+          
+          navigate(`/purchasing/rfqs/new?pr_id=${request.id}`, { 
+            state: { prItems: items } 
+          });
+        },
+      });
+    }
+  };
+
+  const handleConvertToPO = () => {
+    if (confirm("Bu talebi doğrudan PO'ya dönüştürmek istediğinizden emin misiniz?")) {
+      convertToPOMutation.mutate(request.id, {
+        onSuccess: () => {
+          // Prepare query params with PR items
+          const items = request.items?.map(item => ({
+            description: item.description,
+            quantity: item.quantity,
+            uom: item.uom || 'adet',
+            unit_price: item.estimated_price || 0,
+            tax_rate: 18,
+            discount_rate: 0,
+          }));
+          
+          navigate(`/purchasing/orders/new?pr_id=${request.id}`, { 
+            state: { prItems: items } 
+          });
+        },
+      });
     }
   };
 
@@ -80,8 +124,19 @@ export default function PurchaseRequestDetail() {
           )}
           {request.status === "approved" && (
             <>
-              <Button variant="outline">RFQ Oluştur</Button>
-              <Button>PO Oluştur</Button>
+              <Button 
+                variant="outline" 
+                onClick={handleConvertToRFQ}
+                disabled={convertToRFQMutation.isPending}
+              >
+                RFQ Oluştur
+              </Button>
+              <Button 
+                onClick={handleConvertToPO}
+                disabled={convertToPOMutation.isPending}
+              >
+                PO Oluştur
+              </Button>
             </>
           )}
         </div>

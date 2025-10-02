@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,7 @@ interface RFQFormData {
 
 export default function NewRFQ() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { register, handleSubmit, watch, setValue } = useForm<RFQFormData>({
     defaultValues: {
       currency: 'TRY',
@@ -52,6 +53,14 @@ export default function NewRFQ() {
     { description: '', quantity: 1, uom: 'adet' },
   ]);
   const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
+
+  // Pre-fill from PR if available
+  useEffect(() => {
+    const prItems = location.state?.prItems;
+    if (prItems && Array.isArray(prItems) && prItems.length > 0) {
+      setLines(prItems);
+    }
+  }, [location.state]);
 
   const addLine = () => {
     setLines([...lines, { description: '', quantity: 1, uom: 'adet' }]);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ interface POLine {
 
 export default function NewPurchaseOrder() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const rfqId = searchParams.get('rfq_id');
   const vendorId = searchParams.get('vendor_id');
@@ -76,6 +77,14 @@ export default function NewPurchaseOrder() {
       }
     }
   }, [rfq, vendorId, setValue]);
+
+  // Pre-fill from PR if available
+  useEffect(() => {
+    const prItems = location.state?.prItems;
+    if (prItems && Array.isArray(prItems) && prItems.length > 0) {
+      setLines(prItems);
+    }
+  }, [location.state]);
 
   const addLine = () => {
     setLines([...lines, { description: '', quantity: 1, uom: 'adet', unit_price: 0, tax_rate: 18, discount_rate: 0 }]);

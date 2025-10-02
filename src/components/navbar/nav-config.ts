@@ -37,7 +37,11 @@ import {
   Gauge,
   CheckSquare,
   Workflow,
-  Plus
+  Plus,
+  LayoutDashboard,
+  ClipboardList,
+  MessageSquare,
+  ClipboardCheck
 } from "lucide-react";
 
 export const navItems = [
@@ -106,19 +110,39 @@ export const navItems = [
     hasDropdown: true,
     items: [
       {
-        path: "/purchase/requests",
+        path: "/purchasing",
+        icon: LayoutDashboard,
+        label: "Ana Sayfa",
+      },
+      {
+        path: "/purchasing/vendors",
+        icon: Building2,
+        label: "Tedarikçiler",
+      },
+      {
+        path: "/purchasing/requests",
         icon: FileText,
-        label: "Satın Alma Talepleri",
+        label: "Talepler (PR)",
+      },
+      {
+        path: "/purchasing/rfqs",
+        icon: MessageSquare,
+        label: "Teklif İst. (RFQ)",
       },
       {
         path: "/purchasing/orders",
-        icon: PackageCheck,
-        label: "Satın Alma Siparişleri",
+        icon: ShoppingCart,
+        label: "Siparişler (PO)",
       },
       {
-        path: "/purchasing/orders/new",
-        icon: Plus,
-        label: "Yeni Sipariş",
+        path: "/purchasing/grns",
+        icon: ClipboardCheck,
+        label: "Teslimatlar (GRN)",
+      },
+      {
+        path: "/purchasing/invoices",
+        icon: Receipt,
+        label: "Faturalar (AP)",
       },
     ],
   },

@@ -15,3 +15,13 @@ export function formatCurrency(amount: number, currency: string = 'TRY'): string
   
   return formatter.format(amount);
 }
+
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return "-";
+  const d = new Date(date);
+  return d.toLocaleDateString("tr-TR", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}

@@ -1,26 +1,28 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { usePurchaseRequest, useApprovals, useSubmitPurchaseRequest, useDecideApproval } from "@/hooks/usePurchasing";
+import { ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Check, X, Send } from "lucide-react";
-import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
+import { usePurchaseRequest, useApprovals, useSubmitPurchaseRequest } from "@/hooks/usePurchasing";
+import { formatDate } from "@/lib/utils";
+import { PRItemsTab } from "@/components/purchasing/PRItemsTab";
+import { PRApprovalsTab } from "@/components/purchasing/PRApprovalsTab";
 
-const statusColors = {
-  draft: "bg-gray-500",
-  submitted: "bg-blue-500",
-  approved: "bg-green-500",
-  rejected: "bg-red-500",
-  converted: "bg-purple-500",
+const statusConfig = {
+  draft: { label: "Taslak", variant: "secondary" as const },
+  submitted: { label: "Onay Bekliyor", variant: "default" as const },
+  approved: { label: "Onaylandı", variant: "default" as const },
+  rejected: { label: "Reddedildi", variant: "destructive" as const },
+  converted: { label: "Dönüştürüldü", variant: "default" as const },
 };
 
-const priorityColors = {
-  low: "bg-gray-400",
-  normal: "bg-blue-400",
-  high: "bg-orange-400",
-  urgent: "bg-red-500",
+const priorityConfig = {
+  low: { label: "Düşük", variant: "secondary" as const },
+  normal: { label: "Normal", variant: "default" as const },
+  high: { label: "Yüksek", variant: "default" as const },
+  urgent: { label: "Acil", variant: "destructive" as const },
 };
 
 export default function PurchaseRequestDetail() {
@@ -29,54 +31,60 @@ export default function PurchaseRequestDetail() {
   const { data: request, isLoading } = usePurchaseRequest(id!);
   const { data: approvals } = useApprovals("purchase_request", id!);
   const submitMutation = useSubmitPurchaseRequest();
-  const decideMutation = useDecideApproval();
-  const [comment, setComment] = useState("");
 
-  if (isLoading) return <div>Yükleniyor...</div>;
-  if (!request) return <div>Talep bulunamadı</div>;
+  if (isLoading) {
+    return <div className="flex justify-center p-8">Yükleniyor...</div>;
+  }
+
+  if (!request) {
+    return <div className="flex justify-center p-8">Talep bulunamadı</div>;
+  }
 
   const handleSubmit = () => {
-    submitMutation.mutate(request.id);
+    if (confirm("Bu talebi onaya göndermek istediğinizden emin misiniz?")) {
+      submitMutation.mutate(request.id);
+    }
   };
 
-  const handleApprove = (approvalId: string) => {
-    decideMutation.mutate({ id: approvalId, status: "approved", comment });
-  };
-
-  const handleReject = (approvalId: string) => {
-    decideMutation.mutate({ id: approvalId, status: "rejected", comment });
-  };
-
-  const totalAmount = request.items?.reduce(
-    (sum, item) => sum + (item.quantity * (item.estimated_price || 0)), 
+  const estimatedTotal = request.items?.reduce(
+    (sum, item) => sum + ((item.estimated_price || 0) * item.quantity),
     0
   ) || 0;
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Satın Alma Talebi #{request.request_number}</h1>
-          <div className="flex gap-2 mt-2">
-            <Badge className={statusColors[request.status]}>
-              {request.status === 'draft' ? 'Taslak' :
-               request.status === 'submitted' ? 'Onay Bekliyor' :
-               request.status === 'approved' ? 'Onaylandı' :
-               request.status === 'rejected' ? 'Reddedildi' : 'Siparişe Dönüştürüldü'}
-            </Badge>
-            <Badge className={priorityColors[request.priority]}>
-              {request.priority === 'low' ? 'Düşük' :
-               request.priority === 'normal' ? 'Normal' :
-               request.priority === 'high' ? 'Yüksek' : 'Acil'}
-            </Badge>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/purchasing/requests")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Geri
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">{request.request_number || "Taslak Talep"}</h1>
+            <div className="flex gap-2 mt-2">
+              <Badge variant={statusConfig[request.status as keyof typeof statusConfig]?.variant}>
+                {statusConfig[request.status as keyof typeof statusConfig]?.label}
+              </Badge>
+              <Badge variant={priorityConfig[request.priority as keyof typeof priorityConfig]?.variant}>
+                {priorityConfig[request.priority as keyof typeof priorityConfig]?.label}
+              </Badge>
+            </div>
           </div>
         </div>
-        {request.status === 'draft' && (
-          <Button onClick={handleSubmit} disabled={submitMutation.isPending}>
-            <Send className="h-4 w-4 mr-2" />
-            Onaya Gönder
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {request.status === "draft" && (
+            <Button onClick={handleSubmit} disabled={submitMutation.isPending}>
+              <Send className="h-4 w-4 mr-2" />
+              Onaya Gönder
+            </Button>
+          )}
+          {request.status === "approved" && (
+            <>
+              <Button variant="outline">RFQ Oluştur</Button>
+              <Button>PO Oluştur</Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
@@ -90,7 +98,7 @@ export default function PurchaseRequestDetail() {
                 <div>
                   <p className="text-sm text-muted-foreground">Talep Eden</p>
                   <p className="font-medium">
-                    {request.requester?.first_name} {request.requester?.last_name}
+                    {request.requester ? `${request.requester.first_name} ${request.requester.last_name}` : "-"}
                   </p>
                 </div>
                 <div>
@@ -99,7 +107,7 @@ export default function PurchaseRequestDetail() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">İhtiyaç Tarihi</p>
-                  <p className="font-medium">{request.need_by_date || "-"}</p>
+                  <p className="font-medium">{request.need_by_date ? formatDate(request.need_by_date) : "-"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Masraf Merkezi</p>
@@ -111,134 +119,75 @@ export default function PurchaseRequestDetail() {
                   <Separator />
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">Notlar</p>
-                    <p>{request.requester_notes}</p>
+                    <p className="text-sm">{request.requester_notes}</p>
                   </div>
                 </>
               )}
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Tahmini Toplam:</span>
+                <span className="text-xl font-bold">₺{estimatedTotal.toFixed(2)}</span>
+              </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Kalemler</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {request.items?.map((item, index) => (
-                  <div key={item.id} className="border-b pb-4 last:border-0">
-                    <div className="flex justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium">{item.description}</p>
-                        {item.product && (
-                          <p className="text-sm text-muted-foreground">
-                            {item.product.code} - {item.product.name}
-                          </p>
-                        )}
-                        {item.notes && (
-                          <p className="text-sm text-muted-foreground mt-1">{item.notes}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">
-                          {item.quantity} {item.uom}
-                        </p>
-                        {item.estimated_price && (
-                          <p className="text-sm text-muted-foreground">
-                            ₺{item.estimated_price.toFixed(2)} / birim
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Separator className="my-4" />
-              <div className="flex justify-between font-bold">
-                <span>Toplam Tahmini Tutar</span>
-                <span>₺{totalAmount.toFixed(2)}</span>
-              </div>
-            </CardContent>
-          </Card>
+          <Tabs defaultValue="items">
+            <TabsList>
+              <TabsTrigger value="items">
+                Kalemler ({request.items?.length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="approvals">
+                Onaylar ({approvals?.length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="attachments">Ekler</TabsTrigger>
+              <TabsTrigger value="history">Geçmiş</TabsTrigger>
+            </TabsList>
+            <TabsContent value="items">
+              <PRItemsTab requestId={request.id} items={request.items || []} isEditable={request.status === "draft"} />
+            </TabsContent>
+            <TabsContent value="approvals">
+              <PRApprovalsTab approvals={approvals || []} />
+            </TabsContent>
+            <TabsContent value="attachments">
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Henüz ek dosya bulunmuyor
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="history">
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Geçmiş kayıtları burada görünecek
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
 
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Onay Süreci</CardTitle>
+              <CardTitle>Özet</CardTitle>
             </CardHeader>
-            <CardContent>
-              {approvals && approvals.length > 0 ? (
-                <div className="space-y-4">
-                  {approvals.map((approval) => (
-                    <div key={approval.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="font-medium">Seviye {approval.step}</p>
-                        <Badge
-                          className={
-                            approval.status === "approved"
-                              ? "bg-green-500"
-                              : approval.status === "rejected"
-                              ? "bg-red-500"
-                              : "bg-yellow-500"
-                          }
-                        >
-                          {approval.status === "approved"
-                            ? "Onaylandı"
-                            : approval.status === "rejected"
-                            ? "Reddedildi"
-                            : "Bekliyor"}
-                        </Badge>
-                      </div>
-                      {approval.approver && (
-                        <p className="text-sm text-muted-foreground">
-                          {approval.approver.first_name} {approval.approver.last_name}
-                        </p>
-                      )}
-                      {approval.decided_at && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(approval.decided_at).toLocaleDateString("tr-TR")}
-                        </p>
-                      )}
-                      {approval.comment && (
-                        <p className="text-sm mt-2 p-2 bg-muted rounded">{approval.comment}</p>
-                      )}
-                      {approval.status === "pending" && (
-                        <div className="mt-4 space-y-2">
-                          <Textarea
-                            placeholder="Yorum (opsiyonel)"
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            rows={2}
-                          />
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(approval.id)}
-                              disabled={decideMutation.isPending}
-                              className="flex-1"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Onayla
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleReject(approval.id)}
-                              disabled={decideMutation.isPending}
-                              className="flex-1"
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Reddet
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">Henüz onay süreci başlatılmadı</p>
-              )}
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Oluşturulma</p>
+                <p className="font-medium">{formatDate(request.created_at)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Son Güncelleme</p>
+                <p className="font-medium">{formatDate(request.updated_at)}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-sm text-muted-foreground">Toplam Kalem</p>
+                <p className="font-medium">{request.items?.length || 0}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Tahmini Tutar</p>
+                <p className="font-medium text-lg">₺{estimatedTotal.toFixed(2)}</p>
+              </div>
             </CardContent>
           </Card>
         </div>

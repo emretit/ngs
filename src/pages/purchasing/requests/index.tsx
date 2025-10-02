@@ -1,52 +1,84 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Plus, Search, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus, FileText, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
-import { usePurchaseRequests, useSubmitPurchaseRequest } from "@/hooks/usePurchasing";
-import type { PurchaseRequestStatus, PurchaseRequestPriority } from "@/types/purchasing";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { usePurchaseRequests } from "@/hooks/usePurchasing";
+import { formatDate } from "@/lib/utils";
+import { useSearchParams } from "react-router-dom";
 
-const statusConfig: Record<PurchaseRequestStatus, { label: string; color: string; icon: any }> = {
-  draft: { label: 'Taslak', color: 'bg-slate-100 text-slate-800', icon: FileText },
-  submitted: { label: 'Onay Bekliyor', color: 'bg-orange-100 text-orange-800', icon: Clock },
-  approved: { label: 'Onaylandı', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-  rejected: { label: 'Reddedildi', color: 'bg-red-100 text-red-800', icon: XCircle },
-  converted: { label: 'Siparişe Dönüştürüldü', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
+const statusConfig = {
+  draft: { label: "Taslak", variant: "secondary" as const },
+  submitted: { label: "Onay Bekliyor", variant: "default" as const },
+  approved: { label: "Onaylandı", variant: "default" as const },
+  rejected: { label: "Reddedildi", variant: "destructive" as const },
+  converted: { label: "Dönüştürüldü", variant: "default" as const },
 };
 
-const priorityConfig: Record<PurchaseRequestPriority, { label: string; color: string }> = {
-  low: { label: 'Düşük', color: 'bg-slate-100 text-slate-800' },
-  normal: { label: 'Normal', color: 'bg-blue-100 text-blue-800' },
-  high: { label: 'Yüksek', color: 'bg-orange-100 text-orange-800' },
-  urgent: { label: 'Acil', color: 'bg-red-100 text-red-800' },
+const priorityConfig = {
+  low: { label: "Düşük", variant: "secondary" as const },
+  normal: { label: "Normal", variant: "default" as const },
+  high: { label: "Yüksek", variant: "default" as const },
+  urgent: { label: "Acil", variant: "destructive" as const },
 };
 
 export default function PurchaseRequestsList() {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
+  const [priorityFilter, setPriorityFilter] = useState(searchParams.get("priority") || "all");
 
   const { data: requests, isLoading } = usePurchaseRequests();
-  const submitMutation = useSubmitPurchaseRequest();
 
-  const filteredRequests = requests?.filter(request => {
-    const matchesSearch = 
-      request.request_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.requester?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.requester?.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || request.status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
+  const updateFilters = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value && value !== "all") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    setSearchParams(params);
+  };
+
+  const filteredRequests = requests?.filter((req) => {
+    const matchesSearch =
+      !search ||
+      req.request_number?.toLowerCase().includes(search.toLowerCase()) ||
+      req.requester_notes?.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "all" || req.status === statusFilter;
+    const matchesPriority = priorityFilter === "all" || req.priority === priorityFilter;
+    return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const handleSubmit = (id: string) => {
-    if (confirm('Bu talebi onaya göndermek istediğinizden emin misiniz?')) {
-      submitMutation.mutate(id);
-    }
+  const exportToCSV = () => {
+    if (!filteredRequests || filteredRequests.length === 0) return;
+
+    const headers = ["Req No", "Status", "Requester", "Dept", "Priority", "Need By", "Items", "Est. Total", "Updated"];
+    const rows = filteredRequests.map((req) => [
+      req.request_number || "-",
+      req.status || "-",
+      req.requester ? `${req.requester.first_name} ${req.requester.last_name}` : "-",
+      req.department?.name || "-",
+      req.priority || "-",
+      req.need_by_date || "-",
+      req.items?.length || 0,
+      req.items?.reduce((sum, item) => sum + ((item.estimated_price || 0) * item.quantity), 0).toFixed(2) || "0.00",
+      formatDate(req.updated_at),
+    ]);
+
+    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `purchase-requests-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
   };
 
   if (isLoading) {
@@ -54,119 +86,135 @@ export default function PurchaseRequestsList() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Satın Alma Talepleri</h1>
-          <p className="text-muted-foreground">Taleplerinizi oluşturun ve yönetin</p>
+          <p className="text-muted-foreground">Talepleri oluşturun ve yönetin</p>
         </div>
-        <Button onClick={() => navigate('/purchasing/requests/new')} className="gap-2">
-          <Plus className="h-4 w-4" />
+        <Button onClick={() => navigate("/purchasing/requests/new")}>
+          <Plus className="h-4 w-4 mr-2" />
           Yeni Talep
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Talep numarası, talep eden..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-3 py-2 border rounded-md"
-        >
-          <option value="all">Tüm Durumlar</option>
-          <option value="draft">Taslak</option>
-          <option value="submitted">Onay Bekliyor</option>
-          <option value="approved">Onaylandı</option>
-          <option value="rejected">Reddedildi</option>
-          <option value="converted">Siparişe Dönüştürüldü</option>
-        </select>
-      </div>
-
-      {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Talepler</CardTitle>
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Talep no veya notlar..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  updateFilters("search", e.target.value);
+                }}
+                className="pl-9"
+              />
+            </div>
+            <Select
+              value={statusFilter}
+              onValueChange={(val) => {
+                setStatusFilter(val);
+                updateFilters("status", val);
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Durum" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tüm Durumlar</SelectItem>
+                <SelectItem value="draft">Taslak</SelectItem>
+                <SelectItem value="submitted">Onay Bekliyor</SelectItem>
+                <SelectItem value="approved">Onaylandı</SelectItem>
+                <SelectItem value="rejected">Reddedildi</SelectItem>
+                <SelectItem value="converted">Dönüştürüldü</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={priorityFilter}
+              onValueChange={(val) => {
+                setPriorityFilter(val);
+                updateFilters("priority", val);
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Öncelik" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tüm Öncelikler</SelectItem>
+                <SelectItem value="low">Düşük</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="high">Yüksek</SelectItem>
+                <SelectItem value="urgent">Acil</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={exportToCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              CSV İndir
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Talep No</TableHead>
+                <TableHead>Durum</TableHead>
                 <TableHead>Talep Eden</TableHead>
                 <TableHead>Departman</TableHead>
                 <TableHead>Öncelik</TableHead>
-                <TableHead>Durum</TableHead>
                 <TableHead>İhtiyaç Tarihi</TableHead>
-                <TableHead>İşlemler</TableHead>
+                <TableHead className="text-right">Kalem</TableHead>
+                <TableHead className="text-right">Tahmini Toplam</TableHead>
+                <TableHead>Güncelleme</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRequests?.map((request) => {
-                const StatusIcon = statusConfig[request.status].icon;
-                
+              {filteredRequests?.map((req) => {
+                const estimatedTotal = req.items?.reduce(
+                  (sum, item) => sum + ((item.estimated_price || 0) * item.quantity),
+                  0
+                ) || 0;
+
                 return (
-                  <TableRow 
-                    key={request.id}
+                  <TableRow
+                    key={req.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/purchasing/requests/${request.id}`)}
+                    onClick={() => navigate(`/purchasing/requests/${req.id}`)}
                   >
-                    <TableCell className="font-medium">
-                      {request.request_number || 'PR-DRAFT'}
-                    </TableCell>
+                    <TableCell className="font-medium">{req.request_number || "-"}</TableCell>
                     <TableCell>
-                      {request.requester?.first_name} {request.requester?.last_name}
-                    </TableCell>
-                    <TableCell>{request.department?.name || '-'}</TableCell>
-                    <TableCell>
-                      <Badge className={priorityConfig[request.priority].color}>
-                        {priorityConfig[request.priority].label}
+                      <Badge variant={statusConfig[req.status as keyof typeof statusConfig]?.variant}>
+                        {statusConfig[req.status as keyof typeof statusConfig]?.label}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className={statusConfig[request.status].color}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
-                        {statusConfig[request.status].label}
+                      {req.requester ? `${req.requester.first_name} ${req.requester.last_name}` : "-"}
+                    </TableCell>
+                    <TableCell>{req.department?.name || "-"}</TableCell>
+                    <TableCell>
+                      <Badge variant={priorityConfig[req.priority as keyof typeof priorityConfig]?.variant}>
+                        {priorityConfig[req.priority as keyof typeof priorityConfig]?.label}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {request.need_by_date 
-                        ? new Date(request.need_by_date).toLocaleDateString('tr-TR')
-                        : '-'
-                      }
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      {request.status === 'draft' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSubmit(request.id)}
-                          disabled={submitMutation.isPending}
-                        >
-                          Onaya Gönder
-                        </Button>
-                      )}
-                    </TableCell>
+                    <TableCell>{req.need_by_date ? formatDate(req.need_by_date) : "-"}</TableCell>
+                    <TableCell className="text-right">{req.items?.length || 0}</TableCell>
+                    <TableCell className="text-right">₺{estimatedTotal.toFixed(2)}</TableCell>
+                    <TableCell>{formatDate(req.updated_at)}</TableCell>
                   </TableRow>
                 );
               })}
+              {filteredRequests?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    Talep bulunamadı
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
-
-          {filteredRequests?.length === 0 && (
-            <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Henüz talep bulunmuyor</p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

@@ -93,6 +93,63 @@ export type Database = {
           },
         ]
       }
+      approvals: {
+        Row: {
+          approver_id: string | null
+          comment: string | null
+          company_id: string | null
+          created_at: string | null
+          decided_at: string | null
+          id: string
+          object_id: string
+          object_type: string
+          status: string | null
+          step: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          approver_id?: string | null
+          comment?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          decided_at?: string | null
+          id?: string
+          object_id: string
+          object_type: string
+          status?: string | null
+          step?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          approver_id?: string | null
+          comment?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          decided_at?: string | null
+          id?: string
+          object_id?: string
+          object_type?: string
+          status?: string | null
+          step?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approvals_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approvals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -4811,16 +4868,21 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           company_id: string | null
+          cost_center: string | null
           created_at: string | null
           department: string | null
+          department_id: string | null
           description: string | null
           id: string
+          need_by_date: string | null
           needed_by_date: string | null
           notes: string | null
           preferred_supplier_id: string | null
+          priority: string | null
           request_number: string
           requested_date: string | null
           requester_id: string
+          requester_notes: string | null
           status: Database["public"]["Enums"]["purchase_request_status"] | null
           title: string
           total_budget: number
@@ -4830,16 +4892,21 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           company_id?: string | null
+          cost_center?: string | null
           created_at?: string | null
           department?: string | null
+          department_id?: string | null
           description?: string | null
           id?: string
+          need_by_date?: string | null
           needed_by_date?: string | null
           notes?: string | null
           preferred_supplier_id?: string | null
+          priority?: string | null
           request_number?: string
           requested_date?: string | null
           requester_id: string
+          requester_notes?: string | null
           status?: Database["public"]["Enums"]["purchase_request_status"] | null
           title: string
           total_budget?: number
@@ -4849,16 +4916,21 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           company_id?: string | null
+          cost_center?: string | null
           created_at?: string | null
           department?: string | null
+          department_id?: string | null
           description?: string | null
           id?: string
+          need_by_date?: string | null
           needed_by_date?: string | null
           notes?: string | null
           preferred_supplier_id?: string | null
+          priority?: string | null
           request_number?: string
           requested_date?: string | null
           requester_id?: string
+          requester_notes?: string | null
           status?: Database["public"]["Enums"]["purchase_request_status"] | null
           title?: string
           total_budget?: number
@@ -4873,10 +4945,70 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "purchase_requests_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "purchase_requests_preferred_supplier_id_fkey"
             columns: ["preferred_supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchasing_settings: {
+        Row: {
+          approval_threshold_level1: number | null
+          approval_threshold_level2: number | null
+          company_id: string | null
+          created_at: string | null
+          default_currency: string | null
+          default_tax_rate: number | null
+          grn_prefix: string | null
+          id: string
+          po_prefix: string | null
+          pr_prefix: string | null
+          rfq_prefix: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          approval_threshold_level1?: number | null
+          approval_threshold_level2?: number | null
+          company_id?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          default_tax_rate?: number | null
+          grn_prefix?: string | null
+          id?: string
+          po_prefix?: string | null
+          pr_prefix?: string | null
+          rfq_prefix?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          approval_threshold_level1?: number | null
+          approval_threshold_level2?: number | null
+          company_id?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          default_tax_rate?: number | null
+          grn_prefix?: string | null
+          id?: string
+          po_prefix?: string | null
+          pr_prefix?: string | null
+          rfq_prefix?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchasing_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -7441,6 +7573,15 @@ export type Database = {
         Args: { p_completion_data?: Json; p_notification_id: string }
         Returns: boolean
       }
+      create_approval_workflow: {
+        Args: {
+          p_amount?: number
+          p_company_id: string
+          p_object_id: string
+          p_object_type: string
+        }
+        Returns: undefined
+      }
       create_simple_jwt_token: {
         Args: { project_id: string; user_email: string; user_id: string }
         Returns: string
@@ -9153,6 +9294,10 @@ export type Database = {
       unlockrows: {
         Args: { "": string }
         Returns: number
+      }
+      update_cash_account_balance: {
+        Args: { p_account_id: string; p_amount: number; p_type: string }
+        Returns: undefined
       }
       update_order_totals: {
         Args: { order_uuid: string }

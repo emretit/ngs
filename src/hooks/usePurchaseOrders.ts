@@ -32,6 +32,7 @@ export interface PurchaseOrder {
     name: string;
     email: string;
     phone: string;
+    address?: string;
   };
   items?: PurchaseOrderItem[];
   approvals?: any[];
@@ -93,7 +94,7 @@ export const usePurchaseOrders = (filters?: {
         .from('purchase_orders')
         .select(`
           *,
-          supplier:customers!purchase_orders_supplier_id_fkey(id, name, email, mobile_phone),
+          supplier:customers!purchase_orders_supplier_id_fkey(id, name, email, mobile_phone, address),
           items:purchase_order_items(*)
         `)
         .order('created_at', { ascending: false });

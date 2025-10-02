@@ -6,6 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -14,49 +21,77 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ArrowLeft, Check } from "lucide-react";
-import { usePurchaseOrderNew, useReceivePurchaseOrder } from "@/hooks/usePurchaseOrdersNew";
+import { usePurchaseOrderNew } from "@/hooks/usePurchaseOrdersNew";
+import { useCreateGRN } from "@/hooks/useGRNs";
 import { format } from "date-fns";
+
+interface GRNLineData {
+  po_line_id: string;
+  received_quantity: number;
+  qc_status: 'accepted' | 'rework' | 'rejected';
+  location_id?: string;
+  serials?: string[];
+  batches?: string[];
+  notes?: string;
+}
 
 export default function ReceivePurchaseOrder() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: order, isLoading } = usePurchaseOrderNew(id!);
-  const receiveOrder = useReceivePurchaseOrder();
+  const createGRN = useCreateGRN();
   
   const [receiptData, setReceiptData] = useState<{
     received_date: string;
+    warehouse_id?: string;
     notes?: string;
-    items: { item_id: string; received_quantity: number }[];
+    lines: GRNLineData[];
   }>({
     received_date: new Date().toISOString().split('T')[0],
-    items: [],
+    lines: [],
   });
 
-  const updateItemQuantity = (itemId: string, quantity: number) => {
+  const updateLineData = (itemId: string, field: keyof GRNLineData, value: any) => {
     setReceiptData(prev => {
-      const existingIndex = prev.items.findIndex(i => i.item_id === itemId);
+      const existingIndex = prev.lines.findIndex(l => l.po_line_id === itemId);
       if (existingIndex >= 0) {
-        const newItems = [...prev.items];
-        newItems[existingIndex] = { item_id: itemId, received_quantity: quantity };
-        return { ...prev, items: newItems };
+        const newLines = [...prev.lines];
+        newLines[existingIndex] = { ...newLines[existingIndex], [field]: value };
+        return { ...prev, lines: newLines };
       }
       return {
         ...prev,
-        items: [...prev.items, { item_id: itemId, received_quantity: quantity }],
+        lines: [...prev.lines, { 
+          po_line_id: itemId, 
+          received_quantity: 0,
+          qc_status: 'accepted',
+          [field]: value 
+        }],
       };
     });
+  };
+
+  const getLineData = (itemId: string): GRNLineData => {
+    return receiptData.lines.find(l => l.po_line_id === itemId) || {
+      po_line_id: itemId,
+      received_quantity: 0,
+      qc_status: 'accepted',
+    };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await receiveOrder.mutateAsync({
-        orderId: id!,
-        ...receiptData,
+      await createGRN.mutateAsync({
+        po_id: id!,
+        received_date: receiptData.received_date,
+        warehouse_id: receiptData.warehouse_id,
+        notes: receiptData.notes,
+        lines: receiptData.lines.filter(l => l.received_quantity > 0),
       });
-      navigate(`/purchasing/orders/${id}`);
+      navigate(`/purchasing/grns`);
     } catch (error) {
-      console.error('Error receiving order:', error);
+      console.error('Error creating GRN:', error);
     }
   };
 
@@ -125,23 +160,26 @@ export default function ReceivePurchaseOrder() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ürün</TableHead>
-                <TableHead>Sipariş Miktarı</TableHead>
-                <TableHead>Daha Önce Alınan</TableHead>
+            <TableHead>Ürün</TableHead>
+                <TableHead>Sipariş</TableHead>
+                <TableHead>Alınan</TableHead>
                 <TableHead>Kalan</TableHead>
-                <TableHead>Teslim Alınan</TableHead>
+                <TableHead>Teslim Miktar</TableHead>
+                <TableHead>Kalite</TableHead>
+                <TableHead>Lokasyon</TableHead>
+                <TableHead>Notlar</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {order.items?.map((item) => {
-                const remaining = item.quantity - item.received_quantity;
-                const receivedQty = receiptData.items.find(i => i.item_id === item.id)?.received_quantity || 0;
+                const remaining = item.quantity - (item.received_quantity || 0);
+                const lineData = getLineData(item.id);
                 
                 return (
                   <TableRow key={item.id}>
-                    <TableCell>{item.description}</TableCell>
+                    <TableCell className="font-medium">{item.description}</TableCell>
                     <TableCell>{item.quantity} {item.uom}</TableCell>
-                    <TableCell>{item.received_quantity} {item.uom}</TableCell>
+                    <TableCell>{item.received_quantity || 0} {item.uom}</TableCell>
                     <TableCell>{remaining} {item.uom}</TableCell>
                     <TableCell>
                       <Input
@@ -149,8 +187,39 @@ export default function ReceivePurchaseOrder() {
                         min="0"
                         max={remaining}
                         step="0.001"
-                        value={receivedQty}
-                        onChange={(e) => updateItemQuantity(item.id, parseFloat(e.target.value) || 0)}
+                        value={lineData.received_quantity}
+                        onChange={(e) => updateLineData(item.id, 'received_quantity', parseFloat(e.target.value) || 0)}
+                        className="w-24"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Select 
+                        value={lineData.qc_status}
+                        onValueChange={(value) => updateLineData(item.id, 'qc_status', value)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="accepted">Kabul</SelectItem>
+                          <SelectItem value="rework">İşlem Gerekli</SelectItem>
+                          <SelectItem value="rejected">Red</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        placeholder="LOC-A1"
+                        value={lineData.location_id || ''}
+                        onChange={(e) => updateLineData(item.id, 'location_id', e.target.value)}
+                        className="w-24"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        placeholder="Notlar..."
+                        value={lineData.notes || ''}
+                        onChange={(e) => updateLineData(item.id, 'notes', e.target.value)}
                         className="w-32"
                       />
                     </TableCell>
@@ -165,9 +234,9 @@ export default function ReceivePurchaseOrder() {
           <Button type="button" variant="outline" onClick={() => navigate(`/purchasing/orders/${id}`)}>
             İptal
           </Button>
-          <Button type="submit" disabled={receiveOrder.isPending}>
+          <Button type="submit" disabled={createGRN.isPending}>
             <Check className="h-4 w-4 mr-2" />
-            {receiveOrder.isPending ? "Kaydediliyor..." : "Mal Kabul Tamamla"}
+            {createGRN.isPending ? "Kaydediliyor..." : "GRN Oluştur"}
           </Button>
         </div>
       </form>

@@ -37,8 +37,11 @@ export default function NewPurchaseOrder() {
     defaultValues: {
       supplier_id: vendorId || '',
       order_date: new Date().toISOString().split('T')[0],
+      expected_delivery_date: '',
       currency: 'TRY',
       exchange_rate: 1,
+      incoterm: '',
+      notes: '',
     },
   });
 

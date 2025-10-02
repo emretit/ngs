@@ -50,6 +50,10 @@ export default function GRNsList() {
           <h1 className="text-3xl font-bold">Mal Kabul Notları (GRN)</h1>
           <p className="text-muted-foreground">Teslim alınan malları kaydedin</p>
         </div>
+        <Button onClick={() => navigate("/purchasing/orders")}>
+          <Plus className="h-4 w-4 mr-2" />
+          Mal Kabul Yap
+        </Button>
       </div>
 
       <div className="flex items-center gap-4">

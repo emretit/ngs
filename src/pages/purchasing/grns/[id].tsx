@@ -10,9 +10,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { useGRN, useUpdateGRNStatus } from "@/hooks/useGRNs";
 import { format } from "date-fns";
+
+// Print styles
+const printStyles = `
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    body {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .print-page {
+      padding: 20mm;
+    }
+  }
+`;
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -59,21 +75,29 @@ export default function GRNDetail() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/purchasing/grns")}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+    <>
+      <style>{printStyles}</style>
+      <div className="container mx-auto p-6 space-y-6 print-page">
+        <div className="flex items-center gap-4 no-print">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/purchasing/grns")}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold">Mal Kabul Detayı</h1>
           <p className="text-muted-foreground">{grn.grn_number}</p>
         </div>
-        {grn.status === 'received' && (
-          <Button onClick={handlePutaway} disabled={updateStatus.isPending}>
-            Yerleştirme Tamamla
-          </Button>
-        )}
-      </div>
+          <div className="flex gap-2 no-print">
+            {grn.status === 'received' && (
+              <Button onClick={handlePutaway} disabled={updateStatus.isPending}>
+                Yerleştirme Tamamla
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => window.print()}>
+              <Printer className="h-4 w-4 mr-2" />
+              GRN Yazdır
+            </Button>
+          </div>
+        </div>
 
       <div className="grid grid-cols-2 gap-6">
         <Card className="p-6 space-y-4">
@@ -114,6 +138,9 @@ export default function GRNDetail() {
               <TableHead>Teslim Alınan</TableHead>
               <TableHead>Kalite Kontrol</TableHead>
               <TableHead>Lokasyon</TableHead>
+              <TableHead>Seri No</TableHead>
+              <TableHead>Parti No</TableHead>
+              <TableHead>Notlar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,11 +155,25 @@ export default function GRNDetail() {
                 </TableCell>
                 <TableCell>{getQCBadge(line.qc_status)}</TableCell>
                 <TableCell>{line.location_id || '-'}</TableCell>
+                <TableCell>
+                  {line.serials && line.serials.length > 0 
+                    ? line.serials.join(', ') 
+                    : '-'}
+                </TableCell>
+                <TableCell>
+                  {line.batches && line.batches.length > 0 
+                    ? line.batches.join(', ') 
+                    : '-'}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {line.notes || '-'}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

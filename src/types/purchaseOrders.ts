@@ -28,7 +28,11 @@ export interface PurchaseOrder {
   
   // Relations
   supplier?: {
+    id: string;
     name: string;
+    email: string;
+    phone: string;
+    address?: string;
     tax_number?: string;
   };
   request?: {
@@ -66,8 +70,10 @@ export interface PurchaseOrderFormData {
   priority: PurchaseOrderPriority;
   payment_terms?: string;
   delivery_address?: string;
+  incoterm?: string;
   notes?: string;
   currency?: string;
+  exchange_rate?: number;
   items: {
     product_id?: string;
     description: string;

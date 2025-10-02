@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, FileDown, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PurchaseOrdersTab from "@/components/purchase/orders/PurchaseOrdersTab";
 import InvoiceManagementTab from "@/components/purchase/invoices/InvoiceManagementTab";
 interface PurchaseManagementProps {
   isCollapsed?: boolean;
@@ -54,7 +53,9 @@ const PurchaseManagement = ({ isCollapsed, setIsCollapsed }: PurchaseManagementP
             </TabsTrigger>
           </TabsList>
           <TabsContent value="purchase-orders">
-            <PurchaseOrdersTab />
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Bu sekme kaldırıldı. Lütfen yeni satın alma modülünü kullanın.</p>
+            </div>
           </TabsContent>
           <TabsContent value="invoices">
             <InvoiceManagementTab />

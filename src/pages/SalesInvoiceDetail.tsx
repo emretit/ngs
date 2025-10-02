@@ -12,8 +12,8 @@ import { tr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, Tag } from "lucide-react";
 interface SalesInvoiceDetailProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailProps) => {
   const { id } = useParams<{ id: string }>();

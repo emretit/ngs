@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Settings2, Users, UserCheck, Zap, Wrench, FileText } from "lucide-react";
 interface SettingsProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
   const navigate = useNavigate();

@@ -63,7 +63,7 @@ const Employees = () => {
   });
 
   // Get unique positions
-  const positions = Array.from(new Set(employees.map(emp => emp.position).filter(Boolean)));
+  const positions = Array.from(new Set(employees.map(emp => emp.position).filter(Boolean))) as string[];
 
   // Calculate employee stats
   const employeeStats = {

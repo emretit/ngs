@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { RotateCcw, AlertCircle, CheckCircle, Clock } from "lucide-react";
 interface ReturnsProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
   return (

@@ -6,8 +6,8 @@ import OrdersContent from "@/components/orders/OrdersContent";
 import { ViewType } from "@/components/orders/header/OrdersViewToggle";
 import { Order } from "@/types/orders";
 interface OrdersListProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const OrdersList = ({ isCollapsed, setIsCollapsed }: OrdersListProps) => {
   const navigate = useNavigate();

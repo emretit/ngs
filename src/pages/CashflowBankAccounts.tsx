@@ -6,8 +6,8 @@ import { Building, Eye, EyeOff, Wallet, CreditCard, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 interface CashflowBankAccountsProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccountsProps) => {
   const [showBalances, setShowBalances] = useState(false);

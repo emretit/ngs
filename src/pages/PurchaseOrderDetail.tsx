@@ -17,8 +17,8 @@ import PurchaseInvoicesList from "@/components/purchase/invoices/PurchaseInvoice
 import PurchaseInvoiceForm from "@/components/purchase/invoices/PurchaseInvoiceForm";
 import { OrderStatusBadge } from "@/components/purchase/OrderStatusBadge";
 interface PurchaseOrderDetailProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const PurchaseOrderDetail = ({ isCollapsed, setIsCollapsed }: PurchaseOrderDetailProps) => {
   const { id } = useParams<{ id: string }>();

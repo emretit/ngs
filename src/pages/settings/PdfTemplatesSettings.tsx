@@ -2,8 +2,8 @@ import React from "react";
 import PdfTemplates from "@/pages/PdfTemplates";
 import { Settings2, FileText } from "lucide-react";
 interface PdfTemplatesSettingsProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const PdfTemplatesSettings = ({ isCollapsed, setIsCollapsed }: PdfTemplatesSettingsProps) => {
   return (

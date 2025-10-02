@@ -2,8 +2,8 @@ import React from "react";
 import { UserManagement } from "@/components/settings/UserManagement";
 import { Settings2, Users } from "lucide-react";
 interface UsersSettingsProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const UsersSettings = ({ isCollapsed, setIsCollapsed }: UsersSettingsProps) => {
   return (

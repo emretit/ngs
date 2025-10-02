@@ -11,8 +11,8 @@ import { useState } from "react";
 import NewActivityDialog from "@/components/activities/NewActivityDialog";
 import OpportunityForm from "@/components/opportunities/OpportunityForm";
 interface CrmDashboardProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed }) => {
   const navigate = useNavigate();

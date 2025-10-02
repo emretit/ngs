@@ -7,8 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PurchaseOrdersTab from "@/components/purchase/orders/PurchaseOrdersTab";
 import InvoiceManagementTab from "@/components/purchase/invoices/InvoiceManagementTab";
 interface PurchaseManagementProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const PurchaseManagement = ({ isCollapsed, setIsCollapsed }: PurchaseManagementProps) => {
   const navigate = useNavigate();

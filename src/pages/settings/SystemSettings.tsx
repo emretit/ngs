@@ -2,8 +2,8 @@ import React from "react";
 import { SystemSettings } from "@/components/settings/SystemSettings";
 import { Settings2, Wrench } from "lucide-react";
 interface SystemSettingsPageProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const SystemSettingsPage = ({ isCollapsed, setIsCollapsed }: SystemSettingsPageProps) => {
   return (

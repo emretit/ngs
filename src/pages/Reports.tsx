@@ -11,8 +11,8 @@ import ReportsHRSection from "@/components/reports/ReportsHRSection";
 import ReportsVehicleSection from "@/components/reports/ReportsVehicleSection";
 import AIReportChat from "@/components/reports/AIReportChat";
 interface ReportsProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 export default function Reports({ isCollapsed, setIsCollapsed }: ReportsProps) {
   const [searchParams, setSearchParams] = useSearchParams();

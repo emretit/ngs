@@ -11,8 +11,8 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 interface PurchaseInvoiceDetailProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceDetailProps) => {
   const { id } = useParams<{ id: string }>();

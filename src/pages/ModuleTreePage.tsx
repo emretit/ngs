@@ -3,8 +3,8 @@ import { ReactFlowProvider } from '@xyflow/react';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 import { DatabaseSchemaFlow } from '@/components/modules/DatabaseSchemaFlow';
 interface ModuleTreePageProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const ModuleTreePage: React.FC<ModuleTreePageProps> = ({ isCollapsed, setIsCollapsed }) => {
   return (

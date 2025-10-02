@@ -4,8 +4,8 @@ import TaskForm from "@/components/activities/form/TaskForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 interface NewActivityProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const NewActivity = ({ isCollapsed, setIsCollapsed }: NewActivityProps) => {
   const navigate = useNavigate();

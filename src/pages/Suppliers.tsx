@@ -8,8 +8,8 @@ import SuppliersBulkActions from "@/components/suppliers/SuppliersBulkActions";
 import { Supplier } from "@/types/supplier";
 import { toast } from "sonner";
 interface SuppliersProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   const [searchQuery, setSearchQuery] = useState("");

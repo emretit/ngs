@@ -7,8 +7,8 @@ import { useSalesInvoices } from "@/hooks/useSalesInvoices";
 import { useEInvoice } from "@/hooks/useEInvoice";
 import { useNilveraPdf } from "@/hooks/useNilveraPdf";
 interface SalesInvoicesProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
   const navigate = useNavigate();

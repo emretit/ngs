@@ -13,8 +13,8 @@ import TasksKanban from "@/components/activities/TasksKanban";
 import TasksCalendar from "@/components/activities/calendar/TasksCalendar";
 import MyDayView from "@/components/activities/myday/MyDayView";
 interface ActivitiesPageProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
   const [searchQuery, setSearchQuery] = useState("");

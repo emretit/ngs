@@ -5,8 +5,8 @@ import { ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { RequestsTable } from "@/components/purchase/requests/RequestsTable";
 interface PurchaseRequestsProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const PurchaseRequests = ({ isCollapsed, setIsCollapsed }: PurchaseRequestsProps) => {
   const navigate = useNavigate();

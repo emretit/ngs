@@ -2,8 +2,8 @@ import React from "react";
 import { NilveraSettings } from "@/components/settings/NilveraSettings";
 import { Settings2, Zap } from "lucide-react";
 interface NilveraSettingsPageProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const NilveraSettingsPage = ({ isCollapsed, setIsCollapsed }: NilveraSettingsPageProps) => {
   return (

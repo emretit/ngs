@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Package, Calendar, MapPin, CheckCircle } from "lucide-react";
 interface DeliveriesProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
   return (

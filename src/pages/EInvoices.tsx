@@ -6,8 +6,8 @@ import EInvoiceContent from "@/components/einvoice/EInvoiceContent";
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
 import { useToast } from '@/hooks/use-toast';
 interface EInvoicesProps {
-  
-  
+  isCollapsed?: boolean;
+  setIsCollapsed?: (collapsed: boolean) => void;
 }
 const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const navigate = useNavigate();

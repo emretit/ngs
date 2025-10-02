@@ -36,7 +36,8 @@ import {
   MapPin,
   Gauge,
   CheckSquare,
-  Workflow
+  Workflow,
+  Plus
 } from "lucide-react";
 
 export const navItems = [
@@ -107,12 +108,17 @@ export const navItems = [
       {
         path: "/purchase/requests",
         icon: FileText,
-        label: "Talep Oluştur",
+        label: "Satın Alma Talepleri",
       },
       {
-        path: "/orders/purchase",
+        path: "/purchasing/orders",
         icon: PackageCheck,
-        label: "Siparişler",
+        label: "Satın Alma Siparişleri",
+      },
+      {
+        path: "/purchasing/orders/new",
+        icon: Plus,
+        label: "Yeni Sipariş",
       },
     ],
   },

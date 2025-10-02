@@ -4620,13 +4620,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "purchase_invoices_po_id_fkey"
-            columns: ["po_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_orders"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "purchase_invoices_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -4637,64 +4630,57 @@ export type Database = {
       }
       purchase_order_items: {
         Row: {
-          company_id: string | null
-          created_at: string | null
+          created_at: string
           description: string
           discount_rate: number | null
           id: string
-          po_id: string
+          line_total: number
+          notes: string | null
+          order_id: string
           product_id: string | null
           quantity: number
           received_quantity: number | null
-          tax_rate: number
-          total_price: number
-          unit: string
+          tax_rate: number | null
           unit_price: number
-          updated_at: string | null
+          uom: string | null
+          updated_at: string
         }
         Insert: {
-          company_id?: string | null
-          created_at?: string | null
+          created_at?: string
           description: string
           discount_rate?: number | null
           id?: string
-          po_id: string
+          line_total: number
+          notes?: string | null
+          order_id: string
           product_id?: string | null
           quantity: number
           received_quantity?: number | null
-          tax_rate?: number
-          total_price: number
-          unit: string
+          tax_rate?: number | null
           unit_price: number
-          updated_at?: string | null
+          uom?: string | null
+          updated_at?: string
         }
         Update: {
-          company_id?: string | null
-          created_at?: string | null
+          created_at?: string
           description?: string
           discount_rate?: number | null
           id?: string
-          po_id?: string
+          line_total?: number
+          notes?: string | null
+          order_id?: string
           product_id?: string | null
           quantity?: number
           received_quantity?: number | null
-          tax_rate?: number
-          total_price?: number
-          unit?: string
+          tax_rate?: number | null
           unit_price?: number
-          updated_at?: string | null
+          uom?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "purchase_order_items_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "purchase_order_items_po_id_fkey"
-            columns: ["po_id"]
+            foreignKeyName: "purchase_order_items_order_id_fkey"
+            columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
@@ -4710,67 +4696,73 @@ export type Database = {
       }
       purchase_orders: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           company_id: string | null
-          created_at: string | null
-          currency: string
+          created_at: string
+          created_by: string | null
+          currency: string | null
           delivery_address: string | null
-          delivery_terms: string | null
           expected_delivery_date: string | null
           id: string
-          issued_by: string | null
-          issued_date: string | null
           notes: string | null
+          order_date: string
+          order_number: string
           payment_terms: string | null
-          po_number: string
+          priority: string
           request_id: string | null
-          status: Database["public"]["Enums"]["purchase_order_status"] | null
-          subtotal: number
-          supplier_id: string
-          tax_amount: number
-          total_amount: number
-          updated_at: string | null
+          status: string
+          subtotal: number | null
+          supplier_id: string | null
+          tax_total: number | null
+          total_amount: number | null
+          updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           company_id?: string | null
-          created_at?: string | null
-          currency?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
           delivery_address?: string | null
-          delivery_terms?: string | null
           expected_delivery_date?: string | null
           id?: string
-          issued_by?: string | null
-          issued_date?: string | null
           notes?: string | null
+          order_date?: string
+          order_number: string
           payment_terms?: string | null
-          po_number?: string
+          priority?: string
           request_id?: string | null
-          status?: Database["public"]["Enums"]["purchase_order_status"] | null
-          subtotal?: number
-          supplier_id: string
-          tax_amount?: number
-          total_amount?: number
-          updated_at?: string | null
+          status?: string
+          subtotal?: number | null
+          supplier_id?: string | null
+          tax_total?: number | null
+          total_amount?: number | null
+          updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           company_id?: string | null
-          created_at?: string | null
-          currency?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
           delivery_address?: string | null
-          delivery_terms?: string | null
           expected_delivery_date?: string | null
           id?: string
-          issued_by?: string | null
-          issued_date?: string | null
           notes?: string | null
+          order_date?: string
+          order_number?: string
           payment_terms?: string | null
-          po_number?: string
+          priority?: string
           request_id?: string | null
-          status?: Database["public"]["Enums"]["purchase_order_status"] | null
-          subtotal?: number
-          supplier_id?: string
-          tax_amount?: number
-          total_amount?: number
-          updated_at?: string | null
+          status?: string
+          subtotal?: number | null
+          supplier_id?: string | null
+          tax_total?: number | null
+          total_amount?: number | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -4791,7 +4783,7 @@ export type Database = {
             foreignKeyName: "purchase_orders_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
-            referencedRelation: "suppliers"
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -7556,6 +7548,10 @@ export type Database = {
       bytea: {
         Args: { "": unknown } | { "": unknown }
         Returns: string
+      }
+      check_purchase_order_company: {
+        Args: { p_order_id: string }
+        Returns: boolean
       }
       check_stock_status: {
         Args: { current_quantity: number; threshold: number }

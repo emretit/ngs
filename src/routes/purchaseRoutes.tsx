@@ -1,31 +1,26 @@
 import { RouteConfig } from "./types";
-import { lazy } from "react";
 
-const PurchaseManagement = lazy(() => import("@/pages/PurchaseManagement"));
-const PurchaseRequests = lazy(() => import("@/pages/PurchaseRequests"));
-const ProductMapping = lazy(() => import("@/pages/ProductMapping"));
-const PurchaseInvoices = lazy(() => import("@/pages/PurchaseInvoices"));
-const PurchaseInvoiceDetail = lazy(() => import("@/pages/PurchaseInvoiceDetail"));
-const EInvoices = lazy(() => import("@/pages/EInvoices"));
-const EInvoiceProcess = lazy(() => import("@/pages/EInvoiceProcess"));
-const PurchasingDashboard = lazy(() => import("@/pages/purchasing/index"));
-const PurchaseRequestsList = lazy(() => import("@/pages/purchasing/requests/index"));
-const NewPurchaseRequest = lazy(() => import("@/pages/purchasing/requests/new"));
-const PurchaseRequestDetail = lazy(() => import("@/pages/purchasing/requests/[id]"));
-const PurchaseOrdersList = lazy(() => import("@/pages/purchasing/orders/index"));
-const NewPurchaseOrder = lazy(() => import("@/pages/purchasing/orders/new"));
-const PurchaseOrderDetail = lazy(() => import("@/pages/purchasing/orders/[id]"));
-const ReceivePurchaseOrder = lazy(() => import("@/pages/purchasing/orders/receive"));
-const RFQsList = lazy(() => import("@/pages/purchasing/rfqs/index"));
-const NewRFQ = lazy(() => import("@/pages/purchasing/rfqs/new"));
-const RFQDetail = lazy(() => import("@/pages/purchasing/rfqs/[id]"));
-const GRNsList = lazy(() => import("@/pages/purchasing/grns/index"));
-const GRNDetail = lazy(() => import("@/pages/purchasing/grns/[id]"));
-const VendorInvoicesList = lazy(() => import("@/pages/purchasing/invoices/index"));
-const VendorInvoiceDetail = lazy(() => import("@/pages/purchasing/invoices/[id]"));
-const PurchasingSettings = lazy(() => import("@/pages/purchasing/settings/index"));
+// Yeni satın alma modülü - sadece bu kullanılacak
+import PurchaseManagement from "@/pages/PurchaseManagement";
+import PurchasingDashboard from "@/pages/purchasing/index";
+import PurchaseRequestsList from "@/pages/purchasing/requests/index";
+import NewPurchaseRequest from "@/pages/purchasing/requests/new";
+import PurchaseRequestDetail from "@/pages/purchasing/requests/[id]";
+import PurchaseOrdersList from "@/pages/purchasing/orders/index";
+import NewPurchaseOrder from "@/pages/purchasing/orders/new";
+import PurchaseOrderDetail from "@/pages/purchasing/orders/[id]";
+import ReceivePurchaseOrder from "@/pages/purchasing/orders/receive";
+import RFQsList from "@/pages/purchasing/rfqs/index";
+import NewRFQ from "@/pages/purchasing/rfqs/new";
+import RFQDetail from "@/pages/purchasing/rfqs/[id]";
+import GRNsList from "@/pages/purchasing/grns/index";
+import GRNDetail from "@/pages/purchasing/grns/[id]";
+import VendorInvoicesList from "@/pages/purchasing/invoices/index";
+import VendorInvoiceDetail from "@/pages/purchasing/invoices/[id]";
+import PurchasingSettings from "@/pages/purchasing/settings/index";
 
 export const purchaseRoutes: RouteConfig[] = [
+  // Eski route - yönlendirme sayfası
   {
     path: "/purchase",
     component: PurchaseManagement,
@@ -36,108 +31,80 @@ export const purchaseRoutes: RouteConfig[] = [
     component: PurchaseManagement,
     protected: true,
   },
-  {
-    path: "/purchase/requests",
-    component: PurchaseRequests,
-    protected: true,
-  },
-  {
-    path: "/purchase-invoices",
-    component: PurchaseInvoices,
-    protected: true,
-  },
-  {
-    path: "/purchase-invoices/:id",
-    component: PurchaseInvoiceDetail,
-    protected: true,
-  },
-  {
-    path: "/purchase/e-invoice",
-    component: EInvoices,
-    protected: true,
-  },
-  {
-    path: "/purchase/e-invoice/process/:invoiceId",
-    component: EInvoiceProcess,
-    protected: true,
-  },
-  {
-    path: "/product-mapping/:invoiceId",
-    component: ProductMapping,
-    protected: true,
-  },
+  
+  // Yeni satın alma modülü
   {
     path: "/purchasing",
     component: PurchasingDashboard,
     protected: true,
   },
   {
-    path: "/purchasing/requests",
+    path: "/purchase-requests",
     component: PurchaseRequestsList,
     protected: true,
   },
   {
-    path: "/purchasing/requests/new",
+    path: "/purchase-requests/new",
     component: NewPurchaseRequest,
     protected: true,
   },
   {
-    path: "/purchasing/requests/:id",
+    path: "/purchase-requests/:id",
     component: PurchaseRequestDetail,
     protected: true,
   },
   {
-    path: "/purchasing/orders",
+    path: "/purchase-orders",
     component: PurchaseOrdersList,
     protected: true,
   },
   {
-    path: "/purchasing/orders/new",
+    path: "/purchase-orders/new",
     component: NewPurchaseOrder,
     protected: true,
   },
   {
-    path: "/purchasing/orders/:id",
+    path: "/purchase-orders/:id",
     component: PurchaseOrderDetail,
     protected: true,
   },
   {
-    path: "/purchasing/orders/:id/receive",
+    path: "/purchase-orders/:id/receive",
     component: ReceivePurchaseOrder,
     protected: true,
   },
   {
-    path: "/purchasing/rfqs",
+    path: "/purchase-rfqs",
     component: RFQsList,
     protected: true,
   },
   {
-    path: "/purchasing/rfqs/new",
+    path: "/purchase-rfqs/new",
     component: NewRFQ,
     protected: true,
   },
   {
-    path: "/purchasing/rfqs/:id",
+    path: "/purchase-rfqs/:id",
     component: RFQDetail,
     protected: true,
   },
   {
-    path: "/purchasing/grns",
+    path: "/purchase-grns",
     component: GRNsList,
     protected: true,
   },
   {
-    path: "/purchasing/grns/:id",
+    path: "/purchase-grns/:id",
     component: GRNDetail,
     protected: true,
   },
   {
-    path: "/purchasing/invoices",
+    path: "/vendor-invoices",
     component: VendorInvoicesList,
     protected: true,
   },
   {
-    path: "/purchasing/invoices/:id",
+    path: "/vendor-invoices/:id",
     component: VendorInvoiceDetail,
     protected: true,
   },

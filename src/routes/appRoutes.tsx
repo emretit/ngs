@@ -29,13 +29,13 @@ export const appRoutes: RouteConfig[] = [
   ...customerRoutes,
   ...supplierRoutes,
   ...employeeRoutes,
+  ...purchaseRoutes, // purchaseRoutes'u financeRoutes'dan önce koy
   ...financeRoutes,
   ...cashflowRoutes,
   ...serviceRoutes,
   ...orderRoutes,
   ...crmRoutes,
   ...settingsRoutes,
-  ...purchaseRoutes,
   ...proposalRoutes,
   ...vehicleRoutes,
   

@@ -89,7 +89,7 @@ export default function ReceivePurchaseOrder() {
         notes: receiptData.notes,
         lines: receiptData.lines.filter(l => l.received_quantity > 0),
       });
-      navigate(`/purchasing/grns`);
+      navigate(`/purchase-grns`);
     } catch (error) {
       console.error('Error creating GRN:', error);
     }
@@ -108,7 +108,7 @@ export default function ReceivePurchaseOrder() {
       <div className="container mx-auto p-6">
         <Card className="p-6">
           <p className="text-destructive">Bu sipariş henüz onaylanmadı. Mal kabul için sipariş onaylanmış olmalıdır.</p>
-          <Button onClick={() => navigate(`/purchasing/orders/${id}`)} className="mt-4">
+          <Button onClick={() => navigate(`/purchase-orders/${id}`)} className="mt-4">
             Sipariş Detayına Dön
           </Button>
         </Card>
@@ -119,7 +119,7 @@ export default function ReceivePurchaseOrder() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/purchasing/orders/${id}`)}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(`/purchase-orders/${id}`)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -231,7 +231,7 @@ export default function ReceivePurchaseOrder() {
         </Card>
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => navigate(`/purchasing/orders/${id}`)}>
+          <Button type="button" variant="outline" onClick={() => navigate(`/purchase-orders/${id}`)}>
             İptal
           </Button>
           <Button type="submit" disabled={createGRN.isPending}>

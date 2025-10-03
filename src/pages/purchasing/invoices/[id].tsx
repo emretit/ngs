@@ -99,7 +99,7 @@ export default function VendorInvoiceDetail() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/purchasing/invoices")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/vendor-invoices")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">

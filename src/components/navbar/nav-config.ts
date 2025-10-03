@@ -104,43 +104,33 @@ export const navItems = [
   },
   // 5. Satın Alma
   {
-    path: "/purchase",
+    path: "/purchasing",
     icon: PackageCheck,
     label: "Satın Alma",
     hasDropdown: true,
     items: [
       {
-        path: "/purchasing",
-        icon: LayoutDashboard,
-        label: "Ana Sayfa",
-      },
-      {
-        path: "/purchasing/vendors",
-        icon: Building2,
-        label: "Tedarikçiler",
-      },
-      {
-        path: "/purchasing/requests",
+        path: "/purchase-requests",
         icon: FileText,
         label: "Talepler (PR)",
       },
       {
-        path: "/purchasing/rfqs",
+        path: "/purchase-rfqs",
         icon: MessageSquare,
         label: "Teklif İst. (RFQ)",
       },
       {
-        path: "/purchasing/orders",
+        path: "/purchase-orders",
         icon: ShoppingCart,
         label: "Siparişler (PO)",
       },
       {
-        path: "/purchasing/grns",
+        path: "/purchase-grns",
         icon: ClipboardCheck,
         label: "Teslimatlar (GRN)",
       },
       {
-        path: "/purchasing/invoices",
+        path: "/vendor-invoices",
         icon: Receipt,
         label: "Faturalar (AP)",
       },

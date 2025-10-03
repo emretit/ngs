@@ -16,6 +16,8 @@ import CashAccountDetail from "@/pages/CashAccountDetail";
 import CreditCardDetail from "@/pages/CreditCardDetail";
 import BankAccountDetail from "@/pages/BankAccountDetail";
 import PartnerAccountDetail from "@/pages/PartnerAccountDetail";
+import EInvoiceProcess from "@/pages/EInvoiceProcess";
+import EInvoices from "@/pages/EInvoices";
 import { RouteConfig } from "./types";
 
 // Define cashflow routes
@@ -42,4 +44,6 @@ export const financeRoutes: RouteConfig[] = [
   { path: "/sales-invoices", component: SalesInvoices, protected: true },
   { path: "/sales-invoices/create", component: CreateSalesInvoice, protected: true },
   { path: "/sales-invoices/:id", component: SalesInvoiceDetail, protected: true },
+  { path: "/purchase/e-invoice", component: EInvoices, protected: true },
+  { path: "/purchase/e-invoice/process/:invoiceId", component: EInvoiceProcess, protected: true },
 ];

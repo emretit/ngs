@@ -15,13 +15,13 @@ export const useVendorInvoices = (filters?: {
     queryKey: ['vendor-invoices', filters],
     queryFn: async () => {
       let query = supabase
-        .from('vendor_invoices')
+        .from('supplier_invoices')
         .select(`
           *,
-          vendor:customers!vendor_invoices_vendor_id_fkey(name, tax_number),
+          supplier:suppliers!supplier_invoices_supplier_id_fkey(name, tax_number),
           po:purchase_orders(order_number),
           grn:grns(grn_number),
-          lines:vendor_invoice_lines(*)
+          lines:supplier_invoice_lines(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -34,7 +34,7 @@ export const useVendorInvoices = (filters?: {
       }
 
       if (filters?.vendor_id && filters.vendor_id !== ' ') {
-        query = query.eq('vendor_id', filters.vendor_id);
+        query = query.eq('supplier_id', filters.vendor_id);
       }
 
       if (filters?.startDate) {
@@ -58,16 +58,16 @@ export const useVendorInvoice = (id: string) => {
     queryKey: ['vendor-invoice', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vendor_invoices')
+        .from('supplier_invoices')
         .select(`
           *,
-          vendor:customers!vendor_invoices_vendor_id_fkey(id, name, tax_number, email),
-          purchase_order:purchase_orders(
+          supplier:suppliers!supplier_invoices_supplier_id_fkey(id, name, tax_number, email),
+          po:purchase_orders(
             order_number,
             items:purchase_order_items(*)
           ),
           grn:grns(grn_number),
-          lines:vendor_invoice_lines(*)
+          lines:supplier_invoice_lines(*)
         `)
         .eq('id', id)
         .single();
@@ -114,12 +114,12 @@ export const useCreateVendorInvoice = () => {
 
       // Create invoice header
       const { data: invoice, error: invoiceError } = await supabase
-        .from('vendor_invoices')
+        .from('supplier_invoices')
         .insert({
           company_id: profile.company_id,
           invoice_number: formData.invoice_number,
           invoice_date: formData.invoice_date,
-          vendor_id: formData.vendor_id,
+          supplier_id: formData.vendor_id,
           po_id: formData.po_id,
           grn_id: formData.grn_id,
           currency: formData.currency || 'TRY',
@@ -145,7 +145,7 @@ export const useCreateVendorInvoice = () => {
         const line_total = lineSubtotal - discount;
 
         return {
-          vendor_invoice_id: invoice.id,
+          supplier_invoice_id: invoice.id,
           po_line_id: line.po_line_id,
           company_id: profile.company_id,
           product_id: line.product_id,
@@ -160,7 +160,7 @@ export const useCreateVendorInvoice = () => {
       });
 
       const { error: linesError } = await supabase
-        .from('vendor_invoice_lines')
+        .from('supplier_invoice_lines')
         .insert(lines);
 
       if (linesError) throw linesError;
@@ -212,7 +212,7 @@ export const useUpdateVendorInvoiceStatus = () => {
       }
 
       const { error } = await supabase
-        .from('vendor_invoices')
+        .from('supplier_invoices')
         .update(updates)
         .eq('id', id);
 
@@ -241,7 +241,7 @@ export const useThreeWayMatch = (invoiceId: string) => {
     queryKey: ['three-way-match', invoiceId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vendor_invoice_lines')
+        .from('supplier_invoice_lines')
         .select(`
           id,
           description,
@@ -258,7 +258,7 @@ export const useThreeWayMatch = (invoiceId: string) => {
             received_quantity
           )
         `)
-        .eq('vendor_invoice_id', invoiceId);
+        .eq('supplier_invoice_id', invoiceId);
 
       if (error) throw error;
 
@@ -310,10 +310,10 @@ export const usePerformMatch = () => {
     mutationFn: async (invoiceId: string) => {
       // Get invoice with PO and lines
       const { data: invoice } = await supabase
-        .from('vendor_invoices')
+        .from('supplier_invoices')
         .select(`
           *,
-          lines:vendor_invoice_lines(*),
+          lines:supplier_invoice_lines(*),
           purchase_order:purchase_orders(
             items:purchase_order_items(*)
           )
@@ -351,7 +351,7 @@ export const usePerformMatch = () => {
 
         // Update line match status
         await supabase
-          .from('vendor_invoice_lines')
+          .from('supplier_invoice_lines')
           .update({ match_status: lineStatus })
           .eq('id', line.id);
       }
@@ -360,7 +360,7 @@ export const usePerformMatch = () => {
       const match_status = hasDiscrepancy ? 'discrepancy' : 'matched';
 
       const { error } = await supabase
-        .from('vendor_invoices')
+        .from('supplier_invoices')
         .update({ match_status })
         .eq('id', invoiceId);
 

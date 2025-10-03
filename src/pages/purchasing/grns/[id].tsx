@@ -79,7 +79,7 @@ export default function GRNDetail() {
       <style>{printStyles}</style>
       <div className="container mx-auto p-6 space-y-6 print-page">
         <div className="flex items-center gap-4 no-print">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/purchasing/grns")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/purchase-grns")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         <div className="flex-1">

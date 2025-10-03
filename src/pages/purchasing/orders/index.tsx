@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,15 +14,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, FileText } from "lucide-react";
 import { usePurchaseOrders } from "@/hooks/usePurchaseOrders";
-import { useVendors } from "@/hooks/useVendors";
+import { useDebounce } from "@/hooks/useDebounce";
 import { format } from "date-fns";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -38,32 +31,51 @@ const getStatusBadge = (status: string) => {
   return <Badge variant={config.variant}>{config.label}</Badge>;
 };
 
-export default function PurchaseOrdersList() {
+const PurchaseOrdersList = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [supplierFilter, setSupplierFilter] = useState<string>("");
-
-  const { data: purchaseOrders, isLoading } = usePurchaseOrders({
-    search: searchTerm,
-    status: statusFilter || undefined,
-    supplier_id: supplierFilter || undefined,
-  });
   
-  const { data: vendors } = useVendors({ is_active: true });
+  // Debounced search - 300ms gecikme ile optimize edildi
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  
+  const { data: purchaseOrders, isLoading } = usePurchaseOrders({
+    search: debouncedSearchTerm || undefined
+  });
+
+  // Memoized filtered orders - sadece search değiştiğinde yeniden hesapla
+  const filteredOrders = useMemo(() => {
+    if (!purchaseOrders) return [];
+    
+    if (!searchTerm) return purchaseOrders;
+    
+    return purchaseOrders.filter(
+      (po) =>
+        po.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        po.supplier?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [purchaseOrders, searchTerm]);
+
+  // Memoized event handlers
+  const handleOrderClick = useCallback((orderId: string) => {
+    navigate(`/purchase-orders/${orderId}`);
+  }, [navigate]);
+
+  const handleNewOrderClick = useCallback(() => {
+    navigate("/purchase-orders/new");
+  }, [navigate]);
 
   if (isLoading) {
-    return <div className="container mx-auto p-6">Yükleniyor...</div>;
+    return <div className="flex justify-center p-8">Yükleniyor...</div>;
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Satın Alma Siparişleri</h1>
           <p className="text-muted-foreground">Siparişleri yönetin ve takip edin</p>
         </div>
-        <Button onClick={() => navigate("/purchasing/orders/new")}>
+        <Button onClick={handleNewOrderClick}>
           <Plus className="h-4 w-4 mr-2" />
           Yeni Sipariş
         </Button>
@@ -79,34 +91,6 @@ export default function PurchaseOrdersList() {
             className="pl-10"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Durum" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">Tümü</SelectItem>
-            <SelectItem value="draft">Taslak</SelectItem>
-            <SelectItem value="submitted">Onayda</SelectItem>
-            <SelectItem value="approved">Onaylandı</SelectItem>
-            <SelectItem value="sent">Gönderildi</SelectItem>
-            <SelectItem value="received">Teslim Alındı</SelectItem>
-            <SelectItem value="completed">Tamamlandı</SelectItem>
-            <SelectItem value="cancelled">İptal</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={supplierFilter} onValueChange={setSupplierFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Tedarikçi" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">Tümü</SelectItem>
-            {vendors?.map((vendor) => (
-              <SelectItem key={vendor.id} value={vendor.id}>
-                {vendor.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       <Card>
@@ -127,7 +111,7 @@ export default function PurchaseOrdersList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {purchaseOrders?.length === 0 ? (
+            {filteredOrders?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -135,11 +119,11 @@ export default function PurchaseOrdersList() {
                 </TableCell>
               </TableRow>
             ) : (
-              purchaseOrders?.map((po) => (
+              filteredOrders?.map((po) => (
                 <TableRow
                   key={po.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`/purchasing/orders/${po.id}`)}
+                  onClick={() => handleOrderClick(po.id)}
                 >
                   <TableCell className="font-medium">{po.order_number}</TableCell>
                   <TableCell>{po.supplier?.name}</TableCell>
@@ -157,7 +141,7 @@ export default function PurchaseOrdersList() {
                     {po.tax_total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {po.grand_total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                    {po.total_amount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell>{po.currency}</TableCell>
                   <TableCell>{format(new Date(po.updated_at), 'dd.MM.yyyy')}</TableCell>
@@ -167,7 +151,7 @@ export default function PurchaseOrdersList() {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/purchasing/orders/${po.id}`);
+                        handleOrderClick(po.id);
                       }}
                     >
                       Detay
@@ -181,4 +165,6 @@ export default function PurchaseOrdersList() {
       </Card>
     </div>
   );
-}
+};
+
+export default React.memo(PurchaseOrdersList);

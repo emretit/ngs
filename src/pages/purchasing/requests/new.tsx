@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,33 +32,45 @@ export default function NewPurchaseRequest() {
     { description: "", quantity: 1, unit: "Adet", estimated_unit_price: 0, estimated_total: 0 },
   ]);
 
+  // Auth kontrolü - sadece bir kez çalışır
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    const getCurrentUser = async () => {
+      const { data } = await supabase.auth.getUser();
       if (data.user) setCurrentUserId(data.user.id);
-    });
+    };
+    getCurrentUser();
   }, []);
 
-  const addItem = () => {
-    setItems([...items, { description: "", quantity: 1, unit: "Adet", estimated_unit_price: 0, estimated_total: 0 }]);
-  };
+  // Memoized event handlers
+  const addItem = useCallback(() => {
+    setItems(prev => [...prev, { description: "", quantity: 1, unit: "Adet", estimated_unit_price: 0, estimated_total: 0 }]);
+  }, []);
 
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
-  };
+  const removeItem = useCallback((index: number) => {
+    setItems(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
-  const updateItem = (index: number, field: keyof FormItem, value: string | number) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    
-    // Recalculate estimated_total
-    if (field === "quantity" || field === "estimated_unit_price") {
-      newItems[index].estimated_total = newItems[index].quantity * newItems[index].estimated_unit_price;
-    }
-    
-    setItems(newItems);
-  };
+  const updateItem = useCallback((index: number, field: keyof FormItem, value: string | number) => {
+    setItems(prev => prev.map((item, i) => {
+      if (i !== index) return item;
+      
+      const updatedItem = { ...item, [field]: value };
+      
+      // Recalculate estimated_total
+      if (field === "quantity" || field === "estimated_unit_price") {
+        updatedItem.estimated_total = updatedItem.quantity * updatedItem.estimated_unit_price;
+      }
+      
+      return updatedItem;
+    }));
+  }, []);
 
-  const handleSubmit = async () => {
+  // Memoized total calculation
+  const totalEstimated = useMemo(() => {
+    return items.reduce((sum, item) => sum + item.estimated_total, 0);
+  }, [items]);
+
+  const handleSubmit = useCallback(async () => {
     if (!currentUserId) {
       toast({ title: "Hata", description: "Kullanıcı bilgisi alınamadı", variant: "destructive" });
       return;
@@ -88,18 +100,16 @@ export default function NewPurchaseRequest() {
       },
       {
         onSuccess: () => {
-          navigate("/purchasing/requests");
+          navigate("/purchase-requests");
         },
       }
     );
-  };
-
-  const totalEstimated = items.reduce((sum, item) => sum + item.estimated_total, 0);
+  }, [currentUserId, items, priority, needByDate, notes, costCenter, createMutation, navigate]);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/purchasing/requests")}>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/purchase-requests")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Geri
         </Button>
@@ -208,7 +218,7 @@ export default function NewPurchaseRequest() {
       </Card>
 
       <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => navigate("/purchasing/requests")}>
+        <Button variant="outline" onClick={() => navigate("/purchase-requests")}>
           İptal
         </Button>
         <Button onClick={handleSubmit} disabled={createMutation.isPending}>

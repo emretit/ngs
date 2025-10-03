@@ -1,68 +1,58 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, FileDown, Plus } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import InvoiceManagementTab from "@/components/purchase/invoices/InvoiceManagementTab";
+import { ArrowLeft, PackageCheck } from "lucide-react";
+
 interface PurchaseManagementProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
+
 const PurchaseManagement = ({ isCollapsed, setIsCollapsed }: PurchaseManagementProps) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("purchase-orders");
+
   const handleBack = () => {
     navigate("/dashboard");
   };
+
+  const handleGoToNewModule = () => {
+    navigate("/purchasing");
+  };
+
   return (
-    <>
-      <div className="mb-6 flex justify-between items-center">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <Button variant="outline" size="sm" onClick={handleBack}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Panele Dön
         </Button>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/orders/create")}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Yeni Sipariş
-          </Button>
-          <Button 
-            onClick={() => navigate("/purchase/requests/new")}
-            className="flex items-center gap-2 bg-primary text-white"
-          >
-            <FileText className="h-4 w-4" />
-            Yeni Satın Alma Talebi
-          </Button>
+      </div>
+
+      {/* Migration Message */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+            <PackageCheck className="h-8 w-8 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-blue-900 mb-2">
+              Satın Alma Modülü Güncellendi
+            </h2>
+            <p className="text-blue-700 mb-4">
+              Eski satın alma sayfası kaldırıldı. Yeni ve gelişmiş satın alma modülünü kullanın.
+            </p>
+            <Button 
+              onClick={handleGoToNewModule}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <PackageCheck className="h-4 w-4 mr-2" />
+              Yeni Satın Alma Modülüne Git
+            </Button>
+          </div>
         </div>
       </div>
-      <Card className="p-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4 w-full sm:w-auto">
-            <TabsTrigger value="purchase-orders" className="flex items-center">
-              <FileText className="h-4 w-4 mr-2" />
-              Satın Alma Siparişleri
-            </TabsTrigger>
-            <TabsTrigger value="invoices" className="flex items-center">
-              <FileDown className="h-4 w-4 mr-2" />
-              E-Fatura Yönetimi
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="purchase-orders">
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Bu sekme kaldırıldı. Lütfen yeni satın alma modülünü kullanın.</p>
-            </div>
-          </TabsContent>
-          <TabsContent value="invoices">
-            <InvoiceManagementTab />
-          </TabsContent>
-        </Tabs>
-      </Card>
-    </>
+    </div>
   );
 };
 export default PurchaseManagement;

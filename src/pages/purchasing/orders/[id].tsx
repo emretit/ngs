@@ -80,34 +80,47 @@ export default function PurchaseOrderDetail() {
     setIsEditing(false);
   };
 
-  const updateItem = (index: number, field: keyof PurchaseOrderItem, value: any) => {
-    const newItems = [...editableItems];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setEditableItems(newItems);
-  };
+  // Memoized update item function
+  const updateItem = useCallback((index: number, field: keyof PurchaseOrderItem, value: any) => {
+    setEditableItems(prev => prev.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    ));
+  }, []);
 
-  const calculateLineTotal = (item: PurchaseOrderItem) => {
+  // Memoized line total calculation
+  const calculateLineTotal = useCallback((item: PurchaseOrderItem) => {
     const subtotal = item.quantity * item.unit_price;
     const discount = subtotal * (item.discount_rate / 100);
     const taxable = subtotal - discount;
     const tax = taxable * (item.tax_rate / 100);
     return taxable + tax;
-  };
+  }, []);
 
-  const displayItems = isEditing ? editableItems : (po.items || []);
-  const grandTotal = displayItems.reduce((sum, item) => sum + calculateLineTotal(item), 0);
-  const tryTotal = grandTotal * po.exchange_rate;
+  // Memoized display items
+  const displayItems = useMemo(() => {
+    return isEditing ? editableItems : (po.items || []);
+  }, [isEditing, editableItems, po.items]);
 
-  const handleRequestApproval = async () => {
+  // Memoized totals calculation
+  const { grandTotal, tryTotal } = useMemo(() => {
+    const total = displayItems.reduce((sum, item) => sum + calculateLineTotal(item), 0);
+    return {
+      grandTotal: total,
+      tryTotal: total * po.exchange_rate
+    };
+  }, [displayItems, calculateLineTotal, po.exchange_rate]);
+
+  // Memoized event handlers
+  const handleRequestApproval = useCallback(async () => {
     await requestApproval.mutateAsync(po.id);
-  };
+  }, [requestApproval, po.id]);
 
-  const handleSendToVendor = () => {
+  const handleSendToVendor = useCallback(() => {
     toast({
       title: "PDF Gönderiliyor",
       description: "Sipariş PDF'i tedarikçiye email ile gönderilecek.",
     });
-  };
+  }, []);
 
   const approvalThreshold = 50000;
   const needsApproval = tryTotal >= approvalThreshold;
@@ -115,7 +128,7 @@ export default function PurchaseOrderDetail() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/purchasing/orders")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/purchase-orders")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">

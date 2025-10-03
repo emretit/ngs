@@ -1,222 +1,151 @@
-import { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { usePurchaseRequests } from "@/hooks/usePurchasing";
-import { formatDate } from "@/lib/utils";
-import { useSearchParams } from "react-router-dom";
+import { usePurchaseRequests, usePurchaseRequestsInfiniteScroll } from "@/hooks/usePurchaseRequests";
+import { useDebounce } from "@/hooks/useDebounce";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import PurchaseRequestsHeader from "@/components/purchasing/requests/PurchaseRequestsHeader";
+import PurchaseRequestsFilterBar from "@/components/purchasing/requests/PurchaseRequestsFilterBar";
+import PurchaseRequestsContent from "@/components/purchasing/requests/PurchaseRequestsContent";
 
-const statusConfig = {
-  draft: { label: "Taslak", variant: "secondary" as const },
-  submitted: { label: "Onay Bekliyor", variant: "default" as const },
-  approved: { label: "Onaylandı", variant: "default" as const },
-  rejected: { label: "Reddedildi", variant: "destructive" as const },
-  converted: { label: "Dönüştürüldü", variant: "default" as const },
-};
-
-const priorityConfig = {
-  low: { label: "Düşük", variant: "secondary" as const },
-  normal: { label: "Normal", variant: "default" as const },
-  high: { label: "Yüksek", variant: "default" as const },
-  urgent: { label: "Acil", variant: "destructive" as const },
-};
-
-export default function PurchaseRequestsList() {
+const PurchaseRequestsList = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
-  const [priorityFilter, setPriorityFilter] = useState(searchParams.get("priority") || "all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedPriority, setSelectedPriority] = useState<string>('all');
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const pageSize = 20;
 
-  const { data: requests, isLoading } = usePurchaseRequests();
+  // Debounced search - 300ms gecikme ile optimize edildi
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const updateFilters = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams);
-    if (value && value !== "all") {
-      params.set(key, value);
-    } else {
-      params.delete(key);
+  // Fetch departments data
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
     }
-    setSearchParams(params);
-  };
-
-  const filteredRequests = requests?.filter((req) => {
-    const matchesSearch =
-      !search ||
-      req.request_number?.toLowerCase().includes(search.toLowerCase()) ||
-      req.requester_notes?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || req.status === statusFilter;
-    const matchesPriority = priorityFilter === "all" || req.priority === priorityFilter;
-    return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const exportToCSV = () => {
-    if (!filteredRequests || filteredRequests.length === 0) return;
+  // Use only infinite scroll hook for both stats and list - debounced search kullanılıyor
+  const {
+    data: requests,
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    error,
+    loadMore,
+    refresh,
+    totalCount,
+  } = usePurchaseRequestsInfiniteScroll(
+    {
+      status: selectedStatus !== 'all' ? selectedStatus : undefined,
+      search: debouncedSearchQuery, // Debounced search kullanılıyor
+      priority: selectedPriority !== 'all' ? selectedPriority : undefined,
+      department: selectedDepartment !== 'all' ? selectedDepartment : undefined,
+      dateRange: { from: startDate || null, to: endDate || null }
+    },
+    pageSize
+  );
 
-    const headers = ["Req No", "Status", "Requester", "Dept", "Priority", "Need By", "Items", "Est. Total", "Updated"];
-    const rows = filteredRequests.map((req) => [
-      req.request_number || "-",
-      req.status || "-",
-      req.requester ? `${req.requester.first_name} ${req.requester.last_name}` : "-",
-      req.department?.name || "-",
-      req.priority || "-",
-      req.need_by_date || "-",
-      req.items?.length || 0,
-      req.items?.reduce((sum, item) => sum + ((item.estimated_price || 0) * item.quantity), 0).toFixed(2) || "0.00",
-      formatDate(req.updated_at),
-    ]);
+  // Durum değişikliği sonrası sayfayı yenile - useCallback ile optimize edildi
+  const handleRequestStatusChange = useCallback(() => {
+    refresh();
+  }, [refresh]);
 
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `purchase-requests-${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-  };
-
-  if (isLoading) {
-    return <div className="flex justify-center p-8">Yükleniyor...</div>;
+  if (error) {
+    toast.error("Talepler yüklenirken bir hata oluştu");
+    console.error("Error loading requests:", error);
   }
 
+  // Request tıklama handler'ı - useCallback ile optimize edildi
+  const handleRequestClick = useCallback((request: any) => {
+    navigate(`/purchase-requests/${request.id}`);
+  }, [navigate]);
+
+  // Group requests by status for header stats - optimize edildi (tek geçişte gruplama)
+  const groupedRequests = useMemo(() => {
+    if (!requests || requests.length === 0) {
+      return { draft: [], submitted: [], approved: [], rejected: [], converted: [] };
+    }
+    
+    return requests.reduce((acc, r) => {
+      const status = r.status as keyof typeof acc;
+      if (acc[status]) {
+        acc[status].push(r);
+      }
+      return acc;
+    }, {
+      draft: [] as any[],
+      submitted: [] as any[],
+      approved: [] as any[],
+      rejected: [] as any[],
+      converted: [] as any[],
+    });
+  }, [requests]);
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Satın Alma Talepleri</h1>
-          <p className="text-muted-foreground">Talepleri oluşturun ve yönetin</p>
-        </div>
-        <Button onClick={() => navigate("/purchasing/requests/new")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Yeni Talep
-        </Button>
-      </div>
+    <>
+      <div className="space-y-2">
+        {/* Header */}
+        <PurchaseRequestsHeader requests={groupedRequests} />
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Talep no veya notlar..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  updateFilters("search", e.target.value);
-                }}
-                className="pl-9"
-              />
+        {/* Filters */}
+        <PurchaseRequestsFilterBar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          selectedPriority={selectedPriority}
+          setSelectedPriority={setSelectedPriority}
+          selectedDepartment={selectedDepartment}
+          setSelectedDepartment={setSelectedDepartment}
+          departments={departments}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+        />
+
+        {isLoading ? (
+          <div className="flex items-center justify-center h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-muted-foreground">Talepler yükleniyor...</p>
             </div>
-            <Select
-              value={statusFilter}
-              onValueChange={(val) => {
-                setStatusFilter(val);
-                updateFilters("status", val);
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Durum" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tüm Durumlar</SelectItem>
-                <SelectItem value="draft">Taslak</SelectItem>
-                <SelectItem value="submitted">Onay Bekliyor</SelectItem>
-                <SelectItem value="approved">Onaylandı</SelectItem>
-                <SelectItem value="rejected">Reddedildi</SelectItem>
-                <SelectItem value="converted">Dönüştürüldü</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={priorityFilter}
-              onValueChange={(val) => {
-                setPriorityFilter(val);
-                updateFilters("priority", val);
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Öncelik" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tüm Öncelikler</SelectItem>
-                <SelectItem value="low">Düşük</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="high">Yüksek</SelectItem>
-                <SelectItem value="urgent">Acil</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={exportToCSV}>
-              <Download className="h-4 w-4 mr-2" />
-              CSV İndir
-            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Talep No</TableHead>
-                <TableHead>Durum</TableHead>
-                <TableHead>Talep Eden</TableHead>
-                <TableHead>Departman</TableHead>
-                <TableHead>Öncelik</TableHead>
-                <TableHead>İhtiyaç Tarihi</TableHead>
-                <TableHead className="text-right">Kalem</TableHead>
-                <TableHead className="text-right">Tahmini Toplam</TableHead>
-                <TableHead>Güncelleme</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRequests?.map((req) => {
-                const estimatedTotal = req.items?.reduce(
-                  (sum, item) => sum + ((item.estimated_price || 0) * item.quantity),
-                  0
-                ) || 0;
-
-                return (
-                  <TableRow
-                    key={req.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/purchasing/requests/${req.id}`)}
-                  >
-                    <TableCell className="font-medium">{req.request_number || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusConfig[req.status as keyof typeof statusConfig]?.variant}>
-                        {statusConfig[req.status as keyof typeof statusConfig]?.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {req.requester ? `${req.requester.first_name} ${req.requester.last_name}` : "-"}
-                    </TableCell>
-                    <TableCell>{req.department?.name || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant={priorityConfig[req.priority as keyof typeof priorityConfig]?.variant}>
-                        {priorityConfig[req.priority as keyof typeof priorityConfig]?.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{req.need_by_date ? formatDate(req.need_by_date) : "-"}</TableCell>
-                    <TableCell className="text-right">{req.items?.length || 0}</TableCell>
-                    <TableCell className="text-right">₺{estimatedTotal.toFixed(2)}</TableCell>
-                    <TableCell>{formatDate(req.updated_at)}</TableCell>
-                  </TableRow>
-                );
-              })}
-              {filteredRequests?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                    Talep bulunamadı
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+        ) : error ? (
+          <div className="h-96 flex items-center justify-center">
+            <div className="text-red-500">Talepler yüklenirken bir hata oluştu</div>
+          </div>
+        ) : (
+          <PurchaseRequestsContent
+            requests={(requests as any[]) || []}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasNextPage={hasNextPage}
+            loadMore={loadMore}
+            totalCount={totalCount}
+            error={error}
+            onRequestSelect={handleRequestClick}
+            onStatusChange={handleRequestStatusChange}
+            searchQuery={searchQuery}
+            statusFilter={selectedStatus}
+            priorityFilter={selectedPriority}
+          />
+        )}
+      </div>
+    </>
   );
-}
+};
+
+export default React.memo(PurchaseRequestsList);

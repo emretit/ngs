@@ -40,17 +40,17 @@ export default function GRNsList() {
   );
 
   if (isLoading) {
-    return <div className="container mx-auto p-6">Yükleniyor...</div>;
+    return <div className="flex justify-center p-8">Yükleniyor...</div>;
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Mal Kabul Notları (GRN)</h1>
           <p className="text-muted-foreground">Teslim alınan malları kaydedin</p>
         </div>
-        <Button onClick={() => navigate("/purchasing/orders")}>
+        <Button onClick={() => navigate("/purchase-orders")}>
           <Plus className="h-4 w-4 mr-2" />
           Mal Kabul Yap
         </Button>
@@ -93,7 +93,7 @@ export default function GRNsList() {
                 <TableRow
                   key={grn.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`/purchasing/grns/${grn.id}`)}
+                  onClick={() => navigate(`/purchase-grns/${grn.id}`)}
                 >
                   <TableCell className="font-medium">{grn.grn_number}</TableCell>
                   <TableCell>{grn.po?.order_number}</TableCell>
@@ -108,7 +108,7 @@ export default function GRNsList() {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/purchasing/grns/${grn.id}`);
+                        navigate(`/purchase-grns/${grn.id}`);
                       }}
                     >
                       Detay

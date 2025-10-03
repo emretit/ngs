@@ -17,7 +17,7 @@ export interface PurchaseOrder {
   tax_total: number;
   discount_total: number;
   shipping_cost: number;
-  grand_total: number;
+  total_amount: number;
   payment_terms: string | null;
   incoterm: string | null;
   notes: string | null;
@@ -90,14 +90,15 @@ export const usePurchaseOrders = (filters?: {
   return useQuery({
     queryKey: ['purchase-orders', filters],
     queryFn: async () => {
+      // RLS otomatik olarak company_id filtresi uygular
       let query = supabase
         .from('purchase_orders')
         .select(`
           *,
-          supplier:customers!purchase_orders_supplier_id_fkey(id, name, email, mobile_phone, address),
+          supplier:suppliers!purchase_orders_supplier_id_fkey(id, name, email, phone, address),
           items:purchase_order_items(*)
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false});
 
       if (filters?.search) {
         query = query.or(
@@ -130,6 +131,11 @@ export const usePurchaseOrders = (filters?: {
       if (error) throw error;
       return data as PurchaseOrder[];
     },
+    // Cache optimizasyonu - 5 dakika cache'le
+    staleTime: 5 * 60 * 1000, // 5 dakika
+    gcTime: 10 * 60 * 1000, // 10 dakika
+    refetchOnWindowFocus: false, // Pencere odaklandığında yeniden yükleme
+    refetchOnMount: false, // Mount olduğunda yeniden yükleme
   });
 };
 
@@ -138,11 +144,12 @@ export const usePurchaseOrder = (id: string) => {
   return useQuery({
     queryKey: ['purchase-order', id],
     queryFn: async () => {
+      // RLS otomatik olarak company_id filtresi uygular
       const { data, error } = await supabase
         .from('purchase_orders')
         .select(`
           *,
-          supplier:customers!purchase_orders_supplier_id_fkey(id, name, email, mobile_phone, address, city, country, tax_number),
+          supplier:suppliers!purchase_orders_supplier_id_fkey(id, name, email, phone, address, city, country, tax_number),
           items:purchase_order_items(*),
           approvals:approvals(*)
         `)
@@ -153,6 +160,11 @@ export const usePurchaseOrder = (id: string) => {
       return data as PurchaseOrder;
     },
     enabled: !!id,
+    // Cache optimizasyonu
+    staleTime: 5 * 60 * 1000, // 5 dakika
+    gcTime: 10 * 60 * 1000, // 10 dakika
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
 

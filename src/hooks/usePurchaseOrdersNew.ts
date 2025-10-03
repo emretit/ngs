@@ -15,7 +15,7 @@ export const usePurchaseOrdersNew = () => {
         .from('purchase_orders')
         .select(`
           *,
-          supplier:customers(name, tax_number),
+          supplier:vendors(name, tax_number),
           request:purchase_requests(request_number),
           items:purchase_order_items(
             *,
@@ -39,7 +39,7 @@ export const usePurchaseOrderNew = (id: string) => {
         .from('purchase_orders')
         .select(`
           *,
-          supplier:customers(name, tax_number),
+          supplier:vendors(name, tax_number),
           request:purchase_requests(request_number),
           items:purchase_order_items(
             *,

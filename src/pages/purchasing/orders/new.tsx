@@ -129,13 +129,13 @@ export default function NewPurchaseOrder() {
       items: lines,
     });
 
-    navigate('/purchasing/orders');
+    navigate('/purchase-orders');
   };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/purchasing/orders")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/purchase-orders")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -336,7 +336,7 @@ export default function NewPurchaseOrder() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate('/purchasing/orders')}
+            onClick={() => navigate('/purchase-orders')}
           >
             İptal
           </Button>

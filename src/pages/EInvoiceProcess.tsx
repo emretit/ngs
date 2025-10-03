@@ -28,7 +28,6 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 interface EInvoiceItem {
   id: string;
   line_number: number;
@@ -105,7 +104,6 @@ export default function EInvoiceProcess() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [invoice, setInvoice] = useState<EInvoiceDetails | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);

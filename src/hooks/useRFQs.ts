@@ -8,6 +8,7 @@ export const useRFQs = () => {
   return useQuery({
     queryKey: ['rfqs'],
     queryFn: async () => {
+      // RLS otomatik olarak company_id filtresi uygular
       const { data, error } = await supabase
         .from('rfqs')
         .select(`
@@ -15,12 +16,12 @@ export const useRFQs = () => {
           purchase_request:purchase_requests(request_number),
           vendors:rfq_vendors(
             *,
-            vendor:customers(id, name, email, phone)
+            supplier:suppliers(id, name, email, phone)
           ),
           lines:rfq_lines(*),
           quotes:rfq_quotes(
             *,
-            vendor:customers(name),
+            supplier:suppliers(name),
             lines:rfq_quote_lines(*)
           )
         `)
@@ -37,6 +38,7 @@ export const useRFQ = (id: string) => {
   return useQuery({
     queryKey: ['rfq', id],
     queryFn: async () => {
+      // RLS otomatik olarak company_id filtresi uygular
       const { data, error } = await supabase
         .from('rfqs')
         .select(`
@@ -44,7 +46,7 @@ export const useRFQ = (id: string) => {
           purchase_request:purchase_requests(request_number),
           vendors:rfq_vendors(
             *,
-            vendor:customers(id, name, email, mobile_phone, office_phone, rating)
+            supplier:suppliers(id, name, email, phone, rating)
           ),
           lines:rfq_lines(
             *,
@@ -52,7 +54,7 @@ export const useRFQ = (id: string) => {
           ),
           quotes:rfq_quotes(
             *,
-            vendor:customers(name),
+            supplier:suppliers(name),
             lines:rfq_quote_lines(*)
           )
         `)

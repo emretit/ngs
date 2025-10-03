@@ -17,7 +17,6 @@ export const usePurchaseRequests = () => {
         .from('purchase_requests')
         .select(`
           *,
-          requester:employees!purchase_requests_requester_id_fkey(first_name, last_name),
           department:departments(name),
           items:purchase_request_items(
             *,
@@ -27,8 +26,33 @@ export const usePurchaseRequests = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // Fetch requester details from profiles separately
+      if (data && data.length > 0) {
+        const requesterIds = data.map(r => r.requester_id).filter(Boolean);
+        if (requesterIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email')
+            .in('id', requesterIds);
+          
+          // Merge profiles data
+          const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
+          data.forEach(req => {
+            if (req.requester_id) {
+              req.requester = profilesMap.get(req.requester_id);
+            }
+          });
+        }
+      }
+      
       return data as PurchaseRequest[];
     },
+    // Cache optimizasyonu
+    staleTime: 5 * 60 * 1000, // 5 dakika
+    gcTime: 10 * 60 * 1000, // 10 dakika
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
 
@@ -41,7 +65,6 @@ export const usePurchaseRequest = (id: string) => {
         .from('purchase_requests')
         .select(`
           *,
-          requester:employees!purchase_requests_requester_id_fkey(first_name, last_name),
           department:departments(name),
           items:purchase_request_items(
             *,
@@ -52,6 +75,20 @@ export const usePurchaseRequest = (id: string) => {
         .single();
 
       if (error) throw error;
+      
+      // Fetch requester details from profiles separately
+      if (data && data.requester_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .eq('id', data.requester_id)
+          .single();
+        
+        if (profile) {
+          data.requester = profile;
+        }
+      }
+      
       return data as PurchaseRequest;
     },
     enabled: !!id,

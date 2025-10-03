@@ -40,17 +40,17 @@ export default function RFQsList() {
   );
 
   if (isLoading) {
-    return <div className="container mx-auto p-6">Yükleniyor...</div>;
+    return <div className="flex justify-center p-8">Yükleniyor...</div>;
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Teklif Talepleri (RFQ)</h1>
           <p className="text-muted-foreground">Tedarikçilerden teklif alın ve karşılaştırın</p>
         </div>
-        <Button onClick={() => navigate("/purchasing/rfqs/new")}>
+        <Button onClick={() => navigate("/purchase-rfqs/new")}>
           <Plus className="h-4 w-4 mr-2" />
           Yeni RFQ
         </Button>
@@ -98,7 +98,7 @@ export default function RFQsList() {
                   <TableRow
                     key={rfq.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/purchasing/rfqs/${rfq.id}`)}
+                    onClick={() => navigate(`/purchase-rfqs/${rfq.id}`)}
                   >
                     <TableCell className="font-medium">{rfq.rfq_number}</TableCell>
                     <TableCell>{getStatusBadge(rfq.status)}</TableCell>
@@ -116,7 +116,7 @@ export default function RFQsList() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/purchasing/rfqs/${rfq.id}`);
+                          navigate(`/purchase-rfqs/${rfq.id}`);
                         }}
                       >
                         Detay

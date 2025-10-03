@@ -73,10 +73,10 @@ export const useVendors = (filters?: {
     queryKey: ['vendors', filters],
     queryFn: async () => {
       let query = supabase
-        .from('vendors')
+        .from('suppliers')
         .select(`
           *,
-          contacts:vendor_contacts(*)
+          contacts:supplier_contacts(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -115,10 +115,10 @@ export const useVendor = (id: string) => {
     queryKey: ['vendor', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vendors')
+        .from('suppliers')
         .select(`
           *,
-          contacts:vendor_contacts(*)
+          contacts:supplier_contacts(*)
         `)
         .eq('id', id)
         .single();
@@ -150,7 +150,7 @@ export const useCheckVendorDuplicate = () => {
       if (!profile?.company_id) throw new Error('No company found');
 
       let query = supabase
-        .from('vendors')
+        .from('suppliers')
         .select('id, name, tax_number')
         .eq('company_id', profile.company_id);
 
@@ -190,7 +190,7 @@ export const useCreateVendor = () => {
       if (!profile?.company_id) throw new Error('No company found');
 
       const { data: vendor, error } = await supabase
-        .from('vendors')
+        .from('suppliers')
         .insert({
           company_id: profile.company_id,
           created_by: user.id,
@@ -233,7 +233,7 @@ export const useUpdateVendor = () => {
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
-        .from('vendors')
+        .from('suppliers')
         .update({
           ...data,
           updated_by: user.id,
@@ -271,7 +271,7 @@ export const useToggleVendorStatus = () => {
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
-        .from('vendors')
+        .from('suppliers')
         .update({ 
           is_active,
           updated_by: user.id,
@@ -297,9 +297,9 @@ export const useVendorContacts = (vendorId: string) => {
     queryKey: ['vendor-contacts', vendorId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vendor_contacts')
+        .from('supplier_contacts')
         .select('*')
-        .eq('vendor_id', vendorId)
+        .eq('supplier_id', vendorId)
         .order('is_primary', { ascending: false });
 
       if (error) throw error;
@@ -326,7 +326,7 @@ export const useCreateVendorContact = () => {
       if (!profile?.company_id) throw new Error('No company found');
 
       const { data, error } = await supabase
-        .from('vendor_contacts')
+        .from('supplier_contacts')
         .insert({
           ...contact,
           company_id: profile.company_id,
@@ -357,7 +357,7 @@ export const useUpdateVendorContact = () => {
       data: Partial<VendorContact>;
     }) => {
       const { error } = await supabase
-        .from('vendor_contacts')
+        .from('supplier_contacts')
         .update({
           ...data,
           updated_at: new Date().toISOString(),
@@ -383,7 +383,7 @@ export const useDeleteVendorContact = () => {
   return useMutation({
     mutationFn: async ({ id, vendorId }: { id: string; vendorId: string }) => {
       const { error } = await supabase
-        .from('vendor_contacts')
+        .from('supplier_contacts')
         .delete()
         .eq('id', id);
 

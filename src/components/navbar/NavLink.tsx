@@ -1,4 +1,4 @@
-
+import React from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
@@ -9,7 +9,6 @@ interface NavLinkProps {
   label: string;
   isActive: boolean;
   isCollapsed: boolean;
-  isCrmButton?: boolean;
   isSubItem?: boolean;
 }
 
@@ -19,7 +18,6 @@ const NavLink = ({
   label, 
   isActive, 
   isCollapsed,
-  isCrmButton = false,
   isSubItem = false 
 }: NavLinkProps) => {
   return (
@@ -51,4 +49,5 @@ const NavLink = ({
   );
 };
 
-export default NavLink;
+// Memoize to prevent unnecessary re-renders
+export default React.memo(NavLink);

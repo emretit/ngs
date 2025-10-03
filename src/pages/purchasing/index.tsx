@@ -1,35 +1,46 @@
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  FileText, 
-  Clock, 
-  CheckCircle, 
+import { Button } from "@/components/ui/button";
+import {
+  FileText,
+  Clock,
+  CheckCircle,
   XCircle,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Users
 } from "lucide-react";
 import { usePurchaseRequests } from "@/hooks/usePurchasing";
+import { useNavigate } from "react-router-dom";
 
-export default function PurchasingDashboard() {
+const PurchasingDashboard = () => {
+  const navigate = useNavigate();
   const { data: requests, isLoading } = usePurchaseRequests();
 
-  // Calculate stats
-  const stats = {
+  // Calculate stats - memoized to prevent recalculation
+  const stats = useMemo(() => ({
     draft: requests?.filter(r => r.status === 'draft').length || 0,
     pending: requests?.filter(r => r.status === 'submitted').length || 0,
     approved: requests?.filter(r => r.status === 'approved').length || 0,
     rejected: requests?.filter(r => r.status === 'rejected').length || 0,
-  };
+  }), [requests]);
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Yükleniyor...</div>;
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Satın Alma</h1>
-        <p className="text-muted-foreground">Talep ve onay süreçlerini yönetin</p>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Satın Alma</h1>
+          <p className="text-muted-foreground">Talep ve onay süreçlerini yönetin</p>
+        </div>
+        <Button onClick={() => navigate('/suppliers')} variant="outline">
+          <Users className="h-4 w-4 mr-2" />
+          Tedarikçiler
+        </Button>
       </div>
 
       {/* KPI Cards */}
@@ -121,4 +132,6 @@ export default function PurchasingDashboard() {
       </Card>
     </div>
   );
-}
+};
+
+export default React.memo(PurchasingDashboard);

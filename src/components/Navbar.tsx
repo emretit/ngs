@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, startTransition } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,10 +15,19 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const navRef = useRef<HTMLElement>(null);
-  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set<string>());
+  
+  
+  
+  // Load expanded menus from localStorage
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem("expandedMenus");
+    return saved ? new Set(JSON.parse(saved)) : new Set<string>();
+  });
 
-
-  // Dropdown menüler varsayılan olarak kapalı tutulur
+  // Save expanded menus to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("expandedMenus", JSON.stringify(Array.from(expandedMenus)));
+  }, [expandedMenus]);
 
   // Scroll pozisyonunu koru
   useEffect(() => {
@@ -37,52 +46,80 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
     }
   };
 
-  const toggleMenu = (path: string) => {
-    const newExpanded = new Set(expandedMenus);
-    if (newExpanded.has(path)) {
-      newExpanded.delete(path);
-    } else {
-      newExpanded.add(path);
-    }
-    setExpandedMenus(newExpanded);
-  };
-
-  const handleParentClick = (item: any) => {
-    if (item.hasDropdown && item.items) {
-      // Toggle the menu when clicked
-      const newExpanded = new Set(expandedMenus);
-      if (newExpanded.has(item.path)) {
-        newExpanded.delete(item.path);
+  const toggleMenu = useCallback((path: string) => {
+    setExpandedMenus(prev => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(path)) {
+        newExpanded.delete(path);
       } else {
-        newExpanded.add(item.path);
+        newExpanded.add(path);
       }
-      setExpandedMenus(newExpanded);
+      return newExpanded;
+    });
+  }, []);
+
+  const handleParentClick = useCallback((item: any) => {
+    if (item.hasDropdown && item.items) {
+      const isOnParentPage = location.pathname === item.path;
+      const isOnRelatedChildPage = item.items?.some((subItem: any) => 
+        location.pathname === subItem.path || 
+        (subItem.path !== '/' && location.pathname.startsWith(subItem.path + '/'))
+      );
+      const isAlreadyExpanded = expandedMenus.has(item.path);
       
-      // Always navigate to parent page
+      // If we're on a related page (parent or child) and menu is not expanded, just expand it
+      if ((isOnParentPage || isOnRelatedChildPage) && !isAlreadyExpanded) {
+        startTransition(() => {
+          setExpandedMenus(prev => new Set([...prev, item.path]));
+        });
+        return;
+      }
+      
+      // If we're on a related page and menu is expanded, just collapse it
+      if ((isOnParentPage || isOnRelatedChildPage) && isAlreadyExpanded) {
+        startTransition(() => {
+          setExpandedMenus(prev => {
+            const newExpanded = new Set(prev);
+            newExpanded.delete(item.path);
+            return newExpanded;
+          });
+        });
+        return;
+      }
+      
+      // If we're on a different page, navigate and expand menu
       navigate(item.path);
+      startTransition(() => {
+        setExpandedMenus(prev => new Set([...prev, item.path]));
+      });
     } else {
       navigate(item.path);
     }
-  };
+  }, [location.pathname, navigate]);
 
-  const renderNavItem = (item: any) => {
+  // Memoize isActiveChild calculation
+  const getSubItemActiveState = useCallback((subItem: any, item: any) => {
+    // Exact match
+    if (location.pathname === subItem.path) return true;
+    // Check if current path starts with sub-item path (for detail pages)
+    // But make sure it's not matching parent paths
+    if (subItem.path !== '/' && subItem.path !== item.path && location.pathname.startsWith(subItem.path + '/')) return true;
+    // Special case: cash-accounts detail pages should also match bank-accounts nav item
+    if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/cash-accounts/')) return true;
+    if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/credit-cards/')) return true;
+    if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/partner-accounts/')) return true;
+    // Special case: proposal pages should match proposals nav item
+    if (subItem.path === '/proposals' && location.pathname.startsWith('/proposal/')) return true;
+    return false;
+  }, [location.pathname]);
+
+  const renderNavItem = useCallback((item: any) => {
     if (item.hasDropdown && item.items) {
       const isExpanded = expandedMenus.has(item.path);
       const isActive = location.pathname === item.path;
-      const hasActiveChild = item.items.some((subItem: any) => {
-        // Exact match
-        if (location.pathname === subItem.path) return true;
-        // Check if current path starts with sub-item path (for detail pages)
-        // But make sure it's not matching parent paths
-        if (subItem.path !== '/' && subItem.path !== item.path && location.pathname.startsWith(subItem.path + '/')) return true;
-        // Special case: cash-accounts detail pages should also match bank-accounts nav item
-        if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/cash-accounts/')) return true;
-        if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/credit-cards/')) return true;
-        if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/partner-accounts/')) return true;
-        // Special case: proposal pages should match proposals nav item
-        if (subItem.path === '/proposals' && location.pathname.startsWith('/proposal/')) return true;
-        return false;
-      });
+      const hasActiveChild = item.items.some((subItem: any) => 
+        getSubItemActiveState(subItem, item)
+      );
       
       return (
         <div key={item.path} className="space-y-0.5">
@@ -127,14 +164,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
                   to={subItem.path}
                   icon={subItem.icon}
                   label={subItem.label}
-                  isActive={
-                    location.pathname === subItem.path || 
-                    (subItem.path !== '/' && subItem.path !== item.path && location.pathname.startsWith(subItem.path + '/')) ||
-                    (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/cash-accounts/')) ||
-                    (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/credit-cards/')) ||
-                    (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/partner-accounts/')) ||
-                    (subItem.path === '/proposals' && location.pathname.startsWith('/proposal/'))
-                  }
+                  isActive={getSubItemActiveState(subItem, item)}
                   isCollapsed={false}
                   isSubItem={true}
                 />
@@ -156,7 +186,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
         />
       );
     }
-  };
+  }, [expandedMenus, location.pathname, isCollapsed, handleParentClick, toggleMenu, getSubItemActiveState]);
 
   return (
     <div className={cn(
@@ -177,4 +207,6 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   );
 };
 
-export default Navbar;
+export default React.memo(Navbar, (prevProps, nextProps) => {
+  return prevProps.isCollapsed === nextProps.isCollapsed;
+});

@@ -4,9 +4,10 @@ import { UserWithRoles } from "../types";
 
 type UserAvatarProps = {
   user: UserWithRoles;
+  size?: 'sm' | 'md' | 'lg';
 };
 
-export const UserAvatar = ({ user }: UserAvatarProps) => {
+export const UserAvatar = ({ user, size = 'md' }: UserAvatarProps) => {
   // Split full_name into first and last name for display
   const nameParts = user.full_name?.split(' ') || [];
   const firstName = nameParts[0] || '';
@@ -21,23 +22,20 @@ export const UserAvatar = ({ user }: UserAvatarProps) => {
     .join('')
     .toUpperCase() || '??';
 
+  const avatarSize = size === 'sm' ? 'h-8 w-8' : size === 'lg' ? 'h-12 w-12' : 'h-10 w-10';
+  const textSize = size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-base' : 'text-sm';
+  const gapSize = size === 'sm' ? 'gap-2' : size === 'lg' ? 'gap-4' : 'gap-3';
+
   return (
-    <div className="flex items-center gap-3">
-      <Avatar>
+    <div className={`flex items-center ${gapSize}`}>
+      <Avatar className={avatarSize}>
         <AvatarImage src={user.avatar_url || ''} />
-        <AvatarFallback>
+        <AvatarFallback className="text-xs">
           {initials}
         </AvatarFallback>
       </Avatar>
-      <div>
-        <div className="font-medium">
-          {user.full_name || 'İsimsiz Kullanıcı'}
-        </div>
-        {user.email && (
-          <div className="text-sm text-muted-foreground">
-            {user.email}
-          </div>
-        )}
+      <div className={`font-medium ${textSize}`}>
+        {user.full_name || 'İsimsiz Kullanıcı'}
       </div>
     </div>
   );

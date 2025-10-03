@@ -3,16 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { UserFilterBar } from "./UserFilterBar";
-import { UserList } from "./UserList";
-import { UserGridView } from "./UserGridView";
-import { UserKanbanView } from "./UserKanbanView";
+import { ModernUserList } from "./ModernUserList";
 import { UserManagementHeader } from "./UserManagementHeader";
-import { UserViewType } from "./UserViewToggle";
+import { CompactRoleManagement } from "./CompactRoleManagement";
 import { InviteUserDialog } from "./InviteUserDialog";
-import { RoleManagement } from "./RoleManagement";
 import { UserWithRoles } from "./types";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Shield, Plus } from "lucide-react";
 
 export const UserManagement = () => {
   const { toast } = useToast();
@@ -21,8 +18,6 @@ export const UserManagement = () => {
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
-  const [activeView, setActiveView] = useState<UserViewType>("list");
-  const [activeTab, setActiveTab] = useState("users");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
@@ -101,6 +96,23 @@ export const UserManagement = () => {
     refetchIntervalInBackground: true,
     refetchOnReconnect: true,
     queryFn: async () => {
+      // Önce kullanıcının company_id'sini al
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (!currentUser.user) {
+        throw new Error('Kullanıcı giriş yapmamış');
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', currentUser.user.id)
+        .single();
+      
+      if (!profile?.company_id) {
+        throw new Error('Kullanıcının şirket bilgisi bulunamadı');
+      }
+
+      // Aynı company_id'deki tüm kullanıcıları çek
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select(`
@@ -113,6 +125,7 @@ export const UserManagement = () => {
             department
           )
         `)
+        .eq('company_id', profile.company_id)
         .order('created_at', { ascending: true });
       
       if (profilesError) throw profilesError;
@@ -161,37 +174,49 @@ export const UserManagement = () => {
     return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
   });
 
-  // İstatistikler
-  const totalUsers = users?.length || 0;
-  const activeUsers = users?.filter(user => user.status === 'active').length || 0;
-  const inactiveUsers = users?.filter(user => user.status === 'inactive').length || 0;
+  // Roller - veritabanından çek (company_id filtresi ile)
+  const { data: rolesData, isLoading: rolesLoading } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => {
+      // Önce kullanıcının company_id'sini al
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+      
+      if (!profile?.company_id) {
+        return [];
+      }
+      
+      const { data, error } = await supabase
+        .from('roles')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // Roller - users ve rolesData tanımlandıktan sonra
+  const roles = rolesData?.map(role => ({
+    name: role.name,
+    description: role.description,
+    permissions: role.permissions || [],
+    userCount: users?.filter(u => u.user_roles?.some(r => r.role === role.name)).length || 0
+  })) || [];
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex justify-center">
-          <TabsList className="grid grid-cols-2 h-8 w-auto border-none bg-transparent p-0">
-            <TabsTrigger value="users" className="flex items-center gap-1.5 text-xs px-4 py-1 rounded-md border border-gray-200 bg-white data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:border-primary">
-              <Users className="h-3 w-3" />
-              Kullanıcılar
-            </TabsTrigger>
-            <TabsTrigger value="roles" className="flex items-center gap-1.5 text-xs px-4 py-1 rounded-md border border-gray-200 bg-white data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:border-primary">
-              <Shield className="h-3 w-3" />
-              Roller & İzinler
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Header */}
+      <UserManagementHeader />
 
-        <TabsContent value="users" className="mt-6 space-y-6">
-          {/* Header */}
-          <UserManagementHeader
-            activeView={activeView}
-            setActiveView={setActiveView}
-            totalUsers={totalUsers}
-            activeUsers={activeUsers}
-            inactiveUsers={inactiveUsers}
-          />
-
+      {/* Main Content - Kullanıcılar ve Roller Yan Yana */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Sol Taraf - Kullanıcılar (2/3) */}
+        <div className="xl:col-span-2 space-y-4">
           {/* Filters */}
           <UserFilterBar
             searchQuery={searchQuery}
@@ -209,37 +234,47 @@ export const UserManagement = () => {
             setEndDate={setEndDate}
           />
 
-          {/* Content */}
+          {/* Kullanıcı Listesi */}
           <div className="bg-white rounded-lg border shadow-sm">
+            {/* Tablo Header + Yeni Kullanıcı Butonu */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-medium text-foreground">Kullanıcılar</h3>
+                <span className="text-xs text-muted-foreground">({filteredUsers?.length || 0})</span>
+              </div>
+              <InviteUserDialog />
+            </div>
+
             {isLoading ? (
-              <div className="flex items-center justify-center h-[400px]">
+              <div className="flex items-center justify-center h-[300px]">
                 <div className="text-center space-y-4">
-                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-muted-foreground">Kullanıcılar yükleniyor...</p>
+                  <div className="w-6 h-6 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="text-sm text-muted-foreground">Kullanıcılar yükleniyor...</p>
                 </div>
               </div>
             ) : (
-              <div className="p-6">
-                {activeView === "list" && (
-                  <UserList users={filteredUsers || []} isLoading={isLoading} />
-                )}
-                {activeView === "grid" && (
-                  <UserGridView users={filteredUsers || []} isLoading={isLoading} />
-                )}
-                {activeView === "kanban" && (
-                  <UserKanbanView users={filteredUsers || []} isLoading={isLoading} />
-                )}
-              </div>
+              <ModernUserList users={filteredUsers || []} isLoading={isLoading} />
             )}
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="roles" className="mt-6">
-          <div className="bg-white rounded-lg border shadow-sm p-6">
-            <RoleManagement />
+        {/* Sağ Taraf - Roller & İzinler (1/3) */}
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg border shadow-sm p-4">
+            {rolesLoading ? (
+              <div className="flex items-center justify-center h-[200px]">
+                <div className="text-center space-y-4">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="text-muted-foreground">Roller yükleniyor...</p>
+                </div>
+              </div>
+            ) : (
+              <CompactRoleManagement roles={roles} />
+            )}
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 };

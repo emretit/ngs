@@ -74,19 +74,23 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
     }
   };
 
-  const { data: incomingInvoices = [], error, refetch } = useQuery({
+  const { data: incomingInvoices = [], error, refetch, isLoading: queryLoading } = useQuery({
     queryKey: ['incoming-invoices', dateFilters?.startDate, dateFilters?.endDate],
     queryFn: fetchIncomingInvoices,
     enabled, // Hook'u koşullu olarak etkinleştir
-    retry: 1,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000, // 5 dakika cache
+    retry: 2,
+    retryDelay: 2000,
+    staleTime: 15 * 60 * 1000, // 15 dakika cache - daha uzun cache
+    gcTime: 30 * 60 * 1000, // 30 dakika cache'de tut
     refetchOnWindowFocus: false, // Pencere odaklandığında refetch etme
+    refetchOnMount: false, // Mount'ta refetch etme
+    refetchOnReconnect: true, // Bağlantı yenilendiğinde refetch et
+    keepPreviousData: true, // Önceki veriyi tut (smooth transition)
   });
 
   return {
     incomingInvoices,
-    isLoading,
+    isLoading: isLoading || queryLoading, // Hem local hem query loading'i kontrol et
     error,
     refetch,
   };

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import ProductSelector from '@/components/proposals/form/ProductSelector';
-import CompactProductForm from '@/components/einvoice/CompactProductForm';
+// Lazy load heavy components
+const ProductSelector = React.lazy(() => import('@/components/proposals/form/ProductSelector'));
+const CompactProductForm = React.lazy(() => import('@/components/einvoice/CompactProductForm'));
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   ArrowLeft, 
@@ -99,17 +100,95 @@ interface Supplier {
   tax_number?: string;
   email?: string;
 }
+
+// Memoized Table Row Component
+const MemoizedTableRow = React.memo(({ 
+  item, 
+  index, 
+  invoice, 
+  getMatchedProduct, 
+  handleProductSelect, 
+  handleCreateNewProduct, 
+  handleRemoveMatch 
+}: {
+  item: ProductMatchingItem;
+  index: number;
+  invoice: EInvoiceDetails;
+  getMatchedProduct: (productId?: string) => Product | undefined;
+  handleProductSelect: (itemIndex: number, product: Product) => void;
+  handleCreateNewProduct: (itemIndex: number) => void;
+  handleRemoveMatch: (itemIndex: number) => void;
+}) => {
+  const matchedProduct = getMatchedProduct(item.matched_product_id);
+  
+  return (
+    <TableRow className="hover:bg-gray-50">
+      <TableCell className="font-medium text-center">
+        {item.invoice_item.line_number}
+      </TableCell>
+      <TableCell>
+        <div className="max-w-48">
+          <p className="font-medium text-gray-900 truncate text-sm">
+            {item.invoice_item.product_name}
+          </p>
+          <p className="text-xs text-gray-500">
+            {item.invoice_item.product_code && `Kod: ${item.invoice_item.product_code} • `}
+            {item.invoice_item.unit_price.toFixed(2)} {invoice.currency} / {item.invoice_item.unit}
+          </p>
+        </div>
+      </TableCell>
+      <TableCell className="text-right font-mono text-sm">
+        {item.invoice_item.quantity.toFixed(2)}
+      </TableCell>
+      <TableCell>
+        <div className="space-y-2">
+          {matchedProduct ? (
+            <div className="p-2 bg-green-50 border border-green-200 rounded">
+              <p className="font-medium text-green-900 text-sm">
+                {matchedProduct.name}
+              </p>
+              <p className="text-xs text-green-600">
+                SKU: {matchedProduct.sku || '-'} • 
+                {matchedProduct.price.toFixed(2)} {invoice.currency}
+              </p>
+            </div>
+          ) : (
+             <React.Suspense fallback={<div className="text-xs text-gray-500">Yükleniyor...</div>}>
+               <ProductSelector
+                 value=""
+                 onChange={() => {}}
+                 onProductSelect={(product) => handleProductSelect(index, product)}
+                 onNewProduct={() => handleCreateNewProduct(index)}
+                 placeholder="Ürün ara ve seçin..."
+                 className="text-xs"
+               />
+             </React.Suspense>
+          )}
+        </div>
+      </TableCell>
+      <TableCell>
+        {item.matched_product_id && (
+          <Button
+            onClick={() => handleRemoveMatch(index)}
+            variant="ghost"
+            size="sm"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+});
 export default function EInvoiceProcess() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [invoice, setInvoice] = useState<EInvoiceDetails | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [matchingItems, setMatchingItems] = useState<ProductMatchingItem[]>([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isCreatingSupplier, setIsCreatingSupplier] = useState(false);
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
@@ -124,36 +203,74 @@ export default function EInvoiceProcess() {
     project_id: '',
     expense_category_id: ''
   });
+  // React Query ile ürünleri yükle
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['products-for-einvoice'],
+    queryFn: async () => {
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('id, name, sku, price, unit, tax_rate, category_type')
+        .eq('is_active', true)
+        .order('name')
+        .limit(1000);
+      if (productsError) throw productsError;
+      return productsData || [];
+    },
+    staleTime: 10 * 60 * 1000, // 10 dakika cache
+    gcTime: 20 * 60 * 1000, // 20 dakika cache'de tut
+    refetchOnWindowFocus: false,
+  });
+
+  // React Query ile tedarikçileri yükle
+  const { data: suppliers = [], isLoading: isLoadingSuppliers } = useQuery({
+    queryKey: ['suppliers-for-einvoice'],
+    queryFn: async () => {
+      const { data: suppliersData, error: suppliersError } = await supabase
+        .from('suppliers')
+        .select('id, name, tax_number, email, company_id')
+        .eq('status', 'aktif')
+        .order('name')
+        .limit(500);
+      if (suppliersError) throw suppliersError;
+      return suppliersData || [];
+    },
+    staleTime: 10 * 60 * 1000, // 10 dakika cache
+    gcTime: 20 * 60 * 1000, // 20 dakika cache'de tut
+    refetchOnWindowFocus: false,
+  });
+
   useEffect(() => {
     if (invoiceId) {
-      loadAllData();
+      loadInvoiceDetails();
     }
   }, [invoiceId]);
+
+  // Tedarikçi eşleştirmesi için ayrı fonksiyon - useCallback ile optimize et
+  const matchSupplier = useCallback(async () => {
+    if (!invoice || !suppliers.length) return;
+    setSupplierMatchStatus('searching');
+    const matchingSupplier = suppliers.find(s => 
+      s.tax_number === invoice.supplier_tax_number
+    );
+    if (matchingSupplier) {
+      setSelectedSupplierId(matchingSupplier.id);
+      setSupplierMatchStatus('found');
+      console.log('✅ Tedarikçi otomatik eşleştirildi:', matchingSupplier.name);
+    } else {
+      setSupplierMatchStatus('not_found');
+      console.log('⚠️ Tedarikçi bulunamadı:', invoice.supplier_tax_number);
+    }
+  }, [invoice, suppliers]);
+
   // Tedarikçi eşleştirmesi için useEffect
   useEffect(() => {
     if (invoice && suppliers.length > 0) {
       matchSupplier();
     }
-  }, [invoice, suppliers]);
-  const loadAllData = async () => {
-    setIsLoading(true);
-    try {
-      await Promise.all([
-        loadInvoiceDetails(),
-        loadProducts(),
-        loadSuppliers()
-      ]);
-    } catch (error: any) {
-      console.error('❌ Error loading data:', error);
-      toast({
-        title: "Hata",
-        description: error.message || "Veriler yüklenirken hata oluştu",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [invoice, suppliers, matchSupplier]);
+  
+  // Loading state'i hesapla
+  const isLoading = !invoice || isLoadingProducts || isLoadingSuppliers;
   const loadInvoiceDetails = async () => {
     try {
       console.log('🔄 Loading invoice details for:', invoiceId);
@@ -256,69 +373,28 @@ export default function EInvoiceProcess() {
       throw new Error(error.message || 'Fatura detayları yüklenirken hata oluştu');
     }
   };
-  const loadProducts = async () => {
-    try {
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('id, name, sku, price, unit, tax_rate, category_type')
-        .eq('is_active', true)
-        .order('name');
-      if (productsError) throw productsError;
-      setProducts(productsData || []);
-    } catch (error: any) {
-      console.error('❌ Error loading products:', error);
-    }
-  };
-  const loadSuppliers = async () => {
-    try {
-      // Load all suppliers from suppliers table with company_id filter for RLS
-      const { data: suppliersData, error: suppliersError } = await supabase
-        .from('suppliers')
-        .select('id, name, tax_number, email, company_id')
-        .eq('status', 'aktif') // Only active suppliers
-        .order('name');
-      if (suppliersError) throw suppliersError;
-      setSuppliers(suppliersData || []);
-    } catch (error: any) {
-      console.error('❌ Error loading suppliers:', error);
-    }
-  };
-  // Tedarikçi eşleştirmesi için ayrı fonksiyon
-  const matchSupplier = async () => {
-    if (!invoice || !suppliers.length) return;
-    setSupplierMatchStatus('searching');
-    const matchingSupplier = suppliers.find(s => 
-      s.tax_number === invoice.supplier_tax_number
-    );
-    if (matchingSupplier) {
-      setSelectedSupplierId(matchingSupplier.id);
-      setSupplierMatchStatus('found');
-      console.log('✅ Tedarikçi otomatik eşleştirildi:', matchingSupplier.name);
-    } else {
-      setSupplierMatchStatus('not_found');
-      console.log('⚠️ Tedarikçi bulunamadı:', invoice.supplier_tax_number);
-    }
-  };
-  const handleManualMatch = (itemIndex: number, productId: string) => {
-    const updatedMatching = [...matchingItems];
-    updatedMatching[itemIndex] = {
-      ...updatedMatching[itemIndex],
-      matched_product_id: productId
-    };
-    setMatchingItems(updatedMatching);
-  };
-  const handleProductSelect = (itemIndex: number, product: Product) => {
+  const handleManualMatch = useCallback((itemIndex: number, productId: string) => {
+    setMatchingItems(prev => {
+      const updatedMatching = [...prev];
+      updatedMatching[itemIndex] = {
+        ...updatedMatching[itemIndex],
+        matched_product_id: productId
+      };
+      return updatedMatching;
+    });
+  }, []);
+  
+  const handleProductSelect = useCallback((itemIndex: number, product: Product) => {
     handleManualMatch(itemIndex, product.id);
-  };
-  const handleCreateNewProduct = (itemIndex: number) => {
+  }, [handleManualMatch]);
+  
+  const handleCreateNewProduct = useCallback((itemIndex: number) => {
     setCurrentItemIndex(itemIndex);
     setIsProductFormOpen(true);
-  };
+  }, []);
   const handleProductCreated = async (newProduct: Product) => {
-    // Add to products list
-    setProducts(prev => [...prev, newProduct]);
     // Invalidate products query so all dropdowns refresh
-    await queryClient.invalidateQueries({ queryKey: ["products"] });
+    await queryClient.invalidateQueries({ queryKey: ["products-for-einvoice"] });
     // Match with current item
     if (currentItemIndex >= 0) {
       const updatedMatching = [...matchingItems];
@@ -336,14 +412,16 @@ export default function EInvoiceProcess() {
       description: "Ürün oluşturuldu ve eşleştirildi",
     });
   };
-  const handleRemoveMatch = (itemIndex: number) => {
-    const updatedMatching = [...matchingItems];
-    updatedMatching[itemIndex] = {
-      ...updatedMatching[itemIndex],
-      matched_product_id: undefined
-    };
-    setMatchingItems(updatedMatching);
-  };
+  const handleRemoveMatch = useCallback((itemIndex: number) => {
+    setMatchingItems(prev => {
+      const updatedMatching = [...prev];
+      updatedMatching[itemIndex] = {
+        ...updatedMatching[itemIndex],
+        matched_product_id: undefined
+      };
+      return updatedMatching;
+    });
+  }, []);
   const handleCreateNewSupplier = async () => {
     if (!invoice) return;
     setIsCreatingSupplier(true);
@@ -397,8 +475,8 @@ export default function EInvoiceProcess() {
         .single();
       if (error) throw error;
       console.log('✅ Tedarikçi başarıyla oluşturuldu:', newSupplier);
-      // Tedarikçi listesini güncelle
-      setSuppliers(prev => [...prev, newSupplier]);
+      // Tedarikçi query'sini invalidate et
+      await queryClient.invalidateQueries({ queryKey: ["suppliers-for-einvoice"] });
       // Yeni tedarikçiyi seç
       setSelectedSupplierId(newSupplier.id);
       setSupplierMatchStatus('found');
@@ -608,14 +686,25 @@ export default function EInvoiceProcess() {
       setIsCreating(false);
     }
   };
-  const getMatchedProduct = (productId?: string) => {
+  const getMatchedProduct = useCallback((productId?: string) => {
     return products.find(p => p.id === productId);
-  };
-  const matchedCount = matchingItems.filter(item => 
-    item.matched_product_id
-  ).length;
-  const allMatched = matchedCount === matchingItems.length && matchingItems.length > 0;
-  const canCreateInvoice = selectedSupplierId && matchedCount > 0;
+  }, [products]);
+  
+  // Memoize hesaplamaları
+  const matchedCount = useMemo(() => 
+    matchingItems.filter(item => item.matched_product_id).length,
+    [matchingItems]
+  );
+  
+  const allMatched = useMemo(() => 
+    matchedCount === matchingItems.length && matchingItems.length > 0,
+    [matchedCount, matchingItems.length]
+  );
+  
+  const canCreateInvoice = useMemo(() => 
+    selectedSupplierId && matchedCount > 0,
+    [selectedSupplierId, matchedCount]
+  );
   if (isLoading) {
     return (
     <Card>
@@ -813,66 +902,18 @@ export default function EInvoiceProcess() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {matchingItems.map((item, index) => {
-                        const matchedProduct = getMatchedProduct(item.matched_product_id);
-                        return (
-                          <TableRow key={item.invoice_item.id} className="hover:bg-gray-50">
-                            <TableCell className="font-medium text-center">
-                              {item.invoice_item.line_number}
-                            </TableCell>
-                            <TableCell>
-                              <div className="max-w-48">
-                                <p className="font-medium text-gray-900 truncate text-sm">
-                                  {item.invoice_item.product_name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {item.invoice_item.product_code && `Kod: ${item.invoice_item.product_code} • `}
-                                  {item.invoice_item.unit_price.toFixed(2)} {invoice.currency} / {item.invoice_item.unit}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right font-mono text-sm">
-                              {item.invoice_item.quantity.toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-2">
-                                {matchedProduct ? (
-                                  <div className="p-2 bg-green-50 border border-green-200 rounded">
-                                    <p className="font-medium text-green-900 text-sm">
-                                      {matchedProduct.name}
-                                    </p>
-                                    <p className="text-xs text-green-600">
-                                      SKU: {matchedProduct.sku || '-'} • 
-                                      {matchedProduct.price.toFixed(2)} {invoice.currency}
-                                    </p>
-                                  </div>
-                                ) : (
-                                   <ProductSelector
-                                     value=""
-                                     onChange={() => {}}
-                                     onProductSelect={(product) => handleProductSelect(index, product)}
-                                     onNewProduct={() => handleCreateNewProduct(index)}
-                                     placeholder="Ürün ara ve seçin..."
-                                     className="text-xs"
-                                   />
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {item.matched_product_id && (
-                                <Button
-                                  onClick={() => handleRemoveMatch(index)}
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {matchingItems.map((item, index) => (
+                        <MemoizedTableRow
+                          key={item.invoice_item.id}
+                          item={item}
+                          index={index}
+                          invoice={invoice}
+                          getMatchedProduct={getMatchedProduct}
+                          handleProductSelect={handleProductSelect}
+                          handleCreateNewProduct={handleCreateNewProduct}
+                          handleRemoveMatch={handleRemoveMatch}
+                        />
+                      ))}
                     </TableBody>
                   </Table>
                 </div>
@@ -914,23 +955,25 @@ export default function EInvoiceProcess() {
         </div>
       </div>
       {/* Compact Product Form Modal */}
-      <CompactProductForm
-        isOpen={isProductFormOpen}
-        onClose={() => {
-          setIsProductFormOpen(false);
-          setCurrentItemIndex(-1);
-        }}
-        onProductCreated={handleProductCreated}
-        initialData={
-          currentItemIndex >= 0 ? {
-            name: matchingItems[currentItemIndex]?.invoice_item.product_name || "",
-            unit: matchingItems[currentItemIndex]?.invoice_item.unit || "Adet",
-            price: matchingItems[currentItemIndex]?.invoice_item.unit_price || 0,
-            tax_rate: matchingItems[currentItemIndex]?.invoice_item.tax_rate || 18,
-            code: matchingItems[currentItemIndex]?.invoice_item.product_code || "",
-          } : undefined
-        }
-      />
+      <React.Suspense fallback={<div>Modal yükleniyor...</div>}>
+        <CompactProductForm
+          isOpen={isProductFormOpen}
+          onClose={() => {
+            setIsProductFormOpen(false);
+            setCurrentItemIndex(-1);
+          }}
+          onProductCreated={handleProductCreated}
+          initialData={
+            currentItemIndex >= 0 ? {
+              name: matchingItems[currentItemIndex]?.invoice_item.product_name || "",
+              unit: matchingItems[currentItemIndex]?.invoice_item.unit || "Adet",
+              price: matchingItems[currentItemIndex]?.invoice_item.unit_price || 0,
+              tax_rate: matchingItems[currentItemIndex]?.invoice_item.tax_rate || 18,
+              code: matchingItems[currentItemIndex]?.invoice_item.product_code || "",
+            } : undefined
+          }
+        />
+      </React.Suspense>
     </>
   );
 }

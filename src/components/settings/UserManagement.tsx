@@ -2,8 +2,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { UserFilters } from "./UserFilters";
+import { UserFilterBar } from "./UserFilterBar";
 import { UserList } from "./UserList";
+import { UserGridView } from "./UserGridView";
+import { UserKanbanView } from "./UserKanbanView";
+import { UserManagementHeader } from "./UserManagementHeader";
+import { UserViewType } from "./UserViewToggle";
 import { InviteUserDialog } from "./InviteUserDialog";
 import { RoleManagement } from "./RoleManagement";
 import { UserWithRoles } from "./types";
@@ -13,10 +17,14 @@ import { Users, Shield } from "lucide-react";
 export const UserManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string | undefined>();
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [activeView, setActiveView] = useState<UserViewType>("list");
   const [activeTab, setActiveTab] = useState("users");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     const profilesChannel = supabase
@@ -62,6 +70,27 @@ export const UserManagement = () => {
     };
   }, [queryClient, toast]);
 
+  // Fetch departments data
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('department')
+        .not('department', 'is', null)
+        .order('department');
+      
+      if (error) throw error;
+      
+      // Unique departments
+      const uniqueDepartments = Array.from(
+        new Set(data?.map(emp => emp.department).filter(Boolean))
+      ).map(dept => ({ id: dept, name: dept }));
+      
+      return uniqueDepartments;
+    }
+  });
+
   const { data: users, isLoading } = useQuery({
     queryKey: ['users', 'settings', 'employee-matching'],
     staleTime: 0,
@@ -84,7 +113,7 @@ export const UserManagement = () => {
             department
           )
         `)
-        .order('created_at', { ascending: sortOrder === 'asc' });
+        .order('created_at', { ascending: true });
       
       if (profilesError) throw profilesError;
 
@@ -113,11 +142,29 @@ export const UserManagement = () => {
 
   const filteredUsers = users?.filter(user => {
     const fullName = (user.full_name || '').toLowerCase();
-    const matchesSearch = fullName.includes(filter.toLowerCase()) || 
-                         (user.email || '').toLowerCase().includes(filter.toLowerCase());
-    const matchesRole = !roleFilter || user.user_roles?.some(r => r.role === roleFilter);
-    return matchesSearch && matchesRole;
+    const email = (user.email || '').toLowerCase();
+    const department = (user.employees?.department || '').toLowerCase();
+    
+    const matchesSearch = searchQuery === '' || 
+                         fullName.includes(searchQuery.toLowerCase()) || 
+                         email.includes(searchQuery.toLowerCase()) ||
+                         department.includes(searchQuery.toLowerCase());
+    
+    const matchesRole = selectedRole === 'all' || 
+                       user.user_roles?.some(r => r.role === selectedRole);
+    
+    const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
+    
+    const matchesDepartment = selectedDepartment === 'all' || 
+                             user.employees?.department === selectedDepartment;
+    
+    return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
   });
+
+  // İstatistikler
+  const totalUsers = users?.length || 0;
+  const activeUsers = users?.filter(user => user.status === 'active').length || 0;
+  const inactiveUsers = users?.filter(user => user.status === 'inactive').length || 0;
 
   return (
     <div className="space-y-6">
@@ -136,24 +183,54 @@ export const UserManagement = () => {
         </div>
 
         <TabsContent value="users" className="mt-6 space-y-6">
-          <div className="bg-white rounded-lg border shadow-sm">
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-foreground">Kullanıcı Yönetimi</h3>
-                <InviteUserDialog />
-              </div>
-              
-              <UserFilters
-                filter={filter}
-                setFilter={setFilter}
-                roleFilter={roleFilter}
-                setRoleFilter={setRoleFilter}
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-              />
-            </div>
+          {/* Header */}
+          <UserManagementHeader
+            activeView={activeView}
+            setActiveView={setActiveView}
+            totalUsers={totalUsers}
+            activeUsers={activeUsers}
+            inactiveUsers={inactiveUsers}
+          />
 
-            <UserList users={filteredUsers || []} isLoading={isLoading} />
+          {/* Filters */}
+          <UserFilterBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedRole={selectedRole}
+            setSelectedRole={setSelectedRole}
+            selectedStatus={selectedStatus}
+            setSelectedStatus={setSelectedStatus}
+            selectedDepartment={selectedDepartment}
+            setSelectedDepartment={setSelectedDepartment}
+            departments={departments}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+          />
+
+          {/* Content */}
+          <div className="bg-white rounded-lg border shadow-sm">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[400px]">
+                <div className="text-center space-y-4">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="text-muted-foreground">Kullanıcılar yükleniyor...</p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6">
+                {activeView === "list" && (
+                  <UserList users={filteredUsers || []} isLoading={isLoading} />
+                )}
+                {activeView === "grid" && (
+                  <UserGridView users={filteredUsers || []} isLoading={isLoading} />
+                )}
+                {activeView === "kanban" && (
+                  <UserKanbanView users={filteredUsers || []} isLoading={isLoading} />
+                )}
+              </div>
+            )}
           </div>
         </TabsContent>
 

@@ -93,9 +93,16 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
         setExpandedMenus(prev => new Set([...prev, item.path]));
       });
     } else {
+      // For regular nav items without dropdown, just navigate
       navigate(item.path);
     }
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, expandedMenus]);
+
+  // Handle click for dropdown toggle button
+  const handleToggleClick = useCallback((item: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleMenu(item.path);
+  }, [toggleMenu]);
 
   // Memoize isActiveChild calculation
   const getSubItemActiveState = useCallback((subItem: any, item: any) => {
@@ -140,10 +147,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
             </div>
             {!isCollapsed && (
               <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleMenu(item.path);
-                }}
+                onClick={(e) => handleToggleClick(item, e)}
                 className="p-1 hover:bg-gray-700/50 rounded"
               >
                 {isExpanded ? (
@@ -186,7 +190,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
         />
       );
     }
-  }, [expandedMenus, location.pathname, isCollapsed, handleParentClick, toggleMenu, getSubItemActiveState]);
+  }, [expandedMenus, location.pathname, isCollapsed, handleParentClick, handleToggleClick, getSubItemActiveState]);
 
   return (
     <div className={cn(

@@ -115,8 +115,14 @@ serve(async (req) => {
       console.log('📅 Date filter (current month):', { startDate, endDate });
       console.log('⚠️  Sadece aktarılmamış (işlenmemiş) faturalar getiriliyor (IsTransfer=false)');
       
-      const apiUrl = `https://apitest.nilvera.com/einvoice/Purchase?${queryParams.toString()}`;
+      // Use correct API endpoint based on test_mode
+      const baseUrl = nilveraAuth.test_mode 
+        ? 'https://apitest.nilvera.com' 
+        : 'https://api.nilvera.com';
+      
+      const apiUrl = `${baseUrl}/einvoice/Purchase?${queryParams.toString()}`;
       console.log('🌐 Endpoint:', apiUrl);
+      console.log('🔧 Test Mode:', nilveraAuth.test_mode);
       console.log('🔑 Full API Key (first 10 chars):', nilveraAuth.api_key?.substring(0, 10) + '...');
       
       const nilveraResponse = await fetch(apiUrl, {

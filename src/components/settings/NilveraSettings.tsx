@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle, CheckCircle, Key, User, Eye, EyeOff, Plug } from "lucide-react";
+import { NilveraTestConnection } from "./NilveraTestConnection";
 
 export const NilveraSettings = () => {
   const [username, setUsername] = useState("");
@@ -317,6 +318,8 @@ export const NilveraSettings = () => {
                   </div>
                 </div>
               )}
+
+              <NilveraTestConnection />
 
               <Button
                 variant="destructive"

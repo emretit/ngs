@@ -73,23 +73,24 @@ const PurchaseRequestsList = () => {
   }, [navigate]);
 
   // Group requests by status for header stats - optimize edildi (tek geçişte gruplama)
-  const groupedRequests = useMemo(() => {
+  const groupedRequests = useMemo<{ [key: string]: any[] }>(() => {
     if (!requests || requests.length === 0) {
       return { draft: [], submitted: [], approved: [], rejected: [], converted: [] };
     }
     
-    return requests.reduce((acc, r) => {
-      const status = r.status as keyof typeof acc;
-      if (acc[status]) {
-        acc[status].push(r);
+    return requests.reduce<{ [key: string]: any[] }>((acc, r: any) => {
+      const status = r.status as string;
+      if (!acc[status]) {
+        acc[status] = [];
       }
+      acc[status].push(r);
       return acc;
     }, {
-      draft: [] as any[],
-      submitted: [] as any[],
-      approved: [] as any[],
-      rejected: [] as any[],
-      converted: [] as any[],
+      draft: [],
+      submitted: [],
+      approved: [],
+      rejected: [],
+      converted: [],
     });
   }, [requests]);
 

@@ -80,7 +80,7 @@ export const UserManagement = () => {
       // Unique departments
       const uniqueDepartments = Array.from(
         new Set(data?.map(emp => emp.department).filter(Boolean))
-      ).map(dept => ({ id: dept, name: dept }));
+      ).map(dept => ({ id: dept as string, name: dept as string }));
       
       return uniqueDepartments;
     }

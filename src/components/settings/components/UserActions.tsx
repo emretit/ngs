@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { UserWithRoles } from "../types";
 
 type UserActionsProps = {
-  user: UserWithRoles;
-  onResetPassword: () => void;
-  onDeactivate: () => void;
+  user?: UserWithRoles;
+  userId?: string;
+  onResetPassword?: () => void;
+  onDeactivate?: () => void;
 };
 
-export const UserActions = ({ user, onResetPassword, onDeactivate }: UserActionsProps) => {
+export const UserActions = ({ user, userId, onResetPassword, onDeactivate }: UserActionsProps) => {
   return (
     <div className="space-x-2">
       <Button 
@@ -24,7 +25,7 @@ export const UserActions = ({ user, onResetPassword, onDeactivate }: UserActions
         className="text-red-600 hover:text-red-700"
         onClick={() => {
           if (window.confirm('Bu kullanıcıyı devre dışı bırakmak istediğinizden emin misiniz?')) {
-            onDeactivate();
+            onDeactivate?.();
           }
         }}
       >

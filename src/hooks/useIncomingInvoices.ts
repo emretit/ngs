@@ -85,7 +85,7 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
     refetchOnWindowFocus: false, // Pencere odaklandığında refetch etme
     refetchOnMount: false, // Mount'ta refetch etme
     refetchOnReconnect: true, // Bağlantı yenilendiğinde refetch et
-    keepPreviousData: true, // Önceki veriyi tut (smooth transition)
+    placeholderData: (previousData) => previousData, // Önceki veriyi tut (smooth transition)
   });
 
   return {

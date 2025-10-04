@@ -47,6 +47,14 @@ export interface UserWithRoles {
   is_active?: boolean;
   user_roles: UserRole[];
   employee_id?: string | null;
+  employees?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    position: string;
+    department: string;
+  } | null;
+  status?: 'active' | 'inactive' | 'pending' | 'aktif' | 'pasif' | 'izinli';
 }
 
 export type UserWithRoles_Old = UserProfile & { user_roles: UserRole[] };

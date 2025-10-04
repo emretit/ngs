@@ -279,7 +279,7 @@ export const ModernUserList = ({ users, isLoading }: ModernUserListProps) => {
                         <div className="flex items-center gap-2">
                           <EmployeeSelector
                             value={user.employee_id || ''}
-                            onValueChange={(employeeId) => handleEmployeeMatch(user.id, employeeId)}
+                            onChange={(employeeId) => handleEmployeeMatch(user.id, employeeId)}
                             className="h-5 text-xs flex-1"
                           />
                           <Button

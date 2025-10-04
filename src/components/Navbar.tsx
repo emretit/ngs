@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import NavHeader from "./navbar/NavHeader";
 import NavLink from "./navbar/NavLink";
 import { navItems } from "./navbar/nav-config";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface NavbarProps {
   isCollapsed: boolean;
@@ -15,6 +16,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const navRef = useRef<HTMLElement>(null);
+  const { hasModuleAccess, isLoading: permissionsLoading } = usePermissions();
   
   
   
@@ -121,6 +123,14 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   }, [location.pathname]);
 
   const renderNavItem = useCallback((item: any) => {
+    // Modül bazlı erişim kontrolü - path'ten modül adını çıkar
+    const moduleKey = item.path.replace(/^\//, '').split('/')[0] || 'dashboard';
+    
+    // İzin kontrolü - izin yoksa menüyü gösterme
+    if (!permissionsLoading && !hasModuleAccess(moduleKey)) {
+      return null;
+    }
+    
     if (item.hasDropdown && item.items) {
       const isExpanded = expandedMenus.has(item.path);
       const isActive = location.pathname === item.path;

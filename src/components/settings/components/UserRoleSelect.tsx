@@ -10,21 +10,26 @@ import {
 import { UserWithRoles, UserRole } from "../types";
 
 type UserRoleSelectProps = {
-  user: UserWithRoles;
-  onRoleChange: (role: UserRole['role']) => void;
+  user?: UserWithRoles;
+  userId?: string;
+  currentRoles?: UserRole[];
+  onRoleChange?: (role: UserRole['role']) => void;
+  className?: string;
 };
 
-export const UserRoleSelect = ({ user, onRoleChange }: UserRoleSelectProps) => {
+export const UserRoleSelect = ({ user, userId, currentRoles, onRoleChange, className }: UserRoleSelectProps) => {
+  const roles = currentRoles || user?.user_roles || [];
+  
   return (
     <Select
-      value={user.user_roles?.[0]?.role || "viewer"}
+      value={roles?.[0]?.role || "viewer"}
       onValueChange={onRoleChange}
     >
-      <SelectTrigger className="w-[140px]">
+      <SelectTrigger className={className || "w-[140px]"}>
         <SelectValue>
-          {user.user_roles?.[0]?.role ? (
+          {roles?.[0]?.role ? (
             <Badge variant="secondary">
-              {user.user_roles[0].role}
+              {roles[0].role}
             </Badge>
           ) : (
             "Rol seç"

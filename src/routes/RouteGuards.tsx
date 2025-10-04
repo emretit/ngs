@@ -1,25 +1,37 @@
 import React from "react";
 import { useAuth } from "@/auth/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type RouteGuardProps = {
   children: React.ReactNode;
+  requiredModule?: string;
 };
 
 export const PublicRoute: React.FC<RouteGuardProps> = ({ children }) => children;
 
 // Protected routes require authentication
-export const ProtectedRoute: React.FC<RouteGuardProps> = ({ children }) => {
+export const ProtectedRoute: React.FC<RouteGuardProps> = ({ children, requiredModule }) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { hasModuleAccess, isLoading: permissionsLoading } = usePermissions();
 
   React.useEffect(() => {
     if (!loading && !user) {
       navigate("/signin");
     }
   }, [user, loading, navigate]);
+  
+  // Modül erişim kontrolü
+  React.useEffect(() => {
+    if (!loading && !permissionsLoading && user && requiredModule) {
+      if (!hasModuleAccess(requiredModule)) {
+        navigate("/");
+      }
+    }
+  }, [user, loading, permissionsLoading, requiredModule, hasModuleAccess, navigate]);
 
-  if (loading) {
+  if (loading || permissionsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">

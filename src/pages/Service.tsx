@@ -14,18 +14,19 @@ import { Plus, CalendarDays, Users, Clock, AlertCircle, CheckCircle, XCircle, Pa
 import ServiceViewToggle from "@/components/service/ServiceViewToggle";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar as BigCalendar, momentLocalizer, Views } from 'react-big-calendar';
-import moment from 'moment';
-import 'moment/locale/tr';
+import { Calendar as BigCalendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay, addDays as dateFnsAddDays, isSameDay as dateFnsIsSameDay } from 'date-fns';
+import { tr } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-moment.locale('tr');
-// Haftanın Pazartesi'den başlaması için
-moment.updateLocale('tr', {
-  week: {
-    dow: 1, // Pazartesi = 1, Pazar = 0
-  }
+import { formatDate, startOfWeek as getStartOfWeek, isSameDay, addDaysToDate } from '@/utils/dateUtils';
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1, locale: tr }),
+  getDay,
+  locales: { 'tr': tr },
 });
-const localizer = momentLocalizer(moment);
 // Custom Resource View - React Big Calendar'da resource view için özel view gerekli
 const ServicePage = () => {
   const navigate = useNavigate();
@@ -477,20 +478,20 @@ const ServicePage = () => {
                       {/* Gün sütunları Container - Teknisyen Satırlarıyla Aynı Yapı */}
                       <div className="flex flex-1">
                       {Array.from({ length: 7 }, (_, i) => {
-                        const date = moment(currentDate).startOf('week').add(i, 'days');
+                        const date = addDaysToDate(getStartOfWeek(currentDate), i);
                         const turkishDays = {
-                          'Sunday': 'Pazar    ',      // 5 + 4 boşluk = 9 karakter
-                          'Monday': 'Pazartesi',      // 8 + 1 boşluk = 9 karakter
-                          'Tuesday': 'Salı     ',     // 4 + 5 boşluk = 9 karakter
-                          'Wednesday': 'Çarşamba',     // 8 + 1 boşluk = 9 karakter
-                          'Thursday': 'Perşembe ',     // 8 + 1 boşluk = 9 karakter
-                          'Friday': 'Cuma     ',      // 4 + 5 boşluk = 9 karakter
-                          'Saturday': 'Cumartesi'      // 9 karakter (zaten eşit)
+                          'Sunday': 'Pazar    ',
+                          'Monday': 'Pazartesi',
+                          'Tuesday': 'Salı     ',
+                          'Wednesday': 'Çarşamba',
+                          'Thursday': 'Perşembe ',
+                          'Friday': 'Cuma     ',
+                          'Saturday': 'Cumartesi'
                         };
-                        const dayName = date.format('dddd');
+                        const dayName = format(date, 'EEEE', { locale: tr });
                         const turkishDay = turkishDays[dayName as keyof typeof turkishDays] || dayName;
-                        const isToday = date.isSame(moment(), 'day');
-                        const isWeekend = i === 5 || i === 6; // Cumartesi & Pazar
+                        const isToday = isSameDay(date, new Date());
+                        const isWeekend = i === 5 || i === 6;
                         return (
                           <div 
                             key={i} 
@@ -513,7 +514,7 @@ const ServicePage = () => {
                               isWeekend ? 'text-orange-800' : 
                               'text-gray-800'
                             }`}>
-                              {date.format('DD MMM')}
+                              {formatDate(date, 'dd MMM')}
                             </div>
                             {isToday && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1 shadow-sm"></div>
@@ -542,13 +543,13 @@ const ServicePage = () => {
                         <div className="flex flex-1">
                         {/* Gün hücreleri - Modern Drag & Drop */}
                         {Array.from({ length: 7 }, (_, i) => {
-                          const date = moment(currentDate).startOf('week').add(i, 'days');
-                          const isToday = date.isSame(moment(), 'day');
+                          const date = addDaysToDate(getStartOfWeek(currentDate), i);
+                          const isToday = isSameDay(date, new Date());
                           const isWeekend = i === 5 || i === 6;
                           // Bu teknisyen ve günde servis var mı kontrol et
                           const dayServices = calendarEvents.filter(event => {
-                            const eventDate = moment(event.start);
-                            return eventDate.isSame(date, 'day') && event.resourceId === tech.resourceId;
+                            const eventDate = new Date(event.start);
+                            return isSameDay(eventDate, date) && event.resourceId === tech.resourceId;
                           });
                           return (
                         <div 
@@ -622,7 +623,7 @@ const ServicePage = () => {
                                   <div className="opacity-80 text-xs flex items-center gap-1">
                                     <Clock className="w-2 h-2 flex-shrink-0" />
                                     <span className="truncate">
-                                    {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
+                                    {formatDate(service.start, 'HH:mm')} - {formatDate(service.end, 'HH:mm')}
                                     </span>
                                   </div>
                                   {/* Hover overlay */}
@@ -735,7 +736,7 @@ const ServicePage = () => {
                             <div className="flex items-center gap-1 text-gray-600">
                               <Clock className="h-2.5 w-2.5 text-blue-500" />
                               <span className="font-medium">
-                                {moment(service.start).format('HH:mm')} - {moment(service.end).format('HH:mm')}
+                                {formatDate(service.start, 'HH:mm')} - {formatDate(service.end, 'HH:mm')}
                               </span>
                             </div>
                             <div className="flex items-center gap-1 text-orange-600">
@@ -1001,19 +1002,19 @@ const ServicePage = () => {
                               <TableCell className="px-4 py-4">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <Clock className="h-4 w-4" />
-                                  {service.service_reported_date ? moment(service.service_reported_date).format('DD.MM.YYYY') : 'Bildirilmedi'}
+                                  {service.service_reported_date ? formatDate(service.service_reported_date) : 'Bildirilmedi'}
                                 </div>
                               </TableCell>
                               <TableCell className="px-4 py-4">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <Calendar className="h-4 w-4" />
-                                  {service.issue_date ? moment(service.issue_date).format('DD.MM.YYYY') : 'Planlanmamış'}
+                                  {service.issue_date ? formatDate(service.issue_date) : 'Planlanmamış'}
                                 </div>
                               </TableCell>
                               <TableCell className="px-4 py-4">
                                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                   <Calendar className="h-4 w-4" />
-                                  {service.service_due_date ? moment(service.service_due_date).format('DD.MM.YYYY') : 'Tarih belirtilmemiş'}
+                                  {service.service_due_date ? formatDate(service.service_due_date) : 'Tarih belirtilmemiş'}
                                 </div>
                               </TableCell>
                               <TableCell className="px-4 py-4 text-right">

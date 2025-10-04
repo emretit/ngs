@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
-import moment from 'moment';
-import 'moment/locale/tr';
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { tr } from 'date-fns/locale';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
 import type { Task, TaskStatus } from '@/types/task';
 import TaskDetailPanel from '../TaskDetailPanel';
+import { formatDate } from '@/utils/dateUtils';
 
 interface TasksCalendarProps {
   searchQuery: string;
@@ -16,8 +17,13 @@ interface TasksCalendarProps {
 }
 
 // Setup the localizer for react-big-calendar
-moment.locale('tr');
-const localizer = momentLocalizer(moment);
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1, locale: tr }),
+  getDay,
+  locales: { 'tr': tr },
+});
 
 const statusColors: Record<TaskStatus, string> = {
   todo: '#ef4444', // red-500
@@ -158,24 +164,17 @@ const TasksCalendar = ({
           step={60}
           showMultiDayTimes
           messages={{
-            next: 'İleri',
-            previous: 'Geri',
             today: 'Bugün',
+            previous: 'Geri',
+            next: 'İleri',
             month: 'Ay',
             week: 'Hafta',
             day: 'Gün',
             agenda: 'Ajanda',
-            date: 'Tarih',
-            time: 'Saat',
-            event: 'Etkinlik',
-            noEventsInRange: 'Bu tarih aralığında görev bulunmuyor',
-            showMore: (total: number) => `+${total} daha fazla`
           }}
           formats={{
-            monthHeaderFormat: 'MMMM YYYY',
-            dayHeaderFormat: 'dddd DD/MM',
             dayRangeHeaderFormat: ({ start, end }) =>
-              `${moment(start).format('DD/MM')} - ${moment(end).format('DD/MM')}`
+              `${formatDate(start, 'dd/MM')} - ${formatDate(end, 'dd/MM')}`
           }}
         />
       </div>

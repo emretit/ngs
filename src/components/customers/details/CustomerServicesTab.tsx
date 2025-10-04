@@ -27,10 +27,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Customer } from "@/types/customer";
-import moment from 'moment';
-import 'moment/locale/tr';
-
-moment.locale('tr');
+import { formatDate } from '@/utils/dateUtils';
 
 interface CustomerServicesTabProps {
   customer: Customer;
@@ -489,13 +486,13 @@ export const CustomerServicesTab = ({ customer }: CustomerServicesTabProps) => {
                         <TableCell className="px-4 py-4">
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Clock className="h-4 w-4" />
-                            {service.service_reported_date ? moment(service.service_reported_date).format('DD.MM.YYYY') : 'Bildirilmedi'}
+                            {service.service_reported_date ? formatDate(service.service_reported_date) : 'Bildirilmedi'}
                           </div>
                         </TableCell>
                         <TableCell className="px-4 py-4">
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Calendar className="h-4 w-4" />
-                            {service.issue_date ? moment(service.issue_date).format('DD.MM.YYYY') : 'Planlanmamış'}
+                            {service.issue_date ? formatDate(service.issue_date) : 'Planlanmamış'}
                           </div>
                         </TableCell>
                         <TableCell className="px-4 py-4 text-right">

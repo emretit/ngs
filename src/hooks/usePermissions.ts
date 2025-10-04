@@ -51,6 +51,8 @@ export const usePermissions = () => {
   });
 
   const hasModuleAccess = (module: string): boolean => {
+    // Eğer rol atanmamışsa, tüm modüllere erişim ver (varsayılan davranış)
+    if (!permissions) return true;
     return permissions?.[module]?.access === true;
   };
 

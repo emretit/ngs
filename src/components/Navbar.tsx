@@ -126,8 +126,13 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
     // Modül bazlı erişim kontrolü - path'ten modül adını çıkar
     const moduleKey = item.path.replace(/^\//, '').split('/')[0] || 'dashboard';
     
+    // İzin yüklenirken menüyü göster
+    if (permissionsLoading) {
+      return null;
+    }
+    
     // İzin kontrolü - izin yoksa menüyü gösterme
-    if (!permissionsLoading && !hasModuleAccess(moduleKey)) {
+    if (!hasModuleAccess(moduleKey)) {
       return null;
     }
     

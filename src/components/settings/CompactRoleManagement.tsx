@@ -355,66 +355,66 @@ export const CompactRoleManagement = ({ roles }: CompactRoleManagementProps) => 
         </Dialog>
       </div>
 
-      {/* Roller Listesi - Kompakt */}
-      <div className="grid grid-cols-1 gap-3">
+      {/* Roller Listesi */}
+      <div className="divide-y divide-gray-100">
         {roles.map((role) => (
-          <Card key={role.name} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                {/* Sol taraf - Rol bilgisi */}
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={`p-2 rounded-lg border ${getRoleColor(role.name)}`}>
-                    <span className="text-lg">{getRoleIcon(role.name)}</span>
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-semibold capitalize">{role.name}</h4>
-                      <Badge variant="secondary" className="text-xs">
-                        {role.userCount} kullanıcı
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {role.description}
-                    </p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Shield className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
-                        {role.permissions.length} izin
-                      </span>
-                    </div>
-                  </div>
+          <div key={role.name} className="p-4 hover:bg-purple-50/50 transition-all duration-200 group">
+            <div className="flex items-center gap-4">
+              {/* Sol taraf - Rol bilgisi */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className={`p-2.5 rounded-lg border ${getRoleColor(role.name)}`}>
+                  <span className="text-xl">{getRoleIcon(role.name)}</span>
                 </div>
-
-                {/* Sağ taraf - Aksiyonlar */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => {
-                      setEditingRole(role);
-                      setNewRole({
-                        name: role.name,
-                        description: role.description,
-                        permissions: role.permissions,
-                      });
-                      setIsAddDialogOpen(true);
-                    }}
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-medium capitalize">{role.name}</h4>
+                    <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
+                      {role.userCount} kullanıcı
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    {role.description}
+                  </p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Shield className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {role.permissions.length} izin tanımlı
+                    </span>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Sağ taraf - Aksiyonlar */}
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 px-3 text-xs"
+                  onClick={() => {
+                    setEditingRole(role);
+                    setNewRole({
+                      name: role.name,
+                      description: role.description,
+                      permissions: role.permissions,
+                    });
+                    setIsAddDialogOpen(true);
+                  }}
+                >
+                  <Edit className="h-3.5 w-3.5 mr-1.5" />
+                  Düzenle
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 px-3 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  Sil
+                </Button>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     </div>

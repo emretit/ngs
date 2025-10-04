@@ -156,8 +156,7 @@ const UserKanbanView = ({ users, isLoading }: UserKanbanViewProps) => {
                     {/* Rol değiştirme */}
                     <div className="mt-3 pt-2 border-t">
                       <UserRoleSelect 
-                        userId={user.id} 
-                        currentRoles={user.user_roles || []}
+                        userId={user.id}
                         className="text-xs w-full"
                       />
                     </div>

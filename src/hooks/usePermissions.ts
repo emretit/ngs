@@ -27,10 +27,15 @@ export const usePermissions = () => {
         .from('user_roles')
         .select('role_id, roles!inner(permissions, is_active)')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching user permissions:', error);
+        return null;
+      }
+
+      if (!data) {
+        console.warn('No role assigned to user:', user.id);
         return null;
       }
 

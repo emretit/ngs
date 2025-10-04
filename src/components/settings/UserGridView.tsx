@@ -122,8 +122,7 @@ const UserGridView = ({ users, isLoading }: UserGridViewProps) => {
               
               {/* Rol değiştirme */}
               <UserRoleSelect 
-                userId={user.id} 
-                currentRoles={user.user_roles || []}
+                userId={user.id}
                 className="text-xs"
               />
             </div>

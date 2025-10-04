@@ -10,12 +10,28 @@ export const useUserMutations = () => {
   const queryClient = useQueryClient();
 
   const assignRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string, role: UserRole['role'] }) => {
-      const { error } = await supabase.rpc('assign_role', {
-        target_user_id: userId,
-        new_role: role
-      });
-      if (error) throw error;
+    mutationFn: async ({ userId, role }: { userId: string, role: string }) => {
+      // First, check if user already has a role
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existingRole) {
+        // Update existing role
+        const { error } = await supabase
+          .from('user_roles')
+          .update({ role_id: role })
+          .eq('user_id', userId);
+        if (error) throw error;
+      } else {
+        // Insert new role
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role_id: role });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });

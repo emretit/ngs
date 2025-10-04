@@ -236,8 +236,8 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
                 </TableCell>
                 <TableCell>
                   <UserRoleSelect 
-                    user={user}
-                    onRoleChange={(role) => assignRoleMutation.mutate({ userId: user.id, role })}
+                    userId={user.id}
+                    onRoleChange={(roleId) => assignRoleMutation.mutate({ userId: user.id, role: roleId })}
                   />
                 </TableCell>
                 <TableCell>

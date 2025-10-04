@@ -297,6 +297,20 @@ const ServicePage = () => {
       setSortDirection(field === "created_at" ? "desc" : "asc");
     }
   };
+  // Servis taleplerini durumlarına göre grupla
+  const groupedServiceRequests = useMemo(() => {
+    if (!serviceRequests) return {};
+    
+    return serviceRequests.reduce((acc, request) => {
+      const status = request.service_status || 'new';
+      if (!acc[status]) {
+        acc[status] = [];
+      }
+      acc[status].push(request);
+      return acc;
+    }, {} as { [key: string]: ServiceRequest[] });
+  }, [serviceRequests]);
+
   // İstatistikleri hesapla
   const stats = {
     total: serviceRequests?.length || 0,
@@ -313,10 +327,7 @@ const ServicePage = () => {
           activeView={activeView} 
           setActiveView={setActiveView}
           onCreateRequest={() => navigate("/service/new")}
-        />
-        <ServiceStatsCards 
-          stats={stats} 
-          viewType={activeView} 
+          serviceRequests={groupedServiceRequests}
         />
         {/* Content based on view */}
         {activeView === "calendar" ? (

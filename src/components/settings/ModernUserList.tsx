@@ -118,226 +118,152 @@ export const ModernUserList = ({ users, isLoading }: ModernUserListProps) => {
   if (isLoading) {
     return (
       <div className="relative overflow-hidden">
-        <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-                    <div className="flex items-center gap-2">
-                      <UsersIcon className="h-4 w-4" />
-                      <span>Kullanıcı</span>
-                    </div>
-                  </TableHead>
-                  <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      <span>Email</span>
-                    </div>
-                  </TableHead>
-                  <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      <span>Rol</span>
-                    </div>
-                  </TableHead>
-                  <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <UserPlus className="h-4 w-4" />
-                      <span>Çalışan Eşleştirme</span>
-                    </div>
-                  </TableHead>
-                  <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Durum</span>
-                    </div>
-                  </TableHead>
-                  <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Settings className="h-4 w-4" />
-                      <span>İşlem</span>
-                    </div>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index} className="h-6">
-                    <TableCell className="py-1 px-3"><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
-                    <TableCell className="py-1 px-3"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
-                    <TableCell className="py-1 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-                    <TableCell className="py-1 px-2"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
-                    <TableCell className="py-1 px-2"><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-                    <TableCell className="py-1 px-2"><div className="h-5 w-5 bg-gray-200 rounded animate-pulse" /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        <div className="divide-y divide-gray-100">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="p-4 flex items-center gap-4">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-[200px]" />
+                <Skeleton className="h-3 w-[150px]" />
+              </div>
+              <Skeleton className="h-8 w-[120px]" />
+              <Skeleton className="h-8 w-[100px]" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (users.length === 0) {
     return (
-      <div className="text-center py-8">
-        <UsersIcon className="mx-auto h-8 w-8 text-muted-foreground" />
-        <h3 className="mt-2 text-sm font-medium text-foreground">Kullanıcı bulunamadı</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Arama kriterlerinizi değiştirerek tekrar deneyin.
+      <div className="text-center py-16">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+          <UsersIcon className="h-8 w-8 text-gray-400" />
+        </div>
+        <h3 className="text-base font-medium text-foreground">Kullanıcı bulunamadı</h3>
+        <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+          Arama kriterlerinize uygun kullanıcı bulunamadı. Filtreleri değiştirerek tekrar deneyin.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="relative overflow-hidden">
-      <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">
+    <div className="divide-y divide-gray-100">
+      {users.map((user, index) => {
+        const currentRole = user.user_roles?.[0]?.role || '';
+        const isEditing = editingUserId === user.id;
+        
+        return (
+          <div 
+            key={user.id} 
+            className="p-4 hover:bg-blue-50/50 transition-all duration-200 group"
+          >
+            <div className="flex items-center gap-4">
+              {/* Avatar & Info */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <UserAvatar user={user} size="md" />
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <UsersIcon className="h-4 w-4" />
-                    <span>Kullanıcı</span>
+                    <h4 className="text-sm font-medium text-foreground truncate">
+                      {user.full_name || 'İsimsiz Kullanıcı'}
+                    </h4>
+                    <Badge 
+                      variant={user.status === 'active' ? 'default' : 'secondary'}
+                      className={`text-xs ${
+                        user.status === 'active' 
+                          ? 'bg-green-100 text-green-700 border-green-200' 
+                          : 'bg-gray-100 text-gray-700 border-gray-200'
+                      }`}
+                    >
+                      {user.status === 'active' ? 'Aktif' : 'Pasif'}
+                    </Badge>
                   </div>
-                </TableHead>
-                <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    <span>Email</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Mail className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground truncate">{user.email}</span>
                   </div>
-                </TableHead>
-                <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <Shield className="h-4 w-4" />
-                    <span>Rol</span>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <UserPlus className="h-4 w-4" />
-                    <span>Çalışan Eşleştirme</span>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Durum</span>
-                  </div>
-                </TableHead>
-                <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Settings className="h-4 w-4" />
-                    <span>İşlem</span>
-                  </div>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => {
-                const currentRole = user.user_roles?.[0]?.role || '';
-                const isEditing = editingUserId === user.id;
-                
-                return (
-                  <TableRow 
-                    key={user.id} 
-                    className="cursor-pointer hover:bg-blue-50 h-6"
-                  >
-                    {/* Kullanıcı */}
-                    <TableCell className="py-1 px-3">
-                      <UserAvatar user={user} size="sm" />
-                    </TableCell>
+                  {user.employees && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Building2 className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {user.employees.department} • {user.employees.position}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-                    {/* Email */}
-                    <TableCell className="py-1 px-3">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Mail className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{user.email}</span>
+              {/* Role Select */}
+              <div className="w-[180px]">
+                <Select
+                  value={currentRole}
+                  onValueChange={(role) => handleRoleChange(user.id, role)}
+                >
+                  <SelectTrigger className="h-9 text-xs border-gray-200">
+                    <SelectValue placeholder="Rol seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Sistem Yöneticisi">🔐 Sistem Yöneticisi</SelectItem>
+                    <SelectItem value="Yönetici">👑 Yönetici</SelectItem>
+                    <SelectItem value="Satış Müdürü">👨‍💼 Satış Müdürü</SelectItem>
+                    <SelectItem value="Satış Temsilcisi">💼 Satış Temsilcisi</SelectItem>
+                    <SelectItem value="Muhasebe">💰 Muhasebe</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Employee Match */}
+              <div className="w-[200px]">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <EmployeeSelector
+                      value={user.employee_id || ''}
+                      onChange={(employeeId) => handleEmployeeMatch(user.id, employeeId)}
+                      className="h-9 text-xs flex-1 border-gray-200"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-9 w-9 p-0"
+                      onClick={() => setEditingUserId(null)}
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between gap-2">
+                    {user.employees ? (
+                      <div className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                        <span className="truncate text-muted-foreground">
+                          {user.employees.first_name} {user.employees.last_name}
+                        </span>
                       </div>
-                    </TableCell>
+                    ) : (
+                      <span className="text-xs text-muted-foreground flex-1">Eşleştirilmedi</span>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => setEditingUserId(user.id)}
+                    >
+                      <Link2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+              </div>
 
-                    {/* Rol */}
-                    <TableCell className="py-1 px-2 text-center">
-                      <Select
-                        value={currentRole}
-                        onValueChange={(role) => handleRoleChange(user.id, role)}
-                      >
-                        <SelectTrigger className="h-5 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Sistem Yöneticisi">🔐 Sistem Yöneticisi</SelectItem>
-                          <SelectItem value="Yönetici">👑 Yönetici</SelectItem>
-                          <SelectItem value="Satış Müdürü">👨‍💼 Satış Müdürü</SelectItem>
-                          <SelectItem value="Satış Temsilcisi">💼 Satış Temsilcisi</SelectItem>
-                          <SelectItem value="Muhasebe">💰 Muhasebe</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-
-                    {/* Çalışan Eşleştirme */}
-                    <TableCell className="py-1 px-2 text-center">
-                      {isEditing ? (
-                        <div className="flex items-center gap-2">
-                          <EmployeeSelector
-                            value={user.employee_id || ''}
-                            onChange={(employeeId) => handleEmployeeMatch(user.id, employeeId)}
-                            className="h-5 text-xs flex-1"
-                          />
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-5 w-5 p-0"
-                            onClick={() => setEditingUserId(null)}
-                          >
-                            <CheckCircle2 className="h-3 w-3 text-green-600" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-2">
-                          {user.employees ? (
-                            <div className="flex items-center gap-1.5 text-xs">
-                              <CheckCircle2 className="h-3 w-3 text-green-600" />
-                              <span className="truncate">
-                                {user.employees.first_name} {user.employees.last_name}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Eşleştirilmedi</span>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-5 w-5 p-0"
-                            onClick={() => setEditingUserId(user.id)}
-                          >
-                            <Link2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-
-                    {/* Durum */}
-                    <TableCell className="py-1 px-2 text-center">
-                      <Badge 
-                        variant={user.status === 'active' ? 'default' : 'secondary'}
-                        className={`text-xs ${
-                          user.status === 'active' 
-                            ? 'bg-green-100 text-green-700 border-green-200' 
-                            : 'bg-gray-100 text-gray-700 border-gray-200'
-                        }`}
-                      >
-                        {user.status === 'active' ? 'Aktif' : 'Pasif'}
-                      </Badge>
-                    </TableCell>
-
-                    {/* İşlem */}
-                    <TableCell className="py-1 px-2 text-right">
-                      <UserActions userId={user.id} />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+              {/* Actions */}
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <UserActions userId={user.id} />
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

@@ -7,14 +7,11 @@ interface UsersSettingsProps {
 }
 const UsersSettings = ({ isCollapsed, setIsCollapsed }: UsersSettingsProps) => {
   return (
-    <div className="space-y-6">
-        {/* Content */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
-          <div className="p-6">
-            <UserManagement />
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <UserManagement />
       </div>
+    </div>
   );
 };
 export default UsersSettings;

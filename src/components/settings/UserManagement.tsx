@@ -9,7 +9,7 @@ import { CompactRoleManagement } from "./CompactRoleManagement";
 import { InviteUserDialog } from "./InviteUserDialog";
 import { UserWithRoles } from "./types";
 import { Button } from "@/components/ui/button";
-import { Shield, Plus } from "lucide-react";
+import { Shield, Plus, Users } from "lucide-react";
 
 export const UserManagement = () => {
   const { toast } = useToast();
@@ -235,22 +235,36 @@ export const UserManagement = () => {
           />
 
           {/* Kullanıcı Listesi */}
-          <div className="bg-white rounded-lg border shadow-sm">
-            {/* Tablo Header + Yeni Kullanıcı Butonu */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-muted-foreground" />
-                <h3 className="text-sm font-medium text-foreground">Kullanıcılar</h3>
-                <span className="text-xs text-muted-foreground">({filteredUsers?.length || 0})</span>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200/60 overflow-hidden">
+            {/* Tablo Header + Stats */}
+            <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">Kullanıcı Listesi</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Toplam <span className="font-medium text-blue-600">{filteredUsers?.length || 0}</span> kullanıcı
+                  </p>
+                </div>
               </div>
               <InviteUserDialog />
             </div>
 
             {isLoading ? (
-              <div className="flex items-center justify-center h-[300px]">
+              <div className="flex items-center justify-center h-[400px]">
                 <div className="text-center space-y-4">
-                  <div className="w-6 h-6 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-sm text-muted-foreground">Kullanıcılar yükleniyor...</p>
+                  <div className="relative">
+                    <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-foreground">Kullanıcılar yükleniyor...</p>
+                    <p className="text-xs text-muted-foreground">Lütfen bekleyin</p>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -261,16 +275,29 @@ export const UserManagement = () => {
 
         {/* Sağ Taraf - Roller & İzinler (1/3) */}
         <div className="space-y-6">
-          <div className="bg-white rounded-lg border shadow-sm p-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200/60 overflow-hidden">
+            <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Shield className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">Rol Yönetimi</h3>
+                  <p className="text-xs text-muted-foreground">İzinleri düzenleyin</p>
+                </div>
+              </div>
+            </div>
             {rolesLoading ? (
-              <div className="flex items-center justify-center h-[200px]">
+              <div className="flex items-center justify-center h-[300px] p-5">
                 <div className="text-center space-y-4">
-                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-muted-foreground">Roller yükleniyor...</p>
+                  <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
+                  <p className="text-sm text-muted-foreground">Roller yükleniyor...</p>
                 </div>
               </div>
             ) : (
-              <CompactRoleManagement roles={roles} />
+              <div className="p-5">
+                <CompactRoleManagement roles={roles} />
+              </div>
             )}
           </div>
         </div>

@@ -41,27 +41,6 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Compact Summary Stats */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="text-center p-2 bg-green-50 rounded-lg border border-green-100">
-          <div className="text-sm font-bold text-green-700">
-            {showBalances ? formatCurrency(totalBalance, "TRY") : "••••••"}
-          </div>
-          <div className="text-xs text-green-600">Toplam</div>
-        </div>
-        <div className="text-center p-2 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="text-sm font-bold text-blue-700">
-            {cashAccounts.filter(acc => acc.is_active).length}
-          </div>
-          <div className="text-xs text-blue-600">Aktif</div>
-        </div>
-        <div className="text-center p-2 bg-purple-50 rounded-lg border border-purple-100">
-          <div className="text-sm font-bold text-purple-700">
-            {showBalances ? "0" : "••••"}
-          </div>
-          <div className="text-xs text-purple-600">İşlem</div>
-        </div>
-      </div>
 
       {/* Compact Accounts List */}
       <div className="space-y-2">

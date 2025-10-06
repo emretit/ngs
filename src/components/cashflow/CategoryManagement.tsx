@@ -124,14 +124,14 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
                     subcategories.length > 0 
                       ? `${isIncome ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'} font-semibold`
                       : `${isIncome ? 'bg-gray-100 text-gray-500' : 'bg-gray-100 text-gray-500'}`
-                  }`}>
-                    {subcategories.length}
-                  </span>
+                      }`}>
+                        {subcategories.length}
+                      </span>
                   {subcategories.length > 0 && (
                     isExpanded ? (
-                      <ChevronDown className="h-3 w-3 flex-shrink-0 transition-transform" />
-                    ) : (
-                      <ChevronRight className="h-3 w-3 flex-shrink-0 transition-transform" />
+                        <ChevronDown className="h-3 w-3 flex-shrink-0 transition-transform" />
+                      ) : (
+                        <ChevronRight className="h-3 w-3 flex-shrink-0 transition-transform" />
                     )
                   )}
                 </div>
@@ -536,7 +536,7 @@ const CategoryManagement = () => {
                 <div className="p-2 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
                   <TrendingDown className="h-4 w-4" />
                 </div>
-                <div>
+        <div>
                   <h2 className="text-sm font-bold text-gray-900">Gider Kategorileri</h2>
                   <p className="text-xs text-gray-500">Gider türleri ve kategorileri</p>
                 </div>
@@ -615,89 +615,89 @@ const CategoryManagement = () => {
         </div>
 
       {/* Create Dialog */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Yeni Kategori Oluştur</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmitCreate)} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium">Kategori Adı</Label>
-              <Input
-                id="name"
-                placeholder="Örn: Satış Geliri"
-                {...register('name', { required: 'Kategori adı gereklidir' })}
-                className="h-11"
-              />
-              {errors.name && (
-                <p className="text-sm text-red-600">{errors.name.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Kategori Türü</Label>
-              <select
-                value={watchedType}
-                onChange={(e) => setValue('type', e.target.value as 'income' | 'expense')}
-                disabled={watchedIsSubcategory}
-                className="w-full h-11 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="expense">🔴 Gider</option>
-                <option value="income">🟢 Gelir</option>
-              </select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isSubcategory"
-                {...register('isSubcategory')}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <Label htmlFor="isSubcategory" className="text-sm font-medium cursor-pointer">
-                Bu bir alt kategori
-              </Label>
-            </div>
-
-            {watchedIsSubcategory && (
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold">Yeni Kategori Oluştur</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmitCreate)} className="space-y-6">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Ana Kategori</Label>
-                <select
-                  {...register('parentCategoryId', { required: watchedIsSubcategory ? 'Ana kategori seçimi zorunludur' : false })}
-                  className="w-full h-11 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                >
-                  <option value="">Ana kategori seçiniz</option>
-                  {getCategoriesByType(watchedType).map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.parentCategoryId && (
-                  <p className="text-sm text-red-600">{errors.parentCategoryId.message}</p>
+                <Label htmlFor="name" className="text-sm font-medium">Kategori Adı</Label>
+                <Input
+                  id="name"
+                  placeholder="Örn: Satış Geliri"
+                  {...register('name', { required: 'Kategori adı gereklidir' })}
+                  className="h-11"
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-600">{errors.name.message}</p>
                 )}
               </div>
-            )}
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsCreateOpen(false)}
-                className="px-6"
-              >
-                İptal
-              </Button>
-              <Button type="submit" disabled={isSubmitting} className="px-6">
-                {isSubmitting
-                  ? (watchedIsSubcategory ? 'Alt Kategori Ekleniyor...' : 'Kategori Oluşturuluyor...')
-                  : (watchedIsSubcategory ? 'Alt Kategori Ekle' : 'Kategori Oluştur')
-                }
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Kategori Türü</Label>
+                <select
+                  value={watchedType}
+                  onChange={(e) => setValue('type', e.target.value as 'income' | 'expense')}
+                  disabled={watchedIsSubcategory}
+                  className="w-full h-11 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="expense">🔴 Gider</option>
+                  <option value="income">🟢 Gelir</option>
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isSubcategory"
+                  {...register('isSubcategory')}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <Label htmlFor="isSubcategory" className="text-sm font-medium cursor-pointer">
+                  Bu bir alt kategori
+                </Label>
+              </div>
+
+              {watchedIsSubcategory && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Ana Kategori</Label>
+                  <select
+                    {...register('parentCategoryId', { required: watchedIsSubcategory ? 'Ana kategori seçimi zorunludur' : false })}
+                    className="w-full h-11 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  >
+                    <option value="">Ana kategori seçiniz</option>
+                    {getCategoriesByType(watchedType).map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.parentCategoryId && (
+                    <p className="text-sm text-red-600">{errors.parentCategoryId.message}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="px-6"
+                >
+                  İptal
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="px-6">
+                  {isSubmitting
+                    ? (watchedIsSubcategory ? 'Alt Kategori Ekleniyor...' : 'Kategori Oluşturuluyor...')
+                    : (watchedIsSubcategory ? 'Alt Kategori Ekle' : 'Kategori Oluştur')
+                  }
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

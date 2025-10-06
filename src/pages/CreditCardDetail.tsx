@@ -40,6 +40,7 @@ import { useCreditCardDetail, useCreditCardTransactions } from "@/hooks/useAccou
 import { Skeleton } from "@/components/ui/skeleton";
 import CreditCardIncomeModal from "@/components/cashflow/modals/CreditCardIncomeModal";
 import CreditCardExpenseModal from "@/components/cashflow/modals/CreditCardExpenseModal";
+import TransferModal from "@/components/cashflow/modals/TransferModal";
 
 interface CreditCardDetailProps {
   isCollapsed: boolean;
@@ -54,6 +55,7 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   const [activeTab, setActiveTab] = useState("overview");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: card, isLoading: isLoadingCard, error: cardError } = useCreditCardDetail(id);
@@ -173,9 +175,9 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
 
   return (
     <div>
-      {/* Sticky Header - İstatistik kartları ile */}
-      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12">
+      {/* Sticky Header - optimize spacing */}
+      <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
           {/* Sol taraf - Başlık */}
           <div className="flex items-center gap-3">
             <Button 
@@ -261,12 +263,12 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
       </div>
 
       {/* Main Content */}
-      <div className="space-y-6">
+      <div className="space-y-3">
 
         {/* Main Grid Layout - Sol: Kompakt Bilgiler, Sağ: Geniş İşlem Geçmişi */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-2">
           {/* Sol Taraf - Kompakt Bilgiler ve İşlemler */}
-          <div className="space-y-6">
+          <div className="space-y-2">
             {/* Kart Bilgileri ve Hızlı İşlemler - Tek Kart */}
             <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
               <CardHeader className="pb-3">
@@ -333,6 +335,13 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
                       <Minus className="h-4 w-4 mr-2" />
                       Harcama Ekle
                     </Button>
+                    <Button 
+                      onClick={() => setIsTransferModalOpen(true)}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Transfer Yap
+                    </Button>
                     <div className="grid grid-cols-2 gap-2">
                       <Button variant="outline" size="sm" className="text-xs">
                         <Filter className="h-3 w-3 mr-1" />
@@ -350,7 +359,7 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
           </div>
 
           {/* Sağ Taraf - Geniş İşlem Geçmişi */}
-          <div className="xl:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-2">
             {/* İşlem Geçmişi */}
             <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
               <CardHeader className="pb-3">
@@ -361,34 +370,6 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
                     </div>
                     İşlem Geçmişi
                   </CardTitle>
-                  <div className="flex gap-1">
-                    <Button
-                      variant={filterType === "all" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterType("all")}
-                      className={filterType === "all" ? "bg-purple-600 hover:bg-purple-700" : "h-8 px-2 text-xs"}
-                    >
-                      Tümü
-                    </Button>
-                    <Button
-                      variant={filterType === "income" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterType("income")}
-                      className={filterType === "income" ? "bg-green-600 hover:bg-green-700" : "h-8 px-2 text-xs"}
-                    >
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      Ödeme
-                    </Button>
-                    <Button
-                      variant={filterType === "expense" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterType("expense")}
-                      className={filterType === "expense" ? "bg-red-600 hover:bg-red-700" : "h-8 px-2 text-xs"}
-                    >
-                      <TrendingDown className="h-3 w-3 mr-1" />
-                      Harcama
-                    </Button>
-                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
@@ -470,6 +451,14 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
           cardId={id}
           cardName={card?.card_name || ""}
           currency="TRY"
+        />
+        <TransferModal
+          isOpen={isTransferModalOpen}
+          onClose={() => setIsTransferModalOpen(false)}
+          onSuccess={() => {
+            setIsTransferModalOpen(false);
+            window.location.reload();
+          }}
         />
       </div>
     </div>

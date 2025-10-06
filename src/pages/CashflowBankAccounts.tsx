@@ -4,6 +4,7 @@ import CreditCards from "@/components/cashflow/CreditCards";
 import PartnerAccounts from "@/components/cashflow/PartnerAccounts";
 import { Building, Eye, EyeOff, Wallet, CreditCard, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/utils";
 import { useState, memo } from "react";
 import { useAllAccounts } from "@/hooks/useAccountsData";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -209,9 +210,14 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                   <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
                     <Wallet className="h-4 w-4" />
                   </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-gray-900">Nakit Kasa</h2>
-                    <p className="text-xs text-gray-500">Kasa işlemleri</p>
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <h2 className="text-sm font-bold text-gray-900">Nakit Kasa</h2>
+                      <p className="text-xs text-gray-500">Kasa işlemleri</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      {showBalances ? formatCurrency((allAccounts?.cashAccounts || []).reduce((s, a:any) => s + (a.current_balance || 0), 0), "TRY") : "••••••"}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -241,9 +247,14 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                   <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
                     <Building className="h-4 w-4" />
                   </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-gray-900">Banka Hesapları</h2>
-                    <p className="text-xs text-gray-500">Banka işlemleri</p>
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <h2 className="text-sm font-bold text-gray-900">Banka Hesapları</h2>
+                      <p className="text-xs text-gray-500">Banka işlemleri</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                      {showBalances ? formatCurrency((allAccounts?.bankAccounts || []).reduce((s, a:any) => s + ((a.currency === 'TRY' ? (a.current_balance || 0) : 0)), 0), "TRY") : "••••••"}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -273,9 +284,14 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                   <div className="p-2 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
                     <CreditCard className="h-4 w-4" />
                   </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-gray-900">Kredi Kartları</h2>
-                    <p className="text-xs text-gray-500">Kart limitleri</p>
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <h2 className="text-sm font-bold text-gray-900">Kredi Kartları</h2>
+                      <p className="text-xs text-gray-500">Kart limitleri</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
+                      {showBalances ? formatCurrency((allAccounts?.creditCards || []).reduce((s, a:any) => s + (a.available_limit || 0), 0), "TRY") : "••••••"}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -305,9 +321,14 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                   <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
                     <Users className="h-4 w-4" />
                   </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-gray-900">Şirket Ortakları</h2>
-                    <p className="text-xs text-gray-500">Ortak hesapları</p>
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <h2 className="text-sm font-bold text-gray-900">Şirket Ortakları</h2>
+                      <p className="text-xs text-gray-500">Ortak hesapları</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100">
+                      {showBalances ? formatCurrency((allAccounts?.partnerAccounts || []).reduce((s, a:any) => s + (a.current_balance || 0), 0), "TRY") : "••••••"}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

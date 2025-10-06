@@ -41,7 +41,8 @@ import {
   LayoutDashboard,
   ClipboardList,
   MessageSquare,
-  ClipboardCheck
+  ClipboardCheck,
+  ArrowRightLeft
 } from "lucide-react";
 
 export const navItems = [
@@ -202,6 +203,11 @@ export const navItems = [
         path: "/cashflow/bank-accounts",
         icon: Building,
         label: "Hesaplar",
+      },
+      {
+        path: "/cashflow/transfers",
+        icon: ArrowRightLeft,
+        label: "Transfer Geçmişi",
       },
     ],
   },

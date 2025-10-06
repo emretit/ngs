@@ -20,6 +20,7 @@ import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import CashIncomeModal from "@/components/cashflow/modals/CashIncomeModal";
 import CashExpenseModal from "@/components/cashflow/modals/CashExpenseModal";
+import TransferModal from "@/components/cashflow/modals/TransferModal";
 import { useCashAccountDetail, useCashAccountTransactions } from "@/hooks/useAccountDetail";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -35,6 +36,7 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: account, isLoading: isLoadingAccount, error: accountError } = useCashAccountDetail(id);
@@ -135,9 +137,9 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
 
 
   return (
-    <div className="p-6">
+    <div className="p-4">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
           {/* Sol taraf - Başlık */}
           <div className="flex items-center gap-3">
             <button 
@@ -172,7 +174,7 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
           {/* Toplam Bakiye */}
           <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-0 shadow-lg">
             <CardContent className="p-6">
@@ -226,7 +228,7 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-2 flex flex-wrap gap-2">
           <Button 
             onClick={() => setIsIncomeModalOpen(true)}
             className="bg-green-600 hover:bg-green-700 text-white"
@@ -242,6 +244,14 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
             <Minus className="h-4 w-4 mr-2" />
             Gider Ekle
           </Button>
+          <Button 
+            onClick={() => setIsTransferModalOpen(true)}
+            variant="outline"
+            className="border-blue-200 text-blue-700 hover:bg-blue-50"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Transfer Yap
+          </Button>
           <Button variant="outline" size="sm">
             <Filter className="h-4 w-4 mr-2" />
             Filtrele
@@ -249,36 +259,13 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
         </div>
 
         {/* Transactions Table */}
-        <Card className="mt-6">
+        <Card className="mt-3">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 İşlem Geçmişi
               </CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  variant={filterType === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterType("all")}
-                >
-                  Tümü
-                </Button>
-                <Button
-                  variant={filterType === "income" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterType("income")}
-                >
-                  Gelirler
-                </Button>
-                <Button
-                  variant={filterType === "expense" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilterType("expense")}
-                >
-                  Giderler
-                </Button>
-              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -349,6 +336,14 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
           accountId={id}
           accountName={account?.name || ""}
           currency={account?.currency || "TRY"}
+        />
+        <TransferModal
+          isOpen={isTransferModalOpen}
+          onClose={() => setIsTransferModalOpen(false)}
+          onSuccess={() => {
+            setIsTransferModalOpen(false);
+            window.location.reload();
+          }}
         />
       </div>
   );

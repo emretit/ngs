@@ -40,10 +40,12 @@ import {
   CustomTabsList, 
   CustomTabsTrigger 
 } from "@/components/ui/custom-tabs";
-import { usePartnerAccountDetail, usePartnerAccountTransactions } from "@/hooks/useAccountDetail";
+import { usePartnerAccountDetail, usePartnerAccountTransactions, useAccountTransfers } from "@/hooks/useAccountDetail";
 import { Skeleton } from "@/components/ui/skeleton";
 import PartnerIncomeModal from "@/components/cashflow/modals/PartnerIncomeModal";
 import PartnerExpenseModal from "@/components/cashflow/modals/PartnerExpenseModal";
+import PartnerAccountModal from "@/components/cashflow/modals/PartnerAccountModal";
+import TransferModal from "@/components/cashflow/modals/TransferModal";
 
 interface PartnerAccountDetailProps {
   isCollapsed: boolean;
@@ -58,6 +60,8 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
   const [activeTab, setActiveTab] = useState("overview");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedDateRange, setSelectedDateRange] = useState("all");
@@ -67,31 +71,60 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: account, isLoading: isLoadingAccount, error: accountError } = usePartnerAccountDetail(id);
   const { data: transactions = [], isLoading: isLoadingTransactions, refetch: refetchTransactions } = usePartnerAccountTransactions(id, 20);
+  const { data: transfers = [], isLoading: isLoadingTransfers } = useAccountTransfers('partner', id, 20);
   
-  const loading = isLoadingAccount || isLoadingTransactions;
+  const loading = isLoadingAccount || isLoadingTransactions || isLoadingTransfers;
+
+  // Tüm işlemleri (transactions + transfers) birleştir ve tarihe göre sırala
+  const allActivities = useMemo(() => {
+    if (!account) return [];
+    
+    // Transfer işlemlerini transaction formatına çevir
+    const transferActivities = transfers.map(transfer => ({
+      id: `transfer_${transfer.id}`,
+      type: transfer.direction === 'incoming' ? 'income' : 'expense',
+      amount: transfer.amount,
+      description: transfer.direction === 'incoming' 
+        ? `Transfer (${transfer.from_account_name || 'Bilinmeyen Hesap'} → Bu Hesap)`
+        : `Transfer (Bu Hesap → ${transfer.to_account_name || 'Bilinmeyen Hesap'})`,
+      transaction_date: transfer.transfer_date,
+      created_at: transfer.created_at,
+      updated_at: transfer.updated_at,
+      isTransfer: true,
+      transfer_direction: transfer.direction
+    }));
+
+    // Normal işlemler ve transfer işlemlerini birleştir
+    const allActivities = [
+      ...transactions.map(t => ({ ...t, isTransfer: false })),
+      ...transferActivities
+    ].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
+
+    return allActivities;
+  }, [transactions, transfers, account]);
 
   // Her işlemden sonraki toplam bakiyeyi hesapla
   const transactionsWithBalance = useMemo(() => {
     if (!account) return [];
     
     // İşlemleri tarihe göre sırala (en eski en üstte)
-    const sortedTransactions = [...transactions].sort((a, b) => 
+    const sortedActivities = [...allActivities].sort((a, b) => 
       new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
     );
     
     let runningBalance = account.initial_capital || 0;
     
-    return sortedTransactions.map(transaction => {
+    return sortedActivities.map(activity => {
       // İşlem tutarını hesapla
-      const amount = transaction.type === "income" ? transaction.amount : -transaction.amount;
+      const amount = activity.type === "income" ? activity.amount : -activity.amount;
       runningBalance += amount;
       
       return {
-        ...transaction,
+        ...activity,
         balanceAfter: runningBalance
       };
     }).reverse(); // En yeni en üstte olacak şekilde ters çevir
-  }, [transactions, account]);
+  }, [allActivities, account]);
 
   // Memoized calculations - sadece gerekli olduğunda yeniden hesapla
   const filteredTransactions = useMemo(() => {
@@ -265,9 +298,9 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
 
   return (
     <div>
-      {/* Sticky Header - İstatistik kartları ile */}
-      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12">
+      {/* Sticky Header - optimize spacing */}
+      <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
           {/* Sol taraf - Başlık */}
           <div className="flex items-center gap-3">
             <Button 
@@ -341,19 +374,12 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
             >
               <span className="font-medium">{showBalances ? "Gizle" : "Göster"}</span>
             </Button>
-            <Button 
-              onClick={handleEdit}
-              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-600/90 hover:from-orange-600/90 hover:to-orange-600/80 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
-            >
-              <Pencil className="h-4 w-4" />
-              <span>Düzenle</span>
-            </Button>
           </div>
         </div>
       </div>
 
       {/* Arama ve Filtreleme */}
-      <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 mb-2">
         <div className="relative min-w-[250px] flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
@@ -419,21 +445,34 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
       </div>
 
       {/* Main Content */}
-      <div className="space-y-6">
+      <div className="space-y-2">
 
         {/* Main Grid Layout - Sol: Kompakt Bilgiler, Sağ: Geniş İşlem Geçmişi */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-2">
           {/* Sol Taraf - Kompakt Bilgiler ve İşlemler */}
-          <div className="space-y-6">
+          <div className="space-y-2">
             {/* Ortak Bilgileri ve Hızlı İşlemler - Tek Kart */}
             <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-50 to-orange-50/50 border border-orange-200/50">
-                    <UserCheck className="h-4 w-4 text-orange-600" />
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-50 to-orange-50/50 border border-orange-200/50">
+                      <UserCheck className="h-4 w-4 text-orange-600" />
+                    </div>
+                    Ortak Bilgileri & İşlemler
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditModalOpen(true)}
+                      className="h-8 px-3 text-xs"
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Düzenle
+                    </Button>
                   </div>
-                  Ortak Bilgileri & İşlemler
-                </CardTitle>
+                </div>
               </CardHeader>
               <CardContent className="pt-0 space-y-4">
                 {/* Ortak Bilgileri - Kompakt */}
@@ -483,16 +522,13 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
                       <Minus className="h-4 w-4 mr-2" />
                       Gider Ekle
                     </Button>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" size="sm" className="text-xs">
-                        <Filter className="h-3 w-3 mr-1" />
-                        Filtrele
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-xs">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Tarih
-                      </Button>
-                    </div>
+                    <Button 
+                      onClick={() => setIsTransferModalOpen(true)}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Transfer Yap
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -500,7 +536,7 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
           </div>
 
           {/* Sağ Taraf - Geniş İşlem Geçmişi */}
-          <div className="xl:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-2">
             {/* İşlem Geçmişi */}
             <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
               <CardHeader className="pb-3">
@@ -511,34 +547,7 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
                     </div>
                     İşlem Geçmişi
                   </CardTitle>
-                  <div className="flex gap-1">
-                    <Button
-                      variant={filterType === "all" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterType("all")}
-                      className={filterType === "all" ? "bg-orange-600 hover:bg-orange-700" : "h-8 px-2 text-xs"}
-                    >
-                      Tümü
-                    </Button>
-                    <Button
-                      variant={filterType === "income" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterType("income")}
-                      className={filterType === "income" ? "bg-green-600 hover:bg-green-700" : "h-8 px-2 text-xs"}
-                    >
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      Gelir
-                    </Button>
-                    <Button
-                      variant={filterType === "expense" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterType("expense")}
-                      className={filterType === "expense" ? "bg-red-600 hover:bg-red-700" : "h-8 px-2 text-xs"}
-                    >
-                      <TrendingDown className="h-3 w-3 mr-1" />
-                      Gider
-                    </Button>
-                  </div>
+                  
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
@@ -578,12 +587,15 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-2 h-2 rounded-full ${
-                            transaction.type === "income" ? "bg-green-500" : "bg-red-500"
+                            transaction.isTransfer 
+                              ? (transaction.transfer_direction === 'incoming' ? "bg-blue-500" : "bg-purple-500")
+                              : (transaction.type === "income" ? "bg-green-500" : "bg-red-500")
                           }`}></div>
                           <div>
                             <p className="font-medium text-sm">{transaction.description}</p>
                             <p className="text-xs text-gray-500">
-                              {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')} • {transaction.category}
+                              {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')} • 
+                              {transaction.isTransfer ? 'Transfer' : transaction.category}
                             </p>
                             <p className="text-xs text-gray-400">
                               Güncellendi: {new Date(transaction.updated_at).toLocaleDateString('tr-TR')} {new Date(transaction.updated_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
@@ -593,7 +605,9 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
                         <div className="text-right">
                           <div className="flex flex-col items-end gap-1">
                             <p className={`font-bold ${
-                              transaction.type === "income" ? "text-green-600" : "text-red-600"
+                              transaction.isTransfer
+                                ? (transaction.transfer_direction === 'incoming' ? "text-blue-600" : "text-purple-600")
+                                : (transaction.type === "income" ? "text-green-600" : "text-red-600")
                             }`}>
                               {transaction.type === "income" ? "+" : "-"}
                               {showBalances ? formatCurrency(transaction.amount, account.currency) : "••••••"}
@@ -628,6 +642,28 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
           accountId={id}
           accountName={account?.partner_name || ""}
           currency={account?.currency || "TRY"}
+        />
+
+        {/* Düzenleme için mevcut modalı yeniden kullan */}
+        <PartnerAccountModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={() => {
+            setIsEditModalOpen(false);
+          }}
+          mode="edit"
+          accountId={id}
+        />
+
+        {/* Transfer Modal */}
+        <TransferModal
+          isOpen={isTransferModalOpen}
+          onClose={() => setIsTransferModalOpen(false)}
+          onSuccess={() => {
+            setIsTransferModalOpen(false);
+            // Refresh data after transfer
+            window.location.reload();
+          }}
         />
       </div>
     </div>

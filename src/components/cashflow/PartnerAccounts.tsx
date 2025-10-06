@@ -77,27 +77,6 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="text-center p-2 bg-orange-50 rounded-lg border border-orange-100">
-          <div className="text-sm font-bold text-orange-700">
-            {showBalances ? formatCurrency(totalCapital, "TRY") : "••••••"}
-          </div>
-          <div className="text-xs text-orange-600">Sermaye</div>
-        </div>
-        <div className="text-center p-2 bg-green-50 rounded-lg border border-green-100">
-          <div className="text-sm font-bold text-green-700">
-            {showBalances ? formatCurrency(totalCurrentBalance, "TRY") : "••••••"}
-          </div>
-          <div className="text-xs text-green-600">Değer</div>
-        </div>
-        <div className="text-center p-2 bg-purple-50 rounded-lg border border-purple-100">
-          <div className="text-sm font-bold text-purple-700">
-            {showBalances ? formatCurrency(totalProfitShare, "TRY") : "••••••"}
-          </div>
-          <div className="text-xs text-purple-600">Kar Payı</div>
-        </div>
-      </div>
 
 
       {/* Partners List */}

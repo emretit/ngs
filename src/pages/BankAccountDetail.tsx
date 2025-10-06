@@ -40,6 +40,7 @@ import { useBankAccountDetail, useBankAccountTransactions } from "@/hooks/useAcc
 import { Skeleton } from "@/components/ui/skeleton";
 import BankIncomeModal from "@/components/cashflow/modals/BankIncomeModal";
 import BankExpenseModal from "@/components/cashflow/modals/BankExpenseModal";
+import TransferModal from "@/components/cashflow/modals/TransferModal";
 
 interface BankAccountDetailProps {
   isCollapsed: boolean;
@@ -54,6 +55,7 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
   const [activeTab, setActiveTab] = useState("overview");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: account, isLoading: isLoadingAccount, error: accountError } = useBankAccountDetail(id);
@@ -174,9 +176,9 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
 
   return (
     <div>
-      {/* Sticky Header - İstatistik kartları ile */}
-      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12">
+      {/* Sticky Header - optimize spacing */}
+      <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
           {/* Sol taraf - Başlık */}
           <div className="flex items-center gap-3">
             <Button 
@@ -262,12 +264,12 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
       </div>
 
       {/* Main Content */}
-      <div className="space-y-6">
+      <div className="space-y-3">
 
         {/* Main Grid Layout - Sol: Kompakt Bilgiler, Sağ: Geniş İşlem Geçmişi */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-2">
           {/* Sol Taraf - Kompakt Bilgiler ve İşlemler */}
-          <div className="space-y-6">
+          <div className="space-y-2">
             {/* Hesap Bilgileri ve Hızlı İşlemler - Tek Kart */}
             <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
               <CardHeader className="pb-3">
@@ -334,6 +336,13 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
                       <Minus className="h-4 w-4 mr-2" />
                       Gider Ekle
                     </Button>
+                    <Button 
+                      onClick={() => setIsTransferModalOpen(true)}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Transfer Yap
+                    </Button>
                     <div className="grid grid-cols-2 gap-2">
                       <Button variant="outline" size="sm" className="text-xs">
                         <Filter className="h-3 w-3 mr-1" />
@@ -351,7 +360,7 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
           </div>
 
           {/* Sağ Taraf - Geniş İşlem Geçmişi */}
-          <div className="xl:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-2">
             {/* İşlem Geçmişi */}
             <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
               <CardHeader className="pb-3">
@@ -362,34 +371,6 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
                     </div>
                     İşlem Geçmişi
                   </CardTitle>
-                  <div className="flex gap-1">
-                    <Button
-                      variant={filterType === "all" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterType("all")}
-                      className={filterType === "all" ? "bg-blue-600 hover:bg-blue-700" : "h-8 px-2 text-xs"}
-                    >
-                      Tümü
-                    </Button>
-                    <Button
-                      variant={filterType === "income" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterType("income")}
-                      className={filterType === "income" ? "bg-green-600 hover:bg-green-700" : "h-8 px-2 text-xs"}
-                    >
-                      <TrendingUp className="h-3 w-3 mr-1" />
-                      Gelir
-                    </Button>
-                    <Button
-                      variant={filterType === "expense" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilterType("expense")}
-                      className={filterType === "expense" ? "bg-red-600 hover:bg-red-700" : "h-8 px-2 text-xs"}
-                    >
-                      <TrendingDown className="h-3 w-3 mr-1" />
-                      Gider
-                    </Button>
-                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
@@ -471,6 +452,14 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
           accountId={id}
           accountName={account?.account_name || ""}
           currency={account?.currency || "TRY"}
+        />
+        <TransferModal
+          isOpen={isTransferModalOpen}
+          onClose={() => setIsTransferModalOpen(false)}
+          onSuccess={() => {
+            setIsTransferModalOpen(false);
+            window.location.reload();
+          }}
         />
       </div>
     </div>

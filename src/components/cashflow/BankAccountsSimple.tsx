@@ -77,27 +77,6 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="text-center p-2 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="text-sm font-bold text-blue-700">
-            {showBalances ? formatCurrency(totalBankBalance, "TRY") : "••••••"}
-          </div>
-          <div className="text-xs text-blue-600">Toplam</div>
-        </div>
-        <div className="text-center p-2 bg-green-50 rounded-lg border border-green-100">
-          <div className="text-sm font-bold text-green-700">
-            {activeAccounts}
-          </div>
-          <div className="text-xs text-green-600">Aktif</div>
-        </div>
-        <div className="text-center p-2 bg-purple-50 rounded-lg border border-purple-100">
-          <div className="text-sm font-bold text-purple-700">
-            {bankAccounts.length}
-          </div>
-          <div className="text-xs text-purple-600">Toplam</div>
-        </div>
-      </div>
 
 
       {/* Accounts List */}

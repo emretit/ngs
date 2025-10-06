@@ -81,27 +81,6 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Compact Summary Stats */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="text-center p-2 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="text-sm font-bold text-blue-700">
-            {showBalances ? formatCurrency(totalCreditLimit, "TRY") : "••••••"}
-          </div>
-          <div className="text-xs text-blue-600">Toplam</div>
-        </div>
-        <div className="text-center p-2 bg-red-50 rounded-lg border border-red-100">
-          <div className="text-sm font-bold text-red-700">
-            {showBalances ? formatCurrency(totalCurrentBalance, "TRY") : "••••••"}
-          </div>
-          <div className="text-xs text-red-600">Kullanılan</div>
-        </div>
-        <div className="text-center p-2 bg-green-50 rounded-lg border border-green-100">
-          <div className="text-sm font-bold text-green-700">
-            {showBalances ? formatCurrency(totalAvailableLimit, "TRY") : "••••••"}
-          </div>
-          <div className="text-xs text-green-600">Kalan</div>
-        </div>
-      </div>
 
 
       {/* Compact Cards List */}

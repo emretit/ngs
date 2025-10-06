@@ -69,6 +69,23 @@ interface Transaction {
   reference?: string;
 }
 
+interface TransferTransaction {
+  id: string;
+  from_account_type: string;
+  from_account_id: string;
+  to_account_type: string;
+  to_account_id: string;
+  amount: number;
+  currency: string;
+  description?: string;
+  transfer_date: string;
+  created_at: string;
+  updated_at: string;
+  // İlişkili hesap bilgileri
+  from_account_name?: string;
+  to_account_name?: string;
+}
+
 // Company ID cache - useAccountsData.ts'den import edilecek
 let companyIdCache: string | null = null;
 let companyIdPromise: Promise<string> | null = null;
@@ -330,5 +347,64 @@ export function usePartnerAccountTransactions(accountId: string | undefined, lim
     gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
     retry: 1, // Daha az retry
     retryDelay: 500, // Daha hızlı retry
+  });
+}
+
+// Transfer Transactions - Belirli bir hesap için gelen/giden transferler
+export function useAccountTransfers(accountType: string, accountId: string | undefined, limit: number = 20) {
+  return useQuery({
+    queryKey: ['account-transfers', accountType, accountId, limit],
+    queryFn: async () => {
+      if (!accountId) throw new Error("Hesap ID bulunamadı");
+
+      // Hem gelen hem giden transferleri çek
+      const [outgoingTransfers, incomingTransfers] = await Promise.all([
+        // Giden transferler (bu hesaptan başka hesaplara)
+        supabase
+          .from('account_transfers')
+          .select(`
+            *,
+            to_account_name:to_account_id
+          `)
+          .eq('from_account_type', accountType)
+          .eq('from_account_id', accountId)
+          .order('transfer_date', { ascending: false })
+          .limit(limit),
+        
+        // Gelen transferler (başka hesaplardan bu hesaba)
+        supabase
+          .from('account_transfers')
+          .select(`
+            *,
+            from_account_name:from_account_id
+          `)
+          .eq('to_account_type', accountType)
+          .eq('to_account_id', accountId)
+          .order('transfer_date', { ascending: false })
+          .limit(limit)
+      ]);
+
+      if (outgoingTransfers.error) throw outgoingTransfers.error;
+      if (incomingTransfers.error) throw incomingTransfers.error;
+
+      // Transferleri birleştir ve tarihe göre sırala
+      const allTransfers = [
+        ...(outgoingTransfers.data || []).map(transfer => ({
+          ...transfer,
+          direction: 'outgoing' as const
+        })),
+        ...(incomingTransfers.data || []).map(transfer => ({
+          ...transfer,
+          direction: 'incoming' as const
+        }))
+      ].sort((a, b) => new Date(b.transfer_date).getTime() - new Date(a.transfer_date).getTime());
+
+      return allTransfers.slice(0, limit) as (TransferTransaction & { direction: 'incoming' | 'outgoing' })[];
+    },
+    enabled: !!accountId,
+    staleTime: 1000 * 60 * 5, // 5 dakika cache
+    gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
+    retry: 1,
+    retryDelay: 500,
   });
 }

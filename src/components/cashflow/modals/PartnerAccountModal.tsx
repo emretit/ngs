@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ interface PartnerAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  mode?: 'create' | 'edit';
+  accountId?: string; // edit modunda kullanılacak
 }
 
 interface PartnerAccountFormData {
@@ -20,29 +22,52 @@ interface PartnerAccountFormData {
   ownership_percentage: string;
   initial_capital: string;
   currency: string;
-  contact_info: {
-    email: string;
-    phone: string;
-    address: string;
-  };
   investment_date: string;
 }
 
-const PartnerAccountModal = ({ isOpen, onClose, onSuccess }: PartnerAccountModalProps) => {
+const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', accountId }: PartnerAccountModalProps) => {
   const [formData, setFormData] = useState<PartnerAccountFormData>({
     partner_name: "",
     partner_type: "ortak",
     ownership_percentage: "",
     initial_capital: "",
     currency: "TRY",
-    contact_info: {
-      email: "",
-      phone: "",
-      address: ""
-    },
     investment_date: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isPrefilling, setIsPrefilling] = useState(false);
+
+  // Edit modunda formu Supabase'den doldur
+  useEffect(() => {
+    const prefill = async () => {
+      if (!isOpen || mode !== 'edit' || !accountId) return;
+      setIsPrefilling(true);
+      try {
+        const { data, error } = await supabase
+          .from('partner_accounts')
+          .select('partner_name, partner_type, ownership_percentage, initial_capital, currency, investment_date')
+          .eq('id', accountId)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setFormData({
+            partner_name: data.partner_name || "",
+            partner_type: data.partner_type || 'ortak',
+            ownership_percentage: data.ownership_percentage != null ? String(data.ownership_percentage) : "",
+            initial_capital: data.initial_capital != null ? String(data.initial_capital) : "",
+            currency: data.currency || 'TRY',
+            investment_date: data.investment_date || "",
+          });
+        }
+      } catch (e) {
+        console.error('Error pre-filling partner account:', e);
+      } finally {
+        setIsPrefilling(false);
+      }
+    };
+    prefill();
+  }, [isOpen, mode, accountId]);
 
   const handleInputChange = (field: keyof PartnerAccountFormData, value: string) => {
     setFormData(prev => ({
@@ -51,15 +76,6 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess }: PartnerAccountModal
     }));
   };
 
-  const handleContactInfoChange = (field: keyof PartnerAccountFormData['contact_info'], value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      contact_info: {
-        ...prev.contact_info,
-        [field]: value
-      }
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,25 +115,37 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess }: PartnerAccountModal
         throw new Error("Şirket bilgisi bulunamadı");
       }
 
-      const { error } = await supabase
-        .from('partner_accounts')
-        .insert({
-          partner_name: formData.partner_name.trim(),
-          partner_type: formData.partner_type,
-          ownership_percentage: formData.ownership_percentage ? parseFloat(formData.ownership_percentage) : null,
-          initial_capital: formData.initial_capital ? parseFloat(formData.initial_capital) : null,
-          currency: formData.currency,
-          contact_info: formData.contact_info,
-          investment_date: formData.investment_date || null,
-          company_id: profile.company_id
-        });
+      if (mode === 'edit' && accountId) {
+        const { error } = await supabase
+          .from('partner_accounts')
+          .update({
+            partner_name: formData.partner_name.trim(),
+            partner_type: formData.partner_type,
+            ownership_percentage: formData.ownership_percentage ? parseFloat(formData.ownership_percentage) : null,
+            initial_capital: formData.initial_capital ? parseFloat(formData.initial_capital) : null,
+            currency: formData.currency,
+            investment_date: formData.investment_date || null,
+          })
+          .eq('id', accountId);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast({ title: 'Güncellendi', description: 'Ortak hesabı güncellendi' });
+      } else {
+        const { error } = await supabase
+          .from('partner_accounts')
+          .insert({
+            partner_name: formData.partner_name.trim(),
+            partner_type: formData.partner_type,
+            ownership_percentage: formData.ownership_percentage ? parseFloat(formData.ownership_percentage) : null,
+            initial_capital: formData.initial_capital ? parseFloat(formData.initial_capital) : null,
+            currency: formData.currency,
+            investment_date: formData.investment_date || null,
+            company_id: profile.company_id
+          });
 
-      toast({
-        title: "Başarılı",
-        description: "Ortak hesabı oluşturuldu"
-      });
+        if (error) throw error;
+        toast({ title: 'Başarılı', description: 'Ortak hesabı oluşturuldu' });
+      }
 
       onSuccess();
       onClose();
@@ -127,11 +155,6 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess }: PartnerAccountModal
         ownership_percentage: "",
         initial_capital: "",
         currency: "TRY",
-        contact_info: {
-          email: "",
-          phone: "",
-          address: ""
-        },
         investment_date: ""
       });
     } catch (error) {
@@ -150,7 +173,7 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess }: PartnerAccountModal
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Yeni Ortak Hesabı</DialogTitle>
+          <DialogTitle>{mode === 'edit' ? 'Ortak Hesabı Düzenle' : 'Yeni Ortak Hesabı'}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -237,50 +260,13 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess }: PartnerAccountModal
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium">İletişim Bilgileri</h4>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">E-posta</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.contact_info.email}
-                  onChange={(e) => handleContactInfoChange('email', e.target.value)}
-                  placeholder="ornek@email.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefon</Label>
-                <Input
-                  id="phone"
-                  value={formData.contact_info.phone}
-                  onChange={(e) => handleContactInfoChange('phone', e.target.value)}
-                  placeholder="+90 555 123 45 67"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Adres</Label>
-              <Textarea
-                id="address"
-                value={formData.contact_info.address}
-                onChange={(e) => handleContactInfoChange('address', e.target.value)}
-                placeholder="Adres bilgisi"
-                rows={3}
-              />
-            </div>
-          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               İptal
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Oluşturuluyor..." : "Oluştur"}
+            <Button type="submit" disabled={isLoading || isPrefilling}>
+              {isLoading ? (mode === 'edit' ? 'Güncelleniyor...' : 'Oluşturuluyor...') : (mode === 'edit' ? 'Kaydet' : 'Oluştur')}
             </Button>
           </DialogFooter>
         </form>

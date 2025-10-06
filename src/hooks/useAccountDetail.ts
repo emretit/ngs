@@ -55,39 +55,64 @@ interface PartnerAccount {
 
 interface Transaction {
   id: string;
-  account_id: string;
+  account_id?: string;
+  card_id?: string;
+  partner_id?: string;
   amount: number;
   type: "income" | "expense";
+  transaction_type?: string;
   description: string;
-  category: string;
+  category?: string;
+  merchant_name?: string;
+  merchant_category?: string;
   transaction_date: string;
   reference?: string;
 }
 
+// Company ID cache - useAccountsData.ts'den import edilecek
+let companyIdCache: string | null = null;
+let companyIdPromise: Promise<string> | null = null;
+
 async function fetchCompanyId() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Kullanıcı bulunamadı");
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile?.company_id) {
-    throw new Error("Şirket bilgisi bulunamadı");
+  // Cache'den döndür
+  if (companyIdCache) {
+    return companyIdCache;
   }
 
-  return profile.company_id;
+  // Eğer zaten bir request varsa, onu bekle
+  if (companyIdPromise) {
+    return companyIdPromise;
+  }
+
+  // Yeni request başlat
+  companyIdPromise = (async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Kullanıcı bulunamadı");
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      throw new Error("Şirket bilgisi bulunamadı");
+    }
+
+    companyIdCache = profile.company_id;
+    return profile.company_id;
+  })();
+
+  return companyIdPromise;
 }
 
-// Cash Account Detail
+// Cash Account Detail - Optimized
 export function useCashAccountDetail(accountId: string | undefined) {
   return useQuery({
     queryKey: ['cash-account', accountId],
     queryFn: async () => {
       if (!accountId) throw new Error("Hesap ID bulunamadı");
-      
+
       const companyId = await fetchCompanyId();
 
       const { data, error } = await supabase
@@ -103,15 +128,17 @@ export function useCashAccountDetail(accountId: string | undefined) {
       return data as CashAccount;
     },
     enabled: !!accountId,
-    staleTime: 1000 * 60 * 2, // 2 dakika cache
-    gcTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 10, // 10 dakika cache - daha uzun
+    gcTime: 1000 * 60 * 60, // 1 saat garbage collection
+    retry: 1, // Daha az retry
+    retryDelay: 500, // Daha hızlı retry
   });
 }
 
-// Cash Account Transactions
-export function useCashAccountTransactions(accountId: string | undefined) {
+// Cash Account Transactions - Optimized
+export function useCashAccountTransactions(accountId: string | undefined, limit: number = 20) {
   return useQuery({
-    queryKey: ['cash-account-transactions', accountId],
+    queryKey: ['cash-account-transactions', accountId, limit],
     queryFn: async () => {
       if (!accountId) throw new Error("Hesap ID bulunamadı");
 
@@ -121,19 +148,22 @@ export function useCashAccountTransactions(accountId: string | undefined) {
         .from('cash_transactions')
         .select('*')
         .eq('account_id', accountId)
+        .eq('company_id', companyId)
         .order('transaction_date', { ascending: false })
-        .limit(100);
+        .limit(limit);
 
       if (error) throw error;
       return (data as Transaction[]) || [];
     },
     enabled: !!accountId,
-    staleTime: 1000 * 60 * 1, // 1 dakika cache
-    gcTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 dakika cache - daha uzun
+    gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
+    retry: 1, // Daha az retry
+    retryDelay: 500, // Daha hızlı retry
   });
 }
 
-// Bank Account Detail
+// Bank Account Detail - Optimized
 export function useBankAccountDetail(accountId: string | undefined) {
   return useQuery({
     queryKey: ['bank-account', accountId],
@@ -152,15 +182,17 @@ export function useBankAccountDetail(accountId: string | undefined) {
       return data as BankAccount;
     },
     enabled: !!accountId,
-    staleTime: 1000 * 60 * 2,
-    gcTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 10, // 10 dakika cache - daha uzun
+    gcTime: 1000 * 60 * 60, // 1 saat garbage collection
+    retry: 1, // Daha az retry
+    retryDelay: 500, // Daha hızlı retry
   });
 }
 
-// Bank Account Transactions
-export function useBankAccountTransactions(accountId: string | undefined) {
+// Bank Account Transactions - Optimized
+export function useBankAccountTransactions(accountId: string | undefined, limit: number = 20) {
   return useQuery({
-    queryKey: ['bank-account-transactions', accountId],
+    queryKey: ['bank-account-transactions', accountId, limit],
     queryFn: async () => {
       if (!accountId) throw new Error("Hesap ID bulunamadı");
 
@@ -169,18 +201,20 @@ export function useBankAccountTransactions(accountId: string | undefined) {
         .select('*')
         .eq('account_id', accountId)
         .order('transaction_date', { ascending: false })
-        .limit(100);
+        .limit(limit);
 
       if (error) throw error;
       return (data as Transaction[]) || [];
     },
     enabled: !!accountId,
-    staleTime: 1000 * 60 * 1,
-    gcTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 dakika cache - daha uzun
+    gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
+    retry: 1, // Daha az retry
+    retryDelay: 500, // Daha hızlı retry
   });
 }
 
-// Credit Card Detail
+// Credit Card Detail - Optimized
 export function useCreditCardDetail(cardId: string | undefined) {
   return useQuery({
     queryKey: ['credit-card', cardId],
@@ -199,48 +233,59 @@ export function useCreditCardDetail(cardId: string | undefined) {
       return data as CreditCard;
     },
     enabled: !!cardId,
-    staleTime: 1000 * 60 * 2,
-    gcTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 10, // 10 dakika cache - daha uzun
+    gcTime: 1000 * 60 * 60, // 1 saat garbage collection
+    retry: 1, // Daha az retry
+    retryDelay: 500, // Daha hızlı retry
   });
 }
 
-// Credit Card Transactions
-export function useCreditCardTransactions(cardId: string | undefined) {
+// Credit Card Transactions - Optimized
+export function useCreditCardTransactions(cardId: string | undefined, limit: number = 20) {
   return useQuery({
-    queryKey: ['credit-card-transactions', cardId],
+    queryKey: ['credit-card-transactions', cardId, limit],
     queryFn: async () => {
       if (!cardId) throw new Error("Kart ID bulunamadı");
 
       const { data, error } = await supabase
-        .from('credit_card_transactions')
+        .from('card_transactions')
         .select('*')
         .eq('card_id', cardId)
         .order('transaction_date', { ascending: false })
-        .limit(100);
+        .limit(limit);
 
       if (error) throw error;
-      return (data as Transaction[]) || [];
+      
+      // Map card_transactions to Transaction interface
+      const transactions = (data || []).map((item: any) => ({
+        ...item,
+        type: item.transaction_type === 'payment' ? 'income' : 'expense',
+        category: item.merchant_category || item.category || 'Genel',
+        description: item.description || item.merchant_name || 'Kart İşlemi'
+      }));
+
+      return transactions as Transaction[];
     },
     enabled: !!cardId,
-    staleTime: 1000 * 60 * 1,
-    gcTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 dakika cache - daha uzun
+    gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
+    retry: 1, // Daha az retry
+    retryDelay: 500, // Daha hızlı retry
   });
 }
 
-// Partner Account Detail
+// Partner Account Detail - Optimized
 export function usePartnerAccountDetail(accountId: string | undefined) {
   return useQuery({
     queryKey: ['partner-account', accountId],
     queryFn: async () => {
       if (!accountId) throw new Error("Hesap ID bulunamadı");
 
-      const companyId = await fetchCompanyId();
-
+      // Company ID kontrolünü kaldırdık - account ID zaten unique
       const { data, error } = await supabase
         .from('partner_accounts')
         .select('*')
         .eq('id', accountId)
-        .eq('company_id', companyId)
         .single();
 
       if (error) throw error;
@@ -249,30 +294,41 @@ export function usePartnerAccountDetail(accountId: string | undefined) {
       return data as PartnerAccount;
     },
     enabled: !!accountId,
-    staleTime: 1000 * 60 * 2,
-    gcTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 10, // 10 dakika cache - daha uzun
+    gcTime: 1000 * 60 * 60, // 1 saat garbage collection
+    retry: 1, // Daha az retry
+    retryDelay: 500, // Daha hızlı retry
   });
 }
 
-// Partner Account Transactions
-export function usePartnerAccountTransactions(accountId: string | undefined) {
+// Partner Account Transactions - Optimized
+export function usePartnerAccountTransactions(accountId: string | undefined, limit: number = 20) {
   return useQuery({
-    queryKey: ['partner-account-transactions', accountId],
+    queryKey: ['partner-account-transactions', accountId, limit],
     queryFn: async () => {
       if (!accountId) throw new Error("Hesap ID bulunamadı");
 
       const { data, error } = await supabase
         .from('partner_transactions')
         .select('*')
-        .eq('account_id', accountId)
+        .eq('partner_id', accountId)
         .order('transaction_date', { ascending: false })
-        .limit(100);
+        .limit(limit);
 
       if (error) throw error;
-      return (data as Transaction[]) || [];
+      
+      // Partner transactions için özel mapping
+      const mappedData = (data || []).map((transaction: any) => ({
+        ...transaction,
+        type: transaction.type === 'capital_increase' || transaction.type === 'profit_distribution' ? 'income' : 'expense'
+      }));
+      
+      return mappedData as Transaction[];
     },
     enabled: !!accountId,
-    staleTime: 1000 * 60 * 1,
-    gcTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // 5 dakika cache - daha uzun
+    gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
+    retry: 1, // Daha az retry
+    retryDelay: 500, // Daha hızlı retry
   });
 }

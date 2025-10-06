@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Plus, Edit, Trash2, Eye, EyeOff, ExternalLink } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { CreditCard, Plus, Edit, Trash2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import CreditCardModal from "./modals/CreditCardModal";
+import { useCreditCards } from "@/hooks/useAccountsData";
+import AccountsSkeleton from "./AccountsSkeleton";
 
 interface CreditCardAccount {
   id: string;
@@ -29,64 +28,9 @@ interface CreditCardsProps {
 }
 
 const CreditCards = ({ showBalances }: CreditCardsProps) => {
-  const [creditCards, setCreditCards] = useState<CreditCardAccount[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-
-  const fetchCreditCards = async () => {
-    try {
-      setLoading(true);
-      // TODO: Supabase'den kredi kartı hesaplarını çek
-      // Şimdilik mock data
-      const mockData: CreditCardAccount[] = [
-        {
-          id: "1",
-          card_name: "İş Bankası Kredi Kartı",
-          card_number: "1234-5678-9012-3456",
-          bank_name: "Türkiye İş Bankası",
-          card_type: "credit",
-          credit_limit: 50000,
-          current_balance: 15000,
-          available_limit: 35000,
-          currency: "TRY",
-          expiry_date: "12/25",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: "2",
-          card_name: "Garanti Kurumsal Kart",
-          card_number: "9876-5432-1098-7654",
-          bank_name: "Garanti BBVA",
-          card_type: "corporate",
-          credit_limit: 100000,
-          current_balance: 25000,
-          available_limit: 75000,
-          currency: "TRY",
-          expiry_date: "08/26",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
-      setCreditCards(mockData);
-    } catch (error) {
-      console.error('Error fetching credit cards:', error);
-      toast({
-        title: "Hata",
-        description: "Kredi kartları yüklenirken hata oluştu",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCreditCards();
-  }, []);
+  const { data: creditCards = [], isLoading, refetch } = useCreditCards();
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -124,20 +68,15 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
   };
 
   const handleModalSuccess = () => {
-    fetchCreditCards();
+    refetch();
   };
 
   const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.credit_limit, 0);
   const totalCurrentBalance = creditCards.reduce((sum, card) => sum + card.current_balance, 0);
   const totalAvailableLimit = creditCards.reduce((sum, card) => sum + card.available_limit, 0);
 
-  if (loading) {
-    return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-muted-foreground">Yükleniyor...</p>
-      </div>
-    );
+  if (isLoading) {
+    return <AccountsSkeleton />;
   }
 
   return (

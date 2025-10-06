@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ interface CashAccountDetailProps {
   setIsCollapsed: (value: boolean) => void;
 }
 
-const CashAccountDetail = ({ isCollapsed, setIsCollapsed }: CashAccountDetailProps) => {
+const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDetailProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showBalances, setShowBalances] = useState(true);
@@ -38,9 +38,29 @@ const CashAccountDetail = ({ isCollapsed, setIsCollapsed }: CashAccountDetailPro
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: account, isLoading: isLoadingAccount, error: accountError } = useCashAccountDetail(id);
-  const { data: transactions = [], isLoading: isLoadingTransactions, refetch: refetchTransactions } = useCashAccountTransactions(id);
+  const { data: transactions = [], isLoading: isLoadingTransactions, refetch: refetchTransactions } = useCashAccountTransactions(id, 20);
   
   const loading = isLoadingAccount || isLoadingTransactions;
+
+  // Memoized calculations - sadece gerekli olduğunda yeniden hesapla
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(transaction => {
+      if (filterType === "all") return true;
+      return transaction.type === filterType;
+    });
+  }, [transactions, filterType]);
+
+  const totalIncome = useMemo(() => {
+    return transactions
+      .filter(t => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
+
+  const totalExpense = useMemo(() => {
+    return transactions
+      .filter(t => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
 
   const handleIncomeSuccess = () => {
     setIsIncomeModalOpen(false);
@@ -60,13 +80,41 @@ const CashAccountDetail = ({ isCollapsed, setIsCollapsed }: CashAccountDetailPro
     return (
       <div className="p-4 sm:p-8">
         <div className="max-w-[1600px] mx-auto space-y-6">
-          <Skeleton className="h-20 w-full" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
+          {/* Sticky Header Skeleton */}
+          <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-4 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-24" />
+            </div>
           </div>
-          <Skeleton className="h-96 w-full" />
+
+          {/* Main Content Skeleton */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Sol taraf */}
+            <div className="space-y-6">
+              <Skeleton className="h-48 w-full rounded-2xl" />
+              <Skeleton className="h-32 w-full rounded-2xl" />
+            </div>
+            {/* Sağ taraf */}
+            <div className="xl:col-span-2 space-y-6">
+              <Skeleton className="h-96 w-full rounded-2xl" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -85,18 +133,6 @@ const CashAccountDetail = ({ isCollapsed, setIsCollapsed }: CashAccountDetailPro
     );
   }
 
-  const filteredTransactions = transactions.filter(transaction => {
-    if (filterType === "all") return true;
-    return transaction.type === filterType;
-  });
-
-  const totalIncome = transactions
-    .filter(t => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalExpense = transactions
-    .filter(t => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <div className="p-6">
@@ -316,6 +352,6 @@ const CashAccountDetail = ({ isCollapsed, setIsCollapsed }: CashAccountDetailPro
         />
       </div>
   );
-};
+});
 
 export default CashAccountDetail;

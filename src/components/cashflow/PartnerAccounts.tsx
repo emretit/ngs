@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Edit, Trash2, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
 import PartnerAccountModal from "./modals/PartnerAccountModal";
 import { usePartnerAccounts } from "@/hooks/useAccountsData";
 import AccountsSkeleton from "./AccountsSkeleton";
@@ -28,62 +27,9 @@ interface PartnerAccountsProps {
 }
 
 const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
-  const [partnerAccounts, setPartnerAccounts] = useState<PartnerAccount[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-
-  const fetchPartnerAccounts = async () => {
-    try {
-      setLoading(true);
-      // TODO: Supabase'den ortak hesaplarını çek
-      // Şimdilik mock data
-      const mockData: PartnerAccount[] = [
-        {
-          id: "1",
-          partner_name: "Ahmet Yılmaz",
-          partner_type: "ortak",
-          ownership_percentage: 60,
-          initial_capital: 300000,
-          current_balance: 450000,
-          profit_share: 18000,
-          last_profit_distribution: "2024-01-15",
-          currency: "TRY",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: "2",
-          partner_name: "Mehmet Demir",
-          partner_type: "ortak",
-          ownership_percentage: 40,
-          initial_capital: 200000,
-          current_balance: 300000,
-          profit_share: 12000,
-          last_profit_distribution: "2024-01-15",
-          currency: "TRY",
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ];
-      setPartnerAccounts(mockData);
-    } catch (error) {
-      console.error('Error fetching partner accounts:', error);
-      toast({
-        title: "Hata",
-        description: "Ortak hesapları yüklenirken hata oluştu",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPartnerAccounts();
-  }, []);
+  const { data: partnerAccounts = [], isLoading, refetch } = usePartnerAccounts();
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -117,7 +63,7 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
   };
 
   const handleModalSuccess = () => {
-    fetchPartnerAccounts();
+    refetch();
   };
 
   const totalCapital = partnerAccounts.reduce((sum, partner) => sum + partner.initial_capital, 0);
@@ -125,13 +71,8 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
   const totalProfitShare = partnerAccounts.reduce((sum, partner) => sum + partner.profit_share, 0);
   const totalOwnership = partnerAccounts.reduce((sum, partner) => sum + partner.ownership_percentage, 0);
 
-  if (loading) {
-    return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-        <p className="mt-2 text-muted-foreground">Yükleniyor...</p>
-      </div>
-    );
+  if (isLoading) {
+    return <AccountsSkeleton />;
   }
 
   return (

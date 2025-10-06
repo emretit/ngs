@@ -1,8 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { 
   Building2, 
   Plus, 
@@ -13,6 +11,8 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import BankAccountModal from "./modals/BankAccountModal";
+import { useBankAccounts } from "@/hooks/useAccountsData";
+import AccountsSkeleton from "./AccountsSkeleton";
 
 interface BankAccount {
   id: string;
@@ -30,33 +30,9 @@ interface BankAccountsProps {
 }
 
 const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-
-  const fetchBankAccounts = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('bank_accounts')
-        .select('*')
-        .eq('is_active', true)
-        .order('bank_name', { ascending: true });
-
-      if (error) throw error;
-      setBankAccounts((data as unknown as BankAccount[]) || []);
-    } catch (error) {
-      console.error('Error fetching bank accounts:', error);
-      toast.error('Banka hesapları yüklenirken hata oluştu');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBankAccounts();
-  }, []);
+  const { data: bankAccounts = [], isLoading, refetch } = useBankAccounts();
 
   const getAccountTypeLabel = (type: string) => {
     const types: Record<string, string> = {
@@ -83,7 +59,7 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
   };
 
   const handleModalSuccess = () => {
-    fetchBankAccounts();
+    refetch();
   };
 
   const totalBankBalance = bankAccounts.reduce((sum, account) => {
@@ -95,13 +71,8 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
 
   const activeAccounts = bankAccounts.filter(acc => acc.is_active).length;
 
-  if (loading) {
-    return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-muted-foreground">Yükleniyor...</p>
-      </div>
-    );
+  if (isLoading) {
+    return <AccountsSkeleton />;
   }
 
   return (

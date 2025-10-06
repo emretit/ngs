@@ -99,20 +99,6 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="flex gap-2 mb-4">
-        <Button 
-          size="sm" 
-          className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus className="h-3 w-3" />
-          Yeni
-        </Button>
-        <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50 text-xs px-2 py-1">
-          Geçmiş
-        </Button>
-      </div>
 
       {/* Accounts List */}
       <div className="space-y-3">

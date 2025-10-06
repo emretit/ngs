@@ -103,20 +103,6 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
         </div>
       </div>
 
-      {/* Compact Quick Actions */}
-      <div className="flex gap-2 mb-4">
-        <Button 
-          size="sm" 
-          className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus className="h-3 w-3" />
-          Yeni
-        </Button>
-        <Button variant="outline" size="sm" className="border-purple-200 text-purple-700 hover:bg-purple-50 text-xs px-2 py-1">
-          Rapor
-        </Button>
-      </div>
 
       {/* Compact Cards List */}
       <div className="space-y-2">

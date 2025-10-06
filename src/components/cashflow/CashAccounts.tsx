@@ -63,21 +63,6 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
         </div>
       </div>
 
-      {/* Compact Quick Actions */}
-      <div className="flex gap-2 mb-4">
-        <Button 
-          size="sm" 
-          className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus className="h-3 w-3" />
-          Yeni
-        </Button>
-        <Button variant="outline" size="sm" className="border-green-200 text-green-700 hover:bg-green-50 text-xs px-2 py-1">
-          Geçmiş
-        </Button>
-      </div>
-
       {/* Compact Accounts List */}
       <div className="space-y-2">
         {cashAccounts.length === 0 ? (

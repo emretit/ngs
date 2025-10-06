@@ -99,20 +99,6 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="flex gap-2 mb-4">
-        <Button 
-          size="sm" 
-          className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <Plus className="h-3 w-3" />
-          Yeni
-        </Button>
-        <Button variant="outline" size="sm" className="border-orange-200 text-orange-700 hover:bg-orange-50 text-xs px-2 py-1">
-          Dağıt
-        </Button>
-      </div>
 
       {/* Partners List */}
       <div className="space-y-3">

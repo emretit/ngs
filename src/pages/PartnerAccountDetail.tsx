@@ -3,6 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Plus, 
@@ -26,7 +29,8 @@ import {
   PieChart,
   BarChart3,
   Target,
-  Award
+  Award,
+  Search
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
@@ -54,32 +58,17 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
   const [activeTab, setActiveTab] = useState("overview");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedDateRange, setSelectedDateRange] = useState("all");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: account, isLoading: isLoadingAccount, error: accountError } = usePartnerAccountDetail(id);
   const { data: transactions = [], isLoading: isLoadingTransactions, refetch: refetchTransactions } = usePartnerAccountTransactions(id, 20);
   
   const loading = isLoadingAccount || isLoadingTransactions;
-
-  // Memoized calculations - sadece gerekli olduğunda yeniden hesapla
-  const filteredTransactions = useMemo(() => {
-    return transactionsWithBalance.filter(transaction => {
-      if (filterType === "all") return true;
-      return transaction.type === filterType;
-    });
-  }, [transactionsWithBalance, filterType]);
-
-  const totalIncome = useMemo(() => {
-    return transactions
-      .filter(t => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
-
-  const totalExpense = useMemo(() => {
-    return transactions
-      .filter(t => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
 
   // Her işlemden sonraki toplam bakiyeyi hesapla
   const transactionsWithBalance = useMemo(() => {
@@ -104,6 +93,86 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
     }).reverse(); // En yeni en üstte olacak şekilde ters çevir
   }, [transactions, account]);
 
+  // Memoized calculations - sadece gerekli olduğunda yeniden hesapla
+  const filteredTransactions = useMemo(() => {
+    console.log("Filtreleme başlıyor:", {
+      searchQuery,
+      selectedCategory,
+      selectedDateRange,
+      startDate,
+      endDate,
+      filterType,
+      totalTransactions: transactionsWithBalance.length
+    });
+    
+    const filtered = transactionsWithBalance.filter(transaction => {
+      // Tip filtresi
+      if (filterType !== "all" && transaction.type !== filterType) return false;
+      
+      // Arama filtresi
+      if (searchQuery && !transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          !transaction.category?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      
+      // Kategori filtresi
+      if (selectedCategory !== "all" && transaction.category !== selectedCategory) return false;
+      
+      // Tarih filtresi - updated_at (güncellenme tarihi) kullan
+      const updatedDate = new Date(transaction.updated_at);
+      const updatedDateOnly = new Date(updatedDate.getFullYear(), updatedDate.getMonth(), updatedDate.getDate());
+      
+      // Özel tarih aralığı filtresi (DatePicker)
+      if (startDate || endDate) {
+        if (startDate) {
+          const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+          if (updatedDateOnly < startDateOnly) return false;
+        }
+        if (endDate) {
+          const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+          if (updatedDateOnly > endDateOnly) return false;
+        }
+      } else if (selectedDateRange !== "all") {
+        // Önceden tanımlı tarih aralığı filtresi
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        switch (selectedDateRange) {
+          case "today":
+            if (updatedDateOnly < today) return false;
+            break;
+          case "week":
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            if (updatedDateOnly < weekAgo) return false;
+            break;
+          case "month":
+            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            if (updatedDateOnly < monthAgo) return false;
+            break;
+        }
+      }
+      
+      return true;
+    });
+    
+    console.log("Filtreleme sonucu:", {
+      filteredCount: filtered.length,
+      originalCount: transactionsWithBalance.length
+    });
+    
+    return filtered;
+  }, [transactionsWithBalance, filterType, searchQuery, selectedCategory, selectedDateRange, startDate, endDate]);
+
+  const totalIncome = useMemo(() => {
+    return transactions
+      .filter(t => t.type === "income")
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
+
+  const totalExpense = useMemo(() => {
+    return transactions
+      .filter(t => t.type === "expense")
+      .reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
+
   const handleIncomeSuccess = () => {
     setIsIncomeModalOpen(false);
     refetchTransactions();
@@ -116,6 +185,15 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
 
   const handleEdit = () => {
     toast.info("Düzenleme özelliği yakında eklenecek");
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSelectedDateRange("all");
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setFilterType("all");
   };
 
   if (loading) {
@@ -271,6 +349,72 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
               <span>Düzenle</span>
             </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Arama ve Filtreleme */}
+      <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+        <div className="relative min-w-[250px] flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="İşlem açıklaması veya kategori ile ara..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full"
+          />
+        </div>
+        
+        <Select value={filterType} onValueChange={(value: "all" | "income" | "expense") => setFilterType(value)}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="İşlem Tipi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm İşlemler</SelectItem>
+            <SelectItem value="income">💰 Gelir</SelectItem>
+            <SelectItem value="expense">💸 Gider</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-[180px]">
+            <Activity className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Kategori" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm Kategoriler</SelectItem>
+            <SelectItem value="proje_geliri">Proje Geliri</SelectItem>
+            <SelectItem value="kar_dagitimi">Kar Dağıtımı</SelectItem>
+            <SelectItem value="kira">Kira</SelectItem>
+            <SelectItem value="sermaye_artirimi">Sermaye Artırımı</SelectItem>
+            <SelectItem value="sermaye_azaltimi">Sermaye Azaltımı</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedDateRange} onValueChange={setSelectedDateRange}>
+          <SelectTrigger className="w-[180px]">
+            <Calendar className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Tarih Aralığı" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm Zamanlar</SelectItem>
+            <SelectItem value="today">Bugün</SelectItem>
+            <SelectItem value="week">Son 7 Gün</SelectItem>
+            <SelectItem value="month">Son 30 Gün</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="flex gap-2">
+          <DatePicker
+            date={startDate}
+            onSelect={setStartDate}
+            placeholder="Başlangıç"
+          />
+          <DatePicker
+            date={endDate}
+            onSelect={setEndDate}
+            placeholder="Bitiş"
+          />
         </div>
       </div>
 
@@ -440,6 +584,9 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
                             <p className="font-medium text-sm">{transaction.description}</p>
                             <p className="text-xs text-gray-500">
                               {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')} • {transaction.category}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              Güncellendi: {new Date(transaction.updated_at).toLocaleDateString('tr-TR')} {new Date(transaction.updated_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
                         </div>

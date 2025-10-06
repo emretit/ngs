@@ -2,7 +2,7 @@ import BankAccountsSimple from "@/components/cashflow/BankAccountsSimple";
 import CashAccounts from "@/components/cashflow/CashAccounts";
 import CreditCards from "@/components/cashflow/CreditCards";
 import PartnerAccounts from "@/components/cashflow/PartnerAccounts";
-import { Building, Eye, EyeOff, Wallet, CreditCard, Users } from "lucide-react";
+import { Building, Eye, EyeOff, Wallet, CreditCard, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, memo } from "react";
 import { useAllAccounts } from "@/hooks/useAccountsData";
@@ -14,6 +14,10 @@ interface CashflowBankAccountsProps {
 }
 const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccountsProps) => {
   const [showBalances, setShowBalances] = useState(false);
+  const [isCashModalOpen, setIsCashModalOpen] = useState(false);
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
+  const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const { data: allAccounts, isLoading, error } = useAllAccounts();
   const queryClient = useQueryClient();
 
@@ -52,9 +56,9 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-4">
         {/* Header Skeleton */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3">
             <Skeleton className="h-9 w-9 rounded-lg" />
             <div className="space-y-1">
@@ -99,8 +103,8 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
   // Error state
   if (error) {
     return (
-      <div className="space-y-2">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg text-white shadow-lg">
               <Building className="h-5 w-5" />
@@ -123,9 +127,9 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
           {/* Sol taraf - Başlık */}
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg text-white shadow-lg">
@@ -210,7 +214,17 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                     <p className="text-xs text-gray-500">Kasa işlemleri</p>
                   </div>
                 </div>
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    size="sm" 
+                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={() => setIsCashModalOpen(true)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                </div>
               </div>
               <MemoizedCashAccounts 
                 showBalances={showBalances} 
@@ -232,7 +246,17 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                     <p className="text-xs text-gray-500">Banka işlemleri</p>
                   </div>
                 </div>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    size="sm" 
+                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={() => setIsBankModalOpen(true)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                </div>
               </div>
               <MemoizedBankAccounts 
                 showBalances={showBalances} 
@@ -254,7 +278,17 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                     <p className="text-xs text-gray-500">Kart limitleri</p>
                   </div>
                 </div>
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    size="sm" 
+                    className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={() => setIsCreditModalOpen(true)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                </div>
               </div>
               <MemoizedCreditCards 
                 showBalances={showBalances} 
@@ -276,7 +310,17 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                     <p className="text-xs text-gray-500">Ortak hesapları</p>
                   </div>
                 </div>
-                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    size="sm" 
+                    className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={() => setIsPartnerModalOpen(true)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                </div>
               </div>
               <MemoizedPartnerAccounts 
                 showBalances={showBalances} 

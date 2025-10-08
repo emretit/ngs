@@ -37,6 +37,7 @@ const formSchema = z.object({
   country: z.string().optional(),
   city: z.string().optional(),
   district: z.string().optional(),
+  neighborhood: z.string().optional(),
   postal_code: z.string().optional(),
   
   // Emergency Contact
@@ -70,6 +71,7 @@ const SimpleEmployeeForm = () => {
       country: "Turkey",
       city: "",
       district: "",
+      neighborhood: "",
       postal_code: "",
       emergency_contact_name: "",
       emergency_contact_relation: "",
@@ -98,6 +100,7 @@ const SimpleEmployeeForm = () => {
         country: data.country || "Turkey",
         city: data.city || null,
         district: data.district || null,
+        neighborhood: data.neighborhood || null,
         postal_code: data.postal_code || null,
         emergency_contact_name: data.emergency_contact_name || null,
         emergency_contact_relation: data.emergency_contact_relation || null,
@@ -179,11 +182,11 @@ const SimpleEmployeeForm = () => {
 
       {/* Main Content */}
       <Form {...form}>
-        <form id="employee-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+        <form id="employee-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
           <BasicInfoSection control={form.control} />
-          
+
           {/* Adres ve Acil Durum Yan Yana */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
             <AddressSection control={form.control} />
             <EmergencyContactSection control={form.control} />
           </div>

@@ -229,7 +229,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                     <Plus className="h-3 w-3" />
                     Yeni
                   </Button>
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 </div>
               </div>
               <MemoizedCashAccounts 
@@ -266,7 +265,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                     <Plus className="h-3 w-3" />
                     Yeni
                   </Button>
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
                 </div>
               </div>
               <MemoizedBankAccounts 
@@ -303,7 +301,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                     <Plus className="h-3 w-3" />
                     Yeni
                   </Button>
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
                 </div>
               </div>
               <MemoizedCreditCards 
@@ -340,7 +337,6 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                     <Plus className="h-3 w-3" />
                     Yeni
                   </Button>
-                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
                 </div>
               </div>
               <MemoizedPartnerAccounts 

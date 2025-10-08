@@ -3,26 +3,31 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  Plus, 
-  Minus, 
-  TrendingUp, 
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Plus,
+  Minus,
+  TrendingUp,
   TrendingDown,
+  Calendar,
   Filter,
-  Download,
   ArrowLeft,
   Pencil,
   Wallet,
-  FileText
+  Activity,
+  FileText,
+  DollarSign,
+  Search
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { useCashAccountDetail, useCashAccountTransactions, useAccountTransfers } from "@/hooks/useAccountDetail";
+import { Skeleton } from "@/components/ui/skeleton";
 import CashIncomeModal from "@/components/cashflow/modals/CashIncomeModal";
 import CashExpenseModal from "@/components/cashflow/modals/CashExpenseModal";
 import TransferModal from "@/components/cashflow/modals/TransferModal";
-import { useCashAccountDetail, useCashAccountTransactions } from "@/hooks/useAccountDetail";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface CashAccountDetailProps {
   isCollapsed: boolean;
@@ -34,23 +39,141 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
   const navigate = useNavigate();
   const [showBalances, setShowBalances] = useState(true);
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
+  const [activeTab, setActiveTab] = useState("overview");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedDateRange, setSelectedDateRange] = useState("all");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: account, isLoading: isLoadingAccount, error: accountError } = useCashAccountDetail(id);
   const { data: transactions = [], isLoading: isLoadingTransactions, refetch: refetchTransactions } = useCashAccountTransactions(id, 20);
-  
-  const loading = isLoadingAccount || isLoadingTransactions;
+  const { data: transfers = [], isLoading: isLoadingTransfers } = useAccountTransfers('cash', id, 20);
+
+  const loading = isLoadingAccount || isLoadingTransactions || isLoadingTransfers;
+
+  // Tüm işlemleri (transactions + transfers) birleştir ve tarihe göre sırala
+  const allActivities = useMemo(() => {
+    if (!account) return [];
+
+    // Transfer işlemlerini transaction formatına çevir
+    const transferActivities = transfers.map(transfer => ({
+      id: `transfer_${transfer.id}`,
+      type: transfer.direction === 'incoming' ? 'income' : 'expense',
+      amount: transfer.amount,
+      description: transfer.direction === 'incoming'
+        ? `Transfer (${transfer.from_account_name || 'Bilinmeyen Hesap'} → Bu Hesap)`
+        : `Transfer (Bu Hesap → ${transfer.to_account_name || 'Bilinmeyen Hesap'})`,
+      transaction_date: transfer.transfer_date,
+      created_at: transfer.created_at,
+      updated_at: transfer.updated_at,
+      isTransfer: true,
+      transfer_direction: transfer.direction
+    }));
+
+    // Normal işlemler ve transfer işlemlerini birleştir
+    const allActivities = [
+      ...transactions.map(t => ({ ...t, isTransfer: false })),
+      ...transferActivities
+    ].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
+
+    return allActivities;
+  }, [transactions, transfers, account]);
+
+  // Her işlemden sonraki toplam bakiyeyi hesapla
+  const transactionsWithBalance = useMemo(() => {
+    if (!account) return [];
+
+    // İşlemleri tarihe göre sırala (en eski en üstte)
+    const sortedActivities = [...allActivities].sort((a, b) =>
+      new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
+    );
+
+    let runningBalance = account.current_balance || 0;
+
+    return sortedActivities.map(activity => {
+      // İşlem tutarını hesapla
+      const amount = activity.type === "income" ? activity.amount : -activity.amount;
+      runningBalance += amount;
+
+      return {
+        ...activity,
+        balanceAfter: runningBalance
+      };
+    }).reverse(); // En yeni en üstte olacak şekilde ters çevir
+  }, [allActivities, account]);
 
   // Memoized calculations - sadece gerekli olduğunda yeniden hesapla
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(transaction => {
-      if (filterType === "all") return true;
-      return transaction.type === filterType;
+    console.log("Filtreleme başlıyor:", {
+      searchQuery,
+      selectedCategory,
+      selectedDateRange,
+      startDate,
+      endDate,
+      filterType,
+      totalTransactions: transactionsWithBalance.length
     });
-  }, [transactions, filterType]);
+
+    const filtered = transactionsWithBalance.filter(transaction => {
+      // Tip filtresi
+      if (filterType !== "all" && transaction.type !== filterType) return false;
+
+      // Arama filtresi
+      if (searchQuery && !transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          !(transaction as any).category?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+
+      // Kategori filtresi
+      if (selectedCategory !== "all" && (transaction as any).category !== selectedCategory) return false;
+
+      // Tarih filtresi - updated_at (güncellenme tarihi) kullan
+      const updatedDate = new Date((transaction as any).updated_at || transaction.created_at);
+      const updatedDateOnly = new Date(updatedDate.getFullYear(), updatedDate.getMonth(), updatedDate.getDate());
+
+      // Özel tarih aralığı filtresi (DatePicker)
+      if (startDate || endDate) {
+        if (startDate) {
+          const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+          if (updatedDateOnly < startDateOnly) return false;
+        }
+        if (endDate) {
+          const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+          if (updatedDateOnly > endDateOnly) return false;
+        }
+      } else if (selectedDateRange !== "all") {
+        // Önceden tanımlı tarih aralığı filtresi
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        switch (selectedDateRange) {
+          case "today":
+            if (updatedDateOnly < today) return false;
+            break;
+          case "week":
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            if (updatedDateOnly < weekAgo) return false;
+            break;
+          case "month":
+            const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            if (updatedDateOnly < monthAgo) return false;
+            break;
+        }
+      }
+
+      return true;
+    });
+
+    console.log("Filtreleme sonucu:", {
+      filteredCount: filtered.length,
+      originalCount: transactionsWithBalance.length
+    });
+
+    return filtered;
+  }, [transactionsWithBalance, filterType, searchQuery, selectedCategory, selectedDateRange, startDate, endDate]);
 
   const totalIncome = useMemo(() => {
     return transactions
@@ -75,7 +198,16 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
   };
 
   const handleEdit = () => {
-    toast.info("Hesap düzenleme özelliği yakında eklenecek");
+    toast.info("Düzenleme özelliği yakında eklenecek");
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSelectedDateRange("all");
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setFilterType("all");
   };
 
   if (loading) {
@@ -137,188 +269,328 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
 
 
   return (
-    <div className="p-4">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div>
+      {/* Sticky Header - optimize spacing */}
+      <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
           {/* Sol taraf - Başlık */}
           <div className="flex items-center gap-3">
-            <button 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-green-50/50 hover:text-green-700 hover:border-green-200 transition-all duration-200 hover:shadow-sm"
             >
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
-            </button>
-            <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg text-white shadow-lg">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="font-medium">Nakit Hesapları</span>
+            </Button>
+
+            <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white shadow-lg">
               <Wallet className="h-5 w-5" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{account.name}</h1>
-              <p className="text-gray-600">{account.description || "Nakit kasa hesabı"}</p>
+            <div className="space-y-0.5">
+              <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                {account.name}
+              </h1>
+              <p className="text-xs text-muted-foreground/70">
+                {account.description || "Nakit kasa hesabı"} • {account.is_active ? "Aktif" : "Pasif"}
+              </p>
             </div>
           </div>
 
-          {/* Sağ taraf - Aksiyonlar */}
+          {/* Orta - İstatistik Kartları */}
+          <div className="flex flex-wrap gap-1.5 justify-center flex-1 items-center">
+            {/* Mevcut Bakiye */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-gradient-to-r from-green-600 to-green-700 text-white border border-green-600 shadow-sm">
+              <DollarSign className="h-3 w-3" />
+              <span className="font-bold">Bakiye</span>
+              <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">
+                {showBalances ? formatCurrency(account.current_balance, account.currency) : "••••••"}
+              </span>
+            </div>
+
+            {/* Toplam Gelir */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-blue-100 text-blue-800 border-blue-200">
+              <TrendingUp className="h-3 w-3" />
+              <span className="font-medium">Gelir</span>
+              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                {showBalances ? formatCurrency(totalIncome, account.currency) : "••••••"}
+              </span>
+            </div>
+
+            {/* Toplam Gider */}
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-red-100 text-red-800 border-red-200">
+              <TrendingDown className="h-3 w-3" />
+              <span className="font-medium">Gider</span>
+              <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                {showBalances ? formatCurrency(totalExpense, account.currency) : "••••••"}
+              </span>
+            </div>
+          </div>
+
+          {/* Sağ taraf - Butonlar */}
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowBalances(!showBalances)}>
-              {showBalances ? "Gizle" : "Göster"}
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleEdit}>
-              <Pencil className="h-4 w-4 mr-1" />
-              Düzenle
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-1" />
-              Dışa Aktar
+            <Button
+              variant="outline"
+              onClick={() => setShowBalances(!showBalances)}
+              className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
+            >
+              <span className="font-medium">{showBalances ? "Gizle" : "Göster"}</span>
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
-          {/* Toplam Bakiye */}
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600">Toplam Bakiye</p>
-                  <p className="text-3xl font-bold text-green-900">
-                    {showBalances ? formatCurrency(account.current_balance, account.currency) : "••••••"}
-                  </p>
-                </div>
-                <div className="p-3 bg-green-500 rounded-full">
-                  <Wallet className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Toplam Gelir */}
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-600">Toplam Gelir</p>
-                  <p className="text-3xl font-bold text-blue-900">
-                    {showBalances ? formatCurrency(totalIncome, account.currency) : "••••••"}
-                  </p>
-                </div>
-                <div className="p-3 bg-blue-500 rounded-full">
-                  <TrendingUp className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Toplam Gider */}
-          <Card className="bg-gradient-to-br from-red-50 to-rose-100 border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-600">Toplam Gider</p>
-                  <p className="text-3xl font-bold text-red-900">
-                    {showBalances ? formatCurrency(totalExpense, account.currency) : "••••••"}
-                  </p>
-                </div>
-                <div className="p-3 bg-red-500 rounded-full">
-                  <TrendingDown className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Arama ve Filtreleme */}
+      <div className="flex flex-col sm:flex-row gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 mb-2">
+        <div className="relative min-w-[250px] flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="İşlem açıklaması veya kategori ile ara..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full"
+          />
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Button 
-            onClick={() => setIsIncomeModalOpen(true)}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Gelir Ekle
-          </Button>
-          <Button 
-            onClick={() => setIsExpenseModalOpen(true)}
-            variant="outline"
-            className="border-red-200 text-red-700 hover:bg-red-50"
-          >
-            <Minus className="h-4 w-4 mr-2" />
-            Gider Ekle
-          </Button>
-          <Button 
-            onClick={() => setIsTransferModalOpen(true)}
-            variant="outline"
-            className="border-blue-200 text-blue-700 hover:bg-blue-50"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Transfer Yap
-          </Button>
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtrele
-          </Button>
-        </div>
+        <Select value={filterType} onValueChange={(value: "all" | "income" | "expense") => setFilterType(value)}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="İşlem Tipi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm İşlemler</SelectItem>
+            <SelectItem value="income">💰 Gelir</SelectItem>
+            <SelectItem value="expense">💸 Gider</SelectItem>
+          </SelectContent>
+        </Select>
 
-        {/* Transactions Table */}
-        <Card className="mt-3">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                İşlem Geçmişi
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {filteredTransactions.length === 0 ? (
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Henüz işlem bulunmuyor</p>
-                <p className="text-sm text-gray-400 mt-1">İlk işleminizi ekleyerek başlayın</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tarih</TableHead>
-                    <TableHead>Açıklama</TableHead>
-                    <TableHead>Kategori</TableHead>
-                    <TableHead>Tür</TableHead>
-                    <TableHead className="text-right">Tutar</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
-                        {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {transaction.description}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{transaction.category}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={transaction.type === "income" ? "default" : "destructive"}
-                          className={transaction.type === "income" ? "bg-green-100 text-green-800" : ""}
-                        >
-                          {transaction.type === "income" ? "Gelir" : "Gider"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        <span className={transaction.type === "income" ? "text-green-600" : "text-red-600"}>
-                          {transaction.type === "income" ? "+" : "-"}
-                          {showBalances ? formatCurrency(transaction.amount, account.currency) : "••••••"}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-[180px]">
+            <Activity className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Kategori" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm Kategoriler</SelectItem>
+            <SelectItem value="kasa_geliri">Kasa Geliri</SelectItem>
+            <SelectItem value="satış">Satış</SelectItem>
+            <SelectItem value="hizmet">Hizmet</SelectItem>
+            <SelectItem value="diğer_gelir">Diğer Gelir</SelectItem>
+            <SelectItem value="genel_giderler">Genel Giderler</SelectItem>
+            <SelectItem value="kira">Kira</SelectItem>
+            <SelectItem value="personel">Personel</SelectItem>
+            <SelectItem value="malzeme">Malzeme</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedDateRange} onValueChange={setSelectedDateRange}>
+          <SelectTrigger className="w-[180px]">
+            <Calendar className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Tarih Aralığı" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm Zamanlar</SelectItem>
+            <SelectItem value="today">Bugün</SelectItem>
+            <SelectItem value="week">Son 7 Gün</SelectItem>
+            <SelectItem value="month">Son 30 Gün</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="flex gap-2">
+          <DatePicker
+            date={startDate}
+            onSelect={setStartDate}
+            placeholder="Başlangıç"
+          />
+          <DatePicker
+            date={endDate}
+            onSelect={setEndDate}
+            placeholder="Bitiş"
+          />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="space-y-2">
+
+        {/* Main Grid Layout - Sol: Kompakt Bilgiler, Sağ: Geniş İşlem Geçmişi */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-2">
+          {/* Sol Taraf - Kompakt Bilgiler ve İşlemler */}
+          <div className="space-y-2">
+            {/* Hesap Bilgileri ve Hızlı İşlemler - Tek Kart */}
+            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
+                      <Wallet className="h-4 w-4 text-green-600" />
+                    </div>
+                    Hesap Bilgileri & İşlemler
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEdit}
+                      className="h-8 px-3 text-xs"
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Düzenle
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-4">
+                {/* Hesap Bilgileri - Kompakt */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Hesap Adı</label>
+                    <p className="text-sm font-semibold">{account.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Açıklama</label>
+                    <p className="text-sm">{account.description || "Nakit kasa hesabı"}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Para Birimi</label>
+                    <p className="text-sm">{account.currency}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Durum</label>
+                    <Badge
+                      className={`text-xs ${
+                        account.is_active
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      <Activity className="h-3 w-3 mr-1" />
+                      {account.is_active ? "Aktif" : "Pasif"}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Hızlı İşlemler */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Hızlı İşlemler</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Button
+                      onClick={() => setIsIncomeModalOpen(true)}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Gelir Ekle
+                    </Button>
+                    <Button
+                      onClick={() => setIsExpenseModalOpen(true)}
+                      className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm"
+                    >
+                      <Minus className="h-4 w-4 mr-2" />
+                      Gider Ekle
+                    </Button>
+                    <Button
+                      onClick={() => setIsTransferModalOpen(true)}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Transfer Yap
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sağ Taraf - Geniş İşlem Geçmişi */}
+          <div className="xl:col-span-2 space-y-2">
+            {/* İşlem Geçmişi */}
+            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-gray-50 to-gray-50/50 border border-gray-200/50">
+                      <FileText className="h-4 w-4 text-gray-600" />
+                    </div>
+                    İşlem Geçmişi
+                  </CardTitle>
+
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {filteredTransactions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="p-3 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                      <FileText className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-base font-semibold text-gray-700 mb-1">Henüz işlem bulunmuyor</h3>
+                    <p className="text-sm text-gray-500 mb-3">İlk işleminizi ekleyerek başlayın</p>
+                    <div className="flex gap-2 justify-center">
+                      <Button
+                        onClick={() => setIsIncomeModalOpen(true)}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Gelir
+                      </Button>
+                      <Button
+                        onClick={() => setIsExpenseModalOpen(true)}
+                        size="sm"
+                        variant="outline"
+                        className="border-red-200 text-red-700 hover:bg-red-50"
+                      >
+                        <Minus className="h-3 w-3 mr-1" />
+                        Gider
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {filteredTransactions.map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${
+                            transaction.isTransfer
+                              ? (transaction.transfer_direction === 'incoming' ? "bg-blue-500" : "bg-purple-500")
+                              : (transaction.type === "income" ? "bg-green-500" : "bg-red-500")
+                          }`}></div>
+                          <div>
+                            <p className="font-medium text-sm">{transaction.description}</p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')} •
+                              {transaction.isTransfer ? 'Transfer' : (transaction as any).category || 'Genel'}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              Güncellendi: {new Date((transaction as any).updated_at || transaction.created_at).toLocaleDateString('tr-TR')} {new Date((transaction as any).updated_at || transaction.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex flex-col items-end gap-1">
+                            <p className={`font-bold ${
+                              transaction.isTransfer
+                                ? ((transaction as any).transfer_direction === 'incoming' ? "text-blue-600" : "text-purple-600")
+                                : (transaction.type === "income" ? "text-green-600" : "text-red-600")
+                            }`}>
+                              {transaction.type === "income" ? "+" : "-"}
+                              {showBalances ? formatCurrency(transaction.amount, account.currency) : "••••••"}
+                            </p>
+                            <p className="text-xs text-gray-500 font-medium">
+                              Bakiye: {showBalances ? formatCurrency(transaction.balanceAfter, account.currency) : "••••••"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Modals */}
         <CashIncomeModal
@@ -337,15 +609,19 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
           accountName={account?.name || ""}
           currency={account?.currency || "TRY"}
         />
+
+        {/* Transfer Modal */}
         <TransferModal
           isOpen={isTransferModalOpen}
           onClose={() => setIsTransferModalOpen(false)}
           onSuccess={() => {
             setIsTransferModalOpen(false);
+            // Refresh data after transfer
             window.location.reload();
           }}
         />
       </div>
+    </div>
   );
 });
 

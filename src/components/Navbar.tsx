@@ -20,11 +20,16 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   
   
   
-  // Load expanded menus from localStorage
+  // Load expanded menus from localStorage - but start with empty set for first load
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem("expandedMenus");
-    return saved ? new Set(JSON.parse(saved)) : new Set<string>();
+    // Always start with empty set to prevent auto-expanding dropdowns on first load
+    return new Set<string>();
   });
+
+  // Clear localStorage on first load to prevent auto-expanding dropdowns
+  useEffect(() => {
+    localStorage.removeItem("expandedMenus");
+  }, []);
 
   // Save expanded menus to localStorage whenever it changes
   useEffect(() => {

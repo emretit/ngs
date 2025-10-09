@@ -24,9 +24,7 @@ interface Account {
 }
 
 interface TransferFormData {
-  fromAccountType: string;
   fromAccountId: string;
-  toAccountType: string;
   toAccountId: string;
   amount: string;
   currency: string;
@@ -40,9 +38,7 @@ const TransferModal = ({
   onSuccess
 }: TransferModalProps) => {
   const [formData, setFormData] = useState<TransferFormData>({
-    fromAccountType: "",
     fromAccountId: "",
-    toAccountType: "",
     toAccountId: "",
     amount: "",
     currency: "TRY",
@@ -58,9 +54,7 @@ const TransferModal = ({
   // Kaynak ve hedef hesapları yer değiştir
   const handleSwapAccounts = () => {
     setFormData(prev => ({
-      fromAccountType: prev.toAccountType,
       fromAccountId: prev.toAccountId,
-      toAccountType: prev.fromAccountType,
       toAccountId: prev.fromAccountId,
       amount: prev.amount,
       currency: prev.currency,
@@ -163,31 +157,20 @@ const TransferModal = ({
 
   // Kaynak hesap değiştiğinde hedef hesapları güncelle
   useEffect(() => {
-    if (formData.fromAccountType && formData.fromAccountId) {
-      const filtered = accounts.filter(acc => 
-        !(acc.type === formData.fromAccountType && acc.id === formData.fromAccountId)
-      );
+    if (formData.fromAccountId) {
+      const filtered = accounts.filter(acc => acc.id !== formData.fromAccountId);
       setToAccounts(filtered);
-      // Hedef hesap seçimini sıfırla
-      setFormData(prev => ({
-        ...prev,
-        toAccountType: "",
-        toAccountId: ""
-      }));
+      // Eğer hedef hesap kaynak hesapla aynıysa sıfırla
+      if (formData.toAccountId === formData.fromAccountId) {
+        setFormData(prev => ({
+          ...prev,
+          toAccountId: ""
+        }));
+      }
     } else {
       setToAccounts(accounts);
     }
-  }, [formData.fromAccountType, formData.fromAccountId, accounts]);
-
-  // Hedef hesap tipi değiştiğinde hedef hesap seçimini sıfırla
-  useEffect(() => {
-    if (formData.toAccountType) {
-      setFormData(prev => ({
-        ...prev,
-        toAccountId: ""
-      }));
-    }
-  }, [formData.toAccountType]);
+  }, [formData.fromAccountId, accounts]);
 
   const handleInputChange = (field: keyof TransferFormData, value: string) => {
     setFormData(prev => ({
@@ -198,9 +181,8 @@ const TransferModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.fromAccountType || !formData.fromAccountId || 
-        !formData.toAccountType || !formData.toAccountId) {
+
+    if (!formData.fromAccountId || !formData.toAccountId) {
       toast({
         title: "Hata",
         description: "Kaynak ve hedef hesap seçimi zorunludur",
@@ -236,13 +218,21 @@ const TransferModal = ({
 
       const amount = parseFloat(formData.amount);
 
+      // Hesap tiplerini bul
+      const fromAccount = accounts.find(acc => acc.id === formData.fromAccountId);
+      const toAccount = accounts.find(acc => acc.id === formData.toAccountId);
+
+      if (!fromAccount || !toAccount) {
+        throw new Error("Hesap bulunamadı");
+      }
+
       // Transfer kaydını oluştur
       const { error: transferError } = await supabase
         .from('account_transfers')
         .insert({
-          from_account_type: formData.fromAccountType,
+          from_account_type: fromAccount.type,
           from_account_id: formData.fromAccountId,
-          to_account_type: formData.toAccountType,
+          to_account_type: toAccount.type,
           to_account_id: formData.toAccountId,
           amount: amount,
           currency: formData.currency,
@@ -254,7 +244,7 @@ const TransferModal = ({
       if (transferError) throw transferError;
 
       // Kaynak hesaptan para düş
-      const fromTable = getTableName(formData.fromAccountType);
+      const fromTable = getTableName(fromAccount.type);
       const { error: fromError } = await supabase
         .from(fromTable)
         .update({
@@ -265,7 +255,7 @@ const TransferModal = ({
       if (fromError) throw fromError;
 
       // Hedef hesaba para ekle
-      const toTable = getTableName(formData.toAccountType);
+      const toTable = getTableName(toAccount.type);
       const { error: toError } = await supabase
         .from(toTable)
         .update({
@@ -283,9 +273,7 @@ const TransferModal = ({
       onSuccess();
       onClose();
       setFormData({
-        fromAccountType: "",
         fromAccountId: "",
-        toAccountType: "",
         toAccountId: "",
         amount: "",
         currency: "TRY",
@@ -314,15 +302,6 @@ const TransferModal = ({
     }
   };
 
-  const getAccountTypeLabel = (type: string) => {
-    switch (type) {
-      case 'cash': return 'Nakit Kasa';
-      case 'bank': return 'Banka Hesabı';
-      case 'credit_card': return 'Kredi Kartı';
-      case 'partner': return 'Ortak Hesabı';
-      default: return type;
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -333,7 +312,7 @@ const TransferModal = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Kaynak ve Hedef Hesap - Görsel Akış */}
+          {/* Kaynak ve Hedef Hesap - Basit Seçim */}
           <div className="space-y-4">
             {/* Kaynak Hesap */}
             <div className="p-4 rounded-lg border-2 border-blue-200 bg-blue-50/50">
@@ -345,47 +324,34 @@ const TransferModal = ({
                 </div>
                 <Label className="text-base font-semibold text-gray-900">Nereden (Gönderen)</Label>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Select
-                  value={formData.fromAccountType}
-                  onValueChange={(value) => {
-                    handleInputChange('fromAccountType', value);
-                    handleInputChange('fromAccountId', '');
-                  }}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Hesap tipi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">💵 Nakit Kasa</SelectItem>
-                    <SelectItem value="bank">🏦 Banka Hesabı</SelectItem>
-                    <SelectItem value="credit_card">💳 Kredi Kartı</SelectItem>
-                    <SelectItem value="partner">👥 Ortak Hesabı</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={formData.fromAccountId}
-                  onValueChange={(value) => handleInputChange('fromAccountId', value)}
-                  disabled={!formData.fromAccountType}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Hesap seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fromAccounts
-                      .filter(acc => acc.type === formData.fromAccountType)
-                      .map(acc => (
-                        <SelectItem key={acc.id} value={acc.id}>
-                          {acc.name} • {formatCurrency(acc.balance, acc.currency)}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={formData.fromAccountId}
+                onValueChange={(value) => handleInputChange('fromAccountId', value)}
+              >
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Gönderilecek hesabı seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fromAccounts.map(acc => (
+                    <SelectItem key={acc.id} value={acc.id}>
+                      <div className="flex items-center gap-2">
+                        <span>
+                          {acc.type === 'cash' && '💵'}
+                          {acc.type === 'bank' && '🏦'}
+                          {acc.type === 'credit_card' && '💳'}
+                          {acc.type === 'partner' && '👥'}
+                        </span>
+                        <span className="font-medium">{acc.name}</span>
+                        <span className="text-gray-500">•</span>
+                        <span className="text-green-600 font-semibold">{formatCurrency(acc.balance, acc.currency)}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Yer Değiştir Butonu (Google Maps tarzı) */}
+            {/* Yer Değiştir Butonu */}
             <div className="flex justify-center">
               <Button
                 type="button"
@@ -393,6 +359,7 @@ const TransferModal = ({
                 variant="outline"
                 className="rounded-full h-10 w-10 p-0 shadow-sm hover:bg-gray-50 border-gray-300"
                 title="Nereden ve Nereye konumlarını yer değiştir"
+                disabled={!formData.fromAccountId || !formData.toAccountId}
               >
                 <svg className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h11m0 0l-4-4m4 4l-4 4M20 17H9m0 0l4-4m-4 4l4 4" />
@@ -410,48 +377,31 @@ const TransferModal = ({
                 </div>
                 <Label className="text-base font-semibold text-gray-900">Nereye (Alıcı)</Label>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Select 
-                  value={formData.toAccountType} 
-                  onValueChange={(value) => {
-                    handleInputChange('toAccountType', value);
-                    handleInputChange('toAccountId', '');
-                  }}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Hesap tipi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">💵 Nakit Kasa</SelectItem>
-                    <SelectItem value="bank">🏦 Banka Hesabı</SelectItem>
-                    <SelectItem value="credit_card">💳 Kredi Kartı</SelectItem>
-                    <SelectItem value="partner">👥 Ortak Hesabı</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select 
-                  value={formData.toAccountId} 
-                  onValueChange={(value) => handleInputChange('toAccountId', value)}
-                  disabled={!formData.toAccountType}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Hesap seçin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {toAccounts
-                      .filter(acc => {
-                        const isSameAccount = acc.type === formData.fromAccountType && acc.id === formData.fromAccountId;
-                        const isCorrectType = acc.type === formData.toAccountType;
-                        return !isSameAccount && isCorrectType;
-                      })
-                      .map(acc => (
-                        <SelectItem key={acc.id} value={acc.id}>
-                          {acc.name} • {formatCurrency(acc.balance, acc.currency)}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={formData.toAccountId}
+                onValueChange={(value) => handleInputChange('toAccountId', value)}
+              >
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Alıcı hesabı seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {toAccounts.map(acc => (
+                    <SelectItem key={acc.id} value={acc.id}>
+                      <div className="flex items-center gap-2">
+                        <span>
+                          {acc.type === 'cash' && '💵'}
+                          {acc.type === 'bank' && '🏦'}
+                          {acc.type === 'credit_card' && '💳'}
+                          {acc.type === 'partner' && '👥'}
+                        </span>
+                        <span className="font-medium">{acc.name}</span>
+                        <span className="text-gray-500">•</span>
+                        <span className="text-green-600 font-semibold">{formatCurrency(acc.balance, acc.currency)}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

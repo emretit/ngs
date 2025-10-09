@@ -23,7 +23,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
   // Sadece Türkiye seçildiğinde ilçe ve mahalle listelerini göster
   const isTurkey = watchCountry === "Turkey";
   const availableDistricts = isTurkey && watchCity && turkishDistricts[watchCity] ? turkishDistricts[watchCity] : [];
-  const availableNeighborhoods = isTurkey && watchCity && watchDistrict && turkishNeighborhoods[`${watchCity}_${watchDistrict}`] ? turkishNeighborhoods[`${watchCity}_${watchDistrict}`] : [];
+  const availableNeighborhoods = isTurkey && watchDistrict && turkishNeighborhoods[watchDistrict] ? turkishNeighborhoods[watchDistrict] : [];
 
   return (
     <Card className="shadow-md border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-lg">
@@ -36,7 +36,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2.5 pt-0 px-3 pb-3">
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-3 gap-2.5">
           <FormField
             control={control}
             name="country"
@@ -48,6 +48,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                     field.onChange(value);
                     setValue("city", "");
                     setValue("district", "");
+                    setValue("neighborhood", "");
                     setValue("postal_code", "");
                   }}
                   value={field.value}
@@ -78,6 +79,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                     onValueChange={(value) => {
                       field.onChange(value);
                       setValue("district", "");
+                      setValue("neighborhood", "");
                       setValue("postal_code", "");
                     }}
                     value={field.value}
@@ -115,6 +117,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                   <Select
                     onValueChange={(value) => {
                       field.onChange(value);
+                      setValue("neighborhood", "");
                       setValue("postal_code", "");
                     }}
                     value={field.value}
@@ -142,14 +145,14 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
             )}
           />
 
-          {/* Mahalle - Sadece Türkiye için */}
-          {isTurkey && availableNeighborhoods.length > 0 && (
-            <FormField
-              control={control}
-              name="neighborhood"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-medium text-gray-700">Mahalle</FormLabel>
+          {/* Mahalle - Dropdown veya text input */}
+          <FormField
+            control={control}
+            name="neighborhood"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium text-gray-700">Mahalle/Semt</FormLabel>
+                {isTurkey && availableNeighborhoods.length > 0 ? (
                   <Select
                     onValueChange={(value) => {
                       field.onChange(value);
@@ -173,11 +176,15 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+                ) : (
+                  <FormControl>
+                    <Input placeholder="Mahalle/Semt" className="h-7 text-xs" {...field} />
+                  </FormControl>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {/* Posta Kodu */}
           <FormField
@@ -188,9 +195,9 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                 <FormLabel className="text-xs font-medium text-gray-700">Posta Kodu</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder={isTurkey ? "Mahalle seçildiğinde otomatik doldurulur" : "Posta kodu"}
-                    className={`h-7 text-xs ${isTurkey ? 'bg-gray-50' : ''}`}
-                    readOnly={isTurkey}
+                    placeholder={isTurkey && availableNeighborhoods.length > 0 ? "Mahalle seçildiğinde otomatik doldurulur" : "Posta kodu"}
+                    className={`h-7 text-xs ${isTurkey && availableNeighborhoods.length > 0 ? 'bg-gray-50' : ''}`}
+                    readOnly={isTurkey && availableNeighborhoods.length > 0}
                     {...field}
                   />
                 </FormControl>

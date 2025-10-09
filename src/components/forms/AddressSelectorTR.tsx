@@ -7,13 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Loader2 } from "lucide-react";
 import { Control, useFormContext } from "react-hook-form";
-import {
-  turkishCities,
-  turkishDistricts,
-  turkishNeighborhoods,
-  getDistrictsByCity,
-  getNeighborhoodsByDistrict
-} from "@/data/turkeyAddressData";
+import { addressService, AddressOption } from "@/services/addressService";
 import { cn } from "@/lib/utils";
 
 export interface AddressData {
@@ -36,12 +30,6 @@ interface AddressSelectorTRProps {
   fieldPrefix?: string;
 }
 
-interface AddressOption {
-  value: string;
-  label: string;
-  postalCode?: string;
-}
-
 export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
   control,
   onChange,
@@ -54,8 +42,14 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
 }) => {
   const { setValue, watch } = useFormContext();
 
+  const [cities, setCities] = useState<AddressOption[]>([]);
   const [districts, setDistricts] = useState<AddressOption[]>([]);
   const [neighborhoods, setNeighborhoods] = useState<AddressOption[]>([]);
+  const [loading, setLoading] = useState({
+    cities: false,
+    districts: false,
+    neighborhoods: false
+  });
 
   const getFieldName = (field: string) => fieldPrefix ? `${fieldPrefix}.${field}` : field;
 
@@ -69,28 +63,52 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
 
   const isTurkey = watchCountry === "Türkiye" || watchCountry === "Turkey";
 
+  // Load cities on mount
+  useEffect(() => {
+    const loadCities = async () => {
+      setLoading(prev => ({ ...prev, cities: true }));
+      const citiesData = await addressService.getCities();
+      setCities(citiesData);
+      setLoading(prev => ({ ...prev, cities: false }));
+    };
+    
+    if (isTurkey) {
+      loadCities();
+    }
+  }, [isTurkey]);
+
   // Load districts when city changes
   useEffect(() => {
-    if (!isTurkey || !watchCity) {
-      setDistricts([]);
-      return;
-    }
+    const loadDistricts = async () => {
+      if (!isTurkey || !watchCity) {
+        setDistricts([]);
+        return;
+      }
 
-    const cityDistricts = getDistrictsByCity ? getDistrictsByCity(watchCity) : turkishDistricts[watchCity] || [];
-    setDistricts(cityDistricts);
+      setLoading(prev => ({ ...prev, districts: true }));
+      const districtsData = await addressService.getDistrictsByCity(watchCity);
+      setDistricts(districtsData);
+      setLoading(prev => ({ ...prev, districts: false }));
+    };
+
+    loadDistricts();
   }, [isTurkey, watchCity]);
 
   // Load neighborhoods when district changes
   useEffect(() => {
-    if (!isTurkey || !watchDistrict) {
-      setNeighborhoods([]);
-      return;
-    }
+    const loadNeighborhoods = async () => {
+      if (!isTurkey || !watchDistrict) {
+        setNeighborhoods([]);
+        return;
+      }
 
-    const districtNeighborhoods = getNeighborhoodsByDistrict
-      ? getNeighborhoodsByDistrict(watchCity, watchDistrict)
-      : turkishNeighborhoods[watchDistrict] || [];
-    setNeighborhoods(districtNeighborhoods);
+      setLoading(prev => ({ ...prev, neighborhoods: true }));
+      const neighborhoodsData = await addressService.getNeighborhoodsByCityAndDistrict(watchCity, watchDistrict);
+      setNeighborhoods(neighborhoodsData);
+      setLoading(prev => ({ ...prev, neighborhoods: false }));
+    };
+
+    loadNeighborhoods();
   }, [isTurkey, watchCity, watchDistrict]);
 
   // Call onChange when values change
@@ -227,16 +245,22 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
                   disabled={disabled}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="İl seçin" />
+                    <SelectTrigger className="h-9 text-sm" disabled={loading.cities}>
+                      <SelectValue placeholder={loading.cities ? "Yükleniyor..." : "İl seçin"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {turkishCities.map((city) => (
-                      <SelectItem key={city.value} value={city.value}>
-                        {city.label}
-                      </SelectItem>
-                    ))}
+                    {loading.cities ? (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : (
+                      cities.map((city) => (
+                        <SelectItem key={city.value} value={city.value}>
+                          {city.label}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               ) : (
@@ -257,17 +281,23 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
             <Select
               onValueChange={handleCityChange}
               value={watchCity}
-              disabled={disabled}
+              disabled={disabled || loading.cities}
             >
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="İl seçin" />
+                <SelectValue placeholder={loading.cities ? "Yükleniyor..." : "İl seçin"} />
               </SelectTrigger>
               <SelectContent>
-                {turkishCities.map((city) => (
-                  <SelectItem key={city.value} value={city.value}>
-                    {city.label}
-                  </SelectItem>
-                ))}
+                {loading.cities ? (
+                  <div className="flex items-center justify-center py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : (
+                  cities.map((city) => (
+                    <SelectItem key={city.value} value={city.value}>
+                      {city.label}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           ) : (
@@ -302,16 +332,22 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
                   disabled={disabled}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="İlçe seçin" />
+                    <SelectTrigger className="h-9 text-sm" disabled={loading.districts}>
+                      <SelectValue placeholder={loading.districts ? "Yükleniyor..." : "İlçe seçin"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {districts.map((district) => (
-                      <SelectItem key={district.value} value={district.value}>
-                        {district.label}
-                      </SelectItem>
-                    ))}
+                    {loading.districts ? (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : (
+                      districts.map((district) => (
+                        <SelectItem key={district.value} value={district.value}>
+                          {district.label}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               ) : (
@@ -332,17 +368,23 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
             <Select
               onValueChange={handleDistrictChange}
               value={watchDistrict}
-              disabled={disabled}
+              disabled={disabled || loading.districts}
             >
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="İlçe seçin" />
+                <SelectValue placeholder={loading.districts ? "Yükleniyor..." : "İlçe seçin"} />
               </SelectTrigger>
               <SelectContent>
-                {districts.map((district) => (
-                  <SelectItem key={district.value} value={district.value}>
-                    {district.label}
-                  </SelectItem>
-                ))}
+                {loading.districts ? (
+                  <div className="flex items-center justify-center py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : (
+                  districts.map((district) => (
+                    <SelectItem key={district.value} value={district.value}>
+                      {district.label}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           ) : (
@@ -377,16 +419,26 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
                   disabled={disabled}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="Mahalle seçin" />
+                    <SelectTrigger className="h-9 text-sm" disabled={loading.neighborhoods}>
+                      <SelectValue placeholder={loading.neighborhoods ? "Yükleniyor..." : "Mahalle seçin"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {neighborhoods.map((neighborhood) => (
-                      <SelectItem key={neighborhood.value} value={neighborhood.value}>
-                        {neighborhood.label} {neighborhood.postalCode && `- ${neighborhood.postalCode}`}
-                      </SelectItem>
-                    ))}
+                    {loading.neighborhoods ? (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : neighborhoods.length === 0 ? (
+                      <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+                        Mahalle verisi bulunamadı
+                      </div>
+                    ) : (
+                      neighborhoods.map((neighborhood) => (
+                        <SelectItem key={neighborhood.value} value={neighborhood.value}>
+                          {neighborhood.label} {neighborhood.postalCode && `- ${neighborhood.postalCode}`}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               ) : (
@@ -407,17 +459,27 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
             <Select
               onValueChange={handleNeighborhoodChange}
               value={watchNeighborhood}
-              disabled={disabled}
+              disabled={disabled || loading.neighborhoods}
             >
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder="Mahalle seçin" />
+                <SelectValue placeholder={loading.neighborhoods ? "Yükleniyor..." : "Mahalle seçin"} />
               </SelectTrigger>
               <SelectContent>
-                {neighborhoods.map((neighborhood) => (
-                  <SelectItem key={neighborhood.value} value={neighborhood.value}>
-                    {neighborhood.label} {neighborhood.postalCode && `- ${neighborhood.postalCode}`}
-                  </SelectItem>
-                ))}
+                {loading.neighborhoods ? (
+                  <div className="flex items-center justify-center py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : neighborhoods.length === 0 ? (
+                  <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+                    Mahalle verisi bulunamadı
+                  </div>
+                ) : (
+                  neighborhoods.map((neighborhood) => (
+                    <SelectItem key={neighborhood.value} value={neighborhood.value}>
+                      {neighborhood.label} {neighborhood.postalCode && `- ${neighborhood.postalCode}`}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           ) : (

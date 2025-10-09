@@ -1,301 +1,1439 @@
 [
   {
+    "id": 1,
+    "name": "Adana",
+    "districts": [
+      {"id": 1, "name": "Seyhan", "neighborhoods": [{"id": 1, "name": "Kurtuluş", "postalCode": "01120"}, {"id": 2, "name": "Çınarlı", "postalCode": "01140"}]},
+      {"id": 2, "name": "Çukurova", "neighborhoods": [{"id": 4, "name": "Balcalı", "postalCode": "01330"}]},
+      {"id": 3, "name": "Yüreğir", "neighborhoods": []},
+      {"id": 4, "name": "Ceyhan", "neighborhoods": []},
+      {"id": 5, "name": "Kozan", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Adıyaman",
+    "districts": [
+      {"id": 10, "name": "Merkez", "neighborhoods": []},
+      {"id": 11, "name": "Besni", "neighborhoods": []},
+      {"id": 12, "name": "Çelikhan", "neighborhoods": []},
+      {"id": 13, "name": "Gerger", "neighborhoods": []},
+      {"id": 14, "name": "Gölbaşı", "neighborhoods": []},
+      {"id": 15, "name": "Kahta", "neighborhoods": []},
+      {"id": 16, "name": "Samsat", "neighborhoods": []},
+      {"id": 17, "name": "Sincik", "neighborhoods": []},
+      {"id": 18, "name": "Tut", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Afyonkarahisar",
+    "districts": [
+      {"id": 20, "name": "Merkez", "neighborhoods": []},
+      {"id": 21, "name": "Bolvadin", "neighborhoods": []},
+      {"id": 22, "name": "Çay", "neighborhoods": []},
+      {"id": 23, "name": "Dazkırı", "neighborhoods": []},
+      {"id": 24, "name": "Dinar", "neighborhoods": []},
+      {"id": 25, "name": "Emirdağ", "neighborhoods": []},
+      {"id": 26, "name": "İhsaniye", "neighborhoods": []},
+      {"id": 27, "name": "Sandıklı", "neighborhoods": []},
+      {"id": 28, "name": "Sinanpaşa", "neighborhoods": []},
+      {"id": 29, "name": "Sultandağı", "neighborhoods": []},
+      {"id": 30, "name": "Şuhut", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Ağrı",
+    "districts": [
+      {"id": 40, "name": "Merkez", "neighborhoods": []},
+      {"id": 41, "name": "Diyadin", "neighborhoods": []},
+      {"id": 42, "name": "Doğubayazıt", "neighborhoods": []},
+      {"id": 43, "name": "Eleşkirt", "neighborhoods": []},
+      {"id": 44, "name": "Hamur", "neighborhoods": []},
+      {"id": 45, "name": "Patnos", "neighborhoods": []},
+      {"id": 46, "name": "Taşlıçay", "neighborhoods": []},
+      {"id": 47, "name": "Tutak", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Amasya",
+    "districts": [
+      {"id": 50, "name": "Merkez", "neighborhoods": []},
+      {"id": 51, "name": "Göynücek", "neighborhoods": []},
+      {"id": 52, "name": "Gümüşhacıköy", "neighborhoods": []},
+      {"id": 53, "name": "Merzifon", "neighborhoods": []},
+      {"id": 54, "name": "Suluova", "neighborhoods": []},
+      {"id": 55, "name": "Taşova", "neighborhoods": []}
+    ]
+  },
+  {
     "id": 6,
     "name": "Ankara",
     "districts": [
-      {
-        "id": 938,
-        "name": "Çankaya",
-        "neighborhoods": [
-          {"id": 17866, "name": "Aşağı Öveçler", "postalCode": "06460"},
-          {"id": 17867, "name": "Bahçelievler", "postalCode": "06490"},
-          {"id": 17868, "name": "Dikmen", "postalCode": "06450"},
-          {"id": 17869, "name": "Kavaklıdere", "postalCode": "06680"},
-          {"id": 17870, "name": "Yukarı Öveçler", "postalCode": "06460"}
-        ]
-      },
-      {
-        "id": 939,
-        "name": "Keçiören",
-        "neighborhoods": [
-          {"id": 17871, "name": "Aktepe", "postalCode": "06280"},
-          {"id": 17872, "name": "Etlik", "postalCode": "06010"},
-          {"id": 17873, "name": "Güneşevler", "postalCode": "06200"},
-          {"id": 17874, "name": "Karşıyaka", "postalCode": "06170"}
-        ]
-      },
-      {
-        "id": 940,
-        "name": "Yenimahalle",
-        "neighborhoods": [
-          {"id": 17875, "name": "Demetevler", "postalCode": "06200"},
-          {"id": 17876, "name": "Batıkent", "postalCode": "06370"},
-          {"id": 17877, "name": "Güzelkent", "postalCode": "06360"}
-        ]
-      }
-    ]
-  },
-  {
-    "id": 34,
-    "name": "İstanbul",
-    "districts": [
-      {
-        "id": 449,
-        "name": "Beşiktaş",
-        "neighborhoods": [
-          {"id": 9656, "name": "Levent", "postalCode": "34330"},
-          {"id": 9657, "name": "Etiler", "postalCode": "34337"},
-          {"id": 9658, "name": "Bebek", "postalCode": "34342"},
-          {"id": 9659, "name": "Ortaköy", "postalCode": "34347"}
-        ]
-      },
-      {
-        "id": 450,
-        "name": "Kadıköy",
-        "neighborhoods": [
-          {"id": 9660, "name": "Moda", "postalCode": "34710"},
-          {"id": 9661, "name": "Fenerbahçe", "postalCode": "34726"},
-          {"id": 9662, "name": "Göztepe", "postalCode": "34730"},
-          {"id": 9663, "name": "Acıbadem", "postalCode": "34718"}
-        ]
-      },
-      {
-        "id": 451,
-        "name": "Şişli",
-        "neighborhoods": [
-          {"id": 9664, "name": "Mecidiyeköy", "postalCode": "34387"},
-          {"id": 9665, "name": "Nişantaşı", "postalCode": "34365"},
-          {"id": 9666, "name": "Osmanbey", "postalCode": "34367"}
-        ]
-      },
-      {
-        "id": 452,
-        "name": "Beyoğlu",
-        "neighborhoods": [
-          {"id": 9667, "name": "Taksim", "postalCode": "34435"},
-          {"id": 9668, "name": "Cihangir", "postalCode": "34433"},
-          {"id": 9669, "name": "Galata", "postalCode": "34420"}
-        ]
-      },
-      {
-        "id": 453,
-        "name": "Üsküdar",
-        "neighborhoods": [
-          {"id": 9670, "name": "Kuzguncuk", "postalCode": "34674"},
-          {"id": 9671, "name": "Çengelköy", "postalCode": "34680"},
-          {"id": 9672, "name": "Beylerbeyi", "postalCode": "34676"}
-        ]
-      }
-    ]
-  },
-  {
-    "id": 35,
-    "name": "İzmir",
-    "districts": [
-      {
-        "id": 490,
-        "name": "Konak",
-        "neighborhoods": [
-          {"id": 10500, "name": "Alsancak", "postalCode": "35220"},
-          {"id": 10501, "name": "Basmane", "postalCode": "35240"},
-          {"id": 10502, "name": "Göztepe", "postalCode": "35290"}
-        ]
-      },
-      {
-        "id": 491,
-        "name": "Karşıyaka",
-        "neighborhoods": [
-          {"id": 10503, "name": "Bostanlı", "postalCode": "35550"},
-          {"id": 10504, "name": "Mavişehir", "postalCode": "35540"},
-          {"id": 10505, "name": "Çiğli", "postalCode": "35620"}
-        ]
-      },
-      {
-        "id": 492,
-        "name": "Bornova",
-        "neighborhoods": [
-          {"id": 10506, "name": "Erzene", "postalCode": "35050"},
-          {"id": 10507, "name": "Evka 3", "postalCode": "35040"},
-          {"id": 10508, "name": "Kazımdirik", "postalCode": "35100"}
-        ]
-      }
-    ]
-  },
-  {
-    "id": 16,
-    "name": "Bursa",
-    "districts": [
-      {
-        "id": 196,
-        "name": "Osmangazi",
-        "neighborhoods": [
-          {"id": 4100, "name": "Heykel", "postalCode": "16040"},
-          {"id": 4101, "name": "Çekirge", "postalCode": "16070"},
-          {"id": 4102, "name": "Doburca", "postalCode": "16090"}
-        ]
-      },
-      {
-        "id": 197,
-        "name": "Nilüfer",
-        "neighborhoods": [
-          {"id": 4103, "name": "Görükle", "postalCode": "16059"},
-          {"id": 4104, "name": "Ertuğrul", "postalCode": "16120"},
-          {"id": 4105, "name": "Fethiye", "postalCode": "16140"}
-        ]
-      },
-      {
-        "id": 198,
-        "name": "Yıldırım",
-        "neighborhoods": [
-          {"id": 4106, "name": "Mimar Sinan", "postalCode": "16310"},
-          {"id": 4107, "name": "Mollafenari", "postalCode": "16340"},
-          {"id": 4108, "name": "Yıldırım Beyazıt", "postalCode": "16370"}
-        ]
-      }
+      {"id": 938, "name": "Çankaya", "neighborhoods": [{"id": 17866, "name": "Aşağı Öveçler", "postalCode": "06460"}, {"id": 17867, "name": "Bahçelievler", "postalCode": "06490"}, {"id": 17868, "name": "Dikmen", "postalCode": "06450"}, {"id": 17869, "name": "Kavaklıdere", "postalCode": "06680"}]},
+      {"id": 939, "name": "Keçiören", "neighborhoods": [{"id": 17871, "name": "Aktepe", "postalCode": "06280"}, {"id": 17872, "name": "Etlik", "postalCode": "06010"}]},
+      {"id": 940, "name": "Yenimahalle", "neighborhoods": [{"id": 17875, "name": "Demetevler", "postalCode": "06200"}, {"id": 17876, "name": "Batıkent", "postalCode": "06370"}]},
+      {"id": 941, "name": "Mamak", "neighborhoods": []},
+      {"id": 942, "name": "Sincan", "neighborhoods": []},
+      {"id": 943, "name": "Etimesgut", "neighborhoods": []},
+      {"id": 944, "name": "Altındağ", "neighborhoods": []},
+      {"id": 945, "name": "Pursaklar", "neighborhoods": []},
+      {"id": 946, "name": "Gölbaşı", "neighborhoods": []},
+      {"id": 947, "name": "Polatlı", "neighborhoods": []},
+      {"id": 948, "name": "Elmadağ", "neighborhoods": []},
+      {"id": 949, "name": "Çubuk", "neighborhoods": []},
+      {"id": 950, "name": "Beypazarı", "neighborhoods": []},
+      {"id": 951, "name": "Kazan", "neighborhoods": []},
+      {"id": 952, "name": "Kızılcahamam", "neighborhoods": []},
+      {"id": 953, "name": "Şereflikoçhisar", "neighborhoods": []},
+      {"id": 954, "name": "Haymana", "neighborhoods": []},
+      {"id": 955, "name": "Nallıhan", "neighborhoods": []},
+      {"id": 956, "name": "Kalecik", "neighborhoods": []},
+      {"id": 957, "name": "Ayaş", "neighborhoods": []},
+      {"id": 958, "name": "Çamlıdere", "neighborhoods": []},
+      {"id": 959, "name": "Güdül", "neighborhoods": []},
+      {"id": 960, "name": "Bala", "neighborhoods": []},
+      {"id": 961, "name": "Evren", "neighborhoods": []},
+      {"id": 962, "name": "Akyurt", "neighborhoods": []}
     ]
   },
   {
     "id": 7,
     "name": "Antalya",
     "districts": [
-      {
-        "id": 85,
-        "name": "Muratpaşa",
-        "neighborhoods": [
-          {"id": 1800, "name": "Kaleiçi", "postalCode": "07100"},
-          {"id": 1801, "name": "Güzeloba", "postalCode": "07230"},
-          {"id": 1802, "name": "Lara", "postalCode": "07230"}
-        ]
-      },
-      {
-        "id": 86,
-        "name": "Kepez",
-        "neighborhoods": [
-          {"id": 1803, "name": "Varsak", "postalCode": "07320"},
-          {"id": 1804, "name": "Şafak", "postalCode": "07060"},
-          {"id": 1805, "name": "Teomanpaşa", "postalCode": "07070"}
-        ]
-      },
-      {
-        "id": 87,
-        "name": "Konyaaltı",
-        "neighborhoods": [
-          {"id": 1806, "name": "Uncalı", "postalCode": "07070"},
-          {"id": 1807, "name": "Altınkum", "postalCode": "07070"},
-          {"id": 1808, "name": "Hurma", "postalCode": "07070"}
-        ]
-      }
+      {"id": 85, "name": "Muratpaşa", "neighborhoods": [{"id": 1800, "name": "Kaleiçi", "postalCode": "07100"}, {"id": 1801, "name": "Güzeloba", "postalCode": "07230"}, {"id": 1802, "name": "Lara", "postalCode": "07230"}]},
+      {"id": 86, "name": "Kepez", "neighborhoods": [{"id": 1803, "name": "Varsak", "postalCode": "07320"}, {"id": 1804, "name": "Şafak", "postalCode": "07060"}]},
+      {"id": 87, "name": "Konyaaltı", "neighborhoods": [{"id": 1806, "name": "Uncalı", "postalCode": "07070"}, {"id": 1807, "name": "Altınkum", "postalCode": "07070"}]},
+      {"id": 88, "name": "Alanya", "neighborhoods": []},
+      {"id": 89, "name": "Manavgat", "neighborhoods": []},
+      {"id": 90, "name": "Serik", "neighborhoods": []},
+      {"id": 91, "name": "Kaş", "neighborhoods": []},
+      {"id": 92, "name": "Kemer", "neighborhoods": []},
+      {"id": 93, "name": "Kumluca", "neighborhoods": []},
+      {"id": 94, "name": "Elmalı", "neighborhoods": []},
+      {"id": 95, "name": "Finike", "neighborhoods": []},
+      {"id": 96, "name": "Gazipaşa", "neighborhoods": []},
+      {"id": 97, "name": "Akseki", "neighborhoods": []},
+      {"id": 98, "name": "Gündoğmuş", "neighborhoods": []},
+      {"id": 99, "name": "İbradı", "neighborhoods": []},
+      {"id": 100, "name": "Demre", "neighborhoods": []},
+      {"id": 101, "name": "Aksu", "neighborhoods": []},
+      {"id": 102, "name": "Döşemealtı", "neighborhoods": []}
     ]
   },
   {
-    "id": 1,
-    "name": "Adana",
+    "id": 8,
+    "name": "Artvin",
     "districts": [
-      {
-        "id": 1,
-        "name": "Seyhan",
-        "neighborhoods": [
-          {"id": 1, "name": "Kurtuluş", "postalCode": "01120"},
-          {"id": 2, "name": "Çınarlı", "postalCode": "01140"},
-          {"id": 3, "name": "Ziyapaşa", "postalCode": "01160"}
-        ]
-      },
-      {
-        "id": 2,
-        "name": "Çukurova",
-        "neighborhoods": [
-          {"id": 4, "name": "Balcalı", "postalCode": "01330"},
-          {"id": 5, "name": "Güzelyalı", "postalCode": "01340"},
-          {"id": 6, "name": "Sarıçam", "postalCode": "01350"}
-        ]
-      }
+      {"id": 110, "name": "Merkez", "neighborhoods": []},
+      {"id": 111, "name": "Ardanuç", "neighborhoods": []},
+      {"id": 112, "name": "Arhavi", "neighborhoods": []},
+      {"id": 113, "name": "Borçka", "neighborhoods": []},
+      {"id": 114, "name": "Hopa", "neighborhoods": []},
+      {"id": 115, "name": "Şavşat", "neighborhoods": []},
+      {"id": 116, "name": "Yusufeli", "neighborhoods": []},
+      {"id": 117, "name": "Murgul", "neighborhoods": []}
     ]
   },
   {
-    "id": 58,
-    "name": "Sivas",
+    "id": 9,
+    "name": "Aydın",
     "districts": [
-      {
-        "id": 776,
-        "name": "Merkez",
-        "neighborhoods": [
-          {"id": 16800, "name": "Paşabey", "postalCode": "58030"},
-          {"id": 16801, "name": "Kale", "postalCode": "58040"},
-          {"id": 16802, "name": "Şeyh Şamil", "postalCode": "58050"}
-        ]
-      }
+      {"id": 120, "name": "Efeler", "neighborhoods": []},
+      {"id": 121, "name": "Bozdoğan", "neighborhoods": []},
+      {"id": 122, "name": "Çine", "neighborhoods": []},
+      {"id": 123, "name": "Germencik", "neighborhoods": []},
+      {"id": 124, "name": "Karacasu", "neighborhoods": []},
+      {"id": 125, "name": "Koçarlı", "neighborhoods": []},
+      {"id": 126, "name": "Kuşadası", "neighborhoods": []},
+      {"id": 127, "name": "Kuyucak", "neighborhoods": []},
+      {"id": 128, "name": "Nazilli", "neighborhoods": []},
+      {"id": 129, "name": "Söke", "neighborhoods": []},
+      {"id": 130, "name": "Sultanhisar", "neighborhoods": []},
+      {"id": 131, "name": "Yenipazar", "neighborhoods": []},
+      {"id": 132, "name": "Buharkent", "neighborhoods": []},
+      {"id": 133, "name": "İncirliova", "neighborhoods": []},
+      {"id": 134, "name": "Karpuzlu", "neighborhoods": []},
+      {"id": 135, "name": "Köşk", "neighborhoods": []},
+      {"id": 136, "name": "Didim", "neighborhoods": []}
     ]
   },
   {
-    "id": 42,
-    "name": "Konya",
+    "id": 10,
+    "name": "Balıkesir",
     "districts": [
-      {
-        "id": 543,
-        "name": "Meram",
-        "neighborhoods": [
-          {"id": 11600, "name": "Kosova", "postalCode": "42060"},
-          {"id": 11601, "name": "Yaka", "postalCode": "42070"},
-          {"id": 11602, "name": "Durunday", "postalCode": "42080"}
-        ]
-      },
-      {
-        "id": 544,
-        "name": "Selçuklu",
-        "neighborhoods": [
-          {"id": 11603, "name": "Yazır", "postalCode": "42250"},
-          {"id": 11604, "name": "Sancak", "postalCode": "42100"},
-          {"id": 11605, "name": "Buhara", "postalCode": "42110"}
-        ]
-      }
+      {"id": 140, "name": "Altıeylül", "neighborhoods": []},
+      {"id": 141, "name": "Karesi", "neighborhoods": []},
+      {"id": 142, "name": "Ayvalık", "neighborhoods": []},
+      {"id": 143, "name": "Balya", "neighborhoods": []},
+      {"id": 144, "name": "Bandırma", "neighborhoods": []},
+      {"id": 145, "name": "Bigadiç", "neighborhoods": []},
+      {"id": 146, "name": "Burhaniye", "neighborhoods": []},
+      {"id": 147, "name": "Dursunbey", "neighborhoods": []},
+      {"id": 148, "name": "Edremit", "neighborhoods": []},
+      {"id": 149, "name": "Erdek", "neighborhoods": []},
+      {"id": 150, "name": "Gömeç", "neighborhoods": []},
+      {"id": 151, "name": "Gönen", "neighborhoods": []},
+      {"id": 152, "name": "Havran", "neighborhoods": []},
+      {"id": 153, "name": "İvrindi", "neighborhoods": []},
+      {"id": 154, "name": "Kepsut", "neighborhoods": []},
+      {"id": 155, "name": "Manyas", "neighborhoods": []},
+      {"id": 156, "name": "Savaştepe", "neighborhoods": []},
+      {"id": 157, "name": "Sındırgı", "neighborhoods": []},
+      {"id": 158, "name": "Susurluk", "neighborhoods": []},
+      {"id": 159, "name": "Marmara", "neighborhoods": []}
     ]
   },
   {
-    "id": 55,
-    "name": "Samsun",
+    "id": 11,
+    "name": "Bilecik",
     "districts": [
-      {
-        "id": 730,
-        "name": "İlkadım",
-        "neighborhoods": [
-          {"id": 15700, "name": "Kale", "postalCode": "55030"},
-          {"id": 15701, "name": "Cumhuriyet", "postalCode": "55040"},
-          {"id": 15702, "name": "Yenimahalle", "postalCode": "55050"}
-        ]
-      },
-      {
-        "id": 731,
-        "name": "Atakum",
-        "neighborhoods": [
-          {"id": 15703, "name": "Kurupelit", "postalCode": "55200"},
-          {"id": 15704, "name": "Yenimahalle", "postalCode": "55210"},
-          {"id": 15705, "name": "Mimarsinan", "postalCode": "55220"}
-        ]
-      }
+      {"id": 170, "name": "Merkez", "neighborhoods": []},
+      {"id": 171, "name": "Bozüyük", "neighborhoods": []},
+      {"id": 172, "name": "Gölpazarı", "neighborhoods": []},
+      {"id": 173, "name": "Osmaneli", "neighborhoods": []},
+      {"id": 174, "name": "Pazaryeri", "neighborhoods": []},
+      {"id": 175, "name": "Söğüt", "neighborhoods": []},
+      {"id": 176, "name": "Yenipazar", "neighborhoods": []},
+      {"id": 177, "name": "İnhisar", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Bingöl",
+    "districts": [
+      {"id": 180, "name": "Merkez", "neighborhoods": []},
+      {"id": 181, "name": "Genç", "neighborhoods": []},
+      {"id": 182, "name": "Karlıova", "neighborhoods": []},
+      {"id": 183, "name": "Kiğı", "neighborhoods": []},
+      {"id": 184, "name": "Solhan", "neighborhoods": []},
+      {"id": 185, "name": "Adaklı", "neighborhoods": []},
+      {"id": 186, "name": "Yayladere", "neighborhoods": []},
+      {"id": 187, "name": "Yedisu", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Bitlis",
+    "districts": [
+      {"id": 190, "name": "Merkez", "neighborhoods": []},
+      {"id": 191, "name": "Adilcevaz", "neighborhoods": []},
+      {"id": 192, "name": "Ahlat", "neighborhoods": []},
+      {"id": 193, "name": "Güroymak", "neighborhoods": []},
+      {"id": 194, "name": "Hizan", "neighborhoods": []},
+      {"id": 195, "name": "Mutki", "neighborhoods": []},
+      {"id": 196, "name": "Tatvan", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 14,
+    "name": "Bolu",
+    "districts": [
+      {"id": 200, "name": "Merkez", "neighborhoods": []},
+      {"id": 201, "name": "Gerede", "neighborhoods": []},
+      {"id": 202, "name": "Göynük", "neighborhoods": []},
+      {"id": 203, "name": "Kıbrıscık", "neighborhoods": []},
+      {"id": 204, "name": "Mengen", "neighborhoods": []},
+      {"id": 205, "name": "Mudurnu", "neighborhoods": []},
+      {"id": 206, "name": "Seben", "neighborhoods": []},
+      {"id": 207, "name": "Dörtdivan", "neighborhoods": []},
+      {"id": 208, "name": "Yeniçağa", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 15,
+    "name": "Burdur",
+    "districts": [
+      {"id": 210, "name": "Merkez", "neighborhoods": []},
+      {"id": 211, "name": "Ağlasun", "neighborhoods": []},
+      {"id": 212, "name": "Altınyayla", "neighborhoods": []},
+      {"id": 213, "name": "Bucak", "neighborhoods": []},
+      {"id": 214, "name": "Çavdır", "neighborhoods": []},
+      {"id": 215, "name": "Çeltikçi", "neighborhoods": []},
+      {"id": 216, "name": "Gölhisar", "neighborhoods": []},
+      {"id": 217, "name": "Karamanlı", "neighborhoods": []},
+      {"id": 218, "name": "Kemer", "neighborhoods": []},
+      {"id": 219, "name": "Tefenni", "neighborhoods": []},
+      {"id": 220, "name": "Yeşilova", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 16,
+    "name": "Bursa",
+    "districts": [
+      {"id": 196, "name": "Osmangazi", "neighborhoods": [{"id": 4100, "name": "Heykel", "postalCode": "16040"}, {"id": 4101, "name": "Çekirge", "postalCode": "16070"}]},
+      {"id": 197, "name": "Nilüfer", "neighborhoods": [{"id": 4103, "name": "Görükle", "postalCode": "16059"}, {"id": 4104, "name": "Ertuğrul", "postalCode": "16120"}]},
+      {"id": 198, "name": "Yıldırım", "neighborhoods": [{"id": 4106, "name": "Mimar Sinan", "postalCode": "16310"}]},
+      {"id": 199, "name": "Gemlik", "neighborhoods": []},
+      {"id": 230, "name": "İnegöl", "neighborhoods": []},
+      {"id": 231, "name": "İznik", "neighborhoods": []},
+      {"id": 232, "name": "Karacabey", "neighborhoods": []},
+      {"id": 233, "name": "Keles", "neighborhoods": []},
+      {"id": 234, "name": "Mudanya", "neighborhoods": []},
+      {"id": 235, "name": "Mustafakemalpaşa", "neighborhoods": []},
+      {"id": 236, "name": "Orhaneli", "neighborhoods": []},
+      {"id": 237, "name": "Orhangazi", "neighborhoods": []},
+      {"id": 238, "name": "Yenişehir", "neighborhoods": []},
+      {"id": 239, "name": "Büyükorhan", "neighborhoods": []},
+      {"id": 240, "name": "Harmancık", "neighborhoods": []},
+      {"id": 241, "name": "Kestel", "neighborhoods": []},
+      {"id": 242, "name": "Gürsu", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 17,
+    "name": "Çanakkale",
+    "districts": [
+      {"id": 250, "name": "Merkez", "neighborhoods": []},
+      {"id": 251, "name": "Ayvacık", "neighborhoods": []},
+      {"id": 252, "name": "Bayramiç", "neighborhoods": []},
+      {"id": 253, "name": "Biga", "neighborhoods": []},
+      {"id": 254, "name": "Bozcaada", "neighborhoods": []},
+      {"id": 255, "name": "Çan", "neighborhoods": []},
+      {"id": 256, "name": "Eceabat", "neighborhoods": []},
+      {"id": 257, "name": "Ezine", "neighborhoods": []},
+      {"id": 258, "name": "Gelibolu", "neighborhoods": []},
+      {"id": 259, "name": "Gökçeada", "neighborhoods": []},
+      {"id": 260, "name": "Lapseki", "neighborhoods": []},
+      {"id": 261, "name": "Yenice", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 18,
+    "name": "Çankırı",
+    "districts": [
+      {"id": 270, "name": "Merkez", "neighborhoods": []},
+      {"id": 271, "name": "Çerkeş", "neighborhoods": []},
+      {"id": 272, "name": "Eldivan", "neighborhoods": []},
+      {"id": 273, "name": "Ilgaz", "neighborhoods": []},
+      {"id": 274, "name": "Kurşunlu", "neighborhoods": []},
+      {"id": 275, "name": "Orta", "neighborhoods": []},
+      {"id": 276, "name": "Şabanözü", "neighborhoods": []},
+      {"id": 277, "name": "Yapraklı", "neighborhoods": []},
+      {"id": 278, "name": "Atkaracalar", "neighborhoods": []},
+      {"id": 279, "name": "Kızılırmak", "neighborhoods": []},
+      {"id": 280, "name": "Bayramören", "neighborhoods": []},
+      {"id": 281, "name": "Korgun", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 19,
+    "name": "Çorum",
+    "districts": [
+      {"id": 290, "name": "Merkez", "neighborhoods": []},
+      {"id": 291, "name": "Alaca", "neighborhoods": []},
+      {"id": 292, "name": "Bayat", "neighborhoods": []},
+      {"id": 293, "name": "İskilip", "neighborhoods": []},
+      {"id": 294, "name": "Kargı", "neighborhoods": []},
+      {"id": 295, "name": "Mecitözü", "neighborhoods": []},
+      {"id": 296, "name": "Ortaköy", "neighborhoods": []},
+      {"id": 297, "name": "Osmancık", "neighborhoods": []},
+      {"id": 298, "name": "Sungurlu", "neighborhoods": []},
+      {"id": 299, "name": "Dodurga", "neighborhoods": []},
+      {"id": 300, "name": "Laçin", "neighborhoods": []},
+      {"id": 301, "name": "Oğuzlar", "neighborhoods": []},
+      {"id": 302, "name": "Uğurludağ", "neighborhoods": []},
+      {"id": 303, "name": "Boğazkale", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 20,
+    "name": "Denizli",
+    "districts": [
+      {"id": 310, "name": "Merkezefendi", "neighborhoods": []},
+      {"id": 311, "name": "Pamukkale", "neighborhoods": []},
+      {"id": 312, "name": "Acıpayam", "neighborhoods": []},
+      {"id": 313, "name": "Buldan", "neighborhoods": []},
+      {"id": 314, "name": "Çal", "neighborhoods": []},
+      {"id": 315, "name": "Çameli", "neighborhoods": []},
+      {"id": 316, "name": "Çardak", "neighborhoods": []},
+      {"id": 317, "name": "Çivril", "neighborhoods": []},
+      {"id": 318, "name": "Güney", "neighborhoods": []},
+      {"id": 319, "name": "Kale", "neighborhoods": []},
+      {"id": 320, "name": "Sarayköy", "neighborhoods": []},
+      {"id": 321, "name": "Tavas", "neighborhoods": []},
+      {"id": 322, "name": "Babadağ", "neighborhoods": []},
+      {"id": 323, "name": "Bekilli", "neighborhoods": []},
+      {"id": 324, "name": "Honaz", "neighborhoods": []},
+      {"id": 325, "name": "Serinhisar", "neighborhoods": []},
+      {"id": 326, "name": "Baklan", "neighborhoods": []},
+      {"id": 327, "name": "Beyağaç", "neighborhoods": []},
+      {"id": 328, "name": "Bozkurt", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 21,
+    "name": "Diyarbakır",
+    "districts": [
+      {"id": 330, "name": "Bağlar", "neighborhoods": []},
+      {"id": 331, "name": "Kayapınar", "neighborhoods": []},
+      {"id": 332, "name": "Sur", "neighborhoods": []},
+      {"id": 333, "name": "Yenişehir", "neighborhoods": []},
+      {"id": 334, "name": "Bismil", "neighborhoods": []},
+      {"id": 335, "name": "Çermik", "neighborhoods": []},
+      {"id": 336, "name": "Çınar", "neighborhoods": []},
+      {"id": 337, "name": "Çüngüş", "neighborhoods": []},
+      {"id": 338, "name": "Dicle", "neighborhoods": []},
+      {"id": 339, "name": "Ergani", "neighborhoods": []},
+      {"id": 340, "name": "Hani", "neighborhoods": []},
+      {"id": 341, "name": "Hazro", "neighborhoods": []},
+      {"id": 342, "name": "Kulp", "neighborhoods": []},
+      {"id": 343, "name": "Lice", "neighborhoods": []},
+      {"id": 344, "name": "Silvan", "neighborhoods": []},
+      {"id": 345, "name": "Eğil", "neighborhoods": []},
+      {"id": 346, "name": "Kocaköy", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 22,
+    "name": "Edirne",
+    "districts": [
+      {"id": 350, "name": "Merkez", "neighborhoods": []},
+      {"id": 351, "name": "Enez", "neighborhoods": []},
+      {"id": 352, "name": "Havsa", "neighborhoods": []},
+      {"id": 353, "name": "İpsala", "neighborhoods": []},
+      {"id": 354, "name": "Keşan", "neighborhoods": []},
+      {"id": 355, "name": "Lalapaşa", "neighborhoods": []},
+      {"id": 356, "name": "Meriç", "neighborhoods": []},
+      {"id": 357, "name": "Uzunköprü", "neighborhoods": []},
+      {"id": 358, "name": "Süloğlu", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 23,
+    "name": "Elazığ",
+    "districts": [
+      {"id": 360, "name": "Merkez", "neighborhoods": []},
+      {"id": 361, "name": "Ağın", "neighborhoods": []},
+      {"id": 362, "name": "Baskil", "neighborhoods": []},
+      {"id": 363, "name": "Karakoçan", "neighborhoods": []},
+      {"id": 364, "name": "Keban", "neighborhoods": []},
+      {"id": 365, "name": "Maden", "neighborhoods": []},
+      {"id": 366, "name": "Palu", "neighborhoods": []},
+      {"id": 367, "name": "Sivrice", "neighborhoods": []},
+      {"id": 368, "name": "Arıcak", "neighborhoods": []},
+      {"id": 369, "name": "Kovancılar", "neighborhoods": []},
+      {"id": 370, "name": "Alacakaya", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 24,
+    "name": "Erzincan",
+    "districts": [
+      {"id": 380, "name": "Merkez", "neighborhoods": []},
+      {"id": 381, "name": "Çayırlı", "neighborhoods": []},
+      {"id": 382, "name": "İliç", "neighborhoods": []},
+      {"id": 383, "name": "Kemah", "neighborhoods": []},
+      {"id": 384, "name": "Kemaliye", "neighborhoods": []},
+      {"id": 385, "name": "Refahiye", "neighborhoods": []},
+      {"id": 386, "name": "Tercan", "neighborhoods": []},
+      {"id": 387, "name": "Üzümlü", "neighborhoods": []},
+      {"id": 388, "name": "Otlukbeli", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 25,
+    "name": "Erzurum",
+    "districts": [
+      {"id": 390, "name": "Yakutiye", "neighborhoods": []},
+      {"id": 391, "name": "Palandöken", "neighborhoods": []},
+      {"id": 392, "name": "Aziziye", "neighborhoods": []},
+      {"id": 393, "name": "Aşkale", "neighborhoods": []},
+      {"id": 394, "name": "Çat", "neighborhoods": []},
+      {"id": 395, "name": "Hınıs", "neighborhoods": []},
+      {"id": 396, "name": "Horasan", "neighborhoods": []},
+      {"id": 397, "name": "İspir", "neighborhoods": []},
+      {"id": 398, "name": "Karayazı", "neighborhoods": []},
+      {"id": 399, "name": "Narman", "neighborhoods": []},
+      {"id": 400, "name": "Oltu", "neighborhoods": []},
+      {"id": 401, "name": "Olur", "neighborhoods": []},
+      {"id": 402, "name": "Pasinler", "neighborhoods": []},
+      {"id": 403, "name": "Şenkaya", "neighborhoods": []},
+      {"id": 404, "name": "Tekman", "neighborhoods": []},
+      {"id": 405, "name": "Tortum", "neighborhoods": []},
+      {"id": 406, "name": "Karaçoban", "neighborhoods": []},
+      {"id": 407, "name": "Uzundere", "neighborhoods": []},
+      {"id": 408, "name": "Köprüköy", "neighborhoods": []},
+      {"id": 409, "name": "Pazaryolu", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 26,
+    "name": "Eskişehir",
+    "districts": [
+      {"id": 410, "name": "Odunpazarı", "neighborhoods": []},
+      {"id": 411, "name": "Tepebaşı", "neighborhoods": []},
+      {"id": 412, "name": "Alpu", "neighborhoods": []},
+      {"id": 413, "name": "Beylikova", "neighborhoods": []},
+      {"id": 414, "name": "Çifteler", "neighborhoods": []},
+      {"id": 415, "name": "Günyüzü", "neighborhoods": []},
+      {"id": 416, "name": "Han", "neighborhoods": []},
+      {"id": 417, "name": "İnönü", "neighborhoods": []},
+      {"id": 418, "name": "Mahmudiye", "neighborhoods": []},
+      {"id": 419, "name": "Mihalgazi", "neighborhoods": []},
+      {"id": 420, "name": "Mihalıççık", "neighborhoods": []},
+      {"id": 421, "name": "Sarıcakaya", "neighborhoods": []},
+      {"id": 422, "name": "Seyitgazi", "neighborhoods": []},
+      {"id": 423, "name": "Sivrihisar", "neighborhoods": []}
     ]
   },
   {
     "id": 27,
     "name": "Gaziantep",
     "districts": [
-      {
-        "id": 344,
-        "name": "Şehitkamil",
-        "neighborhoods": [
-          {"id": 7300, "name": "İbrahimli", "postalCode": "27060"},
-          {"id": 7301, "name": "Güneykent", "postalCode": "27070"},
-          {"id": 7302, "name": "Karacaahmet", "postalCode": "27080"}
-        ]
-      },
-      {
-        "id": 345,
-        "name": "Şahinbey",
-        "neighborhoods": [
-          {"id": 7303, "name": "Şehreküstü", "postalCode": "27400"},
-          {"id": 7304, "name": "Karataş", "postalCode": "27410"},
-          {"id": 7305, "name": "Burak", "postalCode": "27420"}
-        ]
-      }
+      {"id": 344, "name": "Şehitkamil", "neighborhoods": [{"id": 7300, "name": "İbrahimli", "postalCode": "27060"}, {"id": 7301, "name": "Güneykent", "postalCode": "27070"}]},
+      {"id": 345, "name": "Şahinbey", "neighborhoods": [{"id": 7303, "name": "Şehreküstü", "postalCode": "27400"}]},
+      {"id": 430, "name": "Araban", "neighborhoods": []},
+      {"id": 431, "name": "İslahiye", "neighborhoods": []},
+      {"id": 432, "name": "Karkamış", "neighborhoods": []},
+      {"id": 433, "name": "Nizip", "neighborhoods": []},
+      {"id": 434, "name": "Nurdağı", "neighborhoods": []},
+      {"id": 435, "name": "Oğuzeli", "neighborhoods": []},
+      {"id": 436, "name": "Yavuzeli", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 28,
+    "name": "Giresun",
+    "districts": [
+      {"id": 440, "name": "Merkez", "neighborhoods": []},
+      {"id": 441, "name": "Alucra", "neighborhoods": []},
+      {"id": 442, "name": "Bulancak", "neighborhoods": []},
+      {"id": 443, "name": "Dereli", "neighborhoods": []},
+      {"id": 444, "name": "Espiye", "neighborhoods": []},
+      {"id": 445, "name": "Eynesil", "neighborhoods": []},
+      {"id": 446, "name": "Görele", "neighborhoods": []},
+      {"id": 447, "name": "Keşap", "neighborhoods": []},
+      {"id": 448, "name": "Şebinkarahisar", "neighborhoods": []},
+      {"id": 449, "name": "Tirebolu", "neighborhoods": []},
+      {"id": 450, "name": "Piraziz", "neighborhoods": []},
+      {"id": 451, "name": "Yağlıdere", "neighborhoods": []},
+      {"id": 452, "name": "Çamoluk", "neighborhoods": []},
+      {"id": 453, "name": "Çanakçı", "neighborhoods": []},
+      {"id": 454, "name": "Doğankent", "neighborhoods": []},
+      {"id": 455, "name": "Güce", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 29,
+    "name": "Gümüşhane",
+    "districts": [
+      {"id": 460, "name": "Merkez", "neighborhoods": []},
+      {"id": 461, "name": "Kelkit", "neighborhoods": []},
+      {"id": 462, "name": "Şiran", "neighborhoods": []},
+      {"id": 463, "name": "Torul", "neighborhoods": []},
+      {"id": 464, "name": "Köse", "neighborhoods": []},
+      {"id": 465, "name": "Kürtün", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 30,
+    "name": "Hakkari",
+    "districts": [
+      {"id": 470, "name": "Merkez", "neighborhoods": []},
+      {"id": 471, "name": "Çukurca", "neighborhoods": []},
+      {"id": 472, "name": "Şemdinli", "neighborhoods": []},
+      {"id": 473, "name": "Yüksekova", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 31,
+    "name": "Hatay",
+    "districts": [
+      {"id": 480, "name": "Antakya", "neighborhoods": []},
+      {"id": 481, "name": "Arsuz", "neighborhoods": []},
+      {"id": 482, "name": "Defne", "neighborhoods": []},
+      {"id": 483, "name": "Dörtyol", "neighborhoods": []},
+      {"id": 484, "name": "Hassa", "neighborhoods": []},
+      {"id": 485, "name": "İskenderun", "neighborhoods": []},
+      {"id": 486, "name": "Kırıkhan", "neighborhoods": []},
+      {"id": 487, "name": "Payas", "neighborhoods": []},
+      {"id": 488, "name": "Reyhanlı", "neighborhoods": []},
+      {"id": 489, "name": "Samandağ", "neighborhoods": []},
+      {"id": 490, "name": "Yayladağı", "neighborhoods": []},
+      {"id": 491, "name": "Erzin", "neighborhoods": []},
+      {"id": 492, "name": "Belen", "neighborhoods": []},
+      {"id": 493, "name": "Kumlu", "neighborhoods": []},
+      {"id": 494, "name": "Altınözü", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 32,
+    "name": "Isparta",
+    "districts": [
+      {"id": 500, "name": "Merkez", "neighborhoods": []},
+      {"id": 501, "name": "Atabey", "neighborhoods": []},
+      {"id": 502, "name": "Eğirdir", "neighborhoods": []},
+      {"id": 503, "name": "Gelendost", "neighborhoods": []},
+      {"id": 504, "name": "Keçiborlu", "neighborhoods": []},
+      {"id": 505, "name": "Senirkent", "neighborhoods": []},
+      {"id": 506, "name": "Sütçüler", "neighborhoods": []},
+      {"id": 507, "name": "Şarkikaraağaç", "neighborhoods": []},
+      {"id": 508, "name": "Uluborlu", "neighborhoods": []},
+      {"id": 509, "name": "Yalvaç", "neighborhoods": []},
+      {"id": 510, "name": "Aksu", "neighborhoods": []},
+      {"id": 511, "name": "Gönen", "neighborhoods": []},
+      {"id": 512, "name": "Yenişarbademli", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 33,
+    "name": "Mersin",
+    "districts": [
+      {"id": 520, "name": "Akdeniz", "neighborhoods": []},
+      {"id": 521, "name": "Mezitli", "neighborhoods": []},
+      {"id": 522, "name": "Toroslar", "neighborhoods": []},
+      {"id": 523, "name": "Yenişehir", "neighborhoods": []},
+      {"id": 524, "name": "Anamur", "neighborhoods": []},
+      {"id": 525, "name": "Aydıncık", "neighborhoods": []},
+      {"id": 526, "name": "Bozyazı", "neighborhoods": []},
+      {"id": 527, "name": "Çamlıyayla", "neighborhoods": []},
+      {"id": 528, "name": "Erdemli", "neighborhoods": []},
+      {"id": 529, "name": "Gülnar", "neighborhoods": []},
+      {"id": 530, "name": "Mut", "neighborhoods": []},
+      {"id": 531, "name": "Silifke", "neighborhoods": []},
+      {"id": 532, "name": "Tarsus", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 34,
+    "name": "İstanbul",
+    "districts": [
+      {"id": 449, "name": "Beşiktaş", "neighborhoods": [{"id": 9656, "name": "Levent", "postalCode": "34330"}, {"id": 9657, "name": "Etiler", "postalCode": "34337"}, {"id": 9658, "name": "Bebek", "postalCode": "34342"}]},
+      {"id": 450, "name": "Kadıköy", "neighborhoods": [{"id": 9660, "name": "Moda", "postalCode": "34710"}, {"id": 9661, "name": "Fenerbahçe", "postalCode": "34726"}, {"id": 9662, "name": "Göztepe", "postalCode": "34730"}]},
+      {"id": 451, "name": "Şişli", "neighborhoods": [{"id": 9664, "name": "Mecidiyeköy", "postalCode": "34387"}, {"id": 9665, "name": "Nişantaşı", "postalCode": "34365"}]},
+      {"id": 452, "name": "Beyoğlu", "neighborhoods": [{"id": 9667, "name": "Taksim", "postalCode": "34435"}, {"id": 9668, "name": "Cihangir", "postalCode": "34433"}]},
+      {"id": 453, "name": "Üsküdar", "neighborhoods": [{"id": 9670, "name": "Kuzguncuk", "postalCode": "34674"}, {"id": 9671, "name": "Çengelköy", "postalCode": "34680"}]},
+      {"id": 540, "name": "Fatih", "neighborhoods": []},
+      {"id": 541, "name": "Bakırköy", "neighborhoods": []},
+      {"id": 542, "name": "Eminönü", "neighborhoods": []},
+      {"id": 543, "name": "Eyüpsultan", "neighborhoods": []},
+      {"id": 544, "name": "Gaziosmanpaşa", "neighborhoods": []},
+      {"id": 545, "name": "Güngören", "neighborhoods": []},
+      {"id": 546, "name": "Kartal", "neighborhoods": []},
+      {"id": 547, "name": "Küçükçekmece", "neighborhoods": []},
+      {"id": 548, "name": "Maltepe", "neighborhoods": []},
+      {"id": 549, "name": "Pendik", "neighborhoods": []},
+      {"id": 550, "name": "Sarıyer", "neighborhoods": []},
+      {"id": 551, "name": "Silivri", "neighborhoods": []},
+      {"id": 552, "name": "Tuzla", "neighborhoods": []},
+      {"id": 553, "name": "Zeytinburnu", "neighborhoods": []},
+      {"id": 554, "name": "Büyükçekmece", "neighborhoods": []},
+      {"id": 555, "name": "Çatalca", "neighborhoods": []},
+      {"id": 556, "name": "Ataşehir", "neighborhoods": []},
+      {"id": 557, "name": "Bahçelievler", "neighborhoods": []},
+      {"id": 558, "name": "Bağcılar", "neighborhoods": []},
+      {"id": 559, "name": "Esenler", "neighborhoods": []},
+      {"id": 560, "name": "Kağıthane", "neighborhoods": []},
+      {"id": 561, "name": "Sancaktepe", "neighborhoods": []},
+      {"id": 562, "name": "Sultanbeyli", "neighborhoods": []},
+      {"id": 563, "name": "Sultangazi", "neighborhoods": []},
+      {"id": 564, "name": "Şile", "neighborhoods": []},
+      {"id": 565, "name": "Bayrampaşa", "neighborhoods": []},
+      {"id": 566, "name": "Avcılar", "neighborhoods": []},
+      {"id": 567, "name": "Başakşehir", "neighborhoods": []},
+      {"id": 568, "name": "Beylikdüzü", "neighborhoods": []},
+      {"id": 569, "name": "Çekmeköy", "neighborhoods": []},
+      {"id": 570, "name": "Esenyurt", "neighborhoods": []},
+      {"id": 571, "name": "Arnavutköy", "neighborhoods": []},
+      {"id": 572, "name": "Adalar", "neighborhoods": []},
+      {"id": 573, "name": "Beykoz", "neighborhoods": []},
+      {"id": 574, "name": "Ümraniye", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 35,
+    "name": "İzmir",
+    "districts": [
+      {"id": 490, "name": "Konak", "neighborhoods": [{"id": 10500, "name": "Alsancak", "postalCode": "35220"}, {"id": 10501, "name": "Basmane", "postalCode": "35240"}]},
+      {"id": 491, "name": "Karşıyaka", "neighborhoods": [{"id": 10503, "name": "Bostanlı", "postalCode": "35550"}, {"id": 10504, "name": "Mavişehir", "postalCode": "35540"}]},
+      {"id": 492, "name": "Bornova", "neighborhoods": [{"id": 10506, "name": "Erzene", "postalCode": "35050"}]},
+      {"id": 580, "name": "Aliağa", "neighborhoods": []},
+      {"id": 581, "name": "Balçova", "neighborhoods": []},
+      {"id": 582, "name": "Bayındır", "neighborhoods": []},
+      {"id": 583, "name": "Bayraklı", "neighborhoods": []},
+      {"id": 584, "name": "Bergama", "neighborhoods": []},
+      {"id": 585, "name": "Beydağ", "neighborhoods": []},
+      {"id": 586, "name": "Buca", "neighborhoods": []},
+      {"id": 587, "name": "Çeşme", "neighborhoods": []},
+      {"id": 588, "name": "Çiğli", "neighborhoods": []},
+      {"id": 589, "name": "Dikili", "neighborhoods": []},
+      {"id": 590, "name": "Foça", "neighborhoods": []},
+      {"id": 591, "name": "Gaziemir", "neighborhoods": []},
+      {"id": 592, "name": "Güzelbahçe", "neighborhoods": []},
+      {"id": 593, "name": "Karabağlar", "neighborhoods": []},
+      {"id": 594, "name": "Karaburun", "neighborhoods": []},
+      {"id": 595, "name": "Kemalpaşa", "neighborhoods": []},
+      {"id": 596, "name": "Kınık", "neighborhoods": []},
+      {"id": 597, "name": "Kiraz", "neighborhoods": []},
+      {"id": 598, "name": "Menemen", "neighborhoods": []},
+      {"id": 599, "name": "Menderes", "neighborhoods": []},
+      {"id": 600, "name": "Narlıdere", "neighborhoods": []},
+      {"id": 601, "name": "Ödemiş", "neighborhoods": []},
+      {"id": 602, "name": "Seferihisar", "neighborhoods": []},
+      {"id": 603, "name": "Selçuk", "neighborhoods": []},
+      {"id": 604, "name": "Tire", "neighborhoods": []},
+      {"id": 605, "name": "Torbalı", "neighborhoods": []},
+      {"id": 606, "name": "Urla", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 36,
+    "name": "Kars",
+    "districts": [
+      {"id": 610, "name": "Merkez", "neighborhoods": []},
+      {"id": 611, "name": "Arpaçay", "neighborhoods": []},
+      {"id": 612, "name": "Digor", "neighborhoods": []},
+      {"id": 613, "name": "Kağızman", "neighborhoods": []},
+      {"id": 614, "name": "Sarıkamış", "neighborhoods": []},
+      {"id": 615, "name": "Selim", "neighborhoods": []},
+      {"id": 616, "name": "Susuz", "neighborhoods": []},
+      {"id": 617, "name": "Akyaka", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 37,
+    "name": "Kastamonu",
+    "districts": [
+      {"id": 620, "name": "Merkez", "neighborhoods": []},
+      {"id": 621, "name": "Abana", "neighborhoods": []},
+      {"id": 622, "name": "Ağlı", "neighborhoods": []},
+      {"id": 623, "name": "Araç", "neighborhoods": []},
+      {"id": 624, "name": "Azdavay", "neighborhoods": []},
+      {"id": 625, "name": "Bozkurt", "neighborhoods": []},
+      {"id": 626, "name": "Cide", "neighborhoods": []},
+      {"id": 627, "name": "Çatalzeytin", "neighborhoods": []},
+      {"id": 628, "name": "Daday", "neighborhoods": []},
+      {"id": 629, "name": "Devrekani", "neighborhoods": []},
+      {"id": 630, "name": "Doğanyurt", "neighborhoods": []},
+      {"id": 631, "name": "Hanönü", "neighborhoods": []},
+      {"id": 632, "name": "İhsangazi", "neighborhoods": []},
+      {"id": 633, "name": "İnebolu", "neighborhoods": []},
+      {"id": 634, "name": "Küre", "neighborhoods": []},
+      {"id": 635, "name": "Pınarbaşı", "neighborhoods": []},
+      {"id": 636, "name": "Seydiler", "neighborhoods": []},
+      {"id": 637, "name": "Şenpazar", "neighborhoods": []},
+      {"id": 638, "name": "Taşköprü", "neighborhoods": []},
+      {"id": 639, "name": "Tosya", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 38,
+    "name": "Kayseri",
+    "districts": [
+      {"id": 640, "name": "Kocasinan", "neighborhoods": []},
+      {"id": 641, "name": "Melikgazi", "neighborhoods": []},
+      {"id": 642, "name": "Talas", "neighborhoods": []},
+      {"id": 643, "name": "Hacılar", "neighborhoods": []},
+      {"id": 644, "name": "Bünyan", "neighborhoods": []},
+      {"id": 645, "name": "Develi", "neighborhoods": []},
+      {"id": 646, "name": "Felahiye", "neighborhoods": []},
+      {"id": 647, "name": "İncesu", "neighborhoods": []},
+      {"id": 648, "name": "Pınarbaşı", "neighborhoods": []},
+      {"id": 649, "name": "Sarıoğlan", "neighborhoods": []},
+      {"id": 650, "name": "Sarız", "neighborhoods": []},
+      {"id": 651, "name": "Tomarza", "neighborhoods": []},
+      {"id": 652, "name": "Yahyalı", "neighborhoods": []},
+      {"id": 653, "name": "Yeşilhisar", "neighborhoods": []},
+      {"id": 654, "name": "Akkışla", "neighborhoods": []},
+      {"id": 655, "name": "Özvatan", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 39,
+    "name": "Kırklareli",
+    "districts": [
+      {"id": 660, "name": "Merkez", "neighborhoods": []},
+      {"id": 661, "name": "Babaeski", "neighborhoods": []},
+      {"id": 662, "name": "Demirköy", "neighborhoods": []},
+      {"id": 663, "name": "Kofçaz", "neighborhoods": []},
+      {"id": 664, "name": "Lüleburgaz", "neighborhoods": []},
+      {"id": 665, "name": "Pehlivanköy", "neighborhoods": []},
+      {"id": 666, "name": "Pınarhisar", "neighborhoods": []},
+      {"id": 667, "name": "Vize", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 40,
+    "name": "Kırşehir",
+    "districts": [
+      {"id": 670, "name": "Merkez", "neighborhoods": []},
+      {"id": 671, "name": "Çiçekdağı", "neighborhoods": []},
+      {"id": 672, "name": "Kaman", "neighborhoods": []},
+      {"id": 673, "name": "Mucur", "neighborhoods": []},
+      {"id": 674, "name": "Akpınar", "neighborhoods": []},
+      {"id": 675, "name": "Akçakent", "neighborhoods": []},
+      {"id": 676, "name": "Boztepe", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 41,
+    "name": "Kocaeli",
+    "districts": [
+      {"id": 680, "name": "İzmit", "neighborhoods": []},
+      {"id": 681, "name": "Gebze", "neighborhoods": []},
+      {"id": 682, "name": "Gölcük", "neighborhoods": []},
+      {"id": 683, "name": "Kandıra", "neighborhoods": []},
+      {"id": 684, "name": "Karamürsel", "neighborhoods": []},
+      {"id": 685, "name": "Körfez", "neighborhoods": []},
+      {"id": 686, "name": "Derince", "neighborhoods": []},
+      {"id": 687, "name": "Başiskele", "neighborhoods": []},
+      {"id": 688, "name": "Çayırova", "neighborhoods": []},
+      {"id": 689, "name": "Darıca", "neighborhoods": []},
+      {"id": 690, "name": "Dilovası", "neighborhoods": []},
+      {"id": 691, "name": "Kartepe", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 42,
+    "name": "Konya",
+    "districts": [
+      {"id": 543, "name": "Meram", "neighborhoods": [{"id": 11600, "name": "Kosova", "postalCode": "42060"}, {"id": 11601, "name": "Yaka", "postalCode": "42070"}]},
+      {"id": 544, "name": "Selçuklu", "neighborhoods": [{"id": 11603, "name": "Yazır", "postalCode": "42250"}, {"id": 11604, "name": "Sancak", "postalCode": "42100"}]},
+      {"id": 700, "name": "Karatay", "neighborhoods": []},
+      {"id": 701, "name": "Akşehir", "neighborhoods": []},
+      {"id": 702, "name": "Beyşehir", "neighborhoods": []},
+      {"id": 703, "name": "Bozkır", "neighborhoods": []},
+      {"id": 704, "name": "Cihanbeyli", "neighborhoods": []},
+      {"id": 705, "name": "Çumra", "neighborhoods": []},
+      {"id": 706, "name": "Doğanhisar", "neighborhoods": []},
+      {"id": 707, "name": "Ereğli", "neighborhoods": []},
+      {"id": 708, "name": "Hadim", "neighborhoods": []},
+      {"id": 709, "name": "Ilgın", "neighborhoods": []},
+      {"id": 710, "name": "Kadınhanı", "neighborhoods": []},
+      {"id": 711, "name": "Karapınar", "neighborhoods": []},
+      {"id": 712, "name": "Kulu", "neighborhoods": []},
+      {"id": 713, "name": "Sarayönü", "neighborhoods": []},
+      {"id": 714, "name": "Seydişehir", "neighborhoods": []},
+      {"id": 715, "name": "Yunak", "neighborhoods": []},
+      {"id": 716, "name": "Akören", "neighborhoods": []},
+      {"id": 717, "name": "Altınekin", "neighborhoods": []},
+      {"id": 718, "name": "Çeltik", "neighborhoods": []},
+      {"id": 719, "name": "Derbent", "neighborhoods": []},
+      {"id": 720, "name": "Derebucak", "neighborhoods": []},
+      {"id": 721, "name": "Emirgazi", "neighborhoods": []},
+      {"id": 722, "name": "Güneysınır", "neighborhoods": []},
+      {"id": 723, "name": "Halkapınar", "neighborhoods": []},
+      {"id": 724, "name": "Hüyük", "neighborhoods": []},
+      {"id": 725, "name": "Taşkent", "neighborhoods": []},
+      {"id": 726, "name": "Tuzlukçu", "neighborhoods": []},
+      {"id": 727, "name": "Yalıhüyük", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 43,
+    "name": "Kütahya",
+    "districts": [
+      {"id": 730, "name": "Merkez", "neighborhoods": []},
+      {"id": 731, "name": "Altıntaş", "neighborhoods": []},
+      {"id": 732, "name": "Aslanapa", "neighborhoods": []},
+      {"id": 733, "name": "Çavdarhisar", "neighborhoods": []},
+      {"id": 734, "name": "Domaniç", "neighborhoods": []},
+      {"id": 735, "name": "Emet", "neighborhoods": []},
+      {"id": 736, "name": "Gediz", "neighborhoods": []},
+      {"id": 737, "name": "Simav", "neighborhoods": []},
+      {"id": 738, "name": "Tavşanlı", "neighborhoods": []},
+      {"id": 739, "name": "Dumlupınar", "neighborhoods": []},
+      {"id": 740, "name": "Hisarcık", "neighborhoods": []},
+      {"id": 741, "name": "Pazarlar", "neighborhoods": []},
+      {"id": 742, "name": "Şaphane", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 44,
+    "name": "Malatya",
+    "districts": [
+      {"id": 750, "name": "Battalgazi", "neighborhoods": []},
+      {"id": 751, "name": "Yeşilyurt", "neighborhoods": []},
+      {"id": 752, "name": "Akçadağ", "neighborhoods": []},
+      {"id": 753, "name": "Arapgir", "neighborhoods": []},
+      {"id": 754, "name": "Arguvan", "neighborhoods": []},
+      {"id": 755, "name": "Darende", "neighborhoods": []},
+      {"id": 756, "name": "Doğanşehir", "neighborhoods": []},
+      {"id": 757, "name": "Hekimhan", "neighborhoods": []},
+      {"id": 758, "name": "Pütürge", "neighborhoods": []},
+      {"id": 759, "name": "Yazıhan", "neighborhoods": []},
+      {"id": 760, "name": "Doğanyol", "neighborhoods": []},
+      {"id": 761, "name": "Kale", "neighborhoods": []},
+      {"id": 762, "name": "Kuluncak", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 45,
+    "name": "Manisa",
+    "districts": [
+      {"id": 770, "name": "Şehzadeler", "neighborhoods": []},
+      {"id": 771, "name": "Yunusemre", "neighborhoods": []},
+      {"id": 772, "name": "Ahmetli", "neighborhoods": []},
+      {"id": 773, "name": "Akhisar", "neighborhoods": []},
+      {"id": 774, "name": "Alaşehir", "neighborhoods": []},
+      {"id": 775, "name": "Demirci", "neighborhoods": []},
+      {"id": 776, "name": "Gölmarmara", "neighborhoods": []},
+      {"id": 777, "name": "Gördes", "neighborhoods": []},
+      {"id": 778, "name": "Kırkağaç", "neighborhoods": []},
+      {"id": 779, "name": "Köprübaşı", "neighborhoods": []},
+      {"id": 780, "name": "Kula", "neighborhoods": []},
+      {"id": 781, "name": "Salihli", "neighborhoods": []},
+      {"id": 782, "name": "Sarıgöl", "neighborhoods": []},
+      {"id": 783, "name": "Saruhanlı", "neighborhoods": []},
+      {"id": 784, "name": "Selendi", "neighborhoods": []},
+      {"id": 785, "name": "Soma", "neighborhoods": []},
+      {"id": 786, "name": "Turgutlu", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 46,
+    "name": "Kahramanmaraş",
+    "districts": [
+      {"id": 790, "name": "Dulkadiroğlu", "neighborhoods": []},
+      {"id": 791, "name": "Onikişubat", "neighborhoods": []},
+      {"id": 792, "name": "Afşin", "neighborhoods": []},
+      {"id": 793, "name": "Andırın", "neighborhoods": []},
+      {"id": 794, "name": "Çağlayancerit", "neighborhoods": []},
+      {"id": 795, "name": "Ekinözü", "neighborhoods": []},
+      {"id": 796, "name": "Elbistan", "neighborhoods": []},
+      {"id": 797, "name": "Göksun", "neighborhoods": []},
+      {"id": 798, "name": "Nurhak", "neighborhoods": []},
+      {"id": 799, "name": "Pazarcık", "neighborhoods": []},
+      {"id": 800, "name": "Türkoğlu", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 47,
+    "name": "Mardin",
+    "districts": [
+      {"id": 810, "name": "Artuklu", "neighborhoods": []},
+      {"id": 811, "name": "Derik", "neighborhoods": []},
+      {"id": 812, "name": "Kızıltepe", "neighborhoods": []},
+      {"id": 813, "name": "Mazıdağı", "neighborhoods": []},
+      {"id": 814, "name": "Midyat", "neighborhoods": []},
+      {"id": 815, "name": "Nusaybin", "neighborhoods": []},
+      {"id": 816, "name": "Ömerli", "neighborhoods": []},
+      {"id": 817, "name": "Savur", "neighborhoods": []},
+      {"id": 818, "name": "Dargeçit", "neighborhoods": []},
+      {"id": 819, "name": "Yeşilli", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 48,
+    "name": "Muğla",
+    "districts": [
+      {"id": 820, "name": "Menteşe", "neighborhoods": []},
+      {"id": 821, "name": "Bodrum", "neighborhoods": []},
+      {"id": 822, "name": "Datça", "neighborhoods": []},
+      {"id": 823, "name": "Fethiye", "neighborhoods": []},
+      {"id": 824, "name": "Köyceğiz", "neighborhoods": []},
+      {"id": 825, "name": "Marmaris", "neighborhoods": []},
+      {"id": 826, "name": "Milas", "neighborhoods": []},
+      {"id": 827, "name": "Ula", "neighborhoods": []},
+      {"id": 828, "name": "Yatağan", "neighborhoods": []},
+      {"id": 829, "name": "Dalaman", "neighborhoods": []},
+      {"id": 830, "name": "Ortaca", "neighborhoods": []},
+      {"id": 831, "name": "Seydikemer", "neighborhoods": []},
+      {"id": 832, "name": "Kavaklıdere", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 49,
+    "name": "Muş",
+    "districts": [
+      {"id": 840, "name": "Merkez", "neighborhoods": []},
+      {"id": 841, "name": "Bulanık", "neighborhoods": []},
+      {"id": 842, "name": "Malazgirt", "neighborhoods": []},
+      {"id": 843, "name": "Varto", "neighborhoods": []},
+      {"id": 844, "name": "Hasköy", "neighborhoods": []},
+      {"id": 845, "name": "Korkut", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 50,
+    "name": "Nevşehir",
+    "districts": [
+      {"id": 850, "name": "Merkez", "neighborhoods": []},
+      {"id": 851, "name": "Avanos", "neighborhoods": []},
+      {"id": 852, "name": "Derinkuyu", "neighborhoods": []},
+      {"id": 853, "name": "Gülşehir", "neighborhoods": []},
+      {"id": 854, "name": "Hacıbektaş", "neighborhoods": []},
+      {"id": 855, "name": "Kozaklı", "neighborhoods": []},
+      {"id": 856, "name": "Ürgüp", "neighborhoods": []},
+      {"id": 857, "name": "Acıgöl", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 51,
+    "name": "Niğde",
+    "districts": [
+      {"id": 860, "name": "Merkez", "neighborhoods": []},
+      {"id": 861, "name": "Bor", "neighborhoods": []},
+      {"id": 862, "name": "Çamardı", "neighborhoods": []},
+      {"id": 863, "name": "Ulukışla", "neighborhoods": []},
+      {"id": 864, "name": "Altunhisar", "neighborhoods": []},
+      {"id": 865, "name": "Çiftlik", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 52,
+    "name": "Ordu",
+    "districts": [
+      {"id": 870, "name": "Altınordu", "neighborhoods": []},
+      {"id": 871, "name": "Akkuş", "neighborhoods": []},
+      {"id": 872, "name": "Aybastı", "neighborhoods": []},
+      {"id": 873, "name": "Fatsa", "neighborhoods": []},
+      {"id": 874, "name": "Gölköy", "neighborhoods": []},
+      {"id": 875, "name": "Korgan", "neighborhoods": []},
+      {"id": 876, "name": "Kumru", "neighborhoods": []},
+      {"id": 877, "name": "Mesudiye", "neighborhoods": []},
+      {"id": 878, "name": "Perşembe", "neighborhoods": []},
+      {"id": 879, "name": "Ulubey", "neighborhoods": []},
+      {"id": 880, "name": "Ünye", "neighborhoods": []},
+      {"id": 881, "name": "Gülyalı", "neighborhoods": []},
+      {"id": 882, "name": "Gürgentepe", "neighborhoods": []},
+      {"id": 883, "name": "Çamaş", "neighborhoods": []},
+      {"id": 884, "name": "Çatalpınar", "neighborhoods": []},
+      {"id": 885, "name": "Çaybaşı", "neighborhoods": []},
+      {"id": 886, "name": "İkizce", "neighborhoods": []},
+      {"id": 887, "name": "Kabadüz", "neighborhoods": []},
+      {"id": 888, "name": "Kabataş", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 53,
+    "name": "Rize",
+    "districts": [
+      {"id": 890, "name": "Merkez", "neighborhoods": []},
+      {"id": 891, "name": "Ardeşen", "neighborhoods": []},
+      {"id": 892, "name": "Çamlıhemşin", "neighborhoods": []},
+      {"id": 893, "name": "Çayeli", "neighborhoods": []},
+      {"id": 894, "name": "Fındıklı", "neighborhoods": []},
+      {"id": 895, "name": "İkizdere", "neighborhoods": []},
+      {"id": 896, "name": "Kalkandere", "neighborhoods": []},
+      {"id": 897, "name": "Pazar", "neighborhoods": []},
+      {"id": 898, "name": "Güneysu", "neighborhoods": []},
+      {"id": 899, "name": "Derepazarı", "neighborhoods": []},
+      {"id": 900, "name": "Hemşin", "neighborhoods": []},
+      {"id": 901, "name": "İyidere", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 54,
+    "name": "Sakarya",
+    "districts": [
+      {"id": 910, "name": "Adapazarı", "neighborhoods": []},
+      {"id": 911, "name": "Akyazı", "neighborhoods": []},
+      {"id": 912, "name": "Arifiye", "neighborhoods": []},
+      {"id": 913, "name": "Erenler", "neighborhoods": []},
+      {"id": 914, "name": "Ferizli", "neighborhoods": []},
+      {"id": 915, "name": "Geyve", "neighborhoods": []},
+      {"id": 916, "name": "Hendek", "neighborhoods": []},
+      {"id": 917, "name": "Karasu", "neighborhoods": []},
+      {"id": 918, "name": "Kaynarca", "neighborhoods": []},
+      {"id": 919, "name": "Kocaali", "neighborhoods": []},
+      {"id": 920, "name": "Pamukova", "neighborhoods": []},
+      {"id": 921, "name": "Sapanca", "neighborhoods": []},
+      {"id": 922, "name": "Serdivan", "neighborhoods": []},
+      {"id": 923, "name": "Söğütlü", "neighborhoods": []},
+      {"id": 924, "name": "Taraklı", "neighborhoods": []},
+      {"id": 925, "name": "Karapürçek", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 55,
+    "name": "Samsun",
+    "districts": [
+      {"id": 730, "name": "İlkadım", "neighborhoods": [{"id": 15700, "name": "Kale", "postalCode": "55030"}, {"id": 15701, "name": "Cumhuriyet", "postalCode": "55040"}]},
+      {"id": 731, "name": "Atakum", "neighborhoods": [{"id": 15703, "name": "Kurupelit", "postalCode": "55200"}]},
+      {"id": 930, "name": "Canik", "neighborhoods": []},
+      {"id": 931, "name": "Tekkeköy", "neighborhoods": []},
+      {"id": 932, "name": "Alaçam", "neighborhoods": []},
+      {"id": 933, "name": "Bafra", "neighborhoods": []},
+      {"id": 934, "name": "Çarşamba", "neighborhoods": []},
+      {"id": 935, "name": "Havza", "neighborhoods": []},
+      {"id": 936, "name": "Kavak", "neighborhoods": []},
+      {"id": 937, "name": "Ladik", "neighborhoods": []},
+      {"id": 938, "name": "Terme", "neighborhoods": []},
+      {"id": 939, "name": "Vezirköprü", "neighborhoods": []},
+      {"id": 940, "name": "Asarcık", "neighborhoods": []},
+      {"id": 941, "name": "Ondokuzmayıs", "neighborhoods": []},
+      {"id": 942, "name": "Salıpazarı", "neighborhoods": []},
+      {"id": 943, "name": "Yakakent", "neighborhoods": []},
+      {"id": 944, "name": "Ayvacık", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 56,
+    "name": "Siirt",
+    "districts": [
+      {"id": 950, "name": "Merkez", "neighborhoods": []},
+      {"id": 951, "name": "Baykan", "neighborhoods": []},
+      {"id": 952, "name": "Eruh", "neighborhoods": []},
+      {"id": 953, "name": "Kurtalan", "neighborhoods": []},
+      {"id": 954, "name": "Pervari", "neighborhoods": []},
+      {"id": 955, "name": "Şirvan", "neighborhoods": []},
+      {"id": 956, "name": "Tillo", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 57,
+    "name": "Sinop",
+    "districts": [
+      {"id": 960, "name": "Merkez", "neighborhoods": []},
+      {"id": 961, "name": "Ayancık", "neighborhoods": []},
+      {"id": 962, "name": "Boyabat", "neighborhoods": []},
+      {"id": 963, "name": "Durağan", "neighborhoods": []},
+      {"id": 964, "name": "Erfelek", "neighborhoods": []},
+      {"id": 965, "name": "Gerze", "neighborhoods": []},
+      {"id": 966, "name": "Türkeli", "neighborhoods": []},
+      {"id": 967, "name": "Dikmen", "neighborhoods": []},
+      {"id": 968, "name": "Saraydüzü", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 58,
+    "name": "Sivas",
+    "districts": [
+      {"id": 776, "name": "Merkez", "neighborhoods": [{"id": 16800, "name": "Paşabey", "postalCode": "58030"}, {"id": 16801, "name": "Kale", "postalCode": "58040"}]},
+      {"id": 970, "name": "Divriği", "neighborhoods": []},
+      {"id": 971, "name": "Gemerek", "neighborhoods": []},
+      {"id": 972, "name": "Gürün", "neighborhoods": []},
+      {"id": 973, "name": "Hafik", "neighborhoods": []},
+      {"id": 974, "name": "İmranlı", "neighborhoods": []},
+      {"id": 975, "name": "Kangal", "neighborhoods": []},
+      {"id": 976, "name": "Koyulhisar", "neighborhoods": []},
+      {"id": 977, "name": "Şarkışla", "neighborhoods": []},
+      {"id": 978, "name": "Suşehri", "neighborhoods": []},
+      {"id": 979, "name": "Yıldızeli", "neighborhoods": []},
+      {"id": 980, "name": "Zara", "neighborhoods": []},
+      {"id": 981, "name": "Akıncılar", "neighborhoods": []},
+      {"id": 982, "name": "Altınyayla", "neighborhoods": []},
+      {"id": 983, "name": "Doğanşar", "neighborhoods": []},
+      {"id": 984, "name": "Gölova", "neighborhoods": []},
+      {"id": 985, "name": "Ulaş", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 59,
+    "name": "Tekirdağ",
+    "districts": [
+      {"id": 990, "name": "Süleymanpaşa", "neighborhoods": []},
+      {"id": 991, "name": "Çerkezköy", "neighborhoods": []},
+      {"id": 992, "name": "Çorlu", "neighborhoods": []},
+      {"id": 993, "name": "Ergene", "neighborhoods": []},
+      {"id": 994, "name": "Kapaklı", "neighborhoods": []},
+      {"id": 995, "name": "Hayrabolu", "neighborhoods": []},
+      {"id": 996, "name": "Malkara", "neighborhoods": []},
+      {"id": 997, "name": "Marmaraereğlisi", "neighborhoods": []},
+      {"id": 998, "name": "Muratlı", "neighborhoods": []},
+      {"id": 999, "name": "Saray", "neighborhoods": []},
+      {"id": 1000, "name": "Şarköy", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 60,
+    "name": "Tokat",
+    "districts": [
+      {"id": 1010, "name": "Merkez", "neighborhoods": []},
+      {"id": 1011, "name": "Almus", "neighborhoods": []},
+      {"id": 1012, "name": "Artova", "neighborhoods": []},
+      {"id": 1013, "name": "Erbaa", "neighborhoods": []},
+      {"id": 1014, "name": "Niksar", "neighborhoods": []},
+      {"id": 1015, "name": "Reşadiye", "neighborhoods": []},
+      {"id": 1016, "name": "Turhal", "neighborhoods": []},
+      {"id": 1017, "name": "Zile", "neighborhoods": []},
+      {"id": 1018, "name": "Pazar", "neighborhoods": []},
+      {"id": 1019, "name": "Yeşilyurt", "neighborhoods": []},
+      {"id": 1020, "name": "Başçiftlik", "neighborhoods": []},
+      {"id": 1021, "name": "Sulusaray", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 61,
+    "name": "Trabzon",
+    "districts": [
+      {"id": 1030, "name": "Ortahisar", "neighborhoods": []},
+      {"id": 1031, "name": "Akçaabat", "neighborhoods": []},
+      {"id": 1032, "name": "Araklı", "neighborhoods": []},
+      {"id": 1033, "name": "Arsin", "neighborhoods": []},
+      {"id": 1034, "name": "Çarşıbaşı", "neighborhoods": []},
+      {"id": 1035, "name": "Çaykara", "neighborhoods": []},
+      {"id": 1036, "name": "Dernekpazarı", "neighborhoods": []},
+      {"id": 1037, "name": "Düzköy", "neighborhoods": []},
+      {"id": 1038, "name": "Hayrat", "neighborhoods": []},
+      {"id": 1039, "name": "Köprübaşı", "neighborhoods": []},
+      {"id": 1040, "name": "Maçka", "neighborhoods": []},
+      {"id": 1041, "name": "Of", "neighborhoods": []},
+      {"id": 1042, "name": "Sürmene", "neighborhoods": []},
+      {"id": 1043, "name": "Tonya", "neighborhoods": []},
+      {"id": 1044, "name": "Vakfıkebir", "neighborhoods": []},
+      {"id": 1045, "name": "Yomra", "neighborhoods": []},
+      {"id": 1046, "name": "Beşikdüzü", "neighborhoods": []},
+      {"id": 1047, "name": "Şalpazarı", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 62,
+    "name": "Tunceli",
+    "districts": [
+      {"id": 1050, "name": "Merkez", "neighborhoods": []},
+      {"id": 1051, "name": "Çemişgezek", "neighborhoods": []},
+      {"id": 1052, "name": "Hozat", "neighborhoods": []},
+      {"id": 1053, "name": "Mazgirt", "neighborhoods": []},
+      {"id": 1054, "name": "Nazımiye", "neighborhoods": []},
+      {"id": 1055, "name": "Ovacık", "neighborhoods": []},
+      {"id": 1056, "name": "Pertek", "neighborhoods": []},
+      {"id": 1057, "name": "Pülümür", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 63,
+    "name": "Şanlıurfa",
+    "districts": [
+      {"id": 1060, "name": "Eyyübiye", "neighborhoods": []},
+      {"id": 1061, "name": "Haliliye", "neighborhoods": []},
+      {"id": 1062, "name": "Karaköprü", "neighborhoods": []},
+      {"id": 1063, "name": "Akçakale", "neighborhoods": []},
+      {"id": 1064, "name": "Birecik", "neighborhoods": []},
+      {"id": 1065, "name": "Bozova", "neighborhoods": []},
+      {"id": 1066, "name": "Ceylanpınar", "neighborhoods": []},
+      {"id": 1067, "name": "Halfeti", "neighborhoods": []},
+      {"id": 1068, "name": "Hilvan", "neighborhoods": []},
+      {"id": 1069, "name": "Siverek", "neighborhoods": []},
+      {"id": 1070, "name": "Suruç", "neighborhoods": []},
+      {"id": 1071, "name": "Viranşehir", "neighborhoods": []},
+      {"id": 1072, "name": "Harran", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 64,
+    "name": "Uşak",
+    "districts": [
+      {"id": 1080, "name": "Merkez", "neighborhoods": []},
+      {"id": 1081, "name": "Banaz", "neighborhoods": []},
+      {"id": 1082, "name": "Eşme", "neighborhoods": []},
+      {"id": 1083, "name": "Karahallı", "neighborhoods": []},
+      {"id": 1084, "name": "Sivaslı", "neighborhoods": []},
+      {"id": 1085, "name": "Ulubey", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 65,
+    "name": "Van",
+    "districts": [
+      {"id": 1090, "name": "İpekyolu", "neighborhoods": []},
+      {"id": 1091, "name": "Tuşba", "neighborhoods": []},
+      {"id": 1092, "name": "Edremit", "neighborhoods": []},
+      {"id": 1093, "name": "Bahçesaray", "neighborhoods": []},
+      {"id": 1094, "name": "Başkale", "neighborhoods": []},
+      {"id": 1095, "name": "Çaldıran", "neighborhoods": []},
+      {"id": 1096, "name": "Çatak", "neighborhoods": []},
+      {"id": 1097, "name": "Erciş", "neighborhoods": []},
+      {"id": 1098, "name": "Gevaş", "neighborhoods": []},
+      {"id": 1099, "name": "Gürpınar", "neighborhoods": []},
+      {"id": 1100, "name": "Muradiye", "neighborhoods": []},
+      {"id": 1101, "name": "Özalp", "neighborhoods": []},
+      {"id": 1102, "name": "Saray", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 66,
+    "name": "Yozgat",
+    "districts": [
+      {"id": 1110, "name": "Merkez", "neighborhoods": []},
+      {"id": 1111, "name": "Akdağmadeni", "neighborhoods": []},
+      {"id": 1112, "name": "Boğazlıyan", "neighborhoods": []},
+      {"id": 1113, "name": "Çayıralan", "neighborhoods": []},
+      {"id": 1114, "name": "Çekerek", "neighborhoods": []},
+      {"id": 1115, "name": "Sarıkaya", "neighborhoods": []},
+      {"id": 1116, "name": "Sorgun", "neighborhoods": []},
+      {"id": 1117, "name": "Şefaatli", "neighborhoods": []},
+      {"id": 1118, "name": "Yerköy", "neighborhoods": []},
+      {"id": 1119, "name": "Aydıncık", "neighborhoods": []},
+      {"id": 1120, "name": "Çandır", "neighborhoods": []},
+      {"id": 1121, "name": "Kadışehri", "neighborhoods": []},
+      {"id": 1122, "name": "Saraykent", "neighborhoods": []},
+      {"id": 1123, "name": "Yenifakılı", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 67,
+    "name": "Zonguldak",
+    "districts": [
+      {"id": 1130, "name": "Merkez", "neighborhoods": []},
+      {"id": 1131, "name": "Alapı", "neighborhoods": []},
+      {"id": 1132, "name": "Çaycuma", "neighborhoods": []},
+      {"id": 1133, "name": "Devrek", "neighborhoods": []},
+      {"id": 1134, "name": "Ereğli", "neighborhoods": []},
+      {"id": 1135, "name": "Gökçebey", "neighborhoods": []},
+      {"id": 1136, "name": "Kilimli", "neighborhoods": []},
+      {"id": 1137, "name": "Kozlu", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 68,
+    "name": "Aksaray",
+    "districts": [
+      {"id": 1140, "name": "Merkez", "neighborhoods": []},
+      {"id": 1141, "name": "Ağaçören", "neighborhoods": []},
+      {"id": 1142, "name": "Eskil", "neighborhoods": []},
+      {"id": 1143, "name": "Gülağaç", "neighborhoods": []},
+      {"id": 1144, "name": "Güzelyurt", "neighborhoods": []},
+      {"id": 1145, "name": "Ortaköy", "neighborhoods": []},
+      {"id": 1146, "name": "Sarıyahşi", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 69,
+    "name": "Bayburt",
+    "districts": [
+      {"id": 1150, "name": "Merkez", "neighborhoods": []},
+      {"id": 1151, "name": "Aydıntepe", "neighborhoods": []},
+      {"id": 1152, "name": "Demirözü", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 70,
+    "name": "Karaman",
+    "districts": [
+      {"id": 1160, "name": "Merkez", "neighborhoods": []},
+      {"id": 1161, "name": "Ayrancı", "neighborhoods": []},
+      {"id": 1162, "name": "Başyayla", "neighborhoods": []},
+      {"id": 1163, "name": "Ermenek", "neighborhoods": []},
+      {"id": 1164, "name": "Kazımkarabekir", "neighborhoods": []},
+      {"id": 1165, "name": "Sarıveliler", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 71,
+    "name": "Kırıkkale",
+    "districts": [
+      {"id": 1170, "name": "Merkez", "neighborhoods": []},
+      {"id": 1171, "name": "Bahşili", "neighborhoods": []},
+      {"id": 1172, "name": "Balışeyh", "neighborhoods": []},
+      {"id": 1173, "name": "Çelebi", "neighborhoods": []},
+      {"id": 1174, "name": "Delice", "neighborhoods": []},
+      {"id": 1175, "name": "Karakeçili", "neighborhoods": []},
+      {"id": 1176, "name": "Keskin", "neighborhoods": []},
+      {"id": 1177, "name": "Sulakyurt", "neighborhoods": []},
+      {"id": 1178, "name": "Yahşihan", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 72,
+    "name": "Batman",
+    "districts": [
+      {"id": 1180, "name": "Merkez", "neighborhoods": []},
+      {"id": 1181, "name": "Beşiri", "neighborhoods": []},
+      {"id": 1182, "name": "Gercüş", "neighborhoods": []},
+      {"id": 1183, "name": "Hasankeyf", "neighborhoods": []},
+      {"id": 1184, "name": "Kozluk", "neighborhoods": []},
+      {"id": 1185, "name": "Sason", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 73,
+    "name": "Şırnak",
+    "districts": [
+      {"id": 1190, "name": "Merkez", "neighborhoods": []},
+      {"id": 1191, "name": "Beytüşşebap", "neighborhoods": []},
+      {"id": 1192, "name": "Cizre", "neighborhoods": []},
+      {"id": 1193, "name": "Güçlükonak", "neighborhoods": []},
+      {"id": 1194, "name": "İdil", "neighborhoods": []},
+      {"id": 1195, "name": "Silopi", "neighborhoods": []},
+      {"id": 1196, "name": "Uludere", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 74,
+    "name": "Bartın",
+    "districts": [
+      {"id": 1200, "name": "Merkez", "neighborhoods": []},
+      {"id": 1201, "name": "Amasra", "neighborhoods": []},
+      {"id": 1202, "name": "Kurucaşile", "neighborhoods": []},
+      {"id": 1203, "name": "Ulus", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 75,
+    "name": "Ardahan",
+    "districts": [
+      {"id": 1210, "name": "Merkez", "neighborhoods": []},
+      {"id": 1211, "name": "Çıldır", "neighborhoods": []},
+      {"id": 1212, "name": "Göle", "neighborhoods": []},
+      {"id": 1213, "name": "Hanak", "neighborhoods": []},
+      {"id": 1214, "name": "Posof", "neighborhoods": []},
+      {"id": 1215, "name": "Damal", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 76,
+    "name": "Iğdır",
+    "districts": [
+      {"id": 1220, "name": "Merkez", "neighborhoods": []},
+      {"id": 1221, "name": "Aralık", "neighborhoods": []},
+      {"id": 1222, "name": "Karakoyunlu", "neighborhoods": []},
+      {"id": 1223, "name": "Tuzluca", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 77,
+    "name": "Yalova",
+    "districts": [
+      {"id": 1230, "name": "Merkez", "neighborhoods": []},
+      {"id": 1231, "name": "Altınova", "neighborhoods": []},
+      {"id": 1232, "name": "Armutlu", "neighborhoods": []},
+      {"id": 1233, "name": "Çınarcık", "neighborhoods": []},
+      {"id": 1234, "name": "Çiftlikköy", "neighborhoods": []},
+      {"id": 1235, "name": "Termal", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 78,
+    "name": "Karabük",
+    "districts": [
+      {"id": 1240, "name": "Merkez", "neighborhoods": []},
+      {"id": 1241, "name": "Eflani", "neighborhoods": []},
+      {"id": 1242, "name": "Eskipazar", "neighborhoods": []},
+      {"id": 1243, "name": "Ovacık", "neighborhoods": []},
+      {"id": 1244, "name": "Safranbolu", "neighborhoods": []},
+      {"id": 1245, "name": "Yenice", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 79,
+    "name": "Kilis",
+    "districts": [
+      {"id": 1250, "name": "Merkez", "neighborhoods": []},
+      {"id": 1251, "name": "Elbeyli", "neighborhoods": []},
+      {"id": 1252, "name": "Musabeyli", "neighborhoods": []},
+      {"id": 1253, "name": "Polateli", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 80,
+    "name": "Osmaniye",
+    "districts": [
+      {"id": 1260, "name": "Merkez", "neighborhoods": []},
+      {"id": 1261, "name": "Bahçe", "neighborhoods": []},
+      {"id": 1262, "name": "Düziçi", "neighborhoods": []},
+      {"id": 1263, "name": "Hasanbeyli", "neighborhoods": []},
+      {"id": 1264, "name": "Kadirli", "neighborhoods": []},
+      {"id": 1265, "name": "Sumbas", "neighborhoods": []},
+      {"id": 1266, "name": "Toprakkale", "neighborhoods": []}
+    ]
+  },
+  {
+    "id": 81,
+    "name": "Düzce",
+    "districts": [
+      {"id": 1270, "name": "Merkez", "neighborhoods": []},
+      {"id": 1271, "name": "Akçakoca", "neighborhoods": []},
+      {"id": 1272, "name": "Cumayeri", "neighborhoods": []},
+      {"id": 1273, "name": "Çilimli", "neighborhoods": []},
+      {"id": 1274, "name": "Gölyaka", "neighborhoods": []},
+      {"id": 1275, "name": "Gümüşova", "neighborhoods": []},
+      {"id": 1276, "name": "Kaynaşlı", "neighborhoods": []},
+      {"id": 1277, "name": "Yığılca", "neighborhoods": []}
     ]
   }
 ]

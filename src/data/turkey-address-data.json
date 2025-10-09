@@ -1,0 +1,301 @@
+[
+  {
+    "id": 6,
+    "name": "Ankara",
+    "districts": [
+      {
+        "id": 938,
+        "name": "Çankaya",
+        "neighborhoods": [
+          {"id": 17866, "name": "Aşağı Öveçler", "postalCode": "06460"},
+          {"id": 17867, "name": "Bahçelievler", "postalCode": "06490"},
+          {"id": 17868, "name": "Dikmen", "postalCode": "06450"},
+          {"id": 17869, "name": "Kavaklıdere", "postalCode": "06680"},
+          {"id": 17870, "name": "Yukarı Öveçler", "postalCode": "06460"}
+        ]
+      },
+      {
+        "id": 939,
+        "name": "Keçiören",
+        "neighborhoods": [
+          {"id": 17871, "name": "Aktepe", "postalCode": "06280"},
+          {"id": 17872, "name": "Etlik", "postalCode": "06010"},
+          {"id": 17873, "name": "Güneşevler", "postalCode": "06200"},
+          {"id": 17874, "name": "Karşıyaka", "postalCode": "06170"}
+        ]
+      },
+      {
+        "id": 940,
+        "name": "Yenimahalle",
+        "neighborhoods": [
+          {"id": 17875, "name": "Demetevler", "postalCode": "06200"},
+          {"id": 17876, "name": "Batıkent", "postalCode": "06370"},
+          {"id": 17877, "name": "Güzelkent", "postalCode": "06360"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "name": "İstanbul",
+    "districts": [
+      {
+        "id": 449,
+        "name": "Beşiktaş",
+        "neighborhoods": [
+          {"id": 9656, "name": "Levent", "postalCode": "34330"},
+          {"id": 9657, "name": "Etiler", "postalCode": "34337"},
+          {"id": 9658, "name": "Bebek", "postalCode": "34342"},
+          {"id": 9659, "name": "Ortaköy", "postalCode": "34347"}
+        ]
+      },
+      {
+        "id": 450,
+        "name": "Kadıköy",
+        "neighborhoods": [
+          {"id": 9660, "name": "Moda", "postalCode": "34710"},
+          {"id": 9661, "name": "Fenerbahçe", "postalCode": "34726"},
+          {"id": 9662, "name": "Göztepe", "postalCode": "34730"},
+          {"id": 9663, "name": "Acıbadem", "postalCode": "34718"}
+        ]
+      },
+      {
+        "id": 451,
+        "name": "Şişli",
+        "neighborhoods": [
+          {"id": 9664, "name": "Mecidiyeköy", "postalCode": "34387"},
+          {"id": 9665, "name": "Nişantaşı", "postalCode": "34365"},
+          {"id": 9666, "name": "Osmanbey", "postalCode": "34367"}
+        ]
+      },
+      {
+        "id": 452,
+        "name": "Beyoğlu",
+        "neighborhoods": [
+          {"id": 9667, "name": "Taksim", "postalCode": "34435"},
+          {"id": 9668, "name": "Cihangir", "postalCode": "34433"},
+          {"id": 9669, "name": "Galata", "postalCode": "34420"}
+        ]
+      },
+      {
+        "id": 453,
+        "name": "Üsküdar",
+        "neighborhoods": [
+          {"id": 9670, "name": "Kuzguncuk", "postalCode": "34674"},
+          {"id": 9671, "name": "Çengelköy", "postalCode": "34680"},
+          {"id": 9672, "name": "Beylerbeyi", "postalCode": "34676"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "name": "İzmir",
+    "districts": [
+      {
+        "id": 490,
+        "name": "Konak",
+        "neighborhoods": [
+          {"id": 10500, "name": "Alsancak", "postalCode": "35220"},
+          {"id": 10501, "name": "Basmane", "postalCode": "35240"},
+          {"id": 10502, "name": "Göztepe", "postalCode": "35290"}
+        ]
+      },
+      {
+        "id": 491,
+        "name": "Karşıyaka",
+        "neighborhoods": [
+          {"id": 10503, "name": "Bostanlı", "postalCode": "35550"},
+          {"id": 10504, "name": "Mavişehir", "postalCode": "35540"},
+          {"id": 10505, "name": "Çiğli", "postalCode": "35620"}
+        ]
+      },
+      {
+        "id": 492,
+        "name": "Bornova",
+        "neighborhoods": [
+          {"id": 10506, "name": "Erzene", "postalCode": "35050"},
+          {"id": 10507, "name": "Evka 3", "postalCode": "35040"},
+          {"id": 10508, "name": "Kazımdirik", "postalCode": "35100"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": "Bursa",
+    "districts": [
+      {
+        "id": 196,
+        "name": "Osmangazi",
+        "neighborhoods": [
+          {"id": 4100, "name": "Heykel", "postalCode": "16040"},
+          {"id": 4101, "name": "Çekirge", "postalCode": "16070"},
+          {"id": 4102, "name": "Doburca", "postalCode": "16090"}
+        ]
+      },
+      {
+        "id": 197,
+        "name": "Nilüfer",
+        "neighborhoods": [
+          {"id": 4103, "name": "Görükle", "postalCode": "16059"},
+          {"id": 4104, "name": "Ertuğrul", "postalCode": "16120"},
+          {"id": 4105, "name": "Fethiye", "postalCode": "16140"}
+        ]
+      },
+      {
+        "id": 198,
+        "name": "Yıldırım",
+        "neighborhoods": [
+          {"id": 4106, "name": "Mimar Sinan", "postalCode": "16310"},
+          {"id": 4107, "name": "Mollafenari", "postalCode": "16340"},
+          {"id": 4108, "name": "Yıldırım Beyazıt", "postalCode": "16370"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Antalya",
+    "districts": [
+      {
+        "id": 85,
+        "name": "Muratpaşa",
+        "neighborhoods": [
+          {"id": 1800, "name": "Kaleiçi", "postalCode": "07100"},
+          {"id": 1801, "name": "Güzeloba", "postalCode": "07230"},
+          {"id": 1802, "name": "Lara", "postalCode": "07230"}
+        ]
+      },
+      {
+        "id": 86,
+        "name": "Kepez",
+        "neighborhoods": [
+          {"id": 1803, "name": "Varsak", "postalCode": "07320"},
+          {"id": 1804, "name": "Şafak", "postalCode": "07060"},
+          {"id": 1805, "name": "Teomanpaşa", "postalCode": "07070"}
+        ]
+      },
+      {
+        "id": 87,
+        "name": "Konyaaltı",
+        "neighborhoods": [
+          {"id": 1806, "name": "Uncalı", "postalCode": "07070"},
+          {"id": 1807, "name": "Altınkum", "postalCode": "07070"},
+          {"id": 1808, "name": "Hurma", "postalCode": "07070"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "name": "Adana",
+    "districts": [
+      {
+        "id": 1,
+        "name": "Seyhan",
+        "neighborhoods": [
+          {"id": 1, "name": "Kurtuluş", "postalCode": "01120"},
+          {"id": 2, "name": "Çınarlı", "postalCode": "01140"},
+          {"id": 3, "name": "Ziyapaşa", "postalCode": "01160"}
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Çukurova",
+        "neighborhoods": [
+          {"id": 4, "name": "Balcalı", "postalCode": "01330"},
+          {"id": 5, "name": "Güzelyalı", "postalCode": "01340"},
+          {"id": 6, "name": "Sarıçam", "postalCode": "01350"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "name": "Sivas",
+    "districts": [
+      {
+        "id": 776,
+        "name": "Merkez",
+        "neighborhoods": [
+          {"id": 16800, "name": "Paşabey", "postalCode": "58030"},
+          {"id": 16801, "name": "Kale", "postalCode": "58040"},
+          {"id": 16802, "name": "Şeyh Şamil", "postalCode": "58050"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "name": "Konya",
+    "districts": [
+      {
+        "id": 543,
+        "name": "Meram",
+        "neighborhoods": [
+          {"id": 11600, "name": "Kosova", "postalCode": "42060"},
+          {"id": 11601, "name": "Yaka", "postalCode": "42070"},
+          {"id": 11602, "name": "Durunday", "postalCode": "42080"}
+        ]
+      },
+      {
+        "id": 544,
+        "name": "Selçuklu",
+        "neighborhoods": [
+          {"id": 11603, "name": "Yazır", "postalCode": "42250"},
+          {"id": 11604, "name": "Sancak", "postalCode": "42100"},
+          {"id": 11605, "name": "Buhara", "postalCode": "42110"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "name": "Samsun",
+    "districts": [
+      {
+        "id": 730,
+        "name": "İlkadım",
+        "neighborhoods": [
+          {"id": 15700, "name": "Kale", "postalCode": "55030"},
+          {"id": 15701, "name": "Cumhuriyet", "postalCode": "55040"},
+          {"id": 15702, "name": "Yenimahalle", "postalCode": "55050"}
+        ]
+      },
+      {
+        "id": 731,
+        "name": "Atakum",
+        "neighborhoods": [
+          {"id": 15703, "name": "Kurupelit", "postalCode": "55200"},
+          {"id": 15704, "name": "Yenimahalle", "postalCode": "55210"},
+          {"id": 15705, "name": "Mimarsinan", "postalCode": "55220"}
+        ]
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "name": "Gaziantep",
+    "districts": [
+      {
+        "id": 344,
+        "name": "Şehitkamil",
+        "neighborhoods": [
+          {"id": 7300, "name": "İbrahimli", "postalCode": "27060"},
+          {"id": 7301, "name": "Güneykent", "postalCode": "27070"},
+          {"id": 7302, "name": "Karacaahmet", "postalCode": "27080"}
+        ]
+      },
+      {
+        "id": 345,
+        "name": "Şahinbey",
+        "neighborhoods": [
+          {"id": 7303, "name": "Şehreküstü", "postalCode": "27400"},
+          {"id": 7304, "name": "Karataş", "postalCode": "27410"},
+          {"id": 7305, "name": "Burak", "postalCode": "27420"}
+        ]
+      }
+    ]
+  }
+]

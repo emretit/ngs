@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { Control, useWatch, useFormContext } from "react-hook-form";
-import { turkeyApiService, AddressOption } from "@/services/turkeyApiService";
+import { localAddressService, AddressOption } from "@/services/localAddressService";
 
 interface AddressSectionProps {
   control: Control<any>;
@@ -19,9 +19,6 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
   const [cities, setCities] = useState<AddressOption[]>([]);
   const [districts, setDistricts] = useState<AddressOption[]>([]);
   const [neighborhoods, setNeighborhoods] = useState<AddressOption[]>([]);
-  const [loadingCities, setLoadingCities] = useState(false);
-  const [loadingDistricts, setLoadingDistricts] = useState(false);
-  const [loadingNeighborhoods, setLoadingNeighborhoods] = useState(false);
 
   // Watch form değerleri
   const watchCountry = useWatch({ control, name: "country" }) || "";
@@ -30,13 +27,10 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
 
   const isTurkey = watchCountry === "Turkey";
 
-  // Fetch cities when Turkey is selected
+  // Load cities when Turkey is selected (instant from local data)
   useEffect(() => {
     if (isTurkey) {
-      setLoadingCities(true);
-      turkeyApiService.getCitiesForSelect()
-        .then(setCities)
-        .finally(() => setLoadingCities(false));
+      setCities(localAddressService.getCitiesForSelect());
     } else {
       setCities([]);
       setDistricts([]);
@@ -44,15 +38,12 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
     }
   }, [isTurkey]);
 
-  // Fetch districts when city changes
+  // Load districts when city changes (instant from local data)
   useEffect(() => {
     if (isTurkey && watchCity) {
       const selectedCity = cities.find(c => c.value === watchCity);
       if (selectedCity?.id) {
-        setLoadingDistricts(true);
-        turkeyApiService.getDistrictsByCityId(selectedCity.id)
-          .then(setDistricts)
-          .finally(() => setLoadingDistricts(false));
+        setDistricts(localAddressService.getDistrictsByCityId(selectedCity.id));
       }
     } else {
       setDistricts([]);
@@ -60,15 +51,12 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
     }
   }, [watchCity, isTurkey, cities]);
 
-  // Fetch neighborhoods when district changes
+  // Load neighborhoods when district changes (instant from local data)
   useEffect(() => {
     if (isTurkey && watchDistrict) {
       const selectedDistrict = districts.find(d => d.value === watchDistrict);
       if (selectedDistrict?.id) {
-        setLoadingNeighborhoods(true);
-        turkeyApiService.getNeighborhoodsByDistrictIdForSelect(selectedDistrict.id)
-          .then(setNeighborhoods)
-          .finally(() => setLoadingNeighborhoods(false));
+        setNeighborhoods(localAddressService.getNeighborhoodsByDistrictIdForSelect(selectedDistrict.id));
       }
     } else {
       setNeighborhoods([]);
@@ -133,11 +121,11 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                       setValue("postal_code", "");
                     }}
                     value={field.value}
-                    disabled={loadingCities || cities.length === 0}
+                    disabled={cities.length === 0}
                   >
                     <FormControl>
                       <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder={loadingCities ? "Yükleniyor..." : "Şehir seçin"} />
+                        <SelectValue placeholder="Şehir seçin" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -172,11 +160,11 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                       setValue("postal_code", "");
                     }}
                     value={field.value}
-                    disabled={loadingDistricts || !watchCity}
+                    disabled={!watchCity}
                   >
                     <FormControl>
                       <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder={loadingDistricts ? "Yükleniyor..." : "İlçe seçin"} />
+                        <SelectValue placeholder="İlçe seçin" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -214,11 +202,11 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                       }
                     }}
                     value={field.value}
-                    disabled={loadingNeighborhoods || !watchDistrict}
+                    disabled={!watchDistrict}
                   >
                     <FormControl>
                       <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder={loadingNeighborhoods ? "Yükleniyor..." : "Mahalle seçin"} />
+                        <SelectValue placeholder="Mahalle seçin" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>

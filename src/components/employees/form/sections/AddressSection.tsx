@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { Control, useWatch, useFormContext } from "react-hook-form";
-import { turkishCities, turkishDistricts, turkishNeighborhoods } from "@/data/turkeyAddressData";
+import { turkeyApiService, AddressOption } from "@/services/turkeyApiService";
 
 interface AddressSectionProps {
   control: Control<any>;
@@ -14,16 +14,66 @@ interface AddressSectionProps {
 
 export const AddressSection = ({ control }: AddressSectionProps) => {
   const { setValue } = useFormContext();
+  
+  // State for dynamic data
+  const [cities, setCities] = useState<AddressOption[]>([]);
+  const [districts, setDistricts] = useState<AddressOption[]>([]);
+  const [neighborhoods, setNeighborhoods] = useState<AddressOption[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingNeighborhoods, setLoadingNeighborhoods] = useState(false);
 
   // Watch form değerleri
   const watchCountry = useWatch({ control, name: "country" }) || "";
   const watchCity = useWatch({ control, name: "city" }) || "";
   const watchDistrict = useWatch({ control, name: "district" }) || "";
 
-  // Sadece Türkiye seçildiğinde ilçe ve mahalle listelerini göster
   const isTurkey = watchCountry === "Turkey";
-  const availableDistricts = isTurkey && watchCity && turkishDistricts[watchCity] ? turkishDistricts[watchCity] : [];
-  const availableNeighborhoods = isTurkey && watchDistrict && turkishNeighborhoods[watchDistrict] ? turkishNeighborhoods[watchDistrict] : [];
+
+  // Fetch cities when Turkey is selected
+  useEffect(() => {
+    if (isTurkey) {
+      setLoadingCities(true);
+      turkeyApiService.getCitiesForSelect()
+        .then(setCities)
+        .finally(() => setLoadingCities(false));
+    } else {
+      setCities([]);
+      setDistricts([]);
+      setNeighborhoods([]);
+    }
+  }, [isTurkey]);
+
+  // Fetch districts when city changes
+  useEffect(() => {
+    if (isTurkey && watchCity) {
+      const selectedCity = cities.find(c => c.value === watchCity);
+      if (selectedCity?.id) {
+        setLoadingDistricts(true);
+        turkeyApiService.getDistrictsByCityId(selectedCity.id)
+          .then(setDistricts)
+          .finally(() => setLoadingDistricts(false));
+      }
+    } else {
+      setDistricts([]);
+      setNeighborhoods([]);
+    }
+  }, [watchCity, isTurkey, cities]);
+
+  // Fetch neighborhoods when district changes
+  useEffect(() => {
+    if (isTurkey && watchDistrict) {
+      const selectedDistrict = districts.find(d => d.value === watchDistrict);
+      if (selectedDistrict?.id) {
+        setLoadingNeighborhoods(true);
+        turkeyApiService.getNeighborhoodsByDistrictIdForSelect(selectedDistrict.id)
+          .then(setNeighborhoods)
+          .finally(() => setLoadingNeighborhoods(false));
+      }
+    } else {
+      setNeighborhoods([]);
+    }
+  }, [watchDistrict, isTurkey, districts]);
 
   return (
     <Card className="shadow-md border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-lg">
@@ -83,14 +133,15 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                       setValue("postal_code", "");
                     }}
                     value={field.value}
+                    disabled={loadingCities || cities.length === 0}
                   >
                     <FormControl>
                       <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder="Şehir seçin" />
+                        <SelectValue placeholder={loadingCities ? "Yükleniyor..." : "Şehir seçin"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {turkishCities.map((city) => (
+                      {cities.map((city) => (
                         <SelectItem key={city.value} value={city.value}>
                           {city.label}
                         </SelectItem>
@@ -113,7 +164,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs font-medium text-gray-700">İlçe</FormLabel>
-                {isTurkey && availableDistricts.length > 0 ? (
+                {isTurkey && districts.length > 0 ? (
                   <Select
                     onValueChange={(value) => {
                       field.onChange(value);
@@ -121,14 +172,15 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                       setValue("postal_code", "");
                     }}
                     value={field.value}
+                    disabled={loadingDistricts || !watchCity}
                   >
                     <FormControl>
                       <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder="İlçe seçin" />
+                        <SelectValue placeholder={loadingDistricts ? "Yükleniyor..." : "İlçe seçin"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {availableDistricts.map((district) => (
+                      {districts.map((district) => (
                         <SelectItem key={district.value} value={district.value}>
                           {district.label}
                         </SelectItem>
@@ -152,26 +204,27 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-xs font-medium text-gray-700">Mahalle/Semt</FormLabel>
-                {isTurkey && availableNeighborhoods.length > 0 ? (
+                {isTurkey && neighborhoods.length > 0 ? (
                   <Select
                     onValueChange={(value) => {
                       field.onChange(value);
-                      const neighborhood = availableNeighborhoods.find(n => n.value === value);
-                      if (neighborhood) {
+                      const neighborhood = neighborhoods.find(n => n.value === value);
+                      if (neighborhood?.postalCode) {
                         setValue("postal_code", neighborhood.postalCode);
                       }
                     }}
                     value={field.value}
+                    disabled={loadingNeighborhoods || !watchDistrict}
                   >
                     <FormControl>
                       <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder="Mahalle seçin" />
+                        <SelectValue placeholder={loadingNeighborhoods ? "Yükleniyor..." : "Mahalle seçin"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {availableNeighborhoods.map((neighborhood) => (
+                      {neighborhoods.map((neighborhood) => (
                         <SelectItem key={neighborhood.value} value={neighborhood.value}>
-                          {neighborhood.label} - {neighborhood.postalCode}
+                          {neighborhood.label} {neighborhood.postalCode && `- ${neighborhood.postalCode}`}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -195,9 +248,9 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                 <FormLabel className="text-xs font-medium text-gray-700">Posta Kodu</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder={isTurkey && availableNeighborhoods.length > 0 ? "Mahalle seçildiğinde otomatik doldurulur" : "Posta kodu"}
-                    className={`h-7 text-xs ${isTurkey && availableNeighborhoods.length > 0 ? 'bg-gray-50' : ''}`}
-                    readOnly={isTurkey && availableNeighborhoods.length > 0}
+                    placeholder={isTurkey && neighborhoods.length > 0 ? "Mahalle seçildiğinde otomatik doldurulur" : "Posta kodu"}
+                    className={`h-7 text-xs ${isTurkey && neighborhoods.length > 0 ? 'bg-gray-50' : ''}`}
+                    readOnly={isTurkey && neighborhoods.length > 0}
                     {...field}
                   />
                 </FormControl>

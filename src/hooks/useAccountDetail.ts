@@ -22,6 +22,7 @@ interface BankAccount {
   currency: string;
   current_balance: number;
   available_balance: number;
+  credit_limit?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -45,8 +46,12 @@ interface CreditCard {
 interface PartnerAccount {
   id: string;
   partner_name: string;
+  partner_type: string;
   account_type: string;
   current_balance: number;
+  initial_capital: number;
+  profit_share: number;
+  ownership_percentage: number;
   currency: string;
   is_active: boolean;
   created_at: string;
@@ -67,6 +72,8 @@ interface Transaction {
   merchant_category?: string;
   transaction_date: string;
   reference?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface TransferTransaction {

@@ -486,7 +486,7 @@ const CategoryManagement = () => {
             </div>
             <div className="text-center p-2 bg-blue-50 rounded-lg border border-blue-100">
               <div className="text-sm font-bold text-blue-700">
-                {incomeCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).reduce((sum, cat) => sum + (cat.subcategories?.length || 0), 0)}
+                0
               </div>
               <div className="text-xs text-blue-600">Alt Kategori</div>
             </div>
@@ -573,7 +573,7 @@ const CategoryManagement = () => {
             </div>
             <div className="text-center p-2 bg-purple-50 rounded-lg border border-purple-100">
               <div className="text-sm font-bold text-purple-700">
-                {expenseCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).reduce((sum, cat) => sum + (cat.subcategories?.length || 0), 0)}
+                0
               </div>
               <div className="text-xs text-purple-600">Alt Kategori</div>
             </div>

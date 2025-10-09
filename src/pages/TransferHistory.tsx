@@ -267,7 +267,7 @@ const TransferHistory = memo(({ isCollapsed, setIsCollapsed }: TransferHistoryPr
             <label className="text-sm font-medium text-gray-700">Başlangıç Tarihi</label>
             <DatePicker
               date={startDate}
-              setDate={setStartDate}
+              onSelect={(date) => setStartDate(date || new Date())}
               placeholder="Başlangıç tarihi"
             />
           </div>
@@ -276,7 +276,7 @@ const TransferHistory = memo(({ isCollapsed, setIsCollapsed }: TransferHistoryPr
             <label className="text-sm font-medium text-gray-700">Bitiş Tarihi</label>
             <DatePicker
               date={endDate}
-              setDate={setEndDate}
+              onSelect={(date) => setEndDate(date || new Date())}
               placeholder="Bitiş tarihi"
             />
           </div>

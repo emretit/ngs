@@ -15,10 +15,13 @@ interface BankAccount {
 interface CreditCard {
   id: string;
   card_name: string;
+  card_number: string;
   card_type: string;
+  bank_name: string;
   current_balance: number;
   credit_limit: number;
   available_limit: number;
+  currency: string;
   status: string;
   expiry_date: string;
 }
@@ -37,8 +40,12 @@ interface CashAccount {
 interface PartnerAccount {
   id: string;
   partner_name: string;
+  partner_type: string;
   account_type: string;
   current_balance: number;
+  initial_capital: number;
+  profit_share: number;
+  ownership_percentage: number;
   currency: string;
   is_active: boolean;
   created_at: string;

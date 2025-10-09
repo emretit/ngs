@@ -91,12 +91,17 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
       created_at: transfer.created_at,
       updated_at: transfer.updated_at,
       isTransfer: true,
-      transfer_direction: transfer.direction
+      transfer_direction: transfer.direction,
+      category: 'Transfer'
     }));
 
     // Normal işlemler ve transfer işlemlerini birleştir
     const allActivities = [
-      ...transactions.map(t => ({ ...t, isTransfer: false })),
+      ...transactions.map(t => ({ 
+        ...t, 
+        isTransfer: false,
+        transfer_direction: undefined as 'incoming' | 'outgoing' | undefined
+      })),
       ...transferActivities
     ].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
 

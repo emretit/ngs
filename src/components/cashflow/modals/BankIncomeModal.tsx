@@ -231,7 +231,7 @@ const BankIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
               <Label htmlFor="transaction_date">İşlem Tarihi</Label>
               <DatePicker
                 date={formData.transaction_date}
-                onDateChange={(date) => handleInputChange('transaction_date', date)}
+                onSelect={(date) => handleInputChange('transaction_date', date)}
               />
             </div>
           </div>

@@ -72,12 +72,19 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
       created_at: transfer.created_at,
       updated_at: transfer.updated_at,
       isTransfer: true,
-      transfer_direction: transfer.direction
+      transfer_direction: transfer.direction,
+      category: 'Transfer'
     }));
 
     // Normal işlemler ve transfer işlemlerini birleştir
     const allActivities = [
-      ...transactions.map(t => ({ ...t, isTransfer: false })),
+      ...transactions.map(t => ({ 
+        ...t, 
+        isTransfer: false,
+        transfer_direction: undefined as 'incoming' | 'outgoing' | undefined,
+        updated_at: t.updated_at || t.created_at,
+        created_at: t.created_at || new Date().toISOString()
+      })),
       ...transferActivities
     ].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
 
@@ -125,13 +132,13 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
 
       // Arama filtresi
       if (searchQuery && !transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          !(transaction as any).category?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+          !(transaction.category || 'Genel').toLowerCase().includes(searchQuery.toLowerCase())) return false;
 
       // Kategori filtresi
-      if (selectedCategory !== "all" && (transaction as any).category !== selectedCategory) return false;
+      if (selectedCategory !== "all" && (transaction.category || 'Genel') !== selectedCategory) return false;
 
       // Tarih filtresi - updated_at (güncellenme tarihi) kullan
-      const updatedDate = new Date((transaction as any).updated_at || transaction.created_at);
+      const updatedDate = new Date(transaction.updated_at || transaction.created_at);
       const updatedDateOnly = new Date(updatedDate.getFullYear(), updatedDate.getMonth(), updatedDate.getDate());
 
       // Özel tarih aralığı filtresi (DatePicker)
@@ -561,10 +568,10 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
                             <p className="font-medium text-sm">{transaction.description}</p>
                             <p className="text-xs text-gray-500">
                               {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')} •
-                              {transaction.isTransfer ? 'Transfer' : (transaction as any).category || 'Genel'}
+                              {transaction.isTransfer ? 'Transfer' : (transaction.category || 'Genel')}
                             </p>
                             <p className="text-xs text-gray-400">
-                              Güncellendi: {new Date((transaction as any).updated_at || transaction.created_at).toLocaleDateString('tr-TR')} {new Date((transaction as any).updated_at || transaction.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                              Güncellendi: {new Date(transaction.updated_at || transaction.created_at).toLocaleDateString('tr-TR')} {new Date(transaction.updated_at || transaction.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
                         </div>

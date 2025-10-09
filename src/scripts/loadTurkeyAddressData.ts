@@ -1,31 +1,14 @@
 /**
- * Script to load Turkey address data from the external API into Supabase tables
- * This script should be run once to populate the local database with address data
+ * Script to load Turkey address data from turkiyeapi.dev into Supabase tables
+ * This will populate turkey_cities, turkey_districts, and turkey_neighborhoods
+ * with complete data: 81 provinces, 973 districts, and 32,000+ neighborhoods
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { turkeyApiService } from '@/services/turkeyApiService';
-
-interface Province {
-  id: number;
-  name: string;
-  districts: District[];
-}
-
-interface District {
-  id: number;
-  name: string;
-  neighborhoods: Neighborhood[];
-}
-
-interface Neighborhood {
-  id: number;
-  name: string;
-  postCode: string;
-}
+import { turkeyApiService, Province, District, Neighborhood } from '@/services/turkeyApiService';
 
 interface LoadStats {
-  provincesLoaded: number;
+  citiesLoaded: number;
   districtsLoaded: number;
   neighborhoodsLoaded: number;
   errors: string[];
@@ -33,24 +16,25 @@ interface LoadStats {
 
 class TurkeyAddressDataLoader {
   private stats: LoadStats = {
-    provincesLoaded: 0,
+    citiesLoaded: 0,
     districtsLoaded: 0,
     neighborhoodsLoaded: 0,
     errors: []
   };
 
   async loadAllData(): Promise<LoadStats> {
-    console.log('🇹🇷 Starting Turkey address data loading...');
+    console.log('🇹🇷 Starting Turkey address data loading from turkiyeapi.dev...');
+    console.log('📊 Expected: 81 provinces, 973 districts, 32,000+ neighborhoods');
 
     try {
       // Clear existing data
       await this.clearExistingData();
 
-      // Load provinces from API
+      // Load all provinces
       const provinces = await turkeyApiService.getProvinces();
-      console.log(`📍 Found ${provinces.length} provinces to load`);
+      console.log(`📍 Found ${provinces.length} provinces from API`);
 
-      // Load provinces into database
+      // Load each province with its districts and neighborhoods
       for (const province of provinces) {
         try {
           await this.loadProvince(province);
@@ -73,44 +57,48 @@ class TurkeyAddressDataLoader {
   }
 
   private async clearExistingData(): Promise<void> {
-    console.log('🧹 Clearing existing data...');
+    console.log('🧹 Clearing existing data from tables...');
 
     try {
       // Delete in reverse order due to foreign key constraints
-      await supabase.from('turkey_neighborhoods').delete().neq('id', 0);
-      await supabase.from('turkey_districts').delete().neq('id', 0);
-      await supabase.from('turkey_provinces').delete().neq('id', 0);
+      const { error: neighError } = await supabase.from('turkey_neighborhoods').delete().neq('id', 0);
+      if (neighError) console.warn('Warning clearing neighborhoods:', neighError);
+
+      const { error: distError } = await supabase.from('turkey_districts').delete().neq('id', 0);
+      if (distError) console.warn('Warning clearing districts:', distError);
+
+      const { error: cityError } = await supabase.from('turkey_cities').delete().neq('id', 0);
+      if (cityError) console.warn('Warning clearing cities:', cityError);
 
       console.log('✅ Existing data cleared');
     } catch (error) {
       console.error('❌ Error clearing existing data:', error);
-      throw error;
+      // Continue anyway
     }
   }
 
   private async loadProvince(province: Province): Promise<void> {
     console.log(`📍 Loading province: ${province.name}`);
 
-    // Insert province
-    const { data: provinceData, error: provinceError } = await supabase
-      .from('turkey_provinces')
+    // Insert city (using turkey_cities table)
+    const { error: cityError } = await supabase
+      .from('turkey_cities')
       .insert({
         id: province.id,
         name: province.name,
-        area_code: province.id.toString().padStart(2, '0'),
-        is_metropolitan: this.isMetropolitanCity(province.name)
-      })
-      .select()
-      .single();
+        code: province.id.toString().padStart(2, '0')
+      });
 
-    if (provinceError) {
-      throw new Error(`Failed to insert province: ${provinceError.message}`);
+    if (cityError) {
+      throw new Error(`Failed to insert city: ${cityError.message}`);
     }
 
-    this.stats.provincesLoaded++;
+    this.stats.citiesLoaded++;
 
     // Load districts for this province
+    console.log(`  📋 Loading districts for ${province.name}...`);
     const districts = await turkeyApiService.getDistrictsByProvinceId(province.id);
+    console.log(`  📋 Found ${districts.length} districts`);
 
     for (const district of districts) {
       try {
@@ -122,18 +110,15 @@ class TurkeyAddressDataLoader {
     }
   }
 
-  private async loadDistrict(district: District, provinceId: number): Promise<void> {
+  private async loadDistrict(district: District, cityId: number): Promise<void> {
     // Insert district
-    const { data: districtData, error: districtError } = await supabase
+    const { error: districtError } = await supabase
       .from('turkey_districts')
       .insert({
         id: district.id,
         name: district.name,
-        province_id: provinceId,
-        population: null // Will be updated if population data is available
-      })
-      .select()
-      .single();
+        city_id: cityId
+      });
 
     if (districtError) {
       throw new Error(`Failed to insert district: ${districtError.message}`);
@@ -143,10 +128,14 @@ class TurkeyAddressDataLoader {
 
     // Load neighborhoods for this district
     const neighborhoods = await turkeyApiService.getNeighborhoodsByDistrictId(district.id);
+    
+    if (neighborhoods.length > 0) {
+      console.log(`    🏘️  Loading ${neighborhoods.length} neighborhoods for ${district.name}`);
+    }
 
     for (const neighborhood of neighborhoods) {
       try {
-        await this.loadNeighborhood(neighborhood, district.id, provinceId);
+        await this.loadNeighborhood(neighborhood, district.id);
       } catch (error) {
         this.stats.errors.push(`Error loading neighborhood ${neighborhood.name} in ${district.name}: ${error}`);
         console.error(`❌ Error loading neighborhood ${neighborhood.name}:`, error);
@@ -154,7 +143,7 @@ class TurkeyAddressDataLoader {
     }
   }
 
-  private async loadNeighborhood(neighborhood: Neighborhood, districtId: number, provinceId: number): Promise<void> {
+  private async loadNeighborhood(neighborhood: Neighborhood, districtId: number): Promise<void> {
     // Insert neighborhood
     const { error: neighborhoodError } = await supabase
       .from('turkey_neighborhoods')
@@ -162,9 +151,7 @@ class TurkeyAddressDataLoader {
         id: neighborhood.id,
         name: neighborhood.name,
         district_id: districtId,
-        province_id: provinceId,
-        postal_code: neighborhood.postCode,
-        population: null // Will be updated if population data is available
+        postal_code: neighborhood.postCode || null
       });
 
     if (neighborhoodError) {
@@ -181,10 +168,10 @@ class TurkeyAddressDataLoader {
         .insert({
           last_sync_date: new Date().toISOString(),
           sync_status: this.stats.errors.length > 0 ? 'completed_with_errors' : 'completed',
-          provinces_count: this.stats.provincesLoaded,
+          provinces_count: this.stats.citiesLoaded,
           districts_count: this.stats.districtsLoaded,
           neighborhoods_count: this.stats.neighborhoodsLoaded,
-          error_message: this.stats.errors.length > 0 ? this.stats.errors.join('; ') : null
+          error_message: this.stats.errors.length > 0 ? this.stats.errors.slice(0, 10).join('; ') : null
         });
 
       if (error) {
@@ -197,28 +184,16 @@ class TurkeyAddressDataLoader {
     }
   }
 
-  private isMetropolitanCity(cityName: string): boolean {
-    const metropolitanCities = [
-      'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Adana',
-      'Konya', 'Şanlıurfa', 'Gaziantep', 'Kocaeli', 'Mersin',
-      'Diyarbakır', 'Hatay', 'Manisa', 'Kayseri', 'Samsun',
-      'Balıkesir', 'Kahramanmaraş', 'Van', 'Aydın', 'Denizli',
-      'Şahinbey', 'Adapazarı', 'Malatya', 'Erzurum', 'Trabzon',
-      'Ordu', 'Muğla', 'Eskişehir', 'Tekirdağ'
-    ];
-
-    return metropolitanCities.includes(cityName);
-  }
-
   private printStats(): void {
     console.log('\n📊 Loading Statistics:');
-    console.log(`✅ Provinces loaded: ${this.stats.provincesLoaded}`);
-    console.log(`✅ Districts loaded: ${this.stats.districtsLoaded}`);
-    console.log(`✅ Neighborhoods loaded: ${this.stats.neighborhoodsLoaded}`);
+    console.log(`✅ Cities loaded: ${this.stats.citiesLoaded} / 81`);
+    console.log(`✅ Districts loaded: ${this.stats.districtsLoaded} / 973`);
+    console.log(`✅ Neighborhoods loaded: ${this.stats.neighborhoodsLoaded} / ~32,000`);
 
     if (this.stats.errors.length > 0) {
       console.log(`❌ Errors encountered: ${this.stats.errors.length}`);
-      this.stats.errors.forEach((error, index) => {
+      console.log('First 10 errors:');
+      this.stats.errors.slice(0, 10).forEach((error, index) => {
         console.log(`   ${index + 1}. ${error}`);
       });
     } else {
@@ -228,22 +203,24 @@ class TurkeyAddressDataLoader {
 
   async checkDataStatus(): Promise<{ hasData: boolean; counts: any }> {
     try {
-      const [provincesResult, districtsResult, neighborhoodsResult, syncResult] = await Promise.all([
-        supabase.from('turkey_provinces').select('*', { count: 'exact', head: true }),
+      const [citiesResult, districtsResult, neighborhoodsResult, syncResult] = await Promise.all([
+        supabase.from('turkey_cities').select('*', { count: 'exact', head: true }),
         supabase.from('turkey_districts').select('*', { count: 'exact', head: true }),
         supabase.from('turkey_neighborhoods').select('*', { count: 'exact', head: true }),
-        supabase.from('turkey_address_sync').select('*').order('created_at', { ascending: false }).limit(1).single()
+        supabase.from('turkey_address_sync').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle()
       ]);
 
       const counts = {
-        provinces: provincesResult.count || 0,
+        cities: citiesResult.count || 0,
         districts: districtsResult.count || 0,
         neighborhoods: neighborhoodsResult.count || 0,
         lastSync: syncResult.data?.last_sync_date || null,
         syncStatus: syncResult.data?.sync_status || null
       };
 
-      const hasData = counts.provinces > 0 && counts.districts > 0 && counts.neighborhoods > 0;
+      const hasData = counts.cities > 0 && counts.districts > 0 && counts.neighborhoods > 0;
+
+      console.log('📊 Current database status:', counts);
 
       return { hasData, counts };
     } catch (error) {

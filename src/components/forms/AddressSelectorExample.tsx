@@ -12,11 +12,8 @@ interface ExampleFormData {
   // Address fields
   country: string;
   city: string;
-  cityId: number;
   district: string;
-  districtId: number;
   neighborhood: string;
-  neighborhoodId: number;
   addressDetail: string;
   postalCode: string;
 
@@ -35,11 +32,8 @@ const AddressSelectorExample: React.FC = () => {
     defaultValues: {
       country: "Türkiye",
       city: "",
-      cityId: 0,
       district: "",
-      districtId: 0,
       neighborhood: "",
-      neighborhoodId: 0,
       addressDetail: "",
       postalCode: "",
       entityId: "example-entity-123",
@@ -163,13 +157,13 @@ const AddressSelectorExample: React.FC = () => {
                 <strong>Ülke:</strong> {addressData.country}
               </div>
               <div>
-                <strong>İl:</strong> {addressData.city} {addressData.cityId && `(ID: ${addressData.cityId})`}
+                <strong>İl:</strong> {addressData.city}
               </div>
               <div>
-                <strong>İlçe:</strong> {addressData.district} {addressData.districtId && `(ID: ${addressData.districtId})`}
+                <strong>İlçe:</strong> {addressData.district}
               </div>
               <div>
-                <strong>Mahalle:</strong> {addressData.neighborhood} {addressData.neighborhoodId && `(ID: ${addressData.neighborhoodId})`}
+                <strong>Mahalle:</strong> {addressData.neighborhood}
               </div>
               <div className="col-span-2">
                 <strong>Adres Detayı:</strong> {addressData.addressDetail || "Belirtilmemiş"}

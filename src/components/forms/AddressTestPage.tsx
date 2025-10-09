@@ -9,11 +9,8 @@ import { MapPin, TestTube } from "lucide-react";
 interface TestFormData {
   country: string;
   city: string;
-  cityId: number;
   district: string;
-  districtId: number;
   neighborhood: string;
-  neighborhoodId: number;
   addressDetail: string;
   postalCode: string;
 }
@@ -26,11 +23,8 @@ const AddressTestPage: React.FC = () => {
     defaultValues: {
       country: "Türkiye",
       city: "",
-      cityId: 0,
       district: "",
-      districtId: 0,
       neighborhood: "",
-      neighborhoodId: 0,
       addressDetail: "",
       postalCode: ""
     }
@@ -46,19 +40,16 @@ const AddressTestPage: React.FC = () => {
       results.push(`✅ Ülke seçildi: ${address.country}`);
     }
 
-    if (address.city && address.cityId) {
-      results.push(`✅ İl seçildi: ${address.city} (ID: ${address.cityId})`);
+    if (address.city) {
+      results.push(`✅ İl seçildi: ${address.city}`);
     }
 
-    if (address.district && address.districtId) {
-      results.push(`✅ İlçe seçildi: ${address.district} (ID: ${address.districtId})`);
+    if (address.district) {
+      results.push(`✅ İlçe seçildi: ${address.district}`);
     }
 
     if (address.neighborhood) {
       results.push(`✅ Mahalle seçildi: ${address.neighborhood}`);
-      if (address.neighborhoodId) {
-        results.push(`   └─ Mahalle ID: ${address.neighborhoodId}`);
-      }
     }
 
     if (address.postalCode) {

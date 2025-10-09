@@ -148,10 +148,11 @@ export const getDistrictsByCity = async (cityName: string): Promise<Array<{ valu
       }))
     );
 
-    // Remove duplicates and sort
-    const uniqueDistricts = Array.from(
-      new Map(districts.map((d: any) => [d.value, d])).values()
-    ).sort((a, b) => a.label.localeCompare(b.label, 'tr'));
+    // Remove duplicates and sort  
+    type DistrictItem = { value: string; label: string };
+    const districtMap = new Map<string, DistrictItem>(districts.map((d: DistrictItem) => [d.value, d]));
+    const uniqueDistricts: DistrictItem[] = Array.from(districtMap.values() as Iterable<DistrictItem>)
+      .sort((a, b) => a.label.localeCompare(b.label, 'tr'));
 
     addressDataCache.set(cacheKey, uniqueDistricts);
     return uniqueDistricts;

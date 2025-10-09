@@ -236,8 +236,8 @@ const ApiTestPage: React.FC = () => {
         <CardContent className="text-sm text-blue-700">
           <ol className="list-decimal list-inside space-y-2">
             <li><strong>İl Listesi:</strong> https://turkiyeapi.dev/api/v1/provinces</li>
-            <li><strong>İlçe Listesi:</strong> https://turkiyeapi.dev/api/v1/districts/{cityId}</li>
-            <li><strong>Mahalle Listesi:</strong> https://turkiyeapi.dev/api/v1/neighborhoods/{districtId}</li>
+            <li><strong>İlçe Listesi:</strong> https://turkiyeapi.dev/api/v1/districts/[city_id]</li>
+            <li><strong>Mahalle Listesi:</strong> https://turkiyeapi.dev/api/v1/neighborhoods/[district_id]</li>
             <li><strong>Cache Kontrolü:</strong> Aynı API çağrıları cache'den gelir</li>
           </ol>
 

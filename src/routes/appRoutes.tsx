@@ -19,7 +19,6 @@ import Deliveries from "@/pages/Deliveries";
 import Returns from "@/pages/Returns";
 import InvoiceManagement from "@/pages/InvoiceManagement";
 import ModuleTreePage from "@/pages/ModuleTreePage";
-import LoadAddressData from "@/pages/LoadAddressData";
 
 
 
@@ -45,6 +44,5 @@ export const appRoutes: RouteConfig[] = [
   { path: "/returns", component: Returns, protected: true },
   { path: "/invoices", component: InvoiceManagement, protected: true },
   { path: "/modules-tree", component: ModuleTreePage, protected: true },
-  { path: "/load-address-data", component: LoadAddressData, protected: true },
 
 ];

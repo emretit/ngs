@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { Control, useWatch, useFormContext } from "react-hook-form";
-import { AddressSelectorTR } from "@/components/forms/AddressSelectorTR";
 
 interface AddressSectionProps {
   control: Control<any>;
@@ -17,13 +16,6 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Adres Seçici */}
-      <AddressSelectorTR 
-        control={control}
-        fieldPrefix=""
-        showCard={true}
-      />
-
       {/* Kişisel Bilgiler */}
       <Card className="shadow-md border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-lg">
         <CardHeader className="pb-2 pt-2 px-3">

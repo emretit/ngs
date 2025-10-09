@@ -1,6 +1,5 @@
 import React from "react";
 import { Control } from "react-hook-form";
-import { AddressSelectorTR, AddressData } from "@/components/forms/AddressSelectorTR";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -9,32 +8,13 @@ import { MapPin, User } from "lucide-react";
 
 interface AddressSectionNewProps {
   control: Control<any>;
-  onAddressChange?: (address: AddressData) => void;
 }
 
 export const AddressSectionNew: React.FC<AddressSectionNewProps> = ({
-  control,
-  onAddressChange
+  control
 }) => {
-  const handleAddressChange = (addressData: AddressData) => {
-    // Bu fonksiyon ile adres verileri otomatik olarak form'a aktarılabilir
-    console.log("Address changed:", addressData);
-    if (onAddressChange) {
-      onAddressChange(addressData);
-    }
-  };
-
   return (
     <div className="space-y-4">
-      {/* Adres Bilgileri */}
-      <AddressSelectorTR
-        control={control}
-        onChange={handleAddressChange}
-        required={true}
-        showCard={true}
-        fieldPrefix="address"
-      />
-
       {/* Kişisel Bilgiler */}
       <Card className="shadow-md border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-lg">
         <CardHeader className="pb-2 pt-2 px-3">

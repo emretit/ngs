@@ -497,11 +497,11 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
       {/* Address Summary */}
       {renderAddressSummary()}
 
-      {/* Address Detail */}
-      {control ? (
+      {/* Address Detail - sadece fieldPrefix yoksa göster */}
+      {!fieldPrefix && control ? (
         <FormField
           control={control}
-          name={getFieldName("addressDetail")}
+          name="address"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-sm font-medium text-gray-700">Adres Detayı</FormLabel>
@@ -517,18 +517,18 @@ export const AddressSelectorTR: React.FC<AddressSelectorTRProps> = ({
             </FormItem>
           )}
         />
-      ) : (
+      ) : !fieldPrefix ? (
         <div className="space-y-2">
           <Label className="text-sm font-medium text-gray-700">Adres Detayı</Label>
           <Textarea
             placeholder="Kapı no, apartman adı, kat, daire no vb. detaylar..."
             className="min-h-[60px] resize-none text-sm"
             value={watchAddressDetail}
-            onChange={(e) => setValue(getFieldName("addressDetail"), e.target.value)}
+            onChange={(e) => setValue("address", e.target.value)}
             disabled={disabled}
           />
         </div>
-      )}
+      ) : null}
 
       {/* Postal Code */}
       {control ? (

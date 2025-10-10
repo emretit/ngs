@@ -1,1 +1,0 @@
--- Database: vwhwufnckpqirxptwncw.supabase.co

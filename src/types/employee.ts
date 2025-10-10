@@ -26,10 +26,25 @@ export interface Employee {
   postal_code?: string | null;
   id_ssn?: string | null;
   
+  // New address fields
+  city_id?: number | null;
+  district_id?: number | null;
+  neighborhood_id?: number | null;
+  address_line?: string | null;
+  address_type?: 'home' | 'work' | 'other' | null;
+  
   // Emergency contact
   emergency_contact_name?: string | null;
   emergency_contact_phone?: string | null;
   emergency_contact_relation?: string | null;
+  
+  // Salary information
+  salary_amount?: number | null;
+  salary_currency?: 'TRY' | 'USD' | 'EUR' | 'GBP' | null;
+  salary_type?: 'gross' | 'net' | 'hourly' | 'daily' | null;
+  payment_frequency?: 'monthly' | 'weekly' | 'daily' | 'hourly' | null;
+  salary_start_date?: string | null;
+  salary_notes?: string | null;
   
   created_at?: string;
   updated_at?: string;

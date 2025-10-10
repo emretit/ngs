@@ -17,21 +17,23 @@ interface DatePickerProps {
   onSelect: (date: Date | undefined) => void
   placeholder?: string
   disabled?: boolean
+  className?: string
 }
 
-export function DatePicker({ date, onSelect, placeholder = "Tarih seçin", disabled }: DatePickerProps) {
+export function DatePicker({ date, onSelect, placeholder = "Tarih seçin", disabled, className }: DatePickerProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}
           className={cn(
-            "w-full justify-start text-left font-normal",
-            !date && "text-muted-foreground"
+            "w-full justify-start text-left font-normal h-7 text-xs",
+            !date && "text-muted-foreground",
+            className
           )}
           disabled={disabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon className="mr-2 h-3.5 w-3.5" />
           {date ? format(date, "dd.MM.yyyy", { locale: tr }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>

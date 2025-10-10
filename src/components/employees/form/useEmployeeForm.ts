@@ -32,10 +32,21 @@ export const useEmployeeForm = () => {
         city: data.city || null,
         district: data.district || null,
         postal_code: data.postal_code || null,
+        city_id: data.city_id || null,
+        district_id: data.district_id || null,
+        neighborhood_id: data.neighborhood_id || null,
+        address_line: data.address_line || null,
+        address_type: data.address_type || "home",
         id_ssn: data.id_ssn || null,
         emergency_contact_name: data.emergency_contact_name || null,
         emergency_contact_phone: data.emergency_contact_phone || null,
-        emergency_contact_relation: data.emergency_contact_relation || null
+        emergency_contact_relation: data.emergency_contact_relation || null,
+        salary_amount: data.salary_amount || null,
+        salary_currency: data.salary_currency || "TRY",
+        salary_type: data.salary_type || "gross",
+        payment_frequency: data.payment_frequency || "monthly",
+        salary_start_date: data.salary_start_date || null,
+        salary_notes: data.salary_notes || null
       };
 
       const { error, data: newEmployee } = await supabase

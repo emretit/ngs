@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Eye, Pencil, Trash } from "lucide-react";
 import {
   Table,
@@ -164,28 +163,15 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
                     onClick={() => handleRowClick(employee)}
                   >
                     <TableCell className="py-4 px-6">
-                      <div className="flex items-center space-x-4">
-                        <Avatar className="h-12 w-12 ring-2 ring-primary/20 shadow-lg">
-                          <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold text-lg">
-                            {employee.first_name.charAt(0)}{employee.last_name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold text-gray-900 text-base">
-                            {employee.first_name} {employee.last_name}
-                          </p>
-                        </div>
-                      </div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {employee.first_name} {employee.last_name}
+                      </p>
                     </TableCell>
                     <TableCell className="py-4 px-6">
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-200/50 shadow-sm">
-                        🏢 {employee.department}
-                      </span>
+                      <span className="text-sm text-gray-900">{employee.department}</span>
                     </TableCell>
                     <TableCell className="py-4 px-6">
-                      <span className="text-sm font-medium text-gray-900 bg-gray-100 px-3 py-1.5 rounded-lg">
-                        💼 {employee.position}
-                      </span>
+                      <span className="text-sm text-gray-900">{employee.position}</span>
                     </TableCell>
                     <TableCell className="py-4 px-6">
                       <div className="space-y-1">
@@ -194,9 +180,7 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
                       </div>
                     </TableCell>
                     <TableCell className="py-4 px-6">
-                      <span className="text-sm font-medium text-gray-900 bg-gray-50 px-3 py-1.5 rounded-lg">
-                        📅 {new Date(employee.hire_date).toLocaleDateString("tr-TR")}
-                      </span>
+                      <span className="text-sm text-gray-900">{new Date(employee.hire_date).toLocaleDateString("tr-TR")}</span>
                     </TableCell>
                     <TableCell className="py-4 px-6">
                       <StatusBadge status={employee.status} />

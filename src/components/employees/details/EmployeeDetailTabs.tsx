@@ -1,8 +1,6 @@
 
-import { Tabs } from "@/components/ui/tabs";
 import type { Employee } from "@/types/employee";
-import { EmployeeTabsList } from "./tabs/TabsList";
-import { EmployeeTabsContent } from "./tabs/TabsContent";
+import { EmployeeTabs } from "./EmployeeTabs";
 
 interface EmployeeDetailTabsProps {
   employee: Employee;
@@ -17,20 +15,12 @@ export const EmployeeDetailTabs = ({
   setActiveTab,
   refetch
 }: EmployeeDetailTabsProps) => {
-  const handleEmployeeUpdate = async (updatedEmployee: Employee) => {
-    // This function will be passed to child components
-    await refetch();
-  };
-
   return (
-    <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full animate-fade-in">
-      <EmployeeTabsList activeTab={activeTab} />
-      
-      <EmployeeTabsContent 
-        employee={employee} 
-        handleEmployeeUpdate={handleEmployeeUpdate}
-        refetch={refetch}
-      />
-    </Tabs>
+    <EmployeeTabs 
+      employee={employee} 
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      refetch={refetch}
+    />
   );
 };

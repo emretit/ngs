@@ -14,6 +14,7 @@ import { BasicInfoSection } from "./sections/BasicInfoSection";
 import { AddressSection } from "./sections/AddressSection";
 import { EmergencyContactSection } from "./sections/EmergencyContactSection";
 import { SalarySection } from "./sections/SalarySection";
+import { DocumentUploadSection, DocumentFile } from "./sections/DocumentUploadSection";
 import BackButton from "@/components/ui/back-button";
 import { UserPlus, Save } from "lucide-react";
 
@@ -66,6 +67,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const SimpleEmployeeForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [documents, setDocuments] = useState<DocumentFile[]>([]);
   const navigate = useNavigate();
   const { userData } = useCurrentUser();
 
@@ -157,6 +159,48 @@ const SimpleEmployeeForm = () => {
 
       if (error) throw error;
 
+      // Upload documents if any
+      if (documents.length > 0 && newEmployee?.id) {
+        try {
+          const documentPromises = documents.map(async (doc) => {
+            if (doc.file) {
+              const fileExt = doc.file.name.split('.').pop();
+              const fileName = `${newEmployee.id}/${doc.name}`;
+              
+              const { error: uploadError } = await supabase.storage
+                .from('employee-documents')
+                .upload(fileName, doc.file);
+
+              if (uploadError) throw uploadError;
+
+              // Get public URL
+              const { data: urlData } = supabase.storage
+                .from('employee-documents')
+                .getPublicUrl(fileName);
+
+              // Save document record to database
+              const { error: docError } = await supabase
+                .from('employee_documents')
+                .insert({
+                  employee_id: newEmployee.id,
+                  name: doc.name,
+                  type: doc.type,
+                  size: doc.size,
+                  url: urlData.publicUrl,
+                  uploaded_at: new Date().toISOString()
+                });
+
+              if (docError) throw docError;
+            }
+          });
+
+          await Promise.all(documentPromises);
+        } catch (docError) {
+          console.error("Error uploading documents:", docError);
+          showError("Belgeler yüklenirken hata oluştu, ancak çalışan oluşturuldu.");
+        }
+      }
+
       showSuccess("Çalışan başarıyla oluşturuldu");
       
       // Navigate to the employee details page
@@ -241,6 +285,11 @@ const SimpleEmployeeForm = () => {
               <EmergencyContactSection control={form.control} />
             </div>
           </div>
+
+          {/* Belge Yükleme */}
+          <DocumentUploadSection 
+            onDocumentsChange={setDocuments}
+          />
         </form>
       </Form>
     </div>

@@ -20,8 +20,8 @@ export const EmergencyContactSection = ({ control }: EmergencyContactSectionProp
           Acil Durum İletişim Bilgileri
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
+      <CardContent className="space-y-3 pt-2 px-4 pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <FormField
             control={control}
             name="emergency_contact_name"

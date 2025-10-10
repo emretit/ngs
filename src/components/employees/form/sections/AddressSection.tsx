@@ -131,9 +131,9 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
             Kişisel Bilgiler ve Adres
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-1.5 pt-0 px-3 pb-3 flex-1">
+        <CardContent className="space-y-3 pt-2 px-4 pb-4 flex-1">
           {/* Kişisel Bilgiler */}
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="grid grid-cols-2 gap-3">
             <FormField
               control={control}
               name="date_of_birth"
@@ -223,7 +223,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
 
           {/* Adres Bilgileri */}
           <div className="pt-1 border-t border-gray-100 flex-1 flex flex-col">
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={control}
                 name="city_id"

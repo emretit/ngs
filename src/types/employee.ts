@@ -17,14 +17,15 @@ export interface Employee {
   
   // Extended personal information
   date_of_birth?: string | null;
-  gender?: 'male' | 'female' | 'other' | null;
-  marital_status?: 'single' | 'married' | 'divorced' | 'widowed' | null;
+  gender?: 'erkek' | 'kadın' | 'diğer' | null;
+  marital_status?: 'bekar' | 'evli' | 'boşanmış' | 'dul' | null;
   address?: string | null;
   country?: string | null;
   city?: string | null;
   district?: string | null;
   postal_code?: string | null;
   id_ssn?: string | null;
+  neighborhood?: string | null;
   
   // New address fields
   city_id?: number | null;
@@ -46,6 +47,9 @@ export interface Employee {
   salary_start_date?: string | null;
   salary_notes?: string | null;
   
+  // Company info
+  company_id?: string | null;
+  
   created_at?: string;
   updated_at?: string;
 }
@@ -62,8 +66,8 @@ export interface EmployeeFormData {
   phone: string;
   avatar_url: string;
   date_of_birth: string;
-  gender: 'male' | 'female' | 'other' | null;
-  marital_status: 'single' | 'married' | 'divorced' | 'widowed' | null;
+  gender: 'erkek' | 'kadın' | 'diğer' | null;
+  marital_status: 'bekar' | 'evli' | 'boşanmış' | 'dul' | null;
   address: string;
   country: string;
   city: string;

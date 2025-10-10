@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, Trash } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -15,6 +15,7 @@ import type { Employee } from "@/types/employee";
 import { StatusBadge } from "./StatusBadge";
 import { EmployeeDetailPanel } from "./details/EmployeeDetailPanel";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDeleteEmployee } from "@/hooks/useEmployeeMutations";
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -25,9 +26,20 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
   const navigate = useNavigate();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
+  const deleteEmployeeMutation = useDeleteEmployee();
   
   const handleRowClick = (employee: Employee) => {
     navigate(`/employees/${employee.id}`);
+  };
+
+  const handleDelete = async (employeeId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!confirm("Bu çalışanı silmek istediğinizden emin misiniz?")) {
+      return;
+    }
+
+    deleteEmployeeMutation.mutate(employeeId);
   };
 
   if (isLoading) {
@@ -91,6 +103,7 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
                   </TableCell>
                   <TableCell className="py-4 px-6 text-right">
                     <div className="flex justify-end space-x-2">
+                      <Skeleton className="h-8 w-8 rounded-lg" />
                       <Skeleton className="h-8 w-8 rounded-lg" />
                       <Skeleton className="h-8 w-8 rounded-lg" />
                     </div>
@@ -215,6 +228,17 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
                         >
                           <span className="sr-only">Düzenle</span>
                           <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => handleDelete(employee.id, e)}
+                          className="h-8 w-8 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                          title="Sil"
+                          disabled={deleteEmployeeMutation.isPending}
+                        >
+                          <span className="sr-only">Sil</span>
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>

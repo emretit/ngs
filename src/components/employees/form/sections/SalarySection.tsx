@@ -36,7 +36,10 @@ export const SalarySection = ({ control }: SalarySectionProps) => {
                     placeholder="0.00" 
                     className="h-7 text-xs" 
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? undefined : parseFloat(value) || 0);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -82,7 +85,7 @@ export const SalarySection = ({ control }: SalarySectionProps) => {
                 <FormLabel className="text-xs font-medium text-gray-700">Maaş Türü</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  value={field.value || "gross"}
+                  value={field.value || "brüt"}
                 >
                   <FormControl>
                     <SelectTrigger className="h-7 text-xs">
@@ -90,10 +93,10 @@ export const SalarySection = ({ control }: SalarySectionProps) => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="gross">Brüt Maaş</SelectItem>
+                    <SelectItem value="brüt">Brüt Maaş</SelectItem>
                     <SelectItem value="net">Net Maaş</SelectItem>
-                    <SelectItem value="hourly">Saatlik Ücret</SelectItem>
-                    <SelectItem value="daily">Günlük Ücret</SelectItem>
+                    <SelectItem value="saatlik">Saatlik Ücret</SelectItem>
+                    <SelectItem value="günlük">Günlük Ücret</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -109,7 +112,7 @@ export const SalarySection = ({ control }: SalarySectionProps) => {
                 <FormLabel className="text-xs font-medium text-gray-700">Ödeme Sıklığı</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  value={field.value || "monthly"}
+                  value={field.value || "aylık"}
                 >
                   <FormControl>
                     <SelectTrigger className="h-7 text-xs">
@@ -117,10 +120,10 @@ export const SalarySection = ({ control }: SalarySectionProps) => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="monthly">Aylık</SelectItem>
-                    <SelectItem value="weekly">Haftalık</SelectItem>
-                    <SelectItem value="daily">Günlük</SelectItem>
-                    <SelectItem value="hourly">Saatlik</SelectItem>
+                    <SelectItem value="aylık">Aylık</SelectItem>
+                    <SelectItem value="haftalık">Haftalık</SelectItem>
+                    <SelectItem value="günlük">Günlük</SelectItem>
+                    <SelectItem value="saatlik">Saatlik</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

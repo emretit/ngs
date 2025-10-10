@@ -76,8 +76,8 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
           if (error) throw error;
           setDistricts(data || []);
           // Reset district and neighborhood selections
-          setValue("district_id", "");
-          setValue("neighborhood_id", "");
+          setValue("district_id", undefined);
+          setValue("neighborhood_id", undefined);
           setNeighborhoods([]);
         } catch (error) {
           console.error('Error loading districts:', error);
@@ -105,7 +105,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
           if (error) throw error;
           setNeighborhoods(data || []);
           // Reset neighborhood selection
-          setValue("neighborhood_id", "");
+          setValue("neighborhood_id", undefined);
         } catch (error) {
           console.error('Error loading neighborhoods:', error);
         } finally {
@@ -169,9 +169,9 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="male">Erkek</SelectItem>
-                    <SelectItem value="female">Kadın</SelectItem>
-                    <SelectItem value="other">Diğer</SelectItem>
+                    <SelectItem value="erkek">Erkek</SelectItem>
+                    <SelectItem value="kadın">Kadın</SelectItem>
+                    <SelectItem value="diğer">Diğer</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -195,10 +195,10 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="single">Bekar</SelectItem>
-                    <SelectItem value="married">Evli</SelectItem>
-                    <SelectItem value="divorced">Boşanmış</SelectItem>
-                    <SelectItem value="widowed">Dul</SelectItem>
+                    <SelectItem value="bekar">Bekar</SelectItem>
+                    <SelectItem value="evli">Evli</SelectItem>
+                    <SelectItem value="boşanmış">Boşanmış</SelectItem>
+                    <SelectItem value="dul">Dul</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -232,8 +232,9 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                     <FormLabel className="text-xs font-medium text-gray-700">Şehir *</FormLabel>
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value);
-                        setValue("city_id", parseInt(value));
+                        const cityId = parseInt(value);
+                        field.onChange(cityId);
+                        setValue("city_id", cityId);
                       }}
                       value={field.value?.toString() || ""}
                     >
@@ -263,8 +264,9 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                     <FormLabel className="text-xs font-medium text-gray-700">İlçe *</FormLabel>
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value);
-                        setValue("district_id", parseInt(value));
+                        const districtId = parseInt(value);
+                        field.onChange(districtId);
+                        setValue("district_id", districtId);
                       }}
                       value={field.value?.toString() || ""}
                       disabled={!selectedCityId || loadingDistricts}

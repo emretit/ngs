@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toastUtils";
-import { useCompanySettings } from "@/hooks/useCompanySettings";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,8 +30,8 @@ const formSchema = z.object({
   
   // Personal Information
   date_of_birth: z.string().optional(),
-  gender: z.enum(["male", "female", "other"]).optional(),
-  marital_status: z.enum(["single", "married", "divorced", "widowed"]).optional(),
+  gender: z.enum(["erkek", "kadın", "diğer"]).optional(),
+  marital_status: z.enum(["bekar", "evli", "boşanmış", "dul"]).optional(),
   id_ssn: z.string().optional(),
 
   // Address Information
@@ -47,7 +47,6 @@ const formSchema = z.object({
     district_id: z.number().optional(),
     neighborhood_id: z.number().optional(),
     address_line: z.string().optional(),
-    address_type: z.enum(["home", "work", "other"]).optional(),
   
   // Emergency Contact
   emergency_contact_name: z.string().optional(),
@@ -57,8 +56,8 @@ const formSchema = z.object({
   // Salary Information
   salary_amount: z.number().optional(),
   salary_currency: z.enum(["TRY", "USD", "EUR", "GBP"]).optional(),
-  salary_type: z.enum(["gross", "net", "hourly", "daily"]).optional(),
-  payment_frequency: z.enum(["monthly", "weekly", "daily", "hourly"]).optional(),
+  salary_type: z.enum(["brüt", "net", "saatlik", "günlük"]).optional(),
+  payment_frequency: z.enum(["aylık", "haftalık", "günlük", "saatlik"]).optional(),
   salary_start_date: z.string().optional(),
   salary_notes: z.string().optional(),
 });
@@ -68,7 +67,7 @@ type FormValues = z.infer<typeof formSchema>;
 const SimpleEmployeeForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { settings: companySettings } = useCompanySettings();
+  const { userData } = useCurrentUser();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -95,14 +94,13 @@ const SimpleEmployeeForm = () => {
       district_id: undefined,
       neighborhood_id: undefined,
       address_line: "",
-      address_type: "home",
       emergency_contact_name: "",
       emergency_contact_relation: "",
       emergency_contact_phone: "",
       salary_amount: undefined,
       salary_currency: "TRY",
-      salary_type: "gross",
-      payment_frequency: "monthly",
+      salary_type: "brüt",
+      payment_frequency: "aylık",
       salary_start_date: "",
       salary_notes: "",
     },
@@ -111,12 +109,13 @@ const SimpleEmployeeForm = () => {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
-      console.log('Company Settings:', companySettings);
-      console.log('Company ID:', companySettings?.id);
+      if (!userData?.company_id) {
+        throw new Error("Kullanıcı profil bilgileri bulunamadı. Lütfen giriş yapın.");
+      }
       
-      // Use the correct company_id from profiles table
+      // Use the company_id from userData (current_company_id() will handle the rest)
       const employeeData = {
-        company_id: '5a9c24d2-876e-4eb6-aea5-19328bc38a3a',
+        company_id: userData.company_id,
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
@@ -139,14 +138,13 @@ const SimpleEmployeeForm = () => {
       district_id: data.district_id || null,
       neighborhood_id: data.neighborhood_id || null,
       address_line: data.address_line || null,
-      address_type: data.address_type || "home",
         emergency_contact_name: data.emergency_contact_name || null,
         emergency_contact_relation: data.emergency_contact_relation || null,
         emergency_contact_phone: data.emergency_contact_phone || null,
         salary_amount: data.salary_amount || null,
         salary_currency: data.salary_currency || "TRY",
-        salary_type: data.salary_type || "gross",
-        payment_frequency: data.payment_frequency || "monthly",
+        salary_type: data.salary_type || "brüt",
+        payment_frequency: data.payment_frequency || "aylık",
         salary_start_date: data.salary_start_date || null,
         salary_notes: data.salary_notes || null,
       };

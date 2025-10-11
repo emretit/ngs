@@ -2,21 +2,14 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ExchangeRateCard from "@/components/dashboard/ExchangeRateCard";
-import DashboardCard from "@/components/DashboardCard";
 import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
+import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  BarChart3, 
-  DollarSign, 
-  Users, 
   Target, 
-  TrendingUp,
-  TrendingDown,
-  ChevronRight,
-  Activity,
-  FileText,
-  Briefcase
+  Users, 
+  ChevronRight
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -122,29 +115,12 @@ const Dashboard = () => {
       {/* Global Search Bar */}
       <GlobalSearchBar />
 
-      {/* Financial Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <DashboardCard
-          title="Nakit"
-          value={`₺${(financialData?.cashFlow || 0).toLocaleString('tr-TR')}`}
-          icon={<DollarSign className="h-5 w-5" />}
-        />
-        <DashboardCard
-          title="Alacaklar"
-          value={`₺${(financialData?.receivables || 0).toLocaleString('tr-TR')}`}
-          icon={<TrendingUp className="h-5 w-5" />}
-        />
-        <DashboardCard
-          title="Borçlar"
-          value={`₺${(financialData?.payables || 0).toLocaleString('tr-TR')}`}
-          icon={<TrendingDown className="h-5 w-5" />}
-        />
-        <DashboardCard
-          title="Net Durum"
-          value={`₺${(financialData?.netWorth || 0).toLocaleString('tr-TR')}`}
-          icon={<BarChart3 className="h-5 w-5" />}
-        />
-      </div>
+      {/* KPI Metrics Grid */}
+      <MetricsGrid 
+        financialData={financialData}
+        crmStats={crmStats}
+        hrStats={hrStats}
+      />
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

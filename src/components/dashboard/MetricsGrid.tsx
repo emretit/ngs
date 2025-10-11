@@ -32,6 +32,11 @@ interface MetricsGridProps {
 const MetricsGrid = ({ crmStats, hrStats, financialData }: MetricsGridProps) => {
   const navigate = useNavigate();
 
+  // Generate mock trend data for demo (in production, this would come from API)
+  const generateTrendData = () => {
+    return Array.from({ length: 7 }, () => Math.floor(Math.random() * 100) + 50);
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
       {/* Financial KPIs */}
@@ -42,6 +47,7 @@ const MetricsGrid = ({ crmStats, hrStats, financialData }: MetricsGridProps) => 
         trend="up"
         change={12.5}
         changeLabel="son aya göre"
+        trendData={generateTrendData()}
         onClick={() => navigate("/cashflow")}
       />
       
@@ -51,6 +57,7 @@ const MetricsGrid = ({ crmStats, hrStats, financialData }: MetricsGridProps) => 
         icon={TrendingUp}
         trend="neutral"
         description="Bekleyen tahsilatlar"
+        trendData={generateTrendData()}
         onClick={() => navigate("/contacts")}
       />
       
@@ -61,6 +68,7 @@ const MetricsGrid = ({ crmStats, hrStats, financialData }: MetricsGridProps) => 
         trend="down"
         change={-8.3}
         changeLabel="son aya göre"
+        trendData={generateTrendData()}
         onClick={() => navigate("/purchase")}
       />
       
@@ -71,6 +79,7 @@ const MetricsGrid = ({ crmStats, hrStats, financialData }: MetricsGridProps) => 
         trend="up"
         change={15.2}
         changeLabel="son aya göre"
+        trendData={generateTrendData()}
       />
 
       {/* CRM KPIs */}
@@ -81,6 +90,7 @@ const MetricsGrid = ({ crmStats, hrStats, financialData }: MetricsGridProps) => 
         trend="up"
         change={5}
         changeLabel="yeni fırsat"
+        trendData={generateTrendData()}
         onClick={() => navigate("/opportunities")}
       />
       
@@ -90,6 +100,7 @@ const MetricsGrid = ({ crmStats, hrStats, financialData }: MetricsGridProps) => 
         icon={FileText}
         trend="neutral"
         description="Tamamlanmayı bekleyen"
+        trendData={generateTrendData()}
         onClick={() => navigate("/activities")}
       />
       
@@ -100,6 +111,7 @@ const MetricsGrid = ({ crmStats, hrStats, financialData }: MetricsGridProps) => 
         trend="up"
         change={3}
         changeLabel="bu hafta"
+        trendData={generateTrendData()}
         onClick={() => navigate("/proposals")}
       />
 
@@ -110,6 +122,7 @@ const MetricsGrid = ({ crmStats, hrStats, financialData }: MetricsGridProps) => 
         icon={Users}
         trend="up"
         description={`${hrStats?.onLeave || 0} izinli`}
+        trendData={generateTrendData()}
         onClick={() => navigate("/employees")}
       />
     </div>

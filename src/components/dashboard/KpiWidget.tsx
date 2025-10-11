@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import MiniSparkline from "./MiniSparkline";
 
 interface KpiWidgetProps {
   title: string;
@@ -10,6 +11,7 @@ interface KpiWidgetProps {
   icon: LucideIcon;
   description?: string;
   trend?: "up" | "down" | "neutral";
+  trendData?: number[]; // Mini sparkline data
   onClick?: () => void;
 }
 
@@ -21,6 +23,7 @@ const KpiWidget = ({
   icon: Icon,
   description,
   trend = "neutral",
+  trendData,
   onClick,
 }: KpiWidgetProps) => {
   const getTrendColor = () => {
@@ -52,7 +55,7 @@ const KpiWidget = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-1">
+        <div className="space-y-2">
           <div className="text-2xl font-bold">{value}</div>
           {(change !== undefined || description) && (
             <div className="flex items-center gap-2 text-xs">
@@ -65,6 +68,11 @@ const KpiWidget = ({
               <span className="text-muted-foreground">
                 {changeLabel || description}
               </span>
+            </div>
+          )}
+          {trendData && trendData.length > 0 && (
+            <div className="mt-2">
+              <MiniSparkline data={trendData} trend={trend} />
             </div>
           )}
         </div>

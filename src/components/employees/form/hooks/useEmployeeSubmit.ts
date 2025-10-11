@@ -3,6 +3,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { EmployeeFormValues } from "./useEmployeeForm";
 
+// Helper functions to convert Turkish values back to English for database
+const salaryTypeToEnglish = (type: string | null | undefined): string | null => {
+  if (!type) return null;
+  const mapping: Record<string, string> = {
+    "brüt": "gross",
+    "net": "net",
+    "saatlik": "hourly",
+    "günlük": "daily"
+  };
+  return mapping[type] || null;
+};
+
+const paymentFrequencyToEnglish = (freq: string | null | undefined): string | null => {
+  if (!freq) return null;
+  const mapping: Record<string, string> = {
+    "aylık": "monthly",
+    "haftalık": "weekly",
+    "günlük": "daily",
+    "saatlik": "hourly"
+  };
+  return mapping[freq] || null;
+};
+
 export const useEmployeeSubmit = (employeeId?: string) => {
   const [isSaving, setIsSaving] = useState(false);
 
@@ -13,9 +36,16 @@ export const useEmployeeSubmit = (employeeId?: string) => {
     try {
       setIsSaving(true);
 
+      // Convert Turkish values to English for database
+      const dbValues = {
+        ...values,
+        salary_type: salaryTypeToEnglish(values.salary_type),
+        payment_frequency: paymentFrequencyToEnglish(values.payment_frequency),
+      };
+
       const { error } = await supabase
         .from("employees")
-        .update(values)
+        .update(dbValues)
         .eq("id", employeeId);
 
       if (error) throw error;

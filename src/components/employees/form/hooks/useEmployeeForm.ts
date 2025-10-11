@@ -37,13 +37,36 @@ const employeeFormSchema = z.object({
   // Mali Bilgiler
   salary_amount: z.number().optional(),
   salary_currency: z.enum(["TRY", "USD", "EUR", "GBP"]).nullable().optional(),
-  salary_type: z.enum(["gross", "net", "hourly", "daily"]).nullable().optional(),
-  payment_frequency: z.enum(["monthly", "weekly", "daily", "hourly"]).nullable().optional(),
+  salary_type: z.enum(["brüt", "net", "saatlik", "günlük"]).nullable().optional(),
+  payment_frequency: z.enum(["aylık", "haftalık", "günlük", "saatlik"]).nullable().optional(),
   salary_start_date: z.string().optional(),
   salary_notes: z.string().optional(),
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeFormSchema>;
+
+// Helper functions to convert between database and form values
+const salaryTypeToTurkish = (type: string | null | undefined): "brüt" | "net" | "saatlik" | "günlük" | null => {
+  if (!type) return null;
+  const mapping: Record<string, "brüt" | "net" | "saatlik" | "günlük"> = {
+    "gross": "brüt",
+    "net": "net",
+    "hourly": "saatlik",
+    "daily": "günlük"
+  };
+  return mapping[type] || null;
+};
+
+const paymentFrequencyToTurkish = (freq: string | null | undefined): "aylık" | "haftalık" | "günlük" | "saatlik" | null => {
+  if (!freq) return null;
+  const mapping: Record<string, "aylık" | "haftalık" | "günlük" | "saatlik"> = {
+    "monthly": "aylık",
+    "weekly": "haftalık",
+    "daily": "günlük",
+    "hourly": "saatlik"
+  };
+  return mapping[freq] || null;
+};
 
 export const useEmployeeForm = (employee?: Employee) => {
   const form = useForm<EmployeeFormValues>({
@@ -71,8 +94,8 @@ export const useEmployeeForm = (employee?: Employee) => {
       emergency_contact_relation: employee?.emergency_contact_relation || "",
       salary_amount: employee?.salary_amount || undefined,
       salary_currency: employee?.salary_currency || null,
-      salary_type: employee?.salary_type || null,
-      payment_frequency: employee?.payment_frequency || null,
+      salary_type: salaryTypeToTurkish(employee?.salary_type),
+      payment_frequency: paymentFrequencyToTurkish(employee?.payment_frequency),
       salary_start_date: employee?.salary_start_date || "",
       salary_notes: employee?.salary_notes || "",
     },

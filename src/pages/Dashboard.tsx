@@ -1,328 +1,199 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import ExchangeRateCard from "@/components/dashboard/ExchangeRateCard";
 import DashboardCard from "@/components/DashboardCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   BarChart3, 
   DollarSign, 
   Users, 
   Target, 
-  Settings,
-  Bell,
-  RefreshCw,
-  Download,
-  Calendar,
   TrendingUp,
   TrendingDown,
   ChevronRight,
   Activity,
-  Clock,
-  FileText
+  FileText,
+  Briefcase
 } from "lucide-react";
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const navigate = useNavigate();
 
-  const handleRefresh = () => {
-    setLastUpdated(new Date());
-  };
+  // Fetch real financial data
+  const { data: financialData } = useQuery({
+    queryKey: ['dashboard-financial'],
+    queryFn: async () => {
+      // Get bank accounts balance
+      const { data: bankAccounts } = await supabase
+        .from('bank_accounts')
+        .select('current_balance');
+      
+      // Get cash accounts balance
+      const { data: cashAccounts } = await supabase
+        .from('cash_accounts')
+        .select('current_balance');
 
-  const quickStats = [
-    { 
-      title: "Bugün", 
-      value: "₺45,200", 
-      icon: <DollarSign className="h-5 w-5" />,
-      trend: { value: 12, isPositive: true }
-    },
-    { 
-      title: "Bu Hafta", 
-      value: "₺324,800", 
-      icon: <BarChart3 className="h-5 w-5" />,
-      trend: { value: 8, isPositive: true }
-    },
-    { 
-      title: "Bu Ay", 
-      value: "₺2,847,250", 
-      icon: <TrendingUp className="h-5 w-5" />,
-      trend: { value: 15, isPositive: true }
-    },
-    { 
-      title: "Yıllık", 
-      value: "₺28,450,000", 
-      icon: <Target className="h-5 w-5" />,
-      trend: { value: 23, isPositive: true }
+      // Get customers balance (receivables)
+      const { data: customers } = await supabase
+        .from('customers')
+        .select('balance');
+
+      // Get suppliers data for payables (using einvoices)
+      const { data: invoices } = await supabase
+        .from('einvoices')
+        .select('remaining_amount');
+
+      const totalBankBalance = bankAccounts?.reduce((sum, acc) => sum + (Number(acc.current_balance) || 0), 0) || 0;
+      const totalCashBalance = cashAccounts?.reduce((sum, acc) => sum + (Number(acc.current_balance) || 0), 0) || 0;
+      const totalReceivables = customers?.reduce((sum, c) => sum + (Number(c.balance) || 0), 0) || 0;
+      const totalPayables = invoices?.reduce((sum, inv) => sum + (Number(inv.remaining_amount) || 0), 0) || 0;
+
+      return {
+        cashFlow: totalBankBalance + totalCashBalance,
+        receivables: totalReceivables,
+        payables: totalPayables,
+        netWorth: totalBankBalance + totalCashBalance + totalReceivables - totalPayables
+      };
     }
-  ];
+  });
+
+  // Fetch CRM stats
+  const { data: crmStats } = useQuery({
+    queryKey: ['dashboard-crm'],
+    queryFn: async () => {
+      const { data: opportunities } = await supabase
+        .from('opportunities')
+        .select('id')
+        .in('status', ['open', 'in_progress']);
+
+      const { data: activities } = await supabase
+        .from('activities')
+        .select('id')
+        .in('status', ['todo', 'in_progress']);
+
+      const { data: proposals } = await supabase
+        .from('proposals')
+        .select('id')
+        .eq('status', 'draft');
+
+      return {
+        opportunities: opportunities?.length || 0,
+        activities: activities?.length || 0,
+        proposals: proposals?.length || 0
+      };
+    }
+  });
+
+  // Fetch HR stats
+  const { data: hrStats } = useQuery({
+    queryKey: ['dashboard-hr'],
+    queryFn: async () => {
+      const { data: employees } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('status', 'aktif');
+
+      const { data: leaves } = await supabase
+        .from('employee_leaves')
+        .select('id')
+        .eq('status', 'approved')
+        .gte('end_date', new Date().toISOString());
+
+      return {
+        totalEmployees: employees?.length || 0,
+        onLeave: leaves?.length || 0
+      };
+    }
+  });
 
   return (
-    <div className="max-w-[1800px] mx-auto space-y-8 animate-fade-in">
-        {/* Header with Quick Stats */}
-        <div className="space-y-6">
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-primary/5 via-primary/10 to-accent/5 rounded-2xl border border-primary/10 backdrop-blur-sm shadow-lg">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-gradient-to-r from-primary to-accent rounded-full animate-pulse"></div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Kontrol Paneli
-              </h1>
-            </div>
-            <p className="text-muted-foreground text-lg font-medium ml-6">
-              İşletmenizin günlük performansına göz atın
-            </p>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center gap-2 px-4 py-2 bg-background/80 backdrop-blur-sm rounded-xl border border-border/50 shadow-sm">
-              <Clock className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-foreground">
-                {lastUpdated.toLocaleTimeString('tr-TR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </span>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh} 
-              className="gap-2 bg-background/80 backdrop-blur-sm border-primary/20 hover:bg-primary/10 hover:border-primary/30 transition-all duration-300"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Yenile
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2 bg-background/80 backdrop-blur-sm border-accent/20 hover:bg-accent/10 hover:border-accent/30 transition-all duration-300"
-            >
-              <Download className="h-4 w-4" />
-              Rapor
-            </Button>
-          </div>
-        </div>
-
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {quickStats.map((stat, index) => (
-            <DashboardCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              icon={stat.icon}
-              trend={stat.trend}
-            />
-          ))}
+    <div className="max-w-[1800px] mx-auto space-y-6 animate-fade-in">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Panel</h1>
+          <p className="text-sm text-muted-foreground">İşletme genel bakış</p>
         </div>
       </div>
 
-      {/* Main Dashboard Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column - Main Content */}
-        <div className="lg:col-span-8 space-y-8">
-          {/* Financial Overview */}
-          <Card className="bg-gradient-to-br from-card to-card/50 border-0 shadow-lg">
-            <CardHeader className="pb-6">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-bold flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <DollarSign className="h-6 w-6 text-primary" />
-                  </div>
-                  Finansal Durum
-                </CardTitle>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  Detaylar <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-xl">
-                    <div>
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Nakit Akışı</p>
-                      <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">₺150,000</p>
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400">Bu ay</p>
-                    </div>
-                    <TrendingUp className="h-8 w-8 text-emerald-600" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl">
-                    <div>
-                      <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Alacaklar</p>
-                      <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">₺325,000</p>
-                      <p className="text-xs text-blue-600 dark:text-blue-400">Toplam</p>
-                    </div>
-                    <FileText className="h-8 w-8 text-blue-600" />
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl">
-                    <div>
-                      <p className="text-sm font-medium text-orange-700 dark:text-orange-300">Borçlar</p>
-                      <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">₺185,000</p>
-                      <p className="text-xs text-orange-600 dark:text-orange-400">Toplam</p>
-                    </div>
-                    <TrendingDown className="h-8 w-8 text-orange-600" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl">
-                    <div>
-                      <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Net Durum</p>
-                      <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">₺290,000</p>
-                      <p className="text-xs text-purple-600 dark:text-purple-400">Genel Bakiye</p>
-                    </div>
-                    <BarChart3 className="h-8 w-8 text-purple-600" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Financial Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <DashboardCard
+          title="Nakit"
+          value={`₺${(financialData?.cashFlow || 0).toLocaleString('tr-TR')}`}
+          icon={<DollarSign className="h-5 w-5" />}
+        />
+        <DashboardCard
+          title="Alacaklar"
+          value={`₺${(financialData?.receivables || 0).toLocaleString('tr-TR')}`}
+          icon={<TrendingUp className="h-5 w-5" />}
+        />
+        <DashboardCard
+          title="Borçlar"
+          value={`₺${(financialData?.payables || 0).toLocaleString('tr-TR')}`}
+          icon={<TrendingDown className="h-5 w-5" />}
+        />
+        <DashboardCard
+          title="Net Durum"
+          value={`₺${(financialData?.netWorth || 0).toLocaleString('tr-TR')}`}
+          icon={<BarChart3 className="h-5 w-5" />}
+        />
+      </div>
 
-          {/* CRM & Sales */}
-          <Card className="bg-gradient-to-br from-card to-card/50 border-0 shadow-lg">
-            <CardHeader className="pb-6">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-bold flex items-center gap-3">
-                  <div className="p-2 bg-emerald-500/10 rounded-lg">
-                    <Target className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  Satış Performansı
-                </CardTitle>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  CRM'ye Git <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl">
-                  <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
-                    <Activity className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">24</p>
-                  <p className="text-sm text-blue-700 dark:text-blue-300">Aktif Fırsatlar</p>
-                </div>
-                
-                <div className="text-center p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-xl">
-                  <div className="mx-auto w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-4">
-                    <Calendar className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">18</p>
-                  <p className="text-sm text-emerald-700 dark:text-emerald-300">Bekleyen Görevler</p>
-                </div>
-                
-                <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl">
-                  <div className="mx-auto w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-4">
-                    <FileText className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">12</p>
-                  <p className="text-sm text-purple-700 dark:text-purple-300">Hazır Teklifler</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* CRM Stats */}
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => navigate('/crm')}
+        >
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              CRM
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Fırsatlar</span>
+              <span className="font-bold">{crmStats?.opportunities || 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Aktiviteler</span>
+              <span className="font-bold">{crmStats?.activities || 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Teklifler</span>
+              <span className="font-bold">{crmStats?.proposals || 0}</span>
+            </div>
+            <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
+          </CardContent>
+        </Card>
 
-        {/* Right Column - Sidebar */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Exchange Rates */}
-          <ExchangeRateCard />
+        {/* HR Stats */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              İnsan Kaynakları
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Toplam Çalışan</span>
+              <span className="font-bold">{hrStats?.totalEmployees || 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">İzinli</span>
+              <span className="font-bold">{hrStats?.onLeave || 0}</span>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* HR Summary */}
-          <Card className="bg-gradient-to-br from-card to-card/50 border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Users className="h-5 w-5 text-purple-600" />
-                </div>
-                İnsan Kaynakları
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium">Toplam Çalışan</span>
-                </div>
-                <span className="font-bold">127</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <span className="text-sm font-medium">İzinli Personel</span>
-                </div>
-                <span className="font-bold">8</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Operations */}
-          <Card className="bg-gradient-to-br from-card to-card/50 border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <div className="p-2 bg-orange-500/10 rounded-lg">
-                  <Settings className="h-5 w-5 text-orange-600" />
-                </div>
-                Operasyonlar
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium">Servis Talepleri</span>
-                </div>
-                <span className="font-bold">45</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                  <span className="text-sm font-medium">Açık Projeler</span>
-                </div>
-                <span className="font-bold">12</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activities */}
-          <Card className="bg-gradient-to-br from-card to-card/50 border-0 shadow-lg">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Bell className="h-5 w-5 text-primary" />
-                </div>
-                Son Aktiviteler
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Yeni müşteri eklendi</p>
-                  <p className="text-xs text-muted-foreground">ABC Şirketi • 2s önce</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Fatura gönderildi</p>
-                  <p className="text-xs text-muted-foreground">#2024-001 • 4s önce</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 bg-muted/20 rounded-lg">
-                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Görev atandı</p>
-                  <p className="text-xs text-muted-foreground">Proje analizi • 1g önce</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Exchange Rates */}
+        <ExchangeRateCard />
       </div>
       </div>
   );

@@ -6,6 +6,7 @@ import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import QuickActions from "@/components/dashboard/QuickActions";
 import ActiveTasksList from "@/components/dashboard/ActiveTasksList";
+import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -134,12 +135,14 @@ const Dashboard = () => {
           <ActiveTasksList />
         </div>
 
-        {/* Exchange Rates */}
-        <ExchangeRateCard />
+        {/* Recent Activities Timeline */}
+        <RecentActivitiesTimeline />
       </div>
 
       {/* Secondary Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Exchange Rates */}
+        <ExchangeRateCard />
         {/* CRM Stats */}
         <Card 
           className="cursor-pointer hover:shadow-lg transition-shadow"

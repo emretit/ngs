@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { EditableEmployeeDetails } from "@/components/employees/details/form/EditableEmployeeDetails";
+import { EmployeeEditForm } from "@/components/employees/form/EmployeeEditForm";
 import { Employee } from "@/types/employee";
 import { useToast } from "@/components/ui/use-toast";
 const EmployeeForm = () => {
@@ -35,13 +34,9 @@ const EmployeeForm = () => {
       },
     },
   });
-  const handleSuccess = async () => {
-    await refetch();
+  const handleSuccess = () => {
+    refetch();
     navigate(`/employees/${id}`);
-    toast({
-      title: "Başarılı",
-      description: "Çalışan bilgileri başarıyla güncellendi",
-    });
   };
   return (
     <>
@@ -60,7 +55,7 @@ const EmployeeForm = () => {
       {isLoading ? (
         <div className="py-10 text-center">Çalışan bilgileri yükleniyor...</div>
       ) : employee ? (
-        <EditableEmployeeDetails
+        <EmployeeEditForm
           employee={employee}
           onCancel={() => navigate(`/employees/${id}`)}
           onSuccess={handleSuccess}

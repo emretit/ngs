@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ExchangeRateCard from "@/components/dashboard/ExchangeRateCard";
 import DashboardCard from "@/components/DashboardCard";
+import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -117,6 +118,9 @@ const Dashboard = () => {
           <p className="text-sm text-muted-foreground">İşletme genel bakış</p>
         </div>
       </div>
+
+      {/* Global Search Bar */}
+      <GlobalSearchBar />
 
       {/* Financial Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -1,13 +1,12 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { useLogout } from "@/components/navbar/useLogout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import HeaderUserInfo from "@/components/HeaderUserInfo";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,9 +31,7 @@ export const TopBar = () => {
       
       {/* Right side - Actions and User Menu */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon">
-          <Bell className="h-5 w-5" />
-        </Button>
+        <NotificationCenter />
         <Separator orientation="vertical" className="h-8" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -10,8 +10,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import NotificationList from "./NotificationList";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 const NotificationCenter = () => {
+  // Setup realtime notifications
+  useRealtimeNotifications();
   const { data: unreadCount } = useQuery({
     queryKey: ["unread-notifications-count"],
     queryFn: async () => {

@@ -5,6 +5,7 @@ import ExchangeRateCard from "@/components/dashboard/ExchangeRateCard";
 import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import QuickActions from "@/components/dashboard/QuickActions";
+import ActiveTasksList from "@/components/dashboard/ActiveTasksList";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -128,6 +129,17 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Active Tasks */}
+        <div className="lg:col-span-2">
+          <ActiveTasksList />
+        </div>
+
+        {/* Exchange Rates */}
+        <ExchangeRateCard />
+      </div>
+
+      {/* Secondary Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* CRM Stats */}
         <Card 
           className="cursor-pointer hover:shadow-lg transition-shadow"
@@ -175,9 +187,6 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Exchange Rates */}
-        <ExchangeRateCard />
       </div>
       </div>
   );

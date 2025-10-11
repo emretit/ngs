@@ -128,9 +128,6 @@ const Dashboard = () => {
       {/* Global Search Bar */}
       <GlobalSearchBar />
 
-      {/* Quick Actions */}
-      <QuickActions />
-
       {/* KPI Metrics Grid */}
       <MetricsGrid 
         financialData={financialData}

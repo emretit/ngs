@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LucideIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface KpiWidgetProps {
@@ -11,6 +12,10 @@ interface KpiWidgetProps {
   description?: string;
   trend?: "up" | "down" | "neutral";
   onClick?: () => void;
+  quickAction?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 const KpiWidget = ({
@@ -22,6 +27,7 @@ const KpiWidget = ({
   description,
   trend = "neutral",
   onClick,
+  quickAction,
 }: KpiWidgetProps) => {
   const getTrendColor = () => {
     if (trend === "up") return "text-green-600 dark:text-green-400";
@@ -68,6 +74,22 @@ const KpiWidget = ({
             </div>
           )}
         </div>
+
+        {/* Quick Action Button */}
+        {quickAction && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-3 h-8 gap-1.5 hover:bg-primary hover:text-primary-foreground transition-all"
+            onClick={(e) => {
+              e.stopPropagation();
+              quickAction.onClick();
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span className="text-xs">{quickAction.label}</span>
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

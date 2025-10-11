@@ -98,12 +98,12 @@ export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: Documen
       window.open(document.url, '_blank');
     } else if (document.file) {
       const url = URL.createObjectURL(document.file);
-      const a = document.createElement('a');
+      const a = window.document.createElement('a');
       a.href = url;
       a.download = document.name;
-      document.body.appendChild(a);
+      window.document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
   };

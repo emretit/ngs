@@ -75,7 +75,7 @@ const EmployeeDetails = () => {
           employee={currentEmployee} 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          refetch={refetch}
+          refetch={() => { refetch(); }}
         />
       </div>
     </>

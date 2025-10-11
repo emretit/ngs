@@ -37,8 +37,8 @@ export const EmployeeFormWrapper: React.FC<EmployeeFormWrapperProps> = ({
     status: employee.status === 'aktif' ? 'active' : 'inactive', // Convert status
     avatar_url: employee.avatar_url || "",
     date_of_birth: employee.date_of_birth || "",
-    gender: employee.gender || null,
-    marital_status: employee.marital_status || null,
+    gender: (employee.gender === "erkek" ? "male" : employee.gender === "kadın" ? "female" : employee.gender === "diğer" ? "other" : null) as "male" | "female" | "other" | null,
+    marital_status: (employee.marital_status === "bekar" ? "single" : employee.marital_status === "evli" ? "married" : employee.marital_status === "boşanmış" ? "divorced" : employee.marital_status === "dul" ? "widowed" : null) as "single" | "married" | "divorced" | "widowed" | null,
     address: employee.address || "",
     country: employee.country || "Turkey",
     city: employee.city || "",
@@ -74,10 +74,10 @@ export const EmployeeFormWrapper: React.FC<EmployeeFormWrapperProps> = ({
     const employeeData: Partial<Employee> = {
       ...formData,
       status: formData.status === 'active' ? 'aktif' : 'pasif', // Convert back to DB format
-      // Ensure gender is one of the allowed values or null
-      gender: formData.gender as "male" | "female" | "other" | null,
-      // Ensure marital_status is one of the allowed values or null
-      marital_status: formData.marital_status as "single" | "married" | "divorced" | "widowed" | null
+      // Convert gender back to Turkish
+      gender: formData.gender === "male" ? "erkek" : formData.gender === "female" ? "kadın" : formData.gender === "other" ? "diğer" : null,
+      // Convert marital_status back to Turkish
+      marital_status: formData.marital_status === "single" ? "bekar" : formData.marital_status === "married" ? "evli" : formData.marital_status === "divorced" ? "boşanmış" : formData.marital_status === "widowed" ? "dul" : null
     };
     
     await handleFormSubmit(employeeData);

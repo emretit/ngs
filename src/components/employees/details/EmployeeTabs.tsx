@@ -16,7 +16,7 @@ interface EmployeeTabsProps {
   employee: Employee;
   activeTab: string;
   setActiveTab: (value: string) => void;
-  refetch: () => Promise<void>;
+  refetch: () => void;
 }
 
 export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: EmployeeTabsProps) => {

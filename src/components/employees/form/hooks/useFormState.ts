@@ -18,8 +18,8 @@ const mapEmployeeToFormData = (employee: Employee): EmployeeFormData => {
     status: employee.status === 'aktif' ? 'active' : 'inactive', // Convert status
     avatar_url: employee.avatar_url || '',
     date_of_birth: employee.date_of_birth || '',
-    gender: employee.gender || null,
-    marital_status: employee.marital_status || null,
+    gender: (employee.gender === "erkek" ? "male" : employee.gender === "kadın" ? "female" : employee.gender === "diğer" ? "other" : null) as "male" | "female" | "other" | null,
+    marital_status: (employee.marital_status === "bekar" ? "single" : employee.marital_status === "evli" ? "married" : employee.marital_status === "boşanmış" ? "divorced" : employee.marital_status === "dul" ? "widowed" : null) as "single" | "married" | "divorced" | "widowed" | null,
     address: employee.address || '',
     country: employee.country || 'Turkey',
     city: employee.city || '',

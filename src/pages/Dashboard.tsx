@@ -106,12 +106,22 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="max-w-[1800px] mx-auto space-y-6 animate-fade-in">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Panel</h1>
-          <p className="text-sm text-muted-foreground">İşletme genel bakış</p>
+    <div className="space-y-8 animate-fade-in">
+      {/* Modern Header Section */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Ana Panel
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              İşletmenizin anlık görünümü ve hızlı erişim
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+            <span>Canlı Veri</span>
+          </div>
         </div>
       </div>
 
@@ -128,10 +138,10 @@ const Dashboard = () => {
         hrStats={hrStats}
       />
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Active Tasks */}
-        <div className="lg:col-span-2">
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Active Tasks - Takes 2 columns */}
+        <div className="xl:col-span-2">
           <ActiveTasksList />
         </div>
 
@@ -139,59 +149,82 @@ const Dashboard = () => {
         <RecentActivitiesTimeline />
       </div>
 
-      {/* Secondary Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Exchange Rates */}
-        <ExchangeRateCard />
-        {/* CRM Stats */}
+      {/* Secondary Content - Full width Exchange Rates */}
+      <ExchangeRateCard />
+
+      {/* Bottom Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* CRM Stats Card */}
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow"
+          className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20 cursor-pointer"
           onClick={() => navigate('/crm')}
         >
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              CRM
-            </CardTitle>
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                  <Target className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-semibold text-foreground">
+                    CRM Özeti
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">Müşteri ilişkileri yönetimi</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Fırsatlar</span>
-              <span className="font-bold">{crmStats?.opportunities || 0}</span>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <span className="text-sm font-medium text-muted-foreground">Aktif Fırsatlar</span>
+              <span className="text-lg font-bold text-foreground">{crmStats?.opportunities || 0}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Aktiviteler</span>
-              <span className="font-bold">{crmStats?.activities || 0}</span>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <span className="text-sm font-medium text-muted-foreground">Devam Eden Aktiviteler</span>
+              <span className="text-lg font-bold text-foreground">{crmStats?.activities || 0}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Teklifler</span>
-              <span className="font-bold">{crmStats?.proposals || 0}</span>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <span className="text-sm font-medium text-muted-foreground">Bekleyen Teklifler</span>
+              <span className="text-lg font-bold text-foreground">{crmStats?.proposals || 0}</span>
             </div>
-            <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground" />
           </CardContent>
         </Card>
 
-        {/* HR Stats */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              İnsan Kaynakları
-            </CardTitle>
+        {/* HR Stats Card */}
+        <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
+          <CardHeader className="pb-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  İnsan Kaynakları
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">Personel durumu</p>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Toplam Çalışan</span>
-              <span className="font-bold">{hrStats?.totalEmployees || 0}</span>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <span className="text-sm font-medium text-muted-foreground">Toplam Çalışan</span>
+              <span className="text-lg font-bold text-foreground">{hrStats?.totalEmployees || 0}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">İzinli</span>
-              <span className="font-bold">{hrStats?.onLeave || 0}</span>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <span className="text-sm font-medium text-muted-foreground">İzinli Çalışan</span>
+              <span className="text-lg font-bold text-foreground">{hrStats?.onLeave || 0}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <span className="text-sm font-medium text-muted-foreground">Aktif Çalışan</span>
+              <span className="text-lg font-bold text-foreground">
+                {(hrStats?.totalEmployees || 0) - (hrStats?.onLeave || 0)}
+              </span>
             </div>
           </CardContent>
         </Card>
       </div>
-      </div>
+    </div>
   );
 };
 

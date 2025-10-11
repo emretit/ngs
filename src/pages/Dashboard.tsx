@@ -107,20 +107,20 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Modern Header Section */}
+      {/* Modern Header Section - CRM Dashboard tarzı */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              Ana Panel
+              Gösterge Paneli
             </h1>
             <p className="text-muted-foreground mt-1">
-              İşletmenizin anlık görünümü ve hızlı erişim
+              İş süreçlerinizi takip edin ve yönetin
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-            <span>Canlı Veri</span>
+            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <span>Güncel</span>
           </div>
         </div>
       </div>

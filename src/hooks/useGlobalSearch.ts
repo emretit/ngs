@@ -20,16 +20,30 @@ interface SearchData {
 }
 
 export const useGlobalSearch = (query: string) => {
-  // Fetch all searchable data
+  // Fetch all searchable data with company filter
   const { data: searchData, isLoading } = useQuery({
     queryKey: ["global-search-data"],
     queryFn: async () => {
+      // Get current user's company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      const companyId = user?.user_metadata?.company_id;
+
+      if (!companyId) {
+        return {
+          customers: [],
+          employees: [],
+          proposals: [],
+          products: [],
+          activities: [],
+        };
+      }
+
       const [customers, employees, proposals, products, activities] = await Promise.all([
-        supabase.from("customers").select("id, name, email, office_phone, company").limit(100),
-        supabase.from("employees").select("id, full_name, email, phone, position").limit(100),
-        supabase.from("proposals").select("id, proposal_number, title, customer_id").limit(100),
-        supabase.from("products").select("id, name, product_code, description").limit(100),
-        supabase.from("activities").select("id, title, description, type, status").limit(100),
+        supabase.from("customers").select("id, name, email, office_phone, company").eq("company_id", companyId).limit(100),
+        supabase.from("employees").select("id, full_name, email, phone, position").eq("company_id", companyId).limit(100),
+        supabase.from("proposals").select("id, proposal_number, title, customer_id").eq("company_id", companyId).limit(100),
+        supabase.from("products").select("id, name, sku, description").eq("company_id", companyId).limit(100),
+        supabase.from("activities").select("id, title, description, type, status").eq("company_id", companyId).limit(100),
       ]);
 
       return {
@@ -106,7 +120,7 @@ export const useGlobalSearch = (query: string) => {
     // Search products
     if (searchData.products.length > 0) {
       const productFuse = new Fuse(searchData.products, {
-        keys: ["name", "product_code", "description"],
+        keys: ["name", "sku", "description"],
         threshold: 0.3,
       });
       const productResults = productFuse.search(query).slice(0, 5);
@@ -114,7 +128,7 @@ export const useGlobalSearch = (query: string) => {
         ...productResults.map((result) => ({
           id: result.item.id,
           title: result.item.name,
-          subtitle: result.item.product_code,
+          subtitle: result.item.sku,
           category: "Ürün" as const,
           url: `/products?id=${result.item.id}`,
         }))

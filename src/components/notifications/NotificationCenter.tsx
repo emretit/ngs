@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import NotificationList from "./NotificationList";
+import NotificationListWithFilters from "./NotificationListWithFilters";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
@@ -55,8 +55,8 @@ const NotificationCenter = () => {
             <Badge variant="secondary">{unreadCount} okunmamış</Badge>
           )}
         </div>
-        <ScrollArea className="h-[400px]">
-          <NotificationList />
+        <ScrollArea className="h-[500px]">
+          <NotificationListWithFilters />
         </ScrollArea>
       </PopoverContent>
     </Popover>

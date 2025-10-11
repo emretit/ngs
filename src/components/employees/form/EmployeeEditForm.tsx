@@ -1,14 +1,11 @@
 import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { Employee } from "@/types/employee";
 import { useEmployeeForm } from "./hooks/useEmployeeForm";
 import { useEmployeeSubmit } from "./hooks/useEmployeeSubmit";
-import { PersonalInfoSectionEdit } from "./sections/PersonalInfoSectionEdit";
-import { EmploymentSection } from "./sections/EmploymentSection";
-import { AddressSectionEdit } from "./sections/AddressSectionEdit";
-import { EmergencyContactSectionEdit } from "./sections/EmergencyContactSectionEdit";
-import { FinancialSectionEdit } from "./sections/FinancialSectionEdit";
-import { Separator } from "@/components/ui/separator";
+import { BasicInfoSection } from "./sections/BasicInfoSection";
+import { AddressSection } from "./sections/AddressSection";
+import { EmergencyContactSection } from "./sections/EmergencyContactSection";
+import { SalarySection } from "./sections/SalarySection";
 
 interface EmployeeEditFormProps {
   employee: Employee;
@@ -30,37 +27,19 @@ export const EmployeeEditForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <PersonalInfoSectionEdit control={form.control} />
-        
-        <Separator />
-        
-        <EmploymentSection control={form.control} />
-        
-        <Separator />
-        
-        <AddressSectionEdit control={form.control} />
-        
-        <Separator />
-        
-        <EmergencyContactSectionEdit control={form.control} />
-        
-        <Separator />
-        
-        <FinancialSectionEdit control={form.control} />
+      <form id="employee-edit-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* Temel Bilgiler */}
+        <BasicInfoSection control={form.control} />
 
-        <div className="flex justify-end gap-4 pt-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSaving}
-          >
-            İptal
-          </Button>
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
-          </Button>
+        {/* Kişisel Bilgiler ve Adres, Maaş Bilgileri ve Acil Durum İletişim */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <AddressSection control={form.control} />
+          </div>
+          <div className="space-y-4">
+            <SalarySection control={form.control} />
+            <EmergencyContactSection control={form.control} />
+          </div>
         </div>
       </form>
     </Form>

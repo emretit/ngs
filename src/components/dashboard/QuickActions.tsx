@@ -1,71 +1,86 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, FileText, Receipt, Users, TrendingUp, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import {
+  Plus,
+  FileText,
+  Users,
+  Package,
+  Calendar,
+  TrendingUp,
+} from "lucide-react";
 
-export const QuickActions: React.FC = () => {
+const QuickActions = () => {
   const navigate = useNavigate();
 
-  const quickActions = [
+  const actions = [
     {
-      title: "Yeni Fatura",
-      description: "Satış faturası oluştur",
-      icon: <FileText className="h-5 w-5" />,
-      onClick: () => navigate("/sales-invoices"),
-      variant: "default" as const
+      label: "Yeni Teklif",
+      icon: FileText,
+      onClick: () => navigate("/proposals"),
+      color: "text-blue-600 dark:text-blue-400",
+      bgColor: "bg-blue-50 dark:bg-blue-950",
     },
     {
-      title: "Gider Ekle",
-      description: "Yeni gider kaydı",
-      icon: <Receipt className="h-5 w-5" />,
-      onClick: () => navigate("/expense-management"),
-      variant: "outline" as const
+      label: "Müşteri Ekle",
+      icon: Users,
+      onClick: () => navigate("/contacts"),
+      color: "text-green-600 dark:text-green-400",
+      bgColor: "bg-green-50 dark:bg-green-950",
     },
     {
-      title: "Müşteri Ekle",
-      description: "Yeni müşteri kaydı",
-      icon: <Users className="h-5 w-5" />,
-      onClick: () => navigate("/customer-form"),
-      variant: "outline" as const
+      label: "Ürün Ekle",
+      icon: Package,
+      onClick: () => navigate("/products"),
+      color: "text-purple-600 dark:text-purple-400",
+      bgColor: "bg-purple-50 dark:bg-purple-950",
     },
     {
-      title: "Rapor İndir",
-      description: "Mali rapor al",
-      icon: <Download className="h-5 w-5" />,
-      onClick: () => {/* Export functionality */},
-      variant: "outline" as const
-    }
+      label: "Görev Oluştur",
+      icon: Calendar,
+      onClick: () => navigate("/activities"),
+      color: "text-orange-600 dark:text-orange-400",
+      bgColor: "bg-orange-50 dark:bg-orange-950",
+    },
+    {
+      label: "Fırsat Ekle",
+      icon: TrendingUp,
+      onClick: () => navigate("/opportunities"),
+      color: "text-pink-600 dark:text-pink-400",
+      bgColor: "bg-pink-50 dark:bg-pink-950",
+    },
   ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
+        <CardTitle className="text-base flex items-center gap-2">
+          <Plus className="h-5 w-5" />
           Hızlı İşlemler
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-3">
-          {quickActions.map((action, index) => (
-            <Button
-              key={index}
-              variant={action.variant}
-              className="h-auto p-4 flex flex-col items-start gap-2 text-left"
-              onClick={action.onClick}
-            >
-              <div className="flex items-center gap-2 w-full">
-                {action.icon}
-                <span className="font-medium text-sm">{action.title}</span>
-              </div>
-              <span className="text-xs text-muted-foreground font-normal">
-                {action.description}
-              </span>
-            </Button>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {actions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Button
+                key={action.label}
+                variant="outline"
+                className="h-auto flex-col gap-2 py-4 hover:shadow-md transition-all"
+                onClick={action.onClick}
+              >
+                <div className={`p-2 rounded-lg ${action.bgColor}`}>
+                  <Icon className={`h-5 w-5 ${action.color}`} />
+                </div>
+                <span className="text-xs font-medium">{action.label}</span>
+              </Button>
+            );
+          })}
         </div>
       </CardContent>
     </Card>
   );
 };
+
+export default QuickActions;

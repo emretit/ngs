@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ExchangeRateCard from "@/components/dashboard/ExchangeRateCard";
 import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
+import QuickActions from "@/components/dashboard/QuickActions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -114,6 +115,9 @@ const Dashboard = () => {
 
       {/* Global Search Bar */}
       <GlobalSearchBar />
+
+      {/* Quick Actions */}
+      <QuickActions />
 
       {/* KPI Metrics Grid */}
       <MetricsGrid 

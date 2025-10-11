@@ -40,8 +40,8 @@ export const useGlobalSearch = (query: string) => {
 
       const [customers, employees, proposals, products, activities] = await Promise.all([
         supabase.from("customers").select("id, name, email, office_phone, company").eq("company_id", companyId).limit(100),
-        supabase.from("employees").select("id, full_name, email, phone, position").eq("company_id", companyId).limit(100),
-        supabase.from("proposals").select("id, proposal_number, title, customer_id").eq("company_id", companyId).limit(100),
+        supabase.from("employees").select("id, first_name, last_name, email, phone, position").eq("company_id", companyId).limit(100),
+        supabase.from("proposals").select("id, title, customer_id").eq("company_id", companyId).limit(100),
         supabase.from("products").select("id, name, sku, description").eq("company_id", companyId).limit(100),
         supabase.from("activities").select("id, title, description, type, status").eq("company_id", companyId).limit(100),
       ]);
@@ -84,14 +84,14 @@ export const useGlobalSearch = (query: string) => {
     // Search employees
     if (searchData.employees.length > 0) {
       const employeeFuse = new Fuse(searchData.employees, {
-        keys: ["full_name", "email", "phone", "position"],
+        keys: ["first_name", "last_name", "email", "phone", "position"],
         threshold: 0.3,
       });
       const employeeResults = employeeFuse.search(query).slice(0, 5);
       allResults.push(
         ...employeeResults.map((result) => ({
           id: result.item.id,
-          title: result.item.full_name,
+          title: `${result.item.first_name} ${result.item.last_name}`,
           subtitle: result.item.position || result.item.email,
           category: "Çalışan" as const,
           url: `/employees?id=${result.item.id}`,
@@ -102,15 +102,15 @@ export const useGlobalSearch = (query: string) => {
     // Search proposals
     if (searchData.proposals.length > 0) {
       const proposalFuse = new Fuse(searchData.proposals, {
-        keys: ["proposal_number", "title"],
+        keys: ["title"],
         threshold: 0.3,
       });
       const proposalResults = proposalFuse.search(query).slice(0, 5);
       allResults.push(
         ...proposalResults.map((result) => ({
           id: result.item.id,
-          title: result.item.proposal_number || result.item.title,
-          subtitle: result.item.title,
+          title: result.item.title,
+          subtitle: "Teklif",
           category: "Teklif" as const,
           url: `/proposals?id=${result.item.id}`,
         }))

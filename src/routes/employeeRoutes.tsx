@@ -10,5 +10,5 @@ export const employeeRoutes: RouteConfig[] = [
   { path: "/employees", component: Employees, protected: true },
   { path: "/add-employee", component: AddEmployee, protected: true },
   { path: "/employees/:id", component: EmployeeDetails, protected: true },
-  { path: "/employee-form/:id", component: EmployeeForm, protected: true },
+  { path: "/employees/:id/edit", component: EmployeeForm, protected: true },
 ];

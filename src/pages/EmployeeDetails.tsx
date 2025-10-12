@@ -10,7 +10,7 @@ const EmployeeDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [employee, setEmployee] = useState<Employee | null>(null);
-  const [activeTab, setActiveTab] = useState("details");
+  const [activeTab, setActiveTab] = useState("salary"); // Varsayılan olarak maaş tab'ı açık
   const { data: fetchedEmployee, isLoading, refetch } = useQuery({
     queryKey: ['employee', id],
     queryFn: async () => {

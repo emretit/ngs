@@ -152,8 +152,8 @@ const GlobalSearchBar = () => {
                           onMouseEnter={() => setSelectedIndex(globalIndex)}
                           role="option"
                           aria-selected={isSelected}
-                          className={`w-full text-left px-3 py-2.5 hover:bg-accent transition-colors focus:outline-none focus:bg-accent ${
-                            isSelected ? "bg-accent" : ""
+                          className={`w-full text-left px-3 py-2.5 hover:bg-accent/50 transition-colors focus:outline-none focus:bg-accent/50 ${
+                            isSelected ? "bg-accent/50" : ""
                           }`}
                         >
                           <div className="font-medium text-sm line-clamp-1">{result.title}</div>

@@ -20,12 +20,6 @@ import VendorInvoiceDetail from "@/pages/purchasing/invoices/[id]";
 import PurchasingSettings from "@/pages/purchasing/settings/index";
 
 export const purchaseRoutes: RouteConfig[] = [
-  // Eski route - yönlendirme sayfası
-  {
-    path: "/purchase",
-    component: PurchaseManagement,
-    protected: true,
-  },
   {
     path: "/purchase-management",
     component: PurchaseManagement,

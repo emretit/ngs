@@ -1,12 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import ExchangeRateCard from "@/components/dashboard/ExchangeRateCard";
 import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import QuickActions from "@/components/dashboard/QuickActions";
-import ActiveTasksList from "@/components/dashboard/ActiveTasksList";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -17,6 +16,12 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+
+  // Refresh function for data refetch
+  const refreshData = () => {
+    // Re-trigger all queries
+    window.location.reload();
+  };
 
   // Fetch real financial data
   const { data: financialData } = useQuery({
@@ -107,119 +112,99 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Modern Header Section - CRM Dashboard tarzı */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              Gösterge Paneli
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              İş süreçlerinizi takip edin ve yönetin
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="w-2 h-2 bg-primary rounded-full"></div>
-            <span>Güncel</span>
-          </div>
-        </div>
-      </div>
+      {/* Modern Header Section - Diğer sayfalardaki gibi tutarlı yapı */}
+      <DashboardHeader
+        financialData={financialData}
+        crmStats={crmStats}
+        hrStats={hrStats}
+        onRefresh={refreshData}
+      />
 
       {/* Global Search Bar */}
       <GlobalSearchBar />
 
       {/* KPI Metrics Grid */}
-      <MetricsGrid 
+      <MetricsGrid
         financialData={financialData}
         crmStats={crmStats}
-        hrStats={hrStats}
       />
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Active Tasks - Takes 2 columns */}
-        <div className="xl:col-span-2">
-          <ActiveTasksList />
+      {/* Main Two-Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - 2/3 width */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Recent Activities Timeline */}
+          <RecentActivitiesTimeline />
         </div>
 
-        {/* Recent Activities Timeline */}
-        <RecentActivitiesTimeline />
-      </div>
-
-      {/* Secondary Content - Full width Exchange Rates */}
-      <ExchangeRateCard />
-
-      {/* Bottom Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* CRM Stats Card */}
-        <Card 
-          className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20 cursor-pointer"
-          onClick={() => navigate('/crm')}
-        >
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
+        {/* Right Column - 1/3 width */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <QuickActions />
+          {/* CRM Quick Stats */}
+          <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
+            <CardHeader className="pb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                  <Target className="w-5 h-5 text-muted-foreground" />
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <Target className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg font-semibold text-foreground">
+                  <CardTitle className="text-base font-semibold text-foreground">
                     CRM Özeti
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">Müşteri ilişkileri yönetimi</p>
+                  <p className="text-xs text-muted-foreground">Güncel durum</p>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <span className="text-sm font-medium text-muted-foreground">Aktif Fırsatlar</span>
-              <span className="text-lg font-bold text-foreground">{crmStats?.opportunities || 0}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <span className="text-sm font-medium text-muted-foreground">Devam Eden Aktiviteler</span>
-              <span className="text-lg font-bold text-foreground">{crmStats?.activities || 0}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <span className="text-sm font-medium text-muted-foreground">Bekleyen Teklifler</span>
-              <span className="text-lg font-bold text-foreground">{crmStats?.proposals || 0}</span>
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <span className="text-xs font-medium text-muted-foreground">Aktif Fırsatlar</span>
+                <span className="text-sm font-bold text-foreground">{crmStats?.opportunities || 0}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <span className="text-xs font-medium text-muted-foreground">Bekleyen Teklifler</span>
+                <span className="text-sm font-bold text-foreground">{crmStats?.proposals || 0}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <span className="text-xs font-medium text-muted-foreground">Aktiviteler</span>
+                <span className="text-sm font-bold text-foreground">{crmStats?.activities || 0}</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* HR Stats Card */}
-        <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
-          <CardHeader className="pb-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-muted-foreground" />
+          {/* HR Quick Stats */}
+          <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-semibold text-foreground">
+                    İK Özeti
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">Personel durumu</p>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg font-semibold text-foreground">
-                  İnsan Kaynakları
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">Personel durumu</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <span className="text-xs font-medium text-muted-foreground">Toplam Çalışan</span>
+                <span className="text-sm font-bold text-foreground">{hrStats?.totalEmployees || 0}</span>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <span className="text-sm font-medium text-muted-foreground">Toplam Çalışan</span>
-              <span className="text-lg font-bold text-foreground">{hrStats?.totalEmployees || 0}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <span className="text-sm font-medium text-muted-foreground">İzinli Çalışan</span>
-              <span className="text-lg font-bold text-foreground">{hrStats?.onLeave || 0}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <span className="text-sm font-medium text-muted-foreground">Aktif Çalışan</span>
-              <span className="text-lg font-bold text-foreground">
-                {(hrStats?.totalEmployees || 0) - (hrStats?.onLeave || 0)}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <span className="text-xs font-medium text-muted-foreground">İzinli</span>
+                <span className="text-sm font-bold text-foreground">{hrStats?.onLeave || 0}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <span className="text-xs font-medium text-muted-foreground">Aktif</span>
+                <span className="text-sm font-bold text-foreground">
+                  {(hrStats?.totalEmployees || 0) - (hrStats?.onLeave || 0)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -24,11 +24,34 @@ export const useGlobalSearch = (query: string) => {
   const { data: searchData, isLoading } = useQuery({
     queryKey: ["global-search-data"],
     queryFn: async () => {
-      // Get current user's company_id
+      // Get current user's company_id from profile
       const { data: { user } } = await supabase.auth.getUser();
-      const companyId = user?.user_metadata?.company_id;
+
+      if (!user) {
+        return {
+          customers: [],
+          employees: [],
+          proposals: [],
+          products: [],
+          activities: [],
+        };
+      }
+
+      // First try to get company_id from user_metadata, then from profiles table
+      let companyId = user.user_metadata?.company_id;
 
       if (!companyId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('id', user.id)
+          .single();
+
+        companyId = profile?.company_id;
+      }
+
+      if (!companyId) {
+        console.warn('No company_id found for user');
         return {
           customers: [],
           employees: [],
@@ -76,7 +99,7 @@ export const useGlobalSearch = (query: string) => {
           title: result.item.name,
           subtitle: result.item.company || result.item.email,
           category: "Müşteri" as const,
-          url: `/contacts?id=${result.item.id}`,
+          url: `/contacts/${result.item.id}`,
         }))
       );
     }
@@ -94,7 +117,7 @@ export const useGlobalSearch = (query: string) => {
           title: `${result.item.first_name} ${result.item.last_name}`,
           subtitle: result.item.position || result.item.email,
           category: "Çalışan" as const,
-          url: `/employees?id=${result.item.id}`,
+          url: `/employees/${result.item.id}`,
         }))
       );
     }
@@ -112,7 +135,7 @@ export const useGlobalSearch = (query: string) => {
           title: result.item.title,
           subtitle: "Teklif",
           category: "Teklif" as const,
-          url: `/proposals?id=${result.item.id}`,
+          url: `/proposals/${result.item.id}`,
         }))
       );
     }
@@ -130,7 +153,7 @@ export const useGlobalSearch = (query: string) => {
           title: result.item.name,
           subtitle: result.item.sku,
           category: "Ürün" as const,
-          url: `/products?id=${result.item.id}`,
+          url: `/products/${result.item.id}`,
         }))
       );
     }

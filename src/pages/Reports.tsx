@@ -27,7 +27,26 @@ export default function Reports({ isCollapsed, setIsCollapsed }: ReportsProps) {
   const isExpanded = (sectionId: string) => expandedSections.includes(sectionId);
   try {
     return (
-    <div id="reports-root" className="space-y-6">
+    <>
+      {/* Modern Header Section */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Raporlar
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              İş süreçlerinizi takip edin ve yönetin
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <span>Güncel</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="reports-root" className="space-y-6">
           {/* Global Filters */}
           <ReportsFilters searchParams={searchParams} setSearchParams={setSearchParams} />
           {/* AI Report Chat */}
@@ -72,7 +91,8 @@ export default function Reports({ isCollapsed, setIsCollapsed }: ReportsProps) {
               searchParams={searchParams}
             />
           </div>
-        </div>
+      </div>
+    </>
   );
   } catch (error) {
     console.error('Reports page error:', error);

@@ -1,27 +1,15 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
-import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Target, 
-  Users, 
-  ChevronRight
+  Users
 } from "lucide-react";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-
-  // Refresh function for data refetch
-  const refreshData = () => {
-    // Re-trigger all queries
-    window.location.reload();
-  };
 
   // Fetch real financial data
   const { data: financialData } = useQuery({
@@ -111,23 +99,32 @@ const Dashboard = () => {
   });
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Modern Header Section - Diğer sayfalardaki gibi tutarlı yapı */}
-      <DashboardHeader
-        financialData={financialData}
-        crmStats={crmStats}
-        hrStats={hrStats}
-        onRefresh={refreshData}
-      />
-
-      {/* Global Search Bar */}
-      <GlobalSearchBar />
+    <>
+      {/* Modern Header Section */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Gösterge Paneli
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              İş süreçlerinizi takip edin ve yönetin
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <span>Güncel</span>
+          </div>
+        </div>
+      </div>
 
       {/* KPI Metrics Grid */}
-      <MetricsGrid
-        financialData={financialData}
-        crmStats={crmStats}
-      />
+      <div className="mb-8">
+        <MetricsGrid
+          financialData={financialData}
+          crmStats={crmStats}
+        />
+      </div>
 
       {/* Main Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -139,8 +136,6 @@ const Dashboard = () => {
 
         {/* Right Column - 1/3 width */}
         <div className="space-y-6">
-          {/* Quick Actions */}
-          <QuickActions />
           {/* CRM Quick Stats */}
           <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
             <CardHeader className="pb-4">
@@ -206,7 +201,7 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

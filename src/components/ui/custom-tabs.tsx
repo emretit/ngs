@@ -12,7 +12,7 @@ const CustomTabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-12 items-center justify-center rounded-lg bg-white/80 p-1 shadow-sm backdrop-blur-sm border border-gray-100",
+      "inline-flex h-auto sm:h-12 items-center justify-start sm:justify-center rounded-lg bg-white/80 p-1 shadow-sm backdrop-blur-sm border border-gray-100 overflow-x-auto scrollbar-hide gap-1",
       className
     )}
     {...props}
@@ -27,7 +27,7 @@ const CustomTabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm h-9 rounded-md",
+      "inline-flex items-center justify-center whitespace-nowrap px-2 sm:px-3 py-2 sm:py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm min-h-[36px] sm:h-9 rounded-md flex-shrink-0",
       "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
       className
     )}

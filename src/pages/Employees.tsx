@@ -5,7 +5,8 @@ import { EmployeeList } from "@/components/employees/EmployeeList";
 import EmployeesHeader from "@/components/employees/EmployeesHeader";
 import EmployeesFilterBar from "@/components/employees/EmployeesFilterBar";
 import { toast } from "sonner";
-import type { ViewMode } from "@/types/employee";
+import type { ViewMode, Employee } from "@/types/employee";
+import EmployeesBulkActions from "@/components/employees/EmployeesBulkActions";
 
 const Employees = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -13,6 +14,7 @@ const Employees = () => {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedPosition, setSelectedPosition] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
 
   // Fetch employees with stats
   const { data: employees = [], isLoading, error } = useQuery({
@@ -75,6 +77,19 @@ const Employees = () => {
     partTime: employees.filter(emp => emp.employment_type === 'yari_zamanli').length,
   };
 
+  const handleEmployeeSelect = (employee: Employee) => {
+    setSelectedEmployees(prev => {
+      const isSelected = prev.some(e => e.id === employee.id);
+      return isSelected 
+        ? prev.filter(e => e.id !== employee.id) 
+        : [...prev, employee];
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedEmployees([]);
+  };
+
   if (error) {
     toast.error("Çalışanlar yüklenirken bir hata oluştu");
     console.error("Error loading employees:", error);
@@ -103,6 +118,14 @@ const Employees = () => {
         positions={positions}
       />
 
+      {/* Bulk Actions */}
+      {selectedEmployees.length > 0 && (
+        <EmployeesBulkActions 
+          selectedEmployees={selectedEmployees}
+          onClearSelection={handleClearSelection}
+        />
+      )}
+
 
       {/* Content */}
       {isLoading ? (
@@ -124,6 +147,9 @@ const Employees = () => {
                 employees={employees}
                 isLoading={isLoading}
                 viewMode={viewMode}
+                onEmployeeSelectToggle={handleEmployeeSelect}
+                selectedEmployees={selectedEmployees}
+                setSelectedEmployees={setSelectedEmployees}
               />
             </div>
           </div>

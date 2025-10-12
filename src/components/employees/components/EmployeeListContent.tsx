@@ -6,19 +6,28 @@ interface EmployeeListContentProps {
   employees: Employee[];
   isLoading: boolean;
   viewMode: ViewMode;
+  onEmployeeSelectToggle?: (employee: Employee) => void;
+  selectedEmployees?: Employee[];
+  setSelectedEmployees?: (employees: Employee[]) => void;
 }
 
 export const EmployeeListContent = ({
   employees,
   isLoading,
-  viewMode
+  viewMode,
+  onEmployeeSelectToggle,
+  selectedEmployees,
+  setSelectedEmployees
 }: EmployeeListContentProps) => {
   return (
     <div className="space-y-6">
       {viewMode === 'table' ? (
         <EmployeeTable 
           employees={employees} 
-          isLoading={isLoading} 
+          isLoading={isLoading}
+          onEmployeeSelectToggle={onEmployeeSelectToggle}
+          selectedEmployees={selectedEmployees}
+          setSelectedEmployees={setSelectedEmployees}
         />
       ) : (
         <EmployeeGrid 

@@ -15,13 +15,23 @@ import { StatusBadge } from "./StatusBadge";
 import { EmployeeDetailPanel } from "./details/EmployeeDetailPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteEmployee } from "@/hooks/useEmployeeMutations";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface EmployeeTableProps {
   employees: Employee[];
   isLoading: boolean;
+  onEmployeeSelectToggle?: (employee: Employee) => void;
+  selectedEmployees?: Employee[];
+  setSelectedEmployees?: (employees: Employee[]) => void;
 }
 
-const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
+const EmployeeTable = ({ 
+  employees, 
+  isLoading,
+  onEmployeeSelectToggle,
+  selectedEmployees = [],
+  setSelectedEmployees
+}: EmployeeTableProps) => {
   const navigate = useNavigate();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
@@ -47,6 +57,22 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
         <Table className="border-collapse">
             <TableHeader>
               <TableRow className="bg-gray-50/80 border-b border-gray-200/60">
+                {onEmployeeSelectToggle && (
+                  <TableHead className="h-12 w-[40px] px-6 text-center align-middle font-bold text-foreground/80 text-sm tracking-wide">
+                    <Checkbox
+                      checked={selectedEmployees.length === employees.length && employees.length > 0}
+                      onCheckedChange={(checked) => {
+                        if (setSelectedEmployees) {
+                          if (checked) {
+                            setSelectedEmployees(employees);
+                          } else {
+                            setSelectedEmployees([]);
+                          }
+                        }
+                      }}
+                    />
+                  </TableHead>
+                )}
                 <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
                   👤 Çalışan
                 </TableHead>
@@ -73,6 +99,11 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
             <TableBody>
               {Array.from({ length: 5 }).map((_, index) => (
                 <TableRow key={index} className="h-16 border-b border-gray-100/60">
+                  {onEmployeeSelectToggle && (
+                    <TableCell className="py-4 px-6 text-center">
+                      <Skeleton className="h-4 w-4 rounded" />
+                    </TableCell>
+                  )}
                   <TableCell className="py-4 px-6">
                     <div className="flex items-center space-x-4">
                       <Skeleton className="h-12 w-12 rounded-full" />
@@ -121,6 +152,22 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
         <Table className="border-collapse">
             <TableHeader>
               <TableRow className="bg-gray-50/80 border-b border-gray-200/60">
+                {onEmployeeSelectToggle && (
+                  <TableHead className="h-12 w-[40px] px-6 text-center align-middle font-bold text-foreground/80 text-sm tracking-wide">
+                    <Checkbox
+                      checked={selectedEmployees.length === employees.length && employees.length > 0}
+                      onCheckedChange={(checked) => {
+                        if (setSelectedEmployees) {
+                          if (checked) {
+                            setSelectedEmployees(employees);
+                          } else {
+                            setSelectedEmployees([]);
+                          }
+                        }
+                      }}
+                    />
+                  </TableHead>
+                )}
                 <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
                   👤 Çalışan
                 </TableHead>
@@ -147,7 +194,7 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
             <TableBody>
               {employees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-gray-500">
+                  <TableCell colSpan={onEmployeeSelectToggle ? 8 : 7} className="h-32 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <div className="text-4xl">👥</div>
                       <p className="text-lg font-medium">Çalışan bulunamadı</p>
@@ -156,13 +203,23 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
                   </TableCell>
                 </TableRow>
               ) : (
-                employees.map((employee) => (
-                  <TableRow 
-                    key={employee.id}
-                    className="h-16 cursor-pointer hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/5 transition-all duration-200 border-b border-gray-100/60"
-                    onClick={() => handleRowClick(employee)}
-                  >
-                    <TableCell className="py-4 px-6">
+                employees.map((employee) => {
+                  const isSelected = selectedEmployees.some(e => e.id === employee.id);
+                  return (
+                    <TableRow 
+                      key={employee.id}
+                      className="h-16 cursor-pointer hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/5 transition-all duration-200 border-b border-gray-100/60"
+                      onClick={() => handleRowClick(employee)}
+                    >
+                      {onEmployeeSelectToggle && (
+                        <TableCell className="py-4 px-6 text-center" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => onEmployeeSelectToggle(employee)}
+                          />
+                        </TableCell>
+                      )}
+                      <TableCell className="py-4 px-6">
                       <p className="text-sm font-medium text-gray-900">
                         {employee.first_name} {employee.last_name}
                       </p>
@@ -227,7 +284,8 @@ const EmployeeTable = ({ employees, isLoading }: EmployeeTableProps) => {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               )}
             </TableBody>
           </Table>

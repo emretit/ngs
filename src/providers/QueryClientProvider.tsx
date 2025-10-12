@@ -5,11 +5,12 @@ import { QueryClient, QueryClientProvider as ReactQueryClientProvider } from "@t
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 dk
-      gcTime: 10 * 60 * 1000,
+      staleTime: 10 * 60 * 1000, // 10 dk - daha uzun cache
+      gcTime: 15 * 60 * 1000, // 15 dk
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       retry: 1,
+      refetchInterval: false, // Otomatik refetch kapalı
     },
   },
 });

@@ -60,13 +60,13 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
   }) => (
     <CustomTabsTrigger 
       value={value} 
-      className="flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200 relative"
+      className="flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200 relative"
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         {icon}
-        <span className="hidden md:inline">{label}</span>
+        <span className="text-xs sm:text-sm">{label}</span>
         {count !== undefined && count > 0 && (
-          <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+          <Badge variant="secondary" className="ml-0.5 sm:ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
             {count}
           </Badge>
         )}
@@ -92,7 +92,7 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
 
   return (
     <CustomTabs defaultValue="payments" className="space-y-4">
-      <CustomTabsList className="grid grid-cols-2 lg:grid-cols-5 w-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-1 shadow-sm">
+      <CustomTabsList className="w-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-1 shadow-sm flex flex-nowrap justify-start sm:justify-center">
         <TabTrigger 
           value="payments" 
           icon={<CreditCard className="h-4 w-4" />} 

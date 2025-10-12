@@ -1,4 +1,4 @@
-import { Receipt, FileText, CreditCard, FileStack, Clock, TrendingUp, User, DollarSign, Calendar, BarChart2 } from "lucide-react";
+import { Receipt, FileText, CreditCard, FileStack, Clock, TrendingUp, User, DollarSign, Calendar, BarChart2, Wallet } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -88,7 +88,7 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
 
   return (
     <CustomTabs defaultValue="salary" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-      <CustomTabsList className="grid grid-cols-2 lg:grid-cols-4 w-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-1 shadow-sm">
+      <CustomTabsList className="grid grid-cols-2 lg:grid-cols-5 w-full bg-white/80 backdrop-blur-sm rounded-xl border border-gray-100 p-1 shadow-sm">
         <TabTrigger 
           value="salary" 
           icon={<DollarSign className="h-4 w-4" />} 
@@ -106,6 +106,11 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
           icon={<BarChart2 className="h-4 w-4" />} 
           label="Performans" 
           count={tabCounts?.performance}
+        />
+        <TabTrigger 
+          value="expenses" 
+          icon={<Wallet className="h-4 w-4" />} 
+          label="Masraflar" 
         />
         <TabTrigger 
           value="documents" 
@@ -135,6 +140,13 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
         />
       </CustomTabsContent>
 
+      <CustomTabsContent value="expenses">
+        <EmptyState
+          icon={<Wallet className="w-8 h-8 text-gray-400" />}
+          title="Masraflar"
+          description="Çalışanın masraf talepleri ve ödemeleri burada görüntülenecek."
+        />
+      </CustomTabsContent>
 
       <CustomTabsContent value="documents">
         <EmptyState

@@ -84,8 +84,181 @@ export const EmployeeSalaryTab = ({ employee }: EmployeeSalaryTabProps) => {
     );
   }
 
+  // Get the latest salary record
+  const latestSalary = salaryHistory && salaryHistory.length > 0 ? salaryHistory[0] : null;
+
   return (
     <div className="space-y-6">
+      {/* Otomatik Maaş Hesaplama Tablosu */}
+      {latestSalary && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">Otomatik Maaş Hesaplama</h3>
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {formatDate(latestSalary.effective_date)}
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Sol Kolon - Brüt ve Kesintiler */}
+            <div className="space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-sm text-green-700 font-medium mb-2">BRÜT MAAŞ</p>
+                <p className="text-2xl font-bold text-green-900">
+                  {formatCurrency(Number(latestSalary.gross_salary) || 0)}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-gray-700">KESİNTİLER</h4>
+                
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-700">SGK (Çalışan Payı %{latestSalary.sgk_employee_rate || 14})</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    -{formatCurrency(Number(latestSalary.sgk_employee_amount) || 0)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-700">İşsizlik Sigortası (%{latestSalary.unemployment_employee_rate || 1})</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    -{formatCurrency(Number(latestSalary.unemployment_employee_amount) || 0)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-700">Gelir Vergisi</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    -{formatCurrency(Number(latestSalary.income_tax_amount) || 0)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-700">Damga Vergisi (%{latestSalary.stamp_tax_rate || 0.759})</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    -{formatCurrency(Number(latestSalary.stamp_tax_amount) || 0)}
+                  </span>
+                </div>
+
+                <div className="border-t pt-3">
+                  <div className="flex justify-between items-center p-3 bg-red-50 rounded">
+                    <span className="text-sm font-semibold text-gray-900">Toplam Kesinti</span>
+                    <span className="text-base font-bold text-red-700">
+                      -{formatCurrency(Number(latestSalary.total_deductions) || 0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hakediş ve Yardımlar */}
+              {(latestSalary.meal_allowance || latestSalary.transport_allowance) && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-700">YARDIMLAR</h4>
+                  
+                  {latestSalary.meal_allowance && (
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <span className="text-sm text-gray-700">Yemek Yardımı</span>
+                      <span className="text-sm font-semibold text-green-600">
+                        +{formatCurrency(Number(latestSalary.meal_allowance) || 0)}
+                      </span>
+                    </div>
+                  )}
+
+                  {latestSalary.transport_allowance && (
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <span className="text-sm text-gray-700">Ulaşım Yardımı</span>
+                      <span className="text-sm font-semibold text-green-600">
+                        +{formatCurrency(Number(latestSalary.transport_allowance) || 0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Sağ Kolon - İşveren Maliyeti ve Net */}
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-700 font-medium mb-2">NET MAAŞ</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {formatCurrency(Number(latestSalary.net_salary) || 0)}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-gray-700">İŞVEREN MALİYETLERİ</h4>
+                
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-700">SGK (İşveren Payı %{latestSalary.sgk_employer_rate || 20.5})</span>
+                  <span className="text-sm font-semibold text-orange-600">
+                    {formatCurrency(Number(latestSalary.sgk_employer_amount) || 0)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-700">İşsizlik Sigortası (%{latestSalary.unemployment_employer_rate || 3})</span>
+                  <span className="text-sm font-semibold text-orange-600">
+                    {formatCurrency(Number(latestSalary.unemployment_employer_amount) || 0)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-700">İş Kazası Sigortası (%{latestSalary.accident_insurance_rate || 2})</span>
+                  <span className="text-sm font-semibold text-orange-600">
+                    {formatCurrency(Number(latestSalary.accident_insurance_amount) || 0)}
+                  </span>
+                </div>
+
+                <div className="border-t pt-3">
+                  <div className="flex justify-between items-center p-3 bg-orange-50 rounded">
+                    <span className="text-sm font-semibold text-gray-900">Toplam İşveren Maliyeti</span>
+                    <span className="text-base font-bold text-orange-700">
+                      {formatCurrency(Number(latestSalary.total_employer_cost) || 0)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Kümülatif Bilgiler */}
+              {(latestSalary.cumulative_yearly_gross || latestSalary.cumulative_yearly_tax) && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-700">YILLIK KÜMÜLATİF</h4>
+                  
+                  {latestSalary.cumulative_yearly_gross && (
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <span className="text-sm text-gray-700">Yıllık Toplam Brüt</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(Number(latestSalary.cumulative_yearly_gross) || 0)}
+                      </span>
+                    </div>
+                  )}
+
+                  {latestSalary.cumulative_yearly_tax && (
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                      <span className="text-sm text-gray-700">Yıllık Toplam Vergi</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(Number(latestSalary.cumulative_yearly_tax) || 0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Notlar */}
+              {latestSalary.notes && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">Notlar:</p>
+                  <p className="text-sm text-gray-900">{latestSalary.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Mevcut Maaş Bilgileri */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">

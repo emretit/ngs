@@ -12,7 +12,7 @@ interface EmployeeInfoProps {
 }
 
 export const EmployeeInfo = ({ employee, onUpdate }: EmployeeInfoProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true); // Açık olarak başlatıldı
 
   return (
     <Card className="bg-gradient-to-br from-background to-muted/20 border shadow-sm">

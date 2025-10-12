@@ -69,13 +69,11 @@ export const SalaryForm = ({ employeeId, onSave, onClose, existingSalary }: Sala
         bonus_provision: 0
       };
 
-      // Use UPSERT to handle both insert and update
+      // Update employee record with salary information
       const { data, error } = await supabase
-        .from('employee_salaries')
-        .upsert(salaryData, { 
-          onConflict: 'employee_id',
-          ignoreDuplicates: false 
-        });
+        .from('employees')
+        .update(salaryData)
+        .eq('id', employeeId);
 
       if (error) throw error;
 

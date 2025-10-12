@@ -112,20 +112,7 @@ const Employees = () => {
     queryFn: async () => {
       let query = supabase
         .from('employees')
-        .select(`
-          *,
-          employee_salaries (
-            gross_salary,
-            net_salary,
-            total_employer_cost,
-            meal_allowance,
-            transport_allowance,
-            effective_date,
-            manual_employer_sgk_cost,
-            unemployment_employer_amount,
-            accident_insurance_amount
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (selectedStatus !== 'all') {
@@ -146,34 +133,14 @@ const Employees = () => {
         );
       }
 
-      const { data, error } = await query;
+      const { data: employeesData, error: employeesError } = await query;
       
-      if (error) throw error;
+      if (employeesError) throw employeesError;
       
-      // Process the data to flatten salary information
-      const processedData = (data as any)?.map((employee: any) => {
-        // Handle case where employee_salaries might be null or empty
-        let latestSalary = null;
-        if (employee.employee_salaries && employee.employee_salaries.length > 0) {
-          const salariesArray = Array.isArray(employee.employee_salaries) ? employee.employee_salaries : [employee.employee_salaries];
-          // Sort by effective_date to get the latest
-          salariesArray.sort((a, b) => new Date(b.effective_date || 0).getTime() - new Date(a.effective_date || 0).getTime());
-          latestSalary = salariesArray[0];
-        }
-        
-        return {
-          ...employee,
-          gross_salary: latestSalary?.gross_salary || null,
-          net_salary: latestSalary?.net_salary || null,
-          total_employer_cost: latestSalary?.total_employer_cost || null,
-          meal_allowance: latestSalary?.meal_allowance || null,
-          transport_allowance: latestSalary?.transport_allowance || null,
-          effective_date: latestSalary?.effective_date || null,
-          manual_employer_sgk_cost: latestSalary?.manual_employer_sgk_cost || null,
-          unemployment_employer_amount: latestSalary?.unemployment_employer_amount || null,
-          accident_insurance_amount: latestSalary?.accident_insurance_amount || null,
-        };
-      }) || [];
+      console.log('Employees data:', employeesData);
+      
+      // Salary data is now directly in employees table, no need for separate processing
+      const processedData = employeesData || [];
       
       return processedData;
     }

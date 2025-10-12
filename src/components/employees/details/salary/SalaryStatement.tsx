@@ -59,14 +59,12 @@ export const SalaryStatement = ({ employeeId, onEdit, refreshTrigger }: SalarySt
   const fetchCurrentSalary = async () => {
     try {
       const { data, error } = await supabase
-        .from('employee_salaries')
+        .from('employees')
         .select('*')
-        .eq('employee_id', employeeId)
-        .order('effective_date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('id', employeeId)
+        .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       setCurrentSalary(data);
     } catch (error: any) {
       toast({

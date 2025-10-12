@@ -144,14 +144,12 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
   const fetchCurrentSalary = async () => {
     try {
       const { data, error } = await supabase
-        .from('employee_salaries')
+        .from('employees')
         .select('*')
-        .eq('employee_id', employeeId)
-        .order('effective_date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('id', employeeId)
+        .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       setCurrentSalary(data);
     } catch (error: any) {
       toast({
@@ -185,89 +183,34 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
           startDate.setMonth(endDate.getMonth() - 6);
       }
 
-      // Fetch all related transactions
-      const [payrollData, paymentData, bonusData] = await Promise.all([
-        // Payroll records (tahakkuk)
-        supabase
-          .from('payroll_records')
-          .select('*')
-          .eq('employee_id', employeeId)
-          .gte('payroll_date', startDate.toISOString().split('T')[0])
-          .lte('payroll_date', endDate.toISOString().split('T')[0])
-          .order('payroll_date', { ascending: false }),
+      // Fetch employee data (salary info is now in employees table)
+      const { data: employeeData, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('id', employeeId)
+        .single();
 
-        // Payment transactions (ödeme)
-        supabase
-          .from('payment_transactions')
-          .select('*')
-          .eq('employee_id', employeeId)
-          .gte('payment_date', startDate.toISOString().split('T')[0])
-          .lte('payment_date', endDate.toISOString().split('T')[0])
-          .order('payment_date', { ascending: false }),
-
-        // Employee expenses/bonuses
-        supabase
-          .from('employee_expenses')
-          .select('*')
-          .eq('employee_id', employeeId)
-          .gte('expense_date', startDate.toISOString().split('T')[0])
-          .lte('expense_date', endDate.toISOString().split('T')[0])
-          .order('expense_date', { ascending: false })
-      ]);
-
-      if (payrollData.error) throw payrollData.error;
-      if (paymentData.error) throw paymentData.error;
-      if (bonusData.error && bonusData.error.code !== 'PGRST116') console.warn('Employee expenses table not found');
+      if (error) throw error;
 
       const formattedTransactions: FinancialTransaction[] = [];
 
-      // Add payroll records (tahakkuk)
-      payrollData.data?.forEach(record => {
-        formattedTransactions.push({
-          id: `payroll_${record.id}`,
-          date: record.payroll_date,
-          type: 'tahakkuk',
-          description: `${new Date(record.payroll_date).toLocaleDateString('tr-TR')} Maaş Tahakkuku`,
-          amount: record.total_cost || record.net_salary || 0,
-          status: record.status === 'tahakkuk_edildi' ? 'tamamlandi' : 'beklemende',
-          category: 'maas',
-          notes: record.notes,
-          reference_id: record.id
-        });
-      });
-
-      // Add payment transactions (ödeme)
-      paymentData.data?.forEach(payment => {
-        formattedTransactions.push({
-          id: `payment_${payment.id}`,
-          date: payment.payment_date,
-          type: 'odeme',
-          description: payment.description || 'Maaş Ödemesi',
-          amount: -Math.abs(payment.amount), // Negative for outgoing payments
-          status: payment.status === 'tamamlandi' ? 'tamamlandi' : 'beklemende',
-          category: 'odeme',
-          notes: payment.notes,
-          payment_method: payment.payment_method,
-          reference_id: payment.id
-        });
-      });
-
-      // Add employee expenses/bonuses if table exists
-      if (bonusData.data) {
-        bonusData.data.forEach(expense => {
-          const type = expense.expense_type || 'yardim';
+      // Add current salary as tahakkuk if it exists
+      if (employeeData && employeeData.net_salary && employeeData.effective_date) {
+        // Check if the salary is within the selected period
+        const salaryDate = new Date(employeeData.effective_date);
+        if (salaryDate >= startDate && salaryDate <= endDate) {
           formattedTransactions.push({
-            id: `expense_${expense.id}`,
-            date: expense.expense_date,
-            type: expense.amount > 0 ? (type as any) : 'kesinti',
-            description: expense.description || 'Personel Gideri',
-            amount: expense.amount,
-            status: expense.status || 'tamamlandi',
-            category: expense.category || 'diger',
-            notes: expense.notes,
-            reference_id: expense.id
+            id: `salary_${employeeData.id}`,
+            date: employeeData.effective_date,
+            type: 'tahakkuk',
+            description: `${new Date(employeeData.effective_date).toLocaleDateString('tr-TR')} Maaş Tahakkuku`,
+            amount: employeeData.net_salary || 0,
+            status: 'tamamlandi',
+            category: 'maas',
+            notes: employeeData.salary_notes,
+            reference_id: employeeData.id
           });
-        });
+        }
       }
 
       // Sort by date (newest first)

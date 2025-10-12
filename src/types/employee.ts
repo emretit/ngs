@@ -47,6 +47,17 @@ export interface Employee {
   salary_start_date?: string | null;
   salary_notes?: string | null;
   
+  // Detailed salary and cost information
+  gross_salary?: number | null;
+  net_salary?: number | null;
+  total_employer_cost?: number | null;
+  meal_allowance?: number | null;
+  transport_allowance?: number | null;
+  effective_date?: string | null;
+  manual_employer_sgk_cost?: number | null;
+  unemployment_employer_amount?: number | null;
+  accident_insurance_amount?: number | null;
+  
   // Company info
   company_id?: string | null;
   
@@ -77,6 +88,17 @@ export interface EmployeeFormData {
   emergency_contact_name: string;
   emergency_contact_phone: string;
   emergency_contact_relation: string;
+  
+  // Detailed salary and cost information (optional for form)
+  gross_salary?: number | null;
+  net_salary?: number | null;
+  total_employer_cost?: number | null;
+  meal_allowance?: number | null;
+  transport_allowance?: number | null;
+  effective_date?: string | null;
+  manual_employer_sgk_cost?: number | null;
+  unemployment_employer_amount?: number | null;
+  accident_insurance_amount?: number | null;
 }
 
 // Add these types to support components that use them

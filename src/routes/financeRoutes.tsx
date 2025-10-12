@@ -2,7 +2,6 @@
 import Cashflow from "@/pages/Cashflow";
 import CashflowOpexEntry from "@/pages/CashflowOpexEntry";
 import CashflowExpenses from "@/pages/CashflowExpenses";
-import CashflowEmployeeCosts from "@/pages/CashflowEmployeeCosts";
 import CashflowLoansAndChecks from "@/pages/CashflowLoansAndChecks";
 import CashflowInvoices from "@/pages/CashflowInvoices";
 import CashflowBankAccounts from "@/pages/CashflowBankAccounts";
@@ -26,7 +25,6 @@ export const cashflowRoutes: RouteConfig[] = [
   { path: "/cashflow", component: Cashflow, protected: true },
   { path: "/cashflow/opex-entry", component: CashflowOpexEntry, protected: true },
   { path: "/cashflow/expenses", component: CashflowExpenses, protected: true },
-  { path: "/cashflow/employee-costs", component: CashflowEmployeeCosts, protected: true },
   { path: "/cashflow/loans-and-checks", component: CashflowLoansAndChecks, protected: true },
   { path: "/cashflow/invoices", component: CashflowInvoices, protected: true },
   { path: "/cashflow/bank-accounts", component: CashflowBankAccounts, protected: true },

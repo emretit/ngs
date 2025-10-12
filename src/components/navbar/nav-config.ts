@@ -185,11 +185,6 @@ export const navItems = [
         label: "Giderler",
       },
       {
-        path: "/cashflow/employee-costs",
-        icon: Users2,
-        label: "Çalışan Maliyetleri",
-      },
-      {
         path: "/cashflow/loans-and-checks",
         icon: Calculator,
         label: "Krediler ve Çekler",

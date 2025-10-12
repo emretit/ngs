@@ -37,6 +37,16 @@ const EmployeeTable = ({
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const deleteEmployeeMutation = useDeleteEmployee();
   
+  const formatCurrency = (amount: number | null | undefined) => {
+    if (!amount) return "-";
+    return new Intl.NumberFormat('tr-TR', { 
+      style: 'currency', 
+      currency: 'TRY',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+  
   const handleRowClick = (employee: Employee) => {
     navigate(`/employees/${employee.id}`);
   };
@@ -58,7 +68,7 @@ const EmployeeTable = ({
             <TableHeader>
               <TableRow className="bg-gray-50/80 border-b border-gray-200/60">
                 {onEmployeeSelectToggle && (
-                  <TableHead className="h-12 w-[40px] px-6 text-center align-middle font-bold text-foreground/80 text-sm tracking-wide">
+                  <TableHead className="h-12 w-[40px] px-3 text-center align-middle font-bold text-foreground/80 text-sm tracking-wide">
                     <Checkbox
                       checked={selectedEmployees.length === employees.length && employees.length > 0}
                       onCheckedChange={(checked) => {
@@ -73,38 +83,50 @@ const EmployeeTable = ({
                     />
                   </TableHead>
                 )}
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   👤 Çalışan
                 </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   🏢 Departman
                 </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  💼 Pozisyon
-                </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   📞 İletişim
                 </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  📅 İşe Başlama
+                <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  📅 Başlama
                 </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  🟢 Durum
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  💰 Net
                 </TableHead>
-                <TableHead className="h-12 px-6 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  🏥 SGK
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  🍽️ Yemek
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  🚗 Ulaşım
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  🏢 Toplam
+                </TableHead>
+                <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  📊 Durum
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
                   ⚙️ İşlemler
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={index} className="h-16 border-b border-gray-100/60">
+                <TableRow key={index} className="h-12 border-b border-gray-100/60">
                   {onEmployeeSelectToggle && (
-                    <TableCell className="py-4 px-6 text-center">
+                    <TableCell className="py-2 px-3 text-center">
                       <Skeleton className="h-4 w-4 rounded" />
                     </TableCell>
                   )}
-                  <TableCell className="py-4 px-6">
+                  <TableCell className="py-2 px-3">
                     <div className="flex items-center space-x-4">
                       <Skeleton className="h-12 w-12 rounded-full" />
                       <div className="space-y-2">
@@ -113,25 +135,40 @@ const EmployeeTable = ({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-4 px-6">
-                    <Skeleton className="h-6 w-20 rounded-full" />
+                  <TableCell className="py-2 px-3">
+                    <div className="space-y-1">
+                      <Skeleton className="h-4 w-20 rounded-full" />
+                      <Skeleton className="h-3 w-16 rounded-lg" />
+                    </div>
                   </TableCell>
-                  <TableCell className="py-4 px-6">
-                    <Skeleton className="h-6 w-24 rounded-lg" />
-                  </TableCell>
-                  <TableCell className="py-4 px-6">
+                  <TableCell className="py-2 px-3">
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-32" />
                       <Skeleton className="h-3 w-24" />
                     </div>
                   </TableCell>
-                  <TableCell className="py-4 px-6">
+                  <TableCell className="py-2 px-3">
                     <Skeleton className="h-6 w-20 rounded-lg" />
                   </TableCell>
-                  <TableCell className="py-4 px-6">
+                  <TableCell className="py-2 px-3 text-right">
+                    <Skeleton className="h-6 w-24 rounded-lg" />
+                  </TableCell>
+                  <TableCell className="py-2 px-3 text-right">
+                    <Skeleton className="h-6 w-20 rounded-lg" />
+                  </TableCell>
+                  <TableCell className="py-2 px-3 text-right">
+                    <Skeleton className="h-6 w-16 rounded-lg" />
+                  </TableCell>
+                  <TableCell className="py-2 px-3 text-right">
+                    <Skeleton className="h-6 w-16 rounded-lg" />
+                  </TableCell>
+                  <TableCell className="py-2 px-3 text-right">
+                    <Skeleton className="h-6 w-24 rounded-lg" />
+                  </TableCell>
+                  <TableCell className="py-2 px-3">
                     <Skeleton className="h-6 w-16 rounded-full" />
                   </TableCell>
-                  <TableCell className="py-4 px-6 text-right">
+                  <TableCell className="py-2 px-3 text-right">
                     <div className="flex justify-end space-x-2">
                       <Skeleton className="h-8 w-8 rounded-lg" />
                       <Skeleton className="h-8 w-8 rounded-lg" />
@@ -153,7 +190,7 @@ const EmployeeTable = ({
             <TableHeader>
               <TableRow className="bg-gray-50/80 border-b border-gray-200/60">
                 {onEmployeeSelectToggle && (
-                  <TableHead className="h-12 w-[40px] px-6 text-center align-middle font-bold text-foreground/80 text-sm tracking-wide">
+                  <TableHead className="h-12 w-[40px] px-3 text-center align-middle font-bold text-foreground/80 text-sm tracking-wide">
                     <Checkbox
                       checked={selectedEmployees.length === employees.length && employees.length > 0}
                       onCheckedChange={(checked) => {
@@ -168,25 +205,37 @@ const EmployeeTable = ({
                     />
                   </TableHead>
                 )}
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   👤 Çalışan
                 </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   🏢 Departman
                 </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  💼 Pozisyon
-                </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   📞 İletişim
                 </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  📅 İşe Başlama
+                <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  📅 Başlama
                 </TableHead>
-                <TableHead className="h-12 px-6 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  🟢 Durum
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  💰 Net
                 </TableHead>
-                <TableHead className="h-12 px-6 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  🏥 SGK
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  🍽️ Yemek
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  🚗 Ulaşım
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  🏢 Toplam
+                </TableHead>
+                <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  📊 Durum
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
                   ⚙️ İşlemler
                 </TableHead>
               </TableRow>
@@ -194,7 +243,7 @@ const EmployeeTable = ({
             <TableBody>
               {employees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={onEmployeeSelectToggle ? 8 : 7} className="h-32 text-center text-gray-500">
+                  <TableCell colSpan={onEmployeeSelectToggle ? 12 : 11} className="h-32 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <div className="text-4xl">👥</div>
                       <p className="text-lg font-medium">Çalışan bulunamadı</p>
@@ -208,41 +257,66 @@ const EmployeeTable = ({
                   return (
                     <TableRow 
                       key={employee.id}
-                      className="h-16 cursor-pointer hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/5 transition-all duration-200 border-b border-gray-100/60"
+                      className="h-12 cursor-pointer hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/5 transition-all duration-200 border-b border-gray-100/60"
                       onClick={() => handleRowClick(employee)}
                     >
                       {onEmployeeSelectToggle && (
-                        <TableCell className="py-4 px-6 text-center" onClick={(e) => e.stopPropagation()}>
+                        <TableCell className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={() => onEmployeeSelectToggle(employee)}
                           />
                         </TableCell>
                       )}
-                      <TableCell className="py-4 px-6">
+                      <TableCell className="py-2 px-3">
                       <p className="text-sm font-medium text-gray-900">
                         {employee.first_name} {employee.last_name}
                       </p>
                     </TableCell>
-                    <TableCell className="py-4 px-6">
-                      <span className="text-sm text-gray-900">{employee.department}</span>
+                    <TableCell className="py-2 px-3">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium text-gray-900">{employee.department}</div>
+                        <div className="text-xs text-gray-500">{employee.position}</div>
+                      </div>
                     </TableCell>
-                    <TableCell className="py-4 px-6">
-                      <span className="text-sm text-gray-900">{employee.position}</span>
-                    </TableCell>
-                    <TableCell className="py-4 px-6">
+                    <TableCell className="py-2 px-3">
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-gray-900">{employee.email}</p>
                         <p className="text-sm text-gray-500">{employee.phone || "-"}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="py-4 px-6">
+                    <TableCell className="py-2 px-3">
                       <span className="text-sm text-gray-900">{new Date(employee.hire_date).toLocaleDateString("tr-TR")}</span>
                     </TableCell>
-                    <TableCell className="py-4 px-6">
+                    <TableCell className="py-2 px-3 text-right">
+                      <span className="text-sm font-medium text-green-600">
+                        {formatCurrency(employee.net_salary)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-2 px-3 text-right">
+                      <span className="text-sm font-medium text-blue-600">
+                        {formatCurrency(employee.manual_employer_sgk_cost)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-2 px-3 text-right">
+                      <span className="text-sm font-medium text-orange-600">
+                        {formatCurrency(employee.meal_allowance)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-2 px-3 text-right">
+                      <span className="text-sm font-medium text-purple-600">
+                        {formatCurrency(employee.transport_allowance)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-2 px-3 text-right">
+                      <span className="text-sm font-medium text-red-600">
+                        {formatCurrency(employee.total_employer_cost)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-2 px-3">
                       <StatusBadge status={employee.status} />
                     </TableCell>
-                    <TableCell className="py-4 px-6 text-right">
+                    <TableCell className="py-2 px-3 text-right">
                       <div className="flex justify-end space-x-2">
                         <Button
                           variant="ghost"

@@ -7,6 +7,11 @@ import EmployeesFilterBar from "@/components/employees/EmployeesFilterBar";
 import { toast } from "sonner";
 import type { ViewMode, Employee } from "@/types/employee";
 import EmployeesBulkActions from "@/components/employees/EmployeesBulkActions";
+import { BulkPayrollDialog } from "@/components/employees/BulkPayrollDialog";
+import { BulkPaymentDialog } from "@/components/employees/BulkPaymentDialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, TrendingUp, FileDown, Building2 } from "lucide-react";
 
 const Employees = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,6 +20,91 @@ const Employees = () => {
   const [selectedPosition, setSelectedPosition] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
+  const [bulkPayrollOpen, setBulkPayrollOpen] = useState(false);
+  const [bulkPaymentOpen, setBulkPaymentOpen] = useState(false);
+
+  const formatCurrency = (amount: number | null | undefined) => {
+    if (!amount) return "₺0";
+    return new Intl.NumberFormat('tr-TR', { 
+      style: 'currency', 
+      currency: 'TRY',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const exportToCSV = () => {
+    const headers = [
+      'Ad Soyad',
+      'E-posta',
+      'Telefon',
+      'Departman',
+      'Pozisyon',
+      'İşe Giriş Tarihi',
+      'Doğum Tarihi',
+      'Cinsiyet',
+      'Medeni Durum',
+      'Adres',
+      'Şehir',
+      'İlçe',
+      'Posta Kodu',
+      'Ülke',
+      'TC/SSN',
+      'Acil Durum Kişisi',
+      'Acil Durum Telefon',
+      'Acil Durum Yakınlık',
+      'Brüt Maaş',
+      'Net Maaş',
+      'Toplam İşveren Maliyeti',
+      'Yemek Yardımı',
+      'Ulaşım Yardımı',
+      'SGK İşveren Payı',
+      'İşsizlik İşveren Payı',
+      'İş Kazası Sigortası'
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...employees.map(employee => [
+        `"${employee.first_name} ${employee.last_name}"`,
+        `"${employee.email || ''}"`,
+        `"${employee.phone || ''}"`,
+        `"${employee.department || ''}"`,
+        `"${employee.position || ''}"`,
+        `"${employee.hire_date || ''}"`,
+        `"${employee.date_of_birth || ''}"`,
+        `"${employee.gender || ''}"`,
+        `"${employee.marital_status || ''}"`,
+        `"${employee.address || ''}"`,
+        `"${employee.city || ''}"`,
+        `"${employee.district || ''}"`,
+        `"${employee.postal_code || ''}"`,
+        `"${employee.country || ''}"`,
+        `"${employee.id_ssn || ''}"`,
+        `"${employee.emergency_contact_name || ''}"`,
+        `"${employee.emergency_contact_phone || ''}"`,
+        `"${employee.emergency_contact_relation || ''}"`,
+        employee.gross_salary || 0,
+        employee.net_salary || 0,
+        employee.total_employer_cost || 0,
+        employee.meal_allowance || 0,
+        employee.transport_allowance || 0,
+        employee.manual_employer_sgk_cost || 0,
+        employee.unemployment_employer_amount || 0,
+        employee.accident_insurance_amount || 0
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `calisanlar_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Fetch employees with stats
   const { data: employees = [], isLoading, error } = useQuery({
@@ -22,7 +112,20 @@ const Employees = () => {
     queryFn: async () => {
       let query = supabase
         .from('employees')
-        .select('*')
+        .select(`
+          *,
+          employee_salaries (
+            gross_salary,
+            net_salary,
+            total_employer_cost,
+            meal_allowance,
+            transport_allowance,
+            effective_date,
+            manual_employer_sgk_cost,
+            unemployment_employer_amount,
+            accident_insurance_amount
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (selectedStatus !== 'all') {
@@ -46,7 +149,33 @@ const Employees = () => {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data;
+      
+      // Process the data to flatten salary information
+      const processedData = (data as any)?.map((employee: any) => {
+        // Handle case where employee_salaries might be null or empty
+        let latestSalary = null;
+        if (employee.employee_salaries && employee.employee_salaries.length > 0) {
+          const salariesArray = Array.isArray(employee.employee_salaries) ? employee.employee_salaries : [employee.employee_salaries];
+          // Sort by effective_date to get the latest
+          salariesArray.sort((a, b) => new Date(b.effective_date || 0).getTime() - new Date(a.effective_date || 0).getTime());
+          latestSalary = salariesArray[0];
+        }
+        
+        return {
+          ...employee,
+          gross_salary: latestSalary?.gross_salary || null,
+          net_salary: latestSalary?.net_salary || null,
+          total_employer_cost: latestSalary?.total_employer_cost || null,
+          meal_allowance: latestSalary?.meal_allowance || null,
+          transport_allowance: latestSalary?.transport_allowance || null,
+          effective_date: latestSalary?.effective_date || null,
+          manual_employer_sgk_cost: latestSalary?.manual_employer_sgk_cost || null,
+          unemployment_employer_amount: latestSalary?.unemployment_employer_amount || null,
+          accident_insurance_amount: latestSalary?.accident_insurance_amount || null,
+        };
+      }) || [];
+      
+      return processedData;
     }
   });
 
@@ -77,6 +206,13 @@ const Employees = () => {
     partTime: employees.filter(emp => emp.employment_type === 'yari_zamanli').length,
   };
 
+  // Calculate total costs
+  const totalCosts = employees.reduce((acc, employee) => ({
+    gross_salary: acc.gross_salary + (employee.gross_salary || 0),
+    net_salary: acc.net_salary + (employee.net_salary || 0),
+    total_employer_cost: acc.total_employer_cost + (employee.total_employer_cost || 0),
+  }), { gross_salary: 0, net_salary: 0, total_employer_cost: 0 });
+
   const handleEmployeeSelect = (employee: Employee) => {
     setSelectedEmployees(prev => {
       const isSelected = prev.some(e => e.id === employee.id);
@@ -88,6 +224,22 @@ const Employees = () => {
 
   const handleClearSelection = () => {
     setSelectedEmployees([]);
+  };
+
+  const handleBulkPayroll = () => {
+    if (selectedEmployees.length === 0) {
+      toast.error("Lütfen tahakkuk yapılacak çalışanları seçin");
+      return;
+    }
+    setBulkPayrollOpen(true);
+  };
+
+  const handleBulkPayment = () => {
+    if (selectedEmployees.length === 0) {
+      toast.error("Lütfen ödeme yapılacak çalışanları seçin");
+      return;
+    }
+    setBulkPaymentOpen(true);
   };
 
   if (error) {
@@ -102,6 +254,7 @@ const Employees = () => {
         viewMode={viewMode} 
         setViewMode={setViewMode}
         employeeStats={employeeStats}
+        totalCosts={totalCosts}
       />
 
       {/* Filters */}
@@ -120,9 +273,11 @@ const Employees = () => {
 
       {/* Bulk Actions */}
       {selectedEmployees.length > 0 && (
-        <EmployeesBulkActions 
+        <EmployeesBulkActions
           selectedEmployees={selectedEmployees}
           onClearSelection={handleClearSelection}
+          onBulkPayroll={handleBulkPayroll}
+          onBulkPayment={handleBulkPayment}
         />
       )}
 
@@ -155,6 +310,19 @@ const Employees = () => {
           </div>
         </div>
       )}
+
+      {/* Dialogs */}
+      <BulkPayrollDialog
+        open={bulkPayrollOpen}
+        onOpenChange={setBulkPayrollOpen}
+        selectedEmployees={selectedEmployees}
+      />
+
+      <BulkPaymentDialog
+        open={bulkPaymentOpen}
+        onOpenChange={setBulkPaymentOpen}
+        selectedEmployees={selectedEmployees}
+      />
     </div>
   );
 };

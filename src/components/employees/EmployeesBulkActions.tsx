@@ -1,14 +1,16 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { X, Trash2, Download, Mail, UserX } from "lucide-react";
+import { X, Trash2, Download, Mail, UserX, Calculator, CreditCard } from "lucide-react";
 import { Employee } from "@/types/employee";
 
 interface EmployeesBulkActionsProps {
   selectedEmployees: Employee[];
   onClearSelection: () => void;
+  onBulkPayroll?: () => void;
+  onBulkPayment?: () => void;
 }
 
-const EmployeesBulkActions = ({ selectedEmployees, onClearSelection }: EmployeesBulkActionsProps) => {
+const EmployeesBulkActions = ({ selectedEmployees, onClearSelection, onBulkPayroll, onBulkPayment }: EmployeesBulkActionsProps) => {
   return (
     <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
       <div className="flex items-center space-x-2">
@@ -18,6 +20,26 @@ const EmployeesBulkActions = ({ selectedEmployees, onClearSelection }: Employees
       </div>
       
       <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBulkPayroll}
+          className="text-purple-700 border-purple-300 hover:bg-purple-100"
+        >
+          <Calculator className="h-4 w-4 mr-1" />
+          Toplu Tahakkuk
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBulkPayment}
+          className="text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+        >
+          <CreditCard className="h-4 w-4 mr-1" />
+          Toplu Ödeme
+        </Button>
+
         <Button
           variant="outline"
           size="sm"

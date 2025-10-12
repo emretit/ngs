@@ -21,9 +21,11 @@ import {
   Wrench,
   Clock,
   Phone,
-  Mail
+  Mail,
+  UserPlus
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import BackButton from '@/components/ui/back-button';
 
 interface ServiceRequestFormData {
   service_title: string;
@@ -189,31 +191,61 @@ const NewServiceRequest = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
+    <div>
+      {/* Enhanced Sticky Header */}
+      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
+        <div className="flex items-center justify-between p-3 pl-12">
+          <div className="flex items-center gap-3">
+            {/* Back Button */}
+            <BackButton 
+              onClick={() => navigate("/service")}
+              variant="ghost"
               size="sm"
-              onClick={() => navigate('/service')}
-              className="flex items-center gap-2"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Geri Dön
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">Yeni Servis Talebi</h1>
-              <p className="text-sm text-slate-600">Yeni bir servis talebi oluşturun</p>
+              Servisler
+            </BackButton>
+            
+            {/* Title Section with Icon */}
+            <div className="flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-muted-foreground" />
+              <div className="space-y-0.5">
+                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  Yeni Servis Talebi
+                </h1>
+                <p className="text-xs text-muted-foreground/70">
+                  Hızlı ve kolay servis talebi oluşturma
+                </p>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Wrench className="h-6 w-6 text-blue-600" />
+          
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              type="button"
+              onClick={() => navigate("/service")}
+              disabled={createServiceMutation.isPending}
+              className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
+            >
+              <span className="font-medium">İptal</span>
+            </Button>
+            <Button 
+              type="submit"
+              form="service-form"
+              disabled={createServiceMutation.isPending}
+              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+            >
+              <Save className="h-4 w-4" />
+              <span>{createServiceMutation.isPending ? "Kaydediliyor..." : "Kaydet"}</span>
+            </Button>
           </div>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto space-y-6">
+
+        <form id="service-form" onSubmit={handleSubmit} className="space-y-6">
           {/* Ana Bilgiler */}
           <Card className="shadow-md border-slate-200">
             <CardHeader className="pb-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b">
@@ -424,34 +456,6 @@ const NewServiceRequest = () => {
             </CardContent>
           </Card>
 
-          {/* Form Actions */}
-          <div className="flex items-center justify-end gap-4 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/service')}
-              disabled={createServiceMutation.isPending}
-            >
-              İptal
-            </Button>
-            <Button
-              type="submit"
-              disabled={createServiceMutation.isPending}
-              className="min-w-[120px] bg-blue-600 hover:bg-blue-700"
-            >
-              {createServiceMutation.isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Oluşturuluyor...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Save className="h-4 w-4" />
-                  Servis Oluştur
-                </div>
-              )}
-            </Button>
-          </div>
         </form>
       </div>
     </div>

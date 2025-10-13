@@ -12,7 +12,7 @@ interface PersonalInfoSectionProps {
 
 export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
   return (
-    <Card className="shadow-lg border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-xl">
+    <Card className="shadow-lg border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-xl flex flex-col h-full">
       <CardHeader className="pb-2 pt-3 px-4">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <div className="p-1 rounded-md bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
@@ -21,7 +21,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           Kişisel Bilgiler
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 pt-0 px-4 pb-4">
+      <CardContent className="space-y-3 pt-0 px-4 pb-4 flex-1 flex flex-col">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <FormField
           control={control}
@@ -104,6 +104,8 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           )}
         />
         </div>
+        {/* Boş alan ekleme */}
+        <div className="flex-1"></div>
       </CardContent>
     </Card>
   );

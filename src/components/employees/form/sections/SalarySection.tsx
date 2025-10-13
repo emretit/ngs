@@ -1,44 +1,70 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DatePicker } from "@/components/ui/date-picker";
 import { DollarSign } from "lucide-react";
-import { Control } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
+import { useEffect, useState } from "react";
 
 interface SalarySectionProps {
   control: Control<any>;
 }
 
 export const SalarySection = ({ control }: SalarySectionProps) => {
+  const [totalCost, setTotalCost] = useState(0);
+  
+  // Watch değerleri
+  const netSalary = useWatch({ control, name: "net_salary" }) || 0;
+  const sgkCost = useWatch({ control, name: "manual_employer_sgk_cost" }) || 0;
+  const mealAllowance = useWatch({ control, name: "meal_allowance" }) || 0;
+  const transportAllowance = useWatch({ control, name: "transport_allowance" }) || 0;
+
+  // Toplam maliyeti hesapla
+  useEffect(() => {
+    const net = parseFloat(netSalary.toString()) || 0;
+    const sgk = parseFloat(sgkCost.toString()) || 0;
+    const meal = parseFloat(mealAllowance.toString()) || 0;
+    const transport = parseFloat(transportAllowance.toString()) || 0;
+    
+    const total = net + sgk + meal + transport;
+    setTotalCost(total);
+  }, [netSalary, sgkCost, mealAllowance, transportAllowance]);
+
   return (
-    <Card className="shadow-md border border-border/40 bg-gradient-to-br from-green-50/30 to-green-50/10 backdrop-blur-sm rounded-xl">
-      <CardHeader className="pb-2 pt-2.5">
-        <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-          <div className="p-1 rounded-md bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
-            <DollarSign className="h-3.5 w-3.5 text-green-600" />
-          </div>
-          Maaş Bilgileri
-        </CardTitle>
+    <Card className="shadow-lg border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-xl">
+      <CardHeader className="pb-2 pt-3 px-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+            <div className="p-1 rounded-md bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
+              <DollarSign className="h-3.5 w-3.5 text-green-600" />
+            </div>
+            Maaş Bilgileri
+          </CardTitle>
+          {totalCost > 0 && (
+            <div className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-200">
+              Toplam: ₺{totalCost.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+            </div>
+          )}
+        </div>
       </CardHeader>
-      <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
-        {/* Maaş Miktarı ve Para Birimi */}
-        <div className="grid grid-cols-2 gap-1.5">
+      <CardContent className="space-y-3 pt-0 px-4 pb-4">
+        {/* Net Maaş ve SGK */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <FormField
             control={control}
-            name="salary_amount"
+            name="net_salary"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium text-gray-700">Maaş Miktarı</FormLabel>
+                <FormLabel className="text-xs font-medium text-gray-700">Net Maaş (₺)</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="0.00" 
-                    className="h-7 text-xs" 
+                  <Input
                     {...field}
+                    type="number"
+                    placeholder="Net maaşı girin"
+                    className="h-7 text-xs"
                     onChange={(e) => {
                       const value = e.target.value;
-                      field.onChange(value === "" ? undefined : parseFloat(value) || 0);
+                      field.onChange(value === "" ? 0 : parseFloat(value) || 0);
                     }}
                   />
                 </FormControl>
@@ -49,124 +75,95 @@ export const SalarySection = ({ control }: SalarySectionProps) => {
 
           <FormField
             control={control}
-            name="salary_currency"
+            name="manual_employer_sgk_cost"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium text-gray-700">Para Birimi</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value || "TRY"}
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue placeholder="Para birimi seçin" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="TRY">₺ TRY</SelectItem>
-                    <SelectItem value="USD">$ USD</SelectItem>
-                    <SelectItem value="EUR">€ EUR</SelectItem>
-                    <SelectItem value="GBP">£ GBP</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Maaş Türü ve Ödeme Sıklığı */}
-        <div className="grid grid-cols-2 gap-1.5">
-          <FormField
-            control={control}
-            name="salary_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs font-medium text-gray-700">Maaş Türü</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value || "brüt"}
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue placeholder="Maaş türü seçin" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="brüt">Brüt Maaş</SelectItem>
-                    <SelectItem value="net">Net Maaş</SelectItem>
-                    <SelectItem value="saatlik">Saatlik Ücret</SelectItem>
-                    <SelectItem value="günlük">Günlük Ücret</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
-            name="payment_frequency"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs font-medium text-gray-700">Ödeme Sıklığı</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value || "aylık"}
-                >
-                  <FormControl>
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue placeholder="Ödeme sıklığı seçin" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="aylık">Aylık</SelectItem>
-                    <SelectItem value="haftalık">Haftalık</SelectItem>
-                    <SelectItem value="günlük">Günlük</SelectItem>
-                    <SelectItem value="saatlik">Saatlik</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Başlangıç Tarihi ve Açıklama */}
-        <div className="grid grid-cols-2 gap-1.5">
-          <FormField
-            control={control}
-            name="salary_start_date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs font-medium text-gray-700">Maaş Başlangıç Tarihi</FormLabel>
+                <FormLabel className="text-xs font-medium text-gray-700">SGK İşveren Maliyeti (₺)</FormLabel>
                 <FormControl>
-                  <DatePicker
-                    date={field.value ? new Date(field.value) : undefined}
-                    onSelect={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
-                    placeholder="Maaş başlangıç tarihi seçin"
+                  <Input
+                    {...field}
+                    type="number"
+                    placeholder="SGK işveren maliyeti"
                     className="h-7 text-xs"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? 0 : parseFloat(value) || 0);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+        </div>
 
+        {/* Yol ve Yemek Yardımları */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <FormField
             control={control}
-            name="salary_notes"
+            name="transport_allowance"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium text-gray-700">Açıklama</FormLabel>
+                <FormLabel className="text-xs font-medium text-gray-700">Yol Yardımı (₺)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Maaş açıklaması" className="h-9 text-sm" {...field} />
+                  <Input
+                    {...field}
+                    type="number"
+                    placeholder="0"
+                    className="h-7 text-xs"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? 0 : parseFloat(value) || 0);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={control}
+            name="meal_allowance"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium text-gray-700">Yemek Yardımı (₺)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    placeholder="0"
+                    className="h-7 text-xs"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? 0 : parseFloat(value) || 0);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        {/* Notlar */}
+        <FormField
+          control={control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-medium text-gray-700">Notlar</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Maaş ile ilgili notlar..."
+                  className="h-7 text-xs"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </CardContent>
     </Card>
   );

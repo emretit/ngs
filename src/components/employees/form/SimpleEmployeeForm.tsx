@@ -54,13 +54,12 @@ const formSchema = z.object({
   emergency_contact_relation: z.string().optional(),
   emergency_contact_phone: z.string().optional(),
   
-  // Salary Information
-  salary_amount: z.number().optional(),
-  salary_currency: z.enum(["TRY", "USD", "EUR", "GBP"]).optional(),
-  salary_type: z.enum(["brüt", "net", "saatlik", "günlük"]).optional(),
-  payment_frequency: z.enum(["aylık", "haftalık", "günlük", "saatlik"]).optional(),
-  salary_start_date: z.string().optional(),
-  salary_notes: z.string().optional(),
+  // Salary Information (Detaylı Maaş Bilgileri)
+  net_salary: z.number().optional(),
+  manual_employer_sgk_cost: z.number().optional(),
+  meal_allowance: z.number().optional(),
+  transport_allowance: z.number().optional(),
+  notes: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -99,12 +98,11 @@ const SimpleEmployeeForm = () => {
       emergency_contact_name: "",
       emergency_contact_relation: "",
       emergency_contact_phone: "",
-      salary_amount: undefined,
-      salary_currency: "TRY",
-      salary_type: "brüt",
-      payment_frequency: "aylık",
-      salary_start_date: "",
-      salary_notes: "",
+      net_salary: 0,
+      manual_employer_sgk_cost: 0,
+      meal_allowance: 0,
+      transport_allowance: 0,
+      notes: "",
     },
   });
 
@@ -143,12 +141,17 @@ const SimpleEmployeeForm = () => {
         emergency_contact_name: data.emergency_contact_name || null,
         emergency_contact_relation: data.emergency_contact_relation || null,
         emergency_contact_phone: data.emergency_contact_phone || null,
-        salary_amount: data.salary_amount || null,
-        salary_currency: data.salary_currency || "TRY",
-        salary_type: data.salary_type || "brüt",
-        payment_frequency: data.payment_frequency || "aylık",
-        salary_start_date: data.salary_start_date || null,
-        salary_notes: data.salary_notes || null,
+        // Detaylı Maaş Bilgileri
+        net_salary: data.net_salary || null,
+        gross_salary: data.net_salary || null, // Şimdilik gross = net
+        manual_employer_sgk_cost: data.manual_employer_sgk_cost || null,
+        meal_allowance: data.meal_allowance || null,
+        transport_allowance: data.transport_allowance || null,
+        total_employer_cost: (data.net_salary || 0) + (data.manual_employer_sgk_cost || 0) + (data.meal_allowance || 0) + (data.transport_allowance || 0),
+        notes: data.notes || null,
+        salary_input_type: 'net',
+        calculate_as_minimum_wage: false,
+        effective_date: data.hire_date || new Date().toISOString().split('T')[0],
       };
 
       const { data: newEmployee, error } = await supabase
@@ -276,10 +279,8 @@ const SimpleEmployeeForm = () => {
           <BasicInfoSection control={form.control} />
 
           {/* Kişisel Bilgiler ve Adres, Maaş Bilgileri ve Acil Durum İletişim */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div>
-              <AddressSection control={form.control} />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+            <AddressSection control={form.control} />
             <div className="space-y-4">
               <SalarySection control={form.control} />
               <EmergencyContactSection control={form.control} />

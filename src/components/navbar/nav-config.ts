@@ -181,9 +181,9 @@ export const navItems = [
     hasDropdown: true,
     items: [
       {
-        path: "/cashflow/opex-entry",
-        icon: FileText,
-        label: "OPEX Girişi",
+        path: "/cashflow/bank-accounts",
+        icon: Building,
+        label: "Hesaplar",
       },
       {
         path: "/cashflow/expenses",
@@ -191,14 +191,14 @@ export const navItems = [
         label: "Masraflar",
       },
       {
+        path: "/cashflow/opex-entry",
+        icon: FileText,
+        label: "OPEX Girişi",
+      },
+      {
         path: "/cashflow/loans-and-checks",
         icon: Calculator,
         label: "Krediler ve Çekler",
-      },
-      {
-        path: "/cashflow/bank-accounts",
-        icon: Building,
-        label: "Hesaplar",
       },
       {
         path: "/cashflow/transfers",

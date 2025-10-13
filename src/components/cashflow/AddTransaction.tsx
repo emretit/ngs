@@ -122,7 +122,7 @@ const AddTransaction = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="expense" id="expense" />
-                  <Label htmlFor="expense" className="text-red-600 font-medium">Gider</Label>
+                  <Label htmlFor="expense" className="text-red-600 font-medium">Masraf</Label>
                 </div>
               </RadioGroup>
             </div>

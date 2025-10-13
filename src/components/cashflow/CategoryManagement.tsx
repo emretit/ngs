@@ -529,7 +529,7 @@ const CategoryManagement = () => {
           </div>
         </div>
 
-        {/* Gider Kategorileri Kartı */}
+        {/* Masraf Kategorileri Kartı */}
         <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-rose-200">
           <div className="p-5">
             {/* Card Header */}
@@ -539,8 +539,8 @@ const CategoryManagement = () => {
                   <TrendingDown className="h-4 w-4" />
                 </div>
         <div>
-                  <h2 className="text-sm font-bold text-gray-900">Gider Kategorileri</h2>
-                  <p className="text-xs text-gray-500">Gider türleri ve kategorileri</p>
+                  <h2 className="text-sm font-bold text-gray-900">Masraf Kategorileri</h2>
+                  <p className="text-xs text-gray-500">Masraf türleri ve kategorileri</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -586,8 +586,8 @@ const CategoryManagement = () => {
             {expenseCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length === 0 ? (
               <div className="text-center py-4 text-muted-foreground">
                 <TrendingDown className="h-6 w-6 mx-auto mb-2 text-gray-300" />
-                <p className="text-xs font-medium text-gray-700 mb-1">Henüz gider kategorisi yok</p>
-                <p className="text-xs text-gray-500 mb-2">İlk gider kategorinizi ekleyin</p>
+                <p className="text-xs font-medium text-gray-700 mb-1">Henüz masraf kategorisi yok</p>
+                <p className="text-xs text-gray-500 mb-2">İlk masraf kategorinizi ekleyin</p>
                 <Button 
                   size="sm" 
                   className="bg-rose-600 hover:bg-rose-700 text-white text-xs px-2 py-1"
@@ -644,7 +644,7 @@ const CategoryManagement = () => {
                   disabled={watchedIsSubcategory}
                   className="w-full h-11 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="expense">🔴 Gider</option>
+                  <option value="expense">🔴 Masraf</option>
                   <option value="income">🟢 Gelir</option>
                 </select>
               </div>
@@ -728,7 +728,7 @@ const CategoryManagement = () => {
                 onChange={(e) => setValue('type', e.target.value as 'income' | 'expense')}
                 className="w-full h-11 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
               >
-                <option value="expense">🔴 Gider</option>
+                <option value="expense">🔴 Masraf</option>
                 <option value="income">🟢 Gelir</option>
               </select>
             </div>

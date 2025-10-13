@@ -158,7 +158,7 @@ const PartnerExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountNam
 
       if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
 
-      // Ortak hesabından gider ekle
+      // Ortak hesabından masraf ekle
       const { error: transactionError } = await supabase
         .from('partner_transactions')
         .insert({
@@ -185,7 +185,7 @@ const PartnerExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountNam
 
       toast({
         title: "Başarılı",
-        description: "Gider işlemi eklendi"
+        description: "Masraf işlemi eklendi"
       });
 
       // Formu sıfırla
@@ -202,7 +202,7 @@ const PartnerExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountNam
       console.error('Error adding expense:', error);
       toast({
         title: "Hata",
-        description: "Gider işlemi eklenirken bir hata oluştu",
+        description: "Masraf işlemi eklenirken bir hata oluştu",
         variant: "destructive"
       });
     } finally {
@@ -214,7 +214,7 @@ const PartnerExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountNam
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Ortak Hesabından Gider Ekle</DialogTitle>
+          <DialogTitle>Ortak Hesabından Masraf Ekle</DialogTitle>
           <p className="text-sm text-gray-600">Hesap: {accountName}</p>
         </DialogHeader>
         
@@ -296,7 +296,7 @@ const PartnerExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountNam
               İptal
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Ekleniyor..." : "Gider Ekle"}
+              {isLoading ? "Ekleniyor..." : "Masraf Ekle"}
             </Button>
           </DialogFooter>
         </form>

@@ -53,7 +53,7 @@ export const FinancialOverview: React.FC = () => {
       color: "bg-green-500"
     },
     {
-      title: "Aylık Gider",
+      title: "Aylık Masraf",
       amount: "₺ 1,923,180",
       percentage: 65,
       trend: "down" as const,

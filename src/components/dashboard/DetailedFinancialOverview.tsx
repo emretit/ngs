@@ -169,7 +169,7 @@ export const DetailedFinancialOverview = () => {
     csvData.push(['GİDER DETAYLARI', '', '', '', '', '', '', '', '', '', '', '', '']);
     
     // Employee costs first
-    const employeeRow = ['Personel Giderleri'];
+    const employeeRow = ['Personel Masrafları'];
     months.forEach(month => {
       employeeRow.push((employeeCosts[month]?.totalCost || 0).toString());
     });
@@ -294,7 +294,7 @@ export const DetailedFinancialOverview = () => {
                 
                 {/* Employee Costs */}
                 <tr className="hover:bg-gray-50 bg-yellow-50">
-                  <td className="border border-gray-300 p-3 font-medium">Personel Giderleri</td>
+                  <td className="border border-gray-300 p-3 font-medium">Personel Masrafları</td>
                   {months.map(month => (
                     <td key={month} className="border border-gray-300 p-3 text-right">
                       {formatCurrency(employeeCosts[month]?.totalCost || 0)}
@@ -375,7 +375,7 @@ export const DetailedFinancialOverview = () => {
       {/* Employee Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Personel Giderleri Özeti ({selectedYear})</CardTitle>
+          <CardTitle>Personel Masrafları Özeti ({selectedYear})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

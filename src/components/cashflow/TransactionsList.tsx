@@ -119,7 +119,7 @@ const TransactionsList = () => {
               <SelectContent>
                 <SelectItem value="all">Tüm Türler</SelectItem>
                 <SelectItem value="income">Gelir</SelectItem>
-                <SelectItem value="expense">Gider</SelectItem>
+                <SelectItem value="expense">Masraf</SelectItem>
               </SelectContent>
             </Select>
 
@@ -203,7 +203,7 @@ const TransactionsList = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Filtrelenmiş Gider</p>
+                <p className="text-sm font-medium text-gray-600">Filtrelenmiş Masraf</p>
                 <p className="text-2xl font-bold text-red-600">{formatCurrency(filteredSummary.totalExpenses)}</p>
               </div>
               <TrendingDown className="h-8 w-8 text-red-600" />
@@ -251,7 +251,7 @@ const TransactionsList = () => {
                   </TableCell>
                   <TableCell>
                     <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'}>
-                      {transaction.type === 'income' ? 'Gelir' : 'Gider'}
+                      {transaction.type === 'income' ? 'Gelir' : 'Masraf'}
                     </Badge>
                   </TableCell>
                   <TableCell>{transaction.category?.name}</TableCell>

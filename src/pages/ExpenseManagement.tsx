@@ -35,18 +35,18 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
   ];
 
   const expenseCategories = [
-    "Personel Giderleri",
-    "Kira Giderleri",
+    "Personel Masrafları",
+    "Kira Masrafları",
     "Elektrik ve Faturalar",
     "İnternet ve Telefon",
     "Ofis Malzemeleri",
-    "Pazarlama Giderleri",
-    "Ulaşım Giderleri",
-    "Danışmanlık Giderleri",
+    "Pazarlama Masrafları",
+    "Ulaşım Masrafları",
+    "Danışmanlık Masrafları",
     "Vergi ve Resmi Ödemeler",
-    "Sigorta Giderleri",
+    "Sigorta Masrafları",
     "Bakım ve Onarım",
-    "Diğer Operasyonel Giderler"
+    "Diğer Operasyonel Masraflar"
   ];
 
   return (
@@ -56,7 +56,7 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">
-              Gider Yönetimi
+              Masraf Yönetimi
             </h1>
             <p className="text-muted-foreground mt-1">
               İş süreçlerinizi takip edin ve yönetin
@@ -76,10 +76,10 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />
-              Yeni Gider Girişi
+              Yeni Masraf Girişi
             </CardTitle>
             <CardDescription>
-              Operasyonel giderlerinizi kaydedin
+              Operasyonel masraflarınızı kaydedin
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -115,7 +115,7 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
             </div>
 
             <div>
-              <Label htmlFor="subcategory">Gider Kategorisi</Label>
+              <Label htmlFor="subcategory">Masraf Kategorisi</Label>
               <Select value={subcategory} onValueChange={setSubcategory}>
                 <SelectTrigger>
                   <SelectValue placeholder="Kategori seçin" />
@@ -145,7 +145,7 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
               <Label htmlFor="description">Açıklama</Label>
               <Textarea
                 id="description"
-                placeholder="Gider açıklaması..."
+                placeholder="Masraf açıklaması..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
@@ -153,7 +153,7 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
 
             <Button className="w-full">
               <Plus className="h-4 w-4 mr-2" />
-              Gider Ekle
+              Masraf Ekle
             </Button>
           </CardContent>
         </Card>
@@ -162,7 +162,7 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
         <div className="space-y-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Bu Ay Toplam Gider</CardTitle>
+              <CardTitle className="text-sm font-medium">Bu Ay Toplam Masraf</CardTitle>
               <TrendingDown className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -175,20 +175,20 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Personel Giderleri</CardTitle>
+              <CardTitle className="text-sm font-medium">Personel Masrafları</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">₺55,000</div>
               <p className="text-xs text-muted-foreground">
-                Toplam giderlerin %62'si
+                Toplam masrafların %62'si
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sabit Giderler</CardTitle>
+              <CardTitle className="text-sm font-medium">Sabit Masraflar</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -201,7 +201,7 @@ const ExpenseManagement = ({ isCollapsed, setIsCollapsed }: ExpenseManagementPro
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">En Yüksek Gider Kategorileri</CardTitle>
+              <CardTitle className="text-sm font-medium">En Yüksek Masraf Kategorileri</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">

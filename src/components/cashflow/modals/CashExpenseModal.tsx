@@ -150,7 +150,7 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
 
       toast({
         title: "Başarılı",
-        description: "Gider işlemi eklendi"
+        description: "Masraf işlemi eklendi"
       });
 
       onSuccess();
@@ -166,7 +166,7 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
       console.error('Error adding expense:', error);
       toast({
         title: "Hata",
-        description: "Gider işlemi eklenirken hata oluştu",
+        description: "Masraf işlemi eklenirken hata oluştu",
         variant: "destructive"
       });
     } finally {
@@ -184,7 +184,7 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
               </svg>
             </div>
-            Gider Ekle - {accountName}
+            Masraf Ekle - {accountName}
           </DialogTitle>
         </DialogHeader>
         
@@ -226,7 +226,7 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Gider açıklaması giriniz"
+              placeholder="Masraf açıklaması giriniz"
               rows={3}
               required
             />
@@ -265,7 +265,7 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
               İptal
             </Button>
             <Button type="submit" disabled={isLoading} className="bg-red-600 hover:bg-red-700">
-              {isLoading ? "Ekleniyor..." : "Gider Ekle"}
+              {isLoading ? "Ekleniyor..." : "Masraf Ekle"}
             </Button>
           </DialogFooter>
         </form>

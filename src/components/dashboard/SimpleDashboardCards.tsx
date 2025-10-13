@@ -66,12 +66,12 @@ export const SimpleDashboardCards: React.FC = () => {
       description: "Bu ayki toplam gelir"
     },
     {
-      title: "Toplam Gider",
+      title: "Toplam Masraf",
       value: "₺ 856,200",
       change: "+8.2% geçen ay",
       trend: "up" as const,
       icon: <TrendingDown className="h-4 w-4" />,
-      description: "Bu ayki toplam gider"
+      description: "Bu ayki toplam masraf"
     },
     {
       title: "Net Kar",

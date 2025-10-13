@@ -11,13 +11,13 @@ import { useMonthlyFinancials } from "@/hooks/useMonthlyFinancials";
 
 const FINANCIAL_CATEGORIES = [
   { key: 'revenue', label: 'Gelirler', subcategories: ['Ürün Satışları', 'Hizmet Gelirleri', 'Diğer Gelirler'] },
-  { key: 'cogs', label: 'Satışların Maliyeti', subcategories: ['Direkt Malzemeler', 'Direkt İşçilik', 'Üretim Giderleri'] },
+  { key: 'cogs', label: 'Satışların Maliyeti', subcategories: ['Direkt Malzemeler', 'Direkt İşçilik', 'Üretim Masrafları'] },
   { key: 'gross_profit', label: 'Brüt Kar', subcategories: [] },
-  { key: 'opex', label: 'Faaliyet Giderleri', subcategories: ['Maaşlar', 'Kira', 'Utilities', 'Pazarlama', 'Yönetim'] },
+  { key: 'opex', label: 'Faaliyet Masrafları', subcategories: ['Maaşlar', 'Kira', 'Utilities', 'Pazarlama', 'Yönetim'] },
   { key: 'ebitda', label: 'FAVÖK', subcategories: [] },
   { key: 'depreciation', label: 'Amortisman', subcategories: [] },
   { key: 'ebit', label: 'Faiz ve Vergi Öncesi Kar', subcategories: [] },
-  { key: 'interest', label: 'Faiz', subcategories: ['Faiz Gelirleri', 'Faiz Giderleri'] },
+  { key: 'interest', label: 'Faiz', subcategories: ['Faiz Gelirleri', 'Faiz Masrafları'] },
   { key: 'tax', label: 'Vergi', subcategories: [] },
   { key: 'net_profit', label: 'Net Kar', subcategories: [] },
   { key: 'cash_flow', label: 'Nakit Akışı', subcategories: ['Faaliyet NA', 'Yatırım NA', 'Finansman NA'] },
@@ -120,7 +120,7 @@ const MonthlyFinancialOverview = () => {
   const calculateNetProfit = (month: number) => {
     const ebit = calculateEBIT(month);
     const interestIncome = getFinancialValue('interest', 'Faiz Gelirleri', month);
-    const interestExpense = getFinancialValue('interest', 'Faiz Giderleri', month);
+    const interestExpense = getFinancialValue('interest', 'Faiz Masrafları', month);
     const tax = getFinancialValue('tax', '', month);
     return ebit + interestIncome - interestExpense - tax;
   };
@@ -439,7 +439,7 @@ const MonthlyFinancialOverview = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Aylık Gelir vs Giderler</CardTitle>
+            <CardTitle>Aylık Gelir vs Masraflar</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -449,7 +449,7 @@ const MonthlyFinancialOverview = () => {
                 <YAxis />
                 <Tooltip formatter={(value) => [formatCurrency(Number(value)), '']} />
                 <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} name="Gelir" />
-                <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} name="Gider" />
+                <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} name="Masraf" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -474,7 +474,7 @@ const MonthlyFinancialOverview = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Gider Dağılımı</CardTitle>
+            <CardTitle>Masraf Dağılımı</CardTitle>
             <div className="flex items-center space-x-2 mt-2">
               <Select value={selectedMonthForPie.toString()} onValueChange={(value) => setSelectedMonthForPie(parseInt(value))}>
                 <SelectTrigger className="w-32">

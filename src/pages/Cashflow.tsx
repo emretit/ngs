@@ -15,7 +15,7 @@ const Cashflow = () => {
                     Nakit Akış Yönetimi
                   </h1>
                   <p className="text-xs text-muted-foreground/70">
-                    Gelir ve giderlerinizi profesyonel bir şekilde yönetin ve analiz edin.
+                    Gelir ve masraflarınızı profesyonel bir şekilde yönetin ve analiz edin.
                   </p>
                 </div>
               </div>

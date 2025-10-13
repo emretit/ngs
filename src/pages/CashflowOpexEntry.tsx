@@ -14,7 +14,7 @@ const CashflowOpexEntry = () => {
                 OPEX Girişi
               </h1>
               <p className="text-xs text-muted-foreground/70">
-                Operasyonel giderlerinizi kaydedin ve takip edin.
+                Operasyonel masraflarınızı kaydedin ve takip edin.
               </p>
             </div>
           </div>

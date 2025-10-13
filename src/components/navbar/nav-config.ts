@@ -12,6 +12,7 @@ import {
   Users2,
   Wrench,
   BarChart2,
+  BarChart3,
   ListTodo,
   PackageCheck,
   Target,
@@ -165,6 +166,11 @@ export const navItems = [
         icon: FileText,
         label: "E-Fatura",
       },
+      {
+        path: "/invoices/analysis",
+        icon: BarChart3,
+        label: "Fatura Analizi",
+      },
     ],
   },
   // 8. Nakit Akış
@@ -182,17 +188,12 @@ export const navItems = [
       {
         path: "/cashflow/expenses",
         icon: Receipt,
-        label: "Giderler",
+        label: "Masraflar",
       },
       {
         path: "/cashflow/loans-and-checks",
         icon: Calculator,
         label: "Krediler ve Çekler",
-      },
-      {
-        path: "/cashflow/invoices",
-        icon: FileEdit,
-        label: "Faturalar",
       },
       {
         path: "/cashflow/bank-accounts",

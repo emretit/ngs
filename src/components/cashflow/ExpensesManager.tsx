@@ -39,13 +39,13 @@ interface ExpenseItem {
 }
 
 const EXPENSE_CATEGORIES = [
-  "Personel Giderleri",
-  "Operasyonel Giderler", 
-  "Ofis Giderleri",
+  "Personel Masrafları",
+  "Operasyonel Masraflar", 
+  "Ofis Masrafları",
   "Pazarlama & Satış",
-  "Finansman Giderleri",
-  "Genel Giderler",
-  "Seyahat Giderleri"
+  "Finansman Masrafları",
+  "Genel Masraflar",
+  "Seyahat Masrafları"
 ];
 
 const ExpensesManager = () => {
@@ -252,6 +252,7 @@ const ExpensesManager = () => {
           type: 'expense',
           amount: parseFloat(amount),
           category_id: selectedCategory,
+          subcategory: subcategory || null,
           description: description,
           date: format(date, 'yyyy-MM-dd'),
           expense_type: expenseType,
@@ -460,12 +461,33 @@ const ExpensesManager = () => {
 
   const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
+  // Hesap adını bulmak için fonksiyon
+  const getAccountName = (accountType: string, accountId: string) => {
+    if (!accountType || !accountId) return '-';
+    
+    switch (accountType) {
+      case 'cash':
+        const cashAccount = cashAccounts.find(acc => acc.id === accountId);
+        return cashAccount ? cashAccount.label : '-';
+      case 'bank':
+        const bankAccount = bankAccounts.find(acc => acc.id === accountId);
+        return bankAccount ? bankAccount.label : '-';
+      case 'credit_card':
+        const creditCard = creditCards.find(acc => acc.id === accountId);
+        return creditCard ? creditCard.label : '-';
+      case 'partner':
+        const partnerAccount = partnerAccounts.find(acc => acc.id === accountId);
+        return partnerAccount ? partnerAccount.label : '-';
+      default:
+        return '-';
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Enhanced Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <h2 className="text-xl font-semibold text-gray-900">Masraf Yönetimi</h2>
           <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
             <div className="text-sm text-green-700 font-medium">
               {format(startDate, 'dd MMM', { locale: tr })} - {format(endDate, 'dd MMM yyyy', { locale: tr })}
@@ -484,7 +506,7 @@ const ExpensesManager = () => {
             className="border-gray-300 hover:bg-gray-50"
           >
             <Tag className="mr-2 h-4 w-4" />
-            Gelir-Gider Kategorileri
+            Gelir-Masraf Kategorileri
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -819,8 +841,7 @@ const ExpensesManager = () => {
                 <TableHead>Tarih</TableHead>
                 <TableHead>Tür</TableHead>
                 <TableHead>Çalışan</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead>Alt Kategori</TableHead>
+                <TableHead>Kategori / Alt Kategori</TableHead>
                 <TableHead>Ödeme</TableHead>
                 <TableHead>Ödeme Hesabı</TableHead>
                 <TableHead>Tekrarlı</TableHead>
@@ -847,9 +868,19 @@ const ExpensesManager = () => {
                     }
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{expense.category?.name || 'Bilinmeyen'}</Badge>
+                    <div className="space-y-1">
+                      <div>
+                        <Badge variant="outline" className="text-xs">
+                          {expense.category?.name || 'Bilinmeyen'}
+                        </Badge>
+                      </div>
+                      {expense.subcategory && expense.subcategory.trim() !== '' && (
+                        <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded border">
+                          {expense.subcategory}
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell>{expense.subcategory || "-"}</TableCell>
                     <TableCell>
                       {expense.is_paid ? (
                         <Badge className="bg-green-600 text-white">Ödendi{expense.paid_date ? ` · ${format(new Date(expense.paid_date), 'dd MMM yyyy', { locale: tr })}` : ''}</Badge>
@@ -858,8 +889,20 @@ const ExpensesManager = () => {
                       )}
                     </TableCell>
                   <TableCell>
-                    {expense.payment_account_type ? (
-                      <Badge variant="outline">{expense.payment_account_type}</Badge>
+                    {expense.payment_account_type && expense.payment_account_id ? (
+                      <div className="space-y-1">
+                        <div>
+                          <Badge variant="outline" className="text-xs">
+                            {expense.payment_account_type === 'cash' ? '💵 Kasa' :
+                             expense.payment_account_type === 'bank' ? '🏦 Banka' :
+                             expense.payment_account_type === 'credit_card' ? '💳 Kredi Kartı' :
+                             expense.payment_account_type === 'partner' ? '🤝 Ortak' : expense.payment_account_type}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded border">
+                          {getAccountName(expense.payment_account_type, expense.payment_account_id)}
+                        </div>
+                      </div>
                     ) : (
                       <span>-</span>
                     )}

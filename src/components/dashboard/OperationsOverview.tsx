@@ -156,7 +156,7 @@ export const OperationsOverview: React.FC = () => {
   const pendingApprovals = [
     { type: "invoice", title: "Fatura #2024-0145", requester: "Ahmet Yılmaz", amount: "₺ 15,600" },
     { type: "purchase", title: "Satın Alma Talebi", requester: "Fatma Kaya", amount: "₺ 8,900" },
-    { type: "expense", title: "Gider Raporu", requester: "Mehmet Demir", amount: "₺ 3,200" },
+    { type: "expense", title: "Masraf Raporu", requester: "Mehmet Demir", amount: "₺ 3,200" },
     { type: "vacation", title: "İzin Talebi", requester: "Ayşe Şahin", amount: "5 gün" }
   ];
 

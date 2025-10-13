@@ -112,7 +112,7 @@ const BankExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
 
       if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
 
-      // Banka hesabına gider ekle
+      // Banka hesabına masraf ekle
       const { error: transactionError } = await supabase
         .from('bank_transactions')
         .insert({
@@ -139,7 +139,7 @@ const BankExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
 
       toast({
         title: "Başarılı",
-        description: "Gider işlemi eklendi"
+        description: "Masraf işlemi eklendi"
       });
 
       // Formu sıfırla
@@ -156,7 +156,7 @@ const BankExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
       console.error('Error adding expense:', error);
       toast({
         title: "Hata",
-        description: "Gider işlemi eklenirken bir hata oluştu",
+        description: "Masraf işlemi eklenirken bir hata oluştu",
         variant: "destructive"
       });
     } finally {
@@ -168,7 +168,7 @@ const BankExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Banka Hesabından Gider Ekle</DialogTitle>
+          <DialogTitle>Banka Hesabından Masraf Ekle</DialogTitle>
           <p className="text-sm text-gray-600">Hesap: {accountName}</p>
         </DialogHeader>
         
@@ -241,7 +241,7 @@ const BankExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
               İptal
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Ekleniyor..." : "Gider Ekle"}
+              {isLoading ? "Ekleniyor..." : "Masraf Ekle"}
             </Button>
           </DialogFooter>
         </form>

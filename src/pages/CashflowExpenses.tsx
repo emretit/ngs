@@ -11,10 +11,10 @@ const CashflowExpenses = () => {
           </div>
           <div className="space-y-0.5">
             <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-              Giderler
+              Masraflar
             </h1>
             <p className="text-xs text-muted-foreground/70">
-              Tüm giderlerinizi yönetin ve kategorilere ayırın.
+              Tüm masraflarınızı yönetin ve kategorilere ayırın.
             </p>
           </div>
         </div>

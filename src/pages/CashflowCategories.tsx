@@ -36,7 +36,7 @@ const CashflowCategories = memo(() => {
             </div>
             <div className="space-y-0.5">
               <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                Gelir-Gider Kategorileri
+                Gelir-Masraf Kategorileri
               </h1>
               <p className="text-xs text-muted-foreground/70">
                 Nakit akış kategorilerini yönetin ve düzenleyin
@@ -67,7 +67,7 @@ const CashflowCategories = memo(() => {
             {/* Gider Kategorileri */}
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-red-100 text-red-800 border-red-200">
               <TrendingDown className="h-3 w-3" />
-              <span className="font-medium">Gider</span>
+              <span className="font-medium">Masraf</span>
               <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
                 7
               </span>
@@ -116,7 +116,7 @@ const CashflowCategories = memo(() => {
           <SelectContent>
             <SelectItem value="all">Tüm Kategoriler</SelectItem>
             <SelectItem value="income">💰 Gelir</SelectItem>
-            <SelectItem value="expense">💸 Gider</SelectItem>
+            <SelectItem value="expense">💸 Masraf</SelectItem>
           </SelectContent>
         </Select>
 

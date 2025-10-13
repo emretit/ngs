@@ -335,7 +335,7 @@ const CategoryManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all');
 
-  const { categories, loading, createCategory, updateCategory, deleteCategory, getCategoriesByType } = useCashflowCategories();
+  const { categories, loading, createCategory, updateCategory, deleteCategory, getCategoriesByType, refetch } = useCashflowCategories();
   const { createSubcategory } = useCashflowSubcategories();
 
   const {
@@ -360,8 +360,10 @@ const CategoryManagement = () => {
     try {
       if (data.isSubcategory && data.parentCategoryId) {
         await createSubcategory(data.parentCategoryId, data.name);
+        await refetch();
       } else {
         await createCategory({ name: data.name, type: data.type });
+        await refetch();
       }
       setIsCreateOpen(false);
       reset({ type: 'expense', name: '', isSubcategory: false, parentCategoryId: undefined });

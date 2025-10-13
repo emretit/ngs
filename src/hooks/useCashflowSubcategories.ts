@@ -138,6 +138,25 @@ export const useCashflowSubcategories = (categoryId?: string) => {
     fetchSubcategories(categoryId);
   }, [categoryId]);
 
+  // Realtime güncellemeler: alt kategori ekleme/güncelleme/silme olduğunda otomatik yenile
+  useEffect(() => {
+    const channel = supabase
+      .channel(`cashflow_subcategories_${categoryId || 'all'}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'cashflow_subcategories',
+        filter: categoryId ? `category_id=eq.${categoryId}` : undefined,
+      }, () => {
+        fetchSubcategories(categoryId);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [categoryId]);
+
   return {
     subcategories,
     loading,

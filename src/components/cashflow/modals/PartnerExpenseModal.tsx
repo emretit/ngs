@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,10 +36,13 @@ const PartnerExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountNam
   });
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
+  const [subcategories, setSubcategories] = useState<Array<{id: string, name: string, category_id: string}>>([]);
+  const [selectedCategoryOption, setSelectedCategoryOption] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       fetchCategories();
+      fetchSubcategories();
     }
   }, [isOpen]);
 
@@ -67,6 +70,49 @@ const PartnerExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountNam
       setCategories(data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+    }
+  };
+
+  const fetchSubcategories = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      const { data, error } = await supabase
+        .from('cashflow_subcategories')
+        .select('id, name, category_id')
+        .order('name');
+
+      if (error) throw error;
+      setSubcategories(data || []);
+    } catch (error) {
+      console.error('Error fetching subcategories:', error);
+    }
+  };
+
+  const handleCategoryOptionChange = (value: string) => {
+    setSelectedCategoryOption(value);
+    
+    if (value.startsWith('cat:')) {
+      const categoryId = value.substring(4);
+      const category = categories.find(c => c.id === categoryId);
+      if (category) {
+        handleInputChange('category', category.name);
+      }
+    } else if (value.startsWith('sub:')) {
+      const subcategoryId = value.substring(4);
+      const subcategory = subcategories.find(s => s.id === subcategoryId);
+      if (subcategory) {
+        handleInputChange('category', subcategory.name);
+      }
     }
   };
 
@@ -116,7 +162,7 @@ const PartnerExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountNam
       const { error: transactionError } = await supabase
         .from('partner_transactions')
         .insert({
-          account_id: accountId,
+          partner_id: accountId,
           amount: formData.amount,
           type: 'expense',
           description: formData.description,
@@ -190,15 +236,24 @@ const PartnerExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountNam
 
             <div className="space-y-2">
               <Label htmlFor="category">Kategori</Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+              <Select value={selectedCategoryOption} onValueChange={handleCategoryOptionChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Kategori seçin" />
+                  <SelectValue placeholder="Kategori veya alt kategori seçin" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.name}>
-                      {category.name}
-                    </SelectItem>
+                    <SelectGroup key={category.id}>
+                      <SelectItem value={`cat:${category.id}`} className="font-semibold">
+                        {category.name}
+                      </SelectItem>
+                      {subcategories
+                        .filter((sub) => sub.category_id === category.id)
+                        .map((sub) => (
+                          <SelectItem key={sub.id} value={`sub:${sub.id}`} className="pl-6">
+                            {`${sub.name} (${category.name})`}
+                          </SelectItem>
+                        ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>

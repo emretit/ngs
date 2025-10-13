@@ -1,12 +1,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import {
   Select,
   SelectContent,
@@ -17,7 +12,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ProposalDetailsProps {
@@ -62,57 +56,22 @@ const ProposalDetails = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label>Teklif Tarihi</Label>
-          <Popover open={isProposalDateOpen} onOpenChange={setIsProposalDateOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !proposalDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {proposalDate ? format(proposalDate, "PPP") : "Tarih seçin"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={proposalDate}
-                onSelect={onProposalDateChange}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <EnhancedDatePicker
+            date={proposalDate}
+            onSelect={onProposalDateChange}
+            placeholder="Tarih seçin"
+            className="w-full"
+          />
         </div>
 
         <div>
           <Label>Geçerlilik Tarihi</Label>
-          <Popover
-            open={isExpirationDateOpen}
-            onOpenChange={setIsExpirationDateOpen}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !expirationDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {expirationDate ? format(expirationDate, "PPP") : "Tarih seçin"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={expirationDate}
-                onSelect={onExpirationDateChange}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <EnhancedDatePicker
+            date={expirationDate}
+            onSelect={onExpirationDateChange}
+            placeholder="Tarih seçin"
+            className="w-full"
+          />
         </div>
 
         <div>

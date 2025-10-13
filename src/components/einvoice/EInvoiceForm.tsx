@@ -5,9 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Save, X } from "lucide-react";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
+import { Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -151,48 +150,22 @@ const EInvoiceForm = ({ onClose, onSuccess }: EInvoiceFormProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Fatura Tarihi</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn("w-full justify-start text-left font-normal")}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {format(formData.invoice_date, "dd.MM.yyyy")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.invoice_date}
-                    onSelect={(date) => date && setFormData({ ...formData, invoice_date: date })}
-                    locale={tr}
-                  />
-                </PopoverContent>
-              </Popover>
+              <EnhancedDatePicker
+                date={formData.invoice_date}
+                onSelect={(date) => date && setFormData({ ...formData, invoice_date: date })}
+                placeholder="Tarih seçin"
+                className="w-full"
+              />
             </div>
             
             <div className="space-y-2">
               <Label>Son Ödeme Tarihi</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn("w-full justify-start text-left font-normal", !formData.due_date && "text-muted-foreground")}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.due_date ? format(formData.due_date, "dd.MM.yyyy") : "Seçin"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.due_date}
-                    onSelect={(date) => setFormData({ ...formData, due_date: date })}
-                    locale={tr}
-                  />
-                </PopoverContent>
-              </Popover>
+              <EnhancedDatePicker
+                date={formData.due_date}
+                onSelect={(date) => setFormData({ ...formData, due_date: date })}
+                placeholder="Seçin"
+                className="w-full"
+              />
             </div>
           </div>
 

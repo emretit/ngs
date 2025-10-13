@@ -4,11 +4,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { CalendarIcon, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormValues, RecurrenceType } from "./types";
 import { UseFormSetValue, UseFormWatch } from "react-hook-form";
@@ -179,43 +178,22 @@ const TaskRecurrence = ({ watch, setValue }: TaskRecurrenceProps) => {
       {/* End Date */}
       <div className="space-y-2">
         <Label>Bitiş Tarihi (İsteğe Bağlı)</Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !recurrenceEndDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {recurrenceEndDate ? (
-                format(recurrenceEndDate, "PPP", { locale: tr })
-              ) : (
-                "Bitiş tarihi yok (süresiz)"
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={recurrenceEndDate}
-              onSelect={(date) => setValue("recurrence_end_date", date)}
-              initialFocus
-              locale={tr}
-            />
-            <div className="p-3 border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => setValue("recurrence_end_date", undefined)}
-              >
-                Tarihi Temizle
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <EnhancedDatePicker
+          date={recurrenceEndDate}
+          onSelect={(date) => setValue("recurrence_end_date", date)}
+          placeholder="Bitiş tarihi yok (süresiz)"
+          className="w-full"
+        />
+        {recurrenceEndDate && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => setValue("recurrence_end_date", undefined)}
+          >
+            Tarihi Temizle
+          </Button>
+        )}
       </div>
 
       {/* Preview */}

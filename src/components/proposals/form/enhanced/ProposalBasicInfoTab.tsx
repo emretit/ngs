@@ -4,11 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarIcon, ArrowRight, AlertCircle, Info, Users, Clock, DollarSign } from "lucide-react";
+import { ArrowRight, AlertCircle, Info, Users, Clock, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -193,36 +192,18 @@ const ProposalBasicInfoTab: React.FC<ProposalBasicInfoTabProps> = ({
                 <Label className="flex items-center gap-2">
                   Geçerlilik Tarihi <span className="text-red-500">*</span>
                 </Label>
-                <Popover open={validUntilOpen} onOpenChange={setValidUntilOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !validUntilDate && "text-muted-foreground",
-                        validationErrors.valid_until && "border-destructive"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {validUntilDate ? (
-                        format(validUntilDate, "dd MMMM yyyy", { locale: tr })
-                      ) : (
-                        "Tarih seçin"
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={validUntilDate}
-                      onSelect={handleValidUntilChange}
-                      disabled={(date) =>
-                        date < new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <EnhancedDatePicker
+                  date={validUntilDate}
+                  onSelect={handleValidUntilChange}
+                  placeholder="Tarih seçin"
+                  className={cn(
+                    "w-full",
+                    validationErrors.valid_until && "border-destructive"
+                  )}
+                  disabled={(date) =>
+                    date < new Date() || date < new Date("1900-01-01")
+                  }
+                />
                 {validationErrors.valid_until && (
                   <p className="text-destructive text-sm">{validationErrors.valid_until[0]}</p>
                 )}

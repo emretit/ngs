@@ -8,9 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Save } from "lucide-react";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
+import { Save } from "lucide-react";
 import { Proposal, proposalStatusColors, proposalStatusLabels } from "@/types/proposal";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -212,25 +211,13 @@ const ProposalDetailFullView = ({
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Geçerlilik Tarihi:</span>
                     {isEditMode ? (
-                      <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="w-[180px] justify-start text-left font-normal">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {editedData.valid_until 
-                              ? formatDate(editedData.valid_until) 
-                              : "Tarih seçin"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="end">
-                          <Calendar
-                            mode="single"
-                            selected={editedData.valid_until ? new Date(editedData.valid_until) : undefined}
-                            onSelect={handleDateChange}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <EnhancedDatePicker
+                        date={editedData.valid_until ? new Date(editedData.valid_until) : undefined}
+                        onSelect={handleDateChange}
+                        placeholder="Tarih seçin"
+                        className="w-[180px]"
+                        disabled={(date) => date < new Date()}
+                      />
                     ) : (
                       <span className="font-medium">{formatDate(proposal.valid_until)}</span>
                     )}

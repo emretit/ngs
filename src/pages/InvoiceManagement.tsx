@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Receipt, FileText, Plus } from "lucide-react";
+import { Receipt, FileText, Plus, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +33,14 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
       path: "/purchase/e-invoice",
       color: "from-purple-500 to-violet-500",
       stats: "E-Fatura Aktif"
+    },
+    {
+      title: "Fatura Analizi",
+      description: "Aylık fatura analizleri ve performans raporları",
+      icon: BarChart3,
+      path: "/invoice-analysis",
+      color: "from-indigo-500 to-purple-600",
+      stats: "Detaylı Analiz"
     }
   ];
 
@@ -49,7 +57,7 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {invoiceModules.map((module) => {
               const IconComponent = module.icon;
               return (
@@ -121,14 +129,14 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
                 </Link>
               </Button>
 
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-auto p-4 flex-col items-start justify-start hover:shadow-md transition-all duration-200"
                 asChild
               >
-                <Link to="/cashflow">
-                  <Receipt className="h-5 w-5 mb-2" />
-                  <span className="font-medium">Fatura Raporları</span>
+                <Link to="/invoice-analysis">
+                  <BarChart3 className="h-5 w-5 mb-2" />
+                  <span className="font-medium">Fatura Analizi</span>
                 </Link>
               </Button>
             </div>

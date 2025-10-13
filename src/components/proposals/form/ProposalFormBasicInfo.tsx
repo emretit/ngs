@@ -3,10 +3,7 @@ import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { ProposalStatus, proposalStatusLabels } from "@/types/proposal";
 import { ProposalFormData } from "@/types/proposal-form";
 
@@ -70,27 +67,14 @@ const ProposalFormBasicInfo = ({
         <Label htmlFor="valid_until" className={formErrors.valid_until ? "text-red-500" : ""}>
           Geçerlilik Tarihi <span className="text-red-500">*</span>
         </Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="outline" 
-              className={`w-full justify-start text-left font-normal ${
-                formErrors.valid_until ? "border-red-500 text-red-500" : ""
-              }`}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {formData.valid_until ? formatDate(formData.valid_until) : "Tarih seçin"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={formData.valid_until ? new Date(formData.valid_until) : undefined}
-              onSelect={handleDateChange}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+        <EnhancedDatePicker
+          date={formData.valid_until ? new Date(formData.valid_until) : undefined}
+          onSelect={handleDateChange}
+          placeholder="Tarih seçin"
+          className={`w-full ${
+            formErrors.valid_until ? "border-red-500" : ""
+          }`}
+        />
         {formErrors.valid_until && (
           <p className="text-red-500 text-sm mt-1">{formErrors.valid_until}</p>
         )}

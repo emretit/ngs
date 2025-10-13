@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Plus, Edit, Trash2, Wallet, FileText, Search, Filter, User, Tag } from "lucide-react";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
@@ -527,8 +528,8 @@ const ExpensesManager = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="company">🏢 Şirket Masrafı</SelectItem>
-                      <SelectItem value="employee">👤 Çalışan Masrafı</SelectItem>
+                      <SelectItem value="company">Şirket Masrafı</SelectItem>
+                      <SelectItem value="employee">Çalışan Masrafı</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -616,22 +617,11 @@ const ExpensesManager = () => {
                   
                   <div>
                     <Label htmlFor="date">Tarih</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {date ? format(date, 'dd MMMM yyyy', { locale: tr }) : "Tarih seçin"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
-                        <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={(newDate) => newDate && setDate(newDate)}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <EnhancedDatePicker
+                      date={date}
+                      onSelect={(newDate) => newDate && setDate(newDate)}
+                      placeholder="Tarih seçin"
+                    />
                   </div>
                 </div>
                 
@@ -646,22 +636,12 @@ const ExpensesManager = () => {
                 </div>
                 <div className={`space-y-2 ${isPaid ? '' : 'opacity-50 pointer-events-none'}`}>
                   <Label>Ödeme Tarihi</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {paidDate ? format(paidDate, 'dd MMMM yyyy', { locale: tr }) : 'Tarih seçin'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={paidDate || undefined}
-                        onSelect={(d) => setPaidDate(d || null)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <EnhancedDatePicker
+                    date={paidDate || undefined}
+                    onSelect={(d) => setPaidDate(d || null)}
+                    placeholder="Tarih seçin"
+                    disabled={!isPaid}
+                  />
                 </div>
                 <div className={`space-y-2 ${isPaid ? '' : 'opacity-50 pointer-events-none'}`}>
                   <Label>Hesap Türü</Label>
@@ -742,8 +722,8 @@ const ExpensesManager = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tüm Türler</SelectItem>
-            <SelectItem value="company">🏢 Şirket</SelectItem>
-            <SelectItem value="employee">👤 Çalışan</SelectItem>
+            <SelectItem value="company">Şirket</SelectItem>
+            <SelectItem value="employee">Çalışan</SelectItem>
           </SelectContent>
         </Select>
 
@@ -782,39 +762,19 @@ const ExpensesManager = () => {
         {/* Tarih Filtreleri */}
         <div className="flex items-center gap-2">
           <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-32 justify-start text-left font-normal text-xs">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(startDate, 'dd MMM', { locale: tr })}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={(newDate) => newDate && setStartDate(newDate)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <EnhancedDatePicker
+            date={startDate}
+            onSelect={(newDate) => newDate && setStartDate(newDate)}
+            placeholder="Başlangıç"
+            className="w-32 text-xs"
+          />
           <span className="text-muted-foreground text-sm">-</span>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-32 justify-start text-left font-normal text-xs">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(endDate, 'dd MMM', { locale: tr })}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={(newDate) => newDate && setEndDate(newDate)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <EnhancedDatePicker
+            date={endDate}
+            onSelect={(newDate) => newDate && setEndDate(newDate)}
+            placeholder="Bitiş"
+            className="w-32 text-xs"
+          />
         </div>
 
       </div>
@@ -858,7 +818,7 @@ const ExpensesManager = () => {
                   </TableCell>
                   <TableCell>
                     <Badge variant={expense.expense_type === 'company' ? 'default' : 'secondary'}>
-                      {expense.expense_type === 'company' ? '🏢 Şirket' : '👤 Çalışan'}
+                      {expense.expense_type === 'company' ? 'Şirket' : 'Çalışan'}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -868,16 +828,17 @@ const ExpensesManager = () => {
                     }
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-1">
-                      <div>
-                        <Badge variant="outline" className="text-xs">
-                          {expense.category?.name || 'Bilinmeyen'}
-                        </Badge>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {expense.category?.name || 'Bilinmeyen'}
+                      </Badge>
                       {expense.subcategory && expense.subcategory.trim() !== '' && (
-                        <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded border">
-                          {expense.subcategory}
-                        </div>
+                        <>
+                          <span className="text-gray-400">/</span>
+                          <span className="text-xs text-gray-600 font-normal">
+                            {expense.subcategory}
+                          </span>
+                        </>
                       )}
                     </div>
                   </TableCell>
@@ -890,18 +851,17 @@ const ExpensesManager = () => {
                     </TableCell>
                   <TableCell>
                     {expense.payment_account_type && expense.payment_account_id ? (
-                      <div className="space-y-1">
-                        <div>
-                          <Badge variant="outline" className="text-xs">
-                            {expense.payment_account_type === 'cash' ? '💵 Kasa' :
-                             expense.payment_account_type === 'bank' ? '🏦 Banka' :
-                             expense.payment_account_type === 'credit_card' ? '💳 Kredi Kartı' :
-                             expense.payment_account_type === 'partner' ? '🤝 Ortak' : expense.payment_account_type}
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded border">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {expense.payment_account_type === 'cash' ? 'Kasa' :
+                           expense.payment_account_type === 'bank' ? 'Banka' :
+                           expense.payment_account_type === 'credit_card' ? 'Kredi Kartı' :
+                           expense.payment_account_type === 'partner' ? 'Ortak' : expense.payment_account_type}
+                        </Badge>
+                        <span className="text-gray-400">/</span>
+                        <span className="text-xs text-gray-600 font-normal">
                           {getAccountName(expense.payment_account_type, expense.payment_account_id)}
-                        </div>
+                        </span>
                       </div>
                     ) : (
                       <span>-</span>

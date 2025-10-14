@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { format, differenceInDays } from "date-fns";
 import { tr } from "date-fns/locale";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
+import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
+import { useCustomerSelect } from "@/hooks/useCustomerSelect";
+import { useForm, FormProvider } from "react-hook-form";
 
 interface Check {
   id: string;
@@ -29,6 +32,7 @@ interface Check {
   due_date: string;
   amount: number;
   bank: string;
+  issuer_name?: string;
   payee: string;
   status: string;
   notes?: string;
@@ -69,6 +73,20 @@ const CashflowChecksAndNotes = () => {
   const [noteFilters, setNoteFilters] = useState({ status: "all", dateRange: "" });
   const [checkStatus, setCheckStatus] = useState("pending");
   const [noteStatus, setNoteStatus] = useState("pending");
+  
+  // Check form states
+  const [bankName, setBankName] = useState<string>("");
+  const [issueDate, setIssueDate] = useState<Date | undefined>(undefined);
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const issuerForm = useForm({ defaultValues: { customer_id: "", supplier_id: "" } });
+  const payeeForm = useForm({ defaultValues: { customer_id: "", supplier_id: "" } });
+  const [issuerName, setIssuerName] = useState<string>("");
+  const [payeeName, setPayeeName] = useState<string>("");
+  const { customers = [], suppliers = [] } = useCustomerSelect();
+  const issuerSelectedId = issuerForm.watch("customer_id");
+  const payeeSelectedId = payeeForm.watch("customer_id");
+  const issuerSupplierId = issuerForm.watch("supplier_id");
+  const payeeSupplierId = payeeForm.watch("supplier_id");
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -116,6 +134,48 @@ const CashflowChecksAndNotes = () => {
     }
   });
 
+  // Update issuer/payee names when customer/supplier selection changes
+  useEffect(() => {
+    if (issuerSelectedId) {
+      const c = customers.find((x: any) => x.id === issuerSelectedId);
+      if (c) setIssuerName(c.company || c.name || "");
+    } else if (issuerSupplierId) {
+      const s = suppliers.find((x: any) => x.id === issuerSupplierId);
+      if (s) setIssuerName(s.company || s.name || "");
+    }
+  }, [issuerSelectedId, issuerSupplierId, customers, suppliers]);
+
+  useEffect(() => {
+    if (payeeSelectedId) {
+      const c = customers.find((x: any) => x.id === payeeSelectedId);
+      if (c) setPayeeName(c.company || c.name || "");
+    } else if (payeeSupplierId) {
+      const s = suppliers.find((x: any) => x.id === payeeSupplierId);
+      if (s) setPayeeName(s.company || s.name || "");
+    }
+  }, [payeeSelectedId, payeeSupplierId, customers, suppliers]);
+
+  // Update form state when editing check
+  useEffect(() => {
+    if (editingCheck) {
+      setBankName(editingCheck.bank || (banks[0]?.name || ""));
+      setIssueDate(editingCheck.issue_date ? new Date(editingCheck.issue_date) : undefined);
+      setDueDate(editingCheck.due_date ? new Date(editingCheck.due_date) : undefined);
+      setIssuerName(editingCheck.issuer_name || "");
+      setPayeeName(editingCheck.payee || "");
+      setCheckStatus(editingCheck.status || "pending");
+    } else {
+      setBankName(banks[0]?.name || "");
+      setIssueDate(undefined);
+      setDueDate(undefined);
+      setIssuerName("");
+      setPayeeName("");
+      setCheckStatus("pending");
+      issuerForm.reset({ customer_id: "", supplier_id: "" });
+      payeeForm.reset({ customer_id: "", supplier_id: "" });
+    }
+  }, [editingCheck, banks]);
+
   // Check mutations
   const saveCheckMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -125,6 +185,7 @@ const CashflowChecksAndNotes = () => {
         due_date: formData.get("due_date") as string,
         amount: parseFloat(formData.get("amount") as string),
         bank: formData.get("bank") as string,
+        issuer_name: formData.get("issuer_name") as string,
         payee: formData.get("payee") as string,
         status: formData.get("status") as string,
         notes: formData.get("notes") as string,
@@ -248,124 +309,6 @@ const CashflowChecksAndNotes = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const CheckForm = () => {
-    const currentCheckStatus = editingCheck?.status || "pending";
-    const [bankName, setBankName] = useState<string>(editingCheck?.bank || (banks[0]?.name || ""));
-    const [issueDate, setIssueDate] = useState<Date | undefined>(
-      editingCheck?.issue_date ? new Date(editingCheck.issue_date) : undefined
-    );
-    const [dueDate, setDueDate] = useState<Date | undefined>(
-      editingCheck?.due_date ? new Date(editingCheck.due_date) : undefined
-    );
-    
-    return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="check_number">Çek No</Label>
-            <Input
-              id="check_number"
-              name="check_number"
-              defaultValue={editingCheck?.check_number || ""}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="bank">Banka</Label>
-            <Select value={bankName} onValueChange={setBankName}>
-              <SelectTrigger id="bank">
-                <SelectValue placeholder="Banka seçin" />
-              </SelectTrigger>
-              <SelectContent className="max-h-72">
-                {banks.map((b) => (
-                  <SelectItem key={b.id} value={b.name}>
-                    {b.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <input type="hidden" name="bank" value={bankName} />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label>Düzenleme Tarihi</Label>
-            <EnhancedDatePicker date={issueDate} onSelect={setIssueDate} placeholder="Tarih seçin" />
-            <input type="hidden" name="issue_date" value={issueDate ? format(issueDate, "yyyy-MM-dd") : ""} />
-          </div>
-          <div>
-            <Label>Vade Tarihi</Label>
-            <EnhancedDatePicker date={dueDate} onSelect={setDueDate} placeholder="Tarih seçin" />
-            <input type="hidden" name="due_date" value={dueDate ? format(dueDate, "yyyy-MM-dd") : ""} />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="amount">Tutar</Label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              defaultValue={editingCheck?.amount || ""}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="payee">Lehtar</Label>
-            <Input
-              id="payee"
-              name="payee"
-              defaultValue={editingCheck?.payee || ""}
-              required
-            />
-          </div>
-        </div>
-        <div>
-          <Label htmlFor="status">Durum</Label>
-          <Select 
-            value={checkStatus} 
-            onValueChange={setCheckStatus}
-            defaultValue={currentCheckStatus}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Durum seçin" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pending">Beklemede</SelectItem>
-              <SelectItem value="odenecek">Ödenecek</SelectItem>
-              <SelectItem value="odendi">Ödendi</SelectItem>
-              <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
-            </SelectContent>
-          </Select>
-          <input type="hidden" name="status" value={checkStatus} />
-        </div>
-        <div>
-          <Label htmlFor="notes">Notlar</Label>
-          <Textarea
-            id="notes"
-            name="notes"
-            defaultValue={editingCheck?.notes || ""}
-            placeholder="Notlar..."
-          />
-        </div>
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={() => setCheckDialog(false)}>
-            İptal
-          </Button>
-          <Button
-            onClick={(e) => {
-              const form = e.currentTarget.closest("form") as HTMLFormElement;
-              const formData = new FormData(form);
-              saveCheckMutation.mutate(formData);
-            }}
-          >
-            Kaydet
-          </Button>
-        </div>
-      </div>
-    );
-  };
 
   const NoteForm = () => {
     const currentNoteStatus = editingNote?.status || "pending";
@@ -652,8 +595,121 @@ const CashflowChecksAndNotes = () => {
                         {editingCheck ? "Çek Düzenle" : "Yeni Çek Ekle"}
                       </DialogTitle>
                     </DialogHeader>
-                    <form>
-                      <CheckForm />
+                    <form className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="check_number">Çek No</Label>
+                          <Input
+                            id="check_number"
+                            name="check_number"
+                            defaultValue={editingCheck?.check_number || ""}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="bank">Banka</Label>
+                          <Select value={bankName} onValueChange={setBankName}>
+                            <SelectTrigger id="bank">
+                              <SelectValue placeholder="Banka seçin" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-72">
+                              {banks.map((b) => (
+                                <SelectItem key={b.id} value={b.name}>
+                                  {b.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <input type="hidden" name="bank" value={bankName} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>Düzenleme Tarihi</Label>
+                          <EnhancedDatePicker date={issueDate} onSelect={setIssueDate} placeholder="Tarih seçin" />
+                          <input type="hidden" name="issue_date" value={issueDate ? format(issueDate, "yyyy-MM-dd") : ""} />
+                        </div>
+                        <div>
+                          <Label>Vade Tarihi</Label>
+                          <EnhancedDatePicker date={dueDate} onSelect={setDueDate} placeholder="Tarih seçin" />
+                          <input type="hidden" name="due_date" value={dueDate ? format(dueDate, "yyyy-MM-dd") : ""} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="amount">Tutar</Label>
+                          <Input
+                            id="amount"
+                            name="amount"
+                            type="number"
+                            step="0.01"
+                            defaultValue={editingCheck?.amount || ""}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="status">Durum</Label>
+                          <Select 
+                            value={checkStatus} 
+                            onValueChange={setCheckStatus}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Durum seçin" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Beklemede</SelectItem>
+                              <SelectItem value="odenecek">Ödenecek</SelectItem>
+                              <SelectItem value="odendi">Ödendi</SelectItem>
+                              <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <input type="hidden" name="status" value={checkStatus} />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="issuer_name">Keşideci (çeki düzenleyen)</Label>
+                          <FormProvider {...issuerForm}>
+                            <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
+                          </FormProvider>
+                          <input type="hidden" id="issuer_name" name="issuer_name" value={issuerName} />
+                          <input type="hidden" name="issuer_customer_id" value={issuerSelectedId} />
+                          <input type="hidden" name="issuer_supplier_id" value={issuerSupplierId} />
+                        </div>
+                        <div>
+                          <Label htmlFor="payee">Lehtar (çeki alan)</Label>
+                          <FormProvider {...payeeForm}>
+                            <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
+                          </FormProvider>
+                          <input type="hidden" id="payee" name="payee" value={payeeName} />
+                          <input type="hidden" name="payee_customer_id" value={payeeSelectedId} />
+                          <input type="hidden" name="payee_supplier_id" value={payeeSupplierId} />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="notes">Notlar</Label>
+                        <Textarea
+                          id="notes"
+                          name="notes"
+                          defaultValue={editingCheck?.notes || ""}
+                          placeholder="Notlar..."
+                        />
+                      </div>
+                      <div className="flex justify-end space-x-2">
+                        <Button variant="outline" onClick={() => setCheckDialog(false)}>
+                          İptal
+                        </Button>
+                        <Button
+                          onClick={(e) => {
+                            const form = e.currentTarget.closest("form") as HTMLFormElement;
+                            const formData = new FormData(form);
+                            saveCheckMutation.mutate(formData);
+                          }}
+                        >
+                          Kaydet
+                        </Button>
+                      </div>
                     </form>
                   </DialogContent>
                 </Dialog>

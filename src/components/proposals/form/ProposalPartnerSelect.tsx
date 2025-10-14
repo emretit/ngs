@@ -3,14 +3,13 @@ import React, { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { User, Building2, Plus, Phone, Mail, MapPin, Search } from "lucide-react";
+import { User, Building2, Plus, Phone, Mail, Search } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
-import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from "@/components/ui/custom-tabs";
 import { Input } from "@/components/ui/input";
@@ -18,9 +17,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ProposalPartnerSelectProps {
   partnerType: "customer" | "supplier";
+  label?: string;
+  placeholder?: string;
+  hideLabel?: boolean;
 }
 
-const ProposalPartnerSelect = ({ partnerType }: ProposalPartnerSelectProps) => {
+const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel }: ProposalPartnerSelectProps) => {
   const navigate = useNavigate();
   const { setValue, watch } = useFormContext();
   const [isOpen, setIsOpen] = useState(false);
@@ -57,7 +59,7 @@ const ProposalPartnerSelect = ({ partnerType }: ProposalPartnerSelectProps) => {
     if (partnerType === "supplier" && selectedSupplier) {
       return selectedSupplier.name;
     }
-    return partnerType === "customer" ? "Müşteri seçin..." : "Tedarikçi seçin...";
+    return placeholder ?? (partnerType === "customer" ? "Müşteri seçin..." : "Tedarikçi seçin...");
   };
 
   const selectedPartner = partnerType === "customer" ? selectedCustomer : selectedSupplier;
@@ -77,9 +79,11 @@ const ProposalPartnerSelect = ({ partnerType }: ProposalPartnerSelectProps) => {
   return (
     <div className="space-y-3">
       <div>
-        <Label className="text-base font-medium">
-          {partnerType === "customer" ? "Müşteri" : "Tedarikçi"}
-        </Label>
+        {!hideLabel && (
+          <Label className="text-base font-medium">
+            {label ?? (partnerType === "customer" ? "Müşteri" : "Tedarikçi")}
+          </Label>
+        )}
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -255,41 +259,6 @@ const ProposalPartnerSelect = ({ partnerType }: ProposalPartnerSelectProps) => {
         </Popover>
       </div>
 
-      {selectedPartner && (
-        <Card className="bg-muted/40">
-          <CardContent className="p-4">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <h3 className="font-medium">{selectedPartner.name}</h3>
-                {selectedPartner.company && (
-                  <span className="text-sm text-muted-foreground">{selectedPartner.company}</span>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                {selectedPartner.email && (
-                  <div className="flex items-center">
-                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{selectedPartner.email}</span>
-                  </div>
-                )}
-                {selectedPartner.mobile_phone && (
-                  <div className="flex items-center">
-                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{selectedPartner.mobile_phone}</span>
-                  </div>
-                )}
-                {selectedPartner.address && (
-                  <div className="flex items-center col-span-2">
-                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{selectedPartner.address}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

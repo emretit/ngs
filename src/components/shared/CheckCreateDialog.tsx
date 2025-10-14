@@ -1,4 +1,7 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
+import { useCustomerSelect } from "@/hooks/useCustomerSelect";
+import { useForm, FormProvider } from "react-hook-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -19,6 +22,7 @@ export interface CheckRecord {
   due_date?: string;
   amount?: number;
   bank?: string;
+  issuer_name?: string;
   payee?: string;
   status?: string;
   notes?: string | null;
@@ -52,6 +56,37 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
   const [issueDate, setIssueDate] = useState<Date | undefined>(editingCheck?.issue_date ? new Date(editingCheck.issue_date) : undefined);
   const [dueDate, setDueDate] = useState<Date | undefined>(editingCheck?.due_date ? new Date(editingCheck.due_date) : undefined);
   const [status, setStatus] = useState<string>(editingCheck?.status || "pending");
+  const issuerForm = useForm({ defaultValues: { customer_id: "", supplier_id: "" } });
+  const payeeForm = useForm({ defaultValues: { customer_id: "", supplier_id: "" } });
+  const [issuerName, setIssuerName] = useState<string>(editingCheck?.issuer_name || "");
+  const [payeeName, setPayeeName] = useState<string>(editingCheck?.payee || "");
+  const { customers = [], suppliers = [] } = useCustomerSelect();
+
+  const issuerSelectedId = issuerForm.watch("customer_id");
+  const payeeSelectedId = payeeForm.watch("customer_id");
+  const issuerSupplierId = issuerForm.watch("supplier_id");
+  const payeeSupplierId = payeeForm.watch("supplier_id");
+
+  // Seçilen müşteri/tedarikçi id'sine göre isimleri güncelle
+  useEffect(() => {
+    if (issuerSelectedId) {
+      const c = customers.find((x: any) => x.id === issuerSelectedId);
+      if (c) setIssuerName(c.company || c.name || "");
+    } else if (issuerSupplierId) {
+      const s = suppliers.find((x: any) => x.id === issuerSupplierId);
+      if (s) setIssuerName(s.company || s.name || "");
+    }
+  }, [issuerSelectedId, issuerSupplierId, customers, suppliers]);
+
+  useEffect(() => {
+    if (payeeSelectedId) {
+      const c = customers.find((x: any) => x.id === payeeSelectedId);
+      if (c) setPayeeName(c.company || c.name || "");
+    } else if (payeeSupplierId) {
+      const s = suppliers.find((x: any) => x.id === payeeSupplierId);
+      if (s) setPayeeName(s.company || s.name || "");
+    }
+  }, [payeeSelectedId, payeeSupplierId, customers, suppliers]);
 
   const saveMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -61,6 +96,7 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
         due_date: formData.get("due_date") as string,
         amount: parseFloat((formData.get("amount") as string) || "0"),
         bank: formData.get("bank") as string,
+        issuer_name: formData.get("issuer_name") as string,
         payee: formData.get("payee") as string,
         status: formData.get("status") as string,
         notes: (formData.get("notes") as string) || null,
@@ -140,13 +176,6 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
               <Input id="amount" name="amount" type="number" step="0.01" defaultValue={editingCheck?.amount || ""} required />
             </div>
             <div>
-              <Label htmlFor="payee">Lehtar</Label>
-              <Input id="payee" name="payee" defaultValue={editingCheck?.payee || ""} required />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
               <Label>Durum</Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger>
@@ -161,6 +190,30 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
               </Select>
               <input type="hidden" name="status" value={status} />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="issuer_name">Keşideci (çeki düzenleyen)</Label>
+              <FormProvider {...issuerForm}>
+                <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
+              </FormProvider>
+              <input type="hidden" id="issuer_name" name="issuer_name" value={issuerName} />
+              <input type="hidden" name="issuer_customer_id" value={issuerSelectedId} />
+              <input type="hidden" name="issuer_supplier_id" value={issuerSupplierId} />
+            </div>
+            <div>
+              <Label htmlFor="payee">Lehtar (çeki alan)</Label>
+              <FormProvider {...payeeForm}>
+                <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
+              </FormProvider>
+              <input type="hidden" id="payee" name="payee" value={payeeName} />
+              <input type="hidden" name="payee_customer_id" value={payeeSelectedId} />
+              <input type="hidden" name="payee_supplier_id" value={payeeSupplierId} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="notes">Notlar</Label>
               <Textarea id="notes" name="notes" defaultValue={editingCheck?.notes || ""} />

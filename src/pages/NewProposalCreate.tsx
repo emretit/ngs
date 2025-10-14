@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useForm, FormProvider } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
@@ -24,7 +25,8 @@ import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
 import ProductSelector from "@/components/proposals/form/ProductSelector";
 import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
-import CustomerSelector from "@/components/proposals/form/CustomerSelector";
+import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
+import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 
 interface LineItem extends ProposalItem {
   row_number: number;
@@ -36,6 +38,20 @@ interface NewProposalCreateProps {
 }
 
 const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreateProps) => {
+  const form = useForm({ defaultValues: { customer_id: "", supplier_id: "" } });
+  const watchCustomerId = form.watch("customer_id");
+  const { customers } = useCustomerSelect();
+
+  useEffect(() => {
+    if (watchCustomerId) {
+      const selected = customers?.find(c => c.id === watchCustomerId);
+      if (selected) {
+        handleFieldChange('customer_id', watchCustomerId);
+        handleFieldChange('customer_company', selected.company || selected.name || "");
+        handleFieldChange('contact_name', selected.name || "");
+      }
+    }
+  }, [watchCustomerId, customers]);
   const navigate = useNavigate();
   const { createProposal } = useProposalCreation();
   const [saving, setSaving] = useState(false);
@@ -436,16 +452,9 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
+              <FormProvider {...form}>
               <div className="grid grid-cols-1 gap-3">
-                <CustomerSelector
-                  value={formData.customer_id}
-                  onChange={(customerId, customerName, companyName) => {
-                    handleFieldChange('customer_id', customerId);
-                    handleFieldChange('customer_company', companyName);
-                    handleFieldChange('contact_name', customerName);
-                  }}
-                  error=""
-                />
+                <ProposalPartnerSelect partnerType="customer" />
                 <ContactPersonInput
                   value={formData.contact_name}
                   onChange={(value) => handleFieldChange('contact_name', value)}
@@ -468,6 +477,7 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                   />
                 </div>
               </div>
+              </FormProvider>
             </CardContent>
           </Card>
 

@@ -196,9 +196,14 @@ export const navItems = [
         label: "OPEX Girişi",
       },
       {
-        path: "/cashflow/loans-and-checks",
+        path: "/cashflow/checks-notes",
+        icon: Receipt,
+        label: "Çekler ve Senetler",
+      },
+      {
+        path: "/cashflow/loans",
         icon: Calculator,
-        label: "Krediler ve Çekler",
+        label: "Krediler",
       },
     ],
   },

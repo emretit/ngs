@@ -16,7 +16,7 @@ interface DatePickerProps {
   onSelect?: (date: Date | undefined) => void;
   placeholder?: string;
   className?: string;
-  disabled?: boolean;
+  disabled?: boolean | ((date: Date) => boolean);
 }
 
 function EnhancedCalendar({
@@ -166,6 +166,8 @@ function EnhancedCalendar({
 }
 
 export function EnhancedDatePicker({ date, onSelect, placeholder = "Tarih seçin", className, disabled }: DatePickerProps) {
+  const isButtonDisabled = typeof disabled === 'boolean' ? disabled : false;
+  
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -176,7 +178,7 @@ export function EnhancedDatePicker({ date, onSelect, placeholder = "Tarih seçin
             !date && "text-muted-foreground",
             className
           )}
-          disabled={disabled}
+          disabled={isButtonDisabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {date ? format(date, "dd MMMM yyyy", { locale: tr }) : placeholder}
@@ -187,6 +189,7 @@ export function EnhancedDatePicker({ date, onSelect, placeholder = "Tarih seçin
           mode="single"
           selected={date}
           onSelect={onSelect}
+          disabled={disabled}
           initialFocus
         />
       </PopoverContent>

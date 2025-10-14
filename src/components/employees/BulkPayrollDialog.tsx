@@ -216,7 +216,7 @@ export const BulkPayrollDialog = ({ open, onOpenChange, selectedEmployees }: Bul
                           {item.employee.first_name} {item.employee.last_name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {item.employee.position} - {item.employee.department_id}
+                          {item.employee.position} - {item.employee.department}
                         </div>
                       </div>
                     </div>

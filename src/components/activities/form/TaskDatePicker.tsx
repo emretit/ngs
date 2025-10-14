@@ -47,9 +47,11 @@ const TaskDatePicker = ({ form, defaultValue }: TaskDatePickerProps) => {
                 mode="single"
                 selected={field.value ? new Date(field.value) : undefined}
                 onSelect={(date) => {
-                  field.onChange(date ? date.toISOString() : undefined);
+                  field.onChange(date || undefined);
                 }}
                 initialFocus
+                className={cn("p-3 pointer-events-auto")}
+                locale={tr}
               />
             </PopoverContent>
           </Popover>

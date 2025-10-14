@@ -167,6 +167,7 @@ function EnhancedCalendar({
 
 export function EnhancedDatePicker({ date, onSelect, placeholder = "Tarih seçin", className, disabled }: DatePickerProps) {
   const isButtonDisabled = typeof disabled === 'boolean' ? disabled : false;
+  const calendarDisabled = typeof disabled === 'function' ? disabled : undefined;
   
   return (
     <Popover>
@@ -189,7 +190,7 @@ export function EnhancedDatePicker({ date, onSelect, placeholder = "Tarih seçin
           mode="single"
           selected={date}
           onSelect={onSelect}
-          disabled={disabled}
+          disabled={calendarDisabled}
           initialFocus
         />
       </PopoverContent>

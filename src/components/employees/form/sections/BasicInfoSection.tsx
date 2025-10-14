@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { DatePicker } from "@/components/ui/date-picker";
 import { User } from "lucide-react";
 import { Control } from "react-hook-form";
+import { format } from "date-fns";
 
 interface BasicInfoSectionProps {
   control: Control<any>;
@@ -134,7 +135,7 @@ export const BasicInfoSection = ({ control }: BasicInfoSectionProps) => {
               <FormControl>
                 <DatePicker
                   date={field.value ? new Date(field.value) : undefined}
-                  onSelect={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                  onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
                   placeholder="İşe başlama tarihi seçin"
                   className="h-7 text-xs"
                 />

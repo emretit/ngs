@@ -8,6 +8,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { MapPin, Home, Building } from "lucide-react";
 import { Control, useWatch, useFormContext } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 interface AddressSectionProps {
   control: Control<any>;
@@ -143,7 +144,7 @@ export const AddressSection = ({ control }: AddressSectionProps) => {
                 <FormControl>
                   <DatePicker
                     date={field.value ? new Date(field.value) : undefined}
-                    onSelect={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
+                    onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
                     placeholder="Doğum tarihi seçin"
                     className="h-7 text-xs"
                   />

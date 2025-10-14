@@ -47,7 +47,7 @@ const TaskDatePicker = ({ form, defaultValue }: TaskDatePickerProps) => {
                 mode="single"
                 selected={field.value ? new Date(field.value) : undefined}
                 onSelect={(date) => {
-                  field.onChange(date || undefined);
+                  field.onChange(date ? format(date, 'yyyy-MM-dd') : '');
                 }}
                 initialFocus
                 className={cn("p-3 pointer-events-auto")}

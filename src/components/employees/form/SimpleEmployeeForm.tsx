@@ -148,7 +148,7 @@ const SimpleEmployeeForm = () => {
         meal_allowance: data.meal_allowance || null,
         transport_allowance: data.transport_allowance || null,
         total_employer_cost: (data.net_salary || 0) + (data.manual_employer_sgk_cost || 0) + (data.meal_allowance || 0) + (data.transport_allowance || 0),
-        notes: data.notes || null,
+        salary_notes: data.notes || null,
         salary_input_type: 'net',
         calculate_as_minimum_wage: false,
         effective_date: data.hire_date || new Date().toISOString().split('T')[0],

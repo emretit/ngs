@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Customer } from "@/types/customer";
+import { Supplier } from "@/types/supplier";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,7 +10,7 @@ import { Filter, Download } from "lucide-react";
 import { format } from "date-fns";
 
 interface PaymentsListProps {
-  customer: Customer;
+  supplier: Supplier;
 }
 
 interface Payment {
@@ -26,16 +25,16 @@ interface Payment {
   recipient_name: string;
 }
 
-export const PaymentsList = ({ customer }: PaymentsListProps) => {
+export const PaymentsList = ({ supplier }: PaymentsListProps) => {
   const [directionFilter, setDirectionFilter] = useState("all");
 
   const { data: payments = [], isLoading, error } = useQuery({
-    queryKey: ['customer-payments', customer.id],
+    queryKey: ['supplier-payments', supplier.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
         .select('*')
-        .eq('customer_id', customer.id)
+        .eq('supplier_id', supplier.id)
         .order('payment_date', { ascending: false });
 
       if (error) throw error;
@@ -143,7 +142,7 @@ export const PaymentsList = ({ customer }: PaymentsListProps) => {
               </TableCell>
               <TableCell>{formatPaymentType(payment.payment_type)}</TableCell>
               <TableCell>
-                {payment.payment_direction === 'incoming' ? 'Müşteri Ödemesi' : 'Müşteri İadesi'}: {customer.name}
+                {payment.payment_direction === 'incoming' ? 'Tedarikçi İadesi' : 'Tedarikçi Ödemesi'}: {supplier.name || supplier.company}
                 {payment.description && ` - ${payment.description}`}
               </TableCell>
               <TableCell className="text-right">

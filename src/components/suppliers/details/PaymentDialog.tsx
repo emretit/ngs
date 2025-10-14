@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,7 +5,7 @@ import * as z from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { Customer } from "@/types/customer";
+import { Supplier } from "@/types/supplier";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -34,17 +33,17 @@ type PaymentFormData = z.infer<typeof paymentSchema>;
 interface PaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  customer: Customer;
+  supplier: Supplier;
 }
 
-export function PaymentDialog({ open, onOpenChange, customer }: PaymentDialogProps) {
+export function PaymentDialog({ open, onOpenChange, supplier }: PaymentDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       payment_date: new Date(),
-      payment_direction: "incoming",
+      payment_direction: "outgoing",
       account_type: "bank",
     },
   });
@@ -73,7 +72,7 @@ export function PaymentDialog({ open, onOpenChange, customer }: PaymentDialogPro
     if (!open) {
       form.reset({
         payment_date: new Date(),
-        payment_direction: "incoming",
+        payment_direction: "outgoing",
         account_type: "bank",
       });
     }
@@ -84,46 +83,13 @@ export function PaymentDialog({ open, onOpenChange, customer }: PaymentDialogPro
 
   async function onSubmit(data: PaymentFormData) {
     try {
-      // Önce kullanıcıyı ve company_id'yi al
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Kullanıcı bulunamadı");
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
-
-      // 1. Hesap tipine göre bakiye kontrolü yap
-      let accountBalance = 0;
-      if (data.account_type === "bank") {
-        const { data: bankAccount, error: bankFetchError } = await supabase
-          .from("bank_accounts")
-          .select("current_balance, available_balance")
-          .eq("id", data.account_id)
-          .single();
-        if (bankFetchError) throw bankFetchError;
-        accountBalance = bankAccount.current_balance;
-      } else if (data.account_type === "cash") {
-        const { data: cashAccount, error: cashFetchError } = await supabase
-          .from("cash_accounts")
-          .select("balance")
-          .eq("id", data.account_id)
-          .single();
-        if (cashFetchError) throw cashFetchError;
-        accountBalance = cashAccount.balance;
-      }
-      // Credit card ve partner hesapları için bakiye kontrolü yapılmaz
-
-      const { data: customerData, error: customerFetchError } = await supabase
-        .from("customers")
+      const { data: supplierData, error: supplierFetchError } = await supabase
+        .from("suppliers")
         .select("balance")
-        .eq("id", customer.id)
+        .eq("id", supplier.id)
         .single();
 
-      if (customerFetchError) throw customerFetchError;
+      if (supplierFetchError) throw supplierFetchError;
 
       // 2. Yeni ödemeyi ekle - status'u direkt "completed" olarak ayarla
       const paymentData: any = {
@@ -131,74 +97,64 @@ export function PaymentDialog({ open, onOpenChange, customer }: PaymentDialogPro
         payment_type: data.payment_type,
         description: data.description,
         payment_date: data.payment_date.toISOString(),
-        customer_id: customer.id,
+        supplier_id: supplier.id,
         payment_direction: data.payment_direction,
         status: "completed",
-        recipient_name: customer.name,
+        recipient_name: supplier.name || supplier.company,
         currency: "TRY",
-        company_id: profile.company_id
       };
 
-      // Hesap bilgisini ekle
+      // Şimdilik sadece banka hesapları destekleniyor
       if (data.account_type === "bank") {
         paymentData.bank_account_id = data.account_id;
       } else {
-        // Banka dışı hesaplar için sadece açıklama alanında belirt
-        const accountInfo = accounts?.[data.account_type]?.find(acc => acc.id === data.account_id);
-        const accountTypeText = data.account_type === 'cash' ? 'Kasa' :
-                               data.account_type === 'credit_card' ? 'Kredi Kartı' :
-                               data.account_type === 'partner' ? 'Ortak Hesabı' : '';
-        paymentData.description = `${accountTypeText}: ${accountInfo?.label || ''} - ${data.description || ''}`.trim();
+        throw new Error("Şu anda sadece banka hesapları desteklenmektedir.");
       }
 
       const { error: paymentError } = await supabase.from("payments").insert(paymentData);
 
       if (paymentError) throw paymentError;
 
-      // 3. Hesap bakiyesini güncelle (sadece banka hesapları için)
+      // 3. Banka hesabı bakiyesini güncelle
       const balanceMultiplier = data.payment_direction === "incoming" ? 1 : -1;
+      const { data: bankAccount, error: bankFetchError } = await supabase
+        .from("bank_accounts")
+        .select("current_balance, available_balance")
+        .eq("id", data.account_id)
+        .single();
 
-      if (data.account_type === "bank") {
-        const { data: bankAccount, error: bankFetchError } = await supabase
-          .from("bank_accounts")
-          .select("current_balance, available_balance")
-          .eq("id", data.account_id)
-          .single();
+      if (bankFetchError) throw bankFetchError;
 
-        if (bankFetchError) throw bankFetchError;
+      const newCurrentBalance = bankAccount.current_balance + (data.amount * balanceMultiplier);
+      const newAvailableBalance = bankAccount.available_balance + (data.amount * balanceMultiplier);
 
-        const newCurrentBalance = bankAccount.current_balance + (data.amount * balanceMultiplier);
-        const newAvailableBalance = bankAccount.available_balance + (data.amount * balanceMultiplier);
-
-        const { error: bankUpdateError } = await supabase
-          .from("bank_accounts")
-          .update({
-            current_balance: newCurrentBalance,
-            available_balance: newAvailableBalance,
-          })
-          .eq("id", data.account_id);
-
-        if (bankUpdateError) throw bankUpdateError;
-      }
-      // Diğer hesap türleri için bakiye güncelleme şimdilik yapılmıyor
-
-      // 4. Müşteri bakiyesini güncelle
-      const customerBalanceMultiplier = data.payment_direction === "incoming" ? -1 : 1;
-      const newCustomerBalance = customerData.balance + (data.amount * customerBalanceMultiplier);
-
-      const { error: customerUpdateError } = await supabase
-        .from("customers")
+      const { error: bankUpdateError } = await supabase
+        .from("bank_accounts")
         .update({
-          balance: newCustomerBalance,
+          current_balance: newCurrentBalance,
+          available_balance: newAvailableBalance,
         })
-        .eq("id", customer.id);
+        .eq("id", data.account_id);
 
-      if (customerUpdateError) throw customerUpdateError;
+      if (bankUpdateError) throw bankUpdateError;
+
+      // 4. Tedarikçi bakiyesini güncelle
+      const supplierBalanceMultiplier = data.payment_direction === "incoming" ? -1 : 1;
+      const newSupplierBalance = supplierData.balance + (data.amount * supplierBalanceMultiplier);
+
+      const { error: supplierUpdateError } = await supabase
+        .from("suppliers")
+        .update({
+          balance: newSupplierBalance,
+        })
+        .eq("id", supplier.id);
+
+      if (supplierUpdateError) throw supplierUpdateError;
 
       // Cache'i güncelle
       queryClient.invalidateQueries({ queryKey: ["payment-accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
-      queryClient.invalidateQueries({ queryKey: ["customer-payments", customer.id] });
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      queryClient.invalidateQueries({ queryKey: ["supplier-payments", supplier.id] });
 
       toast({
         title: "Ödeme başarıyla oluşturuldu",
@@ -257,8 +213,8 @@ export function PaymentDialog({ open, onOpenChange, customer }: PaymentDialogPro
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="incoming">Gelen Ödeme (Müşteriden)</SelectItem>
-                        <SelectItem value="outgoing">Giden Ödeme (Müşteriye)</SelectItem>
+                        <SelectItem value="incoming">Gelen Ödeme (Tedarikçiden)</SelectItem>
+                        <SelectItem value="outgoing">Giden Ödeme (Tedarikçiye)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

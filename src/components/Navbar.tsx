@@ -74,16 +74,12 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
       );
       const isAlreadyExpanded = expandedMenus.has(item.path);
       
-      // If we're on a related page (parent or child) and menu is not expanded, just expand it
-      if ((isOnParentPage || isOnRelatedChildPage) && !isAlreadyExpanded) {
-        startTransition(() => {
-          setExpandedMenus(prev => new Set([...prev, item.path]));
-        });
-        return;
-      }
+      // Always navigate to parent page first
+      navigate(item.path);
       
-      // If we're on a related page and menu is expanded, just collapse it
-      if ((isOnParentPage || isOnRelatedChildPage) && isAlreadyExpanded) {
+      // Then handle dropdown state
+      if (isAlreadyExpanded) {
+        // If already expanded, collapse it
         startTransition(() => {
           setExpandedMenus(prev => {
             const newExpanded = new Set(prev);
@@ -91,14 +87,12 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
             return newExpanded;
           });
         });
-        return;
+      } else {
+        // If not expanded, expand it
+        startTransition(() => {
+          setExpandedMenus(prev => new Set([...prev, item.path]));
+        });
       }
-      
-      // If we're on a different page, navigate and expand menu
-      navigate(item.path);
-      startTransition(() => {
-        setExpandedMenus(prev => new Set([...prev, item.path]));
-      });
     } else {
       // For regular nav items without dropdown, just navigate
       navigate(item.path);

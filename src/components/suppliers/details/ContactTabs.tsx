@@ -12,6 +12,7 @@ import { Supplier } from "@/types/supplier";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SupplierInvoicesTab from './SupplierInvoicesTab';
+import { PaymentsTab } from './PaymentsTab';
 
 interface ContactTabsProps {
   supplier: Supplier;
@@ -126,11 +127,7 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
       </CustomTabsList>
 
       <CustomTabsContent value="payments">
-        <EmptyState
-          icon={<CreditCard className="w-8 h-8 text-gray-400" />}
-          title="Ödemeler"
-          description="Bu tedarikçi için yapılan ödemeler burada görüntülenecek."
-        />
+        <PaymentsTab supplier={supplier} />
       </CustomTabsContent>
 
       <CustomTabsContent value="activities">

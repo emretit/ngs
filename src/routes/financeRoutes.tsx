@@ -14,7 +14,6 @@ import CashAccountDetail from "@/pages/CashAccountDetail";
 import CreditCardDetail from "@/pages/CreditCardDetail";
 import BankAccountDetail from "@/pages/BankAccountDetail";
 import PartnerAccountDetail from "@/pages/PartnerAccountDetail";
-import TransferHistory from "@/pages/TransferHistory";
 import EInvoiceProcess from "@/pages/EInvoiceProcess";
 import EInvoices from "@/pages/EInvoices";
 import { RouteConfig } from "./types";
@@ -27,7 +26,6 @@ export const cashflowRoutes: RouteConfig[] = [
   { path: "/cashflow/loans-and-checks", component: CashflowLoansAndChecks, protected: true },
   { path: "/cashflow/bank-accounts", component: CashflowBankAccounts, protected: true },
   { path: "/cashflow/categories", component: CashflowCategoriesWrapper, protected: true },
-  { path: "/cashflow/transfers", component: TransferHistory, protected: true },
   // Account detail routes
   { path: "/cashflow/cash-accounts/:id", component: CashAccountDetail, protected: true },
   { path: "/cashflow/credit-cards/:id", component: CreditCardDetail, protected: true },

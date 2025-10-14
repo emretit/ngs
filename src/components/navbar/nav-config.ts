@@ -200,11 +200,6 @@ export const navItems = [
         icon: Calculator,
         label: "Krediler ve Çekler",
       },
-      {
-        path: "/cashflow/transfers",
-        icon: ArrowRightLeft,
-        label: "Transfer Geçmişi",
-      },
     ],
   },
   // 9. Ürünler

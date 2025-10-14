@@ -20,10 +20,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 const paymentSchema = z.object({
   amount: z.number().positive("Tutar 0'dan büyük olmalıdır"),
-  payment_type: z.enum(["havale", "eft", "kredi_karti", "nakit"]),
+  payment_type: z.enum(["hesap", "cek", "senet"]),
   payment_direction: z.enum(["incoming", "outgoing"]),
-  account_type: z.enum(["cash", "bank", "credit_card", "partner"]),
-  account_id: z.string().uuid(),
+  account_type: z.enum(["cash", "bank", "credit_card", "partner"]).optional(),
+  account_id: z.string().uuid().optional(),
   description: z.string().optional(),
   payment_date: z.date(),
 });
@@ -44,6 +44,7 @@ export function PaymentDialog({ open, onOpenChange, supplier }: PaymentDialogPro
     defaultValues: {
       payment_date: new Date(),
       payment_direction: "outgoing",
+      payment_type: "hesap",
       account_type: "bank",
     },
   });
@@ -80,6 +81,7 @@ export function PaymentDialog({ open, onOpenChange, supplier }: PaymentDialogPro
 
   // Watch account type changes to reset account selection
   const accountType = form.watch("account_type");
+  const selectedPaymentType = form.watch("payment_type");
 
   async function onSubmit(data: PaymentFormData) {
     try {
@@ -235,10 +237,9 @@ export function PaymentDialog({ open, onOpenChange, supplier }: PaymentDialogPro
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="havale">Havale</SelectItem>
-                        <SelectItem value="eft">EFT</SelectItem>
-                        <SelectItem value="kredi_karti">Kredi Kartı</SelectItem>
-                        <SelectItem value="nakit">Nakit</SelectItem>
+                        <SelectItem value="hesap">Nakit - Kredi Kartı - Banka</SelectItem>
+                        <SelectItem value="cek">Çek</SelectItem>
+                        <SelectItem value="senet">Senet</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -249,6 +250,7 @@ export function PaymentDialog({ open, onOpenChange, supplier }: PaymentDialogPro
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {selectedPaymentType === 'hesap' && (
               <FormField
                 control={form.control}
                 name="account_type"
@@ -274,8 +276,9 @@ export function PaymentDialog({ open, onOpenChange, supplier }: PaymentDialogPro
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              />)}
 
+              {selectedPaymentType === 'hesap' && (
               <FormField
                 control={form.control}
                 name="account_id"
@@ -314,7 +317,7 @@ export function PaymentDialog({ open, onOpenChange, supplier }: PaymentDialogPro
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              />)}
 
               <FormField
                 control={form.control}

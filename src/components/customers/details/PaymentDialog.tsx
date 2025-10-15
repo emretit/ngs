@@ -92,7 +92,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
 
   // Watch account type changes to reset account selection
   const accountType = form.watch("account_type");
-  const selectedPaymentType = form.watch("payment_type");
+  const selectedPaymentType = defaultPaymentType || "hesap";
 
   async function onSubmit(data: PaymentFormData) {
     try {
@@ -140,7 +140,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
       // 2. Yeni ödemeyi ekle - status'u direkt "completed" olarak ayarla
       const paymentData: any = {
         amount: data.amount,
-        payment_type: data.payment_type,
+        payment_type: selectedPaymentType || "hesap", // Dropdown'dan gelen değeri kullan
         description: data.description,
         payment_date: data.payment_date.toISOString(),
         customer_id: customer.id,

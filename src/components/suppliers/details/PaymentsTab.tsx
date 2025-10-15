@@ -153,9 +153,6 @@ export const PaymentsTab = ({ supplier }: PaymentsTabProps) => {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-xl">Ödeme Geçmişi</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {supplier.name || supplier.company} ile yapılan tüm finansal işlemler
-              </p>
             </div>
             <PaymentMethodSelector 
               onMethodSelect={handleMethodSelect}

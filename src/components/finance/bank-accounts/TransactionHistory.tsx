@@ -90,6 +90,7 @@ const TransactionHistory = ({ accountId }: TransactionHistoryProps) => {
     return <div>Yükleniyor...</div>;
   }
 
+
   const formatTransactionType = (transaction: Transaction) => {
     if (transaction.payment_type) {
       switch (transaction.payment_type) {

@@ -137,7 +137,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
 
       if (customerFetchError) throw customerFetchError;
 
-      // 2. Yeni ödemeyi ekle - status'u direkt "completed" olarak ayarla
+      // 2. Yeni ödemeyi ekle
       const paymentData: any = {
         amount: data.amount,
         payment_type: selectedPaymentType || "hesap", // Dropdown'dan gelen değeri kullan
@@ -145,8 +145,6 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
         payment_date: data.payment_date.toISOString(),
         customer_id: customer.id,
         payment_direction: data.payment_direction,
-        status: "completed",
-        recipient_name: customer.name,
         currency: "TRY",
         company_id: profile.company_id
       };
@@ -211,6 +209,7 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
       queryClient.invalidateQueries({ queryKey: ["payment-accounts"] });
       queryClient.invalidateQueries({ queryKey: ["customers"] });
       queryClient.invalidateQueries({ queryKey: ["customer-payments", customer.id] });
+      queryClient.invalidateQueries({ queryKey: ["customer-payment-stats", customer.id] });
 
       toast({
         title: "Ödeme başarıyla oluşturuldu",

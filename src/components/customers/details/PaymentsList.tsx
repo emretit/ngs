@@ -24,6 +24,14 @@ interface Payment {
   payment_type: string;
   description: string;
   recipient_name: string;
+  bank_account_id?: string;
+  cash_account_id?: string;
+  credit_card_id?: string;
+  partner_account_id?: string;
+  bank_accounts?: { account_name: string; bank_name: string };
+  cash_accounts?: { account_name: string };
+  credit_cards?: { card_name: string; bank_name: string };
+  partner_accounts?: { name: string };
 }
 
 export const PaymentsList = ({ customer }: PaymentsListProps) => {
@@ -34,7 +42,10 @@ export const PaymentsList = ({ customer }: PaymentsListProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('*')
+        .select(`
+          *,
+          bank_accounts(account_name, bank_name)
+        `)
         .eq('customer_id', customer.id)
         .order('payment_date', { ascending: false });
 
@@ -53,44 +64,52 @@ export const PaymentsList = ({ customer }: PaymentsListProps) => {
         return "Kredi Kartı";
       case "nakit":
         return "Nakit";
+      case "hesap":
+        return "Hesap";
+      case "cek":
+        return "Çek";
+      case "senet":
+        return "Senet";
       default:
         return paymentType;
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return (
-          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-            Tamamlandı
-          </span>
-        );
-      case 'pending':
-        return (
-          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-            Bekliyor
-          </span>
-        );
-      case 'failed':
-        return (
-          <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-            Başarısız
-          </span>
-        );
-      default:
-        return (
-          <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-            {status}
-          </span>
-        );
+  const getAccountName = (payment: Payment) => {
+    if (payment.bank_accounts) {
+      return `${payment.bank_accounts.account_name} - ${payment.bank_accounts.bank_name}`;
     }
+    return "Bilinmeyen Hesap";
   };
+
 
   const filteredPayments = payments.filter(payment => {
     const matchesDirection = directionFilter === 'all' || payment.payment_direction === directionFilter;
     return matchesDirection;
   });
+
+  // Toplam bakiye hesapla
+  const totalBalance = payments.reduce((total, payment) => {
+    if (payment.payment_direction === 'incoming') {
+      return total + Number(payment.amount);
+    } else {
+      return total - Number(payment.amount);
+    }
+  }, 0);
+
+  // Her ödeme için kümülatif bakiye hesapla
+  const calculateCumulativeBalance = (index: number) => {
+    let balance = 0;
+    for (let i = 0; i <= index; i++) {
+      const payment = payments[i];
+      if (payment.payment_direction === 'incoming') {
+        balance += Number(payment.amount);
+      } else {
+        balance -= Number(payment.amount);
+      }
+    }
+    return balance;
+  };
 
   if (isLoading) {
     return <div>Yükleniyor...</div>;
@@ -102,6 +121,16 @@ export const PaymentsList = ({ customer }: PaymentsListProps) => {
         <div className="flex items-center gap-3">
           <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
             Toplam: {payments?.length || 0} İşlem
+          </span>
+          <span className={`text-xs px-2 py-1 rounded-full ${
+            totalBalance >= 0 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-red-100 text-red-800'
+          }`}>
+            Bakiye: {totalBalance.toLocaleString("tr-TR", {
+              style: "currency",
+              currency: "TRY"
+            })}
           </span>
         </div>
         <div className="flex gap-2">
@@ -130,36 +159,49 @@ export const PaymentsList = ({ customer }: PaymentsListProps) => {
           <TableRow>
             <TableHead>Tarih</TableHead>
             <TableHead>İşlem</TableHead>
-            <TableHead>Açıklama</TableHead>
+            <TableHead>Hesap</TableHead>
+            <TableHead className="w-48">Açıklama</TableHead>
             <TableHead className="text-right">Tutar</TableHead>
-            <TableHead>Durum</TableHead>
+            <TableHead className="text-right">Toplam Bakiye</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredPayments?.map((payment) => (
-            <TableRow key={payment.id}>
-              <TableCell>
-                {format(new Date(payment.payment_date), "dd.MM.yyyy")}
-              </TableCell>
-              <TableCell>{formatPaymentType(payment.payment_type)}</TableCell>
-              <TableCell>
-                {payment.payment_direction === 'incoming' ? 'Müşteri Ödemesi' : 'Müşteri İadesi'}: {customer.name}
-                {payment.description && ` - ${payment.description}`}
-              </TableCell>
-              <TableCell className="text-right">
-                <span className={payment.payment_direction === 'incoming' ? "text-green-600" : "text-red-600"}>
-                  {payment.amount.toLocaleString("tr-TR", {
-                    style: "currency",
-                    currency: payment.currency || 'TRY',
-                    signDisplay: "always"
-                  })}
-                </span>
-              </TableCell>
-              <TableCell>
-                {getStatusBadge(payment.status)}
-              </TableCell>
-            </TableRow>
-          ))}
+          {filteredPayments?.map((payment, index) => {
+            const cumulativeBalance = calculateCumulativeBalance(index);
+            return (
+              <TableRow key={payment.id}>
+                <TableCell>
+                  {format(new Date(payment.payment_date), "dd.MM.yyyy")}
+                </TableCell>
+                <TableCell>{formatPaymentType(payment.payment_type)}</TableCell>
+                <TableCell className="font-medium">
+                  {getAccountName(payment)}
+                </TableCell>
+                <TableCell className="w-48">
+                  <div className="truncate" title={payment.description || 'Açıklama yok'}>
+                    {payment.description || 'Açıklama yok'}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <span className={payment.payment_direction === 'incoming' ? "text-green-600" : "text-red-600"}>
+                    {payment.amount.toLocaleString("tr-TR", {
+                      style: "currency",
+                      currency: payment.currency || 'TRY',
+                      signDisplay: "always"
+                    })}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <span className={cumulativeBalance >= 0 ? "text-green-600" : "text-red-600"}>
+                    {cumulativeBalance.toLocaleString("tr-TR", {
+                      style: "currency",
+                      currency: payment.currency || 'TRY'
+                    })}
+                  </span>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

@@ -220,15 +220,50 @@ export function useBankAccountTransactions(accountId: string | undefined, limit:
     queryFn: async () => {
       if (!accountId) throw new Error("Hesap ID bulunamadı");
 
-      const { data, error } = await supabase
-        .from('bank_transactions')
-        .select('*')
-        .eq('account_id', accountId)
-        .order('transaction_date', { ascending: false })
-        .limit(limit);
+      const [bankTransactions, payments] = await Promise.all([
+        supabase
+          .from('bank_transactions')
+          .select('*')
+          .eq('account_id', accountId)
+          .order('transaction_date', { ascending: false })
+          .limit(limit),
+        
+        supabase
+          .from('payments')
+          .select(`
+            *,
+            customer:customers(name),
+            supplier:suppliers(name)
+          `)
+          .eq('bank_account_id', accountId)
+          .order('payment_date', { ascending: false })
+          .limit(limit)
+      ]);
 
-      if (error) throw error;
-      return (data as Transaction[]) || [];
+      if (bankTransactions.error) throw bankTransactions.error;
+      if (payments.error) throw payments.error;
+
+      const formattedPayments = payments.data.map((payment) => ({
+        id: payment.id,
+        amount: payment.amount,
+        description: payment.description,
+        transaction_date: payment.payment_date,
+        type: payment.payment_direction === 'incoming' ? 'income' : 'expense',
+        currency: payment.currency,
+        customer_name: payment.customer?.name,
+        supplier_name: payment.supplier?.name,
+        payment_direction: payment.payment_direction,
+        payment_type: payment.payment_type
+      }));
+
+      const allTransactions = [
+        ...bankTransactions.data,
+        ...formattedPayments
+      ].sort((a, b) => 
+        new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
+      );
+
+      return allTransactions.slice(0, limit);
     },
     enabled: !!accountId,
     staleTime: 1000 * 60 * 5, // 5 dakika cache - daha uzun

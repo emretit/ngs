@@ -288,16 +288,43 @@ const CashflowChecksAndNotes = () => {
     }).format(amount);
   };
 
+  // Durum kategorileri
+  const statusCategories = {
+    'portfoyde': 'incoming',
+    'bankaya_verildi': 'incoming', 
+    'tahsilat_bekleniyor': 'incoming',
+    'tahsil_edildi': 'incoming',
+    'odenecek': 'outgoing',
+    'odendi': 'outgoing',
+    'karsilik_yok': 'outgoing',
+    'tedarikciye_verildi': 'outgoing'
+  };
+
+  // Gelen çekler - NGS'e gelen ve henüz tedarikçiye verilmeyen
+  const incomingChecks = checks.filter(check => 
+    (check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.') &&
+    !['tedarikciye_verildi'].includes(check.status)
+  );
+
+  // Giden çekler - NGS'den giden + tedarikçiye verilen gelen çekler
+  const outgoingChecks = checks.filter(check => 
+    (check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.') ||
+    check.status === 'tedarikciye_verildi'
+  );
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { label: "Beklemede", variant: "secondary" as const },
+      portfoyde: { label: "Portföyde", variant: "secondary" as const },
       odenecek: { label: "Ödenecek", variant: "destructive" as const },
       odendi: { label: "Ödendi", variant: "default" as const },
       cleared: { label: "Tahsil Edildi", variant: "default" as const },
+      tahsil_edildi: { label: "Tahsil Edildi", variant: "default" as const },
       bounced: { label: "Karşılıksız", variant: "destructive" as const },
       karsilik_yok: { label: "Karşılıksız", variant: "destructive" as const },
       bankaya_verildi: { label: "Bankaya Verildi", variant: "outline" as const },
       tahsilat_bekleniyor: { label: "Tahsilat Bekleniyor", variant: "secondary" as const },
+      tedarikciye_verildi: { label: "Tedarikçiye Verildi", variant: "outline" as const },
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "secondary" as const };
@@ -512,25 +539,25 @@ const CashflowChecksAndNotes = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Toplam Tutar</span>
                         <span className="text-lg font-semibold text-green-600">
-                          {formatCurrency(checks.filter(check => check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.').reduce((sum, check) => sum + check.amount, 0))}
+                          {formatCurrency(incomingChecks.reduce((sum, check) => sum + check.amount, 0))}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Bekleyen</span>
                         <span className="text-sm font-medium text-orange-600">
-                          {checks.filter(check => (check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.') && (check.status === 'odenecek' || check.status === 'pending')).length} çek
+                          {incomingChecks.filter(check => check.status === 'portfoyde' || check.status === 'pending').length} çek
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Bankaya Verilen</span>
                         <span className="text-sm font-medium text-blue-600">
-                          {checks.filter(check => (check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.') && (check.status === 'bankaya_verildi' || check.status === 'tahsilat_bekleniyor')).length} çek
+                          {incomingChecks.filter(check => check.status === 'bankaya_verildi' || check.status === 'tahsilat_bekleniyor').length} çek
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Tahsil Edilen</span>
                         <span className="text-sm font-medium text-green-600">
-                          {checks.filter(check => (check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.') && check.status === 'odendi').length} çek
+                          {incomingChecks.filter(check => check.status === 'tahsil_edildi' || check.status === 'odendi').length} çek
                         </span>
                       </div>
                     </div>
@@ -562,8 +589,7 @@ const CashflowChecksAndNotes = () => {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {checks
-                              .filter(check => check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.')
+                            {incomingChecks
                               .slice(0, 5) // İlk 5 çeki göster
                               .map((check) => (
                                 <TableRow key={check.id} className="hover:bg-gray-50">
@@ -598,7 +624,7 @@ const CashflowChecksAndNotes = () => {
                                   </TableCell>
                                 </TableRow>
                               ))}
-                            {checks.filter(check => check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.').length === 0 && (
+                            {incomingChecks.length === 0 && (
                               <TableRow>
                                 <TableCell colSpan={6} className="text-center text-sm text-gray-500 py-4">
                                   Henüz gelen çek bulunmuyor
@@ -609,10 +635,10 @@ const CashflowChecksAndNotes = () => {
                         </Table>
                       </div>
                       
-                      {checks.filter(check => check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.').length > 5 && (
+                      {incomingChecks.length > 5 && (
                         <div className="mt-2 text-center">
                           <Button variant="outline" size="sm" className="text-xs">
-                            Tümünü Gör ({checks.filter(check => check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.').length} çek)
+                            Tümünü Gör ({incomingChecks.length} çek)
                           </Button>
                         </div>
                       )}
@@ -645,19 +671,19 @@ const CashflowChecksAndNotes = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Toplam Tutar</span>
                         <span className="text-lg font-semibold text-blue-600">
-                          {formatCurrency(checks.filter(check => check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.').reduce((sum, check) => sum + check.amount, 0))}
+                          {formatCurrency(outgoingChecks.reduce((sum, check) => sum + check.amount, 0))}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Bekleyen</span>
                         <span className="text-sm font-medium text-orange-600">
-                          {checks.filter(check => (check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.') && (check.status === 'odenecek' || check.status === 'pending')).length} çek
+                          {outgoingChecks.filter(check => check.status === 'odenecek' || check.status === 'pending').length} çek
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Tahsil Edilen</span>
                         <span className="text-sm font-medium text-green-600">
-                          {checks.filter(check => (check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.') && check.status === 'odendi').length} çek
+                          {outgoingChecks.filter(check => check.status === 'odendi' || check.status === 'tahsil_edildi').length} çek
                         </span>
                       </div>
                     </div>
@@ -689,8 +715,7 @@ const CashflowChecksAndNotes = () => {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {checks
-                              .filter(check => check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.')
+                            {outgoingChecks
                               .slice(0, 5) // İlk 5 çeki göster
                               .map((check) => (
                                 <TableRow key={check.id} className="hover:bg-gray-50">
@@ -725,7 +750,7 @@ const CashflowChecksAndNotes = () => {
                                   </TableCell>
                                 </TableRow>
                               ))}
-                            {checks.filter(check => check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.').length === 0 && (
+                            {outgoingChecks.length === 0 && (
                               <TableRow>
                                 <TableCell colSpan={6} className="text-center text-sm text-gray-500 py-4">
                                   Henüz giden çek bulunmuyor
@@ -736,10 +761,10 @@ const CashflowChecksAndNotes = () => {
                         </Table>
                       </div>
                       
-                      {checks.filter(check => check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.').length > 5 && (
+                      {outgoingChecks.length > 5 && (
                         <div className="mt-2 text-center">
                           <Button variant="outline" size="sm" className="text-xs">
-                            Tümünü Gör ({checks.filter(check => check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.').length} çek)
+                            Tümünü Gör ({outgoingChecks.length} çek)
                           </Button>
                         </div>
                       )}
@@ -817,14 +842,16 @@ const CashflowChecksAndNotes = () => {
                           <SelectTrigger>
                             <SelectValue placeholder="Durum seçin" />
                           </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Beklemede</SelectItem>
-                            <SelectItem value="odenecek">Ödenecek</SelectItem>
-                            <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
-                            <SelectItem value="tahsilat_bekleniyor">Tahsilat Bekleniyor</SelectItem>
-                            <SelectItem value="odendi">Ödendi</SelectItem>
-                            <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
-                          </SelectContent>
+                        <SelectContent>
+                          <SelectItem value="portfoyde">Portföyde</SelectItem>
+                          <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
+                          <SelectItem value="tahsilat_bekleniyor">Tahsilat Bekleniyor</SelectItem>
+                          <SelectItem value="tahsil_edildi">Tahsil Edildi</SelectItem>
+                          <SelectItem value="tedarikciye_verildi">Tedarikçiye Verildi</SelectItem>
+                          <SelectItem value="odenecek">Ödenecek</SelectItem>
+                          <SelectItem value="odendi">Ödendi</SelectItem>
+                          <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
+                        </SelectContent>
                         </Select>
                         <input type="hidden" name="status" value={checkStatus} />
                       </div>

@@ -314,7 +314,7 @@ const CashflowChecks = () => {
   }, [allOutgoingChecks, outgoingSearchQuery, outgoingStatusFilter, outgoingStartDate, outgoingEndDate]);
 
   return (
-    <div className="space-y-6">
+    <>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Gelen Çekler Kartı */}
         <Card className="group relative overflow-hidden bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
@@ -1061,7 +1061,7 @@ const CashflowChecks = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
 

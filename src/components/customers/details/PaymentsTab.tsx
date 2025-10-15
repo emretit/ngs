@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { CreditCard, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PaymentDialog } from "./PaymentDialog";
@@ -16,6 +16,11 @@ interface PaymentsTabProps {
 export const PaymentsTab = ({ customer }: PaymentsTabProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPaymentType, setSelectedPaymentType] = useState<"hesap" | "cek" | "senet" | null>(null);
+
+  const handleMethodSelect = useCallback((method: { type: "hesap" | "cek" | "senet" }) => {
+    setSelectedPaymentType(method.type);
+    setIsDialogOpen(true);
+  }, []);
 
   // Fetch payment statistics
   const { data: paymentStats, isLoading: isLoadingStats } = useQuery({
@@ -154,10 +159,7 @@ export const PaymentsTab = ({ customer }: PaymentsTabProps) => {
               </p>
             </div>
             <PaymentMethodSelector 
-              onMethodSelect={(method) => {
-                setSelectedPaymentType(method.type);
-                setIsDialogOpen(true);
-              }}
+              onMethodSelect={handleMethodSelect}
             />
           </div>
         </CardHeader>

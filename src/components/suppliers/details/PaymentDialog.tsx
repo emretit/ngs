@@ -50,6 +50,13 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
     },
   });
 
+  // defaultPaymentType değiştiğinde form'u güncelle
+  useEffect(() => {
+    if (defaultPaymentType) {
+      form.setValue('payment_type', defaultPaymentType);
+    }
+  }, [defaultPaymentType, form]);
+
   // Tüm hesap türlerini fetch et
   const { data: accounts } = useQuery({
     queryKey: ["payment-accounts"],

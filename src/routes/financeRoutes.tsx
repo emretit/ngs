@@ -4,6 +4,8 @@ import CashflowOpexEntry from "@/pages/CashflowOpexEntry";
 import CashflowExpenses from "@/pages/CashflowExpenses";
 import CashflowLoansAndChecks from "@/pages/CashflowLoansAndChecks";
 import CashflowChecksAndNotes from "@/pages/CashflowChecksAndNotes";
+import CashflowChecks from "@/pages/CashflowChecks";
+import CashflowNotes from "@/pages/CashflowNotes";
 import CashflowLoans from "@/pages/CashflowLoans";
 import CashflowBankAccounts from "@/pages/CashflowBankAccounts";
 import CashflowCategoriesWrapper from "@/pages/CashflowCategoriesWrapper";
@@ -25,6 +27,10 @@ export const cashflowRoutes: RouteConfig[] = [
   { path: "/cashflow", component: Cashflow, protected: true },
   { path: "/cashflow/opex-entry", component: CashflowOpexEntry, protected: true },
   { path: "/cashflow/expenses", component: CashflowExpenses, protected: true },
+  // Yeni ayrı route'lar
+  { path: "/cashflow/checks", component: CashflowChecks, protected: true },
+  { path: "/cashflow/notes", component: CashflowNotes, protected: true },
+  // Backward compatibility: eski combined route
   { path: "/cashflow/checks-notes", component: CashflowChecksAndNotes, protected: true },
   { path: "/cashflow/loans", component: CashflowLoans, protected: true },
   // Backward compatibility (optional): keep the old combined route

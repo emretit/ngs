@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, FileText, Download, Receipt, Search, Calendar, CreditCard, MoreHorizontal } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Download, Receipt, Search, Calendar, CreditCard, MoreHorizontal, Filter, Activity } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -75,6 +75,21 @@ const CashflowChecksAndNotes = () => {
   const [noteStatus, setNoteStatus] = useState("pending");
   const [checkType, setCheckType] = useState<"incoming" | "outgoing">("incoming"); // Gelen veya giden çek
   
+  // Filtreleme state'leri
+  const [incomingSearchQuery, setIncomingSearchQuery] = useState("");
+  const [incomingStatusFilter, setIncomingStatusFilter] = useState("all");
+  const [incomingStartDate, setIncomingStartDate] = useState<Date | undefined>(undefined);
+  const [incomingEndDate, setIncomingEndDate] = useState<Date | undefined>(undefined);
+  
+  const [outgoingSearchQuery, setOutgoingSearchQuery] = useState("");
+  const [outgoingStatusFilter, setOutgoingStatusFilter] = useState("all");
+  const [outgoingStartDate, setOutgoingStartDate] = useState<Date | undefined>(undefined);
+  const [outgoingEndDate, setOutgoingEndDate] = useState<Date | undefined>(undefined);
+  
+  // Ödenen hesap seçimi için
+  const [paymentAccountType, setPaymentAccountType] = useState<"cash" | "bank" | "credit_card" | "partner">("bank");
+  const [selectedPaymentAccountId, setSelectedPaymentAccountId] = useState<string>("");
+  
   // Check form states
   const [bankName, setBankName] = useState<string>("");
   const [issueDate, setIssueDate] = useState<Date | undefined>(undefined);
@@ -135,6 +150,26 @@ const CashflowChecksAndNotes = () => {
     }
   });
 
+  // Payment accounts query
+  const { data: paymentAccounts } = useQuery({
+    queryKey: ["payment-accounts"],
+    queryFn: async () => {
+      const [cashRes, bankRes, cardRes, partnerRes] = await Promise.all([
+        supabase.from('cash_accounts').select('id, name'),
+        supabase.from('bank_accounts').select('id, account_name, bank_name').eq("is_active", true),
+        supabase.from('credit_cards').select('id, card_name'),
+        supabase.from('partner_accounts').select('id, partner_name')
+      ]);
+
+      return {
+        cash: cashRes.data?.map(a => ({ id: a.id, label: a.name })) || [],
+        bank: bankRes.data?.map(a => ({ id: a.id, label: `${a.account_name} - ${a.bank_name}` })) || [],
+        credit_card: cardRes.data?.map(a => ({ id: a.id, label: a.card_name })) || [],
+        partner: partnerRes.data?.map(a => ({ id: a.id, label: a.partner_name })) || []
+      };
+    },
+  });
+
   // Update issuer/payee names when customer/supplier selection changes
   useEffect(() => {
     if (issuerSelectedId) {
@@ -188,6 +223,11 @@ const CashflowChecksAndNotes = () => {
     }
   }, [checkType, editingCheck]);
 
+  // Reset payment account selection when account type changes
+  useEffect(() => {
+    setSelectedPaymentAccountId("");
+  }, [paymentAccountType]);
+
   // Check mutations
   const saveCheckMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -198,14 +238,14 @@ const CashflowChecksAndNotes = () => {
         due_date: formData.get("due_date") as string,
         amount: parseFloat(formData.get("amount") as string),
         bank: formData.get("bank") as string,
-        issuer_name: formData.get("issuer_name") as string,
-        payee: formData.get("payee") as string,
+        issuer_name: checkType === "outgoing" ? "NGS İLETİŞİM" : (formData.get("issuer_name") as string),
+        payee: checkType === "incoming" ? "NGS İLETİŞİM" : (formData.get("payee") as string),
         status: status,
         notes: formData.get("notes") as string,
       };
 
-      // Tedarikçiye verildi durumunda tedarikçi bilgilerini ekle
-      if (status === "tedarikciye_verildi") {
+      // Ciro edildi durumunda tedarikçi bilgilerini ekle
+      if (status === "ciro_edildi") {
         const supplierId = formData.get("transferred_to_supplier_id") as string;
         const transferredDate = formData.get("transferred_date") as string;
         if (supplierId) {
@@ -314,32 +354,92 @@ const CashflowChecksAndNotes = () => {
   // Durum kategorileri - 7 ortak durum
   const statusCategories = {
     'portfoyde': 'incoming',
-    'bankaya_verildi': 'incoming', 
+    'bankaya_verildi': 'incoming',
     'tahsil_edildi': 'incoming',
-    'tedarikciye_verildi': 'outgoing',
+    'ciro_edildi': 'incoming',
     'karsilik_yok': 'outgoing',
     'odenecek': 'outgoing',
     'odendi': 'outgoing'
   };
 
-  // Gelen çekler - NGS'e gelen ve henüz tedarikçiye verilmeyen
-  const incomingChecks = checks.filter(check => 
+  // Gelen çekler - NGS'e gelen ve henüz ciro edilmeyen
+  const allIncomingChecks = checks.filter(check => 
     (check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.') &&
-    !['tedarikciye_verildi'].includes(check.status)
+    !['ciro_edildi'].includes(check.status)
   );
 
-  // Giden çekler - NGS'den giden + tedarikçiye verilen gelen çekler
-  const outgoingChecks = checks.filter(check => 
+  // Giden çekler - NGS'den giden + ciro edilen gelen çekler
+  const allOutgoingChecks = checks.filter(check => 
     (check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.') ||
-    check.status === 'tedarikciye_verildi'
+    check.status === 'ciro_edildi'
   );
+
+  // Filtrelenmiş gelen çekler
+  const incomingChecks = useMemo(() => {
+    return allIncomingChecks.filter(check => {
+      const matchesSearch = !incomingSearchQuery || 
+        check.check_number.toLowerCase().includes(incomingSearchQuery.toLowerCase()) ||
+        check.issuer_name.toLowerCase().includes(incomingSearchQuery.toLowerCase()) ||
+        check.bank.toLowerCase().includes(incomingSearchQuery.toLowerCase());
+      
+      const matchesStatus = incomingStatusFilter === "all" || check.status === incomingStatusFilter;
+      
+      // Tarih filtresi
+      let matchesDate = true;
+      if (incomingStartDate || incomingEndDate) {
+        const checkDate = new Date(check.due_date);
+        const startDate = incomingStartDate ? new Date(incomingStartDate) : null;
+        const endDate = incomingEndDate ? new Date(incomingEndDate) : null;
+        
+        if (startDate && endDate) {
+          matchesDate = checkDate >= startDate && checkDate <= endDate;
+        } else if (startDate) {
+          matchesDate = checkDate >= startDate;
+        } else if (endDate) {
+          matchesDate = checkDate <= endDate;
+        }
+      }
+      
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [allIncomingChecks, incomingSearchQuery, incomingStatusFilter, incomingStartDate, incomingEndDate]);
+
+  // Filtrelenmiş giden çekler
+  const outgoingChecks = useMemo(() => {
+    return allOutgoingChecks.filter(check => {
+      const matchesSearch = !outgoingSearchQuery || 
+        check.check_number.toLowerCase().includes(outgoingSearchQuery.toLowerCase()) ||
+        check.payee.toLowerCase().includes(outgoingSearchQuery.toLowerCase()) ||
+        check.bank.toLowerCase().includes(outgoingSearchQuery.toLowerCase());
+      
+      const matchesStatus = outgoingStatusFilter === "all" || check.status === outgoingStatusFilter;
+      
+      // Tarih filtresi
+      let matchesDate = true;
+      if (outgoingStartDate || outgoingEndDate) {
+        const checkDate = new Date(check.due_date);
+        const startDate = outgoingStartDate ? new Date(outgoingStartDate) : null;
+        const endDate = outgoingEndDate ? new Date(outgoingEndDate) : null;
+        
+        if (startDate && endDate) {
+          matchesDate = checkDate >= startDate && checkDate <= endDate;
+        } else if (startDate) {
+          matchesDate = checkDate >= startDate;
+        } else if (endDate) {
+          matchesDate = checkDate <= endDate;
+        }
+      }
+      
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [allOutgoingChecks, outgoingSearchQuery, outgoingStatusFilter, outgoingStartDate, outgoingEndDate]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       portfoyde: { label: "Portföyde", variant: "secondary" as const },
       bankaya_verildi: { label: "Bankaya Verildi", variant: "outline" as const },
       tahsil_edildi: { label: "Tahsil Edildi", variant: "default" as const },
-      tedarikciye_verildi: { label: "Tedarikçiye Verildi", variant: "outline" as const },
+      ciro_edildi: { label: "Ciro Edildi", variant: "outline" as const },
       karsilik_yok: { label: "Karşılıksız", variant: "destructive" as const },
       odenecek: { label: "Ödenecek", variant: "destructive" as const },
       odendi: { label: "Ödendi", variant: "default" as const },
@@ -561,29 +661,52 @@ const CashflowChecksAndNotes = () => {
                           {formatCurrency(incomingChecks.reduce((sum, check) => sum + check.amount, 0))}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Portföyde</span>
-                        <span className="text-sm font-medium text-orange-600">
-                          {incomingChecks.filter(check => check.status === 'portfoyde').length} çek
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Bankaya Verilen</span>
-                        <span className="text-sm font-medium text-blue-600">
-                          {incomingChecks.filter(check => check.status === 'bankaya_verildi').length} çek
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Tahsil Edilen</span>
-                        <span className="text-sm font-medium text-green-600">
-                          {incomingChecks.filter(check => check.status === 'tahsil_edildi').length} çek
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Tedarikçiye Verildi</span>
-                        <span className="text-sm font-medium text-blue-600">
-                          {incomingChecks.filter(check => check.status === 'tedarikciye_verildi').length} çek
-                        </span>
+                      
+                      {/* Durum Kartları */}
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {/* Portföyde */}
+                        <div className="bg-orange-50 border border-orange-200 rounded-md p-2 text-center">
+                          <div className="text-xs text-orange-600 font-medium mb-1">Portföyde</div>
+                          <div className="text-sm font-bold text-orange-700">
+                            {incomingChecks.filter(check => check.status === 'portfoyde').length}
+                          </div>
+                          <div className="text-xs text-orange-500 truncate">
+                            {formatCurrency(incomingChecks.filter(check => check.status === 'portfoyde').reduce((sum, check) => sum + check.amount, 0))}
+                          </div>
+                        </div>
+                        
+                        {/* Bankaya Verilen */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-md p-2 text-center">
+                          <div className="text-xs text-blue-600 font-medium mb-1">Bankaya</div>
+                          <div className="text-sm font-bold text-blue-700">
+                            {incomingChecks.filter(check => check.status === 'bankaya_verildi').length}
+                          </div>
+                          <div className="text-xs text-blue-500 truncate">
+                            {formatCurrency(incomingChecks.filter(check => check.status === 'bankaya_verildi').reduce((sum, check) => sum + check.amount, 0))}
+                          </div>
+                        </div>
+                        
+                        {/* Tahsil Edilen */}
+                        <div className="bg-green-50 border border-green-200 rounded-md p-2 text-center">
+                          <div className="text-xs text-green-600 font-medium mb-1">Tahsil</div>
+                          <div className="text-sm font-bold text-green-700">
+                            {incomingChecks.filter(check => check.status === 'tahsil_edildi').length}
+                          </div>
+                          <div className="text-xs text-green-500 truncate">
+                            {formatCurrency(incomingChecks.filter(check => check.status === 'tahsil_edildi').reduce((sum, check) => sum + check.amount, 0))}
+                          </div>
+                        </div>
+                        
+                        {/* Ciro Edildi */}
+                        <div className="bg-purple-50 border border-purple-200 rounded-md p-2 text-center">
+                          <div className="text-xs text-purple-600 font-medium mb-1">Ciro</div>
+                          <div className="text-sm font-bold text-purple-700">
+                            {incomingChecks.filter(check => check.status === 'ciro_edildi').length}
+                          </div>
+                          <div className="text-xs text-purple-500 truncate">
+                            {formatCurrency(incomingChecks.filter(check => check.status === 'ciro_edildi').reduce((sum, check) => sum + check.amount, 0))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -606,6 +729,52 @@ const CashflowChecksAndNotes = () => {
                             </Button>
                           </DialogTrigger>
                         </Dialog>
+                      </div>
+                      
+                      {/* Gelen Çekler Filtreleme */}
+                      <div className="flex flex-col sm:flex-row gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+                        <div className="relative min-w-[200px] flex-1">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Input
+                            placeholder="Çek no, keşideci veya banka ile ara..."
+                            value={incomingSearchQuery}
+                            onChange={(e) => setIncomingSearchQuery(e.target.value)}
+                            className="pl-10 w-full h-8 text-sm"
+                          />
+                        </div>
+
+                        <Select value={incomingStatusFilter} onValueChange={setIncomingStatusFilter}>
+                          <SelectTrigger className="w-[140px] h-8 text-sm">
+                            <Filter className="mr-2 h-4 w-4" />
+                            <SelectValue placeholder="Durum" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tüm Durumlar</SelectItem>
+                            <SelectItem value="portfoyde">Portföyde</SelectItem>
+                            <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
+                            <SelectItem value="tahsil_edildi">Tahsil Edildi</SelectItem>
+                            <SelectItem value="ciro_edildi">Ciro Edildi</SelectItem>
+                            <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {/* Tarih Filtreleri */}
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <EnhancedDatePicker
+                            date={incomingStartDate}
+                            onSelect={(newDate) => newDate && setIncomingStartDate(newDate)}
+                            placeholder="Başlangıç"
+                            className="w-32 text-xs h-8"
+                          />
+                          <span className="text-muted-foreground text-sm">-</span>
+                          <EnhancedDatePicker
+                            date={incomingEndDate}
+                            onSelect={(newDate) => newDate && setIncomingEndDate(newDate)}
+                            placeholder="Bitiş"
+                            className="w-32 text-xs h-8"
+                          />
+                        </div>
                       </div>
                       
                       {/* Gelen Çekler Tablosu */}
@@ -641,12 +810,12 @@ const CashflowChecksAndNotes = () => {
                                           className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                           onClick={() => {
                                             setEditingCheck(check);
-                                            setCheckStatus("tedarikciye_verildi");
+                                            setCheckStatus("ciro_edildi");
                                             setCheckType("incoming");
                                             setCheckDialog(true);
                                           }}
                                         >
-                                          Tedarikçiye Ver
+                                          Ciro Et
                                         </Button>
                                       )}
                                       <Button
@@ -724,29 +893,52 @@ const CashflowChecksAndNotes = () => {
                           {formatCurrency(outgoingChecks.reduce((sum, check) => sum + check.amount, 0))}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Ödenecek</span>
-                        <span className="text-sm font-medium text-orange-600">
-                          {outgoingChecks.filter(check => check.status === 'odenecek').length} çek
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Ödendi</span>
-                        <span className="text-sm font-medium text-green-600">
-                          {outgoingChecks.filter(check => check.status === 'odendi').length} çek
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Tedarikçiye Verildi</span>
-                        <span className="text-sm font-medium text-blue-600">
-                          {outgoingChecks.filter(check => check.status === 'tedarikciye_verildi').length} çek
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Karşılıksız</span>
-                        <span className="text-sm font-medium text-red-600">
-                          {outgoingChecks.filter(check => check.status === 'karsilik_yok').length} çek
-                        </span>
+                      
+                      {/* Durum Kartları */}
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {/* Ödenecek */}
+                        <div className="bg-orange-50 border border-orange-200 rounded-md p-2 text-center">
+                          <div className="text-xs text-orange-600 font-medium mb-1">Ödenecek</div>
+                          <div className="text-sm font-bold text-orange-700">
+                            {outgoingChecks.filter(check => check.status === 'odenecek').length}
+                          </div>
+                          <div className="text-xs text-orange-500 truncate">
+                            {formatCurrency(outgoingChecks.filter(check => check.status === 'odenecek').reduce((sum, check) => sum + check.amount, 0))}
+                          </div>
+                        </div>
+                        
+                        {/* Ödendi */}
+                        <div className="bg-green-50 border border-green-200 rounded-md p-2 text-center">
+                          <div className="text-xs text-green-600 font-medium mb-1">Ödendi</div>
+                          <div className="text-sm font-bold text-green-700">
+                            {outgoingChecks.filter(check => check.status === 'odendi').length}
+                          </div>
+                          <div className="text-xs text-green-500 truncate">
+                            {formatCurrency(outgoingChecks.filter(check => check.status === 'odendi').reduce((sum, check) => sum + check.amount, 0))}
+                          </div>
+                        </div>
+                        
+                        {/* Karşılıksız */}
+                        <div className="bg-red-50 border border-red-200 rounded-md p-2 text-center">
+                          <div className="text-xs text-red-600 font-medium mb-1">Karşılıksız</div>
+                          <div className="text-sm font-bold text-red-700">
+                            {outgoingChecks.filter(check => check.status === 'karsilik_yok').length}
+                          </div>
+                          <div className="text-xs text-red-500 truncate">
+                            {formatCurrency(outgoingChecks.filter(check => check.status === 'karsilik_yok').reduce((sum, check) => sum + check.amount, 0))}
+                          </div>
+                        </div>
+                        
+                        {/* Ciro Edildi (Giden çeklerde) */}
+                        <div className="bg-purple-50 border border-purple-200 rounded-md p-2 text-center">
+                          <div className="text-xs text-purple-600 font-medium mb-1">Ciro</div>
+                          <div className="text-sm font-bold text-purple-700">
+                            {outgoingChecks.filter(check => check.status === 'ciro_edildi').length}
+                          </div>
+                          <div className="text-xs text-purple-500 truncate">
+                            {formatCurrency(outgoingChecks.filter(check => check.status === 'ciro_edildi').reduce((sum, check) => sum + check.amount, 0))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -771,12 +963,58 @@ const CashflowChecksAndNotes = () => {
                         </Dialog>
                       </div>
                       
+                      {/* Giden Çekler Filtreleme */}
+                      <div className="flex flex-col sm:flex-row gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 mb-4">
+                        <div className="relative min-w-[200px] flex-1">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Input
+                            placeholder="Çek no, lehtar veya banka ile ara..."
+                            value={outgoingSearchQuery}
+                            onChange={(e) => setOutgoingSearchQuery(e.target.value)}
+                            className="pl-10 w-full h-8 text-sm"
+                          />
+                        </div>
+
+                        <Select value={outgoingStatusFilter} onValueChange={setOutgoingStatusFilter}>
+                          <SelectTrigger className="w-[140px] h-8 text-sm">
+                            <Filter className="mr-2 h-4 w-4" />
+                            <SelectValue placeholder="Durum" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tüm Durumlar</SelectItem>
+                            <SelectItem value="odenecek">Ödenecek</SelectItem>
+                            <SelectItem value="odendi">Ödendi</SelectItem>
+                            <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
+                            <SelectItem value="ciro_edildi">Ciro Edildi</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {/* Tarih Filtreleri */}
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <EnhancedDatePicker
+                            date={outgoingStartDate}
+                            onSelect={(newDate) => newDate && setOutgoingStartDate(newDate)}
+                            placeholder="Başlangıç"
+                            className="w-32 text-xs h-8"
+                          />
+                          <span className="text-muted-foreground text-sm">-</span>
+                          <EnhancedDatePicker
+                            date={outgoingEndDate}
+                            onSelect={(newDate) => newDate && setOutgoingEndDate(newDate)}
+                            placeholder="Bitiş"
+                            className="w-32 text-xs h-8"
+                          />
+                        </div>
+                      </div>
+                      
                       {/* Giden Çekler Tablosu */}
                       <div className="rounded-md border border-gray-200">
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-gray-50">
                               <TableHead className="text-xs font-medium text-gray-600">Çek No</TableHead>
+                              <TableHead className="text-xs font-medium text-gray-600">Keşideci</TableHead>
                               <TableHead className="text-xs font-medium text-gray-600">Lehtar</TableHead>
                               <TableHead className="text-xs font-medium text-gray-600">Vade</TableHead>
                               <TableHead className="text-xs font-medium text-gray-600 text-right">Tutar</TableHead>
@@ -790,6 +1028,7 @@ const CashflowChecksAndNotes = () => {
                               .map((check) => (
                                 <TableRow key={check.id} className="hover:bg-gray-50">
                                   <TableCell className="text-sm font-medium">{check.check_number}</TableCell>
+                                  <TableCell className="text-sm">{check.issuer_name}</TableCell>
                                   <TableCell className="text-sm">{check.payee}</TableCell>
                                   <TableCell className="text-sm">{format(new Date(check.due_date), "dd/MM/yyyy")}</TableCell>
                                   <TableCell className="text-sm text-right font-medium">{formatCurrency(check.amount)}</TableCell>
@@ -803,7 +1042,12 @@ const CashflowChecksAndNotes = () => {
                                         onClick={() => {
                                           setEditingCheck(check);
                                           setCheckStatus(check.status);
-                                          setCheckType("outgoing");
+                                          // Ciro edilmiş çekler için checkType'ı doğru belirle
+                                          if (check.status === 'ciro_edildi') {
+                                            setCheckType("incoming");
+                                          } else {
+                                            setCheckType("outgoing");
+                                          }
                                           setCheckDialog(true);
                                         }}
                                       >
@@ -888,6 +1132,23 @@ const CashflowChecksAndNotes = () => {
                       </div>
                     )}
 
+                    {/* Çek Tipi Bilgisi - Düzenleme sırasında göster */}
+                    {editingCheck && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-gray-700">
+                          Çek Tipi
+                        </Label>
+                        <div className="p-2 rounded border bg-gray-50">
+                          <div className="font-medium text-sm">
+                            {checkType === "incoming" ? "Gelen Çek" : "Giden Çek"}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {checkType === "incoming" ? "Müşteriden aldığımız" : "Tedarikçiye verdiğimiz"}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Temel Bilgiler */}
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -952,24 +1213,24 @@ const CashflowChecksAndNotes = () => {
                           <SelectTrigger className="h-8 text-sm">
                               <SelectValue placeholder="Durum seçin" />
                             </SelectTrigger>
-                          <SelectContent>
-                            {checkType === "incoming" ? (
-                              // Gelen çek durumları
-                              <>
-                                <SelectItem value="portfoyde">Portföyde</SelectItem>
-                                <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
-                                <SelectItem value="tahsil_edildi">Tahsil Edildi</SelectItem>
-                                <SelectItem value="tedarikciye_verildi">Tedarikçiye Verildi</SelectItem>
-                                <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
-                              </>
-                            ) : (
-                              // Giden çek durumları
-                              <>
-                                <SelectItem value="odenecek">Ödenecek</SelectItem>
-                                <SelectItem value="odendi">Ödendi</SelectItem>
-                              </>
-                            )}
-                          </SelectContent>
+                        <SelectContent>
+                          {checkType === "incoming" ? (
+                            // Gelen çek durumları
+                            <>
+                              <SelectItem value="portfoyde">Portföyde</SelectItem>
+                              <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
+                              <SelectItem value="tahsil_edildi">Tahsil Edildi</SelectItem>
+                              <SelectItem value="ciro_edildi">Ciro Edildi</SelectItem>
+                              <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
+                            </>
+                          ) : (
+                            // Giden çek durumları
+                            <>
+                              <SelectItem value="odenecek">Ödenecek</SelectItem>
+                              <SelectItem value="odendi">Ödendi</SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
                           </Select>
                           <input type="hidden" name="status" value={checkStatus} />
                         </div>
@@ -1034,11 +1295,11 @@ const CashflowChecksAndNotes = () => {
                     </div>
 
                     {/* Tedarikçiye Verildi durumunda tedarikçi seçimi */}
-                    {checkType === "incoming" && checkStatus === "tedarikciye_verildi" && (
+                    {checkType === "incoming" && checkStatus === "ciro_edildi" && (
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-1">Tedarikçiye Ver</h4>
+                        <h4 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-1">Ciro Et</h4>
                         <div>
-                          <Label htmlFor="transferred_supplier">Hangi Tedarikçiye Verildi?</Label>
+                          <Label htmlFor="transferred_supplier">Hangi Tedarikçiye Ciro Edildi?</Label>
                           <div className="[&_button]:h-8 [&_button]:text-sm">
                             <FormProvider {...payeeForm}>
                               <ProposalPartnerSelect partnerType="supplier" hideLabel placeholder="Tedarikçi seçin..." />
@@ -1047,9 +1308,67 @@ const CashflowChecksAndNotes = () => {
                           <input type="hidden" name="transferred_to_supplier_id" value={payeeSupplierId} />
                           <input type="hidden" name="transferred_date" value={new Date().toISOString()} />
                           <p className="text-xs text-gray-500 mt-1">
-                            Bu çek seçilen tedarikçiye ödeme olarak verilecek
+                            Bu çek seçilen tedarikçiye ciro edilecek
                           </p>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Ödendi durumunda ödenen hesap seçimi */}
+                    {checkStatus === "odendi" && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-1">Ödenen Hesap</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="payment_account_type">Hesap Türü</Label>
+                            <Select value={paymentAccountType} onValueChange={setPaymentAccountType}>
+                              <SelectTrigger className="h-8 text-sm">
+                                <SelectValue placeholder="Hesap türü seçin" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="cash">Kasa</SelectItem>
+                                <SelectItem value="bank">Banka</SelectItem>
+                                <SelectItem value="credit_card">Kredi Kartı</SelectItem>
+                                <SelectItem value="partner">Ortak Hesap</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="payment_account">Hesap</Label>
+                            <Select value={selectedPaymentAccountId} onValueChange={setSelectedPaymentAccountId}>
+                              <SelectTrigger className="h-8 text-sm">
+                                <SelectValue placeholder="Hesap seçin" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {paymentAccountType === 'cash' && paymentAccounts?.cash?.map((account) => (
+                                  <SelectItem key={account.id} value={account.id}>
+                                    {account.label}
+                                  </SelectItem>
+                                ))}
+                                {paymentAccountType === 'bank' && paymentAccounts?.bank?.map((account) => (
+                                  <SelectItem key={account.id} value={account.id}>
+                                    {account.label}
+                                  </SelectItem>
+                                ))}
+                                {paymentAccountType === 'credit_card' && paymentAccounts?.credit_card?.map((account) => (
+                                  <SelectItem key={account.id} value={account.id}>
+                                    {account.label}
+                                  </SelectItem>
+                                ))}
+                                {paymentAccountType === 'partner' && paymentAccounts?.partner?.map((account) => (
+                                  <SelectItem key={account.id} value={account.id}>
+                                    {account.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <input type="hidden" name="payment_account_type" value={paymentAccountType} />
+                        <input type="hidden" name="payment_account_id" value={selectedPaymentAccountId} />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Bu çek hangi hesaptan ödendi?
+                        </p>
                       </div>
                     )}
                     

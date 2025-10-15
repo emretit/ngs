@@ -168,16 +168,51 @@ export function useCashAccountTransactions(accountId: string | undefined, limit:
 
       const companyId = await fetchCompanyId();
 
-      const { data, error } = await supabase
-        .from('cash_transactions')
-        .select('*')
-        .eq('account_id', accountId)
-        .eq('company_id', companyId)
-        .order('transaction_date', { ascending: false })
-        .limit(limit);
+      const [cashTransactions, payments] = await Promise.all([
+        supabase
+          .from('cash_transactions')
+          .select('*')
+          .eq('account_id', accountId)
+          .eq('company_id', companyId)
+          .order('transaction_date', { ascending: false })
+          .limit(limit),
+        
+        supabase
+          .from('payments')
+          .select(`
+            *,
+            customer:customers(name),
+            supplier:suppliers(name)
+          `)
+          .eq('cash_account_id', accountId)
+          .order('payment_date', { ascending: false })
+          .limit(limit)
+      ]);
 
-      if (error) throw error;
-      return (data as Transaction[]) || [];
+      if (cashTransactions.error) throw cashTransactions.error;
+      if (payments.error) throw payments.error;
+
+      const formattedPayments = payments.data.map((payment) => ({
+        id: payment.id,
+        amount: payment.amount,
+        description: payment.description,
+        transaction_date: payment.payment_date,
+        type: payment.payment_direction === 'incoming' ? 'income' : 'expense',
+        category: 'Ödeme',
+        currency: payment.currency,
+        customer_name: payment.customer?.name,
+        supplier_name: payment.supplier?.name,
+        payment_direction: payment.payment_direction
+      }));
+
+      const allTransactions = [
+        ...cashTransactions.data,
+        ...formattedPayments
+      ].sort((a, b) => 
+        new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
+      );
+
+      return allTransactions.slice(0, limit);
     },
     enabled: !!accountId,
     staleTime: 1000 * 60 * 5, // 5 dakika cache - daha uzun
@@ -306,24 +341,58 @@ export function useCreditCardTransactions(cardId: string | undefined, limit: num
     queryFn: async () => {
       if (!cardId) throw new Error("Kart ID bulunamadı");
 
-      const { data, error } = await supabase
-        .from('card_transactions')
-        .select('*')
-        .eq('card_id', cardId)
-        .order('transaction_date', { ascending: false })
-        .limit(limit);
+      const [cardTransactions, payments] = await Promise.all([
+        supabase
+          .from('card_transactions')
+          .select('*')
+          .eq('card_id', cardId)
+          .order('transaction_date', { ascending: false })
+          .limit(limit),
+        
+        supabase
+          .from('payments')
+          .select(`
+            *,
+            customer:customers(name),
+            supplier:suppliers(name)
+          `)
+          .eq('credit_card_account_id', cardId)
+          .order('payment_date', { ascending: false })
+          .limit(limit)
+      ]);
 
-      if (error) throw error;
+      if (cardTransactions.error) throw cardTransactions.error;
+      if (payments.error) throw payments.error;
       
       // Map card_transactions to Transaction interface
-      const transactions = (data || []).map((item: any) => ({
+      const mappedCardTransactions = (cardTransactions.data || []).map((item: any) => ({
         ...item,
         type: item.transaction_type === 'payment' ? 'income' : 'expense',
         category: item.merchant_category || item.category || 'Genel',
         description: item.description || item.merchant_name || 'Kart İşlemi'
       }));
 
-      return transactions as Transaction[];
+      const formattedPayments = payments.data.map((payment) => ({
+        id: payment.id,
+        amount: payment.amount,
+        description: payment.description,
+        transaction_date: payment.payment_date,
+        type: payment.payment_direction === 'incoming' ? 'income' : 'expense',
+        category: 'Ödeme',
+        currency: payment.currency,
+        customer_name: payment.customer?.name,
+        supplier_name: payment.supplier?.name,
+        payment_direction: payment.payment_direction
+      }));
+
+      const allTransactions = [
+        ...mappedCardTransactions,
+        ...formattedPayments
+      ].sort((a, b) => 
+        new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
+      );
+
+      return allTransactions.slice(0, limit) as Transaction[];
     },
     enabled: !!cardId,
     staleTime: 1000 * 60 * 5, // 5 dakika cache - daha uzun
@@ -367,22 +436,56 @@ export function usePartnerAccountTransactions(accountId: string | undefined, lim
     queryFn: async () => {
       if (!accountId) throw new Error("Hesap ID bulunamadı");
 
-      const { data, error } = await supabase
-        .from('partner_transactions')
-        .select('*')
-        .eq('partner_id', accountId)
-        .order('transaction_date', { ascending: false })
-        .limit(limit);
+      const [partnerTransactions, payments] = await Promise.all([
+        supabase
+          .from('partner_transactions')
+          .select('*')
+          .eq('partner_id', accountId)
+          .order('transaction_date', { ascending: false })
+          .limit(limit),
+        
+        supabase
+          .from('payments')
+          .select(`
+            *,
+            customer:customers(name),
+            supplier:suppliers(name)
+          `)
+          .eq('partner_account_id', accountId)
+          .order('payment_date', { ascending: false })
+          .limit(limit)
+      ]);
 
-      if (error) throw error;
+      if (partnerTransactions.error) throw partnerTransactions.error;
+      if (payments.error) throw payments.error;
       
       // Partner transactions için özel mapping
-      const mappedData = (data || []).map((transaction: any) => ({
+      const mappedPartnerTransactions = (partnerTransactions.data || []).map((transaction: any) => ({
         ...transaction,
         type: transaction.type === 'capital_increase' || transaction.type === 'profit_distribution' ? 'income' : 'expense'
       }));
+
+      const formattedPayments = payments.data.map((payment) => ({
+        id: payment.id,
+        amount: payment.amount,
+        description: payment.description,
+        transaction_date: payment.payment_date,
+        type: payment.payment_direction === 'incoming' ? 'income' : 'expense',
+        category: 'Ödeme',
+        currency: payment.currency,
+        customer_name: payment.customer?.name,
+        supplier_name: payment.supplier?.name,
+        payment_direction: payment.payment_direction
+      }));
+
+      const allTransactions = [
+        ...mappedPartnerTransactions,
+        ...formattedPayments
+      ].sort((a, b) => 
+        new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
+      );
       
-      return mappedData as Transaction[];
+      return allTransactions.slice(0, limit) as Transaction[];
     },
     enabled: !!accountId,
     staleTime: 1000 * 60 * 5, // 5 dakika cache - daha uzun

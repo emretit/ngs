@@ -565,10 +565,15 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
                               : (transaction.type === "income" ? "bg-green-500" : "bg-red-500")
                           }`}></div>
                           <div>
-                            <p className="font-medium text-sm">{transaction.description}</p>
+                            <p className="font-medium text-sm">
+                              {transaction.customer_name ? `Müşteri: ${transaction.customer_name}` : ''}
+                              {transaction.supplier_name ? `Tedarikçi: ${transaction.supplier_name}` : ''}
+                              {!transaction.customer_name && !transaction.supplier_name ? (transaction.description || '-') : ''}
+                            </p>
                             <p className="text-xs text-gray-500">
                               {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')} •
                               {transaction.isTransfer ? 'Transfer' : (transaction.category || 'Genel')}
+                              {transaction.description && (transaction.customer_name || transaction.supplier_name) ? ` • ${transaction.description}` : ''}
                             </p>
                             <p className="text-xs text-gray-400">
                               Güncellendi: {new Date(transaction.updated_at || transaction.created_at).toLocaleDateString('tr-TR')} {new Date(transaction.updated_at || transaction.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}

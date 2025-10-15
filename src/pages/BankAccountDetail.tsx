@@ -413,9 +413,14 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
                             transaction.type === "income" ? "bg-green-500" : "bg-red-500"
                           }`}></div>
                           <div>
-                            <p className="font-medium text-sm">{transaction.description}</p>
+                            <p className="font-medium text-sm">
+                              {transaction.customer_name ? `Müşteri: ${transaction.customer_name}` : ''}
+                              {transaction.supplier_name ? `Tedarikçi: ${transaction.supplier_name}` : ''}
+                              {!transaction.customer_name && !transaction.supplier_name ? (transaction.description || '-') : ''}
+                            </p>
                             <p className="text-xs text-gray-500">
-                              {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')} • {transaction.category}
+                              {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')}
+                              {transaction.description && (transaction.customer_name || transaction.supplier_name) ? ` • ${transaction.description}` : ''}
                             </p>
                           </div>
                         </div>

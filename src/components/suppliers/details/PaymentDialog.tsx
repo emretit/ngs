@@ -232,28 +232,6 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="payment_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ödeme Türü</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Ödeme türü seçin" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="hesap">Nakit - Kredi Kartı - Banka</SelectItem>
-                        <SelectItem value="cek">Çek</SelectItem>
-                        <SelectItem value="senet">Senet</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
             </div>
 

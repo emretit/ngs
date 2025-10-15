@@ -1,5 +1,3 @@
-import { Badge } from "@/components/ui/badge";
-
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
@@ -7,7 +5,7 @@ export const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export const getStatusBadge = (status: string) => {
+export const getStatusConfig = (status: string) => {
   const statusConfig = {
     portfoyde: { label: "Portföyde", variant: "secondary" as const },
     bankaya_verildi: { label: "Bankaya Verildi", variant: "outline" as const },
@@ -21,7 +19,6 @@ export const getStatusBadge = (status: string) => {
     bounced: { label: "Karşılıksız", variant: "destructive" as const },
   };
   
-  const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "secondary" as const };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  return statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "secondary" as const };
 };
 

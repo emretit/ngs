@@ -16,7 +16,8 @@ import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useForm, FormProvider } from "react-hook-form";
-import { formatCurrency, getStatusBadge } from "@/utils/cashflowUtils";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency, getStatusConfig } from "@/utils/cashflowUtils";
 
 interface Check {
   id: string;
@@ -469,7 +470,7 @@ const CashflowChecks = () => {
                         <TableCell className="text-xs">{check.issuer_name || "-"}</TableCell>
                         <TableCell className="text-xs">{format(new Date(check.due_date), "dd/MM/yyyy")}</TableCell>
                         <TableCell className="text-xs text-right font-medium">{formatCurrency(check.amount)}</TableCell>
-                        <TableCell>{getStatusBadge(check.status)}</TableCell>
+                        <TableCell>{<Badge variant={getStatusConfig(check.status).variant}>{getStatusConfig(check.status).label}</Badge>}</TableCell>
                         <TableCell className="text-center">
                           <div className="flex justify-center space-x-1">
                             {check.status === 'portfoyde' && (
@@ -689,7 +690,7 @@ const CashflowChecks = () => {
                         <TableCell className="text-xs">{check.payee}</TableCell>
                         <TableCell className="text-xs">{format(new Date(check.due_date), "dd/MM/yyyy")}</TableCell>
                         <TableCell className="text-xs text-right font-medium">{formatCurrency(check.amount)}</TableCell>
-                        <TableCell>{getStatusBadge(check.status)}</TableCell>
+                        <TableCell>{<Badge variant={getStatusConfig(check.status).variant}>{getStatusConfig(check.status).label}</Badge>}</TableCell>
                         <TableCell className="text-center">
                           <div className="flex justify-center space-x-1">
                             {check.status === 'odenecek' && (

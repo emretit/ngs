@@ -12,7 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
-import { formatCurrency, getStatusBadge } from "@/utils/cashflowUtils";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrency, getStatusConfig } from "@/utils/cashflowUtils";
 
 interface FinancialInstrument {
   id: string;
@@ -323,7 +324,7 @@ const CashflowNotes = () => {
                   <TableCell>{format(new Date(note.due_date), "dd/MM/yyyy")}</TableCell>
                   <TableCell className="text-right">{formatCurrency(note.amount)}</TableCell>
                   <TableCell>{note.bank_name || "-"}</TableCell>
-                  <TableCell>{getStatusBadge(note.status)}</TableCell>
+                  <TableCell>{<Badge variant={getStatusConfig(note.status).variant}>{getStatusConfig(note.status).label}</Badge>}</TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center space-x-2">
                       <Button

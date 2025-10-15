@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -46,8 +46,15 @@ const paymentMethods: PaymentMethod[] = [
 ];
 
 export function PaymentMethodSelector({ onMethodSelect, disabled = false }: PaymentMethodSelectorProps) {
+  const [open, setOpen] = useState(false);
+
+  const handleMethodSelect = (method: PaymentMethod) => {
+    onMethodSelect(method);
+    setOpen(false);
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button 
           className="flex items-center gap-2"
@@ -62,7 +69,7 @@ export function PaymentMethodSelector({ onMethodSelect, disabled = false }: Paym
         {paymentMethods.map((method) => (
           <DropdownMenuItem
             key={method.id}
-            onClick={() => onMethodSelect(method)}
+            onClick={() => handleMethodSelect(method)}
             className="flex items-start gap-3 p-3 cursor-pointer"
           >
             <div className="flex-shrink-0 mt-0.5">

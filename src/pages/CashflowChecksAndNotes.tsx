@@ -73,6 +73,7 @@ const CashflowChecksAndNotes = () => {
   const [noteFilters, setNoteFilters] = useState({ status: "all", dateRange: "" });
   const [checkStatus, setCheckStatus] = useState("pending");
   const [noteStatus, setNoteStatus] = useState("pending");
+  const [checkType, setCheckType] = useState<"incoming" | "outgoing">("incoming"); // Gelen veya giden çek
   
   // Check form states
   const [bankName, setBankName] = useState<string>("");
@@ -176,10 +177,22 @@ const CashflowChecksAndNotes = () => {
     }
   }, [editingCheck, banks]);
 
+  // Update default status when check type changes
+  useEffect(() => {
+    if (!editingCheck) { // Sadece yeni çek eklerken
+      if (checkType === "incoming") {
+        setCheckStatus("portfoyde");
+      } else if (checkType === "outgoing") {
+        setCheckStatus("odenecek");
+      }
+    }
+  }, [checkType, editingCheck]);
+
   // Check mutations
   const saveCheckMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const checkData = {
+      const status = formData.get("status") as string;
+      const checkData: any = {
         check_number: formData.get("check_number") as string,
         issue_date: formData.get("issue_date") as string,
         due_date: formData.get("due_date") as string,
@@ -187,9 +200,19 @@ const CashflowChecksAndNotes = () => {
         bank: formData.get("bank") as string,
         issuer_name: formData.get("issuer_name") as string,
         payee: formData.get("payee") as string,
-        status: formData.get("status") as string,
+        status: status,
         notes: formData.get("notes") as string,
       };
+
+      // Tedarikçiye verildi durumunda tedarikçi bilgilerini ekle
+      if (status === "tedarikciye_verildi") {
+        const supplierId = formData.get("transferred_to_supplier_id") as string;
+        const transferredDate = formData.get("transferred_date") as string;
+        if (supplierId) {
+          checkData.transferred_to_supplier_id = supplierId;
+          checkData.transferred_date = transferredDate || new Date().toISOString();
+        }
+      }
 
       if (editingCheck) {
         const { error } = await supabase
@@ -288,16 +311,15 @@ const CashflowChecksAndNotes = () => {
     }).format(amount);
   };
 
-  // Durum kategorileri
+  // Durum kategorileri - 7 ortak durum
   const statusCategories = {
     'portfoyde': 'incoming',
     'bankaya_verildi': 'incoming', 
-    'tahsilat_bekleniyor': 'incoming',
     'tahsil_edildi': 'incoming',
-    'odenecek': 'outgoing',
-    'odendi': 'outgoing',
+    'tedarikciye_verildi': 'outgoing',
     'karsilik_yok': 'outgoing',
-    'tedarikciye_verildi': 'outgoing'
+    'odenecek': 'outgoing',
+    'odendi': 'outgoing'
   };
 
   // Gelen çekler - NGS'e gelen ve henüz tedarikçiye verilmeyen
@@ -314,17 +336,13 @@ const CashflowChecksAndNotes = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { label: "Beklemede", variant: "secondary" as const },
       portfoyde: { label: "Portföyde", variant: "secondary" as const },
+      bankaya_verildi: { label: "Bankaya Verildi", variant: "outline" as const },
+      tahsil_edildi: { label: "Tahsil Edildi", variant: "default" as const },
+      tedarikciye_verildi: { label: "Tedarikçiye Verildi", variant: "outline" as const },
+      karsilik_yok: { label: "Karşılıksız", variant: "destructive" as const },
       odenecek: { label: "Ödenecek", variant: "destructive" as const },
       odendi: { label: "Ödendi", variant: "default" as const },
-      cleared: { label: "Tahsil Edildi", variant: "default" as const },
-      tahsil_edildi: { label: "Tahsil Edildi", variant: "default" as const },
-      bounced: { label: "Karşılıksız", variant: "destructive" as const },
-      karsilik_yok: { label: "Karşılıksız", variant: "destructive" as const },
-      bankaya_verildi: { label: "Bankaya Verildi", variant: "outline" as const },
-      tahsilat_bekleniyor: { label: "Tahsilat Bekleniyor", variant: "secondary" as const },
-      tedarikciye_verildi: { label: "Tedarikçiye Verildi", variant: "outline" as const },
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "secondary" as const };
@@ -512,6 +530,7 @@ const CashflowChecksAndNotes = () => {
             </TabsList>
             
             <TabsContent value="checks" className="space-y-6">
+              {/* Yeni Çek Ekle - üstteki buton kaldırıldı; kart içi butonlar aktif */}
               {/* Check Type Cards */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gelen Çekler Kartı */}
@@ -543,21 +562,27 @@ const CashflowChecksAndNotes = () => {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Bekleyen</span>
+                        <span className="text-sm text-gray-600">Portföyde</span>
                         <span className="text-sm font-medium text-orange-600">
-                          {incomingChecks.filter(check => check.status === 'portfoyde' || check.status === 'pending').length} çek
+                          {incomingChecks.filter(check => check.status === 'portfoyde').length} çek
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Bankaya Verilen</span>
                         <span className="text-sm font-medium text-blue-600">
-                          {incomingChecks.filter(check => check.status === 'bankaya_verildi' || check.status === 'tahsilat_bekleniyor').length} çek
+                          {incomingChecks.filter(check => check.status === 'bankaya_verildi').length} çek
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Tahsil Edilen</span>
                         <span className="text-sm font-medium text-green-600">
-                          {incomingChecks.filter(check => check.status === 'tahsil_edildi' || check.status === 'odendi').length} çek
+                          {incomingChecks.filter(check => check.status === 'tahsil_edildi').length} çek
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Tedarikçiye Verildi</span>
+                        <span className="text-sm font-medium text-blue-600">
+                          {incomingChecks.filter(check => check.status === 'tedarikciye_verildi').length} çek
                         </span>
                       </div>
                     </div>
@@ -565,9 +590,17 @@ const CashflowChecksAndNotes = () => {
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-medium text-gray-900">Portföydeki Çekler</h4>
+                        {/* Kart içi Yeni Çek - Gelen */}
                         <Dialog open={checkDialog} onOpenChange={setCheckDialog}>
                           <DialogTrigger asChild>
-                            <Button size="sm" onClick={() => setEditingCheck(null)}>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setEditingCheck(null);
+                                setCheckType("incoming");
+                                setCheckStatus("portfoyde");
+                              }}
+                            >
                               <Plus className="w-4 h-4 mr-2" />
                               Yeni Çek
                             </Button>
@@ -600,6 +633,22 @@ const CashflowChecksAndNotes = () => {
                                   <TableCell>{getStatusBadge(check.status)}</TableCell>
                                   <TableCell className="text-center">
                                     <div className="flex justify-center space-x-1">
+                                      {/* Tedarikçiye Ver Butonu - Sadece portföyde veya bankaya verilmiş çekler için */}
+                                      {['portfoyde', 'bankaya_verildi'].includes(check.status) && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                          onClick={() => {
+                                            setEditingCheck(check);
+                                            setCheckStatus("tedarikciye_verildi");
+                                            setCheckType("incoming");
+                                            setCheckDialog(true);
+                                          }}
+                                        >
+                                          Tedarikçiye Ver
+                                        </Button>
+                                      )}
                                       <Button
                                         variant="ghost"
                                         size="sm"
@@ -607,6 +656,7 @@ const CashflowChecksAndNotes = () => {
                                         onClick={() => {
                                           setEditingCheck(check);
                                           setCheckStatus(check.status);
+                                          setCheckType("incoming");
                                           setCheckDialog(true);
                                         }}
                                       >
@@ -675,15 +725,27 @@ const CashflowChecksAndNotes = () => {
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Bekleyen</span>
+                        <span className="text-sm text-gray-600">Ödenecek</span>
                         <span className="text-sm font-medium text-orange-600">
-                          {outgoingChecks.filter(check => check.status === 'odenecek' || check.status === 'pending').length} çek
+                          {outgoingChecks.filter(check => check.status === 'odenecek').length} çek
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Tahsil Edilen</span>
+                        <span className="text-sm text-gray-600">Ödendi</span>
                         <span className="text-sm font-medium text-green-600">
-                          {outgoingChecks.filter(check => check.status === 'odendi' || check.status === 'tahsil_edildi').length} çek
+                          {outgoingChecks.filter(check => check.status === 'odendi').length} çek
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Tedarikçiye Verildi</span>
+                        <span className="text-sm font-medium text-blue-600">
+                          {outgoingChecks.filter(check => check.status === 'tedarikciye_verildi').length} çek
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Karşılıksız</span>
+                        <span className="text-sm font-medium text-red-600">
+                          {outgoingChecks.filter(check => check.status === 'karsilik_yok').length} çek
                         </span>
                       </div>
                     </div>
@@ -691,9 +753,17 @@ const CashflowChecksAndNotes = () => {
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-medium text-gray-900">Verdiğimiz Çekler</h4>
+                        {/* Kart içi Yeni Çek - Giden */}
                         <Dialog open={checkDialog} onOpenChange={setCheckDialog}>
                           <DialogTrigger asChild>
-                            <Button size="sm" onClick={() => setEditingCheck(null)}>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setEditingCheck(null);
+                                setCheckType("outgoing");
+                                setCheckStatus("odenecek");
+                              }}
+                            >
                               <Plus className="w-4 h-4 mr-2" />
                               Yeni Çek
                             </Button>
@@ -733,6 +803,7 @@ const CashflowChecksAndNotes = () => {
                                         onClick={() => {
                                           setEditingCheck(check);
                                           setCheckStatus(check.status);
+                                          setCheckType("outgoing");
                                           setCheckDialog(true);
                                         }}
                                       >
@@ -775,116 +846,227 @@ const CashflowChecksAndNotes = () => {
 
               {/* Check Dialog */}
               <Dialog open={checkDialog} onOpenChange={setCheckDialog}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-lg">
                   <DialogHeader>
                     <DialogTitle>
                       {editingCheck ? "Çek Düzenle" : "Yeni Çek Ekle"}
                     </DialogTitle>
                   </DialogHeader>
-                  <form className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="check_number">Çek No</Label>
+                  <form className="space-y-3">
+                    {/* Çek Tipi Seçimi - Sadece yeni çek eklerken göster */}
+                    {!editingCheck && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-gray-700">
+                          Çek Tipi
+                        </Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            className={`p-2 rounded border text-left transition-colors ${
+                              checkType === "incoming" 
+                                ? "border-indigo-500 bg-indigo-50 text-indigo-700" 
+                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                            }`}
+                            onClick={() => setCheckType("incoming")}
+                          >
+                            <div className="font-medium text-sm">Gelen Çek</div>
+                            <div className="text-xs text-gray-500">Müşteriden aldığımız</div>
+                          </button>
+                          <button
+                            type="button"
+                            className={`p-2 rounded border text-left transition-colors ${
+                              checkType === "outgoing" 
+                                ? "border-indigo-500 bg-indigo-50 text-indigo-700" 
+                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                            }`}
+                            onClick={() => setCheckType("outgoing")}
+                          >
+                            <div className="font-medium text-sm">Giden Çek</div>
+                            <div className="text-xs text-gray-500">Tedarikçiye verdiğimiz</div>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Temel Bilgiler */}
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="check_number">Çek No</Label>
                         <Input
-                          id="check_number"
-                          name="check_number"
+                            id="check_number"
+                            name="check_number"
                           defaultValue={editingCheck?.check_number || ""}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="bank">Banka</Label>
-                        <Select value={bankName} onValueChange={setBankName}>
-                          <SelectTrigger id="bank">
-                            <SelectValue placeholder="Banka seçin" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-72">
-                            {banks.map((b) => (
-                              <SelectItem key={b.id} value={b.name}>
-                                {b.name}
-                              </SelectItem>
-                            ))}
+                          className="h-8 text-sm"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="bank">Banka</Label>
+                          <Select value={bankName} onValueChange={setBankName}>
+                          <SelectTrigger id="bank" className="h-8 text-sm">
+                              <SelectValue placeholder="Banka seçin" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-72">
+                              {banks.map((b) => (
+                                <SelectItem key={b.id} value={b.name}>
+                                  {b.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <input type="hidden" name="bank" value={bankName} />
+                        </div>
+                        <div>
+                          <Label>Düzenleme Tarihi</Label>
+                          <div className="[&_button]:h-8 [&_button]:text-sm">
+                            <EnhancedDatePicker date={issueDate} onSelect={setIssueDate} placeholder="Tarih seçin" />
+                          </div>
+                          <input type="hidden" name="issue_date" value={issueDate ? format(issueDate, "yyyy-MM-dd") : ""} />
+                        </div>
+                        <div>
+                          <Label>Vade Tarihi</Label>
+                          <div className="[&_button]:h-8 [&_button]:text-sm">
+                            <EnhancedDatePicker date={dueDate} onSelect={setDueDate} placeholder="Tarih seçin" />
+                          </div>
+                          <input type="hidden" name="due_date" value={dueDate ? format(dueDate, "yyyy-MM-dd") : ""} />
+                        </div>
+                        <div>
+                          <Label htmlFor="amount">Tutar (₺)</Label>
+                          <Input
+                            id="amount"
+                            name="amount"
+                            type="number"
+                            step="0.01"
+                            defaultValue={editingCheck?.amount || ""}
+                            className="h-8 text-sm"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="status">Durum</Label>
+                          <Select 
+                            value={checkStatus} 
+                            onValueChange={setCheckStatus}
+                          >
+                          <SelectTrigger className="h-8 text-sm">
+                              <SelectValue placeholder="Durum seçin" />
+                            </SelectTrigger>
+                          <SelectContent>
+                            {checkType === "incoming" ? (
+                              // Gelen çek durumları
+                              <>
+                                <SelectItem value="portfoyde">Portföyde</SelectItem>
+                                <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
+                                <SelectItem value="tahsil_edildi">Tahsil Edildi</SelectItem>
+                                <SelectItem value="tedarikciye_verildi">Tedarikçiye Verildi</SelectItem>
+                                <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
+                              </>
+                            ) : (
+                              // Giden çek durumları
+                              <>
+                                <SelectItem value="odenecek">Ödenecek</SelectItem>
+                                <SelectItem value="odendi">Ödendi</SelectItem>
+                              </>
+                            )}
                           </SelectContent>
-                        </Select>
-                        <input type="hidden" name="bank" value={bankName} />
+                          </Select>
+                          <input type="hidden" name="status" value={checkStatus} />
+                        </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Düzenleme Tarihi</Label>
-                        <EnhancedDatePicker date={issueDate} onSelect={setIssueDate} placeholder="Tarih seçin" />
-                        <input type="hidden" name="issue_date" value={issueDate ? format(issueDate, "yyyy-MM-dd") : ""} />
-                      </div>
-                      <div>
-                        <Label>Vade Tarihi</Label>
-                        <EnhancedDatePicker date={dueDate} onSelect={setDueDate} placeholder="Tarih seçin" />
-                        <input type="hidden" name="due_date" value={dueDate ? format(dueDate, "yyyy-MM-dd") : ""} />
+                    {/* Taraf Bilgileri */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-1">Taraf Bilgileri</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {checkType === "incoming" ? (
+                          <>
+                            {/* Gelen Çek: Keşideci = Müşteri */}
+                            <div>
+                              <Label htmlFor="issuer_name">Keşideci (Müşteri)</Label>
+                              <div className="[&_button]:h-8 [&_button]:text-sm">
+                                <FormProvider {...issuerForm}>
+                                  <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Müşteri seçin..." />
+                                </FormProvider>
+                              </div>
+                              <input type="hidden" id="issuer_name" name="issuer_name" value={issuerName} />
+                              <input type="hidden" name="issuer_customer_id" value={issuerSelectedId} />
+                            </div>
+                            {/* Gelen Çek: Lehtar = NGS İLETİŞİM (otomatik) */}
+                            <div>
+                              <Label htmlFor="payee">Lehtar</Label>
+                              <Input 
+                                id="payee" 
+                                name="payee" 
+                                value="NGS İLETİŞİM" 
+                                disabled
+                                className="bg-gray-50 h-8 text-sm"
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {/* Giden Çek: Keşideci = NGS İLETİŞİM (otomatik) */}
+                            <div>
+                              <Label htmlFor="issuer_name">Keşideci</Label>
+                              <Input 
+                                id="issuer_name" 
+                                name="issuer_name" 
+                                value="NGS İLETİŞİM" 
+                                disabled
+                                className="bg-gray-50 h-8 text-sm"
+                              />
+                            </div>
+                            {/* Giden Çek: Lehtar = Tedarikçi */}
+                            <div>
+                              <Label htmlFor="payee">Lehtar (Tedarikçi)</Label>
+                              <div className="[&_button]:h-8 [&_button]:text-sm">
+                                <FormProvider {...payeeForm}>
+                                  <ProposalPartnerSelect partnerType="supplier" hideLabel placeholder="Tedarikçi seçin..." />
+                                </FormProvider>
+                              </div>
+                              <input type="hidden" id="payee" name="payee" value={payeeName} />
+                              <input type="hidden" name="payee_supplier_id" value={payeeSupplierId} />
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    {/* Tedarikçiye Verildi durumunda tedarikçi seçimi */}
+                    {checkType === "incoming" && checkStatus === "tedarikciye_verildi" && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-1">Tedarikçiye Ver</h4>
+                        <div>
+                          <Label htmlFor="transferred_supplier">Hangi Tedarikçiye Verildi?</Label>
+                          <div className="[&_button]:h-8 [&_button]:text-sm">
+                            <FormProvider {...payeeForm}>
+                              <ProposalPartnerSelect partnerType="supplier" hideLabel placeholder="Tedarikçi seçin..." />
+                            </FormProvider>
+                          </div>
+                          <input type="hidden" name="transferred_to_supplier_id" value={payeeSupplierId} />
+                          <input type="hidden" name="transferred_date" value={new Date().toISOString()} />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Bu çek seçilen tedarikçiye ödeme olarak verilecek
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Notlar */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-1">Notlar</h4>
                       <div>
-                        <Label htmlFor="amount">Tutar</Label>
-                        <Input
-                          id="amount"
-                          name="amount"
-                          type="number"
-                          step="0.01"
-                          defaultValue={editingCheck?.amount || ""}
-                          required
+                        <Label htmlFor="notes">Notlar</Label>
+                        <Textarea
+                          id="notes"
+                          name="notes"
+                          defaultValue={editingCheck?.notes || ""}
+                          placeholder="Notlar..."
+                          rows={2}
+                          className="text-sm"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="status">Durum</Label>
-                        <Select 
-                          value={checkStatus} 
-                          onValueChange={setCheckStatus}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Durum seçin" />
-                          </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="portfoyde">Portföyde</SelectItem>
-                          <SelectItem value="bankaya_verildi">Bankaya Verildi</SelectItem>
-                          <SelectItem value="tahsilat_bekleniyor">Tahsilat Bekleniyor</SelectItem>
-                          <SelectItem value="tahsil_edildi">Tahsil Edildi</SelectItem>
-                          <SelectItem value="tedarikciye_verildi">Tedarikçiye Verildi</SelectItem>
-                          <SelectItem value="odenecek">Ödenecek</SelectItem>
-                          <SelectItem value="odendi">Ödendi</SelectItem>
-                          <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
-                        </SelectContent>
-                        </Select>
-                        <input type="hidden" name="status" value={checkStatus} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="issuer_name">Keşideci (çeki düzenleyen)</Label>
-                        <FormProvider {...issuerForm}>
-                          <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
-                        </FormProvider>
-                        <input type="hidden" id="issuer_name" name="issuer_name" value={issuerName} />
-                        <input type="hidden" name="issuer_customer_id" value={issuerSelectedId} />
-                        <input type="hidden" name="issuer_supplier_id" value={issuerSupplierId} />
-                      </div>
-                      <div>
-                        <Label htmlFor="payee">Lehtar (çeki alan)</Label>
-                        <FormProvider {...payeeForm}>
-                          <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
-                        </FormProvider>
-                        <input type="hidden" id="payee" name="payee" value={payeeName} />
-                        <input type="hidden" name="payee_customer_id" value={payeeSelectedId} />
-                        <input type="hidden" name="payee_supplier_id" value={payeeSupplierId} />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="notes">Notlar</Label>
-                      <Textarea
-                        id="notes"
-                        name="notes"
-                        defaultValue={editingCheck?.notes || ""}
-                        placeholder="Notlar..."
-                      />
                     </div>
                     <div className="flex justify-end space-x-2">
                       <Button variant="outline" onClick={() => setCheckDialog(false)}>

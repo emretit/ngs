@@ -1,10 +1,10 @@
 
 import { useState } from "react";
-import { Plus, CreditCard, TrendingUp, TrendingDown } from "lucide-react";
+import { CreditCard, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { PaymentDialog } from "./PaymentDialog";
 import { PaymentsList } from "./PaymentsList";
+import { PaymentMethodSelector } from "@/components/shared/PaymentMethodSelector";
 import { Customer } from "@/types/customer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ interface PaymentsTabProps {
 
 export const PaymentsTab = ({ customer }: PaymentsTabProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedPaymentType, setSelectedPaymentType] = useState<"hesap" | "cek" | "senet" | null>(null);
 
   // Fetch payment statistics
   const { data: paymentStats, isLoading: isLoadingStats } = useQuery({
@@ -152,13 +153,12 @@ export const PaymentsTab = ({ customer }: PaymentsTabProps) => {
                 {customer.name} ile yapılan tüm finansal işlemler
               </p>
             </div>
-            <Button 
-              onClick={() => setIsDialogOpen(true)} 
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Ödeme Ekle
-            </Button>
+            <PaymentMethodSelector 
+              onMethodSelect={(method) => {
+                setSelectedPaymentType(method.type);
+                setIsDialogOpen(true);
+              }}
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -168,8 +168,12 @@ export const PaymentsTab = ({ customer }: PaymentsTabProps) => {
       
       <PaymentDialog 
         open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setSelectedPaymentType(null);
+        }}
         customer={customer}
+        defaultPaymentType={selectedPaymentType}
       />
     </div>
   );

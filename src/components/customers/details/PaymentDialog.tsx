@@ -37,9 +37,10 @@ interface PaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   customer: Customer;
+  defaultPaymentType?: "hesap" | "cek" | "senet" | null;
 }
 
-export function PaymentDialog({ open, onOpenChange, customer }: PaymentDialogProps) {
+export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType }: PaymentDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm<PaymentFormData>({
@@ -47,7 +48,7 @@ export function PaymentDialog({ open, onOpenChange, customer }: PaymentDialogPro
     defaultValues: {
       payment_date: new Date(),
       payment_direction: "incoming",
-      payment_type: "hesap",
+      payment_type: defaultPaymentType || "hesap",
       account_type: "bank",
     },
   });

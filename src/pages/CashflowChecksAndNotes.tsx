@@ -798,8 +798,8 @@ const CashflowChecksAndNotes = () => {
                                   <TableCell>{getStatusBadge(check.status)}</TableCell>
                                   <TableCell className="text-center">
                                     <div className="flex justify-center space-x-1">
-                                      {/* Tedarikçiye Ver Butonu - Sadece portföyde veya bankaya verilmiş çekler için */}
-                                      {['portfoyde', 'bankaya_verildi'].includes(check.status) && (
+                                      {/* Ciro Et Butonu - Sadece portföydeki çekler için */}
+                                      {check.status === 'portfoyde' && (
                                         <Button
                                           variant="outline"
                                           size="sm"
@@ -1027,6 +1027,22 @@ const CashflowChecksAndNotes = () => {
                                   <TableCell>{getStatusBadge(check.status)}</TableCell>
                                   <TableCell className="text-center">
                                     <div className="flex justify-center space-x-1">
+                                      {/* Ödeme Yap Butonu - Sadece ödenecek durumundaki çekler için */}
+                                      {check.status === 'odenecek' && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                                          onClick={() => {
+                                            setEditingCheck(check);
+                                            setCheckStatus("odendi");
+                                            setCheckType("outgoing");
+                                            setCheckDialog(true);
+                                          }}
+                                        >
+                                          Ödeme Yap
+                                        </Button>
+                                      )}
                                       <Button
                                         variant="ghost"
                                         size="sm"

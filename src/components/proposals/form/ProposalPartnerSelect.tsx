@@ -53,10 +53,10 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel }: P
   };
   
   const getDisplayName = () => {
-    if (partnerType === "customer" && selectedCustomer) {
+    if (selectedCustomer) {
       return selectedCustomer.name;
     }
-    if (partnerType === "supplier" && selectedSupplier) {
+    if (selectedSupplier) {
       return selectedSupplier.name;
     }
     return placeholder ?? (partnerType === "customer" ? "Müşteri seçin..." : "Tedarikçi seçin...");

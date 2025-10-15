@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, FileText, Download, Receipt, Search, Calendar, CreditCard, MoreHorizontal, Filter, Activity } from "lucide-react";
+import { Plus, Edit, Trash2, FileText, Download, Receipt, Search, Calendar, CreditCard, Filter, Activity } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -635,7 +635,6 @@ const CashflowChecksAndNotes = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gelen Çekler Kartı */}
                 <Card className="group relative overflow-hidden bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full -translate-y-16 translate-x-16"></div>
                   <CardContent className="relative p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
@@ -649,9 +648,6 @@ const CashflowChecksAndNotes = () => {
                           <p className="text-sm text-gray-600">Müşterilerden aldığımız çekler</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
                     </div>
 
                     <div className="space-y-3">
@@ -867,7 +863,6 @@ const CashflowChecksAndNotes = () => {
 
                 {/* Giden Çekler Kartı */}
                 <Card className="group relative overflow-hidden bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full -translate-y-16 translate-x-16"></div>
                   <CardContent className="relative p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
@@ -881,9 +876,6 @@ const CashflowChecksAndNotes = () => {
                           <p className="text-sm text-gray-600">Tedarikçilere verdiğimiz çekler</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
                     </div>
 
                     <div className="space-y-3">

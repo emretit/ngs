@@ -1,4 +1,4 @@
-
+import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -146,4 +146,4 @@ const CustomerList = ({
   );
 };
 
-export default CustomerList;
+export default memo(CustomerList);

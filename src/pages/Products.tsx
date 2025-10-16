@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import ProductListHeader from "@/components/products/ProductListHeader";
@@ -315,4 +315,4 @@ const Products = () => {
   );
 };
 
-export default Products;
+export default memo(Products);

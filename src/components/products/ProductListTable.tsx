@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -73,12 +74,12 @@ const ProductListTable = ({
       : <ChevronDown className="h-4 w-4 ml-1" />;
   };
 
-  const handleEdit = (id: string, e: React.MouseEvent) => {
+  const handleEdit = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/product-form/${id}`);
-  };
+  }, [navigate]);
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = useCallback(async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
     if (!confirm("Bu ürünü silmek istediğinizden emin misiniz?")) {
@@ -101,14 +102,14 @@ const ProductListTable = ({
       console.error('Error deleting product:', error);
       showError("Ürün silinirken bir hata oluştu");
     }
-  };
+  }, [queryClient]);
 
-  const formatPrice = (price: number, currency: string) => {
+  const formatPrice = useCallback((price: number, currency: string) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: currency
     }).format(price);
-  };
+  }, []);
 
   return (
     <div className="bg-gradient-to-br from-card via-muted/20 to-background rounded-2xl shadow-2xl border border-border/10 backdrop-blur-xl relative overflow-hidden">
@@ -256,4 +257,4 @@ const ProductListTable = ({
   );
 };
 
-export default ProductListTable;
+export default memo(ProductListTable);

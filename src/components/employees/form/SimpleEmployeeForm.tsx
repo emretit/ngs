@@ -109,13 +109,27 @@ const SimpleEmployeeForm = () => {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
-      if (!userData?.company_id) {
-        throw new Error("Kullanıcı profil bilgileri bulunamadı. Lütfen giriş yapın.");
+      // Get user session and company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("Lütfen giriş yapın.");
+      }
+
+      // Get profile to ensure company_id exists
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profile?.company_id) {
+        throw new Error("Şirket bilgisi bulunamadı. Lütfen yöneticinizle iletişime geçin.");
       }
       
-      // Use the company_id from userData (current_company_id() will handle the rest)
+      // Use the company_id from profile
       const employeeData = {
-        company_id: userData.company_id,
+        company_id: profile.company_id,
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,

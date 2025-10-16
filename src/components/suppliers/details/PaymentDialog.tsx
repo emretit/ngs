@@ -112,39 +112,81 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
         currency: "TRY",
       };
 
-      // Şimdilik sadece banka hesapları destekleniyor
+      // Hesap bilgisini ekle
       if (data.account_type === "bank") {
         paymentData.bank_account_id = data.account_id;
-      } else {
-        throw new Error("Şu anda sadece banka hesapları desteklenmektedir.");
+      } else if (data.account_type === "cash") {
+        paymentData.cash_account_id = data.account_id;
+      } else if (data.account_type === "credit_card") {
+        paymentData.credit_card_id = data.account_id;
+      } else if (data.account_type === "partner") {
+        paymentData.partner_account_id = data.account_id;
       }
 
       const { error: paymentError } = await supabase.from("payments").insert(paymentData);
 
       if (paymentError) throw paymentError;
 
-      // 3. Banka hesabı bakiyesini güncelle
+      // 3. Hesap bakiyesini güncelle
       const balanceMultiplier = data.payment_direction === "incoming" ? 1 : -1;
-      const { data: bankAccount, error: bankFetchError } = await supabase
-        .from("bank_accounts")
-        .select("current_balance, available_balance")
-        .eq("id", data.account_id)
-        .single();
 
-      if (bankFetchError) throw bankFetchError;
+      if (data.account_type === "bank") {
+        const { data: bankAccount, error: bankFetchError } = await supabase
+          .from("bank_accounts")
+          .select("current_balance, available_balance")
+          .eq("id", data.account_id)
+          .single();
 
-      const newCurrentBalance = bankAccount.current_balance + (data.amount * balanceMultiplier);
-      const newAvailableBalance = bankAccount.available_balance + (data.amount * balanceMultiplier);
+        if (bankFetchError) throw bankFetchError;
 
-      const { error: bankUpdateError } = await supabase
-        .from("bank_accounts")
-        .update({
-          current_balance: newCurrentBalance,
-          available_balance: newAvailableBalance,
-        })
-        .eq("id", data.account_id);
+        const newCurrentBalance = bankAccount.current_balance + (data.amount * balanceMultiplier);
+        const newAvailableBalance = bankAccount.available_balance + (data.amount * balanceMultiplier);
 
-      if (bankUpdateError) throw bankUpdateError;
+        const { error: bankUpdateError } = await supabase
+          .from("bank_accounts")
+          .update({
+            current_balance: newCurrentBalance,
+            available_balance: newAvailableBalance,
+          })
+          .eq("id", data.account_id);
+
+        if (bankUpdateError) throw bankUpdateError;
+      } else if (data.account_type === "cash") {
+        const { data: cashAccount, error: cashFetchError } = await supabase
+          .from("cash_accounts")
+          .select("current_balance")
+          .eq("id", data.account_id)
+          .single();
+
+        if (cashFetchError) throw cashFetchError;
+
+        const newCurrentBalance = cashAccount.current_balance + (data.amount * balanceMultiplier);
+
+        const { error: cashUpdateError } = await supabase
+          .from("cash_accounts")
+          .update({
+            current_balance: newCurrentBalance,
+          })
+          .eq("id", data.account_id);
+
+        if (cashUpdateError) throw cashUpdateError;
+      } else if (data.account_type === "credit_card") {
+        const { error: cardUpdateError } = await supabase.rpc('update_credit_card_balance', {
+          card_id: data.account_id,
+          amount: data.amount * balanceMultiplier,
+          transaction_type: data.payment_direction === 'incoming' ? 'income' : 'expense'
+        });
+
+        if (cardUpdateError) throw cardUpdateError;
+      } else if (data.account_type === "partner") {
+        const { error: partnerUpdateError } = await supabase.rpc('update_partner_account_balance', {
+          account_id: data.account_id,
+          amount: data.amount * balanceMultiplier,
+          transaction_type: data.payment_direction === 'incoming' ? 'income' : 'expense'
+        });
+
+        if (partnerUpdateError) throw partnerUpdateError;
+      }
 
       // 4. Tedarikçi bakiyesini güncelle
       const supplierBalanceMultiplier = data.payment_direction === "incoming" ? -1 : 1;

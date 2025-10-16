@@ -43,7 +43,10 @@ export const PaymentsList = ({ supplier }: PaymentsListProps) => {
         .from('payments')
         .select(`
           *,
-          bank_accounts(account_name, bank_name)
+          bank_accounts(account_name, bank_name),
+          cash_accounts(name as account_name),
+          credit_cards(card_name, bank_name),
+          partner_accounts(partner_name as name)
         `)
         .eq('supplier_id', supplier.id)
         .order('payment_date', { ascending: false });
@@ -77,6 +80,15 @@ export const PaymentsList = ({ supplier }: PaymentsListProps) => {
   const getAccountName = (payment: Payment) => {
     if (payment.bank_accounts) {
       return `${payment.bank_accounts.account_name} - ${payment.bank_accounts.bank_name}`;
+    }
+    if (payment.cash_accounts) {
+      return `Kasa: ${payment.cash_accounts.account_name}`;
+    }
+    if (payment.credit_cards) {
+      return `Kredi Kartı: ${payment.credit_cards.card_name} - ${payment.credit_cards.bank_name}`;
+    }
+    if (payment.partner_accounts) {
+      return `Ortak Hesabı: ${payment.partner_accounts.name}`;
     }
     return "Bilinmeyen Hesap";
   };

@@ -92,7 +92,9 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
       updated_at: transfer.updated_at,
       isTransfer: true,
       transfer_direction: transfer.direction,
-      category: 'Transfer'
+      category: 'Transfer',
+      customer_name: undefined,
+      supplier_name: undefined
     }));
 
     // Normal işlemler ve transfer işlemlerini birleştir

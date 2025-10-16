@@ -985,7 +985,7 @@ const CashflowChecks = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="payment_account_type">Hesap Türü</Label>
-                    <Select value={paymentAccountType} onValueChange={setPaymentAccountType}>
+                    <Select value={paymentAccountType} onValueChange={(value) => setPaymentAccountType(value as "cash" | "bank" | "credit_card" | "partner")}>
                       <SelectTrigger className="h-8 text-sm">
                         <SelectValue placeholder="Hesap türü seçin" />
                       </SelectTrigger>

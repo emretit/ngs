@@ -74,6 +74,8 @@ interface Transaction {
   reference?: string;
   created_at?: string;
   updated_at?: string;
+  customer_name?: string;
+  supplier_name?: string;
 }
 
 interface TransferTransaction {

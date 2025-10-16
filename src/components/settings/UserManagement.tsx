@@ -88,13 +88,11 @@ export const UserManagement = () => {
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['users', 'settings', 'employee-matching'],
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchInterval: 5000,
-    refetchIntervalInBackground: true,
-    refetchOnReconnect: true,
+    staleTime: 2 * 60 * 1000, // 2 minutes - reasonable cache
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchInterval: false, // No auto-refetch
     queryFn: async () => {
       // Önce kullanıcının company_id'sini al
       const { data: currentUser } = await supabase.auth.getUser();

@@ -2,8 +2,8 @@
 import React from "react";
 import type { Employee } from "@/types/employee";
 import { FormFields } from "../FormFields";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useDepartments } from "@/hooks/useDepartments";
 
 interface EmployeeFormProps {
   employee: Employee;
@@ -21,28 +21,7 @@ export const EmployeeForm = ({
   onCancel
 }: EmployeeFormProps) => {
   const [formData, setFormData] = useState<Partial<Employee>>(employee);
-  const [departments, setDepartments] = useState<{ name: string }[]>([]);
-
-  // Fetch departments
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      const { data } = await supabase
-        .from('departments')
-        .select('name')
-        .order('name');
-      
-      setDepartments(data || [
-        { name: "Engineering" },
-        { name: "Sales" },
-        { name: "Marketing" },
-        { name: "Finance" },
-        { name: "HR" },
-        { name: "Operations" }
-      ]);
-    };
-
-    fetchDepartments();
-  }, []);
+  const { data: departments = [] } = useDepartments();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

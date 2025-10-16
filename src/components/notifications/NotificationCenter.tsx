@@ -30,7 +30,8 @@ const NotificationCenter = () => {
       if (error) throw error;
       return count || 0;
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    refetchInterval: false, // Use realtime subscriptions instead
   });
 
   return (

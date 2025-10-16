@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SuppliersHeader from "@/components/suppliers/SuppliersHeader";
@@ -28,23 +28,26 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         throw error;
       }
       return data as Supplier[];
-    }
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
   if (error) {
     toast.error("Tedarikçiler yüklenirken bir hata oluştu");
     console.error("Error loading suppliers:", error);
   }
-  const handleSupplierSelect = (supplier: Supplier) => {
+  const handleSupplierSelect = useCallback((supplier: Supplier) => {
     setSelectedSuppliers(prev => {
       const isSelected = prev.some(s => s.id === supplier.id);
       return isSelected 
         ? prev.filter(s => s.id !== supplier.id) 
         : [...prev, supplier];
     });
-  };
-  const handleClearSelection = () => {
+  }, []);
+  
+  const handleClearSelection = useCallback(() => {
     setSelectedSuppliers([]);
-  };
+  }, []);
   return (
     <div className="space-y-2">
         {/* Header */}
@@ -95,4 +98,5 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
       </div>
   );
 };
-export default Suppliers;
+
+export default memo(Suppliers);

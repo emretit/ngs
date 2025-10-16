@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeList } from "@/components/employees/EmployeeList";
@@ -23,7 +23,68 @@ const Employees = () => {
   const [bulkPayrollOpen, setBulkPayrollOpen] = useState(false);
   const [bulkPaymentOpen, setBulkPaymentOpen] = useState(false);
 
-  const formatCurrency = (amount: number | null | undefined) => {
+  // Fetch employees with stats
+  const { data: employees = [], isLoading, error } = useQuery({
+    queryKey: ['employees', selectedStatus, selectedDepartment, selectedPosition, searchQuery],
+    queryFn: async () => {
+      let query = supabase
+        .from('employees')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (selectedStatus !== 'all') {
+        query = query.eq('status', selectedStatus);
+      }
+
+      if (selectedDepartment !== 'all') {
+        query = query.eq('department_id', selectedDepartment);
+      }
+
+      if (selectedPosition !== 'all') {
+        query = query.eq('position', selectedPosition);
+      }
+
+      if (searchQuery) {
+        query = query.or(
+          `first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`
+        );
+      }
+
+      const { data: employeesData, error: employeesError } = await query;
+      
+      if (employeesError) throw employeesError;
+      
+      console.log('Employees data:', employeesData);
+      
+      // Salary data is now directly in employees table, no need for separate processing
+      const processedData = employeesData || [];
+      
+      return processedData;
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fetch departments
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  // Get unique positions
+  const positions = Array.from(new Set(employees.map(emp => emp.position).filter(Boolean))) as string[];
+
+  const formatCurrency = useCallback((amount: number | null | undefined) => {
     if (!amount) return "₺0";
     return new Intl.NumberFormat('tr-TR', { 
       style: 'currency', 
@@ -31,9 +92,9 @@ const Employees = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);
-  };
+  }, []);
 
-  const exportToCSV = () => {
+  const exportToCSV = useCallback(() => {
     const headers = [
       'Ad Soyad',
       'E-posta',
@@ -104,64 +165,7 @@ const Employees = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  // Fetch employees with stats
-  const { data: employees = [], isLoading, error } = useQuery({
-    queryKey: ['employees', selectedStatus, selectedDepartment, selectedPosition, searchQuery],
-    queryFn: async () => {
-      let query = supabase
-        .from('employees')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (selectedStatus !== 'all') {
-        query = query.eq('status', selectedStatus);
-      }
-
-      if (selectedDepartment !== 'all') {
-        query = query.eq('department_id', selectedDepartment);
-      }
-
-      if (selectedPosition !== 'all') {
-        query = query.eq('position', selectedPosition);
-      }
-
-      if (searchQuery) {
-        query = query.or(
-          `first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`
-        );
-      }
-
-      const { data: employeesData, error: employeesError } = await query;
-      
-      if (employeesError) throw employeesError;
-      
-      console.log('Employees data:', employeesData);
-      
-      // Salary data is now directly in employees table, no need for separate processing
-      const processedData = employeesData || [];
-      
-      return processedData;
-    }
-  });
-
-  // Fetch departments
-  const { data: departments = [] } = useQuery({
-    queryKey: ['departments'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('departments')
-        .select('id, name')
-        .order('name');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  // Get unique positions
-  const positions = Array.from(new Set(employees.map(emp => emp.position).filter(Boolean))) as string[];
+  }, [employees]);
 
   // Calculate employee stats
   const employeeStats = {
@@ -180,34 +184,34 @@ const Employees = () => {
     total_employer_cost: acc.total_employer_cost + (employee.total_employer_cost || 0),
   }), { gross_salary: 0, net_salary: 0, total_employer_cost: 0 });
 
-  const handleEmployeeSelect = (employee: Employee) => {
+  const handleEmployeeSelect = useCallback((employee: Employee) => {
     setSelectedEmployees(prev => {
       const isSelected = prev.some(e => e.id === employee.id);
       return isSelected 
         ? prev.filter(e => e.id !== employee.id) 
         : [...prev, employee];
     });
-  };
+  }, []);
 
-  const handleClearSelection = () => {
+  const handleClearSelection = useCallback(() => {
     setSelectedEmployees([]);
-  };
+  }, []);
 
-  const handleBulkPayroll = () => {
+  const handleBulkPayroll = useCallback(() => {
     if (selectedEmployees.length === 0) {
       toast.error("Lütfen tahakkuk yapılacak çalışanları seçin");
       return;
     }
     setBulkPayrollOpen(true);
-  };
+  }, [selectedEmployees.length]);
 
-  const handleBulkPayment = () => {
+  const handleBulkPayment = useCallback(() => {
     if (selectedEmployees.length === 0) {
       toast.error("Lütfen ödeme yapılacak çalışanları seçin");
       return;
     }
     setBulkPaymentOpen(true);
-  };
+  }, [selectedEmployees.length]);
 
   if (error) {
     toast.error("Çalışanlar yüklenirken bir hata oluştu");
@@ -294,4 +298,4 @@ const Employees = () => {
   );
 };
 
-export default Employees;
+export default memo(Employees);

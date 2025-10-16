@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Task, TaskStatus } from "@/types/task";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -73,20 +73,22 @@ export const useKanbanTasks = ({
         } : undefined
       })) as Task[];
     },
-    enabled: !!userData?.company_id
+    enabled: !!userData?.company_id,
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  useEffect(() => {
-    if (!tasks || isLoading) return;
+  // Memoized filtering - sadece dependency'ler değiştiğinde yeniden hesapla
+  const filteredTasks = useMemo(() => {
+    if (!tasks || isLoading) return [];
 
-    // Filter tasks based on search query, employee, type, status, and "My Day"
-    const filteredTasks = tasks.filter(task => {
+    return tasks.filter(task => {
       const matchesSearch = 
         !searchQuery || 
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
-      // My Day filter: show tasks assigned to current user's employee_id
+      // My Day filter
       let matchesMyDay = true;
       if (isMyDay && userData?.employee_id) {
         matchesMyDay = task.assignee_id === userData.employee_id;
@@ -98,7 +100,10 @@ export const useKanbanTasks = ({
       
       return matchesSearch && matchesEmployee && matchesType && matchesStatus && matchesMyDay;
     });
+  }, [tasks, searchQuery, selectedEmployee, selectedType, selectedStatus, isLoading, isMyDay, userData?.employee_id]);
 
+
+  useEffect(() => {
     // Group filtered tasks by status
     const groupedTasks: KanbanTasks = {
       todo: [],
@@ -118,7 +123,7 @@ export const useKanbanTasks = ({
     }
 
     setTasksState(groupedTasks);
-  }, [tasks, searchQuery, selectedEmployee, selectedType, selectedStatus, isLoading, isMyDay, userData?.employee_id]);
+  }, [filteredTasks, selectedStatus]);
 
   return {
     tasks: tasksState,

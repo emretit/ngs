@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import KpiWidget from "./KpiWidget";
 import {
@@ -99,4 +100,4 @@ const MetricsGrid = ({ crmStats, financialData }: MetricsGridProps) => {
   );
 };
 
-export default MetricsGrid;
+export default memo(MetricsGrid);

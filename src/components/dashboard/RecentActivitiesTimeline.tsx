@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,8 @@ const RecentActivitiesTimeline = () => {
       if (error) throw error;
       return data as ActivityLog[];
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const getActivityIcon = (type: string) => {
@@ -170,4 +173,4 @@ const RecentActivitiesTimeline = () => {
   );
 };
 
-export default RecentActivitiesTimeline;
+export default memo(RecentActivitiesTimeline);

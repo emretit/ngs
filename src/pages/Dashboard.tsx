@@ -2,101 +2,19 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { 
-  Target, 
-  Users
-} from "lucide-react";
+import { Target, Users } from "lucide-react";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 const Dashboard = () => {
+  const { financialData, crmStats, hrStats, isLoading } = useDashboardData();
 
-  // Fetch real financial data
-  const { data: financialData } = useQuery({
-    queryKey: ['dashboard-financial'],
-    queryFn: async () => {
-      // Get bank accounts balance
-      const { data: bankAccounts } = await supabase
-        .from('bank_accounts')
-        .select('current_balance');
-      
-      // Get cash accounts balance
-      const { data: cashAccounts } = await supabase
-        .from('cash_accounts')
-        .select('current_balance');
-
-      // Get customers balance (receivables)
-      const { data: customers } = await supabase
-        .from('customers')
-        .select('balance');
-
-      // Get suppliers data for payables (using einvoices)
-      const { data: invoices } = await supabase
-        .from('einvoices')
-        .select('remaining_amount');
-
-      const totalBankBalance = bankAccounts?.reduce((sum, acc) => sum + (Number(acc.current_balance) || 0), 0) || 0;
-      const totalCashBalance = cashAccounts?.reduce((sum, acc) => sum + (Number(acc.current_balance) || 0), 0) || 0;
-      const totalReceivables = customers?.reduce((sum, c) => sum + (Number(c.balance) || 0), 0) || 0;
-      const totalPayables = invoices?.reduce((sum, inv) => sum + (Number(inv.remaining_amount) || 0), 0) || 0;
-
-      return {
-        cashFlow: totalBankBalance + totalCashBalance,
-        receivables: totalReceivables,
-        payables: totalPayables,
-        netWorth: totalBankBalance + totalCashBalance + totalReceivables - totalPayables
-      };
-    }
-  });
-
-  // Fetch CRM stats
-  const { data: crmStats } = useQuery({
-    queryKey: ['dashboard-crm'],
-    queryFn: async () => {
-      const { data: opportunities } = await supabase
-        .from('opportunities')
-        .select('id')
-        .in('status', ['open', 'in_progress']);
-
-      const { data: activities } = await supabase
-        .from('activities')
-        .select('id')
-        .in('status', ['todo', 'in_progress']);
-
-      const { data: proposals } = await supabase
-        .from('proposals')
-        .select('id')
-        .eq('status', 'draft');
-
-      return {
-        opportunities: opportunities?.length || 0,
-        activities: activities?.length || 0,
-        proposals: proposals?.length || 0
-      };
-    }
-  });
-
-  // Fetch HR stats
-  const { data: hrStats } = useQuery({
-    queryKey: ['dashboard-hr'],
-    queryFn: async () => {
-      const { data: employees } = await supabase
-        .from('employees')
-        .select('id')
-        .eq('status', 'aktif');
-
-      const { data: leaves } = await supabase
-        .from('employee_leaves')
-        .select('id')
-        .eq('status', 'approved')
-        .gte('end_date', new Date().toISOString());
-
-      return {
-        totalEmployees: employees?.length || 0,
-        onLeave: leaves?.length || 0
-      };
-    }
-  });
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <>

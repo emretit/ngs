@@ -25,7 +25,7 @@ interface ProposalTableRowProps {
   formatMoney: (amount: number) => string;
   onSelect: (proposal: Proposal) => void;
   onStatusChange: (proposalId: string, newStatus: ProposalStatus) => void;
-  onDelete: (proposalId: string) => void;
+  onDelete: (proposal: Proposal) => void;
   templates: any[];
   onPdfPrint: (proposal: Proposal, templateId: string) => void;
   isLoading?: boolean;

@@ -32,7 +32,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
   
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [opportunityTypeToDelete, setOpportunityTypeToDelete] = useState<string | null>(null);
+  const [opportunityTypeToDelete, setOpportunityTypeToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -194,6 +194,24 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteTypeConfirm = async () => {
+    if (opportunityTypeToDelete === null) return;
+    
+    setIsDeleting(true);
+    try {
+      await handleDeleteType(opportunityTypeToDelete);
+      setIsDeleteDialogOpen(false);
+      setOpportunityTypeToDelete(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteTypeCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setOpportunityTypeToDelete(null);
   };
 
   const handleCustomerSelect = (customerId: string) => {

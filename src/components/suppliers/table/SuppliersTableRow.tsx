@@ -14,7 +14,7 @@ interface SuppliersTableRowProps {
   onSelect: (supplier: Supplier) => void;
   onSelectToggle?: (supplier: Supplier) => void;
   onStatusChange: (supplierId: string, newStatus: 'aktif' | 'pasif' | 'potansiyel') => void;
-  onDelete: (supplierId: string) => void;
+  onDelete: (supplier: Supplier) => void;
   isSelected?: boolean;
 }
 
@@ -209,7 +209,7 @@ const SuppliersTableRow = ({
               <DropdownMenuItem 
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(supplier.id);
+                  onDelete(supplier);
                 }}
                 className="text-red-600"
               >

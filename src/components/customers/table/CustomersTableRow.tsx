@@ -14,7 +14,7 @@ interface CustomersTableRowProps {
   onSelect: (customer: Customer) => void;
   onSelectToggle?: (customer: Customer) => void;
   onStatusChange: (customerId: string, newStatus: 'aktif' | 'pasif' | 'potansiyel') => void;
-  onDelete: (customerId: string) => void;
+  onDelete: (customer: Customer) => void;
   isSelected?: boolean;
 }
 
@@ -209,7 +209,7 @@ const CustomersTableRow = ({
               <DropdownMenuItem 
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(customer.id);
+                  onDelete(customer);
                 }}
                 className="text-red-600"
               >

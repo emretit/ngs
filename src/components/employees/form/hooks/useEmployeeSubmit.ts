@@ -26,6 +26,25 @@ const paymentFrequencyToEnglish = (freq: string | null | undefined): string | nu
   return mapping[freq] || null;
 };
 
+const sanitizeEmployeeValues = (input: any) => {
+  const dateFields = ['hire_date','date_of_birth','salary_start_date','effective_date'];
+  const sanitized: any = { ...input };
+
+  // Normalize empty strings for known date fields to null
+  dateFields.forEach((field) => {
+    if (sanitized[field] === '' || sanitized[field] === undefined) {
+      sanitized[field] = null;
+    }
+  });
+
+  // Also convert any other empty string values to null to avoid type errors
+  Object.keys(sanitized).forEach((k) => {
+    if (sanitized[k] === '') sanitized[k] = null;
+  });
+
+  return sanitized;
+};
+
 export const useEmployeeSubmit = (employeeId?: string) => {
   const [isSaving, setIsSaving] = useState(false);
 
@@ -36,12 +55,12 @@ export const useEmployeeSubmit = (employeeId?: string) => {
     try {
       setIsSaving(true);
 
-      // Convert Turkish values to English for database
-      const dbValues = {
+      // Convert Turkish values to English for database and sanitize empty inputs
+      const dbValues = sanitizeEmployeeValues({
         ...values,
         salary_type: salaryTypeToEnglish(values.salary_type),
         payment_frequency: paymentFrequencyToEnglish(values.payment_frequency),
-      };
+      });
 
       const { error } = await supabase
         .from("employees")

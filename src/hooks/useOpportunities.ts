@@ -130,7 +130,7 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     ["opportunities", JSON.stringify(filters)],
     fetchOpportunities,
     {
-      pageSize: 50, // Her 50 fırsatta bir yükle
+      pageSize: 20, // Her 20 fırsatta bir yükle
       enabled: true,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 dakika

@@ -1,30 +1,30 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import CustomersHeader from "@/components/customers/CustomersHeader";
 import CustomersFilterBar from "@/components/customers/CustomersFilterBar";
 import CustomersContent from "@/components/customers/CustomersContent";
 import CustomersBulkActions from "@/components/customers/CustomersBulkActions";
 import { Customer } from "@/types/customer";
 import { toast } from "sonner";
+import { useCustomersInfiniteScroll } from "@/hooks/useCustomersInfiniteScroll";
+
 const Contacts = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedCustomers, setSelectedCustomers] = useState<Customer[]>([]);
-  const pageSize = 20;
-  const { data: customers, isLoading, error } = useQuery({
-    queryKey: ['customers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('customers')
-        .select('*');
-      if (error) {
-        console.error('Error fetching customers:', error);
-        throw error;
-      }
-      return data as Customer[];
-    }
+
+  const {
+    data: customers,
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    loadMore,
+    totalCount,
+    error
+  } = useCustomersInfiniteScroll({
+    search: searchQuery,
+    status: selectedStatus,
+    type: selectedType
   });
   if (error) {
     toast.error("Müşteriler yüklenirken bir hata oluştu");
@@ -75,9 +75,12 @@ const Contacts = () => {
           </div>
         ) : (
           <CustomersContent
-            customers={(customers as Customer[]) || []}
+            customers={customers || []}
             isLoading={isLoading}
-            totalCount={customers?.length || 0}
+            isLoadingMore={isLoadingMore}
+            hasNextPage={hasNextPage}
+            loadMore={loadMore}
+            totalCount={totalCount}
             error={error}
             onCustomerSelect={() => {}}
             onCustomerSelectToggle={handleCustomerSelect}

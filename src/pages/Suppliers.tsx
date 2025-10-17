@@ -1,36 +1,35 @@
 import { useState, memo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import SuppliersHeader from "@/components/suppliers/SuppliersHeader";
 import SuppliersFilterBar from "@/components/suppliers/SuppliersFilterBar";
 import SuppliersContent from "@/components/suppliers/SuppliersContent";
 import SuppliersBulkActions from "@/components/suppliers/SuppliersBulkActions";
 import { Supplier } from "@/types/supplier";
 import { toast } from "sonner";
+import { useSuppliersInfiniteScroll } from "@/hooks/useSuppliersInfiniteScroll";
+
 interface SuppliersProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
+
 const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSuppliers, setSelectedSuppliers] = useState<Supplier[]>([]);
-  const pageSize = 20;
-  const { data: suppliers, isLoading, error } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('suppliers')
-        .select('*');
-      if (error) {
-        console.error('Error fetching suppliers:', error);
-        throw error;
-      }
-      return data as Supplier[];
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes cache
-    gcTime: 5 * 60 * 1000, // 5 minutes
+
+  const {
+    data: suppliers,
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    loadMore,
+    totalCount,
+    error
+  } = useSuppliersInfiniteScroll({
+    search: searchQuery,
+    status: selectedStatus,
+    type: selectedType
   });
   if (error) {
     toast.error("Tedarikçiler yüklenirken bir hata oluştu");
@@ -82,9 +81,12 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
           </div>
         ) : (
           <SuppliersContent
-            suppliers={(suppliers as Supplier[]) || []}
+            suppliers={suppliers || []}
             isLoading={isLoading}
-            totalCount={suppliers?.length || 0}
+            isLoadingMore={isLoadingMore}
+            hasNextPage={hasNextPage}
+            loadMore={loadMore}
+            totalCount={totalCount}
             error={error}
             onSupplierSelect={() => {}}
             onSupplierSelectToggle={handleSupplierSelect}

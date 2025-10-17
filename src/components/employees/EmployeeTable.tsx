@@ -16,6 +16,7 @@ import { EmployeeDetailPanel } from "./details/EmployeeDetailPanel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteEmployee } from "@/hooks/useEmployeeMutations";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -37,6 +38,11 @@ const EmployeeTable = ({
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const deleteEmployeeMutation = useDeleteEmployee();
   
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   const formatCurrency = (amount: number | null | undefined) => {
     if (!amount) return "-";
     return new Intl.NumberFormat('tr-TR', { 
@@ -51,14 +57,30 @@ const EmployeeTable = ({
     navigate(`/employees/${employee.id}`);
   };
 
-  const handleDelete = async (employeeId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (employee: Employee, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!confirm("Bu çalışanı silmek istediğinizden emin misiniz?")) {
-      return;
-    }
+    setEmployeeToDelete(employee);
+    setIsDeleteDialogOpen(true);
+  };
 
-    deleteEmployeeMutation.mutate(employeeId);
+  const handleDeleteConfirm = async () => {
+    if (!employeeToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      deleteEmployeeMutation.mutate(employeeToDelete.id);
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setEmployeeToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setEmployeeToDelete(null);
   };
 
   if (isLoading) {
@@ -347,7 +369,7 @@ const EmployeeTable = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={(e) => handleDelete(employee.id, e)}
+                          onClick={(e) => handleDeleteClick(employee, e)}
                           className="h-8 w-8 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-200"
                           title="Sil"
                           disabled={deleteEmployeeMutation.isPending}
@@ -369,6 +391,20 @@ const EmployeeTable = ({
         employee={selectedEmployee}
         isOpen={isDetailPanelOpen}
         onClose={() => setIsDetailPanelOpen(false)}
+      />
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Çalışanı Sil"
+        description={`"${employeeToDelete?.first_name} ${employeeToDelete?.last_name}" çalışanını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
       />
     </>
   );

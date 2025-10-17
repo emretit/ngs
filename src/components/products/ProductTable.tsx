@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -14,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface Product {
   id: string;
@@ -39,24 +41,32 @@ interface ProductTableProps {
 const ProductTable = ({ products, isLoading }: ProductTableProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleEdit = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/product-form/${id}`);
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!confirm("Bu ürünü silmek istediğinizden emin misiniz?")) {
-      return;
-    }
+    setProductToDelete(product);
+    setIsDeleteDialogOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+
+    setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('products')
         .delete()
-        .eq('id', id);
+        .eq('id', productToDelete.id);
 
       if (error) throw error;
 
@@ -67,7 +77,16 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
     } catch (error) {
       console.error('Error deleting product:', error);
       showError("Ürün silinirken bir hata oluştu");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setProductToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setProductToDelete(null);
   };
 
   const formatPrice = (price: number, currency: string) => {
@@ -145,7 +164,7 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
                   variant="ghost"
                   size="icon"
                   className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                  onClick={(e) => handleDelete(product.id, e)}
+                  onClick={(e) => handleDeleteClick(product, e)}
                 >
                   <Trash className="h-4 w-4" />
                 </Button>
@@ -155,6 +174,20 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
         ))}
       </TableBody>
     </Table>
+
+    {/* Confirmation Dialog */}
+    <ConfirmationDialogComponent
+      open={isDeleteDialogOpen}
+      onOpenChange={setIsDeleteDialogOpen}
+      title="Ürünü Sil"
+      description={`"${productToDelete?.name || 'Bu ürün'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+      confirmText="Sil"
+      cancelText="İptal"
+      variant="destructive"
+      onConfirm={handleDeleteConfirm}
+      onCancel={handleDeleteCancel}
+      isLoading={isDeleting}
+    />
   );
 };
 

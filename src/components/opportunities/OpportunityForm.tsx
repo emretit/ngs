@@ -14,7 +14,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, ChevronsUpDown, Building, User, Mail, Phone, Plus, X, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface OpportunityFormProps {
@@ -29,6 +29,11 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
   const { employees, isLoading: employeesLoading } = useEmployeeNames();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [opportunityTypeToDelete, setOpportunityTypeToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -701,39 +706,20 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                       
                       {/* Delete button positioned outside SelectItem */}
                       <div className="absolute top-2 right-8 z-10">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="opacity-100 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
-                              type="button"
-                            >
-                              <Trash2 size={12} />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Fırsat Tipini Sil</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                "{type.display_name}" fırsat tipini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>İptal</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleDeleteType(type.id);
-                                }}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Sil
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-100 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setOpportunityTypeToDelete(type.id);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -858,6 +844,20 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
         </form>
       </DialogContent>
     </Dialog>
+    
+    {/* Confirmation Dialog */}
+    <ConfirmationDialogComponent
+      open={isDeleteDialogOpen}
+      onOpenChange={setIsDeleteDialogOpen}
+      title="Fırsat Tipini Sil"
+      description={`"${opportunityTypeToDelete || 'Bu fırsat tipi'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+      confirmText="Sil"
+      cancelText="İptal"
+      variant="destructive"
+      onConfirm={handleDeleteTypeConfirm}
+      onCancel={handleDeleteTypeCancel}
+      isLoading={isDeleting}
+    />
   );
 };
 

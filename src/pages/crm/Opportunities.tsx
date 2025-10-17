@@ -12,6 +12,7 @@ import OpportunitiesContent from "@/components/opportunities/OpportunitiesConten
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 const Opportunities = () => {
   const { toast } = useToast();
   const [selectedOpportunities, setSelectedOpportunities] = useState<Opportunity[]>([]);
@@ -22,6 +23,12 @@ const Opportunities = () => {
   const [activeView, setActiveView] = useState<"kanban" | "list">("list");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [opportunityToDelete, setOpportunityToDelete] = useState<Opportunity | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   // Fetch employees data
   const { data: employees = [] } = useQuery({
     queryKey: ['employees'],
@@ -99,16 +106,31 @@ const Opportunities = () => {
     setSelectedOpportunity(opportunity);
     setIsDetailOpen(true);
   };
-  const handleDeleteOpportunity = async (opportunity: Opportunity) => {
-    if (confirm(`${opportunity.title} fırsatını silmek istediğinizden emin misiniz?`)) {
-      try {
-        // Burada silme işlemi yapılacak
-        console.log('Deleting opportunity:', opportunity.id);
-        // TODO: Implement delete functionality
-      } catch (error) {
-        console.error('Error deleting opportunity:', error);
-      }
+  const handleDeleteOpportunityClick = (opportunity: Opportunity) => {
+    setOpportunityToDelete(opportunity);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteOpportunityConfirm = async () => {
+    if (!opportunityToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      // Burada silme işlemi yapılacak
+      console.log('Deleting opportunity:', opportunityToDelete.id);
+      // TODO: Implement delete functionality
+    } catch (error) {
+      console.error('Error deleting opportunity:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setOpportunityToDelete(null);
     }
+  };
+
+  const handleDeleteOpportunityCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setOpportunityToDelete(null);
   };
   const handleConvertToProposal = (opportunity: Opportunity) => {
     // Teklif sayfasına yönlendir
@@ -176,7 +198,7 @@ const Opportunities = () => {
                 selectedOpportunities={selectedOpportunities}
                 onUpdateOpportunityStatus={handleUpdateOpportunityStatus}
                 onEdit={handleEditOpportunity}
-                onDelete={handleDeleteOpportunity}
+                onDelete={handleDeleteOpportunityClick}
                 onConvertToProposal={handleConvertToProposal}
                 onPlanMeeting={handlePlanMeeting}
               />
@@ -209,6 +231,20 @@ const Opportunities = () => {
           }}
         />
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Fırsatı Sil"
+        description={`"${opportunityToDelete?.title || 'Bu fırsat'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteOpportunityConfirm}
+        onCancel={handleDeleteOpportunityCancel}
+        isLoading={isDeleting}
+      />
     </>
   );
 };

@@ -21,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { proposalStatusColors, proposalStatusLabels, ProposalStatus } from "@/types/proposal";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { handleProposalStatusChange } from "@/services/workflow/proposalWorkflow";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
@@ -53,6 +53,10 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   // Global discount state
   const [globalDiscountType, setGlobalDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [globalDiscountValue, setGlobalDiscountValue] = useState<number>(0);
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form state matching the proposal edit format
   const [formData, setFormData] = useState({
@@ -467,9 +471,25 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     }
   };
 
-  const handleDelete = () => {
-    toast.success("Teklif silindi");
-    navigate("/proposals");
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      toast.success("Teklif silindi");
+      navigate("/proposals");
+    } catch (error) {
+      console.error('Error deleting proposal:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
   };
 
   const handlePdfPrint = async (templateId?: string) => {
@@ -625,26 +645,15 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" className="bg-red-600 hover:bg-red-700 text-white" size="sm">
-                <Trash className="h-4 w-4 mr-2" />
-                Sil
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Teklif Sil</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Bu teklifi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>İptal</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>Sil</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button 
+            variant="outline" 
+            className="bg-red-600 hover:bg-red-700 text-white" 
+            size="sm"
+            onClick={handleDeleteClick}
+          >
+            <Trash className="h-4 w-4 mr-2" />
+            Sil
+          </Button>
         </div>
       </div>
 
@@ -1072,6 +1081,20 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           onAddToProposal={(productData) => handleAddProductToProposal(productData, editingItemIndex)}
           currency={formData.currency}
           existingData={editingItemData}
+        />
+
+        {/* Confirmation Dialog */}
+        <ConfirmationDialogComponent
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="Teklifi Sil"
+          description="Bu teklifi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+          confirmText="Sil"
+          cancelText="İptal"
+          variant="destructive"
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isLoading={isDeleting}
         />
       </div>
     </div>

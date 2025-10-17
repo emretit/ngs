@@ -16,6 +16,7 @@ import { PdfTemplate } from "@/types/pdf-template";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, Building2, BarChart3, User, DollarSign, Calendar, Clock, Settings } from "lucide-react";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface ProposalTableProps {
   proposals: Proposal[];
@@ -28,6 +29,11 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [proposalToDelete, setProposalToDelete] = useState<Proposal | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const [columns] = useState<Column[]>([
     { id: "number", label: "Teklif No", visible: true, sortable: false },
@@ -100,14 +106,18 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
     }
   };
 
-  const handleDeleteProposal = async (proposalId: string) => {
-    if (!confirm("Bu teklifi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
-      return;
-    }
+  const handleDeleteProposalClick = (proposal: Proposal) => {
+    setProposalToDelete(proposal);
+    setIsDeleteDialogOpen(true);
+  };
 
+  const handleDeleteProposalConfirm = async () => {
+    if (!proposalToDelete) return;
+
+    setIsDeleting(true);
     try {
       // TODO: Add actual delete API call here
-      // await deleteProposal(proposalId);
+      // await deleteProposal(proposalToDelete.id);
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       
       toast({
@@ -122,7 +132,16 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
         description: "Teklif silinirken bir hata oluştu.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setProposalToDelete(null);
     }
+  };
+
+  const handleDeleteProposalCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setProposalToDelete(null);
   };
 
   const formatMoney = (amount: number, currency: string = 'TRY') => {
@@ -266,7 +285,7 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
               formatMoney={formatMoney}
               onSelect={onProposalSelect}
               onStatusChange={handleStatusUpdate}
-              onDelete={handleDeleteProposal}
+              onDelete={handleDeleteProposalClick}
               templates={templates}
               onPdfPrint={handlePdfPrint}
             />
@@ -274,6 +293,20 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
         )}
       </TableBody>
     </Table>
+
+    {/* Confirmation Dialog */}
+    <ConfirmationDialogComponent
+      open={isDeleteDialogOpen}
+      onOpenChange={setIsDeleteDialogOpen}
+      title="Teklifi Sil"
+      description={`"${proposalToDelete?.number || 'Bu teklif'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+      confirmText="Sil"
+      cancelText="İptal"
+      variant="destructive"
+      onConfirm={handleDeleteProposalConfirm}
+      onCancel={handleDeleteProposalCancel}
+      isLoading={isDeleting}
+    />
   );
 };
 

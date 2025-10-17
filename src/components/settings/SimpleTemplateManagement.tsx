@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, Eye, Copy, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface SimpleTemplate {
   id: string;
@@ -27,6 +28,11 @@ export const SimpleTemplateManagement: React.FC = () => {
     description: "",
     content: ""
   });
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<SimpleTemplate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -158,10 +164,29 @@ export const SimpleTemplateManagement: React.FC = () => {
     updateMutation.mutate(editingTemplate);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Bu şablonu silmek istediğinizden emin misiniz?')) {
-      deleteMutation.mutate(id);
+  const handleDeleteClick = (template: SimpleTemplate) => {
+    setTemplateToDelete(template);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!templateToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      deleteMutation.mutate(templateToDelete.id);
+    } catch (error) {
+      console.error('Error deleting template:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setTemplateToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTemplateToDelete(null);
   };
 
   const handleDuplicate = (template: SimpleTemplate) => {
@@ -292,7 +317,7 @@ export const SimpleTemplateManagement: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDelete(template.id)}
+                  onClick={() => handleDeleteClick(template)}
                   className="text-destructive hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -370,6 +395,20 @@ export const SimpleTemplateManagement: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Şablonu Sil"
+        description={`"${templateToDelete?.name || 'Bu şablon'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

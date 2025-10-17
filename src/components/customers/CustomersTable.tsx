@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, FileText, MoreHorizontal } from "lucide-react";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface CustomersTableProps {
   customers: Customer[];
@@ -42,6 +43,11 @@ const CustomersTable = ({
   const queryClient = useQueryClient();
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const [columns] = useState([
     { id: "company", label: "Şirket", visible: true, sortable: true },
@@ -85,14 +91,18 @@ const CustomersTable = ({
     }
   };
 
-  const handleDeleteCustomer = async (customerId: string) => {
-    if (!confirm("Bu müşteriyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
-      return;
-    }
+  const handleDeleteCustomerClick = (customer: Customer) => {
+    setCustomerToDelete(customer);
+    setIsDeleteDialogOpen(true);
+  };
 
+  const handleDeleteCustomerConfirm = async () => {
+    if (!customerToDelete) return;
+
+    setIsDeleting(true);
     try {
       // TODO: Add actual delete API call here
-      // await deleteCustomer(customerId);
+      // await deleteCustomer(customerToDelete.id);
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       
       toast({
@@ -107,7 +117,16 @@ const CustomersTable = ({
         description: "Müşteri silinirken bir hata oluştu.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setCustomerToDelete(null);
     }
+  };
+
+  const handleDeleteCustomerCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setCustomerToDelete(null);
   };
 
   const formatMoney = (amount: number, currency: string = 'TRY') => {
@@ -286,48 +305,64 @@ const CustomersTable = ({
   }
 
   return (
-    <Table>
-      <CustomersTableHeader 
-        columns={columns} 
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        hasSelection={true}
-        onSelectAll={(checked) => {
-          if (setSelectedCustomers) {
-            if (checked) {
-              setSelectedCustomers(filteredCustomers);
-            } else {
-              setSelectedCustomers([]);
+    <div>
+      <Table>
+        <CustomersTableHeader 
+          columns={columns} 
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          hasSelection={true}
+          onSelectAll={(checked) => {
+            if (setSelectedCustomers) {
+              if (checked) {
+                setSelectedCustomers(filteredCustomers);
+              } else {
+                setSelectedCustomers([]);
+              }
             }
-          }
-        }}
-        isAllSelected={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
+          }}
+          isAllSelected={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
+        />
+        <TableBody>
+          {filteredCustomers.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                Bu kriterlere uygun müşteri bulunamadı
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredCustomers.map((customer, index) => (
+              <CustomersTableRow
+                key={customer.id}
+                customer={customer}
+                index={index}
+                formatMoney={formatMoney}
+                onSelect={onCustomerSelect}
+                onSelectToggle={onCustomerSelectToggle}
+                onStatusChange={handleStatusUpdate}
+                onDelete={handleDeleteCustomerClick}
+                isSelected={selectedCustomers.some(c => c.id === customer.id)}
+              />
+            ))
+          )}
+        </TableBody>
+      </Table>
+      
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Müşteriyi Sil"
+        description={`"${customerToDelete?.company || customerToDelete?.name || 'Bu müşteri'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteCustomerConfirm}
+        onCancel={handleDeleteCustomerCancel}
+        isLoading={isDeleting}
       />
-      <TableBody>
-        {filteredCustomers.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-              Bu kriterlere uygun müşteri bulunamadı
-            </TableCell>
-          </TableRow>
-        ) : (
-          filteredCustomers.map((customer, index) => (
-            <CustomersTableRow
-              key={customer.id}
-              customer={customer}
-              index={index}
-              formatMoney={formatMoney}
-              onSelect={onCustomerSelect}
-              onSelectToggle={onCustomerSelectToggle}
-              onStatusChange={handleStatusUpdate}
-              onDelete={handleDeleteCustomer}
-              isSelected={selectedCustomers.some(c => c.id === customer.id)}
-            />
-          ))
-        )}
-      </TableBody>
-    </Table>
+    </div>
   );
 };
 

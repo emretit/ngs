@@ -19,6 +19,7 @@ import { format, parse, startOfWeek, getDay, addDays as dateFnsAddDays, isSameDa
 import { tr } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { formatDate, startOfWeek as getStartOfWeek, isSameDay, addDaysToDate } from '@/utils/dateUtils';
+import { ConfirmationDialogComponent } from '@/components/ui/confirmation-dialog';
 
 const localizer = dateFnsLocalizer({
   format,

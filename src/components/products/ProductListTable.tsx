@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -17,6 +17,7 @@ import { showSuccess, showError } from "@/utils/toastUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import InfiniteScroll from "@/components/ui/infinite-scroll";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface Product {
   id: string;
@@ -65,6 +66,11 @@ const ProductListTable = ({
 }: ProductListTableProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getSortIcon = (field: string) => {
     if (field !== sortField) return null;
@@ -79,18 +85,21 @@ const ProductListTable = ({
     navigate(`/product-form/${id}`);
   }, [navigate]);
 
-  const handleDelete = useCallback(async (id: string, e: React.MouseEvent) => {
+  const handleDeleteClick = useCallback((product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!confirm("Bu ürünü silmek istediğinizden emin misiniz?")) {
-      return;
-    }
+    setProductToDelete(product);
+    setIsDeleteDialogOpen(true);
+  }, []);
 
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!productToDelete) return;
+
+    setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('products')
         .delete()
-        .eq('id', id);
+        .eq('id', productToDelete.id);
 
       if (error) throw error;
 
@@ -101,8 +110,17 @@ const ProductListTable = ({
     } catch (error) {
       console.error('Error deleting product:', error);
       showError("Ürün silinirken bir hata oluştu");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setProductToDelete(null);
     }
-  }, [queryClient]);
+  }, [productToDelete, queryClient]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setIsDeleteDialogOpen(false);
+    setProductToDelete(null);
+  }, []);
 
   const formatPrice = useCallback((price: number, currency: string) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -230,7 +248,7 @@ const ProductListTable = ({
                           variant="ghost"
                           size="icon"
                           className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                          onClick={(e) => handleDelete(product.id, e)}
+                          onClick={(e) => handleDeleteClick(product, e)}
                         >
                           <Trash className="h-4 w-4" />
                         </Button>
@@ -253,6 +271,20 @@ const ProductListTable = ({
           <div />
         </InfiniteScroll>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Ürünü Sil"
+        description={`"${productToDelete?.name || 'Bu ürün'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

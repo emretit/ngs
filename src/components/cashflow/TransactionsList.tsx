@@ -31,6 +31,7 @@ import { tr } from "date-fns/locale";
 import { useCashflowTransactions } from "@/hooks/useCashflowTransactions";
 import { useCashflowCategories } from "@/hooks/useCashflowCategories";
 import { useCashflowAnalytics } from "@/hooks/useCashflowAnalytics";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 const TransactionsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,6 +39,11 @@ const TransactionsList = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<Date>();
   const [dateTo, setDateTo] = useState<Date>();
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { transactions, loading, deleteTransaction } = useCashflowTransactions();
   const { categories } = useCashflowCategories();
@@ -70,10 +76,29 @@ const TransactionsList = () => {
   };
   const netAmount = filteredSummary.totalIncome - filteredSummary.totalExpenses;
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Bu işlemi silmek istediğinizden emin misiniz?')) {
-      await deleteTransaction(id);
+  const handleDeleteClick = (id: string) => {
+    setTransactionToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!transactionToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteTransaction(transactionToDelete);
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setTransactionToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
   };
 
   const exportToExcel = () => {
@@ -283,7 +308,7 @@ const TransactionsList = () => {
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => handleDelete(transaction.id)}
+                        onClick={() => handleDeleteClick(transaction.id)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -303,6 +328,20 @@ const TransactionsList = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="İşlemi Sil"
+        description="Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

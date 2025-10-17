@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, FileText, MoreHorizontal } from "lucide-react";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface SuppliersTableProps {
   suppliers: Supplier[];
@@ -42,6 +43,11 @@ const SuppliersTable = ({
   const queryClient = useQueryClient();
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const [columns] = useState([
     { id: "company", label: "Şirket", visible: true, sortable: true },
@@ -85,14 +91,18 @@ const SuppliersTable = ({
     }
   };
 
-  const handleDeleteSupplier = async (supplierId: string) => {
-    if (!confirm("Bu tedarikçiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
-      return;
-    }
+  const handleDeleteSupplierClick = (supplier: Supplier) => {
+    setSupplierToDelete(supplier);
+    setIsDeleteDialogOpen(true);
+  };
 
+  const handleDeleteSupplierConfirm = async () => {
+    if (!supplierToDelete) return;
+
+    setIsDeleting(true);
     try {
       // TODO: Add actual delete API call here
-      // await deleteSupplier(supplierId);
+      // await deleteSupplier(supplierToDelete.id);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       
       toast({
@@ -107,7 +117,16 @@ const SuppliersTable = ({
         description: "Tedarikçi silinirken bir hata oluştu.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setSupplierToDelete(null);
     }
+  };
+
+  const handleDeleteSupplierCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setSupplierToDelete(null);
   };
 
   const formatMoney = (amount: number, currency: string = 'TRY') => {
@@ -325,13 +344,27 @@ const SuppliersTable = ({
               onSelect={onSupplierSelect}
               onSelectToggle={onSupplierSelectToggle}
               onStatusChange={handleStatusUpdate}
-              onDelete={handleDeleteSupplier}
+              onDelete={handleDeleteSupplierClick}
               isSelected={selectedSuppliers.some(s => s.id === supplier.id)}
             />
           ))
         )}
       </TableBody>
     </Table>
+
+    {/* Confirmation Dialog */}
+    <ConfirmationDialogComponent
+      open={isDeleteDialogOpen}
+      onOpenChange={setIsDeleteDialogOpen}
+      title="Tedarikçiyi Sil"
+      description={`"${supplierToDelete?.company || supplierToDelete?.name || 'Bu tedarikçi'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+      confirmText="Sil"
+      cancelText="İptal"
+      variant="destructive"
+      onConfirm={handleDeleteSupplierConfirm}
+      onCancel={handleDeleteSupplierCancel}
+      isLoading={isDeleting}
+    />
   );
 };
 

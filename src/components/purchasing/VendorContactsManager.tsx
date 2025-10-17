@@ -26,6 +26,7 @@ import {
   useDeleteVendorContact,
   type VendorContact,
 } from '@/hooks/useVendors';
+import { ConfirmationDialogComponent } from '@/components/ui/confirmation-dialog';
 
 interface VendorContactsManagerProps {
   vendorId: string;
@@ -47,6 +48,11 @@ export function VendorContactsManager({ vendorId }: VendorContactsManagerProps) 
     is_primary: false,
     notes: '',
   });
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<VendorContact | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenDialog = (contact?: VendorContact) => {
     if (contact) {
@@ -97,10 +103,29 @@ export function VendorContactsManager({ vendorId }: VendorContactsManagerProps) 
     handleCloseDialog();
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Bu iletişim kişisini silmek istediğinizden emin misiniz?')) {
-      await deleteContact.mutateAsync({ id, vendorId });
+  const handleDeleteClick = (contact: VendorContact) => {
+    setContactToDelete(contact);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!contactToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteContact.mutateAsync({ id: contactToDelete.id, vendorId });
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setContactToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setContactToDelete(null);
   };
 
   if (isLoading) {
@@ -155,7 +180,7 @@ export function VendorContactsManager({ vendorId }: VendorContactsManagerProps) 
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(contact.id)}
+                      onClick={() => handleDeleteClick(contact)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -246,6 +271,20 @@ export function VendorContactsManager({ vendorId }: VendorContactsManagerProps) 
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="İletişim Kişisini Sil"
+        description={`"${contactToDelete?.name || 'Bu iletişim kişisi'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

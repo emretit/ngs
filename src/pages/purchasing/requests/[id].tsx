@@ -10,6 +10,8 @@ import { formatDate } from "@/lib/utils";
 import { PRItemsTab } from "@/components/purchasing/PRItemsTab";
 import { PRApprovalsTab } from "@/components/purchasing/PRApprovalsTab";
 import { AttachmentsTab } from "@/components/purchasing/AttachmentsTab";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { useState } from "react";
 
 const statusConfig = {
   draft: { label: "Taslak", variant: "secondary" as const },
@@ -34,6 +36,14 @@ export default function PurchaseRequestDetail() {
   const submitMutation = useSubmitPurchaseRequest();
   const convertToRFQMutation = useConvertPRToRFQ();
   const convertToPOMutation = useConvertPRToPO();
+  
+  // Confirmation dialog states
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [isConvertToRFQDialogOpen, setIsConvertToRFQDialogOpen] = useState(false);
+  const [isConvertToPODialogOpen, setIsConvertToPODialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConvertingToRFQ, setIsConvertingToRFQ] = useState(false);
+  const [isConvertingToPO, setIsConvertingToPO] = useState(false);
 
   if (isLoading) {
     return <div className="flex justify-center p-8">Yükleniyor...</div>;
@@ -43,14 +53,29 @@ export default function PurchaseRequestDetail() {
     return <div className="flex justify-center p-8">Talep bulunamadı</div>;
   }
 
-  const handleSubmit = () => {
-    if (confirm("Bu talebi onaya göndermek istediğinizden emin misiniz?")) {
+  const handleSubmitClick = () => {
+    setIsSubmitDialogOpen(true);
+  };
+
+  const handleSubmitConfirm = async () => {
+    setIsSubmitting(true);
+    try {
       submitMutation.mutate(request.id);
+    } catch (error) {
+      console.error('Error submitting request:', error);
+    } finally {
+      setIsSubmitting(false);
+      setIsSubmitDialogOpen(false);
     }
   };
 
-  const handleConvertToRFQ = () => {
-    if (confirm("Bu talebi RFQ'ya dönüştürmek istediğinizden emin misiniz?")) {
+  const handleConvertToRFQClick = () => {
+    setIsConvertToRFQDialogOpen(true);
+  };
+
+  const handleConvertToRFQConfirm = async () => {
+    setIsConvertingToRFQ(true);
+    try {
       convertToRFQMutation.mutate(request.id, {
         onSuccess: () => {
           // Prepare query params with PR items
@@ -66,11 +91,21 @@ export default function PurchaseRequestDetail() {
           });
         },
       });
+    } catch (error) {
+      console.error('Error converting to RFQ:', error);
+    } finally {
+      setIsConvertingToRFQ(false);
+      setIsConvertToRFQDialogOpen(false);
     }
   };
 
-  const handleConvertToPO = () => {
-    if (confirm("Bu talebi doğrudan PO'ya dönüştürmek istediğinizden emin misiniz?")) {
+  const handleConvertToPOClick = () => {
+    setIsConvertToPODialogOpen(true);
+  };
+
+  const handleConvertToPOConfirm = async () => {
+    setIsConvertingToPO(true);
+    try {
       convertToPOMutation.mutate(request.id, {
         onSuccess: () => {
           // Prepare query params with PR items
@@ -88,6 +123,11 @@ export default function PurchaseRequestDetail() {
           });
         },
       });
+    } catch (error) {
+      console.error('Error converting to PO:', error);
+    } finally {
+      setIsConvertingToPO(false);
+      setIsConvertToPODialogOpen(false);
     }
   };
 
@@ -118,7 +158,7 @@ export default function PurchaseRequestDetail() {
         </div>
         <div className="flex gap-2">
           {request.status === "draft" && (
-            <Button onClick={handleSubmit} disabled={submitMutation.isPending}>
+            <Button onClick={handleSubmitClick} disabled={submitMutation.isPending}>
               <Send className="h-4 w-4 mr-2" />
               Onaya Gönder
             </Button>
@@ -127,13 +167,13 @@ export default function PurchaseRequestDetail() {
             <>
               <Button 
                 variant="outline" 
-                onClick={handleConvertToRFQ}
+                onClick={handleConvertToRFQClick}
                 disabled={convertToRFQMutation.isPending}
               >
                 RFQ Oluştur
               </Button>
               <Button 
-                onClick={handleConvertToPO}
+                onClick={handleConvertToPOClick}
                 disabled={convertToPOMutation.isPending}
               >
                 PO Oluştur
@@ -244,6 +284,46 @@ export default function PurchaseRequestDetail() {
           </Card>
         </div>
       </div>
+
+      {/* Confirmation Dialogs */}
+      <ConfirmationDialogComponent
+        open={isSubmitDialogOpen}
+        onOpenChange={setIsSubmitDialogOpen}
+        title="Talebi Onaya Gönder"
+        description="Bu talebi onaya göndermek istediğinizden emin misiniz?"
+        confirmText="Gönder"
+        cancelText="İptal"
+        variant="default"
+        onConfirm={handleSubmitConfirm}
+        onCancel={() => setIsSubmitDialogOpen(false)}
+        isLoading={isSubmitting}
+      />
+
+      <ConfirmationDialogComponent
+        open={isConvertToRFQDialogOpen}
+        onOpenChange={setIsConvertToRFQDialogOpen}
+        title="RFQ'ya Dönüştür"
+        description="Bu talebi RFQ'ya dönüştürmek istediğinizden emin misiniz?"
+        confirmText="Dönüştür"
+        cancelText="İptal"
+        variant="default"
+        onConfirm={handleConvertToRFQConfirm}
+        onCancel={() => setIsConvertToRFQDialogOpen(false)}
+        isLoading={isConvertingToRFQ}
+      />
+
+      <ConfirmationDialogComponent
+        open={isConvertToPODialogOpen}
+        onOpenChange={setIsConvertToPODialogOpen}
+        title="PO'ya Dönüştür"
+        description="Bu talebi doğrudan PO'ya dönüştürmek istediğinizden emin misiniz?"
+        confirmText="Dönüştür"
+        cancelText="İptal"
+        variant="default"
+        onConfirm={handleConvertToPOConfirm}
+        onCancel={() => setIsConvertToPODialogOpen(false)}
+        isLoading={isConvertingToPO}
+      />
     </div>
   );
 }

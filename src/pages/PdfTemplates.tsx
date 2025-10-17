@@ -26,10 +26,16 @@ import { PdfTemplate } from '@/types/pdf-template';
 import { PdfExportService } from '@/services/pdf/pdfExportService';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
+import { ConfirmationDialogComponent } from '@/components/ui/confirmation-dialog';
 const PdfTemplates: React.FC = () => {
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<PdfTemplate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   useEffect(() => {
     loadTemplates();
   }, []);
@@ -80,18 +86,32 @@ const PdfTemplates: React.FC = () => {
       toast.error('Varsayılan şablon ayarlanırken hata oluştu');
     }
   };
-  const handleDeleteTemplate = async (templateId: string) => {
-    if (!confirm('Bu şablonu silmek istediğinizden emin misiniz?')) {
-      return;
-    }
+  const handleDeleteTemplateClick = (template: PdfTemplate) => {
+    setTemplateToDelete(template);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteTemplateConfirm = async () => {
+    if (!templateToDelete) return;
+
+    setIsDeleting(true);
     try {
-      await PdfExportService.deleteTemplate(templateId);
+      await PdfExportService.deleteTemplate(templateToDelete.id);
       toast.success('Şablon başarıyla silindi');
       loadTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
       toast.error('Şablon silinirken hata oluştu');
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setTemplateToDelete(null);
     }
+  };
+
+  const handleDeleteTemplateCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTemplateToDelete(null);
   };
   if (isLoading) {
     return (
@@ -219,7 +239,7 @@ const PdfTemplates: React.FC = () => {
                           )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 
-                            onClick={() => handleDeleteTemplate(template.id)}
+                            onClick={() => handleDeleteTemplateClick(template)}
                             className="text-red-600"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
@@ -235,6 +255,20 @@ const PdfTemplates: React.FC = () => {
           </Card>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Şablonu Sil"
+        description={`"${templateToDelete?.name || 'Bu şablon'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteTemplateConfirm}
+        onCancel={handleDeleteTemplateCancel}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Upload, File, Trash2, Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/utils";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface Attachment {
   id: string;
@@ -27,6 +28,11 @@ export function AttachmentsTab({ objectType, objectId }: AttachmentsTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<Attachment | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch attachments
   const { data: attachments, isLoading } = useQuery({
@@ -124,6 +130,31 @@ export function AttachmentsTab({ objectType, objectId }: AttachmentsTabProps) {
     }
   };
 
+  const handleDeleteClick = (attachment: Attachment) => {
+    setAttachmentToDelete(attachment);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!attachmentToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteMutation.mutateAsync(attachmentToDelete);
+    } catch (error) {
+      console.error('Error deleting attachment:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setAttachmentToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setAttachmentToDelete(null);
+  };
+
   // Delete attachment
   const deleteMutation = useMutation({
     mutationFn: async (attachment: Attachment) => {
@@ -202,86 +233,98 @@ export function AttachmentsTab({ objectType, objectId }: AttachmentsTabProps) {
   }
 
   return (
-    <Card>
-      <CardContent className="p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Ek Dosyalar</h3>
-          <label htmlFor="file-upload">
-            <Button type="button" size="sm" disabled={uploading} asChild>
-              <span className="cursor-pointer">
-                {uploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Yükleniyor...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Dosya Ekle
-                  </>
-                )}
-              </span>
-            </Button>
-          </label>
-          <Input
-            id="file-upload"
-            type="file"
-            className="hidden"
-            onChange={handleUpload}
-            disabled={uploading}
-          />
-        </div>
-
-        {!attachments || attachments.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Henüz ek dosya bulunmuyor
+    <div>
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Ek Dosyalar</h3>
+            <label htmlFor="file-upload">
+              <Button type="button" size="sm" disabled={uploading} asChild>
+                <span className="cursor-pointer">
+                  {uploading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Yükleniyor...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Dosya Ekle
+                    </>
+                  )}
+                </span>
+              </Button>
+            </label>
+            <Input
+              id="file-upload"
+              type="file"
+              className="hidden"
+              onChange={handleUpload}
+              disabled={uploading}
+            />
           </div>
-        ) : (
-          <div className="space-y-2">
-            {attachments.map((attachment) => (
-              <div
-                key={attachment.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex items-center gap-3 flex-1">
-                  <File className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{attachment.file_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatFileSize(attachment.file_size)} • {formatDate(attachment.created_at)}
-                    </p>
+
+          {!attachments || attachments.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Henüz ek dosya bulunmuyor
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {attachments.map((attachment) => (
+                <div
+                  key={attachment.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <File className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{attachment.file_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatFileSize(attachment.file_size)} • {formatDate(attachment.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDownload(attachment)}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteClick(attachment)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDownload(attachment)}
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm('Bu dosyayı silmek istediğinizden emin misiniz?')) {
-                        deleteMutation.mutate(attachment);
-                      }
-                    }}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
 
-        <p className="text-xs text-muted-foreground">
-          Maksimum dosya boyutu: 10MB
-        </p>
-      </CardContent>
-    </Card>
+          <p className="text-xs text-muted-foreground">
+            Maksimum dosya boyutu: 10MB
+          </p>
+        </CardContent>
+      </Card>
+      
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Dosyayı Sil"
+        description={`"${attachmentToDelete?.file_name || 'Bu dosya'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
+      />
+    </div>
   );
 }

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -82,6 +82,11 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     warranty: { show: false, label: '', text: '' },
     price: { show: false, label: '', text: '' }
   });
+  
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [termToDelete, setTermToDelete] = useState<{category: string, term: Term} | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -230,24 +235,27 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     }
   };
 
-  const handleDeleteCustomTerm = async (category: 'payment' | 'delivery' | 'warranty' | 'price', termId: string, e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleDeleteCustomTermClick = (category: 'payment' | 'delivery' | 'warranty' | 'price', term: Term) => {
+    setTermToDelete({category, term});
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteCustomTermConfirm = async () => {
+    if (!termToDelete) return;
+
+    setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('proposal_terms')
         .delete()
-        .eq('id', termId);
+        .eq('id', termToDelete.term.id);
 
       if (error) throw error;
 
       // Remove from available terms
       setAvailableTerms(prev => ({
         ...prev,
-        [category]: prev[category].filter(term => term.id !== termId)
+        [termToDelete.category]: prev[termToDelete.category].filter(term => term.id !== termToDelete.term.id)
       }));
 
       toast.success("Şart başarıyla silindi!");
@@ -255,7 +263,16 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     } catch (error) {
       console.error('Error deleting custom term:', error);
       toast.error("Şart silinirken bir hata oluştu: " + (error as Error).message);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setTermToDelete(null);
     }
+  };
+
+  const handleDeleteCustomTermCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTermToDelete(null);
   };
 
   const getCurrentValue = (category: 'payment' | 'delivery' | 'warranty' | 'price') => {
@@ -316,39 +333,20 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
               
               {/* Delete button positioned outside SelectItem */}
               <div className="absolute top-2 right-2 z-10">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
-                      type="button"
-                    >
-                      <Trash2 size={12} />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Şartı Sil</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        "{term.label}" şartını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>İptal</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleDeleteCustomTerm(category, term.id);
-                        }}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Sil
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setTermToDelete({category, term});
+                    setIsDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 size={12} />
+                </Button>
               </div>
             </div>
           ))}
@@ -467,6 +465,20 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           />
         </div>
       </CardContent>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Şartı Sil"
+        description={`"${termToDelete?.term.label || 'Bu şart'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteCustomTermConfirm}
+        onCancel={handleDeleteCustomTermCancel}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

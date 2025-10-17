@@ -8,38 +8,57 @@ export const useDeleteEmployee = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       // Önce çalışanla ilgili tüm referansları sil
-      const tablesToClean = [
-        'expenses',
-        'activities', 
-        'orders',
-        'proposals',
-        'sales_invoices',
-        'customers',
-        'suppliers',
-        'vehicles',
-        'vehicle_maintenance',
-        'purchase_requests',
-        'employee_documents',
-        'employee_leaves',
-        'employee_performance',
-        'employee_salaries',
-        'profiles'
+      const cleanupTasks = [
+        // Expenses tablosunda employee_id
+        { table: 'expenses', column: 'employee_id' },
+        
+        // Activities tablosunda assignee_id
+        { table: 'activities', column: 'assignee_id' },
+        
+        // Orders tablosunda employee_id
+        { table: 'orders', column: 'employee_id' },
+        
+        // Proposals tablosunda employee_id
+        { table: 'proposals', column: 'employee_id' },
+        
+        // Sales invoices tablosunda employee_id
+        { table: 'sales_invoices', column: 'employee_id' },
+        
+        // Customers tablosunda representative
+        { table: 'customers', column: 'representative' },
+        
+        // Suppliers tablosunda representative
+        { table: 'suppliers', column: 'representative' },
+        
+        // Vehicles tablosunda assigned_driver_id
+        { table: 'vehicles', column: 'assigned_driver_id' },
+        
+        // Vehicle maintenance tablosunda technician_id
+        { table: 'vehicle_maintenance', column: 'technician_id' },
+        
+        // Purchase requests tablosunda requester_id
+        { table: 'purchase_requests', column: 'requester_id' },
+        
+        // Employee documents tablosunda employee_id
+        { table: 'employee_documents', column: 'employee_id' },
+        
+        // Employee leaves tablosunda employee_id
+        { table: 'employee_leaves', column: 'employee_id' },
+        
+        // Employee performance tablosunda employee_id
+        { table: 'employee_performance', column: 'employee_id' }
       ];
 
       // Her tablo için çalışan referanslarını sil
-      for (const table of tablesToClean) {
-        const employeeColumns = ['employee_id', 'assignee_id', 'representative', 'assigned_driver_id', 'technician_id', 'requester_id'];
-        
-        for (const column of employeeColumns) {
-          try {
-            await supabase
-              .from(table)
-              .delete()
-              .eq(column, id);
-          } catch (error) {
-            // Kolon yoksa veya hata varsa devam et
-            console.log(`Column ${column} not found in table ${table} or error occurred:`, error);
-          }
+      for (const task of cleanupTasks) {
+        try {
+          await supabase
+            .from(task.table)
+            .delete()
+            .eq(task.column, id);
+        } catch (error) {
+          // Kolon yoksa veya hata varsa devam et
+          console.log(`Column ${task.column} not found in table ${task.table} or error occurred:`, error);
         }
       }
 

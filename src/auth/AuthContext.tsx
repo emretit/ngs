@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { supabase } from '@/integrations/supabase/client'
 import { clearAuthTokens } from "@/lib/supabase-utils"
 import { User, Session } from '@supabase/supabase-js'
+import { isSessionExpired, updateActivity, clearActivity } from '@/lib/session-activity'
 
 interface AuthContextType {
   user: User | null
@@ -30,11 +31,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Check if session is expired before initializing
+    if (isSessionExpired()) {
+      console.log('Session expired, clearing auth state')
+      clearActivity()
+      clearAuthTokens()
+      setSession(null)
+      setUser(null)
+      setLoading(false)
+      return
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+      
+      // Update activity if user is logged in
+      if (session?.user) {
+        updateActivity()
+      }
     })
 
     // Listen for auth changes
@@ -48,6 +65,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(false)
 
       if (event === 'SIGNED_IN' && session?.user) {
+        // Update activity on sign in
+        updateActivity()
+        
         // Update last_login in profiles table
         setTimeout(() => {
           supabase
@@ -61,7 +81,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     })
 
-    return () => subscription.unsubscribe()
+    // Periodic session check (every 5 minutes)
+    const checkInterval = setInterval(() => {
+      if (isSessionExpired()) {
+        console.log('Session expired due to inactivity')
+        signOut()
+      }
+    }, 5 * 60 * 1000) // 5 minutes
+
+    return () => {
+      subscription.unsubscribe()
+      clearInterval(checkInterval)
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
@@ -69,6 +100,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       email,
       password,
     })
+    
+    // Update activity on successful sign in
+    if (data.user && !error) {
+      updateActivity()
+    }
+    
     return { user: data.user, error }
   }
 
@@ -110,10 +147,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.warn('SignOut warning:', error)
     } finally {
-      // Always clear local auth state and tokens
+      // Always clear local auth state, tokens, and activity
       setSession(null)
       setUser(null)
       try { clearAuthTokens() } catch {}
+      clearActivity()
     }
   }
 
@@ -123,10 +161,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signInWithPassword = async (credentials: { email: string; password: string }) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     })
+    
+    // Update activity on successful sign in
+    if (data.user && !error) {
+      updateActivity()
+    }
+    
     return { error }
   }
 

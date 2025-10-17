@@ -304,7 +304,7 @@ const SuppliersTable = ({
     );
   }
 
-  return (
+  return (<>
     <Table>
       <TableHeader>
         <TableRow className="bg-gray-50 border-b">
@@ -365,7 +365,7 @@ const SuppliersTable = ({
       onCancel={handleDeleteSupplierCancel}
       isLoading={isDeleting}
     />
-  );
+  </> );
 };
 
 export default SuppliersTable;

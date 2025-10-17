@@ -264,7 +264,7 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
     );
   }
 
-  return (
+  return (<>
     <Table>
       <ProposalTableHeader 
         columns={columns} 
@@ -307,7 +307,7 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
       onCancel={handleDeleteProposalCancel}
       isLoading={isDeleting}
     />
-  );
+  </> );
 };
 
 export default ProposalTable;

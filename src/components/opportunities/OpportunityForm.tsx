@@ -354,7 +354,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
     }
   };
 
-  return (
+  return (<>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
@@ -858,7 +858,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       onCancel={handleDeleteTypeCancel}
       isLoading={isDeleting}
     />
-  );
+  </> );
 };
 
 export default OpportunityForm;

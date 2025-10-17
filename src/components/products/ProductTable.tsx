@@ -108,7 +108,7 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
     );
   }
 
-  return (
+  return (<>
     <Table>
       <TableHeader>
         <TableRow>
@@ -188,7 +188,7 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
       onCancel={handleDeleteCancel}
       isLoading={isDeleting}
     />
-  );
+  </> );
 };
 
 export default ProductTable;

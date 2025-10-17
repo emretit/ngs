@@ -29,14 +29,13 @@ export const PaymentsList = ({ customer }: PaymentsListProps) => {
               accounts!inner(name, account_type, bank_name)
             `)
             .eq('customer_id', customer.id)
-            .eq('company_id', customer.company_id)
             .order('payment_date', { ascending: false });
 
           if (error) throw error;
           return data as Payment[];
         },
     staleTime: 5 * 60 * 1000, // 5 dakika
-    cacheTime: 10 * 60 * 1000, // 10 dakika
+    gcTime: 10 * 60 * 1000, // 10 dakika
   });
 
   const formatPaymentType = (paymentType: string) => {

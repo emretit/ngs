@@ -38,16 +38,12 @@ export const EmployeeSalaryTab = ({ employee, refetch }: EmployeeSalaryTabProps)
         <TabsContent value="financial" className="space-y-6 mt-6">
           <EmployeeFinancialStatement
             employeeId={employee.id}
-            onEdit={handleEditSalary}
-            refreshTrigger={refreshTrigger}
           />
         </TabsContent>
 
         <TabsContent value="salary" className="space-y-6 mt-6">
           <SalaryInfo
             employeeId={employee.id}
-            onEdit={handleEditSalary}
-            refreshTrigger={refreshTrigger}
           />
         </TabsContent>
 

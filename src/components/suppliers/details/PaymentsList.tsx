@@ -25,7 +25,7 @@ export const PaymentsList = ({ supplier }: PaymentsListProps) => {
         .from('payments')
         .select(`
           *,
-          bank_accounts(account_name, bank_name)
+          accounts!inner(name, account_type, bank_name)
         `)
         .eq('supplier_id', supplier.id)
         .eq('company_id', supplier.company_id)
@@ -35,7 +35,7 @@ export const PaymentsList = ({ supplier }: PaymentsListProps) => {
       return data as Payment[];
     },
     staleTime: 5 * 60 * 1000, // 5 dakika
-    cacheTime: 10 * 60 * 1000, // 10 dakika
+    gcTime: 10 * 60 * 1000, // 10 dakika
   });
 
   const formatPaymentType = (paymentType: string) => {
@@ -60,16 +60,14 @@ export const PaymentsList = ({ supplier }: PaymentsListProps) => {
   };
 
   const getAccountName = (payment: Payment) => {
-    if (payment.bank_accounts) {
-      return `${payment.bank_accounts.account_name} - ${payment.bank_accounts.bank_name}`;
+    if (payment.accounts) {
+      const account = payment.accounts;
+      if (account.account_type === 'bank' && account.bank_name) {
+        return `${account.name} - ${account.bank_name}`;
+      }
+      return account.name;
     }
-    if (payment.description?.includes('Ortak Hesabı')) {
-      return payment.description;
-    }
-    if (payment.description?.includes('Kredi Kartı')) {
-      return payment.description;
-    }
-    return "Diğer Hesap";
+    return "Bilinmeyen Hesap";
   };
 
 

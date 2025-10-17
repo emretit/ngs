@@ -226,9 +226,19 @@ const SimpleEmployeeForm = () => {
       } else {
         navigate("/employees");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating employee:", error);
-      showError("Çalışan oluşturulurken hata oluştu. Lütfen tekrar deneyin.");
+      
+      // Handle specific error cases
+      if (error?.code === '23505') {
+        if (error?.message?.includes('employees_email_key')) {
+          showError("Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta adresi girin.");
+        } else {
+          showError("Bu bilgiler zaten kayıtlı. Lütfen farklı bilgiler girin.");
+        }
+      } else {
+        showError("Çalışan oluşturulurken hata oluştu. Lütfen tekrar deneyin.");
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -285,17 +285,6 @@ export const SalaryStatement = ({ employeeId, onEdit, refreshTrigger }: SalarySt
               <CardTitle className="text-xl flex items-center gap-2">
                 💳 Güncel Maaş Bilgileri
               </CardTitle>
-              {onEdit && (
-                <Button
-                  onClick={() => onEdit(currentSalary)}
-                  variant="outline"
-                  size="sm"
-                  className="border-2 border-blue-300 text-blue-700 hover:bg-blue-100"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Düzenle
-                </Button>
-              )}
             </div>
           </CardHeader>
           <CardContent>

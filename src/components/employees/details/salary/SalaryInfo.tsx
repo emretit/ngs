@@ -203,17 +203,6 @@ export const SalaryInfo = ({ employeeId, onEdit, refreshTrigger }: SalaryInfoPro
               <RefreshCw className="h-4 w-4 mr-2" />
               Yenile
             </Button>
-            {onEdit && (
-              <Button 
-                onClick={() => onEdit(currentSalary)} 
-                variant="outline" 
-                size="sm"
-                className="border-2 border-blue-300 text-blue-700 hover:bg-blue-50"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Düzenle
-              </Button>
-            )}
             <Button 
               onClick={exportToCSV} 
               variant="outline" 

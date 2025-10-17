@@ -186,7 +186,7 @@ export function useCashAccountTransactions(accountId: string | undefined, limit:
             customer:customers(name),
             supplier:suppliers(name)
           `)
-          .eq('cash_account_id', accountId)
+          .eq('account_id', accountId)
           .order('payment_date', { ascending: false })
           .limit(limit)
       ]);
@@ -272,7 +272,7 @@ export function useBankAccountTransactions(accountId: string | undefined, limit:
             customer:customers(name),
             supplier:suppliers(name)
           `)
-          .eq('bank_account_id', accountId)
+          .eq('account_id', accountId)
           .order('payment_date', { ascending: false })
           .limit(limit)
       ]);
@@ -453,7 +453,7 @@ export function usePartnerAccountTransactions(accountId: string | undefined, lim
             customer:customers(name),
             supplier:suppliers(name)
           `)
-          .eq('partner_account_id', accountId)
+          .eq('account_id', accountId)
           .order('payment_date', { ascending: false })
           .limit(limit)
       ]);

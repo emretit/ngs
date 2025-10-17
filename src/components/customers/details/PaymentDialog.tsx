@@ -60,23 +60,44 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
     }
   }, [defaultPaymentType, form]);
 
-  // Tüm hesap türlerini fetch et
+  // Tüm hesapları fetch et (birleşik accounts tablosundan)
   const { data: accounts } = useQuery({
     queryKey: ["payment-accounts"],
     queryFn: async () => {
-      const [cashRes, bankRes, cardRes, partnerRes] = await Promise.all([
-        supabase.from('cash_accounts').select('id, name'),
-        supabase.from('bank_accounts').select('id, account_name, bank_name').eq("is_active", true),
-        supabase.from('credit_cards').select('id, card_name'),
-        supabase.from('partner_accounts').select('id, partner_name')
-      ]);
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('id, name, account_type, bank_name')
+        .eq('is_active', true)
+        .order('account_type', { ascending: true })
+        .order('name', { ascending: true });
 
-      return {
-        cash: cashRes.data?.map(a => ({ id: a.id, label: a.name })) || [],
-        bank: bankRes.data?.map(a => ({ id: a.id, label: `${a.account_name} - ${a.bank_name}` })) || [],
-        credit_card: cardRes.data?.map(a => ({ id: a.id, label: a.card_name })) || [],
-        partner: partnerRes.data?.map(a => ({ id: a.id, label: a.partner_name })) || []
+      if (error) throw error;
+
+      // Hesap türüne göre grupla
+      const groupedAccounts = {
+        bank: [],
+        cash: [],
+        credit_card: [],
+        partner: []
       };
+
+      data?.forEach(account => {
+        let label = account.name;
+        
+        // Hesap türüne göre label oluştur
+        if (account.account_type === 'bank' && account.bank_name) {
+          label = `${account.name} - ${account.bank_name}`;
+        } else if (account.account_type === 'credit_card' && account.bank_name) {
+          label = `${account.name} - ${account.bank_name}`;
+        }
+
+        groupedAccounts[account.account_type].push({
+          id: account.id,
+          label: label
+        });
+      });
+
+      return groupedAccounts;
     },
   });
 
@@ -108,26 +129,15 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
 
       if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
 
-      // 1. Hesap tipine göre bakiye kontrolü yap
-      let accountBalance = 0;
-      if (data.account_type === "bank") {
-        const { data: bankAccount, error: bankFetchError } = await supabase
-          .from("bank_accounts")
-          .select("current_balance, available_balance")
-          .eq("id", data.account_id)
-          .single();
-        if (bankFetchError) throw bankFetchError;
-        accountBalance = bankAccount.current_balance;
-      } else if (data.account_type === "cash") {
-        const { data: cashAccount, error: cashFetchError } = await supabase
-          .from("cash_accounts")
-          .select("current_balance")
-          .eq("id", data.account_id)
-          .single();
-        if (cashFetchError) throw cashFetchError;
-        accountBalance = cashAccount.current_balance;
-      }
-      // Credit card ve partner hesapları için bakiye kontrolü yapılmaz
+      // 1. Hesap bakiyesini kontrol et
+      const { data: account, error: accountFetchError } = await supabase
+        .from("accounts")
+        .select("current_balance, account_type")
+        .eq("id", data.account_id)
+        .single();
+      
+      if (accountFetchError) throw accountFetchError;
+      const accountBalance = account.current_balance;
 
       const { data: customerData, error: customerFetchError } = await supabase
         .from("customers")
@@ -146,19 +156,9 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
         customer_id: customer.id,
         payment_direction: data.payment_direction,
         currency: "TRY",
-        company_id: profile.company_id
+        company_id: profile.company_id,
+        account_id: data.account_id // Birleşik accounts tablosundan
       };
-
-      // Hesap bilgisini ekle
-      if (data.account_type === "bank") {
-        paymentData.bank_account_id = data.account_id;
-      } else if (data.account_type === "cash") {
-        paymentData.cash_account_id = data.account_id;
-      } else if (data.account_type === "credit_card") {
-        paymentData.credit_card_id = data.account_id;
-      } else if (data.account_type === "partner") {
-        paymentData.partner_account_id = data.account_id;
-      }
 
       const { error: paymentError } = await supabase.from("payments").insert(paymentData);
 
@@ -166,63 +166,29 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
 
       // 3. Hesap bakiyesini güncelle
       const balanceMultiplier = data.payment_direction === "incoming" ? 1 : -1;
+      const newCurrentBalance = accountBalance + (data.amount * balanceMultiplier);
 
-      if (data.account_type === "bank") {
-        const { data: bankAccount, error: bankFetchError } = await supabase
-          .from("bank_accounts")
-          .select("current_balance, available_balance")
-          .eq("id", data.account_id)
-          .single();
-
-        if (bankFetchError) throw bankFetchError;
-
-        const newCurrentBalance = bankAccount.current_balance + (data.amount * balanceMultiplier);
-        const newAvailableBalance = bankAccount.available_balance + (data.amount * balanceMultiplier);
-
-        const { error: bankUpdateError } = await supabase
-          .from("bank_accounts")
+      // Banka hesapları için available_balance da güncelle
+      if (account.account_type === "bank") {
+        const { error: accountUpdateError } = await supabase
+          .from("accounts")
           .update({
             current_balance: newCurrentBalance,
-            available_balance: newAvailableBalance,
+            available_balance: newCurrentBalance, // Basitleştirme için aynı değer
           })
           .eq("id", data.account_id);
 
-        if (bankUpdateError) throw bankUpdateError;
-      } else if (data.account_type === "cash") {
-        const { data: cashAccount, error: cashFetchError } = await supabase
-          .from("cash_accounts")
-          .select("current_balance")
-          .eq("id", data.account_id)
-          .single();
-
-        if (cashFetchError) throw cashFetchError;
-
-        const newCurrentBalance = cashAccount.current_balance + (data.amount * balanceMultiplier);
-
-        const { error: cashUpdateError } = await supabase
-          .from("cash_accounts")
+        if (accountUpdateError) throw accountUpdateError;
+      } else {
+        // Diğer hesap türleri için sadece current_balance güncelle
+        const { error: accountUpdateError } = await supabase
+          .from("accounts")
           .update({
             current_balance: newCurrentBalance,
           })
           .eq("id", data.account_id);
 
-        if (cashUpdateError) throw cashUpdateError;
-      } else if (data.account_type === "credit_card") {
-        const { error: cardUpdateError } = await supabase.rpc('update_credit_card_balance', {
-          card_id: data.account_id,
-          amount: data.amount * balanceMultiplier,
-          transaction_type: data.payment_direction === 'incoming' ? 'income' : 'expense'
-        });
-
-        if (cardUpdateError) throw cardUpdateError;
-      } else if (data.account_type === "partner") {
-        const { error: partnerUpdateError } = await supabase.rpc('update_partner_account_balance', {
-          account_id: data.account_id,
-          amount: data.amount * balanceMultiplier,
-          transaction_type: data.payment_direction === 'incoming' ? 'income' : 'expense'
-        });
-
-        if (partnerUpdateError) throw partnerUpdateError;
+        if (accountUpdateError) throw accountUpdateError;
       }
 
       // 4. Müşteri bakiyesini güncelle

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Supplier } from "@/types/supplier";
+import { Payment } from "@/types/payment";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,25 +14,6 @@ interface PaymentsListProps {
   supplier: Supplier;
 }
 
-interface Payment {
-  id: string;
-  amount: number;
-  currency: string;
-  payment_date: string;
-  status: 'pending' | 'completed' | 'failed';
-  payment_direction: 'incoming' | 'outgoing';
-  payment_type: string;
-  description: string;
-  recipient_name: string;
-  bank_account_id?: string;
-  cash_account_id?: string;
-  credit_card_id?: string;
-  partner_account_id?: string;
-  bank_accounts?: { account_name: string; bank_name: string };
-  cash_accounts?: { account_name: string };
-  credit_cards?: { card_name: string; bank_name: string };
-  partner_accounts?: { name: string };
-}
 
 export const PaymentsList = ({ supplier }: PaymentsListProps) => {
   const [directionFilter, setDirectionFilter] = useState("all");
@@ -43,17 +25,17 @@ export const PaymentsList = ({ supplier }: PaymentsListProps) => {
         .from('payments')
         .select(`
           *,
-          bank_accounts(account_name, bank_name),
-          cash_accounts(name as account_name),
-          credit_cards(card_name, bank_name),
-          partner_accounts(partner_name as name)
+          bank_accounts(account_name, bank_name)
         `)
         .eq('supplier_id', supplier.id)
+        .eq('company_id', supplier.company_id)
         .order('payment_date', { ascending: false });
 
       if (error) throw error;
       return data as Payment[];
     },
+    staleTime: 5 * 60 * 1000, // 5 dakika
+    cacheTime: 10 * 60 * 1000, // 10 dakika
   });
 
   const formatPaymentType = (paymentType: string) => {
@@ -81,49 +63,52 @@ export const PaymentsList = ({ supplier }: PaymentsListProps) => {
     if (payment.bank_accounts) {
       return `${payment.bank_accounts.account_name} - ${payment.bank_accounts.bank_name}`;
     }
-    if (payment.cash_accounts) {
-      return `Kasa: ${payment.cash_accounts.account_name}`;
+    if (payment.description?.includes('Ortak Hesabı')) {
+      return payment.description;
     }
-    if (payment.credit_cards) {
-      return `Kredi Kartı: ${payment.credit_cards.card_name} - ${payment.credit_cards.bank_name}`;
+    if (payment.description?.includes('Kredi Kartı')) {
+      return payment.description;
     }
-    if (payment.partner_accounts) {
-      return `Ortak Hesabı: ${payment.partner_accounts.name}`;
-    }
-    return "Bilinmeyen Hesap";
+    return "Diğer Hesap";
   };
 
 
-  const filteredPayments = payments.filter(payment => {
-    const matchesDirection = directionFilter === 'all' || payment.payment_direction === directionFilter;
-    return matchesDirection;
-  });
+  const filteredPayments = useMemo(() => {
+    return payments.filter(payment => {
+      const matchesDirection = directionFilter === 'all' || payment.payment_direction === directionFilter;
+      return matchesDirection;
+    });
+  }, [payments, directionFilter]);
 
   // Toplam bakiye hesapla
-  const totalBalance = payments.reduce((total, payment) => {
-    if (payment.payment_direction === 'incoming') {
-      return total + Number(payment.amount);
-    } else {
-      return total - Number(payment.amount);
-    }
-  }, 0);
+  const totalBalance = useMemo(() => {
+    return payments.reduce((total, payment) => {
+      if (payment.payment_direction === 'incoming') {
+        return total + Number(payment.amount);
+      } else {
+        return total - Number(payment.amount);
+      }
+    }, 0);
+  }, [payments]);
 
   // Her ödeme için kümülatif bakiye hesapla
-  const calculateCumulativeBalance = (index: number) => {
-    let balance = 0;
-    for (let i = 0; i <= index; i++) {
-      const payment = payments[i];
-      if (payment.payment_direction === 'incoming') {
-        balance += Number(payment.amount);
-      } else {
-        balance -= Number(payment.amount);
+  const calculateCumulativeBalance = useMemo(() => {
+    return (index: number) => {
+      let balance = 0;
+      for (let i = 0; i <= index; i++) {
+        const payment = payments[i];
+        if (payment.payment_direction === 'incoming') {
+          balance += Number(payment.amount);
+        } else {
+          balance -= Number(payment.amount);
+        }
       }
-    }
-    return balance;
-  };
+      return balance;
+    };
+  }, [payments]);
 
-  if (isLoading) {
-    return <div>Yükleniyor...</div>;
+  if (error) {
+    return <div className="text-red-500">Ödeme işlemleri yüklenirken hata oluştu.</div>;
   }
 
   return (

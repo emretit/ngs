@@ -7,6 +7,7 @@ import { useLogout } from "@/components/navbar/useLogout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import HeaderUserInfo from "@/components/HeaderUserInfo";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,7 @@ export const TopBar = () => {
       {/* Right side - Actions and User Menu */}
       <div className="flex items-center gap-4">
         <NotificationCenter />
+        <LanguageSwitcher />
         <Separator orientation="vertical" className="h-8" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -5,6 +5,7 @@ import { ToastProvider } from "@/components/toast/ToastProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import { ActivityTracker } from "@/components/ActivityTracker";
+import "@/i18n/config";
 
 const ActivityTrackerWrapper = () => {
   const { user } = useAuth();

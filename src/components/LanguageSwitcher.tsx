@@ -25,17 +25,17 @@ export const LanguageSwitcher = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-gray-300 hover:bg-gray-800 hover:text-white">
+        <Button variant="ghost" size="icon" className="text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200">
           <Globe className="h-5 w-5" />
           <span className="sr-only">Change language</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="bg-slate-900 border-red-500/20 z-50">
         {languages.map((language) => (
           <DropdownMenuItem
             key={language.code}
             onClick={() => changeLanguage(language.code)}
-            className={i18n.language === language.code ? 'bg-accent' : ''}
+            className={`text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 ${i18n.language === language.code ? 'bg-red-500/20 text-red-400' : ''}`}
           >
             <span className="mr-2">{language.flag}</span>
             {language.name}

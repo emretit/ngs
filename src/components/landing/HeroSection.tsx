@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Play, CheckCircle, TrendingUp, Sparkles, Star, Brain, Cpu } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center py-24 px-4 sm:px-6 lg:px-8">
       {/* Dark Background */}
@@ -17,18 +19,18 @@ const HeroSection = () => {
         <div className="flex justify-center mb-10 animate-fade-in">
           <Badge className="px-6 py-2 text-sm font-medium bg-red-600/20 text-red-600 border border-red-500/30 hover:bg-red-600/30 transition-all duration-300 shadow-sm backdrop-blur-sm">
             <Brain className="w-4 h-4 mr-2" />
-            AI Destekli İşletme Yönetim Platformu
+            {t('landing.hero.badge')}
           </Badge>
         </div>
 
         {/* Main Heading with gradient text */}
         <div className="animate-fade-in delay-200">
           <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl font-sans mb-8 leading-tight">
-            <span className="block text-white">İşletmenizi</span>
+            <span className="block text-white">{t('landing.hero.title1')}</span>
             <span className="block bg-gradient-to-r from-red-400 via-red-500 to-red-600 bg-clip-text text-transparent">
-              Tek Platformda
+              {t('landing.hero.title2')}
             </span>
-            <span className="block text-white">Yönetin</span>
+            {t('landing.hero.title3') && <span className="block text-white">{t('landing.hero.title3')}</span>}
           </h1>
         </div>
 
@@ -41,7 +43,7 @@ const HeroSection = () => {
               className="group px-8 py-4 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-2xl hover:shadow-primary/25 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
             >
               <span className="flex items-center">
-                Ücretsiz Başla
+                {t('landing.hero.freeStart')}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </Button>
@@ -55,7 +57,7 @@ const HeroSection = () => {
               <svg className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Detaylı Bilgi
+              {t('landing.hero.detailedInfo')}
             </Button>
           </a>
         </div>
@@ -76,12 +78,12 @@ const HeroSection = () => {
 
               <div className="flex items-center justify-center mb-3">
                 <h3 className="font-bold text-gray-800 text-sm group-hover:text-red-700 transition-colors duration-300">
-                  AI Destekli
+                  {t('landing.hero.aiPowered')}
                 </h3>
               </div>
 
               <p className="text-xs text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
-                Akıllı Otomatikleşme
+                {t('landing.hero.aiDescription')}
               </p>
             </div>
 
@@ -106,12 +108,12 @@ const HeroSection = () => {
 
               <div className="flex items-center justify-center mb-3">
                 <h3 className="font-bold text-gray-800 text-sm group-hover:text-red-700 transition-colors duration-300">
-                  Güçlü Modül
+                  {t('landing.hero.powerfulModules')}
                 </h3>
               </div>
 
               <p className="text-xs text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
-                E-fatura & AI Dahil
+                {t('landing.hero.modulesDescription')}
               </p>
             </div>
 
@@ -136,12 +138,12 @@ const HeroSection = () => {
 
               <div className="flex items-center justify-center mb-3">
                 <h3 className="font-bold text-gray-800 text-sm group-hover:text-red-700 transition-colors duration-300">
-                  5 Kullanıcı Ücretsiz
+                  {t('landing.hero.freeUsers')}
                 </h3>
               </div>
 
               <p className="text-xs text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
-                Kredi kartı gerekmez
+                {t('landing.hero.noCredit')}
               </p>
             </div>
 

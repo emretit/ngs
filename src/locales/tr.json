@@ -203,5 +203,130 @@
     "security": "Güvenlik",
     "notifications": "Bildirimler",
     "language": "Dil"
+  },
+  "landing": {
+    "header": {
+      "modules": "Modüller",
+      "pricing": "Fiyatlandırma",
+      "faq": "SSS",
+      "contact": "İletişim",
+      "freeStart": "Ücretsiz Başla",
+      "login": "Giriş Yap"
+    },
+    "hero": {
+      "badge": "AI Destekli İşletme Yönetim Platformu",
+      "title1": "İşletmenizi",
+      "title2": "Tek Platformda",
+      "title3": "Yönetin",
+      "freeStart": "Ücretsiz Başla",
+      "detailedInfo": "Detaylı Bilgi",
+      "aiPowered": "AI Destekli",
+      "aiDescription": "Akıllı Otomatikleşme",
+      "powerfulModules": "Güçlü Modül",
+      "modulesDescription": "E-fatura & AI Dahil",
+      "freeUsers": "5 Kullanıcı Ücretsiz",
+      "noCredit": "Kredi kartı gerekmez"
+    },
+    "modules": {
+      "badge": "Kapsamlı Modül Paketi",
+      "title1": "AI Destekli Her İhtiyacınız İçin",
+      "title2": "Akıllı Çözümler",
+      "einvoice": {
+        "title": "E-Fatura Entegrasyonu",
+        "description": "Nilvera entegrasyonu ile otomatik e-fatura gönderimi ve alma. Yasal uyumluluk garantili.",
+        "badge": "ÜCRETSİZ"
+      },
+      "ai": {
+        "title": "AI Asistan",
+        "description": "Yapay zeka destekli iş süreçleri, akıllı öneriler ve otomatik veri analizi.",
+        "badge": "YENİ"
+      },
+      "sales": {
+        "title": "Satış Yönetimi",
+        "description": "Fırsatları takip edin, teklifler oluşturun ve satış süreçlerinizi optimize edin."
+      },
+      "customers": {
+        "title": "Müşteriler ve Tedarikçiler",
+        "description": "Müşteri ilişkileri yönetimi ve tedarikçi süreçlerinin optimize edilmesi."
+      },
+      "stock": {
+        "title": "Stok ve Depo",
+        "description": "Envanter takibi, depo yönetimi ve otomatik sipariş noktaları."
+      },
+      "purchasing": {
+        "title": "Satın Alma",
+        "description": "Tedarikçi ilişkilerini yönetin ve sipariş süreçlerini otomatikleştirin."
+      },
+      "hr": {
+        "title": "İnsan Kaynakları",
+        "description": "Personel yönetimi, bordro, izin takibi ve performans değerlendirme."
+      },
+      "finance": {
+        "title": "Finans Yönetimi",
+        "description": "Muhasebe, nakit akışı yönetimi ve finansal raporlama."
+      },
+      "fieldService": {
+        "title": "Saha Servis",
+        "description": "Teknik servis talepleri, saha hizmetleri ve teknisyen yönetimi."
+      },
+      "fleet": {
+        "title": "Araç Yönetimi",
+        "description": "Filo yönetimi, bakım takibi, yakıt kontrolü ve maliyet analizi."
+      }
+    },
+    "pricing": {
+      "badge": "Esnek Fiyatlandırma",
+      "title1": "İşletmenize",
+      "title2": "Uygun Çözüm",
+      "monthly": "Aylık",
+      "yearly": "Yıllık",
+      "discount": "%17",
+      "popular": "POPÜLER",
+      "perMonth": "/ay",
+      "perYear": "/yıl"
+    },
+    "faq": {
+      "badge": "Sık Sorulan Sorular",
+      "title1": "Merak Ettiklerinizin",
+      "title2": "Cevapları Burada",
+      "subtitle": "PAFTA hakkında en çok merak edilen konuları sizin için derledik",
+      "moreQuestions": "Başka sorularınız mı var?",
+      "email": "E-posta: destek@pafta.app",
+      "phone": "Telefon: 0212 555 0123"
+    },
+    "footer": {
+      "description": "İş süreçlerinizi modernize eden güvenilir çözüm ortağınız.",
+      "aiPowered": "AI destekli",
+      "platform": "işletme yönetim platformu.",
+      "email": "destek@pafta.app",
+      "phone": "0212 555 0123",
+      "product": "Ürün",
+      "company": "Şirket",
+      "resources": "Kaynaklar",
+      "modules": "Modüller",
+      "pricing": "Fiyatlandırma",
+      "einvoice": "E-fatura Entegrasyonu",
+      "ai": "AI Asistan",
+      "about": "Hakkımızda",
+      "career": "Kariyer",
+      "contact": "İletişim",
+      "faq": "SSS",
+      "blog": "Blog",
+      "documentation": "Dokümantasyon",
+      "support": "Destek",
+      "api": "API",
+      "rights": "© 2024 PAFTA Platform. Tüm hakları saklıdır.",
+      "privacy": "Gizlilik Politikası",
+      "terms": "Kullanım Şartları",
+      "cookies": "Çerez Politikası"
+    },
+    "mobile": {
+      "modules": "Modüller",
+      "pricing": "Fiyatlandırma",
+      "faq": "SSS",
+      "contact": "İletişim",
+      "freeStart": "Ücretsiz Başla",
+      "login": "Giriş Yap"
+    }
   }
 }

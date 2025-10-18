@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
+import { useTranslation } from 'react-i18next';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface MobileMenuProps {
 }
 
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
+  const { t } = useTranslation();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
   const toggleSubmenu = (menu: string) => {
@@ -44,28 +46,28 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             <a href="#modules" onClick={onClose} className="relative block p-4 text-gray-700 hover:text-red-700 rounded-xl transition-all duration-200 font-medium group">
               <span className="relative z-10 flex items-center space-x-3">
                 <div className="w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <span>Modüller</span>
+                <span>{t('landing.mobile.modules')}</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-red-50 to-red-100/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
             </a>
             <a href="#pricing" onClick={onClose} className="relative block p-4 text-gray-700 hover:text-red-700 rounded-xl transition-all duration-200 font-medium group">
               <span className="relative z-10 flex items-center space-x-3">
                 <div className="w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <span>Fiyatlandırma</span>
+                <span>{t('landing.mobile.pricing')}</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-red-50 to-red-100/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
             </a>
             <a href="#faq" onClick={onClose} className="relative block p-4 text-gray-700 hover:text-red-700 rounded-xl transition-all duration-200 font-medium group">
               <span className="relative z-10 flex items-center space-x-3">
                 <div className="w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <span>SSS</span>
+                <span>{t('landing.mobile.faq')}</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-red-50 to-red-100/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
             </a>
             <a href="#contact" onClick={onClose} className="relative block p-4 text-gray-700 hover:text-red-700 rounded-xl transition-all duration-200 font-medium group">
               <span className="relative z-10 flex items-center space-x-3">
                 <div className="w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <span>İletişim</span>
+                <span>{t('landing.mobile.contact')}</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-red-50 to-red-100/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
             </a>
@@ -74,7 +76,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           {/* CTA Buttons */}
           <div className="space-y-3">
             <a href="/signup" onClick={onClose} className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
-              <span>Ücretsiz Başla</span>
+              <span>{t('landing.mobile.freeStart')}</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -87,7 +89,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               }}
               className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl transition-all duration-200 font-medium"
             >
-              <span>Giriş Yap</span>
+              <span>{t('landing.mobile.login')}</span>
             </button>
           </div>
 

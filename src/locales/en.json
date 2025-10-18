@@ -203,5 +203,130 @@
     "security": "Security",
     "notifications": "Notifications",
     "language": "Language"
+  },
+  "landing": {
+    "header": {
+      "modules": "Modules",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "contact": "Contact",
+      "freeStart": "Start Free",
+      "login": "Login"
+    },
+    "hero": {
+      "badge": "AI-Powered Business Management Platform",
+      "title1": "Manage Your Business",
+      "title2": "In One Platform",
+      "title3": "",
+      "freeStart": "Start Free",
+      "detailedInfo": "Learn More",
+      "aiPowered": "AI-Powered",
+      "aiDescription": "Smart Automation",
+      "powerfulModules": "Powerful Modules",
+      "modulesDescription": "E-Invoice & AI Included",
+      "freeUsers": "5 Users Free",
+      "noCredit": "No credit card required"
+    },
+    "modules": {
+      "badge": "Comprehensive Module Suite",
+      "title1": "AI-Powered Solutions for",
+      "title2": "Every Need",
+      "einvoice": {
+        "title": "E-Invoice Integration",
+        "description": "Automatic e-invoice sending and receiving with Nilvera integration. Legal compliance guaranteed.",
+        "badge": "FREE"
+      },
+      "ai": {
+        "title": "AI Assistant",
+        "description": "AI-powered business processes, smart recommendations, and automated data analysis.",
+        "badge": "NEW"
+      },
+      "sales": {
+        "title": "Sales Management",
+        "description": "Track opportunities, create proposals, and optimize your sales processes."
+      },
+      "customers": {
+        "title": "Customers and Suppliers",
+        "description": "Customer relationship management and supplier process optimization."
+      },
+      "stock": {
+        "title": "Stock & Warehouse",
+        "description": "Inventory tracking, warehouse management, and automatic reorder points."
+      },
+      "purchasing": {
+        "title": "Purchasing",
+        "description": "Manage supplier relationships and automate order processes."
+      },
+      "hr": {
+        "title": "Human Resources",
+        "description": "Personnel management, payroll, leave tracking, and performance evaluation."
+      },
+      "finance": {
+        "title": "Finance Management",
+        "description": "Accounting, cash flow management, and financial reporting."
+      },
+      "fieldService": {
+        "title": "Field Service",
+        "description": "Technical service requests, field services, and technician management."
+      },
+      "fleet": {
+        "title": "Fleet Management",
+        "description": "Fleet management, maintenance tracking, fuel control, and cost analysis."
+      }
+    },
+    "pricing": {
+      "badge": "Flexible Pricing",
+      "title1": "The Right Solution",
+      "title2": "For Your Business",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "discount": "17%",
+      "popular": "POPULAR",
+      "perMonth": "/mo",
+      "perYear": "/yr"
+    },
+    "faq": {
+      "badge": "Frequently Asked Questions",
+      "title1": "Find Answers to",
+      "title2": "Your Questions Here",
+      "subtitle": "We've compiled the most frequently asked questions about PAFTA",
+      "moreQuestions": "Have more questions?",
+      "email": "Email: support@pafta.app",
+      "phone": "Phone: +90 212 555 0123"
+    },
+    "footer": {
+      "description": "Your trusted solution partner for modernizing business processes.",
+      "aiPowered": "AI-powered",
+      "platform": "business management platform.",
+      "email": "support@pafta.app",
+      "phone": "+90 212 555 0123",
+      "product": "Product",
+      "company": "Company",
+      "resources": "Resources",
+      "modules": "Modules",
+      "pricing": "Pricing",
+      "einvoice": "E-Invoice Integration",
+      "ai": "AI Assistant",
+      "about": "About",
+      "career": "Career",
+      "contact": "Contact",
+      "faq": "FAQ",
+      "blog": "Blog",
+      "documentation": "Documentation",
+      "support": "Support",
+      "api": "API",
+      "rights": "© 2024 PAFTA Platform. All rights reserved.",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "cookies": "Cookie Policy"
+    },
+    "mobile": {
+      "modules": "Modules",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "contact": "Contact",
+      "freeStart": "Start Free",
+      "login": "Login"
+    }
   }
 }

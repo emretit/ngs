@@ -9,7 +9,10 @@ import FooterSection from "@/components/landing/FooterSection";
 import LoginButton from "@/components/navbar/LoginButton";
 import MobileMenu from "@/components/landing/MobileMenu";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslation } from 'react-i18next';
+
 const Index = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -116,19 +119,19 @@ const Index = () => {
             {/* Navigation */}
             <nav className="hidden lg:flex items-center space-x-1">
               <a href="#modules" className="relative px-4 py-2.5 text-gray-300 hover:text-red-400 transition-all duration-200 font-medium rounded-lg hover:bg-red-500/10 group">
-                <span className="relative z-10">Modüller</span>
+                <span className="relative z-10">{t('landing.header.modules')}</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </a>
               <a href="#pricing" className="relative px-4 py-2.5 text-gray-300 hover:text-red-400 transition-all duration-200 font-medium rounded-lg hover:bg-red-500/10 group">
-                <span className="relative z-10">Fiyatlandırma</span>
+                <span className="relative z-10">{t('landing.header.pricing')}</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </a>
               <a href="#faq" className="relative px-4 py-2.5 text-gray-300 hover:text-red-400 transition-all duration-200 font-medium rounded-lg hover:bg-red-500/10 group">
-                <span className="relative z-10">SSS</span>
+                <span className="relative z-10">{t('landing.header.faq')}</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </a>
               <a href="#contact" className="relative px-4 py-2.5 text-gray-300 hover:text-red-400 transition-all duration-200 font-medium rounded-lg hover:bg-red-500/10 group">
-                <span className="relative z-10">İletişim</span>
+                <span className="relative z-10">{t('landing.header.contact')}</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </a>
             </nav>
@@ -137,7 +140,7 @@ const Index = () => {
               {/* Desktop CTA */}
               <div className="hidden md:flex items-center space-x-3">
                 <a href="/signup" className="flex items-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2.5 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
-                  <span>Ücretsiz Başla</span>
+                  <span>{t('landing.header.freeStart')}</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>

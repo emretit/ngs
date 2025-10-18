@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,6 +11,7 @@ import { parseAuthParamsFromUrl, getAuthErrorMessage } from "@/utils/authHelpers
 import { safeSignOut } from "@/lib/supabase-utils";
 const SignIn = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { signInWithPassword, user } = useAuth();
   const [email, setEmail] = useState("");
@@ -121,10 +123,10 @@ const SignIn = () => {
               </button>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-3">
-              Hesabınıza Giriş Yapın
+              {t('auth.accountLogin')}
             </h1>
             <p className="text-lg text-gray-600">
-              PAFTA platformuna hoş geldiniz
+              {t('auth.welcomeBack')}
             </p>
           </div>
           {/* Giriş formu */}
@@ -134,7 +136,7 @@ const SignIn = () => {
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   type="email"
-                  placeholder="E-posta adresiniz"
+                  placeholder={t('auth.email')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 pl-10 text-base border-gray-300 focus:border-primary focus:ring-primary"
@@ -145,7 +147,7 @@ const SignIn = () => {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Şifreniz (en az 10 karakter)"
+                  placeholder={t('auth.minPassword')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-12 pl-10 pr-12 text-base border-gray-300 focus:border-primary focus:ring-primary"
@@ -169,11 +171,11 @@ const SignIn = () => {
               {loading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Giriş Yapılıyor...
+                  {t('auth.signingIn')}
                 </div>
               ) : (
                 <div className="flex items-center">
-                  Giriş Yap
+                  {t('auth.signIn')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </div>
               )}
@@ -184,21 +186,21 @@ const SignIn = () => {
           {/* Alt linkler */}
           <div className="text-center space-y-4">
             <p className="text-gray-600">
-              Henüz bir hesabınız yok mu?{" "}
+              {t('auth.noAccount')}{" "}
               <button 
                 onClick={() => navigate("/signup")}
                 className="text-primary hover:text-primary/80 font-semibold transition-colors"
               >
-                Hemen Kaydolun
+                {t('auth.signUpNow')}
               </button>
             </p>
             <p className="text-gray-600">
-              Şifrenizi mi unuttunuz?{" "}
+              {t('auth.forgotPassword')}?{" "}
               <button 
                 onClick={() => navigate("/forgot-password")}
                 className="text-primary hover:text-primary/80 font-semibold transition-colors"
               >
-                Şifre Sıfırlama
+                {t('auth.resetPassword')}
               </button>
             </p>
           </div>

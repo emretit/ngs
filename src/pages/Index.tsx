@@ -8,6 +8,7 @@ import FaqSection from "@/components/landing/FaqSection";
 import FooterSection from "@/components/landing/FooterSection";
 import LoginButton from "@/components/navbar/LoginButton";
 import MobileMenu from "@/components/landing/MobileMenu";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -142,6 +143,7 @@ const Index = () => {
                   </svg>
                 </a>
                 <LoginButton />
+                <LanguageSwitcher />
               </div>
               {/* Mobile Menu Button */}
               <button 

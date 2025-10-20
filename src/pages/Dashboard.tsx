@@ -64,55 +64,32 @@ const Dashboard = () => {
           {/* Right Column - 1/3 width */}
           <div className="space-y-6">
             {/* CRM Quick Stats */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200/50">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <Target className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-bold text-gray-900">
-                        CRM Özeti
-                      </CardTitle>
-                      <p className="text-sm text-blue-600 font-medium">Güncel durum</p>
-                    </div>
+            <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-gray-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <Target className="w-5 h-5 text-white" />
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {crmStats?.opportunities + crmStats?.proposals + crmStats?.activities || 0}
-                    </div>
-                    <div className="text-xs text-blue-500">Toplam</div>
+                  <div>
+                    <CardTitle className="text-sm font-semibold text-foreground">
+                      CRM Özeti
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">Güncel durum</p>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <Target className="w-4 h-4 text-orange-600" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">Aktif Fırsatlar</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{crmStats?.opportunities || 0}</span>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground">Aktif Fırsatlar</span>
+                  <span className="text-sm font-bold text-foreground">{crmStats?.opportunities || 0}</span>
                 </div>
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">Bekleyen Teklifler</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{crmStats?.proposals || 0}</span>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground">Bekleyen Teklifler</span>
+                  <span className="text-sm font-bold text-foreground">{crmStats?.proposals || 0}</span>
                 </div>
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                      <Activity className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">Aktiviteler</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{crmStats?.activities || 0}</span>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground">Aktiviteler</span>
+                  <span className="text-sm font-bold text-foreground">{crmStats?.activities || 0}</span>
                 </div>
               </CardContent>
             </Card>

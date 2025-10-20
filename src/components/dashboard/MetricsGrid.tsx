@@ -27,7 +27,7 @@ const MetricsGrid = ({ crmStats, financialData }: MetricsGridProps) => {
   const navigate = useNavigate();
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 animate-fade-in">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
       <KpiWidget
         title="Aylık Ciro"
         value={`₺${(financialData?.cashFlow || 0).toLocaleString("tr-TR")}`}
@@ -69,33 +69,6 @@ const MetricsGrid = ({ crmStats, financialData }: MetricsGridProps) => {
         }}
       />
 
-      <KpiWidget
-        title="Aktif Fırsatlar"
-        value={crmStats?.opportunities || 0}
-        icon={Target}
-        trend="up"
-        change={5}
-        changeLabel="yeni fırsat"
-        onClick={() => navigate("/opportunities")}
-        quickAction={{
-          label: "Fırsat Ekle",
-          onClick: () => navigate("/opportunities")
-        }}
-      />
-
-      <KpiWidget
-        title="Teklifler"
-        value={crmStats?.proposals || 0}
-        icon={ShoppingCart}
-        trend="up"
-        change={3}
-        changeLabel="bu hafta"
-        onClick={() => navigate("/proposals")}
-        quickAction={{
-          label: "Yeni Teklif",
-          onClick: () => navigate("/proposal/create")
-        }}
-      />
     </div>
   );
 };

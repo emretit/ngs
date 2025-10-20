@@ -62,7 +62,21 @@ export const useEmployeeSubmit = (employeeId?: string) => {
         try {
           const documentPromises = documents.map(async (doc) => {
             if (doc.file) {
-              const fileName = `${employeeId}/${doc.name}`;
+              // Clean filename - remove Turkish characters and special characters
+              const cleanFileName = doc.name
+                .replace(/[ıİğĞüÜşŞöÖçÇ]/g, (match) => {
+                  const replacements: { [key: string]: string } = {
+                    'ı': 'i', 'İ': 'I', 'ğ': 'g', 'Ğ': 'G',
+                    'ü': 'u', 'Ü': 'U', 'ş': 's', 'Ş': 'S',
+                    'ö': 'o', 'Ö': 'O', 'ç': 'c', 'Ç': 'C'
+                  };
+                  return replacements[match] || match;
+                })
+                .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
+                .replace(/_+/g, '_') // Replace multiple underscores with single
+                .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
+              
+              const fileName = `${employeeId}/${cleanFileName}`;
               
               const { error: uploadError } = await supabase.storage
                 .from('employee-documents')
@@ -80,11 +94,12 @@ export const useEmployeeSubmit = (employeeId?: string) => {
                 .from('employee_documents')
                 .insert({
                   employee_id: employeeId,
-                  name: doc.name,
+                  name: cleanFileName, // Use cleaned filename
                   type: doc.type,
                   size: doc.size,
                   url: urlData.publicUrl,
-                  uploaded_at: new Date().toISOString()
+                  uploaded_at: new Date().toISOString(),
+                  company_id: (await supabase.rpc('current_company_id')).data
                 });
 
               if (docError) throw docError;

@@ -154,9 +154,7 @@ const SuppliersTable = ({
     return <SuppliersTableSkeleton />;
   }
 
-  if (!suppliers || suppliers.length === 0) {
-    return <div className="p-4 text-center text-gray-500">Henüz tedarikçi bulunmamaktadır.</div>;
-  }
+  // Not: Boş durumda da başlıkların görünmesi için tablo render'ını sürdür.
 
   // Sort suppliers based on the sort field and direction
   const sortedSuppliers = [...suppliers].sort((a, b) => {
@@ -306,27 +304,23 @@ const SuppliersTable = ({
 
   return (<>
     <Table>
-      <TableHeader>
-        <TableRow className="bg-gray-50 border-b">
-          <SuppliersTableHeader 
-            columns={columns} 
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-            hasSelection={true}
-            onSelectAll={(checked) => {
-              if (setSelectedSuppliers) {
-                if (checked) {
-                  setSelectedSuppliers(filteredSuppliers);
-                } else {
-                  setSelectedSuppliers([]);
-                }
-              }
-            }}
-            isAllSelected={selectedSuppliers.length === filteredSuppliers.length && filteredSuppliers.length > 0}
-          />
-        </TableRow>
-      </TableHeader>
+      <SuppliersTableHeader 
+        columns={columns} 
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        hasSelection={true}
+        onSelectAll={(checked) => {
+          if (setSelectedSuppliers) {
+            if (checked) {
+              setSelectedSuppliers(filteredSuppliers);
+            } else {
+              setSelectedSuppliers([]);
+            }
+          }
+        }}
+        isAllSelected={selectedSuppliers.length === filteredSuppliers.length && filteredSuppliers.length > 0}
+      />
       <TableBody>
         {filteredSuppliers.length === 0 ? (
           <TableRow>

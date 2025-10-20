@@ -1,50 +1,49 @@
 
-import { useState, useEffect } from "react";
-import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { useProposals } from "@/hooks/useProposals";
+import React, { useState, useEffect } from "react";
+import { Table, TableBody } from "@/components/ui/table";
+import { Proposal, ProposalStatus } from "@/types/proposal";
+import ProposalTableHeader from "./table/ProposalTableHeader";
+import { ProposalTableRow } from "./table/ProposalTableRow";
+import ProposalTableEmpty from "./table/ProposalTableEmpty";
+import ProposalTableSkeleton from "./table/ProposalTableSkeleton";
+import { useSortedProposals } from "./table/useSortedProposals";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { changeProposalStatus } from "@/services/crmService";
-import { Proposal, ProposalStatus } from "@/types/proposal";
-import { ProposalFilters } from "./types";
-import { Column } from "./types";
-import { ProposalTableHeader } from "./table/ProposalTableHeader";
-import { ProposalTableRow } from "./table/ProposalTableRow";
-import { ProposalTableSkeleton } from "./table/ProposalTableSkeleton";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
 import { PdfTemplate } from "@/types/pdf-template";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Download, FileText, Building2, BarChart3, User, DollarSign, Calendar, Clock, Settings } from "lucide-react";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import type { ProposalSortField, ProposalSortDirection } from "./table/types";
 
 interface ProposalTableProps {
   proposals: Proposal[];
   isLoading: boolean;
   onProposalSelect: (proposal: Proposal) => void;
   onStatusChange?: () => void;
+  searchQuery?: string;
+  statusFilter?: string;
+  employeeFilter?: string;
 }
 
-const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange }: ProposalTableProps) => {
+const ProposalTable = ({ 
+  proposals, 
+  isLoading, 
+  onProposalSelect, 
+  onStatusChange,
+  searchQuery = "",
+  statusFilter = "all",
+  employeeFilter = "all"
+}: ProposalTableProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
+  const [sortField, setSortField] = useState<ProposalSortField>("created_at");
+  const [sortDirection, setSortDirection] = useState<ProposalSortDirection>("desc");
   
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [proposalToDelete, setProposalToDelete] = useState<Proposal | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  const [columns] = useState<Column[]>([
-    { id: "number", label: "Teklif No", visible: true, sortable: false },
-    { id: "customer", label: "Müşteri", visible: true, sortable: false },
-    { id: "status", label: "Durum", visible: true, sortable: false },
-    { id: "employee", label: "Satış Temsilcisi", visible: true, sortable: false },
-    { id: "total_amount", label: "Toplam Tutar", visible: true, sortable: false },
-    { id: "created_at", label: "Oluşturma Tarihi", visible: true, sortable: false },
-    { id: "valid_until", label: "Geçerlilik", visible: true, sortable: false },
-    { id: "actions", label: "İşlemler", visible: true },
-  ]);
 
   // Load templates when component mounts
   useEffect(() => {
@@ -144,6 +143,15 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
     setProposalToDelete(null);
   };
 
+  const handleSort = (field: ProposalSortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
   const formatMoney = (amount: number, currency: string = 'TRY') => {
     if (!amount && amount !== 0) return `${getCurrencySymbol(currency)}0`;
     
@@ -165,119 +173,34 @@ const ProposalTable = ({ proposals, isLoading, onProposalSelect, onStatusChange 
     return symbols[currency] || currency;
   };
 
-  if (isLoading && proposals.length === 0) {
-    return <ProposalTableSkeleton />;
-  }
+  // Filter proposals based on criteria
+  const filteredProposals = proposals.filter(proposal => {
+    const matchesSearch = !searchQuery ||
+      proposal.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (proposal.customer?.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (proposal.customer_name?.toLowerCase() || "").includes(searchQuery.toLowerCase());
 
-  if (!proposals || proposals.length === 0) {
-    return <div className="p-4 text-center text-gray-500">Henüz teklif bulunmamaktadır.</div>;
-  }
+    const matchesStatus = statusFilter === "all" || proposal.status === statusFilter;
+    const matchesEmployee = employeeFilter === "all" || proposal.employee?.id === employeeFilter;
 
-  // Sort proposals by creation date (newest first) - no other sorting
-  const sortedProposals = [...proposals].sort((a, b) => {
-    if (!a || !b) return 0;
-    const dateA = new Date(a.created_at).getTime();
-    const dateB = new Date(b.created_at).getTime();
-    
-    // If dates are the same, sort by ID to maintain consistent order
-    if (dateA === dateB) {
-      return a.id.localeCompare(b.id);
-    }
-    
-    return dateB - dateA; // Newest first
+    return matchesSearch && matchesStatus && matchesEmployee;
   });
 
-  // Since we're now receiving proposals directly, no need for additional filtering
-  // The filtering is handled at the parent level with infinite scroll
-  const filteredProposals = sortedProposals;
-
-  if (isLoading) {
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span>Teklif No</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                <span>Müşteri Bilgileri</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-              <div className="flex items-center justify-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                <span>Durum</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span>Satış Temsilcisi</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-              <div className="flex items-center justify-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                <span>Toplam Tutar</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-              <div className="flex items-center justify-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span>Oluşturma Tarihi</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-              <div className="flex items-center justify-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span>Geçerlilik</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">
-              <div className="flex items-center justify-end gap-2">
-                <Settings className="h-4 w-4" />
-                <span>İşlemler</span>
-              </div>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <TableRow key={index} className="h-8">
-              <TableCell className="py-2 px-3"><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-3"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-6 w-6 bg-gray-200 rounded animate-pulse" /></TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    );
-  }
+  // Sort the filtered proposals
+  const sortedProposals = useSortedProposals(filteredProposals, sortField, sortDirection);
 
   return (<>
     <Table>
-      <ProposalTableHeader 
-        columns={columns} 
+      <ProposalTableHeader
+        sortField={sortField}
+        sortDirection={sortDirection}
+        handleSort={handleSort}
       />
       <TableBody>
-        {filteredProposals.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-              Bu kriterlere uygun teklif bulunamadı
-            </TableCell>
-          </TableRow>
+        {sortedProposals.length === 0 ? (
+          <ProposalTableEmpty />
         ) : (
-          filteredProposals.map((proposal, index) => (
+          sortedProposals.map((proposal, index) => (
             <ProposalTableRow
               key={proposal.id}
               proposal={proposal}

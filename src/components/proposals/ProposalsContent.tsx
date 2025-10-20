@@ -39,7 +39,7 @@ const ProposalsContent = ({
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (!loadMore || !hasNextPage || isLoadingMore) return;
+    if (!loadMore || !hasNextPage || isLoadingMore || isLoading) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -55,7 +55,7 @@ const ProposalsContent = ({
     }
 
     return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore]);
+  }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
 
   if (error) {
     return (
@@ -74,24 +74,19 @@ const ProposalsContent = ({
             isLoading={isLoading}
             onProposalSelect={onProposalSelect}
             onStatusChange={onStatusChange}
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            employeeFilter={employeeFilter}
           />
           
           {/* Infinite scroll trigger */}
-          {hasNextPage && (
+          {hasNextPage && !isLoading && (
             <div ref={loadMoreRef} className="flex justify-center py-4">
-              {isLoadingMore ? (
+              {isLoadingMore && (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span className="text-sm text-gray-600">Daha fazla teklif yükleniyor...</span>
                 </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={loadMore}
-                  className="text-sm"
-                >
-                  Daha Fazla Yükle
-                </Button>
               )}
             </div>
           )}

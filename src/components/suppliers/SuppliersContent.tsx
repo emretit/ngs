@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Supplier } from "@/types/supplier";
 import SuppliersTable from "./SuppliersTable";
-import { Button } from "@/components/ui/button";
+// Button kaldırıldı; infinite scroll otomatik yükleyecek
 import { Loader2 } from "lucide-react";
 
 interface SuppliersContentProps {
@@ -43,7 +43,8 @@ const SuppliersContent = ({
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (!loadMore || !hasNextPage || isLoadingMore) return;
+    // İlk yükleme bitmeden observer'ı kurmayalım
+    if (!loadMore || !hasNextPage || isLoadingMore || isLoading) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -59,7 +60,7 @@ const SuppliersContent = ({
     }
 
     return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore]);
+  }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
 
   if (error) {
     return (
@@ -87,22 +88,14 @@ const SuppliersContent = ({
             typeFilter={typeFilter}
           />
           
-          {/* Infinite scroll trigger */}
-          {hasNextPage && (
+          {/* Infinite scroll trigger: buton kaldırıldı, sadece otomatik yükleme ve spinner */}
+          {!isLoading && hasNextPage && (
             <div ref={loadMoreRef} className="flex justify-center py-4">
-              {isLoadingMore ? (
+              {isLoadingMore && (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span className="text-sm text-gray-600">Daha fazla tedarikçi yükleniyor...</span>
                 </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={loadMore}
-                  className="text-sm"
-                >
-                  Daha Fazla Yükle
-                </Button>
               )}
             </div>
           )}

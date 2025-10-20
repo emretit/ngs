@@ -1,5 +1,5 @@
 import React from "react";
-import { TableHead, TableRow } from "@/components/ui/table";
+import { TableHead, TableRow, TableHeader } from "@/components/ui/table";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,7 +31,7 @@ const CustomersTableHeader = ({ columns, sortField, sortDirection, onSort, hasSe
   };
 
   return (
-    <thead>
+    <TableHeader>
       <TableRow className="bg-gray-50 border-b">
       {hasSelection && (
         <TableHead className="w-[40px] py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
@@ -66,7 +66,7 @@ const CustomersTableHeader = ({ columns, sortField, sortDirection, onSort, hasSe
         </TableHead>
       ))}
       </TableRow>
-    </thead>
+    </TableHeader>
   );
 };
 

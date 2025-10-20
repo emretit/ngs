@@ -1,5 +1,5 @@
 import React from "react";
-import { TableHead, TableRow } from "@/components/ui/table";
+import { TableHead, TableRow, TableHeader } from "@/components/ui/table";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,40 +31,42 @@ const SuppliersTableHeader = ({ columns, sortField, sortDirection, onSort, hasSe
   };
 
   return (
-    <>
-      {hasSelection && (
-        <TableHead className="w-[40px] py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
-          <Checkbox
-            checked={isAllSelected || false}
-            onCheckedChange={onSelectAll}
-          />
-        </TableHead>
-      )}
-      {columns.map((column) => (
-        <TableHead
-          key={column.id}
-          className={cn(
-            "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
-            column.sortable && "cursor-pointer hover:bg-muted/50"
-          )}
-          onClick={column.sortable ? () => onSort(column.id) : undefined}
-        >
-          <div className="flex items-center gap-1">
-            {column.id === 'company' && <span className="text-lg mr-2">🏢</span>}
-            {column.id === 'name' && <span className="text-lg mr-2">👤</span>}
-            {column.id === 'contact' && <span className="text-lg mr-2">📞</span>}
-            {column.id === 'type' && <span className="text-lg mr-2">🏷️</span>}
-            {column.id === 'status' && <span className="text-lg mr-2">📊</span>}
-            {column.id === 'representative' && <span className="text-lg mr-2">🤝</span>}
-            {column.id === 'balance' && <span className="text-lg mr-2">💰</span>}
-            {column.id === 'created_at' && <span className="text-lg mr-2">📅</span>}
-            {column.id === 'actions' && <span className="text-lg mr-2">⚙️</span>}
-            <span>{column.label}</span>
-            {column.sortable && getSortIcon(column.id)}
-          </div>
-        </TableHead>
-      ))}
-    </>
+    <TableHeader>
+      <TableRow className="bg-gray-50 border-b">
+        {hasSelection && (
+          <TableHead className="w-[40px] py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
+            <Checkbox
+              checked={isAllSelected || false}
+              onCheckedChange={onSelectAll}
+            />
+          </TableHead>
+        )}
+        {columns.map((column) => (
+          <TableHead
+            key={column.id}
+            className={cn(
+              "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
+              column.sortable && "cursor-pointer hover:bg-muted/50"
+            )}
+            onClick={column.sortable ? () => onSort(column.id) : undefined}
+          >
+            <div className="flex items-center gap-1">
+              {column.id === 'company' && <span className="text-lg mr-2">🏢</span>}
+              {column.id === 'name' && <span className="text-lg mr-2">👤</span>}
+              {column.id === 'contact' && <span className="text-lg mr-2">📞</span>}
+              {column.id === 'type' && <span className="text-lg mr-2">🏷️</span>}
+              {column.id === 'status' && <span className="text-lg mr-2">📊</span>}
+              {column.id === 'representative' && <span className="text-lg mr-2">🤝</span>}
+              {column.id === 'balance' && <span className="text-lg mr-2">💰</span>}
+              {column.id === 'created_at' && <span className="text-lg mr-2">📅</span>}
+              {column.id === 'actions' && <span className="text-lg mr-2">⚙️</span>}
+              <span>{column.label}</span>
+              {column.sortable && getSortIcon(column.id)}
+            </div>
+          </TableHead>
+        ))}
+      </TableRow>
+    </TableHeader>
   );
 };
 

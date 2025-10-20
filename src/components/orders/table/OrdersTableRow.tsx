@@ -121,10 +121,10 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
 
   return (
     <TableRow 
-      className="cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+      className="h-16 cursor-pointer transition-colors hover:bg-gray-50"
       onClick={() => onSelect(order)}
     >
-      <TableCell className="font-medium p-4">
+      <TableCell className="p-4 font-medium text-sm">
         <div className="flex items-center space-x-2">
           <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           <span>#{order.order_number}</span>
@@ -138,8 +138,8 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-medium" title={order.customer?.name}>
-              {shortenText(order.customer?.name || "Müşteri yok", 20)}
+            <div className="text-sm font-medium" title={order.customer?.name}>
+              {shortenText(order.customer?.name || "Müşteri yok", 30)}
             </div>
             {order.customer?.company && (
               <div className="text-xs text-muted-foreground" title={order.customer.company}>
@@ -149,18 +149,18 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
           </div>
         </div>
       </TableCell>
-      <TableCell className="p-4">
+      <TableCell className="text-center p-4">
         <Badge className={getStatusColor(order.status)}>
           {getStatusLabel(order.status)}
         </Badge>
       </TableCell>
-      <TableCell className="font-medium p-4">
-        {formatCurrency(order.total_amount || 0)}
+      <TableCell className="text-center p-4 text-sm font-medium">
+        {order.total_amount != null ? formatCurrency(order.total_amount) : '-'}
       </TableCell>
-      <TableCell className="p-4">{formatDate(order.order_date)}</TableCell>
-      <TableCell className="p-4">{formatDate(order.delivery_date)}</TableCell>
-      <TableCell className="p-4">
-        <div className="flex items-center justify-end space-x-1">
+      <TableCell className="text-center p-4 text-sm">{formatDate(order.order_date)}</TableCell>
+      <TableCell className="text-center p-4 text-sm">{formatDate(order.delivery_date)}</TableCell>
+      <TableCell className="p-4 text-right">
+        <div className="flex items-center justify-end space-x-2">
           <Button
             variant="ghost"
             size="icon"

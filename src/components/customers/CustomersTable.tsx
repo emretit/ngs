@@ -154,9 +154,7 @@ const CustomersTable = ({
     return <CustomersTableSkeleton />;
   }
 
-  if (!customers || customers.length === 0) {
-    return <div className="p-4 text-center text-gray-500">Henüz müşteri bulunmamaktadır.</div>;
-  }
+  // Not: Boş durumda da başlıkların görünmesi için tablo render'ını sürdür.
 
   // Sort customers based on the sort field and direction
   const sortedCustomers = [...customers].sort((a, b) => {

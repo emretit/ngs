@@ -3,6 +3,8 @@ import { Order, OrderStatus } from "@/types/orders";
 import { useState } from "react";
 import { OrdersTableHeader } from "./table/OrdersTableHeader";
 import { OrdersTableRow } from "./table/OrdersTableRow";
+import OrdersTableSkeleton from "./table/OrdersTableSkeleton";
+import OrdersTableEmpty from "./table/OrdersTableEmpty";
 
 interface Column {
   id: string;
@@ -92,20 +94,8 @@ const OrdersTable = ({
     return 0;
   });
 
-  if (isLoading && orders.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-[400px]">
-        <div className="text-muted-foreground">Siparişler yükleniyor...</div>
-      </div>
-    );
-  }
-
-  if (!orders || orders.length === 0) {
-    return (
-      <div className="text-center text-muted-foreground py-8">
-        Henüz sipariş bulunmamaktadır.
-      </div>
-    );
+  if (isLoading && (!orders || orders.length === 0)) {
+    return <OrdersTableSkeleton />;
   }
 
   return (
@@ -118,19 +108,23 @@ const OrdersTable = ({
           onSort={handleSort}
         />
         <TableBody>
-          {sortedOrders.map((order, index) => (
-            <OrdersTableRow
-              key={order.id}
-              order={order}
-              index={index}
-              onSelect={onSelectOrder}
-              onEdit={onEditOrder}
-              onDelete={onDeleteOrder}
-              onConvertToInvoice={onConvertToInvoice}
-              onConvertToService={onConvertToService}
-              onPrint={onPrintOrder}
-            />
-          ))}
+          {sortedOrders.length === 0 ? (
+            <OrdersTableEmpty />
+          ) : (
+            sortedOrders.map((order, index) => (
+              <OrdersTableRow
+                key={order.id}
+                order={order}
+                index={index}
+                onSelect={onSelectOrder}
+                onEdit={onEditOrder}
+                onDelete={onDeleteOrder}
+                onConvertToInvoice={onConvertToInvoice}
+                onConvertToService={onConvertToService}
+                onPrint={onPrintOrder}
+              />
+            ))
+          )}
         </TableBody>
       </Table>
     </div>

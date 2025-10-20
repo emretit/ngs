@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, User } from "lucide-react";
+import { Search, Filter, User, Calendar } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { OrderStatus } from "@/types/orders";
 
 interface OrdersFilterBarProps {
@@ -10,6 +11,10 @@ interface OrdersFilterBarProps {
   setSelectedStatus: (status: string) => void;
   selectedCustomer: string;
   setSelectedCustomer: (customer: string) => void;
+  startDate?: Date | undefined;
+  setStartDate?: (value: Date | undefined) => void;
+  endDate?: Date | undefined;
+  setEndDate?: (value: Date | undefined) => void;
 }
 
 const OrdersFilterBar = ({
@@ -18,17 +23,21 @@ const OrdersFilterBar = ({
   selectedStatus,
   setSelectedStatus,
   selectedCustomer,
-  setSelectedCustomer
+  setSelectedCustomer,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate
 }: OrdersFilterBarProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 p-6 bg-gradient-to-r from-card/80 to-muted/40 rounded-xl border border-border/30 shadow-lg backdrop-blur-sm">
-      <div className="relative w-[400px]">
+    <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+      <div className="relative min-w-[250px] flex-1">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
           placeholder="Sipariş no, müşteri adı ile ara..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 w-full"
         />
       </div>
       <Select value={selectedStatus} onValueChange={setSelectedStatus}>
@@ -57,6 +66,22 @@ const OrdersFilterBar = ({
           {/* TODO: Customer options will be populated from API */}
         </SelectContent>
       </Select>
+      {setStartDate && setEndDate && (
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <DatePicker
+            date={startDate}
+            onSelect={setStartDate}
+            placeholder="Başlangıç"
+          />
+          <span className="text-muted-foreground text-sm">-</span>
+          <DatePicker
+            date={endDate}
+            onSelect={setEndDate}
+            placeholder="Bitiş"
+          />
+        </div>
+      )}
     </div>
   );
 };

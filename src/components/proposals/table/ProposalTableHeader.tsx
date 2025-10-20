@@ -1,67 +1,66 @@
 
-import React from 'react';
-import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Building2, BarChart3, User, DollarSign, Calendar, Clock, Settings } from "lucide-react";
+import React from "react";
+import { TableHeader, TableRow, TableHead } from "@/components/ui/table";
+import { ChevronUp, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { ProposalSortField, ProposalSortDirection } from "./types";
 
 interface ProposalTableHeaderProps {
-  columns: any[];
+  sortField: ProposalSortField;
+  sortDirection: ProposalSortDirection;
+  handleSort: (field: ProposalSortField) => void;
 }
 
-export const ProposalTableHeader = ({ 
-  columns
-}: ProposalTableHeaderProps) => {
+const ProposalTableHeader: React.FC<ProposalTableHeaderProps> = ({
+  sortField,
+  sortDirection,
+  handleSort
+}) => {
+  const getSortIcon = (field: ProposalSortField) => {
+    if (field !== sortField) return null;
+    return sortDirection === "asc"
+      ? <ChevronUp className="h-4 w-4 ml-1" />
+      : <ChevronDown className="h-4 w-4 ml-1" />;
+  };
+
+  const renderSortableHeader = (label: string, field: ProposalSortField, className?: string) => (
+    <TableHead
+      className={cn(
+        "cursor-pointer hover:bg-muted/50 h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide",
+        className
+      )}
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center">
+        <span>
+          {field === 'number' && '📄 '}
+          {field === 'customer_name' && '🏢 '}
+          {field === 'status' && '📊 '}
+          {field === 'total_amount' && '💰 '}
+          {field === 'employee_name' && '👤 '}
+          {field === 'created_at' && '📅 '}
+          {field === 'valid_until' && '⏰ '}
+          {label}
+        </span>
+        {getSortIcon(field)}
+      </div>
+    </TableHead>
+  );
+
   return (
     <TableHeader>
-      <TableRow>
-        <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span>Teklif No</span>
-          </div>
-        </TableHead>
-        <TableHead className="w-[20%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            <span>Müşteri Bilgileri</span>
-          </div>
-        </TableHead>
-        <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-          <div className="flex items-center justify-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            <span>Durum</span>
-          </div>
-        </TableHead>
-        <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            <span>Satış Temsilcisi</span>
-          </div>
-        </TableHead>
-        <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-          <div className="flex items-center justify-center gap-2">
-            <DollarSign className="h-4 w-4" />
-            <span>Toplam Tutar</span>
-          </div>
-        </TableHead>
-        <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-          <div className="flex items-center justify-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>Oluşturma Tarihi</span>
-          </div>
-        </TableHead>
-        <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-          <div className="flex items-center justify-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>Geçerlilik</span>
-          </div>
-        </TableHead>
-        <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">
-          <div className="flex items-center justify-end gap-2">
-            <Settings className="h-4 w-4" />
-            <span>İşlemler</span>
-          </div>
-        </TableHead>
+      <TableRow className="bg-gray-50 border-b">
+        {renderSortableHeader("Teklif No", "number", "w-[15%]")}
+        {renderSortableHeader("Müşteri Bilgileri", "customer_name", "w-[20%]")}
+        {renderSortableHeader("Durum", "status", "w-[10%] text-center")}
+        {renderSortableHeader("Satış Temsilcisi", "employee_name", "w-[15%]")}
+        {renderSortableHeader("Toplam Tutar", "total_amount", "w-[12%] text-center")}
+        {renderSortableHeader("Oluşturma Tarihi", "created_at", "w-[10%] text-center")}
+        {renderSortableHeader("Geçerlilik", "valid_until", "w-[10%] text-center")}
+        <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
       </TableRow>
     </TableHeader>
   );
 };
+
+export default ProposalTableHeader;

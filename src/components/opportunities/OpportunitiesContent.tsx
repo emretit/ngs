@@ -77,22 +77,14 @@ const OpportunitiesContent = ({
             priorityFilter={priorityFilter}
           />
           
-          {/* Infinite scroll trigger */}
-          {hasNextPage && (
+          {/* Infinite scroll trigger: buton kaldırıldı, sadece otomatik yükleme ve spinner */}
+          {!isLoading && hasNextPage && (
             <div ref={loadMoreRef} className="flex justify-center py-4">
-              {isLoadingMore ? (
+              {isLoadingMore && (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span className="text-sm text-gray-600">Daha fazla fırsat yükleniyor...</span>
                 </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={loadMore}
-                  className="text-sm"
-                >
-                  Daha Fazla Yükle
-                </Button>
               )}
             </div>
           )}

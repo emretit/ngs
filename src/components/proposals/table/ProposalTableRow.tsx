@@ -129,59 +129,59 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
 
   
   return (
-    <TableRow 
-      key={proposal.id} 
-      onClick={() => onSelect(proposal)} 
-      className="cursor-pointer hover:bg-blue-50 h-8"
+    <TableRow
+      key={proposal.id}
+      className="h-16 cursor-pointer transition-colors hover:bg-gray-50"
+      onClick={() => onSelect(proposal)}
     >
-      <TableCell className="font-medium py-2 px-3 text-xs">#{proposal.number}</TableCell>
-      <TableCell className="py-2 px-3">
+      <TableCell className="p-4 font-medium text-sm">#{proposal.number}</TableCell>
+      <TableCell className="p-4">
         {proposal.customer ? (
           <div className="flex flex-col space-y-0">
-            <span className="text-xs font-medium" title={proposal.customer.name}>
+            <span className="text-sm font-medium" title={proposal.customer.name}>
               {getShortenedCompanyName()}
             </span>
             {proposal.customer.company && (
-              <span className="text-xs text-gray-500" title={proposal.customer.company}>
+              <span className="text-xs text-muted-foreground" title={proposal.customer.company}>
                 {getShortenedCompanyInfo()}
               </span>
             )}
           </div>
         ) : (
-          <span className="text-gray-500 text-xs">{proposal.customer_name || "Müşteri yok"}</span>
+          <span className="text-muted-foreground text-sm">{proposal.customer_name || "Müşteri yok"}</span>
         )}
       </TableCell>
-      <TableCell className="text-center py-2 px-2">
+      <TableCell className="text-center p-4">
         <ProposalStatusCell 
           status={proposal.status} 
           proposalId={proposal.id} 
           onStatusChange={onStatusChange} 
         />
       </TableCell>
-      <TableCell className="py-2 px-2">
+      <TableCell className="p-4">
         {proposal.employee ? (
-          <div className="flex items-center space-x-0.5">
-            <Avatar className="h-3.5 w-3.5">
-              <AvatarFallback className="bg-primary/10 text-primary text-xs">
+          <div className="flex items-center space-x-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-primary/10 text-primary text-sm">
                 {proposal.employee.first_name?.[0]}
                 {proposal.employee.last_name?.[0]}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs font-medium truncate">
+            <span className="text-sm font-medium truncate">
               {proposal.employee.first_name} {proposal.employee.last_name}
             </span>
           </div>
         ) : (
-          <span className="text-muted-foreground text-xs">-</span>
+          <span className="text-muted-foreground text-sm">-</span>
         )}
       </TableCell>
-      <TableCell className="text-center py-2 px-2 text-xs font-medium">
+      <TableCell className="text-center p-4 text-sm font-medium">
         {formatProposalAmount(getGrandTotal(), proposal.currency || 'TRY')}
       </TableCell>
-      <TableCell className="text-center py-2 px-2 text-xs">{formatDate(proposal.created_at)}</TableCell>
-      <TableCell className="text-center py-2 px-2 text-xs">{formatDate(proposal.valid_until)}</TableCell>
-      <TableCell className="py-2 px-2">
-        <div className="flex justify-end space-x-0.5">
+      <TableCell className="text-center p-4 text-sm">{formatDate(proposal.created_at)}</TableCell>
+      <TableCell className="text-center p-4 text-sm">{formatDate(proposal.valid_until)}</TableCell>
+      <TableCell className="p-4 text-right">
+        <div className="flex justify-end space-x-2">
           <Button
             variant="ghost"
             size="icon"
@@ -189,17 +189,17 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
               e.stopPropagation();
               onSelect(proposal);
             }}
-            className="h-4 w-4 hover:bg-blue-100"
+            className="h-8 w-8"
           >
-            <Eye className="h-2.5 w-2.5" />
+            <Eye className="h-4 w-4" />
           </Button>
           <Button 
             variant="ghost" 
             size="icon"
             onClick={(e) => e.stopPropagation()}
-            className="h-4 w-4 hover:bg-gray-100"
+            className="h-8 w-8"
           >
-            <MoreHorizontal className="h-2.5 w-2.5" />
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </div>
       </TableCell>

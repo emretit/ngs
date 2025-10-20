@@ -1,13 +1,16 @@
 import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
 import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
-import { Target, Users, LayoutGrid, FileText, Activity, Calendar, CheckCircle } from "lucide-react";
+import { Target, Users, LayoutGrid, FileText, Activity, Calendar, CheckCircle, DollarSign, ChevronRight } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { financialData, crmStats, hrStats, isLoading } = useDashboardData();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -59,6 +62,48 @@ const Dashboard = () => {
             <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               <RecentActivitiesTimeline />
             </div>
+
+            {/* Cash Flow Card */}
+            <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-gray-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                      <DollarSign className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-foreground">
+                        Nakit Akışı
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground">Finansal durum</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/cashflow")}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Tümünü Gör
+                    <ChevronRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground">Günlük Gelir</span>
+                  <span className="text-sm font-bold text-green-600">₺{(financialData?.cashFlow || 0).toLocaleString("tr-TR")}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground">Bekleyen Tahsilat</span>
+                  <span className="text-sm font-bold text-orange-600">₺{(financialData?.receivables || 0).toLocaleString("tr-TR")}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground">Bekleyen Ödeme</span>
+                  <span className="text-sm font-bold text-red-600">₺{(financialData?.payables || 0).toLocaleString("tr-TR")}</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Column - 1/3 width */}
@@ -66,16 +111,27 @@ const Dashboard = () => {
             {/* CRM Quick Stats */}
             <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-gray-300">
               <CardHeader className="pb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <Target className="w-5 h-5 text-white" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                      <Target className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-foreground">
+                        CRM Özeti
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground">Güncel durum</p>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-sm font-semibold text-foreground">
-                      CRM Özeti
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground">Güncel durum</p>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/opportunities")}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Tümünü Gör
+                    <ChevronRight className="w-3 h-3 ml-1" />
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -95,55 +151,43 @@ const Dashboard = () => {
             </Card>
 
             {/* HR Quick Stats */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-green-50 to-green-100/50 hover:from-green-100 hover:to-green-200/50">
-              <CardHeader className="pb-4">
+            <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-gray-300">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <Users className="w-6 h-6 text-white" />
+                    <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                      <Users className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg font-bold text-gray-900">
+                      <CardTitle className="text-sm font-semibold text-foreground">
                         İK Özeti
                       </CardTitle>
-                      <p className="text-sm text-green-600 font-medium">Personel durumu</p>
+                      <p className="text-xs text-muted-foreground">Personel durumu</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-600">
-                      {hrStats?.totalEmployees || 0}
-                    </div>
-                    <div className="text-xs text-green-500">Toplam</div>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate("/employees")}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Tümünü Gör
+                    <ChevronRight className="w-3 h-3 ml-1" />
+                  </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Users className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">Toplam Çalışan</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{hrStats?.totalEmployees || 0}</span>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground">Toplam Çalışan</span>
+                  <span className="text-sm font-bold text-foreground">{hrStats?.totalEmployees || 0}</span>
                 </div>
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <Calendar className="w-4 h-4 text-yellow-600" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">İzinli</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">{hrStats?.onLeave || 0}</span>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground">İzinli</span>
+                  <span className="text-sm font-bold text-foreground">{hrStats?.onLeave || 0}</span>
                 </div>
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">Aktif</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-900">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <span className="text-xs font-medium text-muted-foreground">Aktif</span>
+                  <span className="text-sm font-bold text-foreground">
                     {(hrStats?.totalEmployees || 0) - (hrStats?.onLeave || 0)}
                   </span>
                 </div>
@@ -157,3 +201,4 @@ const Dashboard = () => {
 };
 
 export default memo(Dashboard);
+

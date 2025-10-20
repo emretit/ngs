@@ -25,7 +25,7 @@ export const useSalaryForm = (employeeId: string) => {
 
       if (error) throw error;
 
-      showSuccess("Maaş bilgisi başarıyla kaydedildi");
+      showSuccess("Maaş bilgisi başarıyla kaydedildi", { duration: 1000 });
       
       return true;
     } catch (error) {

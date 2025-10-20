@@ -45,7 +45,7 @@ const NewContactForm: React.FC<NewContactFormProps> = ({ opportunityId, onSubmit
       };
 
       await onSubmit(newContact);
-      showSuccess("İletişim kaydı başarıyla eklendi");
+      showSuccess("İletişim kaydı başarıyla eklendi", { duration: 1000 });
       form.reset();
       
     } catch (error) {

@@ -16,17 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { UseFormReturn } from "react-hook-form";
 import { ProductFormSchema } from "./ProductFormSchema";
@@ -35,13 +28,17 @@ interface CategorySelectProps {
   form: UseFormReturn<ProductFormSchema>;
 }
 
-interface NewCategoryForm {
+interface Category {
+  id: string;
   name: string;
   description?: string;
+  is_default?: boolean;
 }
 
 const CategorySelect = ({ form }: CategorySelectProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryDescription, setNewCategoryDescription] = useState("");
   const queryClient = useQueryClient();
 
   // Fetch categories
@@ -51,27 +48,17 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
       const { data, error } = await supabase
         .from("product_categories")
         .select("*")
-        .order("name");
+        .eq('is_active', true)
+        .order("sort_order", { ascending: true });
       
       if (error) throw error;
       return data || [];
     },
   });
 
-  // Form for new category
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting }
-  } = useForm<NewCategoryForm>();
-
   // Create category mutation
   const createCategoryMutation = useMutation({
-    mutationFn: async (data: NewCategoryForm) => {
-      console.log('Creating category:', data); // Debug log
-      
-      // Get current user's company_id
+    mutationFn: async (data: { name: string; description?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Kullanıcı bulunamadı');
       
@@ -89,48 +76,61 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
           name: data.name,
           description: data.description || null,
           company_id: profile.company_id,
+          is_default: false,
+          is_active: true,
+          sort_order: 999
         }])
         .select()
         .single();
 
-      if (error) {
-        console.error('Supabase error:', error); // Debug log
-        throw error;
-      }
-      
-      console.log('Category created:', result); // Debug log
+      if (error) throw error;
       return result;
     },
     onSuccess: (newCategory) => {
       queryClient.invalidateQueries({ queryKey: ["productCategories"] });
       form.setValue("category_id", newCategory.id);
+      setNewCategoryName("");
+      setNewCategoryDescription("");
       setIsDialogOpen(false);
-      reset();
       toast.success(`"${newCategory.name}" kategorisi oluşturuldu`);
     },
     onError: (error: any) => {
       console.error("Kategori oluşturma hatası:", error);
-      
-      // Specific error messages
-      if (error?.message?.includes('company_id')) {
-        toast.error("Şirket bilgisi eksik. Lütfen tekrar giriş yapın.");
-      } else if (error?.message?.includes('unique constraint')) {
-        toast.error("Bu kategori adı zaten mevcut.");
-      } else if (error?.message?.includes('Row Level Security')) {
-        toast.error("Kategori oluşturmak için yetkiniz yok.");
-      } else {
-        toast.error(`Kategori oluşturulurken hata oluştu: ${error?.message || 'Bilinmeyen hata'}`);
-      }
+      toast.error(`Kategori oluşturulurken hata oluştu: ${error?.message || 'Bilinmeyen hata'}`);
     },
   });
 
-  const onSubmit = (data: NewCategoryForm) => {
-    console.log('Form submitted with data:', data); // Debug log
-    if (!data.name || data.name.trim() === '') {
-      toast.error('Kategori adı gereklidir');
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error("Kategori adı gereklidir");
       return;
     }
-    createCategoryMutation.mutate(data);
+
+    createCategoryMutation.mutate({
+      name: newCategoryName.trim(),
+      description: newCategoryDescription.trim() || undefined
+    });
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!confirm("Bu kategoriyi silmek istediğinizden emin misiniz?")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('product_categories')
+        .update({ is_active: false })
+        .eq('id', categoryId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["productCategories"] });
+      toast.success("Kategori başarıyla silindi!");
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast.error("Kategori silinirken hata oluştu");
+    }
   };
 
   const handleSelectChange = (value: string) => {
@@ -160,9 +160,24 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
               </FormControl>
               <SelectContent>
                 <SelectItem value="none">Kategorisiz</SelectItem>
-                {categories?.map((category) => (
+                {categories?.map((category: Category) => (
                   <SelectItem key={category.id} value={category.id}>
-                    {category.name}
+                    <div className="flex items-center justify-between w-full">
+                      <span>{category.name}</span>
+                      {!category.is_default && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 ml-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCategory(category.id);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3 text-red-500" />
+                        </Button>
+                      )}
+                    </div>
                   </SelectItem>
                 ))}
                 <SelectItem value="add_new" className="text-primary font-medium">
@@ -178,35 +193,30 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
         )}
       />
 
+      {/* Add Category Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Yeni Kategori Oluştur</DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Kategori Adı *</Label>
+              <label className="text-sm font-medium">Kategori Adı *</label>
               <Input
-                id="name"
                 placeholder="Kategori adı giriniz"
-                {...register("name", { 
-                  required: "Kategori adı gereklidir",
-                  minLength: { value: 2, message: "En az 2 karakter olmalıdır" }
-                })}
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                autoFocus
               />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Açıklama</Label>
-              <Textarea
-                id="description"
+              <label className="text-sm font-medium">Açıklama</label>
+              <Input
                 placeholder="Kategori açıklaması (isteğe bağlı)"
-                rows={3}
-                {...register("description")}
+                value={newCategoryDescription}
+                onChange={(e) => setNewCategoryDescription(e.target.value)}
               />
             </div>
 
@@ -216,17 +226,21 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
                 variant="outline"
                 onClick={() => {
                   setIsDialogOpen(false);
-                  reset();
+                  setNewCategoryName("");
+                  setNewCategoryDescription("");
                 }}
-                disabled={isSubmitting}
+                disabled={createCategoryMutation.isPending}
               >
                 İptal
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Oluşturuluyor..." : "Oluştur"}
+              <Button 
+                onClick={handleAddCategory}
+                disabled={createCategoryMutation.isPending || !newCategoryName.trim()}
+              >
+                {createCategoryMutation.isPending ? "Oluşturuluyor..." : "Oluştur"}
               </Button>
             </div>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
     </>
@@ -234,3 +248,9 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
 };
 
 export default CategorySelect;
+
+
+
+
+
+

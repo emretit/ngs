@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,28 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase } from "lucide-react";
 import { Control } from "react-hook-form";
 import { EmployeeFormValues } from "../hooks/useEmployeeForm";
-import { supabase } from "@/integrations/supabase/client";
+import { DepartmentSelect } from "./DepartmentSelect";
 
 interface EmploymentSectionProps {
   control: Control<EmployeeFormValues>;
 }
 
 export const EmploymentSection = ({ control }: EmploymentSectionProps) => {
-  const [departments, setDepartments] = useState<{ name: string }[]>([]);
-
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      const { data } = await supabase
-        .from('departments')
-        .select('name')
-        .order('name');
-      
-      setDepartments(data || []);
-    };
-
-    fetchDepartments();
-  }, []);
-
   return (
     <Card>
       <CardHeader>
@@ -52,30 +36,7 @@ export const EmploymentSection = ({ control }: EmploymentSectionProps) => {
             )}
           />
 
-          <FormField
-            control={control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Departman *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Departman seçin" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.name} value={dept.name}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <DepartmentSelect control={control} />
 
           <FormField
             control={control}

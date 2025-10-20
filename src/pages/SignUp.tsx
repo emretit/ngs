@@ -64,6 +64,7 @@ const SignUp = () => {
       toast({
         title: "Kayıt Başarılı",
         description: "E-posta adresinizi kontrol edin ve hesabınızı onaylayın.",
+        duration: 1000
       });
       navigate("/signin");
     } catch (error: any) {
@@ -86,6 +87,7 @@ const SignUp = () => {
         variant: "destructive",
         title: "Kayıt Hatası",
         description: errorMessage,
+        duration: 1000
       });
     } finally {
       setLoading(false);

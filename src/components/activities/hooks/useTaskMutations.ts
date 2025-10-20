@@ -23,7 +23,7 @@ export const useTaskMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
-      showSuccess("Task updated successfully");
+      showSuccess("Task updated successfully", { duration: 1000 });
     },
     onError: (error) => {
       console.error("Error updating task:", error);
@@ -43,7 +43,7 @@ export const useTaskMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
-      showSuccess("Task deleted successfully");
+      showSuccess("Task deleted successfully", { duration: 1000 });
     },
     onError: (error) => {
       console.error("Error deleting task:", error);

@@ -32,14 +32,14 @@ const SignIn = () => {
     if (errorCode) {
       const msg = getAuthErrorMessage(errorCode, errorDescription);
       if (msg) {
-        toast({ variant: "destructive", title: "Doğrulama Hatası", description: msg });
+        toast({ variant: "destructive", title: "Doğrulama Hatası", description: msg, duration: 1000 });
       }
     }
     if (accessToken && type === "signup") {
       setBlockAutoRedirect(true);
       setTimeout(async () => {
         await safeSignOut();
-        toast({ title: "E-posta doğrulandı", description: "Lütfen e-posta ve şifrenizle giriş yapın." });
+        toast({ title: "E-posta doğrulandı", description: "Lütfen e-posta ve şifrenizle giriş yapın.", duration: 1000 });
       }, 0);
     }
   }, []);
@@ -69,6 +69,7 @@ const SignIn = () => {
       toast({
         title: "Başarılı",
         description: "Giriş yapıldı. Dashboard'a yönlendiriliyorsunuz...",
+        duration: 1000
       });
       // Dashboard'a yönlendir
       setTimeout(() => {
@@ -91,6 +92,7 @@ const SignIn = () => {
         variant: "destructive",
         title: "Giriş Hatası",
         description: errorMessage,
+        duration: 1000
       });
     } finally {
       setLoading(false);

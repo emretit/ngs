@@ -34,7 +34,7 @@ export const useCustomerExcelImport = () => {
       // Refresh the customers list
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       
-      showSuccess(`${data.length} müşteri başarıyla içe aktarıldı`);
+      showSuccess(`${data.length} müşteri başarıyla içe aktarıldı`, { duration: 1000 });
       
     } catch (error) {
       console.error('Excel import error:', error);

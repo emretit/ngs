@@ -52,7 +52,7 @@ const ProductDetails = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product", id] });
-      showSuccess("Ürün başarıyla güncellendi");
+      showSuccess("Ürün başarıyla güncellendi", { duration: 1000 });
     },
     onError: (error) => {
       console.error("Error updating product:", error);

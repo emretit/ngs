@@ -41,7 +41,7 @@ export const useEditableEmployeeForm = ({ employee, onSuccess }: UseEditableEmpl
 
       if (error) throw error;
 
-      showSuccess("Çalışan bilgileri başarıyla güncellendi");
+      showSuccess("Çalışan bilgileri başarıyla güncellendi", { duration: 1000 });
 
       setIsEditing(false);
       onSuccess?.();

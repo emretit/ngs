@@ -57,7 +57,7 @@ export const useEmployeeForm = () => {
 
       if (error) throw error;
 
-      showSuccess("Çalışan başarıyla oluşturuldu");
+      showSuccess("Çalışan başarıyla oluşturuldu", { duration: 1000 });
 
       // Invalidate and refetch employees
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -120,7 +120,7 @@ export const useEmployeeForm = () => {
 
       if (error) throw error;
 
-      showSuccess("Çalışan bilgileri güncellendi");
+      showSuccess("Çalışan bilgileri güncellendi", { duration: 1000 });
 
       // Invalidate and refetch employees
       queryClient.invalidateQueries({ queryKey: ['employees'] });

@@ -20,7 +20,7 @@ export const usePipelineMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
-      showSuccess('Task status updated successfully');
+      showSuccess('Task status updated successfully', { duration: 1000 });
     },
     onError: (error) => {
       showError('Error updating task status');
@@ -44,7 +44,7 @@ export const usePipelineMutations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deals'] });
-      showSuccess('Deal status updated successfully');
+      showSuccess('Deal status updated successfully', { duration: 1000 });
     },
     onError: (error) => {
       showError('Error updating deal status');

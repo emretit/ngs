@@ -61,7 +61,7 @@ export const useProductFormActions = (
           throw error;
         }
 
-        showSuccess("Ürün başarıyla güncellendi");
+        showSuccess("Ürün başarıyla güncellendi", { duration: 1000 });
         navigate(`/product-details/${productId}`);
       } else {
         // Create a new product with explicit fields that match the database schema
@@ -111,7 +111,7 @@ export const useProductFormActions = (
         }
 
         console.log("Product created successfully:", data);
-        showSuccess("Ürün başarıyla oluşturuldu");
+        showSuccess("Ürün başarıyla oluşturuldu", { duration: 1000 });
         
         if (addAnother) {
           // We'll handle form reset in the component
@@ -162,7 +162,7 @@ export const useProductFormActions = (
 
         if (error) throw error;
 
-        showSuccess("Ürün başarıyla kopyalandı");
+        showSuccess("Ürün başarıyla kopyalandı", { duration: 1000 });
         if (data) {
           navigate(`/product-form/${data.id}`);
         }

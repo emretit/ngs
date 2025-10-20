@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -75,13 +76,6 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     warranty: INITIAL_TERMS.warranty,
     price: INITIAL_TERMS.price
   });
-
-  const [customTermInputs, setCustomTermInputs] = useState<{[key: string]: { show: boolean, label: string, text: string }}>({
-    payment: { show: false, label: '', text: '' },
-    delivery: { show: false, label: '', text: '' },
-    warranty: { show: false, label: '', text: '' },
-    price: { show: false, label: '', text: '' }
-  });
   
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -89,6 +83,12 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Dialog states for each category
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentCategory, setCurrentCategory] = useState<'payment' | 'delivery' | 'warranty' | 'price' | null>(null);
+  const [newTermLabel, setNewTermLabel] = useState("");
+  const [newTermText, setNewTermText] = useState("");
 
   // Load custom terms from database on component mount
   useEffect(() => {
@@ -178,11 +178,8 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     onInputChange(syntheticEvent);
   };
 
-  const handleAddCustomTerm = async (category: 'payment' | 'delivery' | 'warranty' | 'price') => {
-    const customLabel = customTermInputs[category].label.trim();
-    const customText = customTermInputs[category].text.trim();
-    
-    if (!customLabel || !customText) {
+  const handleAddCustomTerm = async () => {
+    if (!currentCategory || !newTermLabel.trim() || !newTermText.trim()) {
       toast.error("Lütfen hem başlık hem de açıklama giriniz.");
       return;
     }
@@ -194,9 +191,9 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       const { data, error } = await supabase
         .from('proposal_terms')
         .insert({
-          category: category,
-          label: customLabel,
-          text: customText,
+          category: currentCategory,
+          label: newTermLabel.trim(),
+          text: newTermText.trim(),
           is_default: false,
           is_active: true,
           sort_order: 999 // Put custom terms at the end
@@ -209,21 +206,21 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       // Add the new term to available terms
       const newTerm: Term = {
         id: data.id,
-        label: customLabel,
-        text: customText,
+        label: newTermLabel.trim(),
+        text: newTermText.trim(),
         is_default: false
       };
 
       setAvailableTerms(prev => ({
         ...prev,
-        [category]: [...prev[category], newTerm]
+        [currentCategory]: [...prev[currentCategory], newTerm]
       }));
 
-      // Reset the custom input
-      setCustomTermInputs(prev => ({
-        ...prev,
-        [category]: { show: false, label: '', text: '' }
-      }));
+      // Reset the form and close dialog
+      setNewTermLabel("");
+      setNewTermText("");
+      setIsDialogOpen(false);
+      setCurrentCategory(null);
 
       toast.success("Yeni şart başarıyla eklendi! Şimdi dropdown'dan seçebilirsiniz.");
 
@@ -306,10 +303,8 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
         value={getCurrentValue(category)}
         onValueChange={(value) => {
           if (value === 'add_custom') {
-            setCustomTermInputs(prev => ({ 
-              ...prev, 
-              [category]: { ...prev[category], show: true } 
-            }));
+            setCurrentCategory(category);
+            setIsDialogOpen(true);
           } else {
             handleTermSelect(category, value);
           }
@@ -360,73 +355,6 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           </SelectItem>
         </SelectContent>
       </Select>
-
-      {/* Custom term input card - rendered outside dropdown */}
-      {customTermInputs[category].show && (
-        <Card className="p-4 border-2 border-dashed border-primary/50 bg-primary/5">
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-foreground">Yeni {title} Şartı</h4>
-            <div className="space-y-2">
-              <Input
-                placeholder="Şart başlığı giriniz..."
-                value={customTermInputs[category].label}
-                onChange={(e) => setCustomTermInputs(prev => ({ 
-                  ...prev, 
-                  [category]: { ...prev[category], label: e.target.value } 
-                }))}
-                className="text-sm"
-                autoFocus
-              />
-              <Textarea
-                placeholder="Şart açıklamasını yazınız..."
-                value={customTermInputs[category].text}
-                onChange={(e) => setCustomTermInputs(prev => ({ 
-                  ...prev, 
-                  [category]: { ...prev[category], text: e.target.value } 
-                }))}
-                className="text-sm min-h-[80px] resize-none"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.ctrlKey) {
-                    e.preventDefault();
-                    handleAddCustomTerm(category);
-                  } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    setCustomTermInputs(prev => ({ 
-                      ...prev, 
-                      [category]: { show: false, label: '', text: '' } 
-                    }));
-                  }
-                }}
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => setCustomTermInputs(prev => ({ 
-                  ...prev, 
-                  [category]: { show: false, label: '', text: '' } 
-                }))}
-                className="h-8 px-3 text-xs"
-              >
-                İptal
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={() => handleAddCustomTerm(category)}
-                disabled={isLoading || !customTermInputs[category].label.trim() || !customTermInputs[category].text.trim()}
-                className="h-8 px-3 text-xs"
-              >
-                <Plus size={14} className="mr-1" />
-                {isLoading ? "Ekleniyor..." : "Dropdown'a Ekle"}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Ctrl + Enter</kbd> ile hızlı ekle
-            </p>
-          </div>
-        </Card>
-      )}
     </div>
   );
 
@@ -465,6 +393,61 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           />
         </div>
       </CardContent>
+
+      {/* Add Term Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Yeni Şart Ekle</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="termLabel">Şart Başlığı *</Label>
+              <Input
+                id="termLabel"
+                placeholder="Şart başlığı giriniz"
+                value={newTermLabel}
+                onChange={(e) => setNewTermLabel(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="termText">Şart Açıklaması *</Label>
+              <Textarea
+                id="termText"
+                placeholder="Şart açıklamasını yazınız"
+                value={newTermText}
+                onChange={(e) => setNewTermText(e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  setNewTermLabel("");
+                  setNewTermText("");
+                  setCurrentCategory(null);
+                }}
+                disabled={isLoading}
+              >
+                İptal
+              </Button>
+              <Button 
+                onClick={handleAddCustomTerm}
+                disabled={isLoading || !newTermLabel.trim() || !newTermText.trim()}
+              >
+                {isLoading ? "Ekleniyor..." : "Ekle"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmation Dialog */}
       <ConfirmationDialogComponent

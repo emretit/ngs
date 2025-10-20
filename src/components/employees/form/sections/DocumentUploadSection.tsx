@@ -1,8 +1,8 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, X, Download, Eye } from "lucide-react";
+import { Upload, FileText, X, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,8 +24,52 @@ export interface DocumentFile {
 export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: DocumentUploadProps) => {
   const [documents, setDocuments] = useState<DocumentFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Load existing documents when employeeId changes
+  useEffect(() => {
+    if (employeeId) {
+      loadExistingDocuments();
+    }
+  }, [employeeId]);
+
+  const loadExistingDocuments = async () => {
+    if (!employeeId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('employee_documents')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading documents:', error);
+        return;
+      }
+
+      if (data) {
+        const existingDocuments: DocumentFile[] = data.map(doc => ({
+          id: doc.id,
+          name: doc.name || doc.file_name,
+          type: doc.type || doc.document_type,
+          size: doc.size || 0,
+          url: doc.url || doc.file_url,
+          uploaded_at: doc.uploaded_at || doc.upload_date
+        }));
+
+        setDocuments(existingDocuments);
+        onDocumentsChange?.(existingDocuments);
+      }
+    } catch (error) {
+      console.error('Error loading documents:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -87,25 +131,47 @@ export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: Documen
     }
   };
 
-  const handleRemoveDocument = (index: number) => {
+  const handleRemoveDocument = async (index: number) => {
+    const documentToRemove = documents[index];
+    
+    // If it's an existing document (has id), delete from Supabase
+    if (documentToRemove.id) {
+      try {
+        // Delete from storage
+        if (documentToRemove.url) {
+          const fileName = documentToRemove.url.split('/').pop();
+          if (fileName) {
+            await supabase.storage
+              .from('employee-documents')
+              .remove([`${employeeId}/${fileName}`]);
+          }
+        }
+
+        // Delete from database
+        await supabase
+          .from('employee_documents')
+          .delete()
+          .eq('id', documentToRemove.id);
+
+        toast({
+          title: "Başarılı",
+          description: "Belge başarıyla silindi.",
+        });
+      } catch (error) {
+        console.error('Error deleting document:', error);
+        toast({
+          title: "Hata",
+          description: "Belge silinirken bir hata oluştu.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Remove from local state
     const newDocuments = documents.filter((_, i) => i !== index);
     setDocuments(newDocuments);
     onDocumentsChange?.(newDocuments);
-  };
-
-  const handleDownload = async (document: DocumentFile) => {
-    if (document.url) {
-      window.open(document.url, '_blank');
-    } else if (document.file) {
-      const url = URL.createObjectURL(document.file);
-      const a = window.document.createElement('a');
-      a.href = url;
-      a.download = document.name;
-      window.document.body.appendChild(a);
-      a.click();
-      window.document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
   };
 
   const handlePreview = (document: DocumentFile) => {
@@ -173,6 +239,16 @@ export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: Documen
           />
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-2">
+            <div className="inline-flex items-center gap-2 text-sm text-blue-600">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              Mevcut dosyalar yükleniyor...
+            </div>
+          </div>
+        )}
+
         {/* Upload Progress */}
         {isUploading && (
           <div className="text-center py-2">
@@ -186,11 +262,11 @@ export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: Documen
         {/* Document List */}
         {documents.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Yüklenen Belgeler ({documents.length})</h4>
+            <h4 className="text-sm font-medium text-gray-700">Belgeler ({documents.length})</h4>
             <div className="space-y-2">
               {documents.map((document, index) => (
                 <div
-                  key={index}
+                  key={document.id || index}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
                 >
                   <div className="flex items-center gap-3">
@@ -207,6 +283,16 @@ export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: Documen
                         <span className="text-xs text-gray-500">
                           {formatFileSize(document.size)}
                         </span>
+                        {document.id && (
+                          <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-200">
+                            Kaydedildi
+                          </Badge>
+                        )}
+                        {!document.id && (
+                          <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-800 border-yellow-200">
+                            Yeni
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -216,18 +302,9 @@ export const DocumentUploadSection = ({ employeeId, onDocumentsChange }: Documen
                       size="sm"
                       onClick={() => handlePreview(document)}
                       className="h-8 w-8 p-0"
-                      title="Önizle"
+                      title="Görüntüle"
                     >
                       <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDownload(document)}
-                      className="h-8 w-8 p-0"
-                      title="İndir"
-                    >
-                      <Download className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"

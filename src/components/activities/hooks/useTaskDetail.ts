@@ -43,7 +43,7 @@ export const useTaskDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
-      showSuccess('Görev başarıyla güncellendi');
+      showSuccess('Görev başarıyla güncellendi', { duration: 1000 });
     },
     onError: (error) => {
       console.error("Mutation error:", error);

@@ -49,7 +49,7 @@ export const useEmployeeData = () => {
         
       if (error) throw error;
       
-      showSuccess("Tüm çalışan bilgileri silindi.");
+      showSuccess("Tüm çalışan bilgileri silindi.", { duration: 1000 });
       
       refetch();
     } catch (error) {

@@ -8,6 +8,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { User } from "lucide-react";
 import { Control } from "react-hook-form";
 import { format } from "date-fns";
+import { DepartmentSelect } from "./DepartmentSelect";
 
 interface BasicInfoSectionProps {
   control: Control<any>;
@@ -97,34 +98,7 @@ export const BasicInfoSection = ({ control }: BasicInfoSectionProps) => {
           )}
         />
 
-        <FormField
-          control={control}
-          name="department"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs font-medium text-gray-700">Departman *</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-7 text-xs">
-                    <SelectValue placeholder="Departman seçin" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Mühendislik">Mühendislik</SelectItem>
-                  <SelectItem value="Satış">Satış</SelectItem>
-                  <SelectItem value="Pazarlama">Pazarlama</SelectItem>
-                  <SelectItem value="Finans">Finans</SelectItem>
-                  <SelectItem value="İnsan Kaynakları">İnsan Kaynakları</SelectItem>
-                  <SelectItem value="Operasyon">Operasyon</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <DepartmentSelect control={control} />
 
         <FormField
           control={control}

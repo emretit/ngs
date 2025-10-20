@@ -62,21 +62,13 @@ export const useEmployeeSubmit = (employeeId?: string) => {
         try {
           const documentPromises = documents.map(async (doc) => {
             if (doc.file) {
-              // Clean filename - remove Turkish characters and special characters
-              const cleanFileName = doc.name
-                .replace(/[ıİğĞüÜşŞöÖçÇ]/g, (match) => {
-                  const replacements: { [key: string]: string } = {
-                    'ı': 'i', 'İ': 'I', 'ğ': 'g', 'Ğ': 'G',
-                    'ü': 'u', 'Ü': 'U', 'ş': 's', 'Ş': 'S',
-                    'ö': 'o', 'Ö': 'O', 'ç': 'c', 'Ç': 'C'
-                  };
-                  return replacements[match] || match;
-                })
-                .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
-                .replace(/_+/g, '_') // Replace multiple underscores with single
-                .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
-              
-              const fileName = `${employeeId}/${cleanFileName}`;
+                  // Generate UUID for filename to avoid Turkish character issues
+                  const { v4: uuidv4 } = await import('uuid');
+                  const fileExtension = doc.name.split('.').pop();
+                  const uniqueFileName = `${uuidv4()}.${fileExtension}`;
+                  
+                  // Use UUID filename for storage, original for display
+                  const fileName = `${employeeId}/${uniqueFileName}`;
               
               const { error: uploadError } = await supabase.storage
                 .from('employee-documents')
@@ -95,9 +87,9 @@ export const useEmployeeSubmit = (employeeId?: string) => {
                 .insert({
                   employee_id: employeeId,
                   document_type: doc.type, // Required field
-                  file_name: cleanFileName, // Required field
+                  file_name: doc.name, // Original filename for display
                   file_url: urlData.publicUrl, // Required field
-                  name: cleanFileName, // New field
+                  name: doc.name, // Original filename for display
                   type: doc.type, // New field
                   size: doc.size, // New field
                   url: urlData.publicUrl, // New field
@@ -116,7 +108,7 @@ export const useEmployeeSubmit = (employeeId?: string) => {
         }
       }
 
-      showSuccess("Çalışan bilgileri başarıyla güncellendi");
+      showSuccess("Çalışan bilgileri başarıyla güncellendi", { duration: 1000 });
       onSuccess?.();
     } catch (error) {
       console.error("Çalışan güncellenirken hata:", error);

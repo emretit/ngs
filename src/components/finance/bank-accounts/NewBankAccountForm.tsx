@@ -77,7 +77,7 @@ export function NewBankAccountForm({ onSuccess }: NewBankAccountFormProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
-      showSuccess("Banka hesabı başarıyla oluşturuldu.");
+      showSuccess("Banka hesabı başarıyla oluşturuldu.", { duration: 1000 });
       onSuccess();
     },
     onError: (error) => {

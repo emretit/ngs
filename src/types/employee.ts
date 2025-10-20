@@ -58,6 +58,9 @@ export interface Employee {
   unemployment_employer_amount?: number | null;
   accident_insurance_amount?: number | null;
   
+  // Balance information
+  balance?: number | null;
+  
   // Company info
   company_id?: string | null;
   

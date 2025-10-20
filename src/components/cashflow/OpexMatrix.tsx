@@ -54,17 +54,15 @@ const OpexMatrix = () => {
         .from('employees')
         .select(`
           department,
-          employee_salaries!inner (
-            total_employer_cost,
-            effective_date,
-            gross_salary,
-            net_salary,
-            meal_allowance,
-            transport_allowance,
-            manual_employer_sgk_cost,
-            unemployment_employer_amount,
-            accident_insurance_amount
-          )
+          total_employer_cost,
+          effective_date,
+          gross_salary,
+          net_salary,
+          meal_allowance,
+          transport_allowance,
+          manual_employer_sgk_cost,
+          unemployment_employer_amount,
+          accident_insurance_amount
         `)
         .eq('status', 'aktif')
         .order('department');
@@ -74,7 +72,6 @@ const OpexMatrix = () => {
       // Group by department and calculate totals
       const departmentTotals = data?.reduce((acc, employee) => {
         const department = employee.department;
-        const salary = employee.employee_salaries as any;
 
         if (!acc[department]) {
           acc[department] = { 
@@ -89,15 +86,15 @@ const OpexMatrix = () => {
             accident_insurance_amount: 0
           };
         }
-        acc[department].total_cost += salary?.total_employer_cost || 0;
+        acc[department].total_cost += employee.total_employer_cost || 0;
         acc[department].count += 1;
-        acc[department].gross_salary += salary?.gross_salary || 0;
-        acc[department].net_salary += salary?.net_salary || 0;
-        acc[department].meal_allowance += salary?.meal_allowance || 0;
-        acc[department].transport_allowance += salary?.transport_allowance || 0;
-        acc[department].manual_employer_sgk_cost += salary?.manual_employer_sgk_cost || 0;
-        acc[department].unemployment_employer_amount += salary?.unemployment_employer_amount || 0;
-        acc[department].accident_insurance_amount += salary?.accident_insurance_amount || 0;
+        acc[department].gross_salary += employee.gross_salary || 0;
+        acc[department].net_salary += employee.net_salary || 0;
+        acc[department].meal_allowance += employee.meal_allowance || 0;
+        acc[department].transport_allowance += employee.transport_allowance || 0;
+        acc[department].manual_employer_sgk_cost += employee.manual_employer_sgk_cost || 0;
+        acc[department].unemployment_employer_amount += employee.unemployment_employer_amount || 0;
+        acc[department].accident_insurance_amount += employee.accident_insurance_amount || 0;
 
         return acc;
       }, {} as Record<string, { 

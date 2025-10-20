@@ -3,31 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { EmployeeFormValues } from "./useEmployeeForm";
 
-// Helper functions to convert Turkish values back to English for database
-const salaryTypeToEnglish = (type: string | null | undefined): string | null => {
-  if (!type) return null;
-  const mapping: Record<string, string> = {
-    "brüt": "gross",
-    "net": "net",
-    "saatlik": "hourly",
-    "günlük": "daily"
-  };
-  return mapping[type] || null;
-};
-
-const paymentFrequencyToEnglish = (freq: string | null | undefined): string | null => {
-  if (!freq) return null;
-  const mapping: Record<string, string> = {
-    "aylık": "monthly",
-    "haftalık": "weekly",
-    "günlük": "daily",
-    "saatlik": "hourly"
-  };
-  return mapping[freq] || null;
-};
-
 const sanitizeEmployeeValues = (input: any) => {
-  const dateFields = ['hire_date','date_of_birth','salary_start_date','effective_date'];
+  const dateFields = ['hire_date','date_of_birth','effective_date'];
   const sanitized: any = { ...input };
 
   // Normalize empty strings for known date fields to null
@@ -55,11 +32,20 @@ export const useEmployeeSubmit = (employeeId?: string) => {
     try {
       setIsSaving(true);
 
-      // Convert Turkish values to English for database and sanitize empty inputs
+      // Calculate total employer cost automatically
+      const netSalary = parseFloat(values.net_salary?.toString() || '0') || 0;
+      const sgkCost = parseFloat(values.manual_employer_sgk_cost?.toString() || '0') || 0;
+      const mealAllowance = parseFloat(values.meal_allowance?.toString() || '0') || 0;
+      const transportAllowance = parseFloat(values.transport_allowance?.toString() || '0') || 0;
+      
+      const totalEmployerCost = netSalary + sgkCost + mealAllowance + transportAllowance;
+
+      // Sanitize empty inputs and map field names
       const dbValues = sanitizeEmployeeValues({
         ...values,
-        salary_type: salaryTypeToEnglish(values.salary_type),
-        payment_frequency: paymentFrequencyToEnglish(values.payment_frequency),
+        salary_notes: values.notes, // Map notes to salary_notes
+        notes: undefined, // Remove notes field
+        total_employer_cost: totalEmployerCost, // Auto-calculate total cost
       });
 
       const { error } = await supabase

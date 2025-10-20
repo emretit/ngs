@@ -121,7 +121,7 @@ const EmployeeTable = ({
                   💰 Net
                 </TableHead>
                 <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🏥 SGK
+                  🏥 Netten Brüte
                 </TableHead>
                 <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   🍽️ Yemek
@@ -131,6 +131,9 @@ const EmployeeTable = ({
                 </TableHead>
                 <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   🏢 Toplam
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  💳 Bakiye
                 </TableHead>
                 <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   📊 Durum
@@ -186,6 +189,9 @@ const EmployeeTable = ({
                   </TableCell>
                   <TableCell className="py-2 px-3 text-right">
                     <Skeleton className="h-6 w-24 rounded-lg" />
+                  </TableCell>
+                  <TableCell className="py-2 px-3 text-right">
+                    <Skeleton className="h-6 w-20 rounded-lg" />
                   </TableCell>
                   <TableCell className="py-2 px-3">
                     <Skeleton className="h-6 w-16 rounded-full" />
@@ -243,7 +249,7 @@ const EmployeeTable = ({
                   💰 Net
                 </TableHead>
                 <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🏥 SGK
+                  🏥 Netten Brüte
                 </TableHead>
                 <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   🍽️ Yemek
@@ -253,6 +259,9 @@ const EmployeeTable = ({
                 </TableHead>
                 <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   🏢 Toplam
+                </TableHead>
+                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
+                  💳 Bakiye
                 </TableHead>
                 <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
                   📊 Durum
@@ -265,7 +274,7 @@ const EmployeeTable = ({
             <TableBody>
               {employees.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={onEmployeeSelectToggle ? 12 : 11} className="h-32 text-center text-gray-500">
+                  <TableCell colSpan={onEmployeeSelectToggle ? 13 : 12} className="h-32 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <div className="text-4xl">👥</div>
                       <p className="text-lg font-medium">Çalışan bulunamadı</p>
@@ -335,6 +344,17 @@ const EmployeeTable = ({
                         {formatCurrency(employee.total_employer_cost)}
                       </span>
                     </TableCell>
+                    <TableCell className="py-2 px-3 text-right">
+                      <span className={`text-sm font-medium ${
+                        (employee.balance || 0) > 0 
+                          ? 'text-green-600' 
+                          : (employee.balance || 0) < 0 
+                            ? 'text-red-600' 
+                            : 'text-gray-600'
+                      }`}>
+                        {formatCurrency(employee.balance)}
+                      </span>
+                    </TableCell>
                     <TableCell className="py-2 px-3">
                       <StatusBadge status={employee.status} />
                     </TableCell>
@@ -358,7 +378,7 @@ const EmployeeTable = ({
                           size="icon"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/employee-form/${employee.id}`);
+                            navigate(`/employees/${employee.id}/edit`);
                           }}
                           className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-all duration-200"
                           title="Düzenle"

@@ -78,12 +78,12 @@ export const SalarySection = ({ control }: SalarySectionProps) => {
             name="manual_employer_sgk_cost"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs font-medium text-gray-700">SGK İşveren Maliyeti (₺)</FormLabel>
+                <FormLabel className="text-xs font-medium text-gray-700">Netten Brüte İşveren Maliyeti (₺)</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     type="number"
-                    placeholder="SGK işveren maliyeti"
+                    placeholder="SGK, işsizlik, iş kazası sigortası dahil"
                     className="h-7 text-xs"
                     onChange={(e) => {
                       const value = e.target.value;
@@ -146,24 +146,49 @@ export const SalarySection = ({ control }: SalarySectionProps) => {
           />
         </div>
 
-        {/* Notlar */}
-        <FormField
-          control={control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs font-medium text-gray-700">Notlar</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="Maaş ile ilgili notlar..."
-                  className="h-7 text-xs"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Notlar ve Bakiye */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <FormField
+            control={control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium text-gray-700">Notlar</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Maaş ile ilgili notlar..."
+                    className="h-7 text-xs"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="balance"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-xs font-medium text-gray-700">Bakiye (₺)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    placeholder="0"
+                    className="h-7 text-xs"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? 0 : parseFloat(value) || 0);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </CardContent>
     </Card>
   );

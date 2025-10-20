@@ -1,9 +1,18 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, UserCheck, UserX, UserCog, Briefcase, Clock, TrendingUp, Building2 } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Users, UserCheck, UserX, UserCog, Briefcase, Clock, TrendingUp, Building2, MoreHorizontal, Download, FileText, Mail, Calculator, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 import EmployeesViewToggle from "./header/EmployeesViewToggle";
 import type { ViewMode } from "@/types/employee";
+import type { Employee } from "@/types/employee";
 
 interface EmployeesHeaderProps {
   viewMode: ViewMode;

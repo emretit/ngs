@@ -45,15 +45,28 @@ export const SalaryInfo = ({ employeeId, onEdit, refreshTrigger }: SalaryInfoPro
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('employee_salaries')
-        .select('*')
-        .eq('employee_id', employeeId)
-        .order('effective_date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .from('employees')
+        .select('net_salary, gross_salary, total_employer_cost, manual_employer_sgk_cost, meal_allowance, transport_allowance, salary_notes, effective_date')
+        .eq('id', employeeId)
+        .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      setCurrentSalary(data || null);
+      if (error) throw error;
+      
+      if (data) {
+        setCurrentSalary({
+          id: employeeId,
+          gross_salary: data.gross_salary || 0,
+          net_salary: data.net_salary || 0,
+          total_employer_cost: data.total_employer_cost || 0,
+          manual_employer_sgk_cost: data.manual_employer_sgk_cost || 0,
+          effective_date: data.effective_date || new Date().toISOString().split('T')[0],
+          meal_allowance: data.meal_allowance || 0,
+          transport_allowance: data.transport_allowance || 0,
+          notes: data.salary_notes || '',
+        });
+      } else {
+        setCurrentSalary(null);
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",

@@ -10,22 +10,18 @@ export const useSalaryForm = (employeeId: string) => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase
-        .from('employee_salaries')
-        .insert({
-          employee_id: employeeId,
-          amount: values.base_salary,
-          currency: 'TRY',
-          effective_date: values.effective_date,
-          payment_date: values.payment_date,
-          gross_salary: values.base_salary + values.allowances + values.bonuses,
+        .from('employees')
+        .update({
           net_salary: values.base_salary + values.allowances + values.bonuses - values.deductions,
-          notes: values.notes,
-          allowances: {
-            allowances: values.allowances,
-            bonuses: values.bonuses,
-            deductions: values.deductions
-          }
-        });
+          gross_salary: values.base_salary + values.allowances + values.bonuses,
+          meal_allowance: values.allowances || 0,
+          transport_allowance: values.bonuses || 0,
+          manual_employer_sgk_cost: values.deductions || 0,
+          total_employer_cost: values.base_salary + values.allowances + values.bonuses + (values.deductions || 0),
+          salary_notes: values.notes,
+          effective_date: values.effective_date,
+        })
+        .eq('id', employeeId);
 
       if (error) throw error;
 

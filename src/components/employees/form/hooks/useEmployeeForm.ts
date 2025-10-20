@@ -35,12 +35,12 @@ const employeeFormSchema = z.object({
   emergency_contact_relation: z.string().optional(),
   
   // Mali Bilgiler
-  salary_amount: z.number().optional(),
-  salary_currency: z.enum(["TRY", "USD", "EUR", "GBP"]).nullable().optional(),
-  salary_type: z.enum(["brüt", "net", "saatlik", "günlük"]).nullable().optional(),
-  payment_frequency: z.enum(["aylık", "haftalık", "günlük", "saatlik"]).nullable().optional(),
-  salary_start_date: z.string().optional(),
-  salary_notes: z.string().optional(),
+  net_salary: z.number().optional(),
+  manual_employer_sgk_cost: z.number().optional(),
+  meal_allowance: z.number().optional(),
+  transport_allowance: z.number().optional(),
+  notes: z.string().optional(),
+  balance: z.number().optional(),
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeFormSchema>;
@@ -90,12 +90,12 @@ export const useEmployeeForm = (employee?: Employee) => {
     emergency_contact_name: employee.emergency_contact_name || "",
     emergency_contact_phone: employee.emergency_contact_phone || "",
     emergency_contact_relation: employee.emergency_contact_relation || "",
-    salary_amount: employee.salary_amount || undefined,
-    salary_currency: employee.salary_currency || null,
-    salary_type: salaryTypeToTurkish(employee.salary_type),
-    payment_frequency: paymentFrequencyToTurkish(employee.payment_frequency),
-    salary_start_date: employee.salary_start_date || "",
-    salary_notes: employee.salary_notes || "",
+    net_salary: employee.net_salary || undefined,
+    manual_employer_sgk_cost: employee.manual_employer_sgk_cost || undefined,
+    meal_allowance: employee.meal_allowance || undefined,
+    transport_allowance: employee.transport_allowance || undefined,
+    notes: employee.salary_notes || "",
+    balance: employee.balance || undefined,
   } : {
     first_name: "",
     last_name: "",
@@ -117,12 +117,12 @@ export const useEmployeeForm = (employee?: Employee) => {
     emergency_contact_name: "",
     emergency_contact_phone: "",
     emergency_contact_relation: "",
-    salary_amount: undefined,
-    salary_currency: null,
-    salary_type: null,
-    payment_frequency: null,
-    salary_start_date: "",
-    salary_notes: "",
+    net_salary: undefined,
+    manual_employer_sgk_cost: undefined,
+    meal_allowance: undefined,
+    transport_allowance: undefined,
+    notes: "",
+    balance: undefined,
   };
 
   const form = useForm<EmployeeFormValues>({

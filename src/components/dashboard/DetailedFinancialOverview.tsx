@@ -52,16 +52,17 @@ export const DetailedFinancialOverview = () => {
 
       // Fetch employee salary data
       const { data: salaryData, error: salaryError } = await supabase
-        .from('employee_salaries')
+        .from('employees')
         .select(`
-          *,
-          employees!inner(
-            first_name,
-            last_name,
-            status
-          )
+          id,
+          first_name,
+          last_name,
+          status,
+          gross_salary,
+          total_employer_cost,
+          effective_date
         `)
-        .eq('employees.status', 'aktif')
+        .eq('status', 'aktif')
         .gte('effective_date', `${selectedYear}-01-01`)
         .lt('effective_date', `${selectedYear + 1}-01-01`);
 
@@ -85,8 +86,8 @@ export const DetailedFinancialOverview = () => {
 
       // Process employee costs by month
       const employeeMonthlyData: EmployeeCosts = {};
-      salaryData?.forEach(salary => {
-        const effectiveDate = new Date(salary.effective_date);
+      salaryData?.forEach(employee => {
+        const effectiveDate = new Date(employee.effective_date);
         const monthIndex = effectiveDate.getMonth();
         const monthName = months[monthIndex];
         
@@ -94,8 +95,8 @@ export const DetailedFinancialOverview = () => {
           employeeMonthlyData[monthName] = { grossSalary: 0, totalCost: 0, count: 0 };
         }
         
-        employeeMonthlyData[monthName].grossSalary += salary.gross_salary || 0;
-        employeeMonthlyData[monthName].totalCost += salary.total_employer_cost || 0;
+        employeeMonthlyData[monthName].grossSalary += employee.gross_salary || 0;
+        employeeMonthlyData[monthName].totalCost += employee.total_employer_cost || 0;
         employeeMonthlyData[monthName].count += 1;
       });
 

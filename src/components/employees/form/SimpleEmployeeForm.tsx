@@ -59,6 +59,7 @@ const formSchema = z.object({
   manual_employer_sgk_cost: z.number().optional(),
   meal_allowance: z.number().optional(),
   transport_allowance: z.number().optional(),
+  balance: z.number().optional(),
   notes: z.string().optional(),
 });
 
@@ -102,6 +103,7 @@ const SimpleEmployeeForm = () => {
       manual_employer_sgk_cost: 0,
       meal_allowance: 0,
       transport_allowance: 0,
+      balance: 0,
       notes: "",
     },
   });
@@ -161,8 +163,12 @@ const SimpleEmployeeForm = () => {
         manual_employer_sgk_cost: data.manual_employer_sgk_cost || null,
         meal_allowance: data.meal_allowance || null,
         transport_allowance: data.transport_allowance || null,
-        total_employer_cost: (data.net_salary || 0) + (data.manual_employer_sgk_cost || 0) + (data.meal_allowance || 0) + (data.transport_allowance || 0),
+        total_employer_cost: (data.net_salary || 0) + 
+                           (data.manual_employer_sgk_cost || 0) + 
+                           (data.meal_allowance || 0) + 
+                           (data.transport_allowance || 0),
         salary_notes: data.notes || null,
+        balance: data.balance || 0,
         salary_input_type: 'net',
         calculate_as_minimum_wage: false,
         effective_date: data.hire_date || new Date().toISOString().split('T')[0],
@@ -311,7 +317,7 @@ const SimpleEmployeeForm = () => {
             </div>
           </div>
 
-          {/* Belge Yükleme */}
+          {/* Özlük Dosyaları */}
           <DocumentUploadSection 
             onDocumentsChange={setDocuments}
           />

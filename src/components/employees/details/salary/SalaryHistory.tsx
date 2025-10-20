@@ -43,13 +43,30 @@ export const SalaryHistory = ({ employeeId }: SalaryHistoryProps) => {
   const fetchSalaryHistory = async () => {
     try {
       const { data, error } = await supabase
-        .from('employee_salaries')
-        .select('*')
-        .eq('employee_id', employeeId)
-        .order('effective_date', { ascending: false });
+        .from('employees')
+        .select('net_salary, gross_salary, total_employer_cost, manual_employer_sgk_cost, unemployment_employer_amount, accident_insurance_amount, salary_notes, effective_date')
+        .eq('id', employeeId)
+        .single();
 
       if (error) throw error;
-      setSalaryHistory(data || []);
+      
+      if (data) {
+        // Tek kayıt olduğu için array olarak wrap ediyoruz
+        setSalaryHistory([{
+          id: employeeId,
+          gross_salary: data.gross_salary || 0,
+          net_salary: data.net_salary || 0,
+          total_employer_cost: data.total_employer_cost || 0,
+          sgk_employer_amount: data.manual_employer_sgk_cost || 0,
+          unemployment_employer_amount: data.unemployment_employer_amount || 0,
+          accident_insurance_amount: data.accident_insurance_amount || 0,
+          effective_date: data.effective_date || new Date().toISOString().split('T')[0],
+          allowances: {},
+          notes: data.salary_notes || '',
+        }]);
+      } else {
+        setSalaryHistory([]);
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",

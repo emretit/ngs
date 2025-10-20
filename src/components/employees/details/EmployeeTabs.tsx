@@ -26,9 +26,10 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
     queryFn: async () => {
       const [salaryRes, leaveRes, performanceRes] = await Promise.all([
         supabase
-          .from('employee_salaries')
-          .select('id', { count: 'exact' })
-          .eq('employee_id', employee.id),
+          .from('employees')
+          .select('net_salary')
+          .eq('id', employee.id)
+          .single(),
         supabase
           .from('employee_leaves')
           .select('id', { count: 'exact' })
@@ -40,7 +41,7 @@ export const EmployeeTabs = ({ employee, activeTab, setActiveTab, refetch }: Emp
       ]);
 
       return {
-        salary: salaryRes.count || 0,
+        salary: salaryRes.data?.net_salary ? 1 : 0,
         leave: leaveRes.count || 0,
         performance: performanceRes.count || 0,
         documents: 0, // TODO: Implement documents count

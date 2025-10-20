@@ -56,8 +56,20 @@ const Employees = () => {
       
       console.log('Employees data:', employeesData);
       
-      // Salary data is now directly in employees table, no need for separate processing
-      const processedData = employeesData || [];
+      // Process data to use salary information directly from employees table
+      const processedData = employeesData?.map(employee => {
+        return {
+          ...employee,
+          net_salary: employee.net_salary || employee.salary_amount || 0,
+          gross_salary: employee.gross_salary || 0,
+          total_employer_cost: employee.total_employer_cost || 0,
+          manual_employer_sgk_cost: employee.manual_employer_sgk_cost || 0,
+          meal_allowance: employee.meal_allowance || 0,
+          transport_allowance: employee.transport_allowance || 0,
+          unemployment_employer_amount: employee.unemployment_employer_amount || 0,
+          accident_insurance_amount: employee.accident_insurance_amount || 0,
+        };
+      }) || [];
       
       return processedData;
     },

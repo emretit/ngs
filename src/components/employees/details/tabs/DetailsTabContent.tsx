@@ -27,7 +27,7 @@ export const DetailsTabContent = ({
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => navigate(`/employee-form/${employee.id}`)}
+          onClick={() => navigate(`/employees/${employee.id}/edit`)}
           className="flex items-center gap-1"
         >
           <Pencil className="h-3.5 w-3.5" />

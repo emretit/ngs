@@ -94,7 +94,7 @@ export const EmployeeGrid = ({ employees, isLoading }: EmployeeGridProps) => {
                       size="icon"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/employee-form/${employee.id}`);
+                        navigate(`/employees/${employee.id}/edit`);
                       }}
                       className="h-8 w-8"
                     >

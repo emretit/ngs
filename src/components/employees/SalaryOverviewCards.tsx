@@ -37,38 +37,33 @@ export const SalaryOverviewCards = () => {
 
   const fetchSalaryStats = async () => {
     try {
-      // Get active employees with their latest salary records
-      const { data: salaryData, error } = await supabase
-        .from('employee_salaries')
+      // Get active employees with their salary data
+      const { data: employees, error } = await supabase
+        .from('employees')
         .select(`
+          id,
+          first_name,
+          last_name,
+          department,
+          status,
           gross_salary,
-          total_employer_cost,
-          employees!inner (
-            id,
-            first_name,
-            last_name,
-            department,
-            status
-          )
+          total_employer_cost
         `)
-        .eq('employees.status', 'aktif')
-        .order('effective_date', { ascending: false });
+        .eq('status', 'aktif');
 
       if (error) throw error;
 
-      // Process data to get latest salary for each employee
-      const employeeSalaries = new Map();
-      salaryData?.forEach(record => {
-        const employeeId = record.employees.id;
-        if (!employeeSalaries.has(employeeId)) {
-          employeeSalaries.set(employeeId, {
-            ...record,
-            employee: record.employees
-          });
+      const latestSalaries = employees?.map(employee => ({
+        gross_salary: employee.gross_salary || 0,
+        total_employer_cost: employee.total_employer_cost || 0,
+        employee: {
+          id: employee.id,
+          first_name: employee.first_name,
+          last_name: employee.last_name,
+          department: employee.department,
+          status: employee.status
         }
-      });
-
-      const latestSalaries = Array.from(employeeSalaries.values());
+      })) || [];
 
       if (latestSalaries.length === 0) {
         setLoading(false);

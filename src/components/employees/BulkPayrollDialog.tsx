@@ -51,21 +51,21 @@ export const BulkPayrollDialog = ({ open, onOpenChange, selectedEmployees }: Bul
   const loadExistingSalaries = async () => {
     try {
       const employeeIds = selectedEmployees.map(emp => emp.id);
-      const { data: salaries, error } = await supabase
-        .from('employee_salaries')
-        .select('*')
-        .in('employee_id', employeeIds);
+      const { data: employees, error } = await supabase
+        .from('employees')
+        .select('id, net_salary, gross_salary, total_employer_cost')
+        .in('id', employeeIds);
 
       if (error) throw error;
 
       setPayrollItems(prev => prev.map(item => {
-        const salary = salaries?.find(s => s.employee_id === item.employee.id);
-        if (salary) {
+        const employee = employees?.find(e => e.id === item.employee.id);
+        if (employee) {
           return {
             ...item,
-            grossSalary: salary.gross_salary || 0,
-            netSalary: salary.net_salary || 0,
-            totalCost: salary.total_employer_cost || 0,
+            grossSalary: employee.gross_salary || 0,
+            netSalary: employee.net_salary || 0,
+            totalCost: employee.total_employer_cost || 0,
             status: 'calculated'
           };
         }

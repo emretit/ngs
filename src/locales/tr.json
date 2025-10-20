@@ -211,7 +211,8 @@
       "faq": "SSS",
       "contact": "İletişim",
       "freeStart": "Ücretsiz Başla",
-      "login": "Giriş Yap"
+      "login": "Giriş Yap",
+      "welcome": "Merhaba"
     },
     "hero": {
       "badge": "AI Destekli İşletme Yönetim Platformu",

@@ -211,7 +211,8 @@
       "faq": "FAQ",
       "contact": "Contact",
       "freeStart": "Start Free",
-      "login": "Login"
+      "login": "Login",
+      "welcome": "Hello"
     },
     "hero": {
       "badge": "AI-Powered Business Management Platform",

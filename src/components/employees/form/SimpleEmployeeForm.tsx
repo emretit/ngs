@@ -219,10 +219,13 @@ const SimpleEmployeeForm = () => {
                 .from('employee_documents')
                 .insert({
                   employee_id: newEmployee.id,
-                  name: cleanFileName, // Use cleaned filename
-                  type: doc.type,
-                  size: doc.size,
-                  url: urlData.publicUrl,
+                  document_type: doc.type, // Required field
+                  file_name: cleanFileName, // Required field
+                  file_url: urlData.publicUrl, // Required field
+                  name: cleanFileName, // New field
+                  type: doc.type, // New field
+                  size: doc.size, // New field
+                  url: urlData.publicUrl, // New field
                   uploaded_at: new Date().toISOString(),
                   company_id: (await supabase.rpc('current_company_id')).data
                 });

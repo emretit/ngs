@@ -31,33 +31,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if session is expired before initializing
-    if (isSessionExpired()) {
-      console.log('Session expired, clearing auth state')
-      clearActivity()
-      clearAuthTokens()
-      setSession(null)
-      setUser(null)
-      setLoading(false)
-      return
-    }
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-      
-      // Update activity if user is logged in
-      if (session?.user) {
-        updateActivity()
-      }
-    })
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    // Listen for auth changes FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session?.user?.email)
 
       setSession(session)
@@ -67,8 +42,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (event === 'SIGNED_IN' && session?.user) {
         // Update activity on sign in
         updateActivity()
-        
-        // Update last_login in profiles table
+
+        // Update last_login in profiles table (deferred)
         setTimeout(() => {
           supabase
             .from('profiles')
@@ -78,6 +53,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
               if (error) console.warn('Failed to update last login:', error)
             })
         }, 0)
+      }
+    })
+
+    // THEN get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
+
+      if (session?.user) {
+        // Inactivity check on app load
+        if (isSessionExpired()) {
+          console.log('Session expired due to inactivity (init)')
+          signOut()
+          return
+        }
+        updateActivity()
       }
     })
 
@@ -94,6 +86,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
       clearInterval(checkInterval)
     }
   }, [])
+
+  // Global activity listeners to refresh inactivity timestamp on user interaction
+  useEffect(() => {
+    if (!user) return;
+
+    let last = 0;
+    const minInterval = 60 * 1000; // throttle to once per minute
+    const handler = () => {
+      const now = Date.now();
+      if (now - last > minInterval) {
+        last = now;
+        updateActivity();
+      }
+    };
+
+    const winEvents: (keyof WindowEventMap)[] = ['mousemove','keydown','click','scroll','focus'];
+    winEvents.forEach((evt) => window.addEventListener(evt, handler, { passive: true } as AddEventListenerOptions));
+    document.addEventListener('visibilitychange', handler as EventListener);
+
+    return () => {
+      winEvents.forEach((evt) => window.removeEventListener(evt, handler as EventListener));
+      document.removeEventListener('visibilitychange', handler as EventListener);
+    };
+  }, [user]);
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({

@@ -26,8 +26,8 @@ export const getLastActivity = (): number | null => {
 // Check if session has expired (8 hours of inactivity)
 export const isSessionExpired = (): boolean => {
   const lastActivity = getLastActivity();
-  if (!lastActivity) return false;
-  
+  // Treat missing activity as expired to enforce inactivity logout
+  if (!lastActivity) return true;
   const timeSinceLastActivity = Date.now() - lastActivity;
   return timeSinceLastActivity > ACTIVITY_TIMEOUT;
 };

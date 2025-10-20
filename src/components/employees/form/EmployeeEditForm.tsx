@@ -7,7 +7,9 @@ import { BasicInfoSection } from "./sections/BasicInfoSection";
 import { AddressSection } from "./sections/AddressSection";
 import { EmergencyContactSection } from "./sections/EmergencyContactSection";
 import { SalarySection } from "./sections/SalarySection";
-import { DocumentUploadSection } from "./sections/DocumentUploadSection";
+import { DocumentUploadSection, DocumentFile } from "./sections/DocumentUploadSection";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface EmployeeEditFormProps {
   employee: Employee;
@@ -22,10 +24,10 @@ export const EmployeeEditForm = ({
 }: EmployeeEditFormProps) => {
   const form = useEmployeeForm(employee);
   const { isSaving, handleSubmit } = useEmployeeSubmit(employee.id);
-  const [documents, setDocuments] = useState<File[]>([]);
+  const [documents, setDocuments] = useState<DocumentFile[]>([]);
 
   const onSubmit = (values: any) => {
-    handleSubmit(values, onSuccess);
+    handleSubmit(values, documents, onSuccess);
   };
 
   return (
@@ -45,6 +47,7 @@ export const EmployeeEditForm = ({
 
         {/* Özlük Dosyaları */}
         <DocumentUploadSection 
+          employeeId={employee.id}
           onDocumentsChange={setDocuments}
         />
       </form>

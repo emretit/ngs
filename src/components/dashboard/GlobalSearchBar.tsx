@@ -28,6 +28,7 @@ const GlobalSearchBar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+
   // Show/hide dropdown based on query and results
   useEffect(() => {
     setIsOpen(searchQuery.length >= 2 && (results.length > 0 || !isLoading));
@@ -85,12 +86,18 @@ const GlobalSearchBar = () => {
 
   return (
     <div 
-      className="w-full max-w-2xl mx-auto px-4 sm:px-0 mb-6" 
+      className="w-full max-w-4xl mx-auto px-4 sm:px-0 mb-8" 
       ref={containerRef}
       role="search"
     >
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none z-10" />
+      <div className="relative group">
+        {/* Search Icon with gradient background */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+          <div className="p-1.5 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-sm">
+            <Search className="h-4 w-4 text-white" />
+          </div>
+        </div>
+        
         <Input
           ref={inputRef}
           type="text"
@@ -98,7 +105,7 @@ const GlobalSearchBar = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Müşteri, teklif, çalışan, ürün ara..."
-          className="pl-10 pr-20 h-12 text-base bg-background/50 backdrop-blur-sm border-2 focus:border-primary/50 transition-all"
+          className="pl-16 pr-24 h-14 text-base bg-white/80 backdrop-blur-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary transition-all duration-200 shadow-lg hover:shadow-xl"
           aria-label="Global arama"
           aria-expanded={isOpen}
           aria-controls="search-results"
@@ -106,20 +113,25 @@ const GlobalSearchBar = () => {
           autoComplete="off"
         />
         
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+        {/* Right side controls */}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
           {searchQuery && (
             <Button
               variant="ghost"
               size="sm"
               onClick={handleClear}
-              className="h-8 w-8 p-0 hover:bg-accent"
+              className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600 transition-colors"
               aria-label="Aramayı temizle"
             >
               <X className="h-4 w-4" />
             </Button>
           )}
+          
           {isLoading && (
-            <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+              <span className="text-xs text-gray-500">Aranıyor...</span>
+            </div>
           )}
         </div>
 
@@ -128,18 +140,21 @@ const GlobalSearchBar = () => {
           <div 
             id="search-results"
             role="listbox"
-            className="absolute top-full left-0 right-0 mt-2 bg-background border-2 border-border rounded-lg shadow-lg max-h-[min(400px,60vh)] overflow-y-auto z-50 animate-fade-in"
+            className="absolute top-full left-0 right-0 mt-3 bg-white border-2 border-gray-200 rounded-xl shadow-2xl max-h-[min(500px,70vh)] overflow-y-auto z-50 animate-in slide-in-from-top-2 duration-200"
           >
             {results.length === 0 && !isLoading ? (
-              <div className="p-4 text-center text-muted-foreground text-sm">
-                <p>Sonuç bulunamadı</p>
-                <p className="text-xs mt-1">Farklı anahtar kelimeler deneyin</p>
+              <div className="p-6 text-center">
+                <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Search className="h-6 w-6 text-gray-400" />
+                </div>
+                <p className="text-gray-600 font-medium">Sonuç bulunamadı</p>
+                <p className="text-sm text-gray-500 mt-1">Farklı anahtar kelimeler deneyin</p>
               </div>
             ) : (
-              <div className="py-2">
+              <div className="py-3">
                 {Object.entries(groupedResults).map(([category, categoryResults]) => (
-                  <div key={category} className="mb-2 last:mb-0">
-                    <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/50 sticky top-0 z-10">
+                  <div key={category} className="mb-3 last:mb-0">
+                    <div className="px-4 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 border-b border-gray-200">
                       {category}
                     </div>
                     {categoryResults.map((result) => {
@@ -152,13 +167,13 @@ const GlobalSearchBar = () => {
                           onMouseEnter={() => setSelectedIndex(globalIndex)}
                           role="option"
                           aria-selected={isSelected}
-                          className={`w-full text-left px-3 py-2.5 hover:bg-accent/50 transition-colors focus:outline-none focus:bg-accent/50 ${
-                            isSelected ? "bg-accent/50" : ""
+                          className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-all duration-150 focus:outline-none focus:bg-blue-50 border-l-4 ${
+                            isSelected ? "bg-blue-50 border-l-blue-500" : "border-l-transparent"
                           }`}
                         >
-                          <div className="font-medium text-sm line-clamp-1">{result.title}</div>
+                          <div className="font-semibold text-sm text-gray-900 line-clamp-1">{result.title}</div>
                           {result.subtitle && (
-                            <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                            <div className="text-xs text-gray-500 mt-1 line-clamp-1">
                               {result.subtitle}
                             </div>
                           )}
@@ -173,12 +188,6 @@ const GlobalSearchBar = () => {
         )}
       </div>
 
-      {/* Mobile hint */}
-      {searchQuery.length > 0 && searchQuery.length < 2 && (
-        <p className="text-xs text-muted-foreground mt-2 text-center sm:hidden">
-          En az 2 karakter girin
-        </p>
-      )}
     </div>
   );
 };

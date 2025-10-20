@@ -2,7 +2,8 @@ import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
-import { Target, Users, LayoutGrid } from "lucide-react";
+import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
+import { Target, Users, LayoutGrid, FileText, Activity, Calendar, CheckCircle } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
 const Dashboard = () => {
@@ -39,6 +40,9 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Global Search Bar */}
+      <GlobalSearchBar />
+
       {/* Main Content Container */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
         {/* KPI Metrics Grid */}
@@ -48,79 +52,127 @@ const Dashboard = () => {
         />
 
         {/* Main Two-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - 2/3 width */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Recent Activities Timeline */}
-          <RecentActivitiesTimeline />
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - 2/3 width */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Recent Activities Timeline */}
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <RecentActivitiesTimeline />
+            </div>
+          </div>
 
-        {/* Right Column - 1/3 width */}
-        <div className="space-y-6">
-          {/* CRM Quick Stats */}
-          <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-primary/20">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Target className="w-5 h-5 text-white" />
+          {/* Right Column - 1/3 width */}
+          <div className="space-y-6">
+            {/* CRM Quick Stats */}
+            <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200/50">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <Target className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-gray-900">
+                        CRM Özeti
+                      </CardTitle>
+                      <p className="text-sm text-blue-600 font-medium">Güncel durum</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {crmStats?.opportunities + crmStats?.proposals + crmStats?.activities || 0}
+                    </div>
+                    <div className="text-xs text-blue-500">Toplam</div>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-sm font-semibold text-foreground">
-                    CRM Özeti
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">Güncel durum</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <Target className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Aktif Fırsatlar</span>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900">{crmStats?.opportunities || 0}</span>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                <span className="text-xs font-medium text-muted-foreground">Aktif Fırsatlar</span>
-                <span className="text-sm font-bold text-foreground">{crmStats?.opportunities || 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                <span className="text-xs font-medium text-muted-foreground">Bekleyen Teklifler</span>
-                <span className="text-sm font-bold text-foreground">{crmStats?.proposals || 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                <span className="text-xs font-medium text-muted-foreground">Aktiviteler</span>
-                <span className="text-sm font-bold text-foreground">{crmStats?.activities || 0}</span>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Bekleyen Teklifler</span>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900">{crmStats?.proposals || 0}</span>
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                      <Activity className="w-4 h-4 text-green-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Aktiviteler</span>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900">{crmStats?.activities || 0}</span>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* HR Quick Stats */}
-          <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-primary/20">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
+            {/* HR Quick Stats */}
+            <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-green-50 to-green-100/50 hover:from-green-100 hover:to-green-200/50">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <Users className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-gray-900">
+                        İK Özeti
+                      </CardTitle>
+                      <p className="text-sm text-green-600 font-medium">Personel durumu</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-600">
+                      {hrStats?.totalEmployees || 0}
+                    </div>
+                    <div className="text-xs text-green-500">Toplam</div>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-sm font-semibold text-foreground">
-                    İK Özeti
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">Personel durumu</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Users className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Toplam Çalışan</span>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900">{hrStats?.totalEmployees || 0}</span>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                <span className="text-xs font-medium text-muted-foreground">Toplam Çalışan</span>
-                <span className="text-sm font-bold text-foreground">{hrStats?.totalEmployees || 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                <span className="text-xs font-medium text-muted-foreground">İzinli</span>
-                <span className="text-sm font-bold text-foreground">{hrStats?.onLeave || 0}</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                <span className="text-xs font-medium text-muted-foreground">Aktif</span>
-                <span className="text-sm font-bold text-foreground">
-                  {(hrStats?.totalEmployees || 0) - (hrStats?.onLeave || 0)}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                      <Calendar className="w-4 h-4 text-yellow-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">İzinli</span>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900">{hrStats?.onLeave || 0}</span>
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 hover:bg-white/90 transition-colors cursor-pointer group/item">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">Aktif</span>
+                  </div>
+                  <span className="text-lg font-bold text-gray-900">
+                    {(hrStats?.totalEmployees || 0) - (hrStats?.onLeave || 0)}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </>

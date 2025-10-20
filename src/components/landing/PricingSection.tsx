@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Check } from "lucide-react";
@@ -6,10 +5,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { pricingPlans } from "@/data/landingPageData";
+import { useTranslation } from "react-i18next";
 
 const PricingSection = () => {
   const navigate = useNavigate();
   const [isYearly, setIsYearly] = useState(false);
+  const { t } = useTranslation();
 
   const handleSignUp = () => {
     navigate("/signup");
@@ -27,14 +28,14 @@ const PricingSection = () => {
           <div className="inline-flex items-center justify-center p-2 bg-red-600/20 rounded-full mb-6">
             <div className="flex items-center space-x-2 px-4 py-2 bg-red-600/30 rounded-full text-red-600 font-medium text-sm backdrop-blur-sm">
               <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-              <span>Esnek Fiyatlandırma</span>
+              <span>{t("landing.pricing.badge")}</span>
             </div>
           </div>
           
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-5 leading-tight font-sans">
-            <span className="text-white">İşletmenize</span>
+            <span className="text-white">{t("landing.pricing.title1")}</span>
             <span className="block bg-gradient-to-r from-red-400 via-red-500 to-red-600 bg-clip-text text-transparent leading-tight">
-              Uygun&nbsp;Çözüm
+              {t("landing.pricing.title2")}
             </span>
           </h2>
 
@@ -49,7 +50,7 @@ const PricingSection = () => {
                     : 'text-white/70 hover:text-white'
                 }`}
               >
-                Aylık
+                {t("landing.pricing.monthly")}
               </button>
               <button
                 onClick={() => setIsYearly(true)}
@@ -59,9 +60,9 @@ const PricingSection = () => {
                     : 'text-white/70 hover:text-white'
                 }`}
               >
-                Yıllık
+                {t("landing.pricing.yearly")}
                 <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
-                  %17
+                  {t("landing.pricing.discount")}
                 </span>
               </button>
             </div>
@@ -101,12 +102,12 @@ const PricingSection = () => {
                     )}
                     {!isYearly && plan.name !== "Ücretsiz" && (
                       <div className="text-gray-500 text-xs">
-                        /ay
+                        {t("landing.pricing.perMonth")}
                       </div>
                     )}
                     {isYearly && plan.name !== "Ücretsiz" && (
                       <div className="text-gray-500 text-xs">
-                        /yıl
+                        {t("landing.pricing.perYear")}
                       </div>
                     )}
                   </div>
@@ -122,7 +123,7 @@ const PricingSection = () => {
                   </h3>
                   {plan.featured && (
                     <span className="ml-2 px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse shadow-lg">
-                      POPÜLER
+                      {t("landing.pricing.popular")}
                     </span>
                   )}
                 </div>

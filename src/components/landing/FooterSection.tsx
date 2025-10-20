@@ -1,5 +1,8 @@
+import { useTranslation } from "react-i18next";
 
 const FooterSection = () => {
+  const { t } = useTranslation();
+  
   return (
     <footer id="contact" className="relative py-24 px-4 sm:px-6 lg:px-8">
       {/* Header ile aynı arka plan */}
@@ -23,19 +26,19 @@ const FooterSection = () => {
               </div>
             </div>
             <p className="text-gray-300 text-lg leading-relaxed mb-8 max-w-lg">
-              İş süreçlerinizi modernize eden güvenilir çözüm ortağınız. 
-              <span className="text-red-400 font-semibold"> AI destekli</span> işletme yönetim platformu.
+              {t("landing.footer.description")} 
+              <span className="text-red-400 font-semibold"> {t("landing.footer.aiPowered")}</span> {t("landing.footer.platform")}
             </p>
             
             {/* Contact Info */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3 text-gray-300 group cursor-pointer">
                 <div className="w-3 h-3 bg-red-500 rounded-full group-hover:scale-125 transition-transform duration-300"></div>
-                <span className="group-hover:text-red-400 transition-colors duration-300">destek@pafta.app</span>
+                <span className="group-hover:text-red-400 transition-colors duration-300">{t("landing.footer.email")}</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-300 group cursor-pointer">
                 <div className="w-3 h-3 bg-red-500 rounded-full group-hover:scale-125 transition-transform duration-300"></div>
-                <span className="group-hover:text-red-400 transition-colors duration-300">0212 555 0123</span>
+                <span className="group-hover:text-red-400 transition-colors duration-300">{t("landing.footer.phone")}</span>
               </div>
             </div>
           </div>
@@ -43,25 +46,25 @@ const FooterSection = () => {
           {/* Product Links */}
           <div>
             <h3 className="text-xl font-bold text-white mb-8 relative">
-              Ürün
+              {t("landing.footer.product")}
               <div className="absolute -bottom-2 left-0 w-8 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full"></div>
             </h3>
             <ul className="space-y-5">
               <li><a href="#modules" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                Modüller
+                {t("landing.footer.modules")}
               </a></li>
               <li><a href="#pricing" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                Fiyatlandırma
+                {t("landing.footer.pricing")}
               </a></li>
               <li><a href="#" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                E-fatura Entegrasyonu
+                {t("landing.footer.einvoice")}
               </a></li>
               <li><a href="#" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                AI Asistan
+                {t("landing.footer.ai")}
               </a></li>
             </ul>
           </div>
@@ -69,25 +72,25 @@ const FooterSection = () => {
           {/* Company Links */}
           <div>
             <h3 className="text-xl font-bold text-white mb-8 relative">
-              Şirket
+              {t("landing.footer.company")}
               <div className="absolute -bottom-2 left-0 w-8 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full"></div>
             </h3>
             <ul className="space-y-5">
               <li><a href="#" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                Hakkımızda
+                {t("landing.footer.about")}
               </a></li>
               <li><a href="#" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                Kariyer
+                {t("landing.footer.career")}
               </a></li>
               <li><a href="#contact" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                İletişim
+                {t("landing.footer.contact")}
               </a></li>
               <li><a href="#faq" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                SSS
+                {t("landing.footer.faq")}
               </a></li>
             </ul>
           </div>
@@ -95,25 +98,25 @@ const FooterSection = () => {
           {/* Resources Links */}
           <div>
             <h3 className="text-xl font-bold text-white mb-8 relative">
-              Kaynaklar
+              {t("landing.footer.resources")}
               <div className="absolute -bottom-2 left-0 w-8 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full"></div>
             </h3>
             <ul className="space-y-5">
               <li><a href="#" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                Blog
+                {t("landing.footer.blog")}
               </a></li>
               <li><a href="#" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                Dokümantasyon
+                {t("landing.footer.documentation")}
               </a></li>
               <li><a href="#" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                Destek
+                {t("landing.footer.support")}
               </a></li>
               <li><a href="#" className="text-gray-300 hover:text-red-400 transition-all duration-300 text-base group flex items-center">
                 <span className="w-1 h-1 bg-red-500 rounded-full mr-3 group-hover:scale-150 transition-transform duration-300"></span>
-                API
+                {t("landing.footer.api")}
               </a></li>
             </ul>
           </div>
@@ -124,12 +127,12 @@ const FooterSection = () => {
           <div className="flex flex-col lg:flex-row justify-between items-center space-y-6 lg:space-y-0">
             <div className="text-center lg:text-left">
               <p className="text-gray-400 text-sm mb-2">
-                &copy; 2024 PAFTA Platform. Tüm hakları saklıdır.
+                {t("landing.footer.rights")}
               </p>
               <div className="flex items-center justify-center lg:justify-start space-x-6 text-xs text-gray-500">
-                <a href="#" className="hover:text-red-400 transition-colors duration-300">Gizlilik Politikası</a>
-                <a href="#" className="hover:text-red-400 transition-colors duration-300">Kullanım Şartları</a>
-                <a href="#" className="hover:text-red-400 transition-colors duration-300">Çerez Politikası</a>
+                <a href="#" className="hover:text-red-400 transition-colors duration-300">{t("landing.footer.privacy")}</a>
+                <a href="#" className="hover:text-red-400 transition-colors duration-300">{t("landing.footer.terms")}</a>
+                <a href="#" className="hover:text-red-400 transition-colors duration-300">{t("landing.footer.cookies")}</a>
               </div>
             </div>
             

@@ -1,8 +1,10 @@
-
 import { faqs } from "@/data/landingPageData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 const FaqSection = () => {
+  const { t } = useTranslation();
+  
   return (
     <section id="faq" className="py-24 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-gray-50 via-white to-gray-50">
       {/* Light Background with subtle effects */}
@@ -15,19 +17,19 @@ const FaqSection = () => {
           <div className="inline-flex items-center justify-center p-2 bg-red-600/10 rounded-full mb-6">
             <div className="flex items-center space-x-2 px-4 py-2 bg-red-600/20 rounded-full text-red-600 font-medium text-sm backdrop-blur-sm">
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-              <span>Sık Sorulan Sorular</span>
+              <span>{t("landing.faq.badge")}</span>
             </div>
           </div>
           
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-            Merak Ettiklerinizin
+            {t("landing.faq.title1")}
             <span className="block bg-gradient-to-r from-red-500 via-red-600 to-red-700 bg-clip-text text-transparent">
-              Cevapları Burada
+              {t("landing.faq.title2")}
             </span>
           </h2>
           
           <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            PAFTA hakkında en çok merak edilen konuları sizin için derledik
+            {t("landing.faq.subtitle")}
           </p>
         </div>
 
@@ -67,16 +69,16 @@ const FaqSection = () => {
         <div className="text-center mt-16">
           <div className="inline-block p-6 bg-gray-900/95 backdrop-blur-sm rounded-3xl border border-gray-700/60 shadow-lg">
             <p className="text-gray-300 mb-4">
-              Başka sorularınız mı var?
+              {t("landing.faq.moreQuestions")}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm">
               <div className="flex items-center space-x-2 text-gray-300">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <span>E-posta: destek@pafta.app</span>
+                <span>{t("landing.faq.email")}</span>
               </div>
               <div className="flex items-center space-x-2 text-gray-300">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <span>Telefon: 0212 555 0123</span>
+                <span>{t("landing.faq.phone")}</span>
               </div>
             </div>
           </div>

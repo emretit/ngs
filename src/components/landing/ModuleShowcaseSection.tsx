@@ -13,73 +13,78 @@ import {
   Users,
   Zap
 } from "lucide-react";
-
-const modules = [
-  {
-    title: "E-Fatura Entegrasyonu",
-    description: "Nilvera entegrasyonu ile otomatik e-fatura gönderimi ve alma. Yasal uyumluluk garantili.",
-    icon: Receipt,
-    color: "bg-green-500/10 text-green-600",
-    important: true
-  },
-  {
-    title: "AI Asistan",
-    description: "Yapay zeka destekli iş süreçleri, akıllı öneriler ve otomatik veri analizi.",
-    icon: Brain,
-    color: "bg-purple-500/10 text-purple-600",
-    important: true
-  },
-  {
-    title: "Satış Yönetimi",
-    description: "Fırsatları takip edin, teklifler oluşturun ve satış süreçlerinizi optimize edin.",
-    icon: ShoppingCart,
-    color: "bg-blue-500/10 text-blue-600"
-  },
-  {
-    title: "Müşteriler ve Tedarikçiler",
-    description: "Müşteri ilişkileri yönetimi ve tedarikçi süreçlerinin optimize edilmesi.",
-    icon: Users,
-    color: "bg-pink-500/10 text-pink-600"
-  },
-  {
-    title: "Stok ve Depo",
-    description: "Envanter takibi, depo yönetimi ve otomatik sipariş noktaları.",
-    icon: Package,
-    color: "bg-cyan-500/10 text-cyan-600"
-  },
-  {
-    title: "Satın Alma",
-    description: "Tedarikçi ilişkilerini yönetin ve sipariş süreçlerini otomatikleştirin.",
-    icon: ShoppingBag,
-    color: "bg-green-500/10 text-green-600"
-  },
-  {
-    title: "İnsan Kaynakları",
-    description: "Personel yönetimi, bordro, izin takibi ve performans değerlendirme.",
-    icon: UserCheck,
-    color: "bg-indigo-500/10 text-indigo-600"
-  },
-  {
-    title: "Finans Yönetimi",
-    description: "Muhasebe, nakit akışı yönetimi ve finansal raporlama.",
-    icon: DollarSign,
-    color: "bg-emerald-500/10 text-emerald-600"
-  },
-  {
-    title: "Saha Servis",
-    description: "Teknik servis talepleri, saha hizmetleri ve teknisyen yönetimi.",
-    icon: Wrench,
-    color: "bg-red-500/10 text-red-600"
-  },
-  {
-    title: "Araç Yönetimi",
-    description: "Filo yönetimi, bakım takibi, yakıt kontrolü ve maliyet analizi.",
-    icon: Car,
-    color: "bg-amber-500/10 text-amber-600"
-  }
-];
+import { useTranslation } from "react-i18next";
 
 const ModuleShowcaseSection = () => {
+  const { t } = useTranslation();
+  
+  const modules = [
+    {
+      title: t("landing.modules.einvoice.title"),
+      description: t("landing.modules.einvoice.description"),
+      icon: Receipt,
+      color: "bg-green-500/10 text-green-600",
+      important: true,
+      badge: t("landing.modules.einvoice.badge")
+    },
+    {
+      title: t("landing.modules.ai.title"),
+      description: t("landing.modules.ai.description"),
+      icon: Brain,
+      color: "bg-purple-500/10 text-purple-600",
+      important: true,
+      badge: t("landing.modules.ai.badge")
+    },
+    {
+      title: t("landing.modules.sales.title"),
+      description: t("landing.modules.sales.description"),
+      icon: ShoppingCart,
+      color: "bg-blue-500/10 text-blue-600"
+    },
+    {
+      title: t("landing.modules.customers.title"),
+      description: t("landing.modules.customers.description"),
+      icon: Users,
+      color: "bg-pink-500/10 text-pink-600"
+    },
+    {
+      title: t("landing.modules.stock.title"),
+      description: t("landing.modules.stock.description"),
+      icon: Package,
+      color: "bg-cyan-500/10 text-cyan-600"
+    },
+    {
+      title: t("landing.modules.purchasing.title"),
+      description: t("landing.modules.purchasing.description"),
+      icon: ShoppingBag,
+      color: "bg-green-500/10 text-green-600"
+    },
+    {
+      title: t("landing.modules.hr.title"),
+      description: t("landing.modules.hr.description"),
+      icon: UserCheck,
+      color: "bg-indigo-500/10 text-indigo-600"
+    },
+    {
+      title: t("landing.modules.finance.title"),
+      description: t("landing.modules.finance.description"),
+      icon: DollarSign,
+      color: "bg-emerald-500/10 text-emerald-600"
+    },
+    {
+      title: t("landing.modules.fieldService.title"),
+      description: t("landing.modules.fieldService.description"),
+      icon: Wrench,
+      color: "bg-red-500/10 text-red-600"
+    },
+    {
+      title: t("landing.modules.fleet.title"),
+      description: t("landing.modules.fleet.description"),
+      icon: Car,
+      color: "bg-amber-500/10 text-amber-600"
+    }
+  ];
+  
   return (
     <section id="modules" className="py-24 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-gray-50 via-white to-gray-50">
       {/* Light Background with subtle effects */}
@@ -92,14 +97,14 @@ const ModuleShowcaseSection = () => {
           <div className="inline-flex items-center justify-center p-2 bg-red-600/10 rounded-full mb-6">
             <div className="flex items-center space-x-2 px-4 py-2 bg-red-600/20 rounded-full text-red-600 font-medium text-sm backdrop-blur-sm">
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-              <span>Kapsamlı Modül Paketi</span>
+              <span>{t("landing.modules.badge")}</span>
             </div>
           </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-5 leading-relaxed font-sans">
-            <span className="text-gray-900">AI Destekli</span> Her İhtiyacınız İçin
+            <span className="text-gray-900">{t("landing.modules.title1")}</span> {t("landing.modules.title2")}
             <span className="block bg-gradient-to-r from-red-500 via-red-600 to-red-700 bg-clip-text text-transparent mt-1 leading-loose">
-              Akıllı&nbsp;Çözümler
+              {/* Empty - handled in title2 */}
             </span>
           </h2>
 
@@ -133,14 +138,9 @@ const ModuleShowcaseSection = () => {
                     <h3 className="font-bold text-white text-sm group-hover:text-red-400 transition-colors duration-300">
                       {module.title}
                     </h3>
-                    {index === 0 && (
+                    {module.badge && (
                       <span className="ml-2 px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse shadow-lg">
-                        ÜCRETSİZ
-                      </span>
-                    )}
-                    {index === 1 && (
-                      <span className="ml-2 px-3 py-1 bg-red-700 text-white text-xs font-bold rounded-full animate-pulse shadow-lg">
-                        YENİ
+                        {module.badge}
                       </span>
                     )}
                   </div>

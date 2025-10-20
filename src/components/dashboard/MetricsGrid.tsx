@@ -29,21 +29,21 @@ const MetricsGrid = ({ crmStats, financialData }: MetricsGridProps) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 animate-fade-in">
       <KpiWidget
-        title="Nakit Akışı"
+        title="Aylık Ciro"
         value={`₺${(financialData?.cashFlow || 0).toLocaleString("tr-TR")}`}
         icon={DollarSign}
         trend="up"
         change={12.5}
-        changeLabel="son aya göre"
-        onClick={() => navigate("/cashflow")}
+        changeLabel="bu ayki satış"
+        onClick={() => navigate("/invoices")}
         quickAction={{
-          label: "İşlem Ekle",
-          onClick: () => navigate("/cashflow")
+          label: "Fatura Ekle",
+          onClick: () => navigate("/invoices/new")
         }}
       />
 
       <KpiWidget
-        title="Alacaklar"
+        title="Müşteriler"
         value={`₺${(financialData?.receivables || 0).toLocaleString("tr-TR")}`}
         icon={TrendingUp}
         trend="neutral"
@@ -56,16 +56,16 @@ const MetricsGrid = ({ crmStats, financialData }: MetricsGridProps) => {
       />
 
       <KpiWidget
-        title="Borçlar"
+        title="Tedarikçiler"
         value={`₺${(financialData?.payables || 0).toLocaleString("tr-TR")}`}
         icon={TrendingDown}
         trend="down"
         change={-8.3}
         changeLabel="son aya göre"
-        onClick={() => navigate("/purchasing")}
+        onClick={() => navigate("/suppliers")}
         quickAction={{
-          label: "Fatura Ekle",
-          onClick: () => navigate("/einvoices")
+          label: "Tedarikçi Ekle",
+          onClick: () => navigate("/suppliers/new")
         }}
       />
 

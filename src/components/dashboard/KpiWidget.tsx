@@ -32,20 +32,21 @@ const KpiWidget = ({
   const getTrendColor = () => {
     if (trend === "up") return "text-green-600 dark:text-green-400";
     if (trend === "down") return "text-red-600 dark:text-red-400";
-    return "text-muted-foreground";
+    return "text-blue-600 dark:text-blue-400";
   };
 
   const getTrendBg = () => {
     if (trend === "up") return "bg-green-50 dark:bg-green-950";
     if (trend === "down") return "bg-red-50 dark:bg-red-950";
-    return "bg-muted/50";
+    return "bg-blue-50 dark:bg-blue-950";
   };
 
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-all hover:shadow-md",
-        onClick && "cursor-pointer hover:border-primary/50"
+        "relative overflow-hidden transition-all hover:shadow-md border border-gray-200",
+        onClick && "cursor-pointer hover:border-primary/50",
+        "group"
       )}
       onClick={onClick}
     >
@@ -53,13 +54,13 @@ const KpiWidget = ({
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <div className={cn("p-2 rounded-lg", getTrendBg())}>
+        <div className={cn("p-2 rounded-lg transition-colors", getTrendBg())}>
           <Icon className={cn("h-4 w-4", getTrendColor())} />
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-1">
-          <div className="text-2xl font-bold">{value}</div>
+          <div className="text-2xl font-bold tracking-tight group-hover:text-foreground">{value}</div>
           {(change !== undefined || description) && (
             <div className="flex items-center gap-2 text-xs">
               {change !== undefined && (

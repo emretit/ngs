@@ -284,7 +284,49 @@
       "discount": "17%",
       "popular": "POPULAR",
       "perMonth": "/mo",
-      "perYear": "/yr"
+      "perYear": "/yr",
+      "plans": {
+        "free": {
+          "name": "Free",
+          "description": "Completely free for up to 5 users. E-invoice included!",
+          "buttonText": "Start Free",
+          "features": {
+            "users": "Up to 5 users",
+            "einvoice": "E-invoice integration",
+            "basicCrm": "Basic CRM features",
+            "customerManagement": "Customer management",
+            "simpleReporting": "Simple reporting",
+            "emailSupport": "Email support"
+          }
+        },
+        "business": {
+          "name": "Business",
+          "description": "Comprehensive features for growing businesses.",
+          "buttonText": "Try Free",
+          "discount": "17% discount",
+          "features": {
+            "users": "Up to 20 users",
+            "advancedEinvoice": "Advanced e-invoice features",
+            "inventory": "Inventory management",
+            "financialReporting": "Financial reporting",
+            "prioritySupport": "Priority support",
+            "apiAccess": "API access"
+          }
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Custom solutions for large-scale businesses.",
+          "buttonText": "Request a Meeting",
+          "features": {
+            "unlimitedUsers": "Unlimited users",
+            "allFeatures": "All features",
+            "customIntegrations": "Custom integrations",
+            "advancedSecurity": "Advanced security",
+            "prioritySupport": "Priority support",
+            "customTraining": "Custom training and support"
+          }
+        }
+      }
     },
     "faq": {
       "badge": "Frequently Asked Questions",
@@ -293,7 +335,33 @@
       "subtitle": "We've compiled the most frequently asked questions about PAFTA",
       "moreQuestions": "Have more questions?",
       "email": "Email: support@pafta.app",
-      "phone": "Phone: +90 212 555 0123"
+      "phone": "Phone: +90 212 555 0123",
+      "questions": {
+        "einvoice": {
+          "q": "How does e-invoice integration work?",
+          "a": "We automate your e-invoice sending and receiving processes with Nilvera API integration. Fully compliant with legal regulations, secure and fast."
+        },
+        "free": {
+          "q": "Is it really free for up to 5 users?",
+          "a": "Yes! All basic features, including e-invoice integration, are completely free for up to 5 users."
+        },
+        "setup": {
+          "q": "How long does setup take?",
+          "a": "Setup is completed within 24-48 hours and your e-invoice integration will be ready."
+        },
+        "migration": {
+          "q": "Can my existing data be transferred?",
+          "a": "Yes, data transfer from Excel, CSV and other systems is available. Your e-invoice history is also preserved."
+        },
+        "providers": {
+          "q": "Which e-invoice providers are supported?",
+          "a": "Nilvera integration is currently active. We can add support for other providers."
+        },
+        "support": {
+          "q": "How do I get technical support?",
+          "a": "We provide 24/7 support via email, phone, live support and video tutorials."
+        }
+      }
     },
     "footer": {
       "description": "Your trusted solution partner for modernizing business processes.",

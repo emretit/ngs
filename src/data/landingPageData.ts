@@ -8,6 +8,7 @@ import {
   Zap,
   Star,
 } from "lucide-react";
+import i18n from "@/i18n/config";
 
 export const coreFeatures = [
   {
@@ -52,52 +53,52 @@ export const screenshots = [
 
 export const pricingPlans = [
   {
-    name: "Ücretsiz",
+    name: i18n.t("landing.pricing.plans.free.name"),
     monthlyPrice: "₺0",
     yearlyPrice: "₺0",
-    description: "5 kullanıcıya kadar tamamen ücretsiz. E-fatura dahil!",
+    description: i18n.t("landing.pricing.plans.free.description"),
     features: [
-      "5 kullanıcıya kadar",
-      "E-fatura entegrasyonu",
-      "Temel CRM özellikleri",
-      "Müşteri yönetimi",
-      "Basit raporlama",
-      "E-posta desteği"
+      i18n.t("landing.pricing.plans.free.features.users"),
+      i18n.t("landing.pricing.plans.free.features.einvoice"),
+      i18n.t("landing.pricing.plans.free.features.basicCrm"),
+      i18n.t("landing.pricing.plans.free.features.customerManagement"),
+      i18n.t("landing.pricing.plans.free.features.simpleReporting"),
+      i18n.t("landing.pricing.plans.free.features.emailSupport")
     ],
-    buttonText: "Ücretsiz Başla",
+    buttonText: i18n.t("landing.pricing.plans.free.buttonText"),
     featured: false
   },
   {
-    name: "Business",
+    name: i18n.t("landing.pricing.plans.business.name"),
     monthlyPrice: "₺999",
     yearlyPrice: "₺9.999",
-    yearlyDiscount: "17% indirim",
-    description: "Büyüyen işletmeler için kapsamlı özellikler.",
+    yearlyDiscount: i18n.t("landing.pricing.plans.business.discount"),
+    description: i18n.t("landing.pricing.plans.business.description"),
     features: [
-      "20 kullanıcıya kadar",
-      "Gelişmiş e-fatura özellikleri",
-      "Envanter yönetimi",
-      "Finansal raporlama",
-      "Öncelikli destek",
-      "API erişimi"
+      i18n.t("landing.pricing.plans.business.features.users"),
+      i18n.t("landing.pricing.plans.business.features.advancedEinvoice"),
+      i18n.t("landing.pricing.plans.business.features.inventory"),
+      i18n.t("landing.pricing.plans.business.features.financialReporting"),
+      i18n.t("landing.pricing.plans.business.features.prioritySupport"),
+      i18n.t("landing.pricing.plans.business.features.apiAccess")
     ],
-    buttonText: "Ücretsiz Deneyin",
+    buttonText: i18n.t("landing.pricing.plans.business.buttonText"),
     featured: true
   },
   {
-    name: "Enterprise",
+    name: i18n.t("landing.pricing.plans.enterprise.name"),
     monthlyPrice: "",
     yearlyPrice: "",
-    description: "Büyük ölçekli işletmeler için özel çözümler.",
+    description: i18n.t("landing.pricing.plans.enterprise.description"),
     features: [
-      "Sınırsız kullanıcı",
-      "Tüm özellikler",
-      "Özel entegrasyonlar",
-      "Gelişmiş güvenlik",
-      "Öncelikli destek",
-      "Özel eğitim ve destek"
+      i18n.t("landing.pricing.plans.enterprise.features.unlimitedUsers"),
+      i18n.t("landing.pricing.plans.enterprise.features.allFeatures"),
+      i18n.t("landing.pricing.plans.enterprise.features.customIntegrations"),
+      i18n.t("landing.pricing.plans.enterprise.features.advancedSecurity"),
+      i18n.t("landing.pricing.plans.enterprise.features.prioritySupport"),
+      i18n.t("landing.pricing.plans.enterprise.features.customTraining")
     ],
-    buttonText: "Görüşme Talep Edin",
+    buttonText: i18n.t("landing.pricing.plans.enterprise.buttonText"),
     featured: false
   }
 ];
@@ -125,27 +126,27 @@ export const testimonials = [
 
 export const faqs = [
   {
-    question: "E-fatura entegrasyonu nasıl çalışıyor?",
-    answer: "Nilvera API entegrasyonu ile e-fatura gönderim ve alma işlemlerinizi otomatikleştiriyoruz. Yasal mevzuata tam uyumlu, güvenli ve hızlı."
+    question: i18n.t("landing.faq.questions.einvoice.q"),
+    answer: i18n.t("landing.faq.questions.einvoice.a")
   },
   {
-    question: "5 kullanıcıya kadar gerçekten ücretsiz mi?",
-    answer: "Evet! E-fatura entegrasyonu dahil olmak üzere temel tüm özellikler 5 kullanıcıya kadar tamamen ücretsiz."
+    question: i18n.t("landing.faq.questions.free.q"),
+    answer: i18n.t("landing.faq.questions.free.a")
   },
   {
-    question: "Kurulum ne kadar sürer?",
-    answer: "24-48 saat içinde kurulum tamamlanır ve e-fatura entegrasyonunuz hazır hale gelir."
+    question: i18n.t("landing.faq.questions.setup.q"),
+    answer: i18n.t("landing.faq.questions.setup.a")
   },
   {
-    question: "Mevcut verilerim aktarılır mı?",
-    answer: "Evet, Excel, CSV ve diğer sistemlerden veri aktarımı yapılır. E-fatura geçmişiniz de korunur."
+    question: i18n.t("landing.faq.questions.migration.q"),
+    answer: i18n.t("landing.faq.questions.migration.a")
   },
   {
-    question: "Hangi e-fatura sağlayıcıları destekleniyor?",
-    answer: "Şu an Nilvera entegrasyonu aktif. Diğer sağlayıcılar için destek ekleyebiliriz."
+    question: i18n.t("landing.faq.questions.providers.q"),
+    answer: i18n.t("landing.faq.questions.providers.a")
   },
   {
-    question: "Teknik destek nasıl alırım?",
-    answer: "E-posta, telefon, canlı destek ve video eğitimlerle 7/24 destekliyoruz."
+    question: i18n.t("landing.faq.questions.support.q"),
+    answer: i18n.t("landing.faq.questions.support.a")
   }
 ];

@@ -284,7 +284,49 @@
       "discount": "%17",
       "popular": "POPÜLER",
       "perMonth": "/ay",
-      "perYear": "/yıl"
+      "perYear": "/yıl",
+      "plans": {
+        "free": {
+          "name": "Ücretsiz",
+          "description": "5 kullanıcıya kadar tamamen ücretsiz. E-fatura dahil!",
+          "buttonText": "Ücretsiz Başla",
+          "features": {
+            "users": "5 kullanıcıya kadar",
+            "einvoice": "E-fatura entegrasyonu",
+            "basicCrm": "Temel CRM özellikleri",
+            "customerManagement": "Müşteri yönetimi",
+            "simpleReporting": "Basit raporlama",
+            "emailSupport": "E-posta desteği"
+          }
+        },
+        "business": {
+          "name": "Business",
+          "description": "Büyüyen işletmeler için kapsamlı özellikler.",
+          "buttonText": "Ücretsiz Deneyin",
+          "discount": "17% indirim",
+          "features": {
+            "users": "20 kullanıcıya kadar",
+            "advancedEinvoice": "Gelişmiş e-fatura özellikleri",
+            "inventory": "Envanter yönetimi",
+            "financialReporting": "Finansal raporlama",
+            "prioritySupport": "Öncelikli destek",
+            "apiAccess": "API erişimi"
+          }
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Büyük ölçekli işletmeler için özel çözümler.",
+          "buttonText": "Görüşme Talep Edin",
+          "features": {
+            "unlimitedUsers": "Sınırsız kullanıcı",
+            "allFeatures": "Tüm özellikler",
+            "customIntegrations": "Özel entegrasyonlar",
+            "advancedSecurity": "Gelişmiş güvenlik",
+            "prioritySupport": "Öncelikli destek",
+            "customTraining": "Özel eğitim ve destek"
+          }
+        }
+      }
     },
     "faq": {
       "badge": "Sık Sorulan Sorular",
@@ -293,7 +335,33 @@
       "subtitle": "PAFTA hakkında en çok merak edilen konuları sizin için derledik",
       "moreQuestions": "Başka sorularınız mı var?",
       "email": "E-posta: destek@pafta.app",
-      "phone": "Telefon: 0212 555 0123"
+      "phone": "Telefon: 0212 555 0123",
+      "questions": {
+        "einvoice": {
+          "q": "E-fatura entegrasyonu nasıl çalışıyor?",
+          "a": "Nilvera API entegrasyonu ile e-fatura gönderim ve alma işlemlerinizi otomatikleştiriyoruz. Yasal mevzuata tam uyumlu, güvenli ve hızlı."
+        },
+        "free": {
+          "q": "5 kullanıcıya kadar gerçekten ücretsiz mi?",
+          "a": "Evet! E-fatura entegrasyonu dahil olmak üzere temel tüm özellikler 5 kullanıcıya kadar tamamen ücretsiz."
+        },
+        "setup": {
+          "q": "Kurulum ne kadar sürer?",
+          "a": "24-48 saat içinde kurulum tamamlanır ve e-fatura entegrasyonunuz hazır hale gelir."
+        },
+        "migration": {
+          "q": "Mevcut verilerim aktarılır mı?",
+          "a": "Evet, Excel, CSV ve diğer sistemlerden veri aktarımı yapılır. E-fatura geçmişiniz de korunur."
+        },
+        "providers": {
+          "q": "Hangi e-fatura sağlayıcıları destekleniyor?",
+          "a": "Şu an Nilvera entegrasyonu aktif. Diğer sağlayıcılar için destek ekleyebiliriz."
+        },
+        "support": {
+          "q": "Teknik destek nasıl alırım?",
+          "a": "E-posta, telefon, canlı destek ve video eğitimlerle 7/24 destekliyoruz."
+        }
+      }
     },
     "footer": {
       "description": "İş süreçlerinizi modernize eden güvenilir çözüm ortağınız.",

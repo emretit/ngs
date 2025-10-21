@@ -51,6 +51,7 @@ const CustomerEdit = () => {
     second_district: "",
     second_country: "",
     second_postal_code: "",
+    payment_terms: "",
   });
   const { data: customer, isLoading: isLoadingCustomer } = useQuery({
     queryKey: ['customer', id],
@@ -110,6 +111,7 @@ const CustomerEdit = () => {
         second_district: customer.second_district || "",
         second_country: customer.second_country || "",
         second_postal_code: customer.second_postal_code || "",
+        payment_terms: customer.payment_terms || "",
       });
     }
   }, [customer]);
@@ -156,6 +158,7 @@ const CustomerEdit = () => {
         second_district: data.second_district || null,
         second_country: data.second_country || null,
         second_postal_code: data.second_postal_code || null,
+        payment_terms: data.payment_terms || null,
       };
       const { error } = await supabase
         .from('customers')

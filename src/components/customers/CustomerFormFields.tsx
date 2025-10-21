@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerFormData } from "@/types/customer";
 import CompanyBasicInfo from "./form/CompanyBasicInfo";
 import ContactInformation from "./form/ContactInformation";
@@ -63,7 +64,7 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
                 <Receipt className="h-4 w-4 text-purple-600" />
               </div>
-              E-Fatura ve Banka Bilgileri
+              Finans Bilgileri
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
@@ -84,6 +85,38 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
                 <p className="text-xs text-purple-600/70">
                   VKN ile müşteri bilgileri çekildiğinde otomatik doldurulur
                 </p>
+              </div>
+
+              {/* Ödeme Şartları */}
+              <div className="space-y-1.5">
+                <Label htmlFor="payment_terms" className="text-xs font-medium text-gray-700">
+                  Ödeme Şartları
+                </Label>
+                <Select
+                  value={formData.payment_terms}
+                  onValueChange={(value) => setFormData({ ...formData, payment_terms: value })}
+                >
+                  <SelectTrigger className="h-7 text-xs">
+                    <SelectValue placeholder="Ödeme koşulu seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="peşin">Peşin Ödeme</SelectItem>
+                    <SelectItem value="15_gün_vade">15 Gün Vade</SelectItem>
+                    <SelectItem value="30_gün_vade">30 Gün Vade</SelectItem>
+                    <SelectItem value="45_gün_vade">45 Gün Vade</SelectItem>
+                    <SelectItem value="60_gün_vade">60 Gün Vade</SelectItem>
+                    <SelectItem value="90_gün_vade">90 Gün Vade</SelectItem>
+                    <SelectItem value="120_gün_vade">120 Gün Vade</SelectItem>
+                    <SelectItem value="%30_peşin_%70_vade">%30 Peşin, %70 Vade</SelectItem>
+                    <SelectItem value="%50_peşin_%50_vade">%50 Peşin, %50 Vade</SelectItem>
+                    <SelectItem value="%70_peşin_%30_vade">%70 Peşin, %30 Vade</SelectItem>
+                    <SelectItem value="çekle_ödeme">Çekle Ödeme</SelectItem>
+                    <SelectItem value="senetle_ödeme">Senetle Ödeme</SelectItem>
+                    <SelectItem value="kredi_kartı">Kredi Kartı ile Ödeme</SelectItem>
+                    <SelectItem value="havale_ile">Havale ile Ödeme</SelectItem>
+                    <SelectItem value="özel_vade">Özel Vade</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Banka Bilgileri */}

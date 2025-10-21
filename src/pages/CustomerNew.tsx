@@ -52,6 +52,7 @@ const CustomerNew = () => {
     second_district: "",
     second_country: "",
     second_postal_code: "",
+    payment_terms: "",
   });
   const mutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {
@@ -94,6 +95,7 @@ const CustomerNew = () => {
         second_district: data.second_district || null,
         second_country: data.second_country || null,
         second_postal_code: data.second_postal_code || null,
+        payment_terms: data.payment_terms || null,
       };
       const { data: newCustomer, error } = await supabase
         .from('customers')

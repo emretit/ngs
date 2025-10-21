@@ -42,6 +42,7 @@ export interface Customer {
   second_district: string | null;
   second_country: string | null;
   second_postal_code: string | null;
+  payment_terms: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -86,4 +87,5 @@ export interface CustomerFormData {
   second_district: string;
   second_country: string;
   second_postal_code: string;
+  payment_terms: string;
 }

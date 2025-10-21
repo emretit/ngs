@@ -182,7 +182,7 @@
     "fullName": "Ad Soyad",
     "companyName": "Şirket Adı (Opsiyonel)",
     "companyOwner": "Şirket adı girerseniz otomatik olarak sahibi olursunuz.",
-    "minPassword": "Şifreniz (en az 10 karakter)",
+    "minPassword": "Şifreniz (en az 8 karakter)",
     "signingIn": "Giriş Yapılıyor...",
     "creatingAccount": "Hesap Oluşturuluyor...",
     "noAccount": "Henüz bir hesabınız yok mu?",

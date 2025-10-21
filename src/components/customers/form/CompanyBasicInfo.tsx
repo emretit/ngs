@@ -68,10 +68,11 @@ const CompanyBasicInfo = ({ formData, setFormData }: CompanyBasicInfoProps) => {
         {/* Şirket Adı - Üstte tam genişlik */}
         <div className="space-y-1.5">
           <Label htmlFor="company" className="text-xs font-medium text-gray-700">
-            Şirket Adı
+            Şirket Adı *
           </Label>
           <Input
             id="company"
+            required
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
             placeholder="Şirket adı giriniz"

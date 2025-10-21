@@ -1,6 +1,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CustomerFormData } from "@/types/customer";
 import CompanyBasicInfo from "./form/CompanyBasicInfo";
@@ -139,23 +140,9 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
           </CardHeader>
           <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
             <div className="grid grid-cols-1 gap-3">
-              {/* İletişim */}
-              <div className="space-y-1.5">
-                <Label htmlFor="fax" className="text-xs font-medium text-gray-700">
-                  Faks
-                </Label>
-                <Input
-                  id="fax"
-                  value={formData.fax}
-                  onChange={(e) => setFormData({ ...formData, fax: e.target.value })}
-                  placeholder="+90 212 XXX XX XX"
-                  className="h-7 text-xs"
-                />
-              </div>
 
               {/* Ticaret Sicil Bilgileri */}
               <div className="pt-2 border-t border-gray-100">
-                <h4 className="text-xs font-medium text-gray-600 mb-3">Ticaret Sicil Bilgileri</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="trade_registry_number" className="text-xs font-medium text-gray-700">
@@ -184,99 +171,78 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
                 </div>
               </div>
 
-
-              {/* Adres Detayları */}
+              {/* Müşteri Detay Bilgileri */}
               <div className="pt-2 border-t border-gray-100">
-                <h4 className="text-xs font-medium text-gray-600 mb-3">Adres Detayları</h4>
-                <div className="space-y-1.5">
-                  <Label htmlFor="address_line" className="text-xs font-medium text-gray-700">
-                    Adres Satırı
-                  </Label>
-                  <Input
-                    id="address_line"
-                    value={formData.address_line}
-                    onChange={(e) => setFormData({ ...formData, address_line: e.target.value })}
-                    placeholder="Mahalle, sokak, bina no, daire no..."
-                    className="h-7 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Ödeme Bilgileri */}
-              <div className="pt-2 border-t border-gray-100">
-                <h4 className="text-xs font-medium text-gray-600 mb-3">Ödeme Bilgileri</h4>
                 <div className="grid grid-cols-1 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="payee_financial_account_id" className="text-xs font-medium text-gray-700">
-                      Alacaklı Mali Hesap ID
-                    </Label>
-                    <Input
-                      id="payee_financial_account_id"
-                      value={formData.payee_financial_account_id}
-                      onChange={(e) => setFormData({ ...formData, payee_financial_account_id: e.target.value })}
-                      placeholder="Mali hesap kimlik numarası"
-                      className="h-7 text-xs"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="establishment_date" className="text-xs font-medium text-gray-700">
+                        Kuruluş Tarihi
+                      </Label>
+                      <Input
+                        id="establishment_date"
+                        type="date"
+                        value={formData.establishment_date}
+                        onChange={(e) => setFormData({ ...formData, establishment_date: e.target.value })}
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="sector" className="text-xs font-medium text-gray-700">
+                        Sektör/Faaliyet Alanı
+                      </Label>
+                      <Input
+                        id="sector"
+                        value={formData.sector}
+                        onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
+                        placeholder="Teknoloji, İnşaat, Ticaret..."
+                        className="h-7 text-xs"
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label htmlFor="payment_means_code" className="text-xs font-medium text-gray-700">
-                        Ödeme Araçları Kodu
+                      <Label htmlFor="customer_segment" className="text-xs font-medium text-gray-700">
+                        Müşteri Segmenti
                       </Label>
                       <Input
-                        id="payment_means_code"
-                        value={formData.payment_means_code}
-                        onChange={(e) => setFormData({ ...formData, payment_means_code: e.target.value })}
-                        placeholder="Ödeme araçları kodu"
+                        id="customer_segment"
+                        value={formData.customer_segment}
+                        onChange={(e) => setFormData({ ...formData, customer_segment: e.target.value })}
+                        placeholder="Kurumsal, KOBİ, Bireysel..."
                         className="h-7 text-xs"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="payment_means_channel_code" className="text-xs font-medium text-gray-700">
-                        Ödeme Kanalları Kodu
+                      <Label htmlFor="customer_source" className="text-xs font-medium text-gray-700">
+                        Müşteri Kaynağı
                       </Label>
                       <Input
-                        id="payment_means_channel_code"
-                        value={formData.payment_means_channel_code}
-                        onChange={(e) => setFormData({ ...formData, payment_means_channel_code: e.target.value })}
-                        placeholder="Ödeme kanalları kodu"
+                        id="customer_source"
+                        value={formData.customer_source}
+                        onChange={(e) => setFormData({ ...formData, customer_source: e.target.value })}
+                        placeholder="Web sitesi, Referans, Reklam..."
                         className="h-7 text-xs"
                       />
                     </div>
                   </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="notes" className="text-xs font-medium text-gray-700">
+                      Notlar
+                    </Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Müşteri hakkında özel notlar..."
+                      className="h-7 text-xs resize-none min-h-[60px]"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Sistem Bilgileri */}
-              <div className="pt-2 border-t border-gray-100">
-                <h4 className="text-xs font-medium text-gray-600 mb-3">Sistem Bilgileri</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="company_id" className="text-xs font-medium text-gray-700">
-                      Şirket ID
-                    </Label>
-                    <Input
-                      id="company_id"
-                      value={formData.company_id}
-                      onChange={(e) => setFormData({ ...formData, company_id: e.target.value })}
-                      placeholder="UUID formatında şirket ID"
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="aliases" className="text-xs font-medium text-gray-700">
-                      Takma Adlar (JSON)
-                    </Label>
-                    <Input
-                      id="aliases"
-                      value={formData.aliases}
-                      onChange={(e) => setFormData({ ...formData, aliases: e.target.value })}
-                      placeholder='{"alias1": "değer1", "alias2": "değer2"}'
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
+
+
             </div>
           </CardContent>
         </Card>

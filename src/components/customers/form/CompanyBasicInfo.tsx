@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerFormData } from "@/types/customer";
 import { CheckCircle, XCircle, Loader2, UserPlus } from "lucide-react";
 import AddressFields from "@/components/shared/AddressFields";
@@ -219,6 +220,23 @@ const CompanyBasicInfo = ({ formData, setFormData }: CompanyBasicInfoProps) => {
           onCountryChange={(value) => setFormData({ ...formData, country: value })}
           onPostalCodeChange={(value) => setFormData({ ...formData, postal_code: value })}
         />
+
+        {/* İkinci Adres Bilgileri */}
+        <div className="pt-3 border-t border-gray-100">
+          <h4 className="text-xs font-medium text-gray-600 mb-3">İkinci Adres Bilgileri</h4>
+          <AddressFields
+            city={formData.second_city}
+            district={formData.second_district}
+            address={formData.second_address}
+            country={formData.second_country}
+            postal_code={formData.second_postal_code}
+            onCityChange={(value) => setFormData({ ...formData, second_city: value })}
+            onDistrictChange={(value) => setFormData({ ...formData, second_district: value })}
+            onAddressChange={(value) => setFormData({ ...formData, second_address: value })}
+            onCountryChange={(value) => setFormData({ ...formData, second_country: value })}
+            onPostalCodeChange={(value) => setFormData({ ...formData, second_postal_code: value })}
+          />
+        </div>
     </div>
   );
 };

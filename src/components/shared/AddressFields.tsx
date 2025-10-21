@@ -184,7 +184,7 @@ export const AddressFields = ({
           value={address}
           onChange={(e) => onAddressChange(e.target.value)}
           placeholder="Mahalle, sokak, bina no..."
-          className="h-7 text-xs resize-none min-h-[60px]"
+          className="text-xs resize-none min-h-[60px]"
         />
       </div>
 

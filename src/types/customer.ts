@@ -26,6 +26,22 @@ export interface Customer {
   tax_office: string | null;
   is_einvoice_mukellef: boolean;
   einvoice_alias_name: string | null;
+  company_id: string | null;
+  establishment_date: string | null;
+  sector: string | null;
+  customer_segment: string | null;
+  customer_source: string | null;
+  notes: string | null;
+  first_contact_position: string | null;
+  second_contact_name: string | null;
+  second_contact_email: string | null;
+  second_contact_phone: string | null;
+  second_contact_position: string | null;
+  second_address: string | null;
+  second_city: string | null;
+  second_district: string | null;
+  second_country: string | null;
+  second_postal_code: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -55,10 +71,19 @@ export interface CustomerFormData {
   account_number: string;
   trade_registry_number: string;
   mersis_number: string;
-  address_line: string;
-  payee_financial_account_id: string;
-  payment_means_code: string;
-  payment_means_channel_code: string;
-  company_id: string;
-  aliases: string;
+  establishment_date: string;
+  sector: string;
+  customer_segment: string;
+  customer_source: string;
+  notes: string;
+  first_contact_position: string;
+  second_contact_name: string;
+  second_contact_email: string;
+  second_contact_phone: string;
+  second_contact_position: string;
+  second_address: string;
+  second_city: string;
+  second_district: string;
+  second_country: string;
+  second_postal_code: string;
 }

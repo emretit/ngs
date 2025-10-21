@@ -28,6 +28,21 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
     city: "",
     district: "",
     einvoice_alias_name: "",
+    website: "",
+    country: "",
+    postal_code: "",
+    fax: "",
+    bank_name: "",
+    iban: "",
+    account_number: "",
+    trade_registry_number: "",
+    mersis_number: "",
+    address_line: "",
+    payee_financial_account_id: "",
+    payment_means_code: "",
+    payment_means_channel_code: "",
+    company_id: "",
+    aliases: "",
   });
 
   const { data: customer, isLoading: isLoadingCustomer, error: customerError } = useQuery({
@@ -77,6 +92,21 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         city: customer.city || "",
         district: customer.district || "",
         einvoice_alias_name: customer.einvoice_alias_name || "",
+        website: customer.website || "",
+        country: customer.country || "",
+        postal_code: customer.postal_code || "",
+        fax: customer.fax || "",
+        bank_name: customer.bank_name || "",
+        iban: customer.iban || "",
+        account_number: customer.account_number || "",
+        trade_registry_number: customer.trade_registry_number || "",
+        mersis_number: customer.mersis_number || "",
+        address_line: customer.address || "",
+        payee_financial_account_id: "",
+        payment_means_code: "",
+        payment_means_channel_code: "",
+        company_id: "",
+        aliases: "",
       });
     }
   }, [customer]);

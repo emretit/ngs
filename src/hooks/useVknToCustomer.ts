@@ -90,12 +90,16 @@ export const useVknToCustomer = () => {
         tax_office: vknData.taxOffice || null,
         address: vknData.address || null,
         city: vknData.city || null,
+        district: vknData.district || null,
         email: vknData.email || null,
         mobile_phone: vknData.phone || null,
         office_phone: null,
         representative: null,
         balance: 0,
         company_id: profile.company_id,
+        // Nilvera için ticaret sicil ve mersis numaraları
+        trade_registry_number: vknData.sicilNo || null,
+        mersis_number: vknData.mersisNo || null,
         // E-fatura mükellefi bilgileri
         is_einvoice_mukellef: true,
         einvoice_alias_name: vknData.aliasName || null,

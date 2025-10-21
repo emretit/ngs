@@ -237,9 +237,13 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
         city={formData.city}
         district={formData.district}
         address={formData.address}
+        country={formData.country}
+        postal_code={formData.postal_code}
         onCityChange={(value) => setFormData({ ...formData, city: value })}
         onDistrictChange={(value) => setFormData({ ...formData, district: value })}
         onAddressChange={(value) => setFormData({ ...formData, address: value })}
+        onCountryChange={(value) => setFormData({ ...formData, country: value })}
+        onPostalCodeChange={(value) => setFormData({ ...formData, postal_code: value })}
       />
 
       <div className="space-y-1">

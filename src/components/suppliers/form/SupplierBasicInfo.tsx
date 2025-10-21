@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SupplierFormData } from "@/types/supplier";
 import { Building, FileText, CheckCircle, XCircle, Loader2, UserPlus, MapPin } from "lucide-react";
 import SupplierTypeAndStatus from "./SupplierTypeAndStatus";
@@ -75,70 +76,69 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 pt-2 px-4 pb-4">
-          {/* Temel Bilgiler - Kompakt Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div className="lg:col-span-3 space-y-1">
-              <Label htmlFor="company" className="text-xs font-medium text-foreground flex items-center gap-1">
-                <div className="p-1 bg-purple-100 rounded-md">
-                  <Building className="w-3 h-3 text-purple-600" />
-                </div>
-                <span>Şirket Adı</span>
-              </Label>
-              <Input
-                id="company"
-                value={formData.company}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                placeholder="Şirket adı giriniz"
-                className="h-7 text-xs"
-              />
-            </div>
-
-            <div className="lg:col-span-2 space-y-1">
-              <Label htmlFor="tax_number" className="text-xs font-medium text-foreground flex items-center gap-1">
-                <div className="p-1 bg-amber-100 rounded-md">
-                  <FileText className="w-3 h-3 text-amber-600" />
-                </div>
-                <span>Vergi No / TC Kimlik *</span>
-              </Label>
-              <div className="relative">
-                <Input
-                  id="tax_number"
-                  value={formData.tax_number}
-                  onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
-                  placeholder="1234567890"
-                  className="h-7 text-xs pr-28"
-                />
-                {/* E-fatura mükellefi durumu göstergesi */}
-                {formData.tax_number && formData.tax_number.length >= 10 && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                    {isNilveraLoading ? (
-                      <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
-                    ) : mukellefInfo ? (
-                      <div className="flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3 text-green-500" />
-                        <span className="text-xs text-green-600 font-medium">E-Fatura</span>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
+        {/* Temel Bilgiler - Kompakt Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <div className="lg:col-span-3 space-y-1">
+            <Label htmlFor="company" className="text-xs font-medium text-foreground flex items-center gap-1">
+              <div className="p-1 bg-purple-100 rounded-md">
+                <Building className="w-3 h-3 text-purple-600" />
               </div>
-            </div>
+              <span>Şirket Adı</span>
+            </Label>
+            <Input
+              id="company"
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+              placeholder="Şirket adı giriniz"
+              className="h-7 text-xs"
+            />
+          </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="tax_office" className="text-xs font-medium text-foreground flex items-center gap-1">
-                <div className="p-1 bg-amber-100 rounded-md">
-                  <Building className="w-3 h-3 text-amber-600" />
-                </div>
-                <span>Vergi Dairesi</span>
-              </Label>
+          <div className="lg:col-span-2 space-y-1">
+            <Label htmlFor="tax_number" className="text-xs font-medium text-foreground flex items-center gap-1">
+              <div className="p-1 bg-amber-100 rounded-md">
+                <FileText className="w-3 h-3 text-amber-600" />
+              </div>
+              <span>Vergi No / TC Kimlik *</span>
+            </Label>
+            <div className="relative">
               <Input
-                id="tax_office"
-                value={formData.tax_office}
-                onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
-                placeholder="Vergi dairesi"
-                className="h-7 text-xs"
+                id="tax_number"
+                value={formData.tax_number}
+                onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+                placeholder="1234567890"
+                className="h-7 text-xs pr-28"
               />
+              {/* E-fatura mükellefi durumu göstergesi */}
+              {formData.tax_number && formData.tax_number.length >= 10 && (
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  {isNilveraLoading ? (
+                    <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
+                  ) : mukellefInfo ? (
+                    <div className="flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3 text-green-500" />
+                      <span className="text-xs text-green-600 font-medium">E-Fatura</span>
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="tax_office" className="text-xs font-medium text-foreground flex items-center gap-1">
+              <div className="p-1 bg-amber-100 rounded-md">
+                <Building className="w-3 h-3 text-amber-600" />
+              </div>
+              <span>Vergi Dairesi</span>
+            </Label>
+            <Input
+              id="tax_office"
+              value={formData.tax_office}
+              onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
+              placeholder="Vergi dairesi"
+              className="h-7 text-xs"
+            />
           </div>
         </div>
 
@@ -216,92 +216,92 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
             </div>
           </div>
         )}
-      </div>
 
-      {/* Adres Bilgileri - Kompakt Grid */}
-      <div className="space-y-2">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-          <div className="space-y-1">
-            <Label htmlFor="city" className="text-xs font-medium text-foreground flex items-center gap-1">
-              <div className="p-1 bg-blue-100 rounded-md">
-                <MapPin className="w-3 h-3 text-blue-600" />
-              </div>
-              <span>İl</span>
-            </Label>
-            <Input
-              id="city"
-              value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              placeholder="İl seçiniz"
-              className="h-9 text-sm"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="district" className="text-xs font-medium text-foreground flex items-center gap-1">
-              <div className="p-1 bg-blue-100 rounded-md">
-                <MapPin className="w-3 h-3 text-blue-600" />
-              </div>
-              <span>İlçe</span>
-            </Label>
-            <Input
-              id="district"
-              value={formData.district}
-              onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-              placeholder="İlçe seçiniz"
-              className="h-9 text-sm"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="country" className="text-xs font-medium text-foreground flex items-center gap-1">
-              <div className="p-1 bg-blue-100 rounded-md">
-                <MapPin className="w-3 h-3 text-blue-600" />
-              </div>
-              <span>Ülke</span>
-            </Label>
-            <Input
-              id="country"
-              value={formData.country}
-              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-              placeholder="Türkiye"
-              className="h-9 text-sm"
-            />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="postal_code" className="text-xs font-medium text-foreground flex items-center gap-1">
-              <div className="p-1 bg-blue-100 rounded-md">
-                <MapPin className="w-3 h-3 text-blue-600" />
-              </div>
-              <span>Posta Kodu</span>
-            </Label>
-            <Input
-              id="postal_code"
-              value={formData.postal_code}
-              onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-              placeholder="34000"
-              className="h-9 text-sm"
-            />
-          </div>
-        </div>
-        {/* Detaylı Adres - Tam genişlik */}
-        <div className="space-y-1">
-          <Label htmlFor="address" className="text-xs font-medium text-foreground flex items-center gap-1">
-            <div className="p-1 bg-blue-100 rounded-md">
-              <MapPin className="w-3 h-3 text-blue-600" />
+        {/* Adres Bilgileri - Kompakt Grid */}
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="city" className="text-xs font-medium text-foreground flex items-center gap-1">
+                <div className="p-1 bg-blue-100 rounded-md">
+                  <MapPin className="w-3 h-3 text-blue-600" />
+                </div>
+                <span>İl</span>
+              </Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="İl seçiniz"
+                className="h-9 text-sm"
+              />
             </div>
-            <span>Detaylı Adres</span>
-          </Label>
-          <Input
-            id="address"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            placeholder="Mahalle, sokak, bina no..."
-            className="h-9 text-sm"
-          />
-        </div>
+            <div className="space-y-1">
+              <Label htmlFor="district" className="text-xs font-medium text-foreground flex items-center gap-1">
+                <div className="p-1 bg-blue-100 rounded-md">
+                  <MapPin className="w-3 h-3 text-blue-600" />
+                </div>
+                <span>İlçe</span>
+              </Label>
+              <Input
+                id="district"
+                value={formData.district}
+                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                placeholder="İlçe seçiniz"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="country" className="text-xs font-medium text-foreground flex items-center gap-1">
+                <div className="p-1 bg-blue-100 rounded-md">
+                  <MapPin className="w-3 h-3 text-blue-600" />
+                </div>
+                <span>Ülke</span>
+              </Label>
+              <Input
+                id="country"
+                value={formData.country}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                placeholder="Türkiye"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="postal_code" className="text-xs font-medium text-foreground flex items-center gap-1">
+                <div className="p-1 bg-blue-100 rounded-md">
+                  <MapPin className="w-3 h-3 text-blue-600" />
+                </div>
+                <span>Posta Kodu</span>
+              </Label>
+              <Input
+                id="postal_code"
+                value={formData.postal_code}
+                onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                placeholder="34000"
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+          {/* Detaylı Adres - Tam genişlik */}
+          <div className="space-y-1">
+            <Label htmlFor="address" className="text-xs font-medium text-foreground flex items-center gap-1">
+              <div className="p-1 bg-blue-100 rounded-md">
+                <MapPin className="w-3 h-3 text-blue-600" />
+              </div>
+              <span>Detaylı Adres</span>
+            </Label>
+            <Input
+              id="address"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="Mahalle, sokak, bina no..."
+              className="h-9 text-sm"
+            />
+          </div>
 
-        {/* Tedarikçi Tipi ve Durumu - Kompakt */}
-        <div className="p-2 bg-green-50 rounded-md border border-green-200">
-          <SupplierTypeAndStatus formData={formData} setFormData={setFormData} />
+          {/* Tedarikçi Tipi ve Durumu - Kompakt */}
+          <div className="p-2 bg-green-50 rounded-md border border-green-200">
+            <SupplierTypeAndStatus formData={formData} setFormData={setFormData} />
+          </div>
         </div>
       </CardContent>
     </Card>

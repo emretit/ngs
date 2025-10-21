@@ -396,6 +396,64 @@
       "contact": "Contact",
       "freeStart": "Start Free",
       "login": "Login"
+    },
+    "features": {
+      "badge": "Powerful Features",
+      "title": "Why PAFTA?",
+      "subtitle": "All the essential features your modern business needs in one solution.",
+      "easyUse": {
+        "title": "Easy to Use",
+        "description": "Intuitive interface allows your entire team to adapt quickly, no training required."
+      },
+      "reporting": {
+        "title": "Flexible Reporting",
+        "description": "Transform your data into meaningful insights with customizable reports and charts."
+      },
+      "integrations": {
+        "title": "Integrations",
+        "description": "Seamless integration with your existing tools, making your workflows uninterrupted."
+      },
+      "mobile": {
+        "title": "Mobile Compatible",
+        "description": "Manage your business on the go, access from any device."
+      }
+    },
+    "screenshots": {
+      "title": "Discover Our User-Friendly Interface",
+      "subtitle": "Easily manage your business with our modern and user-friendly design.",
+      "sales": {
+        "title": "Sales Management",
+        "description": "Track opportunities, create proposals, and optimize your sales processes."
+      },
+      "inventory": {
+        "title": "Inventory Tracking",
+        "description": "Monitor your stock levels in real-time and set automatic reorder points."
+      },
+      "financial": {
+        "title": "Financial Analysis",
+        "description": "Track income and expenses, plan your cash flow, and analyze your financial performance."
+      }
+    },
+    "testimonials": {
+      "title": "What Our Customers Say?",
+      "subtitle": "Discover how they improved their business processes with our platform.",
+      "items": {
+        "0": {
+          "quote": "The modern interface and ease of use are truly impressive! We digitalized our business.",
+          "name": "Ahmet Yılmaz",
+          "role": "General Manager, ABC Technology"
+        },
+        "1": {
+          "quote": "Having 8 modules on one platform greatly accelerated our workflows. Great solution!",
+          "name": "Zeynep Kara",
+          "role": "Operations Manager, Innovation Ltd."
+        },
+        "2": {
+          "quote": "Thanks to the user-friendly interface, our team adapted quickly. Very satisfied.",
+          "name": "Can Özkan",
+          "role": "Business Development Manager, TechCorp"
+        }
+      }
     }
   }
 }

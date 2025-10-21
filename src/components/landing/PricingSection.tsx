@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { pricingPlans } from "@/data/landingPageData";
+// Removed pricingPlans import - now using translations directly
 import { useTranslation } from "react-i18next";
 
 const PricingSection = () => {
@@ -71,7 +71,57 @@ const PricingSection = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-          {pricingPlans.map((plan, index) => (
+          {[
+            {
+              name: t("landing.pricing.plans.free.name"),
+              monthlyPrice: "₺0",
+              yearlyPrice: "₺0",
+              description: t("landing.pricing.plans.free.description"),
+              features: [
+                t("landing.pricing.plans.free.features.users"),
+                t("landing.pricing.plans.free.features.einvoice"),
+                t("landing.pricing.plans.free.features.basicCrm"),
+                t("landing.pricing.plans.free.features.customerManagement"),
+                t("landing.pricing.plans.free.features.simpleReporting"),
+                t("landing.pricing.plans.free.features.emailSupport")
+              ],
+              buttonText: t("landing.pricing.plans.free.buttonText"),
+              featured: false
+            },
+            {
+              name: t("landing.pricing.plans.business.name"),
+              monthlyPrice: "₺999",
+              yearlyPrice: "₺9.999",
+              yearlyDiscount: t("landing.pricing.plans.business.discount"),
+              description: t("landing.pricing.plans.business.description"),
+              features: [
+                t("landing.pricing.plans.business.features.users"),
+                t("landing.pricing.plans.business.features.advancedEinvoice"),
+                t("landing.pricing.plans.business.features.inventory"),
+                t("landing.pricing.plans.business.features.financialReporting"),
+                t("landing.pricing.plans.business.features.prioritySupport"),
+                t("landing.pricing.plans.business.features.apiAccess")
+              ],
+              buttonText: t("landing.pricing.plans.business.buttonText"),
+              featured: true
+            },
+            {
+              name: t("landing.pricing.plans.enterprise.name"),
+              monthlyPrice: "",
+              yearlyPrice: "",
+              description: t("landing.pricing.plans.enterprise.description"),
+              features: [
+                t("landing.pricing.plans.enterprise.features.unlimitedUsers"),
+                t("landing.pricing.plans.enterprise.features.allFeatures"),
+                t("landing.pricing.plans.enterprise.features.customIntegrations"),
+                t("landing.pricing.plans.enterprise.features.advancedSecurity"),
+                t("landing.pricing.plans.enterprise.features.prioritySupport"),
+                t("landing.pricing.plans.enterprise.features.customTraining")
+              ],
+              buttonText: t("landing.pricing.plans.enterprise.buttonText"),
+              featured: false
+            }
+          ].map((plan, index) => (
             <div
               key={index}
               className={`group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer ${

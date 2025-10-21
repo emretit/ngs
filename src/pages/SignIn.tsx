@@ -52,8 +52,8 @@ const SignIn = () => {
       setLoading(false);
       return;
     }
-    if (password.length < 8) {
-      setError("Şifre en az 8 karakter olmalıdır.");
+    if (password.length < 10) {
+      setError("Şifre en az 10 karakter olmalıdır.");
       setLoading(false);
       return;
     }
@@ -153,7 +153,7 @@ const SignIn = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-12 pl-10 pr-12 text-base border-gray-300 focus:border-primary focus:ring-primary"
-                  minLength={8}
+                  minLength={10}
                   required
                 />
                 <button

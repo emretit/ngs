@@ -156,11 +156,12 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-xs font-medium text-gray-700">
-                  E-posta
+                  E-posta *
                 </Label>
                 <Input
                   id="email"
                   type="email"
+                  required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="email@example.com"
@@ -170,10 +171,11 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
 
               <div className="space-y-1.5">
                 <Label htmlFor="mobile_phone" className="text-xs font-medium text-gray-700">
-                  Telefon
+                  Telefon *
                 </Label>
                 <PhoneInput
                   id="mobile_phone"
+                  required
                   value={formData.mobile_phone ? formatPhoneNumber(formData.mobile_phone) : ""}
                   onChange={(value) => setFormData({ ...formData, mobile_phone: getDigitsOnly(value) })}
                 />

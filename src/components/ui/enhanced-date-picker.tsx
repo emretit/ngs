@@ -28,10 +28,12 @@ function EnhancedCalendar({
   const [currentMonth, setCurrentMonth] = React.useState(props.month || new Date());
   const [showMonthYearPicker, setShowMonthYearPicker] = React.useState(false);
 
-  const handleMonthChange = (month: number, year: number) => {
+  const handleMonthChange = (month: number, year: number, closePicker: boolean = true) => {
     const newDate = new Date(year, month);
     setCurrentMonth(newDate);
-    setShowMonthYearPicker(false);
+    if (closePicker) {
+      setShowMonthYearPicker(false);
+    }
     if (props.onMonthChange) {
       props.onMonthChange(newDate);
     }
@@ -108,7 +110,7 @@ function EnhancedCalendar({
                     <label className="block text-xs font-medium text-gray-700 mb-1">Yıl</label>
                     <Select
                       value={displayMonth.getFullYear().toString()}
-                      onValueChange={(year) => handleMonthChange(displayMonth.getMonth(), parseInt(year))}
+                      onValueChange={(year) => handleMonthChange(displayMonth.getMonth(), parseInt(year), false)}
                     >
                       <SelectTrigger className="w-full h-8 text-sm">
                         <SelectValue />
@@ -130,12 +132,12 @@ function EnhancedCalendar({
                       {months.map((month, index) => (
                         <button
                           key={index}
-                          onClick={() => handleMonthChange(index, displayMonth.getFullYear())}
+                          onClick={() => handleMonthChange(index, displayMonth.getFullYear(), false)}
                           className={cn(
-                            "p-2 text-xs rounded hover:bg-gray-100 transition-colors",
+                            "p-2 text-xs rounded transition-colors",
                             index === displayMonth.getMonth()
                               ? "bg-primary text-primary-foreground"
-                              : "text-gray-700"
+                              : "text-gray-700 hover:bg-gray-100"
                           )}
                         >
                           {month}

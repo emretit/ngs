@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { CustomerFormData } from "@/types/customer";
 import CompanyBasicInfo from "./form/CompanyBasicInfo";
 import ContactInformation from "./form/ContactInformation";
@@ -179,11 +180,13 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
                       <Label htmlFor="establishment_date" className="text-xs font-medium text-gray-700">
                         Kuruluş Tarihi
                       </Label>
-                      <Input
-                        id="establishment_date"
-                        type="date"
-                        value={formData.establishment_date}
-                        onChange={(e) => setFormData({ ...formData, establishment_date: e.target.value })}
+                      <DatePicker
+                        date={formData.establishment_date ? new Date(formData.establishment_date) : undefined}
+                        onSelect={(date) => setFormData({ 
+                          ...formData, 
+                          establishment_date: date ? date.toISOString().split('T')[0] : "" 
+                        })}
+                        placeholder="Kuruluş tarihi seçiniz"
                         className="h-7 text-xs"
                       />
                     </div>

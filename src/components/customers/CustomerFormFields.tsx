@@ -5,18 +5,181 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { CustomerFormData } from "@/types/customer";
 import CompanyBasicInfo from "./form/CompanyBasicInfo";
 import ContactInformation from "./form/ContactInformation";
 import CompanyInformation from "./form/CompanyInformation";
-import { User, Building2, Receipt, FileText } from "lucide-react";
+import { User, Building2, Receipt, FileText, Plus, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface CustomerFormFieldsProps {
   formData: CustomerFormData;
   setFormData: (value: CustomerFormData) => void;
 }
 
+interface Term {
+  id: string;
+  label: string;
+  text: string;
+  is_default?: boolean;
+}
+
+// Predefined payment terms
+const INITIAL_PAYMENT_TERMS = [
+  { id: "pesin", label: "Peşin Ödeme", text: "%100 peşin ödeme yapılacaktır.", is_default: true },
+  { id: "vade30", label: "30-70 Avans - Vadeli", text: "%30 avans, kalan %70 teslimde ödenecektir.", is_default: true },
+  { id: "vade50", label: "50-50 Avans - Vadeli", text: "%50 avans, kalan %50 teslimde ödenecektir.", is_default: true },
+  { id: "vade30gun", label: "30 Gün Vadeli", text: "Fatura tarihinden itibaren 30 gün vadeli ödenecektir.", is_default: true },
+  { id: "vade60gun", label: "60 Gün Vadeli", text: "Fatura tarihinden itibaren 60 gün vadeli ödenecektir.", is_default: true },
+  { id: "vade90gun", label: "90 Gün Vadeli", text: "Fatura tarihinden itibaren 90 gün vadeli ödenecektir.", is_default: true },
+  { id: "cek", label: "Çekle Ödeme", text: "Ödeme çekle yapılacaktır.", is_default: true },
+  { id: "senet", label: "Senetle Ödeme", text: "Ödeme senetle yapılacaktır.", is_default: true },
+  { id: "kredi_karti", label: "Kredi Kartı", text: "Ödeme kredi kartı ile yapılacaktır.", is_default: true },
+  { id: "havale", label: "Havale", text: "Ödeme havale ile yapılacaktır.", is_default: true }
+];
+
 const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) => {
+  // Payment terms state
+  const [availablePaymentTerms, setAvailablePaymentTerms] = useState<Term[]>(INITIAL_PAYMENT_TERMS);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTermLabel, setNewTermLabel] = useState("");
+  const [newTermText, setNewTermText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [termToDelete, setTermToDelete] = useState<{term: Term} | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Load custom payment terms from database
+  useEffect(() => {
+    const loadCustomTerms = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('custom_terms')
+          .select('*')
+          .eq('category', 'payment')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const customTerms = data?.map(term => ({
+          id: term.id,
+          label: term.label,
+          text: term.text,
+          is_default: false
+        })) || [];
+
+        setAvailablePaymentTerms([...INITIAL_PAYMENT_TERMS, ...customTerms]);
+      } catch (error) {
+        console.error('Error loading custom terms:', error);
+      }
+    };
+
+    loadCustomTerms();
+  }, []);
+
+  // Get current selected term ID
+  const getCurrentPaymentTermId = () => {
+    const currentTerms = formData.payment_terms || '';
+    const matchingTerm = availablePaymentTerms.find(term => 
+      currentTerms.trim() === term.text.trim()
+    );
+    return matchingTerm?.id || '';
+  };
+
+  // Handle term selection
+  const handlePaymentTermSelect = (termId: string) => {
+    if (termId === 'add_custom') {
+      setIsDialogOpen(true);
+    } else {
+      const selectedTerm = availablePaymentTerms.find(t => t.id === termId);
+      if (selectedTerm) {
+        setFormData({ ...formData, payment_terms: selectedTerm.text });
+      }
+    }
+  };
+
+  // Add custom term
+  const handleAddCustomTerm = async () => {
+    if (!newTermLabel.trim() || !newTermText.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('custom_terms')
+        .insert([{
+          category: 'payment',
+          label: newTermLabel.trim(),
+          text: newTermText.trim()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newTerm = {
+        id: data.id,
+        label: data.label,
+        text: data.text,
+        is_default: false
+      };
+
+      setAvailablePaymentTerms(prev => [newTerm, ...prev]);
+      setFormData({ ...formData, payment_terms: newTerm.text });
+      setIsDialogOpen(false);
+      setNewTermLabel("");
+      setNewTermText("");
+      toast.success("Ödeme şartı başarıyla eklendi!");
+    } catch (error) {
+      console.error('Error adding custom term:', error);
+      toast.error("Şart eklenirken bir hata oluştu: " + (error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Delete custom term
+  const handleDeleteCustomTermConfirm = async () => {
+    if (!termToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('custom_terms')
+        .delete()
+        .eq('id', termToDelete.term.id);
+
+      if (error) throw error;
+
+      setAvailablePaymentTerms(prev => 
+        prev.filter(term => term.id !== termToDelete.term.id)
+      );
+
+      // If the deleted term was selected, clear the selection
+      if (formData.payment_terms === termToDelete.term.text) {
+        setFormData({ ...formData, payment_terms: "" });
+      }
+
+      toast.success("Ödeme şartı başarıyla silindi!");
+    } catch (error) {
+      console.error('Error deleting custom term:', error);
+      toast.error("Şart silinirken bir hata oluştu: " + (error as Error).message);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setTermToDelete(null);
+    }
+  };
+
+  const handleDeleteCustomTermCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setTermToDelete(null);
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Row - Customer & Contact Information Combined */}
@@ -89,32 +252,56 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
 
               {/* Ödeme Şartları */}
               <div className="space-y-1.5">
-                <Label htmlFor="payment_terms" className="text-xs font-medium text-gray-700">
-                  Ödeme Şartları
-                </Label>
-                <Select
-                  value={formData.payment_terms}
-                  onValueChange={(value) => setFormData({ ...formData, payment_terms: value })}
+                <Label className="text-xs font-medium text-gray-700">Ödeme Şartları</Label>
+                <Select 
+                  value={getCurrentPaymentTermId()}
+                  onValueChange={handlePaymentTermSelect}
                 >
-                  <SelectTrigger className="h-7 text-xs">
+                  <SelectTrigger className="w-full h-7 text-xs bg-background border-border hover:border-primary transition-colors">
                     <SelectValue placeholder="Ödeme koşulu seçin" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="peşin">Peşin Ödeme</SelectItem>
-                    <SelectItem value="15_gün_vade">15 Gün Vade</SelectItem>
-                    <SelectItem value="30_gün_vade">30 Gün Vade</SelectItem>
-                    <SelectItem value="45_gün_vade">45 Gün Vade</SelectItem>
-                    <SelectItem value="60_gün_vade">60 Gün Vade</SelectItem>
-                    <SelectItem value="90_gün_vade">90 Gün Vade</SelectItem>
-                    <SelectItem value="120_gün_vade">120 Gün Vade</SelectItem>
-                    <SelectItem value="%30_peşin_%70_vade">%30 Peşin, %70 Vade</SelectItem>
-                    <SelectItem value="%50_peşin_%50_vade">%50 Peşin, %50 Vade</SelectItem>
-                    <SelectItem value="%70_peşin_%30_vade">%70 Peşin, %30 Vade</SelectItem>
-                    <SelectItem value="çekle_ödeme">Çekle Ödeme</SelectItem>
-                    <SelectItem value="senetle_ödeme">Senetle Ödeme</SelectItem>
-                    <SelectItem value="kredi_kartı">Kredi Kartı ile Ödeme</SelectItem>
-                    <SelectItem value="havale_ile">Havale ile Ödeme</SelectItem>
-                    <SelectItem value="özel_vade">Özel Vade</SelectItem>
+                  <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
+                    {availablePaymentTerms.map((term) => (
+                      <div key={term.id} className="group relative">
+                        <SelectItem 
+                          value={term.id} 
+                          className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50 data-[highlighted]:bg-muted/50 pr-10 transition-colors"
+                        >
+                          <div className="flex flex-col gap-1 w-full">
+                            <span className="font-medium text-sm text-foreground">{term.label}</span>
+                            <span className="text-xs text-muted-foreground leading-relaxed whitespace-normal break-words">{term.text}</span>
+                          </div>
+                        </SelectItem>
+                        
+                        {/* Delete button for custom terms */}
+                        {!term.is_default && (
+                          <div className="absolute top-2 right-2 z-10">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setTermToDelete({term});
+                                setIsDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {/* Add custom option */}
+                    <SelectItem value="add_custom" className="cursor-pointer hover:bg-primary/10 focus:bg-primary/10 data-[highlighted]:bg-primary/10 p-3 border-t border-border mt-1">
+                      <div className="flex items-center gap-2">
+                        <Plus size={16} className="text-primary" />
+                        <span className="text-sm font-medium text-primary">Yeni şart ekle</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -296,6 +483,75 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
         </Card>
       </div>
 
+      {/* Add Custom Term Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Yeni Ödeme Şartı Ekle</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="termLabel" className="text-xs font-medium text-gray-700">Şart Başlığı *</Label>
+              <Input
+                id="termLabel"
+                placeholder="Şart başlığı giriniz"
+                value={newTermLabel}
+                onChange={(e) => setNewTermLabel(e.target.value)}
+                className="h-7 text-xs"
+                autoFocus
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="termText" className="text-xs font-medium text-gray-700">Şart Açıklaması *</Label>
+              <Textarea
+                id="termText"
+                placeholder="Şart açıklamasını yazınız"
+                value={newTermText}
+                onChange={(e) => setNewTermText(e.target.value)}
+                className="h-7 text-xs"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  setNewTermLabel("");
+                  setNewTermText("");
+                }}
+                disabled={isLoading}
+              >
+                İptal
+              </Button>
+              <Button 
+                onClick={handleAddCustomTerm}
+                disabled={isLoading || !newTermLabel.trim() || !newTermText.trim()}
+              >
+                {isLoading ? "Ekleniyor..." : "Ekle"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Ödeme Şartını Sil"
+        description={`"${termToDelete?.term.label || 'Bu şart'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteCustomTermConfirm}
+        onCancel={handleDeleteCustomTermCancel}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

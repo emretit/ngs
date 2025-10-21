@@ -1,8 +1,33 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { coreFeatures } from "@/data/landingPageData";
+import { Zap, BarChart3, Globe, Smartphone } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const FeaturesSection = () => {
+  const { t } = useTranslation();
+  
+  const coreFeatures = [
+    {
+      title: t("landing.features.easyUse.title"),
+      description: t("landing.features.easyUse.description"),
+      icon: Zap,
+    },
+    {
+      title: t("landing.features.reporting.title"),
+      description: t("landing.features.reporting.description"),
+      icon: BarChart3,
+    },
+    {
+      title: t("landing.features.integrations.title"),
+      description: t("landing.features.integrations.description"),
+      icon: Globe,
+    },
+    {
+      title: t("landing.features.mobile.title"),
+      description: t("landing.features.mobile.description"),
+      icon: Smartphone,
+    },
+  ];
   return (
     <section id="features" className="py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-muted/5 to-transparent relative">
       {/* Minimal decoration */}
@@ -13,22 +38,16 @@ const FeaturesSection = () => {
           <div className="inline-flex items-center justify-center p-2 bg-primary/10 rounded-full mb-6">
             <div className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full text-primary font-medium text-sm">
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <span>Güçlü Özellikler</span>
+              <span>{t("landing.features.badge")}</span>
             </div>
           </div>
           
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-8 leading-tight">
-            Neden 
-            <span className="bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent">
-              PAFTA
-            </span>
-            ?
+            {t("landing.features.title")}
           </h2>
           
           <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-            Modern işletmenizin ihtiyaç duyduğu tüm temel özellikler tek bir çözümde. 
-            <span className="text-primary font-semibold"> Kullanım kolaylığından</span> güçlü entegrasyonlara kadar 
-            <span className="text-secondary font-semibold"> her detay düşünüldü.</span>
+            {t("landing.features.subtitle")}
           </p>
         </div>
 

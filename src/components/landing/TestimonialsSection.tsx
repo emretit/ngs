@@ -1,18 +1,40 @@
 
 import { Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { testimonials } from "@/data/landingPageData";
+import { useTranslation } from "react-i18next";
 
 const TestimonialsSection = () => {
+  const { t } = useTranslation();
+  
+  const testimonials = [
+    {
+      quote: t("landing.testimonials.items.0.quote"),
+      name: t("landing.testimonials.items.0.name"),
+      role: t("landing.testimonials.items.0.role"),
+      avatar: "https://randomuser.me/api/portraits/men/1.jpg",
+    },
+    {
+      quote: t("landing.testimonials.items.1.quote"),
+      name: t("landing.testimonials.items.1.name"),
+      role: t("landing.testimonials.items.1.role"),
+      avatar: "https://randomuser.me/api/portraits/women/2.jpg",
+    },
+    {
+      quote: t("landing.testimonials.items.2.quote"),
+      name: t("landing.testimonials.items.2.name"),
+      role: t("landing.testimonials.items.2.role"),
+      avatar: "https://randomuser.me/api/portraits/men/3.jpg",
+    },
+  ];
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/50">
       <div className="mx-auto max-w-7xl">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl font-sans">
-            Müşterilerimiz Ne Diyor?
+            {t("landing.testimonials.title")}
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-            Platformumuz ile iş süreçlerini nasıl geliştirdiklerini keşfedin.
+            {t("landing.testimonials.subtitle")}
           </p>
         </div>
 

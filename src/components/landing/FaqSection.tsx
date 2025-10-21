@@ -1,4 +1,4 @@
-import { faqs } from "@/data/landingPageData";
+// Removed faqs import - now using translations directly
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 
@@ -34,7 +34,32 @@ const FaqSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {faqs.map((faq, index) => (
+          {[
+            {
+              question: t("landing.faq.questions.einvoice.q"),
+              answer: t("landing.faq.questions.einvoice.a")
+            },
+            {
+              question: t("landing.faq.questions.free.q"),
+              answer: t("landing.faq.questions.free.a")
+            },
+            {
+              question: t("landing.faq.questions.setup.q"),
+              answer: t("landing.faq.questions.setup.a")
+            },
+            {
+              question: t("landing.faq.questions.migration.q"),
+              answer: t("landing.faq.questions.migration.a")
+            },
+            {
+              question: t("landing.faq.questions.providers.q"),
+              answer: t("landing.faq.questions.providers.a")
+            },
+            {
+              question: t("landing.faq.questions.support.q"),
+              answer: t("landing.faq.questions.support.a")
+            }
+          ].map((faq, index) => (
             <div
               key={index}
               className="group relative p-6 rounded-3xl bg-gray-900/95 backdrop-blur-xl border border-gray-700/60 hover:border-red-200/60 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer overflow-hidden"

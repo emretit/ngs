@@ -42,12 +42,21 @@ export const EditableCustomerDetails = ({
     account_number: customer.account_number || "",
     trade_registry_number: customer.trade_registry_number || "",
     mersis_number: customer.mersis_number || "",
-    address_line: customer.address || "",
-    payee_financial_account_id: "",
-    payment_means_code: "",
-    payment_means_channel_code: "",
-    company_id: "",
-    aliases: "",
+    establishment_date: customer.establishment_date || "",
+    sector: customer.sector || "",
+    customer_segment: customer.customer_segment || "",
+    customer_source: customer.customer_source || "",
+    notes: customer.notes || "",
+    first_contact_position: customer.first_contact_position || "",
+    second_contact_name: customer.second_contact_name || "",
+    second_contact_email: customer.second_contact_email || "",
+    second_contact_phone: customer.second_contact_phone || "",
+    second_contact_position: customer.second_contact_position || "",
+    second_address: customer.second_address || "",
+    second_city: customer.second_city || "",
+    second_district: customer.second_district || "",
+    second_country: customer.second_country || "",
+    second_postal_code: customer.second_postal_code || ""
   });
 
   const { mutation } = useCustomerEdit(customer.id, onSuccess);

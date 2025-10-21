@@ -396,6 +396,64 @@
       "contact": "İletişim",
       "freeStart": "Ücretsiz Başla",
       "login": "Giriş Yap"
+    },
+    "features": {
+      "badge": "Güçlü Özellikler",
+      "title": "Neden PAFTA?",
+      "subtitle": "Modern işletmenizin ihtiyaç duyduğu tüm temel özellikler tek bir çözümde.",
+      "easyUse": {
+        "title": "Kolay Kullanım",
+        "description": "Sezgisel arayüz ile tüm ekibiniz hızlıca adapte olabilir, eğitim gerektirmez."
+      },
+      "reporting": {
+        "title": "Esnek Raporlama",
+        "description": "Özelleştirilebilir raporlar ve grafiklerle verilerinizi anlamlı bilgilere dönüştürün."
+      },
+      "integrations": {
+        "title": "Entegrasyonlar",
+        "description": "Mevcut araçlarınızla sorunsuz entegrasyon, iş akışlarınızı kesintisiz hale getirin."
+      },
+      "mobile": {
+        "title": "Mobil Uyumlu",
+        "description": "Hareket halindeyken bile işlerinizi yönetin, her cihazdan erişim sağlayın."
+      }
+    },
+    "screenshots": {
+      "title": "Kullanışlı Arayüzümüzü Keşfedin",
+      "subtitle": "Modern ve kullanıcı dostu tasarımımız ile işlerinizi kolayca yönetin.",
+      "sales": {
+        "title": "Satış Yönetimi",
+        "description": "Fırsatları takip edin, teklifler oluşturun ve satış süreçlerinizi optimize edin."
+      },
+      "inventory": {
+        "title": "Envanter Takibi",
+        "description": "Stok seviyelerinizi gerçek zamanlı izleyin, otomatik sipariş noktaları belirleyin."
+      },
+      "financial": {
+        "title": "Finansal Analiz",
+        "description": "Gelir-gider takibi yapın, nakit akışınızı planlayın ve finansal performansınızı analiz edin."
+      }
+    },
+    "testimonials": {
+      "title": "Müşterilerimiz Ne Diyor?",
+      "subtitle": "Platformumuz ile iş süreçlerini nasıl geliştirdiklerini keşfedin.",
+      "items": {
+        "0": {
+          "quote": "Modern arayüzü ve kullanım kolaylığı gerçekten etkileyici! İşletmemizi dijitalleştirdik.",
+          "name": "Ahmet Yılmaz",
+          "role": "Genel Müdür, ABC Teknoloji"
+        },
+        "1": {
+          "quote": "8 modülün tek platformda olması iş akışlarımızı çok hızlandırdı. Harika çözüm!",
+          "name": "Zeynep Kara",
+          "role": "Operasyon Müdürü, İnovasyon Ltd."
+        },
+        "2": {
+          "quote": "Kullanıcı dostu ara yüz sayesinde ekibimiz hızla adapte oldu. Çok memnunuz.",
+          "name": "Can Özkan",
+          "role": "İş Geliştirme Müdürü, TechCorp"
+        }
+      }
     }
   }
 }

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SupplierFormData } from "@/types/supplier";
 import { Building, FileText, CheckCircle, Loader2, MapPin, Search, User, Users, Building2 } from "lucide-react";
+import AddressFields from "@/components/shared/AddressFields";
 import { useNilveraCompanyInfo } from "@/hooks/useNilveraCompanyInfo";
 import { useEffect } from "react";
 import {
@@ -53,7 +54,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.tax_number}
             onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
             placeholder="Vergi Numarası"
-            className="text-sm h-9 flex-1"
+            className="h-7 text-xs flex-1"
             required
           />
           <Button
@@ -196,7 +197,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Ad Soyad veya Yetkili Kişi"
-            className="text-sm h-9"
+            className="h-7 text-xs"
             required
           />
         </div>
@@ -210,7 +211,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
             placeholder="Şirket Adı"
-            className="text-sm h-9"
+            className="h-7 text-xs"
             required
           />
         </div>
@@ -226,80 +227,39 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
           value={formData.tax_office}
           onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
           placeholder="Vergi Dairesi"
-          className="h-9 text-sm"
+          className="h-7 text-xs"
           required
         />
       </div>
 
-      {/* Adres Bilgileri - Kompakt */}
+      {/* Adres Bilgileri */}
+      <AddressFields
+        city={formData.city}
+        district={formData.district}
+        address={formData.address}
+        onCityChange={(value) => setFormData({ ...formData, city: value })}
+        onDistrictChange={(value) => setFormData({ ...formData, district: value })}
+        onAddressChange={(value) => setFormData({ ...formData, address: value })}
+      />
+
       <div className="space-y-1">
-        <Label htmlFor="address" className="text-xs font-medium text-gray-700">
-          Adres *
+        <Label htmlFor="type" className="text-xs font-medium text-gray-700">
+          Tür *
         </Label>
-        <Textarea
-          id="address"
-          value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          placeholder="Tam Adres"
-          className="min-h-[60px] text-sm resize-none"
-          style={{ height: 'auto' }}
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            target.style.height = 'auto';
-            target.style.height = target.scrollHeight + 'px';
-          }}
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="city" className="text-xs font-medium text-gray-700">
-            Şehir *
-          </Label>
-          <Input
-            id="city"
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            placeholder="Şehir"
-            className="text-sm h-9"
-            required
-          />
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="district" className="text-xs font-medium text-gray-700">
-            İlçe *
-          </Label>
-          <Input
-            id="district"
-            value={formData.district}
-            onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-            placeholder="İlçe"
-            className="text-sm h-9"
-            required
-          />
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="type" className="text-xs font-medium text-gray-700">
-            Tür *
-          </Label>
-          <Select
-            value={formData.type}
-            onValueChange={(value: "bireysel" | "kurumsal") =>
-              setFormData({ ...formData, type: value })
-            }
-          >
-            <SelectTrigger className="h-9 text-sm">
-              <SelectValue placeholder="Tür Seçin" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="bireysel">Bireysel</SelectItem>
-              <SelectItem value="kurumsal">Kurumsal</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select
+          value={formData.type}
+          onValueChange={(value: "bireysel" | "kurumsal") =>
+            setFormData({ ...formData, type: value })
+          }
+        >
+          <SelectTrigger className="h-7 text-xs">
+            <SelectValue placeholder="Tür Seçin" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="bireysel">Bireysel</SelectItem>
+            <SelectItem value="kurumsal">Kurumsal</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -312,7 +272,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.representative}
             onChange={(e) => setFormData({ ...formData, representative: e.target.value })}
             placeholder="Yetkili Kişi"
-            className="text-sm h-9"
+            className="h-7 text-xs"
           />
         </div>
 
@@ -326,7 +286,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
               setFormData({ ...formData, status: value })
             }
           >
-            <SelectTrigger className="h-9 text-sm">
+            <SelectTrigger className="h-7 text-xs">
               <SelectValue placeholder="Durum Seçin" />
             </SelectTrigger>
             <SelectContent>
@@ -346,7 +306,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.country}
             onChange={(e) => setFormData({ ...formData, country: e.target.value })}
             placeholder="Türkiye"
-            className="text-sm h-9"
+            className="h-7 text-xs"
           />
         </div>
       </div>
@@ -361,7 +321,7 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
             value={formData.postal_code}
             onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
             placeholder="34000"
-            className="text-sm h-9"
+            className="h-7 text-xs"
           />
         </div>
       </div>

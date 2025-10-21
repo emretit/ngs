@@ -32,7 +32,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
         onValueChange={onCurrencyChange}
         disabled={isLoading}
       >
-        <SelectTrigger id="currency-select" className="w-full bg-white">
+        <SelectTrigger id="currency-select" className="w-full h-7 text-xs bg-white">
           <SelectValue placeholder="Para Birimi" />
         </SelectTrigger>
         <SelectContent position="popper" className="bg-white z-[100] min-w-[8rem]">

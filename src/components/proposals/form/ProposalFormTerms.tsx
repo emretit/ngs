@@ -296,7 +296,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
 
   const renderDropdown = (category: 'payment' | 'delivery' | 'warranty' | 'price', title: string, placeholder: string) => (
     <div className="space-y-2">
-      <Label>{title}</Label>
+      <Label className="text-xs font-medium text-gray-700">{title}</Label>
       
       {/* Dropdown for predefined terms */}
       <Select 
@@ -310,7 +310,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           }
         }}
       >
-        <SelectTrigger className="w-full bg-background border-border hover:border-primary transition-colors">
+        <SelectTrigger className="w-full h-7 text-xs bg-background border-border hover:border-primary transition-colors">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
@@ -361,7 +361,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   return (
     <div className="space-y-6">
       <CardHeader className="p-0">
-        <CardTitle className="text-lg">Şartlar ve Koşullar</CardTitle>
+        <CardTitle className="text-sm font-semibold">Şartlar ve Koşullar</CardTitle>
       </CardHeader>
       
       <CardContent className="p-0 space-y-6">
@@ -376,7 +376,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
 
         {/* Other Terms Input */}
         <div className="space-y-2">
-          <Label htmlFor="other_terms">Diğer Şartlar</Label>
+          <Label htmlFor="other_terms" className="text-xs font-medium text-gray-700">Diğer Şartlar</Label>
           <Textarea
             id="other_terms"
             name="other_terms"
@@ -389,7 +389,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
               onInputChange(e);
             }}
             placeholder="Ekstra şartlar ve notlar buraya yazılabilir"
-            className="min-h-[120px]"
+            className="h-7 text-xs"
           />
         </div>
       </CardContent>
@@ -403,23 +403,25 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="termLabel">Şart Başlığı *</Label>
+              <Label htmlFor="termLabel" className="text-xs font-medium text-gray-700">Şart Başlığı *</Label>
               <Input
                 id="termLabel"
                 placeholder="Şart başlığı giriniz"
                 value={newTermLabel}
                 onChange={(e) => setNewTermLabel(e.target.value)}
+                className="h-7 text-xs"
                 autoFocus
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="termText">Şart Açıklaması *</Label>
+              <Label htmlFor="termText" className="text-xs font-medium text-gray-700">Şart Açıklaması *</Label>
               <Textarea
                 id="termText"
                 placeholder="Şart açıklamasını yazınız"
                 value={newTermText}
                 onChange={(e) => setNewTermText(e.target.value)}
+                className="h-7 text-xs"
                 rows={4}
               />
             </div>

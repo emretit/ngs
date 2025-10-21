@@ -2,8 +2,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { CustomerFormData } from "@/types/customer";
-import { Building, FileText, CheckCircle, XCircle, Loader2, UserPlus, MapPin } from "lucide-react";
-import CustomerTypeAndStatus from "./CustomerTypeAndStatus";
+import { CheckCircle, XCircle, Loader2, UserPlus } from "lucide-react";
+import AddressFields from "@/components/shared/AddressFields";
 import { useNilveraCompanyInfo } from "@/hooks/useNilveraCompanyInfo";
 import { useVknToCustomer } from "@/hooks/useVknToCustomer";
 import { useEffect } from "react";
@@ -63,66 +63,62 @@ const CompanyBasicInfo = ({ formData, setFormData }: CompanyBasicInfoProps) => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Şirket ve Vergi Bilgileri */}
-      <div className="space-y-3">
-        <div className="space-y-3">
-          {/* Şirket Adı - Üstte tam genişlik */}
+    <div className="space-y-3">
+        {/* Şirket Adı - Üstte tam genişlik */}
+        <div className="space-y-1.5">
+          <Label htmlFor="company" className="text-xs font-medium text-gray-700">
+            Şirket Adı
+          </Label>
+          <Input
+            id="company"
+            value={formData.company}
+            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            placeholder="Şirket adı giriniz"
+            className="h-7 text-xs"
+          />
+        </div>
+
+        {/* Vergi Bilgileri - Alt kısımda yan yana */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="company" className="text-xs font-medium text-gray-700">
-              Şirket Adı
+            <Label htmlFor="tax_number" className="text-xs font-medium text-gray-700">
+              Vergi No / TC Kimlik *
             </Label>
-            <Input
-              id="company"
-              value={formData.company}
-              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              placeholder="Şirket adı giriniz"
-              className="text-sm h-9"
-            />
+            <div className="relative">
+              <Input
+                id="tax_number"
+                value={formData.tax_number}
+                onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+                placeholder="1234567890"
+                className="h-7 text-xs pr-32"
+              />
+              {/* E-fatura mükellefi durumu göstergesi */}
+              {formData.tax_number && formData.tax_number.length >= 10 && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  {isNilveraLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                  ) : mukellefInfo ? (
+                    <div className="flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-xs text-green-600 font-medium">E-Fatura Mükellefi</span>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Vergi Bilgileri - Alt kısımda yan yana */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="tax_number" className="text-xs font-medium text-gray-700">
-                Vergi No / TC Kimlik *
-              </Label>
-              <div className="relative">
-                <Input
-                  id="tax_number"
-                  value={formData.tax_number}
-                  onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
-                  placeholder="1234567890"
-                  className="text-sm h-9 pr-32"
-                />
-                {/* E-fatura mükellefi durumu göstergesi */}
-                {formData.tax_number && formData.tax_number.length >= 10 && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    {isNilveraLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                    ) : mukellefInfo ? (
-                      <div className="flex items-center gap-1">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="text-xs text-green-600 font-medium">E-Fatura Mükellefi</span>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="tax_office" className="text-xs font-medium text-gray-700">
-                Vergi Dairesi
-              </Label>
-              <Input
-                id="tax_office"
-                value={formData.tax_office}
-                onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
-                placeholder="Vergi dairesi"
-                className="text-sm h-9"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="tax_office" className="text-xs font-medium text-gray-700">
+              Vergi Dairesi
+            </Label>
+            <Input
+              id="tax_office"
+              value={formData.tax_office}
+              onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
+              placeholder="Vergi dairesi"
+              className="h-7 text-xs"
+            />
           </div>
         </div>
 
@@ -209,62 +205,20 @@ const CompanyBasicInfo = ({ formData, setFormData }: CompanyBasicInfoProps) => {
             </div>
           </div>
         )}
-      </div>
 
-      {/* Adres Bilgileri */}
-      <div className="space-y-4">
-        
-        <div className="space-y-4">
-          {/* İl ve İlçe - Üst satır */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="city" className="text-xs font-medium text-gray-700">
-                İl
-              </Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                placeholder="İl seçiniz"
-                className="text-sm h-9"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="district" className="text-xs font-medium text-gray-700">
-                İlçe
-              </Label>
-              <Input
-                id="district"
-                value={formData.district}
-                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                placeholder="İlçe seçiniz"
-                className="text-sm h-9"
-              />
-            </div>
-          </div>
-
-          {/* Detaylı Adres - Alt satır tam genişlik */}
-          <div className="space-y-1.5">
-            <Label htmlFor="address" className="text-xs font-medium text-gray-700">
-              Detaylı Adres
-            </Label>
-            <Input
-              id="address"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="Mahalle, sokak, bina no..."
-              className="text-sm h-9"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Müşteri Tipi ve Durumu */}
-      <div className="space-y-3">
-        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-          <CustomerTypeAndStatus formData={formData} setFormData={setFormData} />
-        </div>
-      </div>
+        {/* Adres Bilgileri */}
+        <AddressFields
+          city={formData.city}
+          district={formData.district}
+          address={formData.address}
+          country={formData.country}
+          postal_code={formData.postal_code}
+          onCityChange={(value) => setFormData({ ...formData, city: value })}
+          onDistrictChange={(value) => setFormData({ ...formData, district: value })}
+          onAddressChange={(value) => setFormData({ ...formData, address: value })}
+          onCountryChange={(value) => setFormData({ ...formData, country: value })}
+          onPostalCodeChange={(value) => setFormData({ ...formData, postal_code: value })}
+        />
     </div>
   );
 };

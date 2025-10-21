@@ -77,7 +77,7 @@ const ProposalDetails = ({
         <div>
           <Label>Durum</Label>
           <Select value={status} onValueChange={onStatusChange}>
-            <SelectTrigger>
+            <SelectTrigger className="h-7 text-xs">
               <SelectValue placeholder="Durum seçin" />
             </SelectTrigger>
             <SelectContent>

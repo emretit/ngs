@@ -26,14 +26,6 @@ export interface Customer {
   tax_office: string | null;
   is_einvoice_mukellef: boolean;
   einvoice_alias_name: string | null;
-  einvoice_company_name: string | null;
-  einvoice_tax_office: string | null;
-  einvoice_address: string | null;
-  einvoice_city: string | null;
-  einvoice_district: string | null;
-  einvoice_mersis_no: string | null;
-  einvoice_sicil_no: string | null;
-  einvoice_checked_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -54,4 +46,19 @@ export interface CustomerFormData {
   city: string;
   district: string;
   einvoice_alias_name: string;
+  website: string;
+  country: string;
+  postal_code: string;
+  fax: string;
+  bank_name: string;
+  iban: string;
+  account_number: string;
+  trade_registry_number: string;
+  mersis_number: string;
+  address_line: string;
+  payee_financial_account_id: string;
+  payment_means_code: string;
+  payment_means_channel_code: string;
+  company_id: string;
+  aliases: string;
 }

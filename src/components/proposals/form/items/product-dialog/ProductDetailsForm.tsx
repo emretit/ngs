@@ -63,7 +63,7 @@ const ProductDetailsForm: React.FC<ProductDetailsFormProps> = ({
         <div>
           <Label htmlFor="product-depo">Depo Seçimi</Label>
           <Select value={selectedDepo} onValueChange={setSelectedDepo}>
-            <SelectTrigger id="product-depo">
+            <SelectTrigger id="product-depo" className="h-7 text-xs">
               <SelectValue placeholder="Depo seçin" />
             </SelectTrigger>
             <SelectContent>

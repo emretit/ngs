@@ -49,7 +49,7 @@ const ProposalFormBasicInfo = ({
           value={formData.status} 
           onValueChange={(value) => handleSelectChange("status", value as ProposalStatus)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="h-7 text-xs">
             <SelectValue placeholder="Durum seçin" />
           </SelectTrigger>
           <SelectContent>

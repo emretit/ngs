@@ -235,7 +235,7 @@ const ProductDetailsModal = ({
                 Birim
               </Label>
               <Select value={unit} onValueChange={setUnit}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 h-7 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -277,7 +277,7 @@ const ProductDetailsModal = ({
                   onValueChange={handleCurrencyChange}
                   disabled={isLoadingRates}
                 >
-                  <SelectTrigger className="w-24">
+                  <SelectTrigger className="w-24 h-7 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent position="popper" className="bg-background border z-[100]">
@@ -306,7 +306,7 @@ const ProductDetailsModal = ({
               <div className="flex gap-2 mt-1">
                 <div className="flex-1">
                   <Select value={vatRate.toString()} onValueChange={(value) => setVatRate(Number(value))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-7 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

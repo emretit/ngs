@@ -189,7 +189,7 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
                         }
                       }}
                     >
-                      <SelectTrigger className="h-9 w-full">
+                      <SelectTrigger className="h-7 text-xs w-full">
                         <SelectValue placeholder="Para Birimi" />
                       </SelectTrigger>
                       <SelectContent>
@@ -247,7 +247,7 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
                       value={String(item.tax_rate || 20)}
                       onValueChange={(value) => handleItemChange(index, "tax_rate", Number(value))}
                     >
-                      <SelectTrigger className="h-9 w-full">
+                      <SelectTrigger className="h-7 text-xs w-full">
                         <SelectValue placeholder="KDV Oranı" />
                       </SelectTrigger>
                       <SelectContent>

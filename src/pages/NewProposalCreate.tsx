@@ -438,20 +438,20 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
       </div>
 
       {/* Main Content */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Top Row - Customer & Proposal Details Combined */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {/* Customer Information */}
           <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CardHeader className="pb-2 pt-2.5">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
                   <FileText className="h-4 w-4 text-blue-600" />
                 </div>
                 Müşteri Bilgileri
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 pt-0">
+            <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
               <FormProvider {...form}>
               <div className="grid grid-cols-1 gap-3">
                 <ProposalPartnerSelect partnerType="customer" />
@@ -483,34 +483,36 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
 
           {/* Offer Details */}
           <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CardHeader className="pb-2 pt-2.5">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
                   <CalendarDays className="h-4 w-4 text-green-600" />
                 </div>
                 Teklif Detayları
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pt-0">
+            <CardContent className="space-y-3 pt-0 px-4 pb-4">
               {/* Tarih Alanları - Altlı Üstlü */}
               <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="offer_date" className="text-sm font-medium text-gray-700">Teklif Tarihi</Label>
+                    <Label htmlFor="offer_date" className="text-xs font-medium text-gray-700">Teklif Tarihi</Label>
                     <DatePicker
                       date={formData.offer_date}
                       onSelect={(date) => handleFieldChange('offer_date', date)}
                       placeholder="Teklif tarihi seçin"
+                      className="h-7 text-xs"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="validity_date" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="validity_date" className="text-xs font-medium text-gray-700">
                       Geçerlilik Tarihi <span className="text-red-500">*</span>
                     </Label>
                     <DatePicker
                       date={formData.validity_date}
                       onSelect={(date) => handleFieldChange('validity_date', date)}
                       placeholder="Geçerlilik tarihi seçin"
+                      className="h-7 text-xs"
                     />
                   </div>
                 </div>
@@ -519,18 +521,18 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
               {/* Diğer Alanlar */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="offer_number" className="text-sm font-medium text-gray-700">Teklif No</Label>
+                  <Label htmlFor="offer_number" className="text-xs font-medium text-gray-700">Teklif No</Label>
                   <Input
                     id="offer_number"
                     value={formData.offer_number}
                     onChange={(e) => handleFieldChange('offer_number', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 h-7 text-xs"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="status" className="text-sm font-medium text-gray-700">Teklif Durumu</Label>
+                  <Label htmlFor="status" className="text-xs font-medium text-gray-700">Teklif Durumu</Label>
                   <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger className="mt-1 h-7 text-xs">
                       <SelectValue placeholder="Durum seçin" />
                     </SelectTrigger>
                     <SelectContent>
@@ -549,13 +551,13 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
 
               {/* Notlar Alanı */}
               <div>
-                <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Notlar</Label>
+                <Label htmlFor="notes" className="text-xs font-medium text-gray-700">Notlar</Label>
                 <Textarea
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => handleFieldChange('notes', e.target.value)}
                   placeholder="Teklif hakkında notlarınızı yazın..."
-                  className="mt-1 min-h-[80px] resize-none"
+                  className="mt-1 h-7 text-xs resize-none"
                 />
               </div>
             </CardContent>
@@ -564,9 +566,9 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
 
         {/* Products/Services Table - Full Width */}
         <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2 pt-2.5">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
                       <Plus className="h-4 w-4 text-purple-600" />
                     </div>
@@ -578,7 +580,7 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                   </Button>
                 </div>
               </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="space-y-3 pt-0 px-4 pb-4">
                 {/* Kolon Başlıkları */}
                 <div className="grid grid-cols-12 gap-2 mb-3 px-1">
                   <div className="col-span-5">
@@ -635,7 +637,7 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                             value={item.quantity}
                             onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
                             min="1"
-                            className="h-8 text-xs"
+                            className="h-7 text-xs"
                           />
                         </div>
                         
@@ -721,18 +723,18 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         </Card>
 
         {/* Terms and Financial Summary - Side by Side */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Terms & Conditions */}
           <Card className="lg:col-span-2 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CardHeader className="pb-2 pt-2.5">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-50/50 border border-indigo-200/50">
                   <Check className="h-4 w-4 text-indigo-600" />
                 </div>
                 Şartlar ve Koşullar
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4">
+            <CardContent className="space-y-3 pt-0 px-4 pb-4">
               <ProposalFormTerms
                 paymentTerms={formData.payment_terms}
                 deliveryTerms={formData.delivery_terms}
@@ -746,13 +748,13 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
 
           {/* Financial Summary */}
           <Card className="lg:col-span-1 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CardHeader className="pb-2 pt-2.5">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Calculator className="h-4 w-4" />
                 Finansal Özet
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pt-0">
+            <CardContent className="space-y-3 pt-0 px-4 pb-4">
                 {/* Always use multi-currency display to show actual currencies used */}
                 <div className="space-y-4">
                   {Object.entries(calculationsByCurrency).map(([currency, totals]) => (
@@ -775,7 +777,7 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                           </div>
                           <div className="flex gap-2">
                             <Select value={globalDiscountType} onValueChange={(value: 'percentage' | 'amount') => setGlobalDiscountType(value)}>
-                              <SelectTrigger className="w-16 h-6 text-xs">
+                              <SelectTrigger className="w-16 h-7 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -791,7 +793,7 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                               placeholder="0"
                               min="0"
                               step={globalDiscountType === 'percentage' ? '0.1' : '0.01'}
-                              className="flex-1 h-6 text-xs"
+                              className="flex-1 h-7 text-xs"
                             />
                           </div>
                         </div>

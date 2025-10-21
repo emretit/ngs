@@ -144,7 +144,7 @@ const ProductList: React.FC<ProductListProps> = ({
       <div className="flex flex-col md:flex-row gap-2 mb-4">
         <div className="flex-1">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-7 text-xs">
               <SelectValue placeholder="Kategori Filtresi" />
             </SelectTrigger>
             <SelectContent>
@@ -158,7 +158,7 @@ const ProductList: React.FC<ProductListProps> = ({
         
         <div className="flex-1">
           <Select value={stockFilter} onValueChange={setStockFilter}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-7 text-xs">
               <SelectValue placeholder="Stok Durumu" />
             </SelectTrigger>
             <SelectContent>
@@ -172,7 +172,7 @@ const ProductList: React.FC<ProductListProps> = ({
         
         <div className="flex-1">
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full h-7 text-xs">
               <SelectValue placeholder="Sıralama" />
             </SelectTrigger>
             <SelectContent>

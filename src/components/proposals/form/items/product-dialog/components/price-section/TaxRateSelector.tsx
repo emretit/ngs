@@ -25,7 +25,7 @@ const TaxRateSelector: React.FC<TaxRateSelectorProps> = ({
         value={`${value}`}
         onValueChange={(value) => onChange(Number(value))}
       >
-        <SelectTrigger id="vat-rate" className="w-full">
+        <SelectTrigger id="vat-rate" className="w-full h-7 text-xs">
           <SelectValue placeholder="KDV Oranı" />
         </SelectTrigger>
         <SelectContent position="popper" className="bg-white z-[100]">

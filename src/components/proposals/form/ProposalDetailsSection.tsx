@@ -76,7 +76,7 @@ const ProposalDetailsSection = () => {
             defaultValue={watch("paymentTerm")} 
             onValueChange={(value) => setValue("paymentTerm", value)}
           >
-            <SelectTrigger id="paymentTerm" className="mt-1">
+            <SelectTrigger id="paymentTerm" className="mt-1 h-7 text-xs">
               <SelectValue placeholder="Ödeme koşulu seçin" />
             </SelectTrigger>
             <SelectContent>

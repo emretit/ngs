@@ -84,9 +84,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
     return employees.filter(employee => {
       const matchesSearch = 
         searchQuery === "" || 
-        `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (employee.position && employee.position.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (employee.department && employee.department.toLowerCase().includes(searchQuery.toLowerCase()));
+        `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchQuery.toLowerCase());
       
       return matchesSearch;
     });
@@ -102,7 +100,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
   if (isLoading) {
     return (
       <div className={cn("space-y-2", className)}>
-        {showLabel && <Label className={error ? "text-red-500" : ""}>{label}</Label>}
+        {showLabel && <Label className={cn("text-xs font-medium text-gray-700", error ? "text-red-500" : "")}>{label}</Label>}
         <div className="flex items-center justify-center py-4">
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
           <span className="ml-2 text-sm">{loadingText}</span>
@@ -113,7 +111,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
 
   return (
     <div className={cn("space-y-2", className)}>
-      {showLabel && <Label className={error ? "text-red-500" : ""}>{label}</Label>}
+      {showLabel && <Label className={cn("text-xs font-medium text-gray-700", error ? "text-red-500" : "")}>{label}</Label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -121,14 +119,14 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full justify-between",
+              "w-full h-7 text-xs justify-between",
               !value && "text-muted-foreground",
               error && "border-red-500"
             )}
           >
             <span className="truncate text-left flex-1">
               {selectedEmployee 
-                ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}${selectedEmployee.position ? ` (${selectedEmployee.position})` : ""}`
+                ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}`
                 : placeholder
               }
             </span>
@@ -165,21 +163,9 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
                   >
                     <div className="flex items-center space-x-3">
                       <User className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">
-                          {employee.first_name} {employee.last_name}
-                        </span>
-                        {employee.position && (
-                          <span className="text-xs text-muted-foreground">
-                            {employee.position}
-                          </span>
-                        )}
-                        {employee.department && (
-                          <span className="text-xs text-muted-foreground">
-                            {employee.department}
-                          </span>
-                        )}
-                      </div>
+                      <span className="font-medium text-sm">
+                        {employee.first_name} {employee.last_name}
+                      </span>
                     </div>
                   </div>
                 ))}

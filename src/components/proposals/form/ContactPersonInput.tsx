@@ -96,7 +96,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
 
   return (
     <div className="space-y-1">
-      <Label className="text-base font-medium">İletişim Kişisi *</Label>
+      <Label className="text-xs font-medium text-gray-700">İletişim Kişisi *</Label>
       <div className="relative">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <div className="flex">
@@ -104,7 +104,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder="İletişim kişisi adını girin"
-              className={`flex-1 ${suggestions.length > 0 ? 'rounded-r-none' : ''} ${
+              className={`flex-1 h-7 text-xs ${suggestions.length > 0 ? 'rounded-r-none' : ''} ${
                 error ? "border-red-500" : ""
               }`}
             />
@@ -112,7 +112,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="rounded-l-none border-l-0 px-3"
+                  className="rounded-l-none border-l-0 px-3 h-7 text-xs"
                   type="button"
                 >
                   <ChevronDown className="h-4 w-4" />

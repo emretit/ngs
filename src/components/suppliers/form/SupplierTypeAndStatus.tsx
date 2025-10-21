@@ -34,7 +34,7 @@ const SupplierTypeAndStatus = ({ formData, setFormData }: SupplierTypeAndStatusP
               setFormData({ ...formData, type: value })
             }
           >
-            <SelectTrigger className="h-10">
+            <SelectTrigger className="h-7 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -55,7 +55,7 @@ const SupplierTypeAndStatus = ({ formData, setFormData }: SupplierTypeAndStatusP
               setFormData({ ...formData, status: value })
             }
           >
-            <SelectTrigger className="h-10">
+            <SelectTrigger className="h-7 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

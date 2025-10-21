@@ -140,7 +140,7 @@ const ProposalBasicInfoTab: React.FC<ProposalBasicInfoTabProps> = ({
                   value={formData.status} 
                   onValueChange={(value) => onFieldChange("status", value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-7 text-xs">
                     <SelectValue placeholder="Durum seçin" />
                   </SelectTrigger>
                   <SelectContent>
@@ -219,7 +219,7 @@ const ProposalBasicInfoTab: React.FC<ProposalBasicInfoTabProps> = ({
                   value={formData.currency} 
                   onValueChange={(value) => onFieldChange("currency", value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-7 text-xs">
                     <SelectValue placeholder="Para birimi seçin" />
                   </SelectTrigger>
                   <SelectContent>

@@ -65,11 +65,16 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
   };
 
   return (
-    <div className="space-y-3">
-      {/* Şirket ve Vergi Bilgileri */}
-      <div className="space-y-3">
-        
-        <div className="space-y-3">
+    <Card className="shadow-md border border-border/40 bg-gradient-to-br from-blue-50/30 to-blue-50/10 backdrop-blur-sm rounded-xl">
+      <CardHeader className="pb-2 pt-2.5">
+        <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+          <div className="p-1 rounded-md bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
+            <Building className="h-3.5 w-3.5 text-blue-600" />
+          </div>
+          Şirket Bilgileri
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-2 px-4 pb-4">
           {/* Temel Bilgiler - Kompakt Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div className="lg:col-span-3 space-y-1">
@@ -84,7 +89,7 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 placeholder="Şirket adı giriniz"
-                className="h-9 text-sm"
+                className="h-7 text-xs"
               />
             </div>
 
@@ -101,7 +106,7 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
                   value={formData.tax_number}
                   onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
                   placeholder="1234567890"
-                  className="h-9 text-sm pr-28"
+                  className="h-7 text-xs pr-28"
                 />
                 {/* E-fatura mükellefi durumu göstergesi */}
                 {formData.tax_number && formData.tax_number.length >= 10 && (
@@ -131,7 +136,7 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
                 value={formData.tax_office}
                 onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
                 placeholder="Vergi dairesi"
-                className="h-9 text-sm"
+                className="h-7 text-xs"
               />
             </div>
           </div>
@@ -293,13 +298,13 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
             className="h-9 text-sm"
           />
         </div>
-      </div>
 
-      {/* Tedarikçi Tipi ve Durumu - Kompakt */}
-      <div className="p-2 bg-green-50 rounded-md border border-green-200">
-        <SupplierTypeAndStatus formData={formData} setFormData={setFormData} />
-      </div>
-    </div>
+        {/* Tedarikçi Tipi ve Durumu - Kompakt */}
+        <div className="p-2 bg-green-50 rounded-md border border-green-200">
+          <SupplierTypeAndStatus formData={formData} setFormData={setFormData} />
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

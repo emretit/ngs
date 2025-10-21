@@ -80,7 +80,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel }: P
     <div className="space-y-3">
       <div>
         {!hideLabel && (
-          <Label className="text-base font-medium">
+          <Label className="text-xs font-medium text-gray-700">
             {label ?? (partnerType === "customer" ? "Müşteri" : "Tedarikçi")}
           </Label>
         )}
@@ -90,7 +90,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel }: P
               variant="outline"
               role="combobox"
               aria-expanded={isOpen}
-              className="w-full justify-between mt-1"
+              className="w-full h-7 text-xs justify-between mt-1"
             >
               <div className="flex items-center">
                 {partnerType === "customer" ? (

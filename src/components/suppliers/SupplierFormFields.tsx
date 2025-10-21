@@ -23,35 +23,35 @@ interface SupplierFormFieldsProps {
 
 const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Top Row - Supplier & Contact Information Combined */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* Tedarikçi Bilgileri */}
         <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <CardHeader className="pb-2 pt-2.5">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
                 <Building2 className="h-4 w-4 text-blue-600" />
               </div>
               Tedarikçi Bilgileri
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 pt-0">
+          <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
             <SupplierBasicInfoCompact formData={formData} setFormData={setFormData} />
           </CardContent>
         </Card>
 
         {/* İletişim Bilgileri */}
         <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <CardHeader className="pb-2 pt-2.5">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
                 <User className="h-4 w-4 text-green-600" />
               </div>
               İletişim Bilgileri
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 pt-0">
+          <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
             <ContactInformationCompact formData={formData} setFormData={setFormData} />
           </CardContent>
         </Card>
@@ -59,15 +59,15 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
 
       {/* Finansal ve Ödeme Bilgileri */}
       <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <CardHeader className="pb-2 pt-2.5">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-50/50 border border-emerald-200/50">
               <DollarSign className="h-4 w-4 text-emerald-600" />
             </div>
             Finansal ve Ödeme Bilgileri
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 pt-0">
+        <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Sol Sütun - Finansal */}
             <div className="space-y-2">
@@ -84,7 +84,7 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
                     setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })
                   }
                   placeholder="0.00"
-                  className="h-9 text-sm"
+                  className="h-7 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Pozitif değer alacak, negatif değer borç anlamına gelir
@@ -100,7 +100,7 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
                   value={formData.einvoice_alias_name}
                   onChange={(e) => setFormData({ ...formData, einvoice_alias_name: e.target.value })}
                   placeholder="E-fatura takma adı"
-                  className="h-9 text-sm"
+                  className="h-7 text-xs"
                 />
               </div>
             </div>
@@ -117,7 +117,7 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
                   value={formData.payee_financial_account_id}
                   onChange={(e) => setFormData({ ...formData, payee_financial_account_id: e.target.value })}
                   placeholder="Finansal hesap ID"
-                  className="h-9 text-sm"
+                  className="h-7 text-xs"
                 />
               </div>
               <div className="space-y-1.5">
@@ -130,7 +130,7 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
                   value={formData.payment_means_code}
                   onChange={(e) => setFormData({ ...formData, payment_means_code: e.target.value })}
                   placeholder="Ödeme yöntemi"
-                  className="h-9 text-sm"
+                  className="h-7 text-xs"
                 />
               </div>
               <div className="space-y-1.5">
@@ -143,7 +143,7 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
                   value={formData.payment_means_channel_code}
                   onChange={(e) => setFormData({ ...formData, payment_means_channel_code: e.target.value })}
                   placeholder="Ödeme kanal kodu"
-                  className="h-9 text-sm"
+                  className="h-7 text-xs"
                 />
               </div>
             </div>

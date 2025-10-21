@@ -55,7 +55,7 @@ const QuantityDepoSection: React.FC<QuantityDepoSectionProps> = ({
         <div className="space-y-2">
           <Label htmlFor="depo">Depo</Label>
           <Select value={selectedDepo} onValueChange={setSelectedDepo}>
-            <SelectTrigger>
+            <SelectTrigger className="h-7 text-xs">
               <SelectValue placeholder="Depo seçin" />
             </SelectTrigger>
             <SelectContent>

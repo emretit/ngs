@@ -53,7 +53,7 @@ const ProposalTemplateSelect: React.FC = () => {
             }
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger className="h-7 text-xs">
             <SelectValue placeholder="Şablon seçin" />
           </SelectTrigger>
           <SelectContent>

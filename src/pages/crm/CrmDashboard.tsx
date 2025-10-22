@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ActivitiesSummary from "@/components/crm/ActivitiesSummary";
 import ProposalsSummary from "@/components/crm/ProposalsSummary";
 import OpportunitiesSummary from "@/components/crm/OpportunitiesSummary";
@@ -21,140 +20,129 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
   return (
     <>
       {/* Clean Header Section */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              CRM Özeti
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              İş süreçlerinizi takip edin ve yönetin
-            </p>
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-r from-primary to-primary/80 rounded-lg text-white shadow-lg">
+              <BarChart3 className="h-5 w-5" />
+            </div>
+            <div className="space-y-0.5">
+              <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                CRM Özeti
+              </h1>
+              <p className="text-xs text-muted-foreground/70">
+                İş süreçlerinizi takip edin ve yönetin
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="w-2 h-2 bg-primary rounded-full"></div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
             <span>Güncel</span>
           </div>
         </div>
       </div>
-      <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {/* Activities Card */}
-          <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
-            <CardHeader className="pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-muted-foreground" />
+          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-blue-200">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                    <Calendar className="h-4 w-4" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-semibold text-foreground">
-                      Aktiviteler
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">Günlük işlemler & görevler</p>
+                    <h2 className="text-sm font-bold text-gray-900">Aktiviteler</h2>
+                    <p className="text-xs text-gray-500">Günlük işlemler</p>
                   </div>
                 </div>
                 <Button
                   size="sm"
-                  variant="default"
+                  className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 h-7"
                   onClick={() => setIsNewActivityDialogOpen(true)}
                 >
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="h-3 w-3" />
                   Yeni
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
               <ActivitiesSummary />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
           {/* Opportunities Card */}
-          <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
-            <CardHeader className="pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5 text-muted-foreground" />
+          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                    <BarChart3 className="h-4 w-4" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-semibold text-foreground">
-                      Fırsatlar
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">Satış fırsatları & potansiyel</p>
+                    <h2 className="text-sm font-bold text-gray-900">Fırsatlar</h2>
+                    <p className="text-xs text-gray-500">Satış fırsatları</p>
                   </div>
                 </div>
                 <Button
                   size="sm"
-                  variant="default"
+                  className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7"
                   onClick={() => setIsNewOpportunityDialogOpen(true)}
                 >
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="h-3 w-3" />
                   Yeni
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
               <OpportunitiesSummary />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
           {/* Proposals Card */}
-          <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
-            <CardHeader className="pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
+          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-orange-200">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                    <FileText className="h-4 w-4" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-semibold text-foreground">
-                      Teklifler
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">Müşteri teklifleri & sunumlar</p>
+                    <h2 className="text-sm font-bold text-gray-900">Teklifler</h2>
+                    <p className="text-xs text-gray-500">Müşteri teklifleri</p>
                   </div>
                 </div>
                 <Button
                   size="sm"
-                  variant="default"
+                  className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 h-7"
                   onClick={() => navigate("/proposal/create")}
                 >
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="h-3 w-3" />
                   Yeni
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
               <ProposalsSummary />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
           {/* Orders Card */}
-          <Card className="group hover:shadow-lg transition-all duration-300 border border-border hover:border-primary/20">
-            <CardHeader className="pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                    <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-green-200">
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                    <ShoppingCart className="h-4 w-4" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-semibold text-foreground">
-                      Siparişler
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">Müşteri siparişleri & teslimat</p>
+                    <h2 className="text-sm font-bold text-gray-900">Siparişler</h2>
+                    <p className="text-xs text-gray-500">Müşteri siparişleri</p>
                   </div>
                 </div>
                 <Button
                   size="sm"
-                  variant="default"
+                  className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7"
                   onClick={() => navigate("/orders/create")}
                 >
-                  <Plus className="h-4 w-4 mr-1" />
+                  <Plus className="h-3 w-3" />
                   Yeni
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
               <OrdersSummary />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
         <NewActivityDialog
           isOpen={isNewActivityDialogOpen}

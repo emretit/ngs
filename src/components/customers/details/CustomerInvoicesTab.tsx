@@ -180,12 +180,12 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'sales' | 'purchase')}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="sales" className="flex items-center gap-2">
+        <TabsList className="inline-flex h-auto items-center justify-start rounded-lg bg-white/80 p-1 shadow-sm backdrop-blur-sm border border-gray-100 gap-1">
+          <TabsTrigger value="sales" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200 min-h-[36px] text-gray-600 hover:text-gray-900 hover:bg-gray-50">
             <Receipt className="h-4 w-4" />
             Satış Faturaları ({salesInvoices.length})
           </TabsTrigger>
-          <TabsTrigger value="purchase" className="flex items-center gap-2">
+          <TabsTrigger value="purchase" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200 min-h-[36px] text-gray-600 hover:text-gray-900 hover:bg-gray-50">
             <Receipt className="h-4 w-4" />
             Alış Faturaları ({purchaseInvoices.length})
           </TabsTrigger>

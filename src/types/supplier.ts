@@ -70,4 +70,31 @@ export interface SupplierFormData {
     type: number;
   }>;
   einvoice_alias_name: string;
+  // İkinci yetkili kişi bilgileri
+  second_contact_name: string;
+  second_contact_email: string;
+  second_contact_phone: string;
+  second_contact_position: string;
+  // İkinci adres bilgileri
+  second_address: string;
+  second_city: string;
+  second_district: string;
+  second_country: string;
+  second_postal_code: string;
+  // Finansal bilgiler
+  bank_name: string;
+  iban: string;
+  account_number: string;
+  payment_terms: string;
+  // Şirket detay bilgileri
+  trade_registry_number: string;
+  mersis_number: string;
+  establishment_date: string;
+  sector: string;
+  supplier_segment: string;
+  supplier_source: string;
+  // Notlar
+  notes: string;
+  // İlk yetkili kişi pozisyonu
+  first_contact_position: string;
 }

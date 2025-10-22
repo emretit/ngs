@@ -38,6 +38,33 @@ const SupplierForm = () => {
     payment_means_code: "",
     aliases: [],
     einvoice_alias_name: "",
+    // İkinci yetkili kişi bilgileri
+    second_contact_name: "",
+    second_contact_email: "",
+    second_contact_phone: "",
+    second_contact_position: "",
+    // İkinci adres bilgileri
+    second_address: "",
+    second_city: "",
+    second_district: "",
+    second_country: "",
+    second_postal_code: "",
+    // Finansal bilgiler
+    bank_name: "",
+    iban: "",
+    account_number: "",
+    payment_terms: "",
+    // Şirket detay bilgileri
+    trade_registry_number: "",
+    mersis_number: "",
+    establishment_date: "",
+    sector: "",
+    supplier_segment: "",
+    supplier_source: "",
+    // Notlar
+    notes: "",
+    // İlk yetkili kişi pozisyonu
+    first_contact_position: "",
   });
   const { data: supplier, isLoading: isLoadingSupplier, error: supplierError } = useQuery({
     queryKey: ['supplier', id],
@@ -87,6 +114,33 @@ const SupplierForm = () => {
         payment_means_code: supplier.payment_means_code || "",
         aliases: supplier.aliases || [],
         einvoice_alias_name: supplier.einvoice_alias_name || "",
+        // İkinci yetkili kişi bilgileri
+        second_contact_name: supplier.second_contact_name || "",
+        second_contact_email: supplier.second_contact_email || "",
+        second_contact_phone: supplier.second_contact_phone || "",
+        second_contact_position: supplier.second_contact_position || "",
+        // İkinci adres bilgileri
+        second_address: supplier.second_address || "",
+        second_city: supplier.second_city || "",
+        second_district: supplier.second_district || "",
+        second_country: supplier.second_country || "",
+        second_postal_code: supplier.second_postal_code || "",
+        // Finansal bilgiler
+        bank_name: supplier.bank_name || "",
+        iban: supplier.iban || "",
+        account_number: supplier.account_number || "",
+        payment_terms: supplier.payment_terms || "",
+        // Şirket detay bilgileri
+        trade_registry_number: supplier.trade_registry_number || "",
+        mersis_number: supplier.mersis_number || "",
+        establishment_date: supplier.establishment_date || "",
+        sector: supplier.sector || "",
+        supplier_segment: supplier.supplier_segment || "",
+        supplier_source: supplier.supplier_source || "",
+        // Notlar
+        notes: supplier.notes || "",
+        // İlk yetkili kişi pozisyonu
+        first_contact_position: supplier.first_contact_position || "",
       });
     }
   }, [supplier]);
@@ -117,6 +171,43 @@ const SupplierForm = () => {
         tax_office: data.type === 'kurumsal' ? data.tax_office || null : null,
         city: data.city || null,
         district: data.district || null,
+        country: data.country || null,
+        postal_code: data.postal_code || null,
+        fax: data.fax || null,
+        website: data.website || null,
+        is_active: data.is_active,
+        payee_financial_account_id: data.payee_financial_account_id || null,
+        payment_means_channel_code: data.payment_means_channel_code || null,
+        payment_means_code: data.payment_means_code || null,
+        aliases: data.aliases.length > 0 ? data.aliases : null,
+        einvoice_alias_name: data.einvoice_alias_name || null,
+        // İkinci yetkili kişi bilgileri
+        second_contact_name: data.second_contact_name || null,
+        second_contact_email: data.second_contact_email || null,
+        second_contact_phone: data.second_contact_phone || null,
+        second_contact_position: data.second_contact_position || null,
+        // İkinci adres bilgileri
+        second_address: data.second_address || null,
+        second_city: data.second_city || null,
+        second_district: data.second_district || null,
+        second_country: data.second_country || null,
+        second_postal_code: data.second_postal_code || null,
+        // Finansal bilgiler
+        bank_name: data.bank_name || null,
+        iban: data.iban || null,
+        account_number: data.account_number || null,
+        payment_terms: data.payment_terms || null,
+        // Şirket detay bilgileri
+        trade_registry_number: data.trade_registry_number || null,
+        mersis_number: data.mersis_number || null,
+        establishment_date: data.establishment_date || null,
+        sector: data.sector || null,
+        supplier_segment: data.supplier_segment || null,
+        supplier_source: data.supplier_source || null,
+        // Notlar
+        notes: data.notes || null,
+        // İlk yetkili kişi pozisyonu
+        first_contact_position: data.first_contact_position || null,
       };
       if (id) {
         const { error: updateError } = await supabase

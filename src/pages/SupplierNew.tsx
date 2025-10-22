@@ -36,6 +36,33 @@ const SupplierNew = () => {
     payment_means_code: "",
     aliases: [],
     einvoice_alias_name: "",
+    // İkinci yetkili kişi bilgileri
+    second_contact_name: "",
+    second_contact_email: "",
+    second_contact_phone: "",
+    second_contact_position: "",
+    // İkinci adres bilgileri
+    second_address: "",
+    second_city: "",
+    second_district: "",
+    second_country: "",
+    second_postal_code: "",
+    // Finansal bilgiler
+    bank_name: "",
+    iban: "",
+    account_number: "",
+    payment_terms: "",
+    // Şirket detay bilgileri
+    trade_registry_number: "",
+    mersis_number: "",
+    establishment_date: "",
+    sector: "",
+    supplier_segment: "",
+    supplier_source: "",
+    // Notlar
+    notes: "",
+    // İlk yetkili kişi pozisyonu
+    first_contact_position: "",
   });
   // URL parametrelerinden form verilerini doldur
   useEffect(() => {
@@ -81,6 +108,12 @@ const SupplierNew = () => {
         payment_means_code: data.payment_means_code || null,
         aliases: data.aliases.length > 0 ? data.aliases : null,
         einvoice_alias_name: data.einvoice_alias_name || null,
+        // Yeni alanlar - şimdilik null olarak gönder, veritabanı güncellemesi gerekebilir
+        bank_name: data.bank_name || null,
+        iban: data.iban || null,
+        account_number: data.account_number || null,
+        trade_registry_number: data.trade_registry_number || null,
+        mersis_number: data.mersis_number || null,
       };
       const { data: newSupplier, error } = await supabase
         .from('suppliers')

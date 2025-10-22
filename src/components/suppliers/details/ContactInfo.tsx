@@ -298,6 +298,179 @@ export const ContactInfo = ({ supplier, onUpdate }: ContactInfoProps) => {
                 {supplier.einvoice_alias_name || <span className="text-gray-400 italic">Belirtilmemiş</span>}
               </div>
             </div>
+
+            {/* İkinci Yetkili Kişi Bilgileri */}
+            {supplier.second_contact_name && (
+              <>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <Users className="w-2.5 h-2.5 text-indigo-600" />
+                    <span>İkinci Yetkili</span>
+                  </div>
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {supplier.second_contact_name}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <Mail className="w-2.5 h-2.5 text-blue-600" />
+                    <span>İkinci E-posta</span>
+                  </div>
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {supplier.second_contact_email || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <Phone className="w-2.5 h-2.5 text-green-600" />
+                    <span>İkinci Telefon</span>
+                  </div>
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {supplier.second_contact_phone ? formatPhoneNumber(supplier.second_contact_phone) : <span className="text-gray-400 italic">Belirtilmemiş</span>}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <User className="w-2.5 h-2.5 text-indigo-600" />
+                    <span>İkinci Pozisyon</span>
+                  </div>
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {supplier.second_contact_position || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* İkinci Adres Bilgileri */}
+            {supplier.second_address && (
+              <>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <MapPin className="w-2.5 h-2.5 text-rose-600" />
+                    <span>İkinci Adres</span>
+                  </div>
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {supplier.second_address}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <MapPin className="w-2.5 h-2.5 text-rose-600" />
+                    <span>İkinci Şehir</span>
+                  </div>
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {supplier.second_city || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <MapPin className="w-2.5 h-2.5 text-rose-600" />
+                    <span>İkinci İlçe</span>
+                  </div>
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {supplier.second_district || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <MapPin className="w-2.5 h-2.5 text-rose-600" />
+                    <span>İkinci Ülke</span>
+                  </div>
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {supplier.second_country || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <MapPin className="w-2.5 h-2.5 text-rose-600" />
+                    <span>İkinci Posta Kodu</span>
+                  </div>
+                  <div className="text-xs font-medium text-gray-900 truncate">
+                    {supplier.second_postal_code || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Şirket Detay Bilgileri */}
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <Clock className="w-2.5 h-2.5 text-blue-500" />
+                <span>Kuruluş Tarihi</span>
+              </div>
+              <div className="text-xs font-medium text-gray-900 truncate">
+                {supplier.establishment_date ? new Date(supplier.establishment_date).toLocaleDateString('tr-TR') : <span className="text-gray-400 italic">Belirtilmemiş</span>}
+              </div>
+            </div>
+
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <Building className="w-2.5 h-2.5 text-purple-600" />
+                <span>Sektör</span>
+              </div>
+              <div className="text-xs font-medium text-gray-900 truncate">
+                {supplier.sector || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+              </div>
+            </div>
+
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <Users className="w-2.5 h-2.5 text-indigo-600" />
+                <span>Tedarikçi Segmenti</span>
+              </div>
+              <div className="text-xs font-medium text-gray-900 truncate">
+                {supplier.supplier_segment || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+              </div>
+            </div>
+
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <Globe className="w-2.5 h-2.5 text-purple-600" />
+                <span>Tedarikçi Kaynağı</span>
+              </div>
+              <div className="text-xs font-medium text-gray-900 truncate">
+                {supplier.supplier_source || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+              </div>
+            </div>
+
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <FileText className="w-2.5 h-2.5 text-amber-600" />
+                <span>Notlar</span>
+              </div>
+              <div className="text-xs font-medium text-gray-900 truncate">
+                {supplier.notes || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+              </div>
+            </div>
+
+            {/* Pozisyon Bilgileri */}
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <User className="w-2.5 h-2.5 text-primary" />
+                <span>Pozisyon</span>
+              </div>
+              <div className="text-xs font-medium text-gray-900 truncate">
+                {supplier.first_contact_position || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+              </div>
+            </div>
+
+            {/* Ödeme Şartları */}
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <CreditCard className="w-2.5 h-2.5 text-emerald-600" />
+                <span>Ödeme Şartları</span>
+              </div>
+              <div className="text-xs font-medium text-gray-900 truncate">
+                {supplier.payment_terms || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+              </div>
+            </div>
           </div>
         </div>
       )}

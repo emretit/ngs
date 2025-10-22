@@ -53,12 +53,14 @@ export const useProposalEdit = () => {
       const updatedProposal = {
         ...proposal,
         title: formData.title,
+        subject: formData.subject, // Teklif konusu
         description: formData.description,
         valid_until: formData.valid_until,
         terms: formData.payment_terms,
         notes: formData.notes,
         status: formData.status,
         currency: formData.currency,
+        exchange_rate: formData.exchange_rate, // Döviz kuru
         items: formData.items,
         customer_id: formData.customer_id,
         employee_id: formData.employee_id,

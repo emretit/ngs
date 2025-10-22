@@ -74,12 +74,14 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
     offer_number: `TKF-${Date.now().toString().slice(-6)}`,
     
     // General Section
+    subject: "", // Teklif konusu
     validity_date: undefined as Date | undefined,
     prepared_by: "",
     notes: "",
     
     // Financial settings
     currency: "TRY",
+    exchange_rate: 1, // Döviz kuru
     discount_percentage: 0,
     vat_percentage: 20,
     
@@ -352,6 +354,7 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
       // Prepare data for backend
       const proposalData = {
         title: `${formData.customer_company} - Teklif`,
+        subject: formData.subject, // Teklif konusu
         description: formData.notes,
         number: formData.offer_number,
         customer_id: formData.customer_id || null,
@@ -367,6 +370,7 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
         status: status,
         total_amount: primaryTotals.grand,
         currency: primaryCurrency,
+        exchange_rate: formData.exchange_rate, // Döviz kuru
         // Override hook's calculation with our computed total
         computed_total_amount: primaryTotals.grand,
         items: validItems.map(item => ({
@@ -492,6 +496,18 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-0 px-4 pb-4">
+              {/* Teklif Konusu */}
+              <div>
+                <Label htmlFor="subject" className="text-xs font-medium text-gray-700">Teklif Konusu</Label>
+                <Input
+                  id="subject"
+                  value={formData.subject || ""}
+                  onChange={(e) => handleFieldChange('subject', e.target.value)}
+                  placeholder="Teklif konusunu girin"
+                  className="mt-1 h-7 text-xs"
+                />
+              </div>
+
               {/* Tarih Alanları - Altlı Üstlü */}
               <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -518,8 +534,8 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                 </div>
               </div>
 
-              {/* Diğer Alanlar */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Teklif No, Durum ve Para Birimi */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <Label htmlFor="offer_number" className="text-xs font-medium text-gray-700">Teklif No</Label>
                   <Input
@@ -547,7 +563,43 @@ const NewProposalCreate = ({ isCollapsed, setIsCollapsed }: NewProposalCreatePro
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label htmlFor="currency" className="text-xs font-medium text-gray-700">Para Birimi</Label>
+                  <Select value={formData.currency || "TRY"} onValueChange={(value) => handleFieldChange('currency', value)}>
+                    <SelectTrigger className="mt-1 h-7 text-xs">
+                      <SelectValue placeholder="Para birimi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TRY">₺ TRY</SelectItem>
+                      <SelectItem value="USD">$ USD</SelectItem>
+                      <SelectItem value="EUR">€ EUR</SelectItem>
+                      <SelectItem value="GBP">£ GBP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
+              {formData.currency && formData.currency !== "TRY" && (
+                <div>
+                  <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
+                    Döviz Kuru (1 {formData.currency} = ? TRY)
+                  </Label>
+                  <Input
+                    id="exchange_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.exchange_rate || ""}
+                    onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
+                    placeholder="Örn: 32.50"
+                    className="mt-1 h-7 text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    1 {formData.currency} = {formData.exchange_rate || "1"} TRY
+                  </p>
+                </div>
+              )}
 
               {/* Notlar Alanı */}
               <div>

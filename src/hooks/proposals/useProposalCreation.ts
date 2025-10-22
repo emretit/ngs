@@ -22,6 +22,7 @@ export const useProposalCreation = () => {
         id: uuidv4(),
         number: `PRO-${Math.floor(10000 + Math.random() * 90000)}`, // Generate random number
         title: formData.title,
+        subject: formData.subject, // Teklif konusu
         description: formData.description,
         customer_id: formData.customer_id,
         employee_id: formData.employee_id,
@@ -35,6 +36,7 @@ export const useProposalCreation = () => {
         updated_at: new Date().toISOString(),
         total_amount: formData.computed_total_amount || totals.total || 0,
         currency: formData.currency || "TRY",
+        exchange_rate: formData.exchange_rate || 1, // Döviz kuru
         items: formData.items?.map(item => ({
           ...item,
           // Ensure currency is set for each item

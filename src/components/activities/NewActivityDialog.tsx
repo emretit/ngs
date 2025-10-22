@@ -279,11 +279,11 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           {/* Durum ve Önem */}
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center space-x-3">
-              <Label className="text-sm font-medium text-gray-700">Durum</Label>
+              <Label className="text-xs font-medium text-gray-700">Durum</Label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="text-sm border-0 bg-transparent focus:ring-0 focus:outline-none"
+                className="text-xs border-0 bg-transparent focus:ring-0 focus:outline-none font-normal"
               >
                 <option value="todo">Yapılacak</option>
                 <option value="in_progress">Devam Ediyor</option>
@@ -330,7 +330,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                     <select
                       value={recurrenceType}
                       onChange={(e) => setRecurrenceType(e.target.value as any)}
-                      className="w-full p-2 text-sm border border-gray-200 rounded-md bg-white h-8"
+                      className="w-full px-3 py-2 text-xs border border-gray-200 rounded-md bg-white h-8"
                     >
                       <option value="none">Tekrarlanmaz</option>
                       <option value="daily">Günlük</option>
@@ -348,7 +348,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                         value={recurrenceInterval}
                         onChange={(e) => setRecurrenceInterval(parseInt(e.target.value) || 1)}
                         min="1"
-                        className="w-full p-2 text-sm border border-gray-200 rounded-md h-8"
+                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded-md h-8"
                       />
                     </div>
                   )}
@@ -362,7 +362,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                         onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || 1)}
                         min="1"
                         max="31"
-                        className="w-full p-2 text-sm border border-gray-200 rounded-md h-8"
+                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded-md h-8"
                       />
                     </div>
                   )}
@@ -406,7 +406,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                     type="date"
                     value={recurrenceEndDate}
                     onChange={(e) => setRecurrenceEndDate(e.target.value)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded-md h-8"
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-md h-8"
                   />
                 </div>
               </div>

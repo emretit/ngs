@@ -14,6 +14,7 @@ interface ActivityStats {
   general: number;
   todo: number;
   in_progress: number;
+  postponed: number;
   completed: number;
 }
 
@@ -28,7 +29,8 @@ const ActivitiesSummary = () => {
     general: 0,
     todo: 0,
     in_progress: 0,
-    completed: 0
+    completed: 0,
+    postponed: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -54,7 +56,8 @@ const ActivitiesSummary = () => {
             general: 0,
             todo: 0,
             in_progress: 0,
-            completed: 0
+            completed: 0,
+            postponed: 0
           };
           
           activities.forEach(activity => {

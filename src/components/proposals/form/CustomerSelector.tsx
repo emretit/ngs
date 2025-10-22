@@ -83,7 +83,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({ value, onChange, er
 
   return (
     <div className="space-y-2">
-      <Label className={error ? "text-red-500" : ""}>Firma Adı *</Label>
+      <Label className={cn("text-xs font-medium text-gray-700", error ? "text-red-500" : "")}>Müşteri</Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -91,7 +91,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({ value, onChange, er
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full justify-between h-8",
+              "w-full h-8 text-xs justify-between",
               !value && "text-muted-foreground",
               error && "border-red-500"
             )}
@@ -99,7 +99,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({ value, onChange, er
             <span className="truncate text-left flex-1">
               {selectedCustomer 
                 ? (selectedCustomer.company || selectedCustomer.name)
-                : "Müşteri ara..."
+                : "Müşteri seçin..."
               }
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

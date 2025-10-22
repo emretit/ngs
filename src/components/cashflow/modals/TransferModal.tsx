@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -304,14 +304,18 @@ const TransferModal = ({
 
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Hesap Arası Transfer</DialogTitle>
-          <p className="text-sm text-gray-500">Hesaplarınız arasında para transferi yapın</p>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Hesap Arası Transfer"
+      maxWidth="2xl"
+      headerColor="blue"
+    >
+      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <p className="text-sm text-blue-700">Hesaplarınız arasında para transferi yapın</p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
           {/* Kaynak ve Hedef Hesap - Basit Seçim */}
           <div className="space-y-4">
             {/* Kaynak Hesap */}
@@ -467,17 +471,20 @@ const TransferModal = ({
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading} className="flex-1">
-              İptal
-            </Button>
-            <Button type="submit" disabled={isLoading} className="flex-1 bg-blue-600 hover:bg-blue-700">
-              {isLoading ? "Transfer Yapılıyor..." : "✓ Transferi Onayla"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <UnifiedDialogFooter className="gap-2">
+          <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} className="flex-1" />
+          <UnifiedDialogActionButton
+            onClick={() => {}}
+            variant="primary"
+            disabled={isLoading}
+            loading={isLoading}
+            className="flex-1 bg-blue-600 hover:bg-blue-700"
+          >
+            ✓ Transferi Onayla
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
   );
 };
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -167,11 +167,14 @@ export const RoleDialog = ({ open, onOpenChange, roleId }: RoleDialogProps) => {
   }, 0);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Yeni Rol Oluştur</DialogTitle>
-        </DialogHeader>
+    <UnifiedDialog
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      title="Yeni Rol Oluştur"
+      maxWidth="4xl"
+      headerColor="purple"
+      className="max-h-[90vh] overflow-y-auto"
+    >
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -329,15 +332,15 @@ export const RoleDialog = ({ open, onOpenChange, roleId }: RoleDialogProps) => {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            İptal
-          </Button>
-          <Button onClick={handleSave}>
-            Kaydet
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <UnifiedDialogFooter>
+        <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} />
+        <UnifiedDialogActionButton
+          onClick={handleSave}
+          variant="primary"
+        >
+          Kaydet
+        </UnifiedDialogActionButton>
+      </UnifiedDialogFooter>
+    </UnifiedDialog>
   );
 };

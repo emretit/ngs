@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -149,14 +148,14 @@ export const BulkPayrollDialog = ({ open, onOpenChange, selectedEmployees }: Bul
   const totalPayroll = calculateTotalPayroll();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Calculator className="h-6 w-6 text-purple-600" />
-            Toplu Maaş Tahakkuku
-          </DialogTitle>
-        </DialogHeader>
+    <UnifiedDialog
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      title="Toplu Maaş Tahakkuku"
+      maxWidth="4xl"
+      headerColor="purple"
+      className="max-h-[90vh] overflow-y-auto"
+    >
 
         <div className="space-y-6">
           {/* Tahakkuk Bilgileri */}
@@ -280,25 +279,19 @@ export const BulkPayrollDialog = ({ open, onOpenChange, selectedEmployees }: Bul
             </Card>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              onClick={handleProcessPayroll}
-              disabled={validItems.length === 0 || isProcessing}
-              className="flex-1 h-12 bg-purple-600 hover:bg-purple-700"
-            >
-              {isProcessing ? "İşleniyor..." : `${validItems.length} Çalışanın Maaşını Tahakkuk Et`}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-12 px-8"
-            >
-              İptal
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} disabled={isProcessing} />
+          <UnifiedDialogActionButton
+            onClick={handleProcessPayroll}
+            variant="primary"
+            disabled={validItems.length === 0 || isProcessing}
+            loading={isProcessing}
+            className="flex-1 h-12 bg-purple-600 hover:bg-purple-700"
+          >
+            {validItems.length} Çalışanın Maaşını Tahakkuk Et
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </div>
+    </UnifiedDialog>
   );
 };

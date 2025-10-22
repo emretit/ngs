@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -373,12 +373,14 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
   };
 
   return (<>
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Yeni Fırsat Ekle</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Yeni Fırsat Ekle"
+      maxWidth="xl"
+      headerColor="blue"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="title">Fırsat Başlığı</Label>
             <Input 
@@ -851,17 +853,19 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
             />
           </div>
           
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" type="button" onClick={onClose} disabled={isSubmitting}>
-              İptal
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Kaydediliyor..." : "Kaydet"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={onClose} disabled={isSubmitting} />
+          <UnifiedDialogActionButton
+            onClick={() => {}}
+            variant="primary"
+            disabled={isSubmitting}
+            loading={isSubmitting}
+          >
+            Kaydet
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
     
     {/* Confirmation Dialog */}
     <ConfirmationDialogComponent

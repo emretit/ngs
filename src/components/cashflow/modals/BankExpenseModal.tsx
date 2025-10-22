@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -165,14 +163,18 @@ const BankExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Banka Hesabından Masraf Ekle</DialogTitle>
-          <p className="text-sm text-gray-600">Hesap: {accountName}</p>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Banka Hesabından Masraf Ekle"
+      maxWidth="lg"
+      headerColor="red"
+    >
+      <div className="mb-4 p-3 bg-red-50 rounded-lg border border-red-200">
+        <p className="text-sm text-red-700">Hesap: {accountName}</p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Tutar ({currency}) *</Label>
@@ -227,26 +229,28 @@ const BankExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="transaction_date">İşlem Tarihi</Label>
-              <DatePicker
-                date={formData.transaction_date}
-                onSelect={(date) => handleInputChange('transaction_date', date)}
-              />
-            </div>
+            <UnifiedDatePicker
+              label="İşlem Tarihi"
+              date={formData.transaction_date}
+              onSelect={(date) => handleInputChange('transaction_date', date)}
+              placeholder="Tarih seçin"
+            />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              İptal
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Ekleniyor..." : "Masraf Ekle"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
+          <UnifiedDialogActionButton
+            onClick={() => {}}
+            variant="destructive"
+            disabled={isLoading}
+            loading={isLoading}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Masraf Ekle
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
   );
 };
 

@@ -2,14 +2,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -57,42 +51,52 @@ export const InviteUserDialog = () => {
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button>Yeni Kullanıcı Davet Et</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Şirkete Kullanıcı Davet Et</DialogTitle>
-          <DialogDescription>
-            Davet edilen kullanıcıya Supabase üzerinden şifre belirleme e-postası gönderilir.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
+    <>
+      <Button onClick={() => setIsOpen(true)}>Yeni Kullanıcı Davet Et</Button>
+      
+      <UnifiedDialog
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Şirkete Kullanıcı Davet Et"
+        maxWidth="md"
+        headerColor="green"
+      >
+        <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+          <p className="text-sm text-green-700">Davet edilen kullanıcıya Supabase üzerinden şifre belirleme e-postası gönderilir.</p>
+        </div>
+        
+        <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-muted-foreground">
+            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
               E-posta adresi
-            </label>
+            </Label>
             <Input
+              id="email"
               placeholder="kullanici@example.com"
               type="email"
               value={newUserEmail}
               onChange={(e) => setNewUserEmail(e.target.value)}
               disabled={inviteUserMutation.isPending}
+              className="mt-1"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-gray-500 mt-1">
               Bu kullanıcıya şifre belirleme maili gönderilecek
             </p>
           </div>
-          <Button 
-            onClick={() => inviteUserMutation.mutate(newUserEmail)}
-            disabled={inviteUserMutation.isPending || !newUserEmail.trim()}
-            className="w-full"
-          >
-            {inviteUserMutation.isPending ? "Gönderiliyor..." : "Davet Gönder"}
-          </Button>
+          
+          <UnifiedDialogFooter>
+            <UnifiedDialogCancelButton onClick={() => setIsOpen(false)} disabled={inviteUserMutation.isPending} />
+            <UnifiedDialogActionButton
+              onClick={() => inviteUserMutation.mutate(newUserEmail)}
+              variant="primary"
+              disabled={inviteUserMutation.isPending || !newUserEmail.trim()}
+              loading={inviteUserMutation.isPending}
+            >
+              Davet Gönder
+            </UnifiedDialogActionButton>
+          </UnifiedDialogFooter>
         </div>
-      </DialogContent>
-    </Dialog>
+      </UnifiedDialog>
+    </>
   );
 };

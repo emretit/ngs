@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -175,20 +173,14 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-              </svg>
-            </div>
-            Masraf Ekle - {accountName}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Masraf Ekle - ${accountName}`}
+      maxWidth="lg"
+      headerColor="red"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="amount">Tutar *</Label>
@@ -210,14 +202,13 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="transaction_date">Tarih *</Label>
-              <DatePicker
-                date={formData.transaction_date}
-                onSelect={(date) => handleInputChange('transaction_date', date)}
-                placeholder="Tarih seçin"
-              />
-            </div>
+            <UnifiedDatePicker
+              label="Tarih"
+              date={formData.transaction_date}
+              onSelect={(date) => handleInputChange('transaction_date', date)}
+              placeholder="Tarih seçin"
+              required
+            />
           </div>
 
           <div className="space-y-2">
@@ -260,17 +251,20 @@ const CashExpenseModal = ({ isOpen, onClose, onSuccess, accountId, accountName, 
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              İptal
-            </Button>
-            <Button type="submit" disabled={isLoading} className="bg-red-600 hover:bg-red-700">
-              {isLoading ? "Ekleniyor..." : "Masraf Ekle"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
+          <UnifiedDialogActionButton
+            onClick={() => {}}
+            variant="destructive"
+            disabled={isLoading}
+            loading={isLoading}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            Masraf Ekle
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
   );
 };
 

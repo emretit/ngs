@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { handleError, handleSuccess } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { generateRecurringTasks, createNextTaskInstance } from "@/utils/recurringTaskScheduler";
+import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 
 interface NewActivityDialogProps {
   isOpen: boolean;
@@ -61,18 +63,14 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   const [selectedOpportunityId, setSelectedOpportunityId] = useState(opportunityId || "");
   const [selectedAssigneeId, setSelectedAssigneeId] = useState("");
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingOpportunities, setIsLoadingOpportunities] = useState(false);
-  const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
   const [isOpportunityPopoverOpen, setIsOpportunityPopoverOpen] = useState(false);
-  const [isAssigneePopoverOpen, setIsAssigneePopoverOpen] = useState(false);
 
   // Fırsatları yükle
   useEffect(() => {
     if (isOpen) {
       loadOpportunities();
-      loadEmployees();
     }
   }, [isOpen]);
 
@@ -95,24 +93,6 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
     }
   };
 
-  const loadEmployees = async () => {
-    setIsLoadingEmployees(true);
-    try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('id, first_name, last_name, email')
-        .order('first_name', { ascending: true });
-
-      if (error) throw error;
-      setEmployees(data || []);
-    } catch (error) {
-      handleError(error, {
-        operation: "fetchEmployees"
-      });
-    } finally {
-      setIsLoadingEmployees(false);
-    }
-  };
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -233,30 +213,15 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
     onClose();
   };
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto max-h-[95vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <h2 className="text-lg font-semibold text-gray-900">Yeni Aktivite</h2>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Yeni Aktivite"
+      maxWidth="md"
+      headerColor="blue"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
           {/* Başlık ve Açıklama */}
           <div className="space-y-3">
             <div className="space-y-1">
@@ -348,79 +313,24 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
               </Popover>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-700">Görevli</Label>
-              <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={isAssigneePopoverOpen}
-                    className="w-full justify-between h-9 text-sm"
-                  >
-                    {selectedAssigneeId
-                      ? employees.find((employee) => employee.id === selectedAssigneeId)?.first_name?.slice(0, 10) + "..."
-                      : "Seç"}
-                    <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-0">
-                  <Command>
-                    <CommandInput placeholder="Çalışan ara..." />
-                    <CommandList>
-                      <CommandEmpty>Çalışan bulunamadı.</CommandEmpty>
-                      <CommandGroup>
-                        <CommandItem
-                          value=""
-                          onSelect={() => {
-                            setSelectedAssigneeId("");
-                            setIsAssigneePopoverOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedAssigneeId === "" ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          Görevlendirilmedi
-                        </CommandItem>
-                        {employees.map((employee) => (
-                          <CommandItem
-                            key={employee.id}
-                            value={employee.first_name + " " + employee.last_name}
-                            onSelect={() => {
-                              setSelectedAssigneeId(employee.id);
-                              setIsAssigneePopoverOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedAssigneeId === employee.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {employee.first_name} {employee.last_name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <EmployeeSelector
+              value={selectedAssigneeId}
+              onChange={setSelectedAssigneeId}
+              label="Görevli"
+              placeholder="Görevli seçin..."
+              searchPlaceholder="Çalışan ara..."
+              noResultsText="Çalışan bulunamadı"
+              showLabel={true}
+            />
           </div>
 
           {/* Tarih */}
-          <div className="space-y-1">
-            <Label className="text-sm font-medium text-gray-700">Son Tarih</Label>
-            <Input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="h-9"
-            />
-          </div>
+          <UnifiedDatePicker
+            label="Son Tarih"
+            date={dueDate ? new Date(dueDate) : undefined}
+            onSelect={(date) => setDueDate(date ? date.toISOString().split('T')[0] : "")}
+            placeholder="Tarih seçin"
+          />
 
           {/* Durum ve Önem */}
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -574,35 +484,20 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
             </div>
           )}
 
-          {/* Butonlar */}
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-              className="px-4 py-2 text-sm"
-            >
-              İptal
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="px-6 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {isLoading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Oluşturuluyor...</span>
-                </div>
-              ) : (
-                "Oluştur"
-              )}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={handleClose} disabled={isLoading} />
+          <UnifiedDialogActionButton
+            onClick={() => {}}
+            variant="primary"
+            disabled={isLoading}
+            loading={isLoading}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            Oluştur
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
   );
 };
 

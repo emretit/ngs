@@ -5,10 +5,11 @@ import ProposalsSummary from "@/components/crm/ProposalsSummary";
 import OpportunitiesSummary from "@/components/crm/OpportunitiesSummary";
 import OrdersSummary from "@/components/crm/OrdersSummary";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Calendar, FileText, BarChart3, ShoppingCart, Plus } from "lucide-react";
+import { ChevronRight, Calendar, FileText, BarChart3, ShoppingCart, Plus, Users, TrendingUp, DollarSign, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import NewActivityDialog from "@/components/activities/NewActivityDialog";
 import OpportunityForm from "@/components/opportunities/OpportunityForm";
+import { formatCurrency } from "@/lib/utils";
 interface CrmDashboardProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
@@ -42,13 +43,18 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
         </div>
       </div>
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          {/* Activities Card */}
-          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-blue-200">
+
+        {/* Ana CRM Kartları - Hesaplar sayfasındaki gibi detaylı */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Activities Card - Detaylı Özet */}
+          <div 
+            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-blue-200 cursor-pointer"
+            onClick={() => navigate("/activities")}
+          >
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                     <Calendar className="h-4 w-4" />
                   </div>
                   <div>
@@ -56,24 +62,33 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
                     <p className="text-xs text-gray-500">Günlük işlemler</p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 h-7"
-                  onClick={() => setIsNewActivityDialogOpen(true)}
-                >
-                  <Plus className="h-3 w-3" />
-                  Yeni
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsNewActivityDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                </div>
               </div>
               <ActivitiesSummary />
             </div>
           </div>
-          {/* Opportunities Card */}
-          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200">
+
+          {/* Opportunities Card - Detaylı Özet */}
+          <div 
+            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200 cursor-pointer"
+            onClick={() => navigate("/opportunities")}
+          >
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                  <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
                     <BarChart3 className="h-4 w-4" />
                   </div>
                   <div>
@@ -81,24 +96,33 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
                     <p className="text-xs text-gray-500">Satış fırsatları</p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7"
-                  onClick={() => setIsNewOpportunityDialogOpen(true)}
-                >
-                  <Plus className="h-3 w-3" />
-                  Yeni
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsNewOpportunityDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                </div>
               </div>
               <OpportunitiesSummary />
             </div>
           </div>
-          {/* Proposals Card */}
-          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-orange-200">
+
+          {/* Proposals Card - Detaylı Özet */}
+          <div 
+            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-orange-200 cursor-pointer"
+            onClick={() => navigate("/proposals")}
+          >
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                  <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
                     <FileText className="h-4 w-4" />
                   </div>
                   <div>
@@ -106,24 +130,33 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
                     <p className="text-xs text-gray-500">Müşteri teklifleri</p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 h-7"
-                  onClick={() => navigate("/proposal/create")}
-                >
-                  <Plus className="h-3 w-3" />
-                  Yeni
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/proposal/create");
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                </div>
               </div>
               <ProposalsSummary />
             </div>
           </div>
-          {/* Orders Card */}
-          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-green-200">
+
+          {/* Orders Card - Detaylı Özet */}
+          <div 
+            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-green-200 cursor-pointer"
+            onClick={() => navigate("/orders")}
+          >
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                  <div className="p-2 bg-green-100 rounded-lg text-green-600">
                     <ShoppingCart className="h-4 w-4" />
                   </div>
                   <div>
@@ -131,14 +164,19 @@ const CrmDashboard: React.FC<CrmDashboardProps> = ({ isCollapsed, setIsCollapsed
                     <p className="text-xs text-gray-500">Müşteri siparişleri</p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7"
-                  onClick={() => navigate("/orders/create")}
-                >
-                  <Plus className="h-3 w-3" />
-                  Yeni
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/orders/create");
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                </div>
               </div>
               <OrdersSummary />
             </div>

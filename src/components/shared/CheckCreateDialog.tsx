@@ -2,13 +2,11 @@ import React, { useState, useEffect } from "react";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useForm, FormProvider } from "react-hook-form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -119,12 +117,14 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{editingCheck?.id ? "Çek Düzenle" : "Yeni Çek Ekle"}</DialogTitle>
-        </DialogHeader>
-        <form
+    <UnifiedDialog
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      title={editingCheck?.id ? "Çek Düzenle" : "Yeni Çek Ekle"}
+      maxWidth="2xl"
+      headerColor="blue"
+    >
+      <form
           onSubmit={(e) => {
             e.preventDefault();
             const form = e.currentTarget as HTMLFormElement;
@@ -160,14 +160,20 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Düzenleme Tarihi</Label>
-              <EnhancedDatePicker date={issueDate} onSelect={setIssueDate} placeholder="Tarih seçin" />
-            </div>
-            <div>
-              <Label>Vade Tarihi</Label>
-              <EnhancedDatePicker date={dueDate} onSelect={setDueDate} placeholder="Tarih seçin" />
-            </div>
+            <UnifiedDatePicker
+              label="Düzenleme Tarihi"
+              date={issueDate}
+              onSelect={setIssueDate}
+              placeholder="Tarih seçin"
+              required
+            />
+            <UnifiedDatePicker
+              label="Vade Tarihi"
+              date={dueDate}
+              onSelect={setDueDate}
+              placeholder="Tarih seçin"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -220,13 +226,19 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>İptal</Button>
-            <Button type="submit">Kaydet</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} disabled={saveMutation.isPending} />
+          <UnifiedDialogActionButton
+            onClick={() => {}}
+            variant="primary"
+            disabled={saveMutation.isPending}
+            loading={saveMutation.isPending}
+          >
+            Kaydet
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
   );
 }
 

@@ -7,10 +7,10 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Customer } from "@/types/customer";
 import { Supplier } from "@/types/supplier";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
@@ -176,13 +176,15 @@ export function PaymentDialog({ open, onOpenChange, contact, contactType }: Paym
   const directionLabels = getDirectionLabels();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Yeni Ödeme Ekle</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <UnifiedDialog
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      title="Yeni Ödeme Ekle"
+      maxWidth="md"
+      headerColor="green"
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="amount"
@@ -328,15 +330,19 @@ export function PaymentDialog({ open, onOpenChange, contact, contactType }: Paym
               )}
             />
 
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-                İptal
-              </Button>
-              <Button type="submit">Kaydet</Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <UnifiedDialogFooter>
+            <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} />
+            <UnifiedDialogActionButton
+              onClick={() => form.handleSubmit(onSubmit)()}
+              variant="primary"
+              disabled={form.formState.isSubmitting}
+              loading={form.formState.isSubmitting}
+            >
+              Kaydet
+            </UnifiedDialogActionButton>
+          </UnifiedDialogFooter>
+        </form>
+      </Form>
+    </UnifiedDialog>
   );
 }

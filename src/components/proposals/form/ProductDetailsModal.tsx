@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { X, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Product } from "@/types/product";
 import { formatCurrency } from "@/utils/formatters";
 import { useCurrencyManagement } from "@/components/proposals/form/items/hooks/useCurrencyManagement";
@@ -176,26 +175,19 @@ const ProductDetailsModal = ({
   if (!product && !existingData) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="bg-primary/10 -m-6 mb-4 p-4 rounded-t-lg">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold text-primary truncate">
-              {product ? product.name : (existingData ? existingData.name : "Ürün Detayları")}
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          {product?.sku && (
-            <p className="text-sm text-muted-foreground">Ürün Kodu: {product.sku}</p>
-          )}
-        </DialogHeader>
+    <UnifiedDialog
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      title={product ? product.name : (existingData ? existingData.name : "Ürün Detayları")}
+      maxWidth="2xl"
+      headerColor="blue"
+      className="max-h-[90vh] overflow-y-auto"
+    >
+      {product?.sku && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-700">Ürün Kodu: {product.sku}</p>
+        </div>
+      )}
 
         <div className="space-y-4">
           {product && showStockWarning && (
@@ -367,24 +359,19 @@ const ProductDetailsModal = ({
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              İptal
-            </Button>
-            <Button
-              onClick={handleAddToProposal}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Ekle
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} />
+          <UnifiedDialogActionButton
+            onClick={handleAddToProposal}
+            variant="primary"
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Ekle
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </div>
+    </UnifiedDialog>
   );
 };
 

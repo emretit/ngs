@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
 import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Target, Users, LayoutGrid, FileText, Activity, Calendar, CheckCircle, DollarSign, ChevronRight } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useNavigate } from "react-router-dom";
@@ -22,26 +23,12 @@ const Dashboard = () => {
 
   return (
     <>
-      {/* Header - aligned with Proposals header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
-        {/* Left: Title with icon */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg text-white shadow-lg">
-            <LayoutGrid className="h-5 w-5" />
-          </div>
-          <div className="space-y-0.5">
-            <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-              Gösterge Paneli
-            </h1>
-            <p className="text-xs text-muted-foreground/70">İş süreçlerinizi takip edin ve yönetin.</p>
-          </div>
-        </div>
-        {/* Right: Status pill */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-600 shadow-sm">
-          <span className="font-bold">Durum</span>
-          <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">Güncel</span>
-        </div>
-      </div>
+      {/* Dashboard Header */}
+      <DashboardHeader 
+        financialData={financialData}
+        crmStats={crmStats}
+        hrStats={hrStats}
+      />
 
       {/* Global Search Bar */}
       <GlobalSearchBar />

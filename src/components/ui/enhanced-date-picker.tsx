@@ -179,7 +179,7 @@ export function EnhancedDatePicker({ date, onSelect, placeholder = "Tarih seçin
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-start text-left font-normal",
+            "w-full h-8 justify-start text-left font-normal",
             !date && "text-muted-foreground",
             className
           )}

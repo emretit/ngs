@@ -91,7 +91,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({ value, onChange, er
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full justify-between",
+              "w-full justify-between h-8",
               !value && "text-muted-foreground",
               error && "border-red-500"
             )}

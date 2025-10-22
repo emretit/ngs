@@ -6,15 +6,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { handleError, handleSuccess } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { generateRecurringTasks, createNextTaskInstance } from "@/utils/recurringTaskScheduler";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
+import OpportunitySelector from "@/components/opportunities/OpportunitySelector";
+import CustomerSelector from "@/components/proposals/form/CustomerSelector";
 
 interface NewActivityDialogProps {
   isOpen: boolean;
@@ -26,11 +26,6 @@ interface NewActivityDialogProps {
   opportunityId?: string;
 }
 
-interface Opportunity {
-  id: string;
-  title: string;
-  status: string;
-}
 
 interface Employee {
   id: string;
@@ -62,36 +57,11 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState(1);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState(opportunityId || "");
   const [selectedAssigneeId, setSelectedAssigneeId] = useState("");
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [selectedCustomerName, setSelectedCustomerName] = useState("");
+  const [selectedCompanyName, setSelectedCompanyName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingOpportunities, setIsLoadingOpportunities] = useState(false);
-  const [isOpportunityPopoverOpen, setIsOpportunityPopoverOpen] = useState(false);
 
-  // Fırsatları yükle
-  useEffect(() => {
-    if (isOpen) {
-      loadOpportunities();
-    }
-  }, [isOpen]);
-
-  const loadOpportunities = async () => {
-    setIsLoadingOpportunities(true);
-    try {
-      const { data, error } = await supabase
-        .from('opportunities')
-        .select('id, title, status')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOpportunities(data || []);
-    } catch (error) {
-      handleError(error, {
-        operation: "fetchOpportunities"
-      });
-    } finally {
-      setIsLoadingOpportunities(false);
-    }
-  };
 
 
 
@@ -109,9 +79,15 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
 
     try {
       // Seçilen fırsat bilgilerini al
-      const selectedOpportunity = selectedOpportunityId
-        ? opportunities.find(opp => opp.id === selectedOpportunityId)
-        : null;
+      let selectedOpportunity = null;
+      if (selectedOpportunityId) {
+        const { data: opportunityData } = await supabase
+          .from('opportunities')
+          .select('id, title, status')
+          .eq('id', selectedOpportunityId)
+          .single();
+        selectedOpportunity = opportunityData;
+      }
 
       const { data, error } = await supabase
         .from('activities')
@@ -199,6 +175,9 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
     setDueDate("");
     setSelectedOpportunityId("");
     setSelectedAssigneeId("");
+    setSelectedCustomerId("");
+    setSelectedCustomerName("");
+    setSelectedCompanyName("");
     // Reset recurring fields
     setIsRecurring(false);
     setRecurrenceType('none');
@@ -211,6 +190,12 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  const handleCustomerChange = (customerId: string, customerName: string, companyName: string) => {
+    setSelectedCustomerId(customerId);
+    setSelectedCustomerName(customerName);
+    setSelectedCompanyName(companyName);
   };
 
   return (
@@ -231,7 +216,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Aktivite başlığını girin"
-                className="h-10"
+                className="h-8"
                 required
               />
             </div>
@@ -244,74 +229,22 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Aktivite detaylarını girin"
                 rows={2}
-                className="resize-none"
+                className="resize-none h-8"
               />
             </div>
           </div>
 
           {/* Hızlı Seçimler */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-sm font-medium text-gray-700">Fırsat</Label>
-              <Popover open={isOpportunityPopoverOpen} onOpenChange={setIsOpportunityPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={isOpportunityPopoverOpen}
-                    className="w-full justify-between h-9 text-sm"
-                  >
-                    {selectedOpportunityId
-                      ? opportunities.find((opportunity) => opportunity.id === selectedOpportunityId)?.title?.slice(0, 20) + "..."
-                      : "Seç"}
-                    <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-0">
-                  <Command>
-                    <CommandInput placeholder="Fırsat ara..." />
-                    <CommandList>
-                      <CommandEmpty>Fırsat bulunamadı.</CommandEmpty>
-                      <CommandGroup>
-                        <CommandItem
-                          value=""
-                          onSelect={() => {
-                            setSelectedOpportunityId("");
-                            setIsOpportunityPopoverOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedOpportunityId === "" ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          Fırsat seçilmedi
-                        </CommandItem>
-                        {opportunities.map((opportunity) => (
-                          <CommandItem
-                            key={opportunity.id}
-                            value={opportunity.title}
-                            onSelect={() => {
-                              setSelectedOpportunityId(opportunity.id);
-                              setIsOpportunityPopoverOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedOpportunityId === opportunity.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {opportunity.title} - ({opportunity.status})
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <OpportunitySelector
+              value={selectedOpportunityId}
+              onChange={setSelectedOpportunityId}
+              label="Fırsat"
+              placeholder="Fırsat seçin..."
+              searchPlaceholder="Fırsat ara..."
+              noResultsText="Fırsat bulunamadı"
+              showLabel={true}
+            />
 
             <EmployeeSelector
               value={selectedAssigneeId}
@@ -324,13 +257,24 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
             />
           </div>
 
-          {/* Tarih */}
-          <UnifiedDatePicker
-            label="Son Tarih"
-            date={dueDate ? new Date(dueDate) : undefined}
-            onSelect={(date) => setDueDate(date ? date.toISOString().split('T')[0] : "")}
-            placeholder="Tarih seçin"
-          />
+          {/* Müşteri ve Son Tarih */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <CustomerSelector
+                value={selectedCustomerId}
+                onChange={handleCustomerChange}
+                error=""
+              />
+            </div>
+            <div className="space-y-1">
+              <UnifiedDatePicker
+                label="Son Tarih"
+                date={dueDate ? new Date(dueDate) : undefined}
+                onSelect={(date) => setDueDate(date ? date.toISOString().split('T')[0] : "")}
+                placeholder="Tarih seçin"
+              />
+            </div>
+          </div>
 
           {/* Durum ve Önem */}
           <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -386,7 +330,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                     <select
                       value={recurrenceType}
                       onChange={(e) => setRecurrenceType(e.target.value as any)}
-                      className="w-full p-2 text-sm border border-gray-200 rounded-md bg-white"
+                      className="w-full p-2 text-sm border border-gray-200 rounded-md bg-white h-8"
                     >
                       <option value="none">Tekrarlanmaz</option>
                       <option value="daily">Günlük</option>
@@ -404,7 +348,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                         value={recurrenceInterval}
                         onChange={(e) => setRecurrenceInterval(parseInt(e.target.value) || 1)}
                         min="1"
-                        className="w-full p-2 text-sm border border-gray-200 rounded-md"
+                        className="w-full p-2 text-sm border border-gray-200 rounded-md h-8"
                       />
                     </div>
                   )}
@@ -418,7 +362,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                         onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || 1)}
                         min="1"
                         max="31"
-                        className="w-full p-2 text-sm border border-gray-200 rounded-md"
+                        className="w-full p-2 text-sm border border-gray-200 rounded-md h-8"
                       />
                     </div>
                   )}
@@ -462,7 +406,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                     type="date"
                     value={recurrenceEndDate}
                     onChange={(e) => setRecurrenceEndDate(e.target.value)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded-md"
+                    className="w-full p-2 text-sm border border-gray-200 rounded-md h-8"
                   />
                 </div>
               </div>

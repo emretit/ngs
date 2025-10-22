@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,23 +12,20 @@ import {
 import { 
   ChevronsUpDown, 
   Search, 
-  User, 
+  Target, 
   Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
-interface Employee {
+interface Opportunity {
   id: string;
-  first_name: string;
-  last_name: string;
-  position?: string;
-  department?: string;
-  email?: string;
-  phone?: string;
+  title: string;
+  status: string;
+  value?: number;
 }
 
-interface EmployeeSelectorProps {
+interface OpportunitySelectorProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
@@ -43,16 +39,16 @@ interface EmployeeSelectorProps {
   className?: string;
 }
 
-const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({ 
+const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({ 
   value, 
   onChange, 
   error, 
   companyId,
-  label = "Çalışan Seçin",
-  placeholder = "Çalışan seçin...",
-  searchPlaceholder = "Çalışan ara...",
-  loadingText = "Çalışanlar yükleniyor...",
-  noResultsText = "Çalışan bulunamadı",
+  label = "Fırsat Seçin",
+  placeholder = "Fırsat seçin...",
+  searchPlaceholder = "Fırsat ara...",
+  loadingText = "Fırsatlar yükleniyor...",
+  noResultsText = "Fırsat bulunamadı",
   showLabel = true,
   className = ""
 }) => {
@@ -60,41 +56,58 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const { userData } = useCurrentUser();
 
-  const { data: employees = [], isLoading } = useQuery({
-    queryKey: ["employees", companyId || userData?.company_id],
+  const { data: opportunities = [], isLoading } = useQuery({
+    queryKey: ["opportunities", companyId || userData?.company_id],
     queryFn: async () => {
       const targetCompanyId = companyId || userData?.company_id;
       if (!targetCompanyId) return [];
       
       const { data, error } = await supabase
-        .from("employees")
-        .select("id, first_name, last_name, position, department")
+        .from("opportunities")
+        .select("id, title, status, value")
         .eq("company_id", targetCompanyId)
-        .eq("status", "aktif")
-        .order("first_name");
+        .order("created_at", { ascending: false });
       
       if (error) throw error;
-      return data as Employee[] || [];
+      return data as Opportunity[] || [];
     },
     enabled: !!(companyId || userData?.company_id),
   });
 
-  // Filter employees based on search query
-  const filteredEmployees = useMemo(() => {
-    return employees.filter(employee => {
+  // Filter opportunities based on search query
+  const filteredOpportunities = useMemo(() => {
+    return opportunities.filter(opportunity => {
       const matchesSearch = 
         searchQuery === "" || 
-        `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchQuery.toLowerCase());
+        opportunity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        opportunity.status.toLowerCase().includes(searchQuery.toLowerCase());
       
       return matchesSearch;
     });
-  }, [employees, searchQuery]);
+  }, [opportunities, searchQuery]);
 
-  const selectedEmployee = employees.find(emp => emp.id === value);
+  const selectedOpportunity = opportunities.find(opp => opp.id === value);
 
-  const handleSelectEmployee = (employee: Employee) => {
-    onChange(employee.id);
+  const handleSelectOpportunity = (opportunity: Opportunity) => {
+    onChange(opportunity.id);
     setOpen(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'yeni':
+        return 'text-blue-600 bg-blue-50';
+      case 'devam ediyor':
+        return 'text-yellow-600 bg-yellow-50';
+      case 'teklif verildi':
+        return 'text-purple-600 bg-purple-50';
+      case 'kazanıldı':
+        return 'text-green-600 bg-green-50';
+      case 'kaybedildi':
+        return 'text-red-600 bg-red-50';
+      default:
+        return 'text-gray-600 bg-gray-50';
+    }
   };
 
   if (isLoading) {
@@ -125,8 +138,8 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             )}
           >
             <span className="truncate text-left flex-1">
-              {selectedEmployee 
-                ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}`
+              {selectedOpportunity 
+                ? selectedOpportunity.title
                 : placeholder
               }
             </span>
@@ -147,25 +160,40 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
           </div>
           
           <div className="max-h-[300px] overflow-y-auto">
-            {filteredEmployees.length === 0 ? (
+            {filteredOpportunities.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 {searchQuery 
-                  ? `"${searchQuery}" ile eşleşen çalışan bulunamadı` 
+                  ? `"${searchQuery}" ile eşleşen fırsat bulunamadı` 
                   : noResultsText}
               </div>
             ) : (
               <div className="p-1">
-                {filteredEmployees.map(employee => (
+                {filteredOpportunities.map(opportunity => (
                   <div
-                    key={employee.id}
+                    key={opportunity.id}
                     className="flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer rounded-sm"
-                    onClick={() => handleSelectEmployee(employee)}
+                    onClick={() => handleSelectOpportunity(opportunity)}
                   >
-                    <div className="flex items-center space-x-3">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium text-sm">
-                        {employee.first_name} {employee.last_name}
-                      </span>
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <Target className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">
+                          {opportunity.title}
+                        </div>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className={cn(
+                            "px-2 py-1 text-xs rounded-full",
+                            getStatusColor(opportunity.status)
+                          )}>
+                            {opportunity.status}
+                          </span>
+                          {opportunity.value && (
+                            <span className="text-xs text-muted-foreground">
+                              {opportunity.value.toLocaleString('tr-TR')} ₺
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -179,4 +207,4 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
   );
 };
 
-export default EmployeeSelector;
+export default OpportunitySelector;

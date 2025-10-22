@@ -3,6 +3,7 @@ import { ProposalItem, ProposalStatus } from "./proposal";
 
 export interface ProposalFormData {
   title: string;
+  subject?: string; // Teklif konusu
   customer_id?: string;
   employee_id?: string;
   opportunity_id?: string;
@@ -23,6 +24,7 @@ export interface ProposalFormData {
   description?: string;
   status: ProposalStatus; // Changed from optional to required
   currency?: string; // Proposal currency
+  exchange_rate?: number; // Döviz kuru
   computed_total_amount?: number; // Computed total for display purposes
 }
 

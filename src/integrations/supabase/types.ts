@@ -14,6 +14,187 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_transfers: {
+        Row: {
+          amount: number
+          company_id: string | null
+          created_at: string | null
+          currency: string
+          description: string | null
+          from_account_id: string
+          from_account_type: string
+          id: string
+          to_account_id: string
+          to_account_type: string
+          transfer_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          from_account_id: string
+          from_account_type: string
+          id?: string
+          to_account_id: string
+          to_account_type: string
+          transfer_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          from_account_id?: string
+          from_account_type?: string
+          id?: string
+          to_account_id?: string
+          to_account_type?: string
+          transfer_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_transfers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts: {
+        Row: {
+          account_number: string | null
+          account_type: string
+          available_balance: number | null
+          available_limit: number | null
+          bank_name: string | null
+          branch_name: string | null
+          card_number: string | null
+          card_type: string | null
+          company_id: string
+          created_at: string | null
+          credit_limit: number | null
+          currency: string | null
+          current_balance: number | null
+          description: string | null
+          end_date: string | null
+          expiry_date: string | null
+          iban: string | null
+          id: string
+          initial_capital: number | null
+          interest_rate: number | null
+          investment_date: string | null
+          is_active: boolean | null
+          last_payment_date: string | null
+          last_transaction_date: string | null
+          location: string | null
+          minimum_payment: number | null
+          name: string
+          notes: string | null
+          ownership_percentage: number | null
+          partner_type: string | null
+          payment_due_date: string | null
+          profit_share: number | null
+          responsible_person: string | null
+          start_date: string | null
+          status: string | null
+          swift_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          account_type: string
+          available_balance?: number | null
+          available_limit?: number | null
+          bank_name?: string | null
+          branch_name?: string | null
+          card_number?: string | null
+          card_type?: string | null
+          company_id: string
+          created_at?: string | null
+          credit_limit?: number | null
+          currency?: string | null
+          current_balance?: number | null
+          description?: string | null
+          end_date?: string | null
+          expiry_date?: string | null
+          iban?: string | null
+          id?: string
+          initial_capital?: number | null
+          interest_rate?: number | null
+          investment_date?: string | null
+          is_active?: boolean | null
+          last_payment_date?: string | null
+          last_transaction_date?: string | null
+          location?: string | null
+          minimum_payment?: number | null
+          name: string
+          notes?: string | null
+          ownership_percentage?: number | null
+          partner_type?: string | null
+          payment_due_date?: string | null
+          profit_share?: number | null
+          responsible_person?: string | null
+          start_date?: string | null
+          status?: string | null
+          swift_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          account_type?: string
+          available_balance?: number | null
+          available_limit?: number | null
+          bank_name?: string | null
+          branch_name?: string | null
+          card_number?: string | null
+          card_type?: string | null
+          company_id?: string
+          created_at?: string | null
+          credit_limit?: number | null
+          currency?: string | null
+          current_balance?: number | null
+          description?: string | null
+          end_date?: string | null
+          expiry_date?: string | null
+          iban?: string | null
+          id?: string
+          initial_capital?: number | null
+          interest_rate?: number | null
+          investment_date?: string | null
+          is_active?: boolean | null
+          last_payment_date?: string | null
+          last_transaction_date?: string | null
+          location?: string | null
+          minimum_payment?: number | null
+          name?: string
+          notes?: string | null
+          ownership_percentage?: number | null
+          partner_type?: string | null
+          payment_due_date?: string | null
+          profit_share?: number | null
+          responsible_person?: string | null
+          start_date?: string | null
+          status?: string | null
+          swift_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activities: {
         Row: {
           assignee_id: string | null
@@ -342,6 +523,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      banks: {
+        Row: {
+          bank_code: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          short_name: string | null
+          swift_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          short_name?: string | null
+          swift_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          short_name?: string | null
+          swift_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       card_transactions: {
         Row: {
@@ -694,42 +908,69 @@ export type Database = {
           amount: number
           bank: string
           check_number: string
+          check_type: string | null
           company_id: string | null
           created_at: string
           due_date: string
           id: string
           issue_date: string
+          issuer_customer_id: string | null
+          issuer_name: string | null
+          issuer_supplier_id: string | null
           notes: string | null
           payee: string
+          payee_customer_id: string | null
+          payee_supplier_id: string | null
+          portfolio_status: string | null
           status: string
+          transferred_date: string | null
+          transferred_to_supplier_id: string | null
           updated_at: string
         }
         Insert: {
           amount: number
           bank: string
           check_number: string
+          check_type?: string | null
           company_id?: string | null
           created_at?: string
           due_date: string
           id?: string
           issue_date: string
+          issuer_customer_id?: string | null
+          issuer_name?: string | null
+          issuer_supplier_id?: string | null
           notes?: string | null
           payee: string
+          payee_customer_id?: string | null
+          payee_supplier_id?: string | null
+          portfolio_status?: string | null
           status?: string
+          transferred_date?: string | null
+          transferred_to_supplier_id?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
           bank?: string
           check_number?: string
+          check_type?: string | null
           company_id?: string | null
           created_at?: string
           due_date?: string
           id?: string
           issue_date?: string
+          issuer_customer_id?: string | null
+          issuer_name?: string | null
+          issuer_supplier_id?: string | null
           notes?: string | null
           payee?: string
+          payee_customer_id?: string | null
+          payee_supplier_id?: string | null
+          portfolio_status?: string | null
           status?: string
+          transferred_date?: string | null
+          transferred_to_supplier_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -738,6 +979,41 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checks_issuer_customer_id_fkey"
+            columns: ["issuer_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checks_issuer_supplier_id_fkey"
+            columns: ["issuer_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checks_payee_customer_id_fkey"
+            columns: ["payee_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checks_payee_supplier_id_fkey"
+            columns: ["payee_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checks_transferred_to_supplier_id_fkey"
+            columns: ["transferred_to_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -883,30 +1159,74 @@ export type Database = {
           },
         ]
       }
+      custom_terms: {
+        Row: {
+          category: string
+          company_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          label: string
+          sort_order: number | null
+          text: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          label: string
+          sort_order?: number | null
+          text: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          label?: string
+          sort_order?: number | null
+          text?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_terms_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           account_number: string | null
           address: string | null
-          aliases: Json | null
           balance: number
           bank_name: string | null
           city: string | null
+          city_id: number | null
           company: string | null
           company_id: string | null
           country: string | null
           created_at: string | null
+          customer_segment: string | null
+          customer_source: string | null
           district: string | null
-          einvoice_address: string | null
+          district_id: number | null
           einvoice_alias_name: string | null
-          einvoice_checked_at: string | null
-          einvoice_city: string | null
-          einvoice_company_name: string | null
-          einvoice_district: string | null
-          einvoice_mersis_no: string | null
-          einvoice_sicil_no: string | null
-          einvoice_tax_office: string | null
           email: string | null
+          establishment_date: string | null
           fax: string | null
+          first_contact_position: string | null
           iban: string | null
           id: string
           is_active: boolean | null
@@ -915,12 +1235,21 @@ export type Database = {
           mersis_number: string | null
           mobile_phone: string | null
           name: string
+          neighborhood_id: number | null
+          notes: string | null
           office_phone: string | null
-          payee_financial_account_id: string | null
-          payment_means_channel_code: string | null
-          payment_means_code: string | null
           postal_code: string | null
           representative: string | null
+          second_address: string | null
+          second_city: string | null
+          second_contact_email: string | null
+          second_contact_name: string | null
+          second_contact_phone: string | null
+          second_contact_position: string | null
+          second_country: string | null
+          second_district: string | null
+          second_postal_code: string | null
+          sector: string | null
           status: Database["public"]["Enums"]["customer_status"]
           tax_number: string | null
           tax_office: string | null
@@ -932,26 +1261,23 @@ export type Database = {
         Insert: {
           account_number?: string | null
           address?: string | null
-          aliases?: Json | null
           balance?: number
           bank_name?: string | null
           city?: string | null
+          city_id?: number | null
           company?: string | null
           company_id?: string | null
           country?: string | null
           created_at?: string | null
+          customer_segment?: string | null
+          customer_source?: string | null
           district?: string | null
-          einvoice_address?: string | null
+          district_id?: number | null
           einvoice_alias_name?: string | null
-          einvoice_checked_at?: string | null
-          einvoice_city?: string | null
-          einvoice_company_name?: string | null
-          einvoice_district?: string | null
-          einvoice_mersis_no?: string | null
-          einvoice_sicil_no?: string | null
-          einvoice_tax_office?: string | null
           email?: string | null
+          establishment_date?: string | null
           fax?: string | null
+          first_contact_position?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean | null
@@ -960,12 +1286,21 @@ export type Database = {
           mersis_number?: string | null
           mobile_phone?: string | null
           name: string
+          neighborhood_id?: number | null
+          notes?: string | null
           office_phone?: string | null
-          payee_financial_account_id?: string | null
-          payment_means_channel_code?: string | null
-          payment_means_code?: string | null
           postal_code?: string | null
           representative?: string | null
+          second_address?: string | null
+          second_city?: string | null
+          second_contact_email?: string | null
+          second_contact_name?: string | null
+          second_contact_phone?: string | null
+          second_contact_position?: string | null
+          second_country?: string | null
+          second_district?: string | null
+          second_postal_code?: string | null
+          sector?: string | null
           status?: Database["public"]["Enums"]["customer_status"]
           tax_number?: string | null
           tax_office?: string | null
@@ -977,26 +1312,23 @@ export type Database = {
         Update: {
           account_number?: string | null
           address?: string | null
-          aliases?: Json | null
           balance?: number
           bank_name?: string | null
           city?: string | null
+          city_id?: number | null
           company?: string | null
           company_id?: string | null
           country?: string | null
           created_at?: string | null
+          customer_segment?: string | null
+          customer_source?: string | null
           district?: string | null
-          einvoice_address?: string | null
+          district_id?: number | null
           einvoice_alias_name?: string | null
-          einvoice_checked_at?: string | null
-          einvoice_city?: string | null
-          einvoice_company_name?: string | null
-          einvoice_district?: string | null
-          einvoice_mersis_no?: string | null
-          einvoice_sicil_no?: string | null
-          einvoice_tax_office?: string | null
           email?: string | null
+          establishment_date?: string | null
           fax?: string | null
+          first_contact_position?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean | null
@@ -1005,12 +1337,21 @@ export type Database = {
           mersis_number?: string | null
           mobile_phone?: string | null
           name?: string
+          neighborhood_id?: number | null
+          notes?: string | null
           office_phone?: string | null
-          payee_financial_account_id?: string | null
-          payment_means_channel_code?: string | null
-          payment_means_code?: string | null
           postal_code?: string | null
           representative?: string | null
+          second_address?: string | null
+          second_city?: string | null
+          second_contact_email?: string | null
+          second_contact_name?: string | null
+          second_contact_phone?: string | null
+          second_contact_position?: string | null
+          second_country?: string | null
+          second_district?: string | null
+          second_postal_code?: string | null
+          sector?: string | null
           status?: Database["public"]["Enums"]["customer_status"]
           tax_number?: string | null
           tax_office?: string | null
@@ -1021,10 +1362,31 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "customers_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_cities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "customers_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_neighborhoods"
             referencedColumns: ["id"]
           },
           {
@@ -1042,7 +1404,10 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          is_active: boolean | null
+          is_default: boolean | null
           name: string
+          sort_order: number | null
           updated_at: string | null
         }
         Insert: {
@@ -1050,7 +1415,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
           name: string
+          sort_order?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -1058,7 +1426,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
           name?: string
+          sort_order?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1773,8 +2144,13 @@ export type Database = {
           file_name: string
           file_url: string
           id: string
+          name: string | null
+          size: number | null
+          type: string | null
           updated_at: string | null
           upload_date: string | null
+          uploaded_at: string | null
+          url: string | null
         }
         Insert: {
           company_id?: string | null
@@ -1784,8 +2160,13 @@ export type Database = {
           file_name: string
           file_url: string
           id?: string
+          name?: string | null
+          size?: number | null
+          type?: string | null
           updated_at?: string | null
           upload_date?: string | null
+          uploaded_at?: string | null
+          url?: string | null
         }
         Update: {
           company_id?: string | null
@@ -1795,8 +2176,13 @@ export type Database = {
           file_name?: string
           file_url?: string
           id?: string
+          name?: string | null
+          size?: number | null
+          type?: string | null
           updated_at?: string | null
           upload_date?: string | null
+          uploaded_at?: string | null
+          url?: string | null
         }
         Relationships: [
           {
@@ -1923,27 +2309,58 @@ export type Database = {
           },
         ]
       }
-      employee_salaries: {
+      employees: {
         Row: {
-          accident_insurance_amount: number | null
           accident_insurance_rate: number | null
+          address: string | null
+          address_line: string | null
           allowances: Json | null
+          avatar_url: string | null
+          balance: number | null
           bonus_provision: number | null
           calculate_as_minimum_wage: boolean | null
+          city: string | null
+          city_id: number | null
           company_id: string | null
+          country: string | null
           created_at: string | null
           cumulative_yearly_gross: number | null
           cumulative_yearly_tax: number | null
-          effective_date: string
-          employee_id: string | null
-          gross_salary: number
+          date_of_birth: string | null
+          department: string
+          district: string | null
+          district_id: number | null
+          effective_date: string | null
+          email: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
+          first_name: string
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          gross_salary: number | null
+          hire_date: string
           id: string
+          id_ssn: string | null
           income_tax_amount: number | null
+          last_name: string
           manual_employer_sgk_cost: number | null
+          marital_status:
+            | Database["public"]["Enums"]["marital_status_type"]
+            | null
           meal_allowance: number | null
-          net_salary: number
-          notes: string | null
+          neighborhood: string | null
+          neighborhood_id: number | null
+          net_salary: number | null
+          payment_frequency: string | null
+          phone: string | null
+          position: string
+          postal_code: string | null
+          salary_amount: number | null
+          salary_currency: string | null
           salary_input_type: string | null
+          salary_notes: string | null
+          salary_start_date: string | null
+          salary_type: string | null
           severance_provision: number | null
           sgk_employee_amount: number | null
           sgk_employee_rate: number | null
@@ -1952,206 +2369,184 @@ export type Database = {
           stamp_tax: number | null
           stamp_tax_amount: number | null
           stamp_tax_rate: number | null
+          status: Database["public"]["Enums"]["employee_status"]
           tax_year: number | null
           total_deductions: number | null
           total_employer_cost: number | null
           transport_allowance: number | null
           unemployment_employee_amount: number | null
           unemployment_employee_rate: number | null
-          unemployment_employer_amount: number | null
           unemployment_employer_rate: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          accident_insurance_amount?: number | null
-          accident_insurance_rate?: number | null
-          allowances?: Json | null
-          bonus_provision?: number | null
-          calculate_as_minimum_wage?: boolean | null
-          company_id?: string | null
-          created_at?: string | null
-          cumulative_yearly_gross?: number | null
-          cumulative_yearly_tax?: number | null
-          effective_date: string
-          employee_id?: string | null
-          gross_salary: number
-          id?: string
-          income_tax_amount?: number | null
-          manual_employer_sgk_cost?: number | null
-          meal_allowance?: number | null
-          net_salary: number
-          notes?: string | null
-          salary_input_type?: string | null
-          severance_provision?: number | null
-          sgk_employee_amount?: number | null
-          sgk_employee_rate?: number | null
-          sgk_employer_amount?: number | null
-          sgk_employer_rate?: number | null
-          stamp_tax?: number | null
-          stamp_tax_amount?: number | null
-          stamp_tax_rate?: number | null
-          tax_year?: number | null
-          total_deductions?: number | null
-          total_employer_cost?: number | null
-          transport_allowance?: number | null
-          unemployment_employee_amount?: number | null
-          unemployment_employee_rate?: number | null
-          unemployment_employer_amount?: number | null
-          unemployment_employer_rate?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          accident_insurance_amount?: number | null
-          accident_insurance_rate?: number | null
-          allowances?: Json | null
-          bonus_provision?: number | null
-          calculate_as_minimum_wage?: boolean | null
-          company_id?: string | null
-          created_at?: string | null
-          cumulative_yearly_gross?: number | null
-          cumulative_yearly_tax?: number | null
-          effective_date?: string
-          employee_id?: string | null
-          gross_salary?: number
-          id?: string
-          income_tax_amount?: number | null
-          manual_employer_sgk_cost?: number | null
-          meal_allowance?: number | null
-          net_salary?: number
-          notes?: string | null
-          salary_input_type?: string | null
-          severance_provision?: number | null
-          sgk_employee_amount?: number | null
-          sgk_employee_rate?: number | null
-          sgk_employer_amount?: number | null
-          sgk_employer_rate?: number | null
-          stamp_tax?: number | null
-          stamp_tax_amount?: number | null
-          stamp_tax_rate?: number | null
-          tax_year?: number | null
-          total_deductions?: number | null
-          total_employer_cost?: number | null
-          transport_allowance?: number | null
-          unemployment_employee_amount?: number | null
-          unemployment_employee_rate?: number | null
-          unemployment_employer_amount?: number | null
-          unemployment_employer_rate?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "employee_salaries_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "employee_salaries_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: true
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      employees: {
-        Row: {
-          address: string | null
-          avatar_url: string | null
-          city: string | null
-          company_id: string | null
-          country: string | null
-          created_at: string | null
-          date_of_birth: string | null
-          department: string
-          district: string | null
-          email: string
-          emergency_contact_name: string | null
-          emergency_contact_phone: string | null
-          emergency_contact_relation: string | null
-          first_name: string
-          gender: Database["public"]["Enums"]["gender_type"] | null
-          hire_date: string
-          id: string
-          id_ssn: string | null
-          last_name: string
-          marital_status:
-            | Database["public"]["Enums"]["marital_status_type"]
-            | null
-          phone: string | null
-          position: string
-          postal_code: string | null
-          status: Database["public"]["Enums"]["employee_status"]
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          accident_insurance_rate?: number | null
           address?: string | null
+          address_line?: string | null
+          allowances?: Json | null
           avatar_url?: string | null
+          balance?: number | null
+          bonus_provision?: number | null
+          calculate_as_minimum_wage?: boolean | null
           city?: string | null
+          city_id?: number | null
           company_id?: string | null
           country?: string | null
           created_at?: string | null
+          cumulative_yearly_gross?: number | null
+          cumulative_yearly_tax?: number | null
           date_of_birth?: string | null
           department: string
           district?: string | null
+          district_id?: number | null
+          effective_date?: string | null
           email: string
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           first_name: string
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          gross_salary?: number | null
           hire_date: string
           id?: string
           id_ssn?: string | null
+          income_tax_amount?: number | null
           last_name: string
+          manual_employer_sgk_cost?: number | null
           marital_status?:
             | Database["public"]["Enums"]["marital_status_type"]
             | null
+          meal_allowance?: number | null
+          neighborhood?: string | null
+          neighborhood_id?: number | null
+          net_salary?: number | null
+          payment_frequency?: string | null
           phone?: string | null
           position: string
           postal_code?: string | null
+          salary_amount?: number | null
+          salary_currency?: string | null
+          salary_input_type?: string | null
+          salary_notes?: string | null
+          salary_start_date?: string | null
+          salary_type?: string | null
+          severance_provision?: number | null
+          sgk_employee_amount?: number | null
+          sgk_employee_rate?: number | null
+          sgk_employer_amount?: number | null
+          sgk_employer_rate?: number | null
+          stamp_tax?: number | null
+          stamp_tax_amount?: number | null
+          stamp_tax_rate?: number | null
           status?: Database["public"]["Enums"]["employee_status"]
+          tax_year?: number | null
+          total_deductions?: number | null
+          total_employer_cost?: number | null
+          transport_allowance?: number | null
+          unemployment_employee_amount?: number | null
+          unemployment_employee_rate?: number | null
+          unemployment_employer_rate?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          accident_insurance_rate?: number | null
           address?: string | null
+          address_line?: string | null
+          allowances?: Json | null
           avatar_url?: string | null
+          balance?: number | null
+          bonus_provision?: number | null
+          calculate_as_minimum_wage?: boolean | null
           city?: string | null
+          city_id?: number | null
           company_id?: string | null
           country?: string | null
           created_at?: string | null
+          cumulative_yearly_gross?: number | null
+          cumulative_yearly_tax?: number | null
           date_of_birth?: string | null
           department?: string
           district?: string | null
+          district_id?: number | null
+          effective_date?: string | null
           email?: string
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           first_name?: string
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          gross_salary?: number | null
           hire_date?: string
           id?: string
           id_ssn?: string | null
+          income_tax_amount?: number | null
           last_name?: string
+          manual_employer_sgk_cost?: number | null
           marital_status?:
             | Database["public"]["Enums"]["marital_status_type"]
             | null
+          meal_allowance?: number | null
+          neighborhood?: string | null
+          neighborhood_id?: number | null
+          net_salary?: number | null
+          payment_frequency?: string | null
           phone?: string | null
           position?: string
           postal_code?: string | null
+          salary_amount?: number | null
+          salary_currency?: string | null
+          salary_input_type?: string | null
+          salary_notes?: string | null
+          salary_start_date?: string | null
+          salary_type?: string | null
+          severance_provision?: number | null
+          sgk_employee_amount?: number | null
+          sgk_employee_rate?: number | null
+          sgk_employer_amount?: number | null
+          sgk_employer_rate?: number | null
+          stamp_tax?: number | null
+          stamp_tax_amount?: number | null
+          stamp_tax_rate?: number | null
           status?: Database["public"]["Enums"]["employee_status"]
+          tax_year?: number | null
+          total_deductions?: number | null
+          total_employer_cost?: number | null
+          transport_allowance?: number | null
+          unemployment_employee_amount?: number | null
+          unemployment_employee_rate?: number | null
+          unemployment_employer_rate?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
           {
+            foreignKeyName: "employees_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_cities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "employees_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_neighborhoods"
             referencedColumns: ["id"]
           },
           {
@@ -2439,6 +2834,15 @@ export type Database = {
           employee_id: string | null
           expense_type: string | null
           id: string
+          is_paid: boolean | null
+          is_recurring: boolean | null
+          paid_date: string | null
+          payment_account_id: string | null
+          payment_account_type: string | null
+          payment_amount: number | null
+          recurrence_end_date: string | null
+          recurrence_pattern: string | null
+          subcategory: string | null
           type: string
           updated_at: string
         }
@@ -2453,6 +2857,15 @@ export type Database = {
           employee_id?: string | null
           expense_type?: string | null
           id?: string
+          is_paid?: boolean | null
+          is_recurring?: boolean | null
+          paid_date?: string | null
+          payment_account_id?: string | null
+          payment_account_type?: string | null
+          payment_amount?: number | null
+          recurrence_end_date?: string | null
+          recurrence_pattern?: string | null
+          subcategory?: string | null
           type: string
           updated_at?: string
         }
@@ -2467,6 +2880,15 @@ export type Database = {
           employee_id?: string | null
           expense_type?: string | null
           id?: string
+          is_paid?: boolean | null
+          is_recurring?: boolean | null
+          paid_date?: string | null
+          payment_account_id?: string | null
+          payment_account_type?: string | null
+          payment_amount?: number | null
+          recurrence_end_date?: string | null
+          recurrence_pattern?: string | null
+          subcategory?: string | null
           type?: string
           updated_at?: string
         }
@@ -3896,7 +4318,6 @@ export type Database = {
       partner_accounts: {
         Row: {
           company_id: string | null
-          contact_info: Json | null
           created_at: string | null
           currency: string | null
           current_balance: number | null
@@ -3912,7 +4333,6 @@ export type Database = {
         }
         Insert: {
           company_id?: string | null
-          contact_info?: Json | null
           created_at?: string | null
           currency?: string | null
           current_balance?: number | null
@@ -3928,7 +4348,6 @@ export type Database = {
         }
         Update: {
           company_id?: string | null
-          contact_info?: Json | null
           created_at?: string | null
           currency?: string | null
           current_balance?: number | null
@@ -4059,8 +4478,8 @@ export type Database = {
       }
       payments: {
         Row: {
+          account_id: string | null
           amount: number
-          bank_account_id: string
           company_id: string | null
           created_at: string | null
           currency: Database["public"]["Enums"]["currency_type"]
@@ -4070,15 +4489,14 @@ export type Database = {
           payment_date: string
           payment_direction: string | null
           payment_type: string | null
-          recipient_name: string
+          recipient_name: string | null
           reference_note: string | null
-          status: Database["public"]["Enums"]["payment_status"]
           supplier_id: string | null
           updated_at: string | null
         }
         Insert: {
+          account_id?: string | null
           amount: number
-          bank_account_id: string
           company_id?: string | null
           created_at?: string | null
           currency: Database["public"]["Enums"]["currency_type"]
@@ -4088,15 +4506,14 @@ export type Database = {
           payment_date?: string
           payment_direction?: string | null
           payment_type?: string | null
-          recipient_name: string
+          recipient_name?: string | null
           reference_note?: string | null
-          status?: Database["public"]["Enums"]["payment_status"]
           supplier_id?: string | null
           updated_at?: string | null
         }
         Update: {
+          account_id?: string | null
           amount?: number
-          bank_account_id?: string
           company_id?: string | null
           created_at?: string | null
           currency?: Database["public"]["Enums"]["currency_type"]
@@ -4106,18 +4523,17 @@ export type Database = {
           payment_date?: string
           payment_direction?: string | null
           payment_type?: string | null
-          recipient_name?: string
+          recipient_name?: string | null
           reference_note?: string | null
-          status?: Database["public"]["Enums"]["payment_status"]
           supplier_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "payments_bank_account_id_fkey"
-            columns: ["bank_account_id"]
+            foreignKeyName: "payments_account_id_fkey"
+            columns: ["account_id"]
             isOneToOne: false
-            referencedRelation: "bank_accounts"
+            referencedRelation: "accounts"
             referencedColumns: ["id"]
           },
           {
@@ -4252,7 +4668,10 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          is_active: boolean | null
+          is_default: boolean | null
           name: string
+          sort_order: number | null
           updated_at: string | null
         }
         Insert: {
@@ -4260,7 +4679,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
           name: string
+          sort_order?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -4268,7 +4690,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
           name?: string
+          sort_order?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -4522,6 +4947,7 @@ export type Database = {
           delivery_terms: string | null
           description: string | null
           employee_id: string | null
+          exchange_rate: number | null
           id: string
           items: Json | null
           notes: string | null
@@ -4536,6 +4962,7 @@ export type Database = {
           selected_pricing_terms: string[] | null
           selected_warranty_terms: string[] | null
           status: string
+          subject: string | null
           terms: string | null
           title: string
           total_amount: number
@@ -4552,6 +4979,7 @@ export type Database = {
           delivery_terms?: string | null
           description?: string | null
           employee_id?: string | null
+          exchange_rate?: number | null
           id?: string
           items?: Json | null
           notes?: string | null
@@ -4566,6 +4994,7 @@ export type Database = {
           selected_pricing_terms?: string[] | null
           selected_warranty_terms?: string[] | null
           status?: string
+          subject?: string | null
           terms?: string | null
           title: string
           total_amount?: number
@@ -4582,6 +5011,7 @@ export type Database = {
           delivery_terms?: string | null
           description?: string | null
           employee_id?: string | null
+          exchange_rate?: number | null
           id?: string
           items?: Json | null
           notes?: string | null
@@ -4596,6 +5026,7 @@ export type Database = {
           selected_pricing_terms?: string[] | null
           selected_warranty_terms?: string[] | null
           status?: string
+          subject?: string | null
           terms?: string | null
           title?: string
           total_amount?: number
@@ -6455,15 +6886,18 @@ export type Database = {
         Row: {
           account_number: string | null
           address: string | null
+          address_line: string | null
           aliases: Json | null
           balance: number
           bank_name: string | null
           city: string | null
+          city_id: number | null
           company: string | null
           company_id: string | null
           country: string | null
           created_at: string | null
           district: string | null
+          district_id: number | null
           einvoice_address: string | null
           einvoice_alias_name: string | null
           einvoice_checked_at: string | null
@@ -6474,7 +6908,9 @@ export type Database = {
           einvoice_sicil_no: string | null
           einvoice_tax_office: string | null
           email: string | null
+          establishment_date: string | null
           fax: string | null
+          first_contact_position: string | null
           iban: string | null
           id: string
           is_active: boolean | null
@@ -6483,13 +6919,28 @@ export type Database = {
           mersis_number: string | null
           mobile_phone: string | null
           name: string
+          neighborhood_id: number | null
+          notes: string | null
           office_phone: string | null
           payee_financial_account_id: string | null
           payment_means_channel_code: string | null
           payment_means_code: string | null
+          payment_terms: string | null
           postal_code: string | null
           representative: string | null
+          second_address: string | null
+          second_city: string | null
+          second_contact_email: string | null
+          second_contact_name: string | null
+          second_contact_phone: string | null
+          second_contact_position: string | null
+          second_country: string | null
+          second_district: string | null
+          second_postal_code: string | null
+          sector: string | null
           status: Database["public"]["Enums"]["supplier_status"]
+          supplier_segment: string | null
+          supplier_source: string | null
           tax_number: string | null
           tax_office: string | null
           trade_registry_number: string | null
@@ -6500,15 +6951,18 @@ export type Database = {
         Insert: {
           account_number?: string | null
           address?: string | null
+          address_line?: string | null
           aliases?: Json | null
           balance?: number
           bank_name?: string | null
           city?: string | null
+          city_id?: number | null
           company?: string | null
           company_id?: string | null
           country?: string | null
           created_at?: string | null
           district?: string | null
+          district_id?: number | null
           einvoice_address?: string | null
           einvoice_alias_name?: string | null
           einvoice_checked_at?: string | null
@@ -6519,7 +6973,9 @@ export type Database = {
           einvoice_sicil_no?: string | null
           einvoice_tax_office?: string | null
           email?: string | null
+          establishment_date?: string | null
           fax?: string | null
+          first_contact_position?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean | null
@@ -6528,13 +6984,28 @@ export type Database = {
           mersis_number?: string | null
           mobile_phone?: string | null
           name: string
+          neighborhood_id?: number | null
+          notes?: string | null
           office_phone?: string | null
           payee_financial_account_id?: string | null
           payment_means_channel_code?: string | null
           payment_means_code?: string | null
+          payment_terms?: string | null
           postal_code?: string | null
           representative?: string | null
+          second_address?: string | null
+          second_city?: string | null
+          second_contact_email?: string | null
+          second_contact_name?: string | null
+          second_contact_phone?: string | null
+          second_contact_position?: string | null
+          second_country?: string | null
+          second_district?: string | null
+          second_postal_code?: string | null
+          sector?: string | null
           status?: Database["public"]["Enums"]["supplier_status"]
+          supplier_segment?: string | null
+          supplier_source?: string | null
           tax_number?: string | null
           tax_office?: string | null
           trade_registry_number?: string | null
@@ -6545,15 +7016,18 @@ export type Database = {
         Update: {
           account_number?: string | null
           address?: string | null
+          address_line?: string | null
           aliases?: Json | null
           balance?: number
           bank_name?: string | null
           city?: string | null
+          city_id?: number | null
           company?: string | null
           company_id?: string | null
           country?: string | null
           created_at?: string | null
           district?: string | null
+          district_id?: number | null
           einvoice_address?: string | null
           einvoice_alias_name?: string | null
           einvoice_checked_at?: string | null
@@ -6564,7 +7038,9 @@ export type Database = {
           einvoice_sicil_no?: string | null
           einvoice_tax_office?: string | null
           email?: string | null
+          establishment_date?: string | null
           fax?: string | null
+          first_contact_position?: string | null
           iban?: string | null
           id?: string
           is_active?: boolean | null
@@ -6573,13 +7049,28 @@ export type Database = {
           mersis_number?: string | null
           mobile_phone?: string | null
           name?: string
+          neighborhood_id?: number | null
+          notes?: string | null
           office_phone?: string | null
           payee_financial_account_id?: string | null
           payment_means_channel_code?: string | null
           payment_means_code?: string | null
+          payment_terms?: string | null
           postal_code?: string | null
           representative?: string | null
+          second_address?: string | null
+          second_city?: string | null
+          second_contact_email?: string | null
+          second_contact_name?: string | null
+          second_contact_phone?: string | null
+          second_contact_position?: string | null
+          second_country?: string | null
+          second_district?: string | null
+          second_postal_code?: string | null
+          sector?: string | null
           status?: Database["public"]["Enums"]["supplier_status"]
+          supplier_segment?: string | null
+          supplier_source?: string | null
           tax_number?: string | null
           tax_office?: string | null
           trade_registry_number?: string | null
@@ -6589,6 +7080,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "suppliers_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_cities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "suppliers_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -6596,10 +7094,139 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "suppliers_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suppliers_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_neighborhoods"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "suppliers_representative_uuid_fkey"
             columns: ["representative"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      turkey_address_sync: {
+        Row: {
+          created_at: string
+          districts_count: number | null
+          error_message: string | null
+          id: string
+          last_sync_date: string
+          neighborhoods_count: number | null
+          provinces_count: number | null
+          sync_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          districts_count?: number | null
+          error_message?: string | null
+          id?: string
+          last_sync_date?: string
+          neighborhoods_count?: number | null
+          provinces_count?: number | null
+          sync_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          districts_count?: number | null
+          error_message?: string | null
+          id?: string
+          last_sync_date?: string
+          neighborhoods_count?: number | null
+          provinces_count?: number | null
+          sync_status?: string | null
+        }
+        Relationships: []
+      }
+      turkey_cities: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      turkey_districts: {
+        Row: {
+          city_id: number | null
+          created_at: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          city_id?: number | null
+          created_at?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          city_id?: number | null
+          created_at?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "turkey_districts_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      turkey_neighborhoods: {
+        Row: {
+          created_at: string | null
+          district_id: number | null
+          id: number
+          name: string
+          postal_code: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          district_id?: number | null
+          id?: number
+          name: string
+          postal_code?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          district_id?: number | null
+          id?: number
+          name?: string
+          postal_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "turkey_neighborhoods_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_districts"
             referencedColumns: ["id"]
           },
         ]
@@ -8716,6 +9343,14 @@ export type Database = {
         Args: { "": string }
         Returns: unknown
       }
+      get_cities: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          code: string
+          id: number
+          name: string
+        }[]
+      }
       get_deal_counts_by_status: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -8723,9 +9358,36 @@ export type Database = {
           status: string
         }[]
       }
+      get_districts_by_city: {
+        Args: { city_id_param: number }
+        Returns: {
+          city_name: string
+          id: number
+          name: string
+        }[]
+      }
+      get_full_address: {
+        Args: {
+          address_line_param?: string
+          city_id_param?: number
+          district_id_param?: number
+          neighborhood_id_param?: number
+        }
+        Returns: string
+      }
       get_jwt_secret: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_neighborhoods_by_district: {
+        Args: { district_id_param: number }
+        Returns: {
+          city_name: string
+          district_name: string
+          id: number
+          name: string
+          postal_code: string
+        }[]
       }
       get_proj4_from_srid: {
         Args: { "": number }
@@ -8864,7 +9526,7 @@ export type Database = {
         Args:
           | { tbl_oid: unknown; use_typmod?: boolean }
           | { use_typmod?: boolean }
-        Returns: number
+        Returns: string
       }
       postgis_addbbox: {
         Args: { "": unknown }
@@ -10133,6 +10795,10 @@ export type Database = {
         Args: { order_uuid: string }
         Returns: undefined
       }
+      update_partner_account_balance: {
+        Args: { amount_change: number; partner_account_id: string }
+        Returns: undefined
+      }
       update_user_fcm_token: {
         Args: {
           p_device_id?: string
@@ -10150,6 +10816,10 @@ export type Database = {
           schema_name: string
           table_name: string
         }
+        Returns: string
+      }
+      user_company_id: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       user_has_role_or_higher: {
@@ -10174,14 +10844,22 @@ export type Database = {
       event_type: "technical" | "sales"
       financial_instrument_status: "pending" | "cleared" | "bounced"
       financial_instrument_type: "check" | "promissory_note"
-      gender_type: "male" | "female" | "other"
+      gender_type: "male" | "female" | "other" | "erkek" | "kadın" | "diğer"
       invoice_status:
         | "pending"
         | "paid"
         | "partially_paid"
         | "overdue"
         | "cancelled"
-      marital_status_type: "single" | "married" | "divorced" | "widowed"
+      marital_status_type:
+        | "single"
+        | "married"
+        | "divorced"
+        | "widowed"
+        | "bekar"
+        | "evli"
+        | "boşanmış"
+        | "dul"
       order_status:
         | "pending"
         | "confirmed"
@@ -10382,7 +11060,7 @@ export const Constants = {
       event_type: ["technical", "sales"],
       financial_instrument_status: ["pending", "cleared", "bounced"],
       financial_instrument_type: ["check", "promissory_note"],
-      gender_type: ["male", "female", "other"],
+      gender_type: ["male", "female", "other", "erkek", "kadın", "diğer"],
       invoice_status: [
         "pending",
         "paid",
@@ -10390,7 +11068,16 @@ export const Constants = {
         "overdue",
         "cancelled",
       ],
-      marital_status_type: ["single", "married", "divorced", "widowed"],
+      marital_status_type: [
+        "single",
+        "married",
+        "divorced",
+        "widowed",
+        "bekar",
+        "evli",
+        "boşanmış",
+        "dul",
+      ],
       order_status: [
         "pending",
         "confirmed",

@@ -119,6 +119,18 @@ const ProposalBasicInfoTab: React.FC<ProposalBasicInfoTabProps> = ({
                 )}
               </div>
 
+              {/* Subject */}
+              <div className="space-y-2">
+                <Label htmlFor="subject">Teklif Konusu</Label>
+                <Input
+                  id="subject"
+                  name="subject"
+                  value={formData.subject || ""}
+                  onChange={(e) => onFieldChange("subject", e.target.value)}
+                  placeholder="Örn: Yazılım Geliştirme Hizmeti"
+                />
+              </div>
+
               {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description">Açıklama</Label>
@@ -231,6 +243,26 @@ const ProposalBasicInfoTab: React.FC<ProposalBasicInfoTabProps> = ({
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Exchange Rate */}
+              {formData.currency && formData.currency !== "TRY" && (
+                <div className="space-y-2">
+                  <Label htmlFor="exchange_rate">Döviz Kuru (TRY)</Label>
+                  <Input
+                    id="exchange_rate"
+                    name="exchange_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.exchange_rate || ""}
+                    onChange={(e) => onFieldChange("exchange_rate", parseFloat(e.target.value) || 1)}
+                    placeholder="Örn: 32.50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    1 {formData.currency} = {formData.exchange_rate || "1"} TRY
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -51,7 +51,8 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
     second_city: "",
     second_district: "",
     second_country: "",
-    second_postal_code: ""
+    second_postal_code: "",
+    payment_terms: "",
   });
 
   const { data: customer, isLoading: isLoadingCustomer, error: customerError } = useQuery({
@@ -124,7 +125,8 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         second_city: customer.second_city || "",
         second_district: customer.second_district || "",
         second_country: customer.second_country || "",
-        second_postal_code: customer.second_postal_code || ""
+        second_postal_code: customer.second_postal_code || "",
+        payment_terms: customer.payment_terms || "",
       });
     }
   }, [customer]);

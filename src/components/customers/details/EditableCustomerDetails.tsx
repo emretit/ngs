@@ -56,7 +56,8 @@ export const EditableCustomerDetails = ({
     second_city: customer.second_city || "",
     second_district: customer.second_district || "",
     second_country: customer.second_country || "",
-    second_postal_code: customer.second_postal_code || ""
+    second_postal_code: customer.second_postal_code || "",
+    payment_terms: customer.payment_terms || "",
   });
 
   const { mutation } = useCustomerEdit(customer.id, onSuccess);

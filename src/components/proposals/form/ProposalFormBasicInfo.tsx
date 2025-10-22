@@ -8,7 +8,7 @@ import { ProposalStatus, proposalStatusLabels } from "@/types/proposal";
 import { ProposalFormData } from "@/types/proposal-form";
 
 interface ProposalFormBasicInfoProps {
-  formData: Pick<ProposalFormData, 'title' | 'status' | 'valid_until'>;
+  formData: Pick<ProposalFormData, 'title' | 'subject' | 'status' | 'valid_until'>;
   formErrors: Record<string, string>;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
@@ -41,6 +41,17 @@ const ProposalFormBasicInfo = ({
         {formErrors.title && (
           <p className="text-red-500 text-sm mt-1">{formErrors.title}</p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="subject">Teklif Konusu</Label>
+        <Input 
+          id="subject"
+          name="subject"
+          value={formData.subject || ""}
+          onChange={handleInputChange}
+          placeholder="Teklif konusunu girin"
+        />
       </div>
       
       <div className="space-y-2">

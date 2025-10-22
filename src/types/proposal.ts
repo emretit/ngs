@@ -89,6 +89,7 @@ export interface Proposal extends Record<string, unknown> {
   id: string;
   number: string;
   title: string;
+  subject?: string; // Teklif konusu
   description?: string;
   customer_id?: string;
   customer_name?: string;
@@ -112,6 +113,7 @@ export interface Proposal extends Record<string, unknown> {
   updated_at: string;
   total_amount: number;
   currency?: string; // Currency
+  exchange_rate?: number; // Döviz kuru
   items?: ProposalItem[];
   attachments?: ProposalAttachment[];
   

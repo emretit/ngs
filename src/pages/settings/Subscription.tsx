@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Check, Calendar, AlertCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { CreditCard, Check, Calendar, AlertCircle, Sparkles } from "lucide-react";
 import { IyzicoPaymentForm } from "@/components/payments/IyzicoPaymentForm";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -14,42 +15,47 @@ interface SubscriptionProps {
 // Paket bilgileri - bu bilgiler backend'den de gelebilir
 const subscriptionPlans = [
   {
-    id: "starter",
-    name: "Başlangıç",
-    price: 299,
-    period: "ay",
+    id: "free",
+    name: "Ücretsiz",
+    monthlyPrice: 0,
+    yearlyPrice: 0,
     features: [
-      "5 Kullanıcı",
-      "Temel CRM",
-      "Teklif & Sipariş Yönetimi",
-      "Email Desteği"
+      "1 Kullanıcı",
+      "Temel CRM Özellikleri",
+      "5 GB Depolama",
+      "Email Desteği",
+      "Temel Raporlama"
     ]
   },
   {
-    id: "professional",
-    name: "Profesyonel",
-    price: 599,
-    period: "ay",
+    id: "business",
+    name: "İşletme",
+    monthlyPrice: 999,
+    yearlyPrice: 9999,
     popular: true,
     features: [
-      "15 Kullanıcı",
+      "10 Kullanıcı",
       "Gelişmiş CRM",
-      "Satın Alma Yönetimi",
+      "Teklif & Sipariş Yönetimi",
       "E-Fatura Entegrasyonu",
-      "Öncelikli Destek"
+      "50 GB Depolama",
+      "Öncelikli Destek",
+      "Özel Raporlar"
     ]
   },
   {
     id: "enterprise",
     name: "Kurumsal",
-    price: 999,
-    period: "ay",
+    monthlyPrice: null,
+    yearlyPrice: null,
     features: [
       "Sınırsız Kullanıcı",
       "Tüm Özellikler",
       "API Erişimi",
       "Özel Entegrasyonlar",
-      "7/24 Destek"
+      "Sınırsız Depolama",
+      "7/24 Öncelikli Destek",
+      "Özel Eğitim & Danışmanlık"
     ]
   }
 ];
@@ -57,15 +63,17 @@ const subscriptionPlans = [
 const Subscription = ({ isCollapsed, setIsCollapsed }: SubscriptionProps) => {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [isYearly, setIsYearly] = useState(false);
   
   // Şu anki abonelik durumu - backend'den gelecek
   const currentSubscription = {
-    planId: "professional",
-    planName: "Profesyonel",
+    planId: "business",
+    planName: "İşletme",
     status: "active",
     startDate: "2025-01-01",
     nextBillingDate: "2025-02-01",
-    amount: 599
+    amount: 999,
+    isYearly: false
   };
 
   const handleUpgrade = (planId: string) => {
@@ -84,13 +92,16 @@ const Subscription = ({ isCollapsed, setIsCollapsed }: SubscriptionProps) => {
   };
 
   const selectedPlanData = subscriptionPlans.find(p => p.id === selectedPlan);
+  const selectedPlanPrice = selectedPlanData 
+    ? (isYearly ? selectedPlanData.yearlyPrice : selectedPlanData.monthlyPrice) 
+    : 0;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg">
+          <div className="p-2 bg-gradient-to-r from-red-500 to-red-600 rounded-lg text-white shadow-lg">
             <CreditCard className="h-5 w-5" />
           </div>
           <div className="space-y-0.5">
@@ -138,9 +149,9 @@ const Subscription = ({ isCollapsed, setIsCollapsed }: SubscriptionProps) => {
             </div>
           </div>
           
-          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <AlertCircle className="h-4 w-4 text-blue-600" />
-            <p className="text-sm text-blue-900">
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <p className="text-sm text-red-900">
               Aboneliğiniz otomatik olarak yenilenecektir. İptal etmek için destek ekibiyle iletişime geçin.
             </p>
           </div>
@@ -151,7 +162,7 @@ const Subscription = ({ isCollapsed, setIsCollapsed }: SubscriptionProps) => {
                 setSelectedPlan(currentSubscription.planId);
                 setShowPaymentDialog(true);
               }}
-              className="gap-2"
+              className="gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
             >
               <CreditCard className="h-4 w-4" />
               Ödeme Yap
@@ -162,53 +173,153 @@ const Subscription = ({ isCollapsed, setIsCollapsed }: SubscriptionProps) => {
 
       {/* Paket Seçenekleri */}
       <div>
-        <h2 className="text-2xl font-bold mb-4">Paket Yükseltme</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {subscriptionPlans.map((plan) => (
-            <Card 
-              key={plan.id}
-              className={`relative ${plan.popular ? 'border-primary shadow-lg' : ''} ${
-                currentSubscription.planId === plan.id ? 'bg-muted' : ''
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground">En Popüler</Badge>
-                </div>
-              )}
-              <CardHeader>
-                <CardTitle className="text-xl">{plan.name}</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">{plan.price} TRY</span>
-                  <span className="text-muted-foreground ml-2">/{plan.period}</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-2">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                
-                {currentSubscription.planId === plan.id ? (
-                  <Button variant="outline" className="w-full" disabled>
-                    Mevcut Paket
-                  </Button>
-                ) : (
-                  <Button 
-                    className="w-full" 
-                    onClick={() => handleUpgrade(plan.id)}
-                    variant={plan.popular ? "default" : "outline"}
-                  >
-                    Bu Pakete Geç
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex flex-col items-center mb-8 space-y-4">
+          <h2 className="text-3xl font-bold text-center">Paket Yükseltme</h2>
+          
+          {/* Monthly/Yearly Toggle */}
+          <div className="flex items-center gap-3 p-1 bg-muted rounded-full">
+            <span className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${!isYearly ? 'bg-background shadow-sm' : ''}`}>
+              Aylık
+            </span>
+            <Switch
+              checked={isYearly}
+              onCheckedChange={setIsYearly}
+              className="data-[state=checked]:bg-red-500"
+            />
+            <span className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isYearly ? 'bg-background shadow-sm' : ''}`}>
+              Yıllık
+            </span>
+            {isYearly && (
+              <Badge className="bg-red-500 text-white animate-pulse">
+                2 Ay Ücretsiz
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {subscriptionPlans.map((plan, index) => {
+            const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
+            const isCurrentPlan = currentSubscription.planId === plan.id;
+            
+            return (
+              <div
+                key={plan.id}
+                className="group animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <Card 
+                  className={`relative h-full transition-all duration-500 hover:scale-105 hover:-translate-y-2 ${
+                    plan.popular 
+                      ? 'border-2 border-red-500 shadow-2xl shadow-red-500/20' 
+                      : 'border border-border hover:border-red-300 hover:shadow-xl'
+                  } ${
+                    isCurrentPlan ? 'bg-gradient-to-br from-red-50 to-white' : 'bg-card'
+                  }`}
+                >
+                  {/* Popular Badge */}
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                      <Badge className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-1.5 text-sm font-semibold shadow-lg animate-pulse">
+                        <Sparkles className="h-3 w-3 mr-1 inline" />
+                        En Popüler
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* Current Plan Badge */}
+                  {isCurrentPlan && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-300">
+                        Mevcut Paketiniz
+                      </Badge>
+                    </div>
+                  )}
+
+                  <CardHeader className="pb-8">
+                    <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+                    
+                    {/* Price Container */}
+                    <div className="mt-6 flex items-baseline gap-2">
+                      {price !== null ? (
+                        <>
+                          <span className="text-5xl font-bold bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent">
+                            ₺{price.toLocaleString('tr-TR')}
+                          </span>
+                          <span className="text-muted-foreground text-lg">
+                            /{isYearly ? 'yıl' : 'ay'}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-3xl font-bold text-foreground">
+                          Özel Fiyat
+                        </span>
+                      )}
+                    </div>
+                    
+                    {isYearly && price && price > 0 && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Aylık ₺{Math.round(price / 12).toLocaleString('tr-TR')} (₺{((plan.monthlyPrice! * 12) - price).toLocaleString('tr-TR')} tasarruf)
+                      </p>
+                    )}
+                  </CardHeader>
+
+                  <CardContent className="space-y-6">
+                    {/* Features List */}
+                    <ul className="space-y-3">
+                      {plan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-3 group/item">
+                          <div className="mt-0.5 rounded-full bg-red-100 p-1 transition-all group-hover/item:bg-red-200">
+                            <Check className="h-4 w-4 text-red-600" />
+                          </div>
+                          <span className="text-sm text-muted-foreground group-hover/item:text-foreground transition-colors">
+                            {feature}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    {/* Action Button */}
+                    <div className="pt-4">
+                      {isCurrentPlan ? (
+                        <Button 
+                          variant="outline" 
+                          className="w-full border-2 border-red-300 text-red-600 hover:bg-red-50" 
+                          disabled
+                        >
+                          Mevcut Paket
+                        </Button>
+                      ) : price === null ? (
+                        <Button 
+                          className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all"
+                          onClick={() => handleUpgrade(plan.id)}
+                        >
+                          Teklif Al
+                        </Button>
+                      ) : (
+                        <Button 
+                          className={`w-full transition-all ${
+                            plan.popular
+                              ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl'
+                              : 'border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white'
+                          }`}
+                          onClick={() => handleUpgrade(plan.id)}
+                          variant={plan.popular ? "default" : "outline"}
+                        >
+                          Bu Pakete Geç
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+
+                  {/* Bottom Accent */}
+                  {plan.popular && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-red-600 to-red-500 rounded-b-lg" />
+                  )}
+                </Card>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -259,16 +370,16 @@ const Subscription = ({ isCollapsed, setIsCollapsed }: SubscriptionProps) => {
             </DialogDescription>
           </DialogHeader>
           
-          {selectedPlanData && (
+          {selectedPlanData && selectedPlanPrice !== null && (
             <IyzicoPaymentForm
-              amount={selectedPlanData.price}
-              basketId={`subscription-${selectedPlanData.id}-${Date.now()}`}
+              amount={selectedPlanPrice}
+              basketId={`subscription-${selectedPlanData.id}-${isYearly ? 'yearly' : 'monthly'}-${Date.now()}`}
               basketItems={[
                 {
                   id: selectedPlanData.id,
-                  name: `${selectedPlanData.name} Paketi - Aylık Abonelik`,
+                  name: `${selectedPlanData.name} Paketi - ${isYearly ? 'Yıllık' : 'Aylık'} Abonelik`,
                   category: "Subscription",
-                  price: selectedPlanData.price,
+                  price: selectedPlanPrice,
                 }
               ]}
               onSuccess={handlePaymentSuccess}

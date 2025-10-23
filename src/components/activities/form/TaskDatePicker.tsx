@@ -22,23 +22,23 @@ const TaskDatePicker = ({ form, defaultValue }: TaskDatePickerProps) => {
       name="due_date"
       render={({ field }) => (
         <FormItem className="flex flex-col">
-          <FormLabel>Son Tarih</FormLabel>
+          <FormLabel className="text-xs font-medium text-gray-700">Son Tarih</FormLabel>
           <Popover>
             <PopoverTrigger asChild>
               <FormControl>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full pl-3 text-left font-normal",
+                    "w-full h-8 px-3 py-2 text-xs text-left font-normal justify-start",
                     !field.value && "text-muted-foreground"
                   )}
                 >
+                  <CalendarIcon className="mr-2 h-3.5 w-3.5 opacity-50" />
                   {field.value ? (
-                    format(new Date(field.value), "PPP", { locale: tr })
+                    format(new Date(field.value), "dd MMMM yyyy", { locale: tr })
                   ) : (
                     <span>Tarih Seçin</span>
                   )}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                 </Button>
               </FormControl>
             </PopoverTrigger>

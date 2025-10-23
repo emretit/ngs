@@ -12,8 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Maximize2, Save, Plus, Phone, Mail, MessageSquare, Calendar, User, Edit2, Clock, CheckCircle2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Save, Plus, Phone, Mail, MessageSquare, Calendar, User, Edit2, Clock, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Opportunity, OpportunityStatus, opportunityStatusLabels, ContactHistoryItem } from "@/types/crm";
@@ -42,7 +41,6 @@ export const OpportunityDetailSheet = ({
   });
   
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const { employees } = useEmployeeNames();
 
   // Set the current status when the opportunity changes
@@ -97,7 +95,7 @@ export const OpportunityDetailSheet = ({
     onError: (error) => {
       toast.error('Hata', {
         description: 'Fırsat güncellenirken bir hata oluştu',
-        className: "bg-red-50 border-red-200",
+        className: "bg-gray-50 border-gray-200",
       });
       console.error('Error updating opportunity:', error);
     }
@@ -129,12 +127,6 @@ export const OpportunityDetailSheet = ({
     });
   };
 
-  const handleViewFullDetails = () => {
-    if (opportunity) {
-      navigate(`/opportunities/${opportunity.id}`);
-      onClose();
-    }
-  };
 
   const handleAddActivity = async () => {
     if (!opportunity || !newActivity.notes.trim()) return;
@@ -176,40 +168,31 @@ export const OpportunityDetailSheet = ({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="sm:max-w-xl md:max-w-2xl overflow-y-auto border-l border-red-100 bg-gradient-to-b from-white to-red-50/30">
+      <SheetContent className="sm:max-w-xl md:max-w-2xl overflow-y-auto border-l border-gray-200 bg-white">
         <SheetHeader className="text-left border-b pb-4 mb-4">
           <div className="flex justify-between items-start">
             <div>
-              <SheetTitle className="text-xl text-red-900">{opportunity.title}</SheetTitle>
+              <SheetTitle className="text-xl text-gray-900">{opportunity.title}</SheetTitle>
               <div className="flex items-center mt-1 text-muted-foreground">
                 <span className="mr-2">
                   {opportunity.customer?.name || "Müşteri atanmamış"}
                 </span>
-                <span className="text-sm px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                <span className="text-sm px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">
                   {opportunityStatusLabels[opportunity.status]}
                 </span>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleViewFullDetails}
-              className="ml-auto border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
-            >
-              <Maximize2 className="mr-2 h-4 w-4" />
-              Tam Görünüm
-            </Button>
           </div>
           
           <div className="flex items-end justify-between mt-4 pt-4 gap-4">
             <div className="flex-1">
-              <p className="text-sm font-medium mb-2 text-red-700">Fırsat Durumu</p>
+              <p className="text-sm font-medium mb-2 text-gray-700">Fırsat Durumu</p>
               <Select 
                 value={currentStatus || opportunity.status} 
                 onValueChange={handleStatusChange}
                 disabled={updateOpportunityMutation.isPending}
               >
-                <SelectTrigger className="w-full border-red-200 focus:ring-red-200">
+                <SelectTrigger className="w-full border-gray-200 focus:ring-gray-200">
                   <SelectValue placeholder="Durum seçin" />
                 </SelectTrigger>
                 <SelectContent>
@@ -224,7 +207,7 @@ export const OpportunityDetailSheet = ({
             <Button 
               onClick={handleSaveStatus}
               disabled={updateOpportunityMutation.isPending || currentStatus === opportunity.status}
-              className="bg-red-800 text-white hover:bg-red-900"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Save className="mr-2 h-4 w-4" />
               Kaydet
@@ -233,28 +216,28 @@ export const OpportunityDetailSheet = ({
         </SheetHeader>
         
         <Tabs defaultValue="details" className="mt-6">
-          <TabsList className="grid grid-cols-4 mb-6 bg-red-100/50">
+          <TabsList className="grid grid-cols-4 mb-6 bg-gray-100/50">
             <TabsTrigger 
               value="details"
-              className="data-[state=active]:bg-red-200 data-[state=active]:text-red-900"
+              className="data-[state=active]:bg-gray-200 data-[state=active]:text-gray-900"
             >
               Detaylar
             </TabsTrigger>
             <TabsTrigger 
               value="activities"
-              className="data-[state=active]:bg-red-200 data-[state=active]:text-red-900"
+              className="data-[state=active]:bg-gray-200 data-[state=active]:text-gray-900"
             >
               Aktiviteler
             </TabsTrigger>
             <TabsTrigger 
               value="history"
-              className="data-[state=active]:bg-red-200 data-[state=active]:text-red-900"
+              className="data-[state=active]:bg-gray-200 data-[state=active]:text-gray-900"
             >
               Geçmiş
             </TabsTrigger>
             <TabsTrigger 
               value="notes"
-              className="data-[state=active]:bg-red-200 data-[state=active]:text-red-900"
+              className="data-[state=active]:bg-gray-200 data-[state=active]:text-gray-900"
             >
               Notlar
             </TabsTrigger>
@@ -263,31 +246,31 @@ export const OpportunityDetailSheet = ({
           <TabsContent value="details">
             <div className="space-y-4">
               <div>
-                <Label className="text-red-800">Başlık</Label>
+                <Label className="text-gray-800">Başlık</Label>
                 <Input 
                   value={editingValues.title || ""}
                   onChange={(e) => handleInputChange("title", e.target.value)}
-                  className="border-red-200 focus:border-red-300 focus:ring-red-100" 
+                  className="border-gray-200 focus:border-gray-300 focus:ring-gray-100" 
                 />
               </div>
               
               <div>
-                <Label className="text-red-800">Açıklama</Label>
+                <Label className="text-gray-800">Açıklama</Label>
                 <Textarea 
                   value={editingValues.description || ""}
                   onChange={(e) => handleInputChange("description", e.target.value)}
-                  className="border-red-200 focus:border-red-300 focus:ring-red-100" 
+                  className="border-gray-200 focus:border-gray-300 focus:ring-gray-100" 
                 />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-red-800">Öncelik</Label>
+                  <Label className="text-gray-800">Öncelik</Label>
                   <Select 
                     value={editingValues.priority || opportunity.priority}
                     onValueChange={(val) => handleInputChange("priority", val)}
                   >
-                    <SelectTrigger className="border-red-200 focus:ring-red-100">
+                    <SelectTrigger className="border-gray-200 focus:ring-gray-100">
                       <SelectValue placeholder="Öncelik seçin" />
                     </SelectTrigger>
                     <SelectContent>
@@ -299,21 +282,21 @@ export const OpportunityDetailSheet = ({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-red-800">Tahmini Değer</Label>
+                    <Label className="text-gray-800">Tahmini Değer</Label>
                     <Input 
                       type="number" 
                       value={editingValues.value ?? opportunity.value}
                       onChange={(e) => handleInputChange("value", parseFloat(e.target.value))}
-                      className="border-red-200 focus:border-red-300 focus:ring-red-100" 
+                      className="border-gray-200 focus:border-gray-300 focus:ring-gray-100" 
                     />
                   </div>
                   <div>
-                    <Label className="text-red-800">Para Birimi</Label>
+                    <Label className="text-gray-800">Para Birimi</Label>
                     <Select 
                       value={editingValues.currency || opportunity.currency || "TRY"}
                       onValueChange={(val) => handleInputChange("currency", val)}
                     >
-                      <SelectTrigger className="border-red-200 focus:ring-red-100">
+                      <SelectTrigger className="border-gray-200 focus:ring-gray-100">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -328,22 +311,22 @@ export const OpportunityDetailSheet = ({
               </div>
               
               <div>
-                <Label className="text-red-800">Beklenen Kapanış Tarihi</Label>
+                <Label className="text-gray-800">Beklenen Kapanış Tarihi</Label>
                 <Input 
                   type="date" 
                   value={editingValues.expected_close_date?.split('T')[0] || ""}
                   onChange={(e) => handleInputChange("expected_close_date", e.target.value)}
-                  className="border-red-200 focus:border-red-300 focus:ring-red-100" 
+                  className="border-gray-200 focus:border-gray-300 focus:ring-gray-100" 
                 />
               </div>
               
               <div>
-                <Label className="text-red-800">Sorumlu Kişi</Label>
+                <Label className="text-gray-800">Sorumlu Kişi</Label>
                 <Select 
                   value={editingValues.employee_id || opportunity.employee_id || ""}
                   onValueChange={(val) => handleInputChange("employee_id", val)}
                 >
-                  <SelectTrigger className="border-red-200 focus:ring-red-100">
+                  <SelectTrigger className="border-gray-200 focus:ring-gray-100">
                     <SelectValue placeholder="Sorumlu kişi seçin" />
                   </SelectTrigger>
                   <SelectContent>
@@ -361,7 +344,7 @@ export const OpportunityDetailSheet = ({
               <Button 
                 onClick={handleSaveChanges}
                 disabled={updateOpportunityMutation.isPending}
-                className="bg-red-800 text-white hover:bg-red-900"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Save className="mr-2 h-4 w-4" />
                 Değişiklikleri Kaydet
@@ -372,11 +355,11 @@ export const OpportunityDetailSheet = ({
           <TabsContent value="activities">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-red-800">Aktiviteler</h3>
+                <h3 className="text-lg font-medium text-gray-800">Aktiviteler</h3>
                 <Button 
                   onClick={() => setShowNewActivityForm(!showNewActivityForm)}
                   size="sm"
-                  className="bg-red-800 text-white hover:bg-red-900"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Yeni Aktivite
@@ -384,21 +367,21 @@ export const OpportunityDetailSheet = ({
               </div>
               
               {showNewActivityForm && (
-                <Card className="border-red-200">
+                <Card className="border-gray-200">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm text-red-800">Yeni Aktivite Ekle</CardTitle>
+                    <CardTitle className="text-sm text-gray-800">Yeni Aktivite Ekle</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-red-800">Aktivite Türü</Label>
+                        <Label className="text-gray-800">Aktivite Türü</Label>
                         <Select 
                           value={newActivity.contact_type}
                           onValueChange={(val: ContactHistoryItem["contact_type"]) => 
                             setNewActivity(prev => ({ ...prev, contact_type: val }))
                           }
                         >
-                          <SelectTrigger className="border-red-200">
+                          <SelectTrigger className="border-gray-200">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -410,22 +393,22 @@ export const OpportunityDetailSheet = ({
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-red-800">Tarih</Label>
+                        <Label className="text-gray-800">Tarih</Label>
                         <Input 
                           type="date"
                           value={newActivity.date}
                           onChange={(e) => setNewActivity(prev => ({ ...prev, date: e.target.value }))}
-                          className="border-red-200"
+                          className="border-gray-200"
                         />
                       </div>
                     </div>
                     <div>
-                      <Label className="text-red-800">Notlar</Label>
+                      <Label className="text-gray-800">Notlar</Label>
                       <Textarea 
                         value={newActivity.notes}
                         onChange={(e) => setNewActivity(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Aktivite detaylarını yazın..."
-                        className="border-red-200"
+                        className="border-gray-200"
                         rows={3}
                       />
                     </div>
@@ -434,7 +417,7 @@ export const OpportunityDetailSheet = ({
                         variant="outline"
                         size="sm"
                         onClick={() => setShowNewActivityForm(false)}
-                        className="border-red-200 text-red-700"
+                        className="border-gray-200 text-gray-700"
                       >
                         İptal
                       </Button>
@@ -442,7 +425,7 @@ export const OpportunityDetailSheet = ({
                         size="sm"
                         onClick={handleAddActivity}
                         disabled={!newActivity.notes.trim()}
-                        className="bg-red-800 text-white hover:bg-red-900"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
                       >
                         Ekle
                       </Button>
@@ -456,19 +439,19 @@ export const OpportunityDetailSheet = ({
                   <p className="text-center text-gray-500 py-4">Henüz aktivite yok</p>
                 ) : (
                   contactHistory.map((activity) => (
-                    <Card key={activity.id} className="border-red-100">
+                    <Card key={activity.id} className="border-gray-100">
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3">
-                          <div className="p-2 rounded-full bg-red-100">
-                            {activity.contact_type === 'call' && <Phone className="h-4 w-4 text-red-600" />}
-                            {activity.contact_type === 'email' && <Mail className="h-4 w-4 text-red-600" />}
-                            {activity.contact_type === 'meeting' && <Calendar className="h-4 w-4 text-red-600" />}
-                            {activity.contact_type === 'other' && <MessageSquare className="h-4 w-4 text-red-600" />}
+                          <div className="p-2 rounded-full bg-gray-100">
+                            {activity.contact_type === 'call' && <Phone className="h-4 w-4 text-gray-600" />}
+                            {activity.contact_type === 'email' && <Mail className="h-4 w-4 text-gray-600" />}
+                            {activity.contact_type === 'meeting' && <Calendar className="h-4 w-4 text-gray-600" />}
+                            {activity.contact_type === 'other' && <MessageSquare className="h-4 w-4 text-gray-600" />}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-2">
-                                <Badge variant="outline" className="border-red-200 text-red-800">
+                                <Badge variant="outline" className="border-gray-200 text-gray-800">
                                   {activity.contact_type === 'call' && 'Telefon'}
                                   {activity.contact_type === 'email' && 'E-posta'}
                                   {activity.contact_type === 'meeting' && 'Toplantı'}
@@ -497,10 +480,10 @@ export const OpportunityDetailSheet = ({
           
           <TabsContent value="history">
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-red-800">Fırsat Geçmişi</h3>
+              <h3 className="text-lg font-medium text-gray-800">Fırsat Geçmişi</h3>
               
               <div className="space-y-3">
-                <Card className="border-red-100">
+                <Card className="border-gray-100">
                   <CardContent className="p-4">
                     <div className="flex items-start space-x-3">
                       <div className="p-2 rounded-full bg-green-100">
@@ -526,7 +509,7 @@ export const OpportunityDetailSheet = ({
                   </CardContent>
                 </Card>
                 
-                <Card className="border-red-100">
+                <Card className="border-gray-100">
                   <CardContent className="p-4">
                     <div className="flex items-start space-x-3">
                       <div className="p-2 rounded-full bg-blue-100">
@@ -548,11 +531,11 @@ export const OpportunityDetailSheet = ({
                 </Card>
                 
                 {opportunity.customer && (
-                  <Card className="border-red-100">
+                  <Card className="border-gray-100">
                     <CardContent className="p-4">
                       <div className="flex items-start space-x-3">
-                        <div className="p-2 rounded-full bg-purple-100">
-                          <User className="h-4 w-4 text-purple-600" />
+                        <div className="p-2 rounded-full bg-gray-100">
+                          <User className="h-4 w-4 text-gray-600" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
@@ -583,11 +566,11 @@ export const OpportunityDetailSheet = ({
           <TabsContent value="notes">
             <div className="space-y-4">
               <div>
-                <Label className="text-red-800">Notlar</Label>
+                <Label className="text-gray-800">Notlar</Label>
                 <Textarea 
                   value={editingValues.notes || ""}
                   onChange={(e) => handleInputChange("notes", e.target.value)}
-                  className="min-h-[200px] border-red-200 focus:border-red-300 focus:ring-red-100" 
+                  className="min-h-[200px] border-gray-200 focus:border-gray-300 focus:ring-gray-100" 
                 />
               </div>
             </div>
@@ -596,7 +579,7 @@ export const OpportunityDetailSheet = ({
               <Button 
                 onClick={handleSaveChanges}
                 disabled={updateOpportunityMutation.isPending}
-                className="bg-red-800 text-white hover:bg-red-900"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Save className="mr-2 h-4 w-4" />
                 Notları Kaydet
@@ -607,11 +590,12 @@ export const OpportunityDetailSheet = ({
         
         <SheetFooter className="flex justify-end pt-4 mt-6 border-t">
           <Button 
-            onClick={handleViewFullDetails}
+            onClick={handleSaveChanges}
             variant="outline" 
-            className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+            className="border-gray-200 text-gray-700 hover:bg-gray-50"
           >
-            Tam Görünüm
+            <Save className="mr-2 h-4 w-4" />
+            Kaydet
           </Button>
         </SheetFooter>
       </SheetContent>

@@ -271,18 +271,11 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
           </div>
 
           {/* Alt Görevler */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2 pb-1 border-b border-gray-200">
-              <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-              <h3 className="text-xs font-medium text-gray-900">Alt Görevler</h3>
-            </div>
-            
-            <SubtaskManager 
-              task={{...task, subtasks}} 
-              onUpdate={handleUpdateSubtasks} 
-              isUpdating={isUpdating}
-            />
-          </div>
+          <SubtaskManager 
+            task={{...task, subtasks}} 
+            onUpdate={handleUpdateSubtasks} 
+            isUpdating={isUpdating}
+          />
         </form>
       </div>
 

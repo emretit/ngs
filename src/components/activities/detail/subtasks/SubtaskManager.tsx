@@ -111,15 +111,14 @@ export const SubtaskManager = ({ task, onUpdate, isUpdating = false }: SubtaskMa
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center space-x-2 pb-2 border-b border-gray-200">
-        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-        <h3 className="text-sm font-medium text-gray-900">Alt Görevler</h3>
+        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+        <h3 className="text-xs font-medium text-gray-900">Alt Görevler</h3>
       </div>
 
       {/* Alt Görev Yönetimi */}
-      <div className="space-y-3">
         <SubtaskHeader 
           isAddingSubtask={isAddingSubtask} 
           onAddClick={handleAddSubtaskClick} 
@@ -163,7 +162,6 @@ export const SubtaskManager = ({ task, onUpdate, isUpdating = false }: SubtaskMa
         ) : (
           <EmptySubtasks />
         )}
-      </div>
     </div>
   );
 };

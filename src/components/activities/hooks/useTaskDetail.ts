@@ -9,7 +9,6 @@ export const useTaskDetail = () => {
 
   const updateTaskMutation = useMutation({
     mutationFn: async (updatedTask: Omit<Task, 'subtasks'>) => {
-      console.log("Updating task:", updatedTask);
       
       // Only send the fields we want to update to avoid type errors
       const taskForUpdate = {
@@ -38,7 +37,6 @@ export const useTaskDetail = () => {
         throw error;
       }
       
-      console.log("Task updated successfully:", data);
       return data;
     },
     onSuccess: () => {

@@ -39,9 +39,6 @@ export const SubtaskManager = ({ task, onUpdate, isUpdating = false }: SubtaskMa
       created_at: new Date().toISOString()
     };
     
-    console.log("SubtaskManager: Adding subtask:", newSubtaskItem);
-    console.log("SubtaskManager: Current subtasks:", subtasks);
-    console.log("SubtaskManager: New subtasks array:", [...subtasks, newSubtaskItem]);
     
     onUpdate([...subtasks, newSubtaskItem]);
     setNewSubtask("");

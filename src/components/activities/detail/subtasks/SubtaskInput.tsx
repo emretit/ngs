@@ -43,12 +43,6 @@ const SubtaskInput = ({
 
   const isDisabled = isUpdating || !value.trim();
   
-  console.log("SubtaskInput render:", {
-    value,
-    isUpdating,
-    valueTrimmed: value.trim(),
-    isDisabled
-  });
 
   return (
     <div className="flex items-center gap-2">
@@ -63,14 +57,7 @@ const SubtaskInput = ({
       />
       <Button 
         size="sm" 
-        onClick={() => {
-          console.log("SubtaskInput: Button clicked!");
-          console.log("SubtaskInput: value:", value);
-          console.log("SubtaskInput: isUpdating:", isUpdating);
-          console.log("SubtaskInput: value.trim():", value.trim());
-          console.log("SubtaskInput: disabled:", isDisabled);
-          onSave();
-        }}
+        onClick={onSave}
         disabled={isDisabled}
       >
         <Check className="h-4 w-4" />

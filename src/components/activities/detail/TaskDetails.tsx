@@ -119,13 +119,17 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
 
   const handleSave = () => {
     const updatedTask = {
-      ...formData,
+      id: task.id,
       title,
       description,
       status,
+      type: task.type || 'general',
       priority: isImportant ? 'high' as const : 'medium' as const,
       due_date: dueDate?.toISOString(),
-      assignee_id: selectedAssigneeId || null
+      assignee_id: selectedAssigneeId || null,
+      related_item_id: task.related_item_id,
+      related_item_title: task.related_item_title,
+      related_item_type: task.related_item_type
     };
     updateTaskMutation.mutate(updatedTask);
   };

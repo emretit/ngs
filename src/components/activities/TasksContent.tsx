@@ -41,6 +41,12 @@ const TasksContent = ({
             first_name,
             last_name,
             avatar_url
+          ),
+          subtasks(
+            id,
+            title,
+            completed,
+            created_at
           )
         `)
         .eq("company_id", userData.company_id)

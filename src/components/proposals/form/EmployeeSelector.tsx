@@ -99,8 +99,8 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
 
   if (isLoading) {
     return (
-      <div className={cn("space-y-2", className)}>
-        {showLabel && <Label className={cn("text-xs font-medium text-gray-700", error ? "text-red-500" : "")}>{label}</Label>}
+      <div className={cn("space-y-1", className)}>
+        {showLabel && <Label className={cn("text-sm font-medium text-gray-700", error ? "text-red-500" : "")}>{label}</Label>}
         <div className="flex items-center justify-center py-4">
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
           <span className="ml-2 text-sm">{loadingText}</span>
@@ -110,8 +110,8 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
   }
 
   return (
-    <div className={cn("space-y-2", className)}>
-      {showLabel && <Label className={cn("text-xs font-medium text-gray-700", error ? "text-red-500" : "")}>{label}</Label>}
+    <div className={cn("space-y-1", className)}>
+      {showLabel && <Label className={cn("text-sm font-medium text-gray-700", error ? "text-red-500" : "")}>{label}</Label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -119,7 +119,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full h-8 text-xs justify-between",
+              "w-full h-8 text-sm justify-between",
               !value && "text-muted-foreground",
               error && "border-red-500"
             )}

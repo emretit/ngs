@@ -81,7 +81,7 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
     >
       <TableCell className="p-4 font-medium">
         <div className="flex items-center space-x-2">
-          {task.is_important && (
+          {task.priority === 'high' && (
             <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
           )}
           {task.is_recurring && (
@@ -94,7 +94,7 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
         {formatDate(task.due_date)}
       </TableCell>
       <TableCell className="p-4">
-        {task.is_important ? (
+        {task.priority === 'high' ? (
           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
             <Star className="h-3 w-3 mr-1 fill-yellow-600" />
             Önemli

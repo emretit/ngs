@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { handleError, handleSuccess } from "@/utils/errorHandler";
 import { logger } from "@/utils/logger";
 import { generateRecurringTasks, createNextTaskInstance } from "@/utils/recurringTaskScheduler";
@@ -43,6 +44,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   relatedItemType,
   opportunityId
 }) => {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("todo");
@@ -95,17 +97,11 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           title: title.trim(),
           description: description.trim() || null,
           status,
-          is_important: isImportant,
+          priority: isImportant ? 'high' : 'medium',
           type: 'general',
           due_date: dueDate ? new Date(dueDate).toISOString() : null,
           assignee_id: selectedAssigneeId || null,
-          // Recurring task fields
-          is_recurring: isRecurring,
-          recurrence_type: recurrenceType,
-          recurrence_interval: recurrenceInterval,
-          recurrence_end_date: recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : null,
-          recurrence_days: recurrenceDays.length > 0 ? recurrenceDays : null,
-          recurrence_day_of_month: recurrenceDayOfMonth,
+          company_id: user?.company_id || null,
           // Fırsat seçildiyse related_item kolonlarını doldur
           related_item_id: selectedOpportunity ? selectedOpportunity.id : null,
           related_item_type: selectedOpportunity ? 'opportunity' : null,
@@ -156,7 +152,6 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
       handleSuccess("Aktivite başarıyla oluşturuldu", "createActivity");
       resetForm();
       onSuccess();
-      onClose();
     } catch (error) {
       handleError(error, {
         operation: "createActivity",
@@ -269,8 +264,18 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
             <div className="space-y-1">
               <UnifiedDatePicker
                 label="Son Tarih"
-                date={dueDate ? new Date(dueDate) : undefined}
-                onSelect={(date) => setDueDate(date ? date.toISOString().split('T')[0] : "")}
+                date={dueDate ? new Date(dueDate + 'T00:00:00') : undefined}
+                onSelect={(date) => {
+                  if (date) {
+                    // Timezone kaymasını önlemek için yerel tarih formatını kullan
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    setDueDate(`${year}-${month}-${day}`);
+                  } else {
+                    setDueDate("");
+                  }
+                }}
                 placeholder="Tarih seçin"
               />
             </div>

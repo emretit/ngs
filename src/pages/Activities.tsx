@@ -5,8 +5,9 @@ import TasksPageHeader from "@/components/activities/header/TasksPageHeader";
 import TasksFilterBar from "@/components/activities/filters/TasksFilterBar";
 import { useKanbanTasks } from "@/components/activities/hooks/useKanbanTasks";
 import NewActivityDialog from "@/components/activities/NewActivityDialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { Task, TaskStatus } from "@/types/task";
 import { ViewType } from "@/components/activities/header/TasksViewToggle";
 import TasksKanban from "@/components/activities/TasksKanban";
@@ -24,6 +25,8 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
   const [activeView, setActiveView] = useState<ViewType>("table");
   const [isNewActivityDialogOpen, setIsNewActivityDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
   const { data: employees = [] } = useQuery({
     queryKey: ["employees-for-filter"],
     queryFn: async () => {
@@ -49,7 +52,14 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
   };
   const handleActivitySuccess = () => {
     // Aktivite başarıyla eklendiğinde yapılacak işlemler
-    // Örneğin: sayfayı yenile, toast göster, vs.
+    // React Query cache'ini invalidate et ki yeni veriler gelsin
+    if (userData?.company_id) {
+      queryClient.invalidateQueries({
+        queryKey: ["activities", userData.company_id]
+      });
+    }
+    // Dialog'u kapat
+    setIsNewActivityDialogOpen(false);
   };
   return (
     <>

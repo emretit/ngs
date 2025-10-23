@@ -24,40 +24,41 @@ const TaskMainInfo = ({ formData, handleInputChange }: TaskMainInfoProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col">
-        <h2 className="text-xl font-semibold">{formData.title}</h2>
-        
-        <div className="flex items-center justify-between mt-1 text-sm text-muted-foreground">
-          <span>Oluşturulma: {formatDate(formData.created_at)}</span>
-          {formData.updated_at && formData.updated_at !== formData.created_at && (
-            <span>Güncelleme: {formatDate(formData.updated_at)}</span>
-          )}
+      {/* Header */}
+      <div className="flex items-center space-x-2 pb-2 border-b border-gray-200">
+        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+        <h3 className="text-sm font-medium text-gray-900">Görev Bilgileri</h3>
+      </div>
+
+      {/* Başlık ve Açıklama */}
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <label htmlFor="title" className="text-sm font-medium text-gray-700">
+            Başlık *
+          </label>
+          <Input
+            id="title"
+            value={formData.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+            placeholder="Görev başlığını girin"
+            className="h-8"
+            required
+          />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="title" className="text-sm font-medium">
-          Başlık
-        </label>
-        <Input
-          id="title"
-          value={formData.title}
-          onChange={(e) => handleInputChange('title', e.target.value)}
-          className="w-full"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="description" className="text-sm font-medium">
-          Açıklama
-        </label>
-        <Textarea
-          id="description"
-          value={formData.description || ''}
-          onChange={(e) => handleInputChange('description', e.target.value)}
-          className="w-full min-h-[100px]"
-          placeholder="Aktivite açıklaması"
-        />
+        
+        <div className="space-y-1">
+          <label htmlFor="description" className="text-sm font-medium text-gray-700">
+            Açıklama
+          </label>
+          <Textarea
+            id="description"
+            value={formData.description || ''}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            className="resize-none h-20"
+            placeholder="Görev detaylarını girin"
+            rows={3}
+          />
+        </div>
       </div>
     </div>
   );

@@ -8,7 +8,6 @@ export interface Task {
   description?: string;
   status: TaskStatus;
   priority?: TaskPriority;
-  is_important?: boolean;
   type: TaskType;
   assignee_id?: string;
   assignee?: {

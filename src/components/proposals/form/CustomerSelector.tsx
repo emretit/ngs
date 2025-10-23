@@ -72,7 +72,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({ value, onChange, er
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-1">
         <div className="flex items-center justify-center py-4">
           <Loader2 className="h-4 w-4 animate-spin text-primary" />
           <span className="ml-2 text-sm">Müşteriler yükleniyor...</span>
@@ -82,8 +82,8 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({ value, onChange, er
   }
 
   return (
-    <div className="space-y-2">
-      <Label className={cn("text-xs font-medium text-gray-700", error ? "text-red-500" : "")}>Müşteri</Label>
+    <div className="space-y-1">
+      <Label className={cn("text-sm font-medium text-gray-700", error ? "text-red-500" : "")}>Müşteri</Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -91,7 +91,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({ value, onChange, er
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full h-8 text-xs justify-between",
+              "w-full h-8 text-sm justify-between",
               !value && "text-muted-foreground",
               error && "border-red-500"
             )}

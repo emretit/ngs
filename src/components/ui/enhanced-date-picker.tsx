@@ -179,14 +179,16 @@ export function EnhancedDatePicker({ date, onSelect, placeholder = "Tarih seçin
         <Button
           variant="outline"
           className={cn(
-            "w-full h-8 justify-start text-left font-normal",
+            "w-full h-8 justify-between text-left font-normal text-sm",
             !date && "text-muted-foreground",
             className
           )}
           disabled={isButtonDisabled}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "dd MMMM yyyy", { locale: tr }) : placeholder}
+          <span className="truncate text-left flex-1">
+            {date ? format(date, "dd MMMM yyyy", { locale: tr }) : placeholder}
+          </span>
+          <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

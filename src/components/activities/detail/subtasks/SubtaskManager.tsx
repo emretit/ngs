@@ -39,6 +39,10 @@ export const SubtaskManager = ({ task, onUpdate, isUpdating = false }: SubtaskMa
       created_at: new Date().toISOString()
     };
     
+    console.log("SubtaskManager: Adding subtask:", newSubtaskItem);
+    console.log("SubtaskManager: Current subtasks:", subtasks);
+    console.log("SubtaskManager: New subtasks array:", [...subtasks, newSubtaskItem]);
+    
     onUpdate([...subtasks, newSubtaskItem]);
     setNewSubtask("");
     setIsAddingSubtask(false);
@@ -110,50 +114,59 @@ export const SubtaskManager = ({ task, onUpdate, isUpdating = false }: SubtaskMa
   };
 
   return (
-    <div className="space-y-3 border-t pt-4 mt-4">
-      <SubtaskHeader 
-        isAddingSubtask={isAddingSubtask} 
-        onAddClick={handleAddSubtaskClick} 
-        isUpdating={isUpdating}
-      />
-      
-      {isAddingSubtask && (
-        <SubtaskInput
-          value={newSubtask}
-          onChange={setNewSubtask}
-          onSave={handleAddSubtask}
-          onCancel={handleCancelAdd}
-          isUpdating={isUpdating}
-          placeholder="Alt görev başlığı"
-          autoFocus
-        />
-      )}
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center space-x-2 pb-2 border-b border-gray-200">
+        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+        <h3 className="text-sm font-medium text-gray-900">Alt Görevler</h3>
+      </div>
 
-      {task.subtasks && task.subtasks.length > 0 ? (
-        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-          {task.subtasks.map((subtask, index) => (
-            <SubtaskItem
-              key={subtask.id}
-              subtask={subtask}
-              isEditing={editingSubtaskId === subtask.id}
-              editValue={editingSubtaskId === subtask.id ? editValue : ''}
-              onToggle={(completed) => handleToggleSubtask(subtask.id, completed)}
-              onDelete={() => handleDeleteSubtask(subtask.id)}
-              onEdit={() => handleStartEditing(subtask)}
-              onSaveEdit={handleSaveEdit}
-              onCancelEdit={handleCancelEdit}
-              onChangeEditValue={setEditValue}
-              onMoveUp={() => handleMoveSubtask(subtask.id, 'up')}
-              onMoveDown={() => handleMoveSubtask(subtask.id, 'down')}
-              isFirst={index === 0}
-              isLast={index === task.subtasks.length - 1}
-              isUpdating={isUpdating}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptySubtasks />
-      )}
+      {/* Alt Görev Yönetimi */}
+      <div className="space-y-3">
+        <SubtaskHeader 
+          isAddingSubtask={isAddingSubtask} 
+          onAddClick={handleAddSubtaskClick} 
+          isUpdating={isUpdating}
+        />
+        
+        {isAddingSubtask && (
+          <SubtaskInput
+            value={newSubtask}
+            onChange={setNewSubtask}
+            onSave={handleAddSubtask}
+            onCancel={handleCancelAdd}
+            isUpdating={isUpdating}
+            placeholder="Alt görev başlığı"
+            autoFocus
+          />
+        )}
+
+        {task.subtasks && task.subtasks.length > 0 ? (
+          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+            {task.subtasks.map((subtask, index) => (
+              <SubtaskItem
+                key={subtask.id}
+                subtask={subtask}
+                isEditing={editingSubtaskId === subtask.id}
+                editValue={editingSubtaskId === subtask.id ? editValue : ''}
+                onToggle={(completed) => handleToggleSubtask(subtask.id, completed)}
+                onDelete={() => handleDeleteSubtask(subtask.id)}
+                onEdit={() => handleStartEditing(subtask)}
+                onSaveEdit={handleSaveEdit}
+                onCancelEdit={handleCancelEdit}
+                onChangeEditValue={setEditValue}
+                onMoveUp={() => handleMoveSubtask(subtask.id, 'up')}
+                onMoveDown={() => handleMoveSubtask(subtask.id, 'down')}
+                isFirst={index === 0}
+                isLast={index === task.subtasks.length - 1}
+                isUpdating={isUpdating}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptySubtasks />
+        )}
+      </div>
     </div>
   );
 };

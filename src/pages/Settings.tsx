@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings2, Users, UserCheck, Zap, Wrench, FileText } from "lucide-react";
+import { Settings2, Users, UserCheck, Zap, Wrench, FileText, CreditCard } from "lucide-react";
 interface SettingsProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
@@ -80,6 +80,25 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                     </h3>
                     <p className="text-sm text-gray-600">
                       Sistem kullanıcılarını yönetin
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Abonelik & Faturalama */}
+              <div 
+                onClick={() => navigate("/settings/subscription")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <CreditCard className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      Abonelik & Faturalama
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Paket ve ödeme yönetimi
                     </p>
                   </div>
                 </div>

@@ -6,12 +6,14 @@ import SystemSettingsPage from "@/pages/settings/SystemSettings";
 import PdfTemplatesSettings from "@/pages/settings/PdfTemplatesSettings";
 import PdfTemplateEditor from "@/pages/templates/PdfTemplateEditor";
 import NotificationSettings from "@/pages/NotificationSettings";
+import Subscription from "@/pages/settings/Subscription";
 import { RouteConfig } from "./types";
 
 // Define settings routes
 export const settingsRoutes: RouteConfig[] = [
   { path: "/settings", component: Settings, protected: true },
   { path: "/settings/users", component: UsersSettings, protected: true },
+  { path: "/settings/subscription", component: Subscription, protected: true },
   { path: "/settings/nilvera", component: NilveraSettingsPage, protected: true },
   { path: "/settings/system", component: SystemSettingsPage, protected: true },
   { path: "/settings/pdf-templates", component: PdfTemplatesSettings, protected: true },

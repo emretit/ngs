@@ -34,6 +34,7 @@ export interface Task {
   recurrence_day_of_month?: number;
   parent_task_id?: string; // For recurring task instances
   is_recurring_instance?: boolean; // True if this is a generated instance
+  is_important?: boolean; // Important task flag
 }
 
 export interface SubTask {

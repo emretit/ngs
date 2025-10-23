@@ -165,35 +165,37 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="sm:max-w-xl md:max-w-2xl overflow-y-auto border-l border-gray-200 bg-white">
-        <SheetHeader className="text-left border-b pb-3 mb-3">
-          <div className="flex justify-between items-start">
-            <div>
-              <SheetTitle className="text-lg text-gray-900">{task.title}</SheetTitle>
-              <div className="flex items-center mt-1 text-muted-foreground">
-                <span className="text-xs mr-2">
-                  {task.assignee?.first_name ? `${task.assignee.first_name} ${task.assignee.last_name}` : "Görevli atanmamış"}
-                </span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800">
-                  {status === 'todo' && 'Yapılacak'}
-                  {status === 'in_progress' && 'Devam Ediyor'}
-                  {status === 'completed' && 'Tamamlandı'}
-                  {status === 'postponed' && 'Ertelendi'}
-                </span>
-              </div>
-              <div className="flex items-center mt-1 text-xs text-gray-500 space-x-3">
-                <div className="flex items-center">
-                  <Calendar className="h-3 w-3 mr-1" />
-                  <span>Oluşturulma: {formatDate(task.created_at)}</span>
-                </div>
-                {task.updated_at && task.updated_at !== task.created_at && (
+        <SheetHeader className="text-left border-b pb-4 mb-4">
+          {/* Modern Header with Gradient Background */}
+          <div className="flex items-center justify-between p-4 -m-4 mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">{task.title}</h2>
+                <div className="flex items-center text-xs text-gray-600 mt-0.5 space-x-3">
                   <div className="flex items-center">
-                    <Edit2 className="h-3 w-3 mr-1" />
-                    <span>Revize: {formatDate(task.updated_at)}</span>
+                    <Calendar className="h-3 w-3 mr-1" />
+                    <span>Oluşturulma: {formatDate(task.created_at)}</span>
                   </div>
-                )}
+                  {task.updated_at && task.updated_at !== task.created_at && (
+                    <div className="flex items-center">
+                      <Edit2 className="h-3 w-3 mr-1" />
+                      <span>Revize: {formatDate(task.updated_at)}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs px-2 py-1 rounded-full bg-white text-gray-700 border border-gray-200">
+                {status === 'todo' && 'Yapılacak'}
+                {status === 'in_progress' && 'Devam Ediyor'}
+                {status === 'completed' && 'Tamamlandı'}
+                {status === 'postponed' && 'Ertelendi'}
+              </span>
+            </div>
           </div>
+          
         </SheetHeader>
         
         <div className="mt-4 space-y-4">

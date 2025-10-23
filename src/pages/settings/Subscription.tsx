@@ -144,6 +144,19 @@ const Subscription = ({ isCollapsed, setIsCollapsed }: SubscriptionProps) => {
               Aboneliğiniz otomatik olarak yenilenecektir. İptal etmek için destek ekibiyle iletişime geçin.
             </p>
           </div>
+
+          <div className="flex justify-end">
+            <Button 
+              onClick={() => {
+                setSelectedPlan(currentSubscription.planId);
+                setShowPaymentDialog(true);
+              }}
+              className="gap-2"
+            >
+              <CreditCard className="h-4 w-4" />
+              Ödeme Yap
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

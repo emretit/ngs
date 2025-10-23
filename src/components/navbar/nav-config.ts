@@ -250,6 +250,11 @@ export const navItems = [
         label: "Kullanıcı Yönetimi",
       },
       {
+        path: "/settings/subscription",
+        icon: CreditCard,
+        label: "Abonelik & Faturalama",
+      },
+      {
         path: "/settings/nilvera",
         icon: Zap,
         label: "Nilvera E-Fatura",

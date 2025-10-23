@@ -155,15 +155,15 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
         )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <form className="space-y-4">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-3">
+              <form className="space-y-3">
           {/* Görev Başlığı ve Tarih Header */}
-          <div className="pb-4 border-b border-gray-200">
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <div className="pb-3 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">
               {title}
             </h3>
-            <div className="flex items-center space-x-4 text-sm text-gray-500">
+            <div className="flex items-center space-x-3 text-xs text-gray-500">
               <span>Oluşturulma: {formatDate(task.created_at)}</span>
               {task.updated_at && task.updated_at !== task.created_at && (
                 <span>Güncelleme: {formatDate(task.updated_at)}</span>
@@ -172,34 +172,34 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
           </div>
 
           {/* Başlık ve Açıklama */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="space-y-1">
-              <Label htmlFor="title" className="text-sm font-medium text-gray-700">Başlık *</Label>
+              <Label htmlFor="title" className="text-xs font-medium text-gray-700">Başlık *</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Aktivite başlığını girin"
-                className="h-8"
+                className="h-7 text-sm"
                 required
               />
             </div>
             
             <div className="space-y-1">
-              <Label htmlFor="description" className="text-sm font-medium text-gray-700">Açıklama</Label>
+              <Label htmlFor="description" className="text-xs font-medium text-gray-700">Açıklama</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Aktivite detaylarını girin"
                 rows={2}
-                className="resize-none h-8"
+                className="resize-none h-12 text-sm"
               />
             </div>
           </div>
 
           {/* Hızlı Seçimler */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <OpportunitySelector
               value={selectedOpportunityId}
               onChange={setSelectedOpportunityId}
@@ -222,7 +222,7 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
           </div>
 
           {/* Müşteri ve Son Tarih */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <CustomerSelector
                 value={selectedCustomerId}
@@ -241,8 +241,8 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
           </div>
 
           {/* Durum ve Önem */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+            <div className="flex items-center space-x-2">
               <Label className="text-xs font-medium text-gray-700">Durum</Label>
               <select
                 value={status}
@@ -256,25 +256,25 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
               </select>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <Switch
                 id="is_important"
                 checked={isImportant}
                 onCheckedChange={setIsImportant}
-                className="scale-90"
+                className="scale-75"
               />
-              <Label htmlFor="is_important" className="flex items-center space-x-1 cursor-pointer text-sm">
-                <Star className={`h-4 w-4 ${isImportant ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
+              <Label htmlFor="is_important" className="flex items-center space-x-1 cursor-pointer text-xs">
+                <Star className={`h-3 w-3 ${isImportant ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
                 <span>Önemli</span>
               </Label>
             </div>
           </div>
 
           {/* Alt Görevler */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2 pb-2 border-b border-gray-200">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <h3 className="text-sm font-medium text-gray-900">Alt Görevler</h3>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2 pb-1 border-b border-gray-200">
+              <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+              <h3 className="text-xs font-medium text-gray-900">Alt Görevler</h3>
             </div>
             
             <SubtaskManager 
@@ -287,12 +287,12 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
       </div>
 
       {/* Footer */}
-      <div className="flex justify-end space-x-2 p-4 border-t border-gray-200">
+      <div className="flex justify-end space-x-2 p-3 border-t border-gray-200">
         {onClose && (
           <button
             onClick={onClose}
             disabled={isUpdating}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:bg-gray-100 disabled:text-gray-400"
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:bg-gray-100 disabled:text-gray-400"
           >
             İptal
           </button>
@@ -300,16 +300,16 @@ const TaskDetails = ({ task, onClose }: TaskDetailsProps) => {
         <button
           onClick={handleSave}
           disabled={isUpdating}
-          className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:bg-gray-300 flex items-center space-x-2"
+          className="px-4 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:bg-gray-300 flex items-center space-x-1"
         >
           {isUpdating ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               <span>Kaydediliyor...</span>
             </>
           ) : (
             <>
-              <Save className="h-4 w-4" />
+              <Save className="h-3 w-3" />
               <span>Kaydet</span>
             </>
           )}

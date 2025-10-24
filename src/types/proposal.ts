@@ -49,6 +49,7 @@ export interface ProposalItem {
   stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock';
   original_currency?: string; // Original currency of the product
   original_price?: number; // Original price of the product
+  row_number?: number; // Row number for display
 }
 
 export interface ProposalAttachment {

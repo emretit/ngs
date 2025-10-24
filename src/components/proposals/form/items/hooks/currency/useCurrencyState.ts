@@ -3,8 +3,8 @@ import { useState, useCallback } from "react";
 import { getCurrencyOptions } from "../../utils/currencyUtils";
 import { toast } from "sonner";
 
-export const useCurrencyState = () => {
-  const [selectedCurrency, setSelectedCurrency] = useState<string>("TRY");
+export const useCurrencyState = (defaultCurrency?: string) => {
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(defaultCurrency || "TRY");
   const currencyOptions = getCurrencyOptions();
 
   const handleCurrencyChange = useCallback((newCurrency: string) => {

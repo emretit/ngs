@@ -75,8 +75,8 @@ const ProductDetailsModal = ({
     if (product) {
       // We're adding a new product
       setQuantity(1);
-      setUnitPrice(product.unit_price || 0);
-      setVatRate(product.vat_rate || 20);
+      setUnitPrice(product.price || 0);
+      setVatRate(product.tax_rate || 20);
       setDiscountRate(0);
       setDescription(product.description || "");
       setUnit(product.unit || "adet");

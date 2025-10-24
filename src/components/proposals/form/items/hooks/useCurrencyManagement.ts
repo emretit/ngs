@@ -4,8 +4,9 @@ import { useCurrencyFormatter } from "./currency/useCurrencyFormatter";
 import { useCurrencyConverter } from "./currency/useCurrencyConverter";
 import { useCurrencyState } from "./currency/useCurrencyState";
 import { useMemo } from "react";
+import { Product } from "@/types/product";
 
-export const useCurrencyManagement = () => {
+export const useCurrencyManagement = (defaultCurrency?: string, product?: Product | null, isManualPriceEdit?: boolean) => {
   const { exchangeRates, isLoadingRates } = useExchangeRates();
   const { formatCurrency, getCurrencySymbol } = useCurrencyFormatter();
   const { convertAmount } = useCurrencyConverter(exchangeRates);
@@ -14,7 +15,11 @@ export const useCurrencyManagement = () => {
     setSelectedCurrency, 
     currencyOptions, 
     handleCurrencyChange 
-  } = useCurrencyState();
+  } = useCurrencyState(defaultCurrency);
+
+  // Get original currency and price from product
+  const originalCurrency = product?.currency || defaultCurrency || "TRY";
+  const originalPrice = product?.price || 0;
 
   // Memoize the return object to prevent unnecessary re-renders
   const currencyManagement = useMemo(() => ({
@@ -26,7 +31,9 @@ export const useCurrencyManagement = () => {
     getCurrencySymbol,
     handleCurrencyChange,
     convertAmount,
-    isLoadingRates
+    isLoadingRates,
+    originalCurrency,
+    originalPrice
   }), [
     selectedCurrency,
     setSelectedCurrency,
@@ -36,7 +43,9 @@ export const useCurrencyManagement = () => {
     getCurrencySymbol,
     handleCurrencyChange,
     convertAmount,
-    isLoadingRates
+    isLoadingRates,
+    originalCurrency,
+    originalPrice
   ]);
 
   return currencyManagement;

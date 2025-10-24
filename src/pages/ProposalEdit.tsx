@@ -32,8 +32,6 @@ import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
 import ProductSelector from "@/components/proposals/form/ProductSelector";
 import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
-
-// New Card Components
 import CustomerInfoCard from "@/components/proposals/cards/CustomerInfoCard";
 import ProposalDetailsCard from "@/components/proposals/cards/ProposalDetailsCard";
 import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
@@ -722,30 +720,15 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {/* Customer Information */}
           <CustomerInfoCard
-            data={{
-              customer_id: formData.customer_id,
-              contact_name: formData.contact_name,
-              prepared_by: formData.prepared_by,
-              employee_id: formData.employee_id,
-            }}
-            onChange={handleFieldChange}
+            formData={formData}
+            handleFieldChange={handleFieldChange}
             errors={{}}
-            required={true}
           />
 
           {/* Offer Details */}
           <ProposalDetailsCard
-            data={{
-              subject: formData.subject,
-              offer_date: formData.offer_date,
-              validity_date: formData.validity_date,
-              offer_number: formData.offer_number,
-              status: formData.status,
-              currency: formData.currency,
-              exchange_rate: formData.exchange_rate,
-              notes: formData.notes,
-            }}
-            onChange={handleFieldChange}
+            formData={formData}
+            handleFieldChange={handleFieldChange}
             errors={{}}
           />
         </div>
@@ -755,51 +738,54 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           items={items}
           onAddItem={addItem}
           onRemoveItem={removeItem}
-          onUpdateItem={handleItemChange}
-          onMoveItemUp={undefined}
-          onMoveItemDown={undefined}
-          loading={false}
+          onItemChange={handleItemChange}
+          onProductModalSelect={(product, itemIndex) => {
+            if (itemIndex !== undefined) {
+              // Editing existing item
+              setSelectedProduct(null);
+              setEditingItemIndex(itemIndex);
+              setEditingItemData(product);
+              setProductModalOpen(true);
+            } else {
+              // Adding new item
+              handleProductModalSelect(product, itemIndex);
+            }
+          }}
+          showMoveButtons={false}
+          inputHeight="h-8"
         />
 
         {/* Terms and Financial Summary - Side by Side */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Terms & Conditions */}
           <TermsConditionsCard
-            data={{
-              payment_terms: formData.payment_terms,
-              delivery_terms: formData.delivery_terms,
-              warranty_terms: formData.warranty_terms,
-              price_terms: formData.price_terms,
-              other_terms: formData.other_terms,
-            }}
-            onChange={(field, value) => handleFieldChange(field, value)}
-            errors={{}}
+            paymentTerms={formData.payment_terms}
+            deliveryTerms={formData.delivery_terms}
+            warrantyTerms={formData.warranty_terms}
+            priceTerms={formData.price_terms}
+            otherTerms={formData.other_terms}
+            onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
           />
 
           {/* Financial Summary */}
           <FinancialSummaryCard
-            data={{
-              gross_total: Object.values(calculationsByCurrency)[0]?.gross || 0,
-              vat_percentage: formData.vat_percentage || 20,
-              discount_type: globalDiscountType,
-              discount_value: globalDiscountValue,
-              net_total: Object.values(calculationsByCurrency)[0]?.net || 0,
-              vat_amount: Object.values(calculationsByCurrency)[0]?.vat || 0,
-              total_amount: Object.values(calculationsByCurrency)[0]?.grand || 0,
-              currency: formData.currency || 'TRY',
+            calculationsByCurrency={calculationsByCurrency}
+            globalDiscountType={globalDiscountType}
+            globalDiscountValue={globalDiscountValue}
+            onGlobalDiscountTypeChange={(type) => {
+              setGlobalDiscountType(type);
+              setHasChanges(true);
             }}
-            onChange={(field, value) => {
-              if (field === 'vat_percentage') {
-                handleFieldChange('vat_percentage', value);
-              } else if (field === 'discount_type') {
-                setGlobalDiscountType(value);
-                setHasChanges(true);
-              } else if (field === 'discount_value') {
-                setGlobalDiscountValue(value);
-                setHasChanges(true);
-              }
+            onGlobalDiscountValueChange={(value) => {
+              setGlobalDiscountValue(value);
+              setHasChanges(true);
             }}
-            errors={{}}
+            vatPercentage={formData.vat_percentage}
+            onVatPercentageChange={(value) => {
+              handleFieldChange('vat_percentage', value);
+            }}
+            showVatControl={true}
+            inputHeight="h-6"
           />
         </div>
 

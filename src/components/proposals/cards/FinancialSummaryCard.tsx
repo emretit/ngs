@@ -1,33 +1,47 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Calculator, TrendingUp, Percent, DollarSign, Receipt } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 
+interface FinancialTotals {
+  gross: number;
+  discount: number;
+  net: number;
+  vat: number;
+  grand: number;
+}
+
 interface FinancialSummaryCardProps {
-  data: {
-    gross_total: number;
-    vat_percentage: number;
-    discount_type: 'percentage' | 'amount';
-    discount_value: number;
-    net_total: number;
-    vat_amount: number;
-    total_amount: number;
-    currency: string;
-  };
-  onChange: (field: string, value: any) => void;
-  errors?: Record<string, string>;
+  calculationsByCurrency: Record<string, FinancialTotals>;
+  globalDiscountType: 'percentage' | 'amount';
+  globalDiscountValue: number;
+  onGlobalDiscountTypeChange: (type: 'percentage' | 'amount') => void;
+  onGlobalDiscountValueChange: (value: number) => void;
+  vatPercentage?: number;
+  onVatPercentageChange?: (value: number) => void;
+  showVatControl?: boolean;
+  inputHeight?: "h-6" | "h-7";
 }
 
 const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
-  data,
-  onChange,
-  errors = {}
+  calculationsByCurrency,
+  globalDiscountType,
+  globalDiscountValue,
+  onGlobalDiscountTypeChange,
+  onGlobalDiscountValueChange,
+  vatPercentage = 20,
+  onVatPercentageChange,
+  showVatControl = false,
+  inputHeight = "h-7"
 }) => {
+  const currencies = Object.keys(calculationsByCurrency);
+  const isMultiCurrency = currencies.length > 1;
+
   return (
-    <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+    <Card className="lg:col-span-1 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
       <CardHeader className="pb-2 pt-2.5">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-50/50 border border-emerald-200/50">
@@ -36,89 +50,138 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
           Finansal Özet
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-4 pb-4 pt-0">
-        <div className="space-y-3">
-          {/* Brüt Toplam */}
-          <div className="flex justify-between items-center py-2">
-            <span className="text-sm font-medium text-gray-700">Brüt Toplam:</span>
-            <span className="text-sm font-semibold text-gray-900">
-              {formatCurrency(data.gross_total, data.currency)}
-            </span>
-          </div>
+      <CardContent className="space-y-4 pt-0 px-4 pb-4">
+        {/* Multi-currency display */}
+        <div className="space-y-4">
+          {currencies.map((currency) => {
+            const totals = calculationsByCurrency[currency];
+            return (
+              <div key={currency} className="space-y-3">
+                {/* Currency Header */}
+                {isMultiCurrency && (
+                  <div className="text-right text-sm font-medium text-primary flex items-center justify-end gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    {currency} Toplamları
+                  </div>
+                )}
 
-          {/* KDV Oranı */}
-          <div className="flex items-center justify-between">
-            <Label htmlFor="vat_percentage" className="text-xs font-medium text-gray-700">
-              KDV Oranı
-            </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="vat_percentage"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={data.vat_percentage}
-                onChange={(e) => onChange('vat_percentage', parseFloat(e.target.value) || 0)}
-                className="w-16 h-7 text-xs text-center"
-              />
-              <span className="text-xs text-gray-500">%</span>
-            </div>
-          </div>
+                {/* Financial Summary */}
+                <div className="space-y-3">
+                  {/* Gross Total */}
+                  <div className="flex justify-between items-center p-2 bg-slate-50 rounded-lg">
+                    <span className="text-xs text-gray-600 flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      Brüt Toplam:
+                    </span>
+                    <span className="font-semibold text-sm">{formatCurrency(totals.gross, currency)}</span>
+                  </div>
 
-          {/* Genel İndirim */}
-          <div className="flex items-center justify-between">
-            <Label htmlFor="discount" className="text-xs font-medium text-gray-700">
-              Genel İndirim
-            </Label>
-            <div className="flex items-center gap-2">
-              <Select
-                value={data.discount_type}
-                onValueChange={(value: 'percentage' | 'amount') => onChange('discount_type', value)}
-              >
-                <SelectTrigger className="w-16 h-7 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="percentage">%</SelectItem>
-                  <SelectItem value="amount">₺</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                id="discount"
-                type="number"
-                min="0"
-                step="0.01"
-                value={data.discount_value}
-                onChange={(e) => onChange('discount_value', parseFloat(e.target.value) || 0)}
-                className="w-20 h-7 text-xs"
-              />
-            </div>
-          </div>
+                  {/* VAT Control - Only in edit mode */}
+                  {showVatControl && onVatPercentageChange && (
+                    <div className="border border-orange-200 rounded-lg p-3 bg-orange-50/30">
+                      <div className="text-xs text-center text-orange-700 font-medium mb-2 flex items-center justify-center gap-1">
+                        <Percent className="h-3 w-3" />
+                        KDV Oranı
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          value={vatPercentage}
+                          onChange={(e) => onVatPercentageChange(Number(e.target.value))}
+                          placeholder="20"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          className={`flex-1 ${inputHeight} text-xs`}
+                        />
+                        <div className="px-2 py-1 bg-orange-100 text-orange-700 text-xs flex items-center rounded font-medium">
+                          %
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-          {/* Net Toplam */}
-          <div className="flex justify-between items-center py-2 border-t border-gray-200">
-            <span className="text-sm font-medium text-gray-700">Net Toplam:</span>
-            <span className="text-sm font-semibold text-gray-900">
-              {formatCurrency(data.net_total, data.currency)}
-            </span>
-          </div>
+                  {/* Global Discount Controls */}
+                  <div className="border border-blue-200 rounded-lg p-3 bg-blue-50/30">
+                    <div className="text-xs text-center text-blue-700 font-medium mb-2 flex items-center justify-center gap-1">
+                      <Receipt className="h-3 w-3" />
+                      Genel İndirim
+                    </div>
+                    <div className="flex gap-2">
+                      <Select 
+                        value={globalDiscountType} 
+                        onValueChange={onGlobalDiscountTypeChange}
+                      >
+                        <SelectTrigger className={`w-16 ${inputHeight} text-xs`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="percentage" className="text-xs">
+                            <div className="flex items-center gap-1">
+                              <Percent className="h-3 w-3" />
+                              %
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="amount" className="text-xs">
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="h-3 w-3" />
+                              ₺
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      <Input
+                        type="number"
+                        value={globalDiscountValue}
+                        onChange={(e) => onGlobalDiscountValueChange(Number(e.target.value))}
+                        placeholder="0"
+                        min="0"
+                        step={globalDiscountType === 'percentage' ? '0.1' : '0.01'}
+                        className={`flex-1 ${inputHeight} text-xs`}
+                      />
+                    </div>
+                  </div>
 
-          {/* KDV */}
-          <div className="flex justify-between items-center py-1">
-            <span className="text-sm font-medium text-gray-700">KDV:</span>
-            <span className="text-sm font-semibold text-gray-900">
-              {formatCurrency(data.vat_amount, data.currency)}
-            </span>
-          </div>
+                  {/* Discount Display */}
+                  {totals.discount > 0 && (
+                    <div className="flex justify-between items-center p-2 bg-red-50 rounded-lg border border-red-200">
+                      <span className="text-red-600 text-xs font-medium">İndirim:</span>
+                      <span className="text-red-600 font-semibold text-sm">
+                        -{formatCurrency(totals.discount, currency)}
+                      </span>
+                    </div>
+                  )}
 
-          {/* Genel Toplam */}
-          <div className="flex justify-between items-center py-3 border-t-2 border-gray-300 bg-gray-50 rounded-lg px-3">
-            <span className="text-lg font-bold text-gray-900">GENEL TOPLAM:</span>
-            <span className="text-lg font-bold text-gray-900">
-              {formatCurrency(data.total_amount, data.currency)}
-            </span>
-          </div>
+                  {/* Net Total */}
+                  <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                    <span className="text-xs text-gray-600 font-medium">Net Toplam:</span>
+                    <span className="font-semibold text-sm">{formatCurrency(totals.net, currency)}</span>
+                  </div>
+
+                  {/* VAT Display */}
+                  {totals.vat > 0 && (
+                    <div className="flex justify-between items-center p-2 bg-purple-50 rounded-lg border border-purple-200">
+                      <span className="text-purple-600 text-xs font-medium">KDV:</span>
+                      <span className="text-purple-600 font-semibold text-sm">
+                        {formatCurrency(totals.vat, currency)}
+                      </span>
+                    </div>
+                  )}
+
+                  <Separator className="my-2" />
+
+                  {/* Grand Total */}
+                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border-2 border-emerald-200">
+                    <span className="font-bold text-sm text-emerald-800">GENEL TOPLAM:</span>
+                    <span className="font-bold text-lg text-emerald-600">
+                      {formatCurrency(totals.grand, currency)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

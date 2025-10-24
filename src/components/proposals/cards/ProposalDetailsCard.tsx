@@ -9,23 +9,23 @@ import { CalendarDays } from "lucide-react";
 import { ProposalStatus, proposalStatusLabels, proposalStatusColors } from "@/types/proposal";
 
 interface ProposalDetailsCardProps {
-  data: {
+  formData: {
     subject?: string;
     offer_date?: Date;
     validity_date?: Date;
     offer_number?: string;
-    status?: ProposalStatus;
+    status: ProposalStatus;
     currency?: string;
     exchange_rate?: number;
     notes?: string;
   };
-  onChange: (field: string, value: any) => void;
+  handleFieldChange: (field: string, value: any) => void;
   errors?: Record<string, string>;
 }
 
 const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
-  data,
-  onChange,
+  formData,
+  handleFieldChange,
   errors = {}
 }) => {
   return (
@@ -46,8 +46,8 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
           </Label>
           <Input
             id="subject"
-            value={data.subject || ""}
-            onChange={(e) => onChange('subject', e.target.value)}
+            value={formData.subject || ""}
+            onChange={(e) => handleFieldChange('subject', e.target.value)}
             placeholder="Teklif konusunu girin"
             className="mt-1 h-7 text-xs"
           />
@@ -59,8 +59,8 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
             <div>
               <Label htmlFor="offer_date" className="text-xs font-medium text-gray-700">Teklif Tarihi</Label>
               <DatePicker
-                date={data.offer_date}
-                onSelect={(date) => onChange('offer_date', date)}
+                date={formData.offer_date}
+                onSelect={(date) => handleFieldChange('offer_date', date)}
                 placeholder="Teklif tarihi seçin"
                 className="h-7 text-xs"
               />
@@ -70,8 +70,8 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
                 Geçerlilik Tarihi <span className="text-red-500">*</span>
               </Label>
               <DatePicker
-                date={data.validity_date}
-                onSelect={(date) => onChange('validity_date', date)}
+                date={formData.validity_date}
+                onSelect={(date) => handleFieldChange('validity_date', date)}
                 placeholder="Geçerlilik tarihi seçin"
                 className="h-7 text-xs"
               />
@@ -85,14 +85,14 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
             <Label htmlFor="offer_number" className="text-xs font-medium text-gray-700">Teklif No</Label>
             <Input
               id="offer_number"
-              value={data.offer_number}
-              onChange={(e) => onChange('offer_number', e.target.value)}
+              value={formData.offer_number}
+              onChange={(e) => handleFieldChange('offer_number', e.target.value)}
               className="mt-1 h-7 text-xs"
             />
           </div>
           <div>
             <Label htmlFor="status" className="text-xs font-medium text-gray-700">Teklif Durumu</Label>
-            <Select value={data.status} onValueChange={(value: ProposalStatus) => onChange('status', value)}>
+            <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
               <SelectTrigger className="mt-1 h-7 text-xs">
                 <SelectValue placeholder="Durum seçin" />
               </SelectTrigger>
@@ -110,7 +110,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
           </div>
           <div>
             <Label htmlFor="currency" className="text-xs font-medium text-gray-700">Para Birimi</Label>
-            <Select value={data.currency || "TRY"} onValueChange={(value) => onChange('currency', value)}>
+            <Select value={formData.currency || "TRY"} onValueChange={(value) => handleFieldChange('currency', value)}>
               <SelectTrigger className="mt-1 h-7 text-xs">
                 <SelectValue placeholder="Para birimi" />
               </SelectTrigger>
@@ -125,23 +125,23 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
         </div>
 
         {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
-        {data.currency && data.currency !== "TRY" && (
+        {formData.currency && formData.currency !== "TRY" && (
           <div>
             <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
-              Döviz Kuru (1 {data.currency} = ? TRY)
+              Döviz Kuru (1 {formData.currency} = ? TRY)
             </Label>
             <Input
               id="exchange_rate"
               type="number"
               step="0.01"
               min="0"
-              value={data.exchange_rate || ""}
-              onChange={(e) => onChange('exchange_rate', parseFloat(e.target.value) || 1)}
+              value={formData.exchange_rate || ""}
+              onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
               placeholder="Örn: 32.50"
               className="mt-1 h-7 text-xs"
             />
             <p className="text-[10px] text-muted-foreground mt-1">
-              1 {data.currency} = {data.exchange_rate || "1"} TRY
+              1 {formData.currency} = {formData.exchange_rate || "1"} TRY
             </p>
           </div>
         )}
@@ -151,10 +151,10 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
           <Label htmlFor="notes" className="text-xs font-medium text-gray-700">Notlar</Label>
           <Textarea
             id="notes"
-            value={data.notes}
-            onChange={(e) => onChange('notes', e.target.value)}
+            value={formData.notes}
+            onChange={(e) => handleFieldChange('notes', e.target.value)}
             placeholder="Teklif hakkında notlarınızı yazın..."
-            className="mt-1 min-h-[80px] resize-none"
+            className="mt-1 h-7 text-xs resize-none"
           />
         </div>
       </CardContent>

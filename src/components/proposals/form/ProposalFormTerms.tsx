@@ -152,6 +152,13 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     // Yeni seçim önceki değeri değiştirsin, eklemesin
     const newValue = selectedTerm.text;
 
+    console.log('🔍 ProposalFormTerms - handleTermSelect:', {
+      category,
+      fieldName,
+      currentValue,
+      newValue,
+      selectedTerm: selectedTerm.text
+    });
 
     // Create a synthetic event to update the appropriate field
     const syntheticEvent = {
@@ -365,6 +372,10 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
             name="other_terms"
             value={otherTerms || ""}
             onChange={(e) => {
+              console.log('🔍 ProposalFormTerms - Other Terms onChange:', {
+                name: e.target.name,
+                value: e.target.value
+              });
               onInputChange(e);
             }}
             placeholder="Ekstra şartlar ve notlar buraya yazılabilir"

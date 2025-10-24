@@ -197,11 +197,11 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
                         <SelectValue placeholder="Para Birimi" />
                       </SelectTrigger>
                       <SelectContent>
-                        {currencyOptions?.map((option) => (
+                        {currencyOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.symbol} {option.value}
                           </SelectItem>
-                        )) || []}
+                        ))}
                       </SelectContent>
                     </Select>
                     {item.original_currency && item.original_currency !== (item.currency || selectedCurrency) && (
@@ -255,11 +255,11 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
                         <SelectValue placeholder="KDV Oranı" />
                       </SelectTrigger>
                       <SelectContent>
-                        {taxRateOptions?.map((option) => (
+                        {taxRateOptions.map((option) => (
                           <SelectItem key={option.value} value={String(option.value)}>
                             {option.label}
                           </SelectItem>
-                        )) || []}
+                        ))}
                       </SelectContent>
                     </Select>
                   </TableCell>

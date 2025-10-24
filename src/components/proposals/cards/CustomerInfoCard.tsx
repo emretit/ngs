@@ -1,36 +1,34 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
+import { FormProvider, useForm } from "react-hook-form";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
-import { FormProvider, useForm } from "react-hook-form";
 
 interface CustomerInfoCardProps {
-  data: {
-    customer_id?: string;
-    contact_name?: string;
-    prepared_by?: string;
-    employee_id?: string;
+  formData: {
+    customer_id: string;
+    contact_name: string;
+    prepared_by: string;
+    employee_id: string;
   };
-  onChange: (field: string, value: any) => void;
+  handleFieldChange: (field: string, value: any) => void;
   errors?: Record<string, string>;
-  required?: boolean;
 }
 
 const CustomerInfoCard: React.FC<CustomerInfoCardProps> = ({
-  data,
-  onChange,
-  errors = {},
-  required = false
+  formData,
+  handleFieldChange,
+  errors = {}
 }) => {
   // Form object for FormProvider
   const form = useForm({
     defaultValues: {
-      customer_id: data.customer_id || '',
-      contact_name: data.contact_name || '',
-      prepared_by: data.prepared_by || '',
-      employee_id: data.employee_id || '',
+      customer_id: formData.customer_id || '',
+      contact_name: formData.contact_name || '',
+      prepared_by: formData.prepared_by || '',
+      employee_id: formData.employee_id || '',
     }
   });
 
@@ -47,23 +45,20 @@ const CustomerInfoCard: React.FC<CustomerInfoCardProps> = ({
       <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
         <FormProvider {...form}>
           <div className="grid grid-cols-1 gap-3">
-            <ProposalPartnerSelect 
-              partnerType="customer" 
-              required={required} 
-            />
+            <ProposalPartnerSelect partnerType="customer" required />
             <ContactPersonInput
-              value={data.contact_name}
-              onChange={(value) => onChange('contact_name', value)}
-              customerId={data.customer_id}
+              value={formData.contact_name}
+              onChange={(value) => handleFieldChange('contact_name', value)}
+              customerId={formData.customer_id}
               error={errors.contact_name || ""}
-              required={required}
+              required
             />
             <div>
               <EmployeeSelector
-                value={data.prepared_by || ""}
+                value={formData.prepared_by || ""}
                 onChange={(value) => {
-                  onChange('prepared_by', value);
-                  onChange('employee_id', value);
+                  handleFieldChange('prepared_by', value);
+                  handleFieldChange('employee_id', value);
                 }}
                 error={errors.prepared_by || ""}
               />

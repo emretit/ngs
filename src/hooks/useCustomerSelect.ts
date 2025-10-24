@@ -46,7 +46,6 @@ export const useCustomerSelect = () => {
         throw error;
       }
       
-      console.log("Customers data:", data);
       // Add searchable text to each customer
       const customersWithSearch = data?.map(customer => ({
         ...customer,

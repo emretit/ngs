@@ -62,13 +62,6 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   otherTerms,
   onInputChange
 }) => {
-  console.log('🔍 ProposalFormTerms - Props:', {
-    paymentTerms,
-    deliveryTerms,
-    warrantyTerms,
-    priceTerms,
-    otherTerms
-  });
   // State to hold all available terms (predefined + custom from DB)
   const [availableTerms, setAvailableTerms] = useState<{[key: string]: Term[]}>({
     payment: INITIAL_TERMS.payment,
@@ -284,12 +277,6 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       currentTerms.trim() === term.text.trim()
     );
     
-    console.log('🔍 ProposalFormTerms - getCurrentValue:', {
-      category,
-      currentTerms,
-      matchingTerm: matchingTerm?.label,
-      selectedId: matchingTerm?.id || ''
-    });
     
     return matchingTerm?.id || '';
   };

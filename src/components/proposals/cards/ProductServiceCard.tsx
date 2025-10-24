@@ -26,6 +26,11 @@ interface ProductServiceCardProps {
   onMoveItemUp?: (index: number) => void;
   onMoveItemDown?: (index: number) => void;
   loading?: boolean;
+  selectedCurrency?: string;
+  formatCurrency?: (amount: number, currency?: string) => string;
+  currencyOptions?: { value: string; label: string; symbol: string }[];
+  taxRateOptions?: { value: number; label: string }[];
+  onItemCurrencyChange?: (index: number, currency: string) => void;
 }
 
 const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
@@ -35,7 +40,23 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
   onUpdateItem,
   onMoveItemUp,
   onMoveItemDown,
-  loading = false
+  loading = false,
+  selectedCurrency = "TRY",
+  formatCurrency = (amount: number) => `₺${amount.toFixed(2)}`,
+  currencyOptions = [
+    { value: "TRY", label: "Türk Lirası", symbol: "₺" },
+    { value: "USD", label: "Amerikan Doları", symbol: "$" },
+    { value: "EUR", label: "Euro", symbol: "€" },
+    { value: "GBP", label: "İngiliz Sterlini", symbol: "£" }
+  ],
+  taxRateOptions = [
+    { value: 0, label: "%0" },
+    { value: 1, label: "%1" },
+    { value: 8, label: "%8" },
+    { value: 18, label: "%18" },
+    { value: 20, label: "%20" }
+  ],
+  onItemCurrencyChange = () => {}
 }) => {
   return (
     <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
@@ -60,11 +81,15 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
       <CardContent className="pt-0 px-4 pb-4">
         <ProposalItemsTable
           items={items}
-          onRemoveItem={onRemoveItem}
-          onUpdateItem={onUpdateItem}
-          onMoveItemUp={onMoveItemUp}
-          onMoveItemDown={onMoveItemDown}
-          loading={loading}
+          handleItemChange={onUpdateItem}
+          handleRemoveItem={onRemoveItem}
+          handleMoveItemUp={onMoveItemUp}
+          handleMoveItemDown={onMoveItemDown}
+          selectedCurrency={selectedCurrency}
+          formatCurrency={formatCurrency}
+          currencyOptions={currencyOptions}
+          taxRateOptions={taxRateOptions}
+          handleItemCurrencyChange={onItemCurrencyChange}
         />
       </CardContent>
     </Card>

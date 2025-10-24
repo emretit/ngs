@@ -124,7 +124,7 @@ const PricingSection = () => {
           ].map((plan, index) => (
             <div
               key={index}
-              className={`group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-default ${
+              className={`group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer ${
                 plan.featured
                   ? 'border-4 border-red-500/80 hover:border-red-600 ring-4 ring-red-300/30 shadow-2xl'
                   : 'border-gray-200/60 hover:border-red-200/60 shadow-lg'

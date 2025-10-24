@@ -116,7 +116,7 @@ const ModuleShowcaseSection = () => {
             return (
               <div
                 key={index}
-                className={`group relative p-6 rounded-3xl bg-gray-900/95 backdrop-blur-xl border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer ${
+                className={`group relative p-6 rounded-3xl bg-gray-900/95 backdrop-blur-xl border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-default ${
                   module.important
                     ? 'border-red-300/60 hover:border-red-400/80 ring-2 ring-red-200/40 shadow-xl'
                     : 'border-gray-700/60 hover:border-red-200/60 shadow-lg'

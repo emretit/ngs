@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, AlertTriangle, CheckCircle, XCircle, LayoutGrid, List, FileText, Download, Upload, MoreHorizontal, Settings } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +43,7 @@ const ProductListHeader = ({
   onImportExcel,
   onBulkAction
 }: ProductListHeaderProps) => {
+  const navigate = useNavigate();
 
   // Toplam ürün sayısını hesapla
   const totalCount = products.all.length;
@@ -206,7 +207,7 @@ const ProductListHeader = ({
 
             <Button
               className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300 h-8 px-4"
-              onClick={() => window.location.href = '/product-form'}
+              onClick={() => navigate('/product-form')}
             >
               <Plus className="h-4 w-4" />
               <span>Yeni Ürün</span>

@@ -62,13 +62,6 @@ const ProductFormWrapper = () => {
     }
   };
 
-  console.log("Current form state:", { 
-    isEditing, 
-    productId, 
-    isSubmitting, 
-    values: form.getValues(),
-    errors: form.formState.errors
-  });
 
   return (
     <div className="w-full">

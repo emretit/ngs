@@ -2,7 +2,6 @@
 import { Card } from "@/components/ui/card";
 import { useProductForm } from "./hooks/useProductForm";
 import { useProductFormActions } from "./hooks/useProductFormActions";
-import ProductFormHeader from "./ProductFormHeader";
 import ProductCompactForm from "./ProductCompactForm";
 import { Form } from "@/components/ui/form";
 import { useEffect } from "react";
@@ -65,18 +64,16 @@ const ProductFormWrapper = () => {
 
   return (
     <div className="w-full">
-      <ProductFormHeader 
-        isEditing={isEditing}
-        isSubmitting={isSubmitting}
-        productId={productId}
-        form={form}
-        onSubmit={handleSubmit}
-        onDuplicate={handleDuplicate}
-      />
-
       <Form {...form}>
-        <form onSubmit={form.handleSubmit((values) => handleSubmit(values, false))}>
-          <ProductCompactForm form={form} />
+        <form id="product-form" onSubmit={form.handleSubmit((values) => handleSubmit(values, false))}>
+          <ProductCompactForm 
+            form={form} 
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            isEditing={isEditing}
+            productId={productId}
+            onDuplicate={handleDuplicate}
+          />
         </form>
       </Form>
     </div>

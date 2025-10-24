@@ -199,7 +199,12 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
           to={item.path}
           icon={item.icon}
           label={item.label}
-          isActive={location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path + '/'))}
+          isActive={
+            location.pathname === item.path || 
+            (item.path !== '/' && location.pathname.startsWith(item.path + '/')) ||
+            // Special case: product-form pages should match products nav item
+            (item.path === '/products' && location.pathname.startsWith('/product-form'))
+          }
           isCollapsed={isCollapsed}
         />
       );

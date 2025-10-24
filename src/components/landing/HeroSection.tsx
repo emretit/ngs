@@ -64,7 +64,7 @@ const HeroSection = () => {
 
         {/* Advanced Module Style Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto animate-fade-in delay-600">
-          <div className="group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border border-gray-200/60 hover:border-red-200/60 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer">
+          <div className="group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border border-gray-200/60 hover:border-red-200/60 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-default">
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-red-50/20 via-transparent to-gray-50/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
@@ -94,7 +94,7 @@ const HeroSection = () => {
             <div className="absolute top-4 right-4 w-2 h-2 bg-red-500/30 rounded-full group-hover:bg-red-500/60 transition-colors duration-300"></div>
           </div>
 
-          <div className="group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border border-red-300/60 hover:border-red-400/80 ring-2 ring-red-200/40 shadow-xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer">
+          <div className="group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border border-red-300/60 hover:border-red-400/80 ring-2 ring-red-200/40 shadow-xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-default">
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-red-50/20 via-transparent to-gray-50/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
@@ -124,7 +124,7 @@ const HeroSection = () => {
             <div className="absolute top-4 right-4 w-2 h-2 bg-red-500/30 rounded-full group-hover:bg-red-500/60 transition-colors duration-300"></div>
           </div>
 
-          <div className="group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border border-gray-200/60 hover:border-red-200/60 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer">
+          <div className="group relative p-6 rounded-3xl bg-white/95 backdrop-blur-xl border border-gray-200/60 hover:border-red-200/60 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-default">
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-red-50/20 via-transparent to-gray-50/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 

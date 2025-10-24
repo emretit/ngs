@@ -24,6 +24,7 @@ interface ContactPersonInputProps {
   onChange: (value: string) => void;
   customerId?: string;
   error?: string;
+  required?: boolean;
 }
 
 interface Customer {
@@ -41,7 +42,8 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
   value,
   onChange,
   customerId,
-  error
+  error,
+  required
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,7 +98,9 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
 
   return (
     <div className="space-y-1">
-      <Label className="text-xs font-medium text-gray-700">İletişim Kişisi *</Label>
+      <Label className="text-xs font-medium text-gray-700">
+        İletişim Kişisi {required && <span className="text-red-500">*</span>}
+      </Label>
       <div className="relative">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <div className="flex">

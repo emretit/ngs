@@ -70,6 +70,14 @@ export const useCurrentUser = () => {
           throw error;
         }
 
+        // Veri kontrolü
+        if (!data) {
+          console.warn('Kullanıcı profili bulunamadı');
+          setUserData(null);
+          setError('Kullanıcı profili bulunamadı');
+          return;
+        }
+
         // Cache'e kaydet
         sessionStorage.setItem(cacheKey, JSON.stringify({
           data,

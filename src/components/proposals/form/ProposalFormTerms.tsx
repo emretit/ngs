@@ -310,7 +310,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           }
         }}
       >
-        <SelectTrigger className="w-full h-7 text-xs bg-background border-border hover:border-primary transition-colors">
+        <SelectTrigger className="w-full h-14 text-xs bg-background border-border hover:border-primary transition-colors">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
@@ -360,17 +360,20 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
 
   return (
     <div className="space-y-6">
-      <CardHeader className="p-0">
-        <CardTitle className="text-sm font-semibold">Şartlar ve Koşullar</CardTitle>
-      </CardHeader>
-      
       <CardContent className="p-0 space-y-6">
         {/* Predefined Terms Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {renderDropdown('payment', 'Ödeme Şartları', 'Ödeme koşulu seçin')}
-          {renderDropdown('delivery', 'Teslimat', 'Teslimat koşulu seçin')}
-          {renderDropdown('warranty', 'Garanti Şartları', 'Garanti koşulu seçin')}
-          {renderDropdown('price', 'Fiyat', 'Fiyat koşulu seçin')}
+        <div className="space-y-4">
+          {/* İlk satır */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {renderDropdown('payment', 'Ödeme Şartları', 'Ödeme koşulu seçin')}
+            {renderDropdown('delivery', 'Teslimat', 'Teslimat koşulu seçin')}
+          </div>
+          
+          {/* İkinci satır */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {renderDropdown('warranty', 'Garanti Şartları', 'Garanti koşulu seçin')}
+            {renderDropdown('price', 'Fiyat', 'Fiyat koşulu seçin')}
+          </div>
         </div>
 
 

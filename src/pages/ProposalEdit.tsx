@@ -8,12 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download } from "lucide-react";
+import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download, MoreHorizontal, Save, FileDown, Eye, TrendingUp, ArrowRight, Building2, CalendarDays, XCircle } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
 import { useProposalEdit } from "@/hooks/useProposalEdit";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
+import { FormProvider, useForm } from "react-hook-form";
 import { ProposalItem } from "@/types/proposal";
 
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -22,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { proposalStatusColors, proposalStatusLabels, ProposalStatus } from "@/types/proposal";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { handleProposalStatusChange } from "@/services/workflow/proposalWorkflow";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
 import ProposalFormTerms from "@/components/proposals/form/ProposalFormTerms";
@@ -30,7 +31,14 @@ import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
 import ProductSelector from "@/components/proposals/form/ProductSelector";
 import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
-import CustomerSelector from "@/components/proposals/form/CustomerSelector";
+import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
+
+// New Card Components
+import CustomerInfoCard from "@/components/proposals/cards/CustomerInfoCard";
+import ProposalDetailsCard from "@/components/proposals/cards/ProposalDetailsCard";
+import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
+import TermsConditionsCard from "@/components/proposals/cards/TermsConditionsCard";
+import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
 
 interface LineItem extends ProposalItem {
   row_number: number;
@@ -45,6 +53,16 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { proposal, loading, saving, handleBack, handleSave } = useProposalEdit();
+  
+  // Form object for FormProvider
+  const form = useForm({
+    defaultValues: {
+      customer_id: proposal?.customer_id || '',
+      contact_name: proposal?.contact_name || '',
+      prepared_by: proposal?.prepared_by || '',
+      employee_id: proposal?.employee_id || '',
+    }
+  });
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
@@ -521,139 +539,177 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   };
 
   const getStatusActions = () => {
-    if (!proposal) return null;
-    
-    const actions = [];
-    
-    if (proposal.status === 'draft') {
-      actions.push(
-        <Button key="send" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleStatusChange('sent')}>
-          <Send className="h-4 w-4 mr-2" />
-          Müşteriye Gönder
-        </Button>
-      );
-      actions.push(
-        <Button key="pending" variant="outline" onClick={() => handleStatusChange('pending_approval')}>
-          <Clock className="h-4 w-4 mr-2" />
-          Onaya Gönder
-        </Button>
-      );
-    }
-    
-    if (proposal.status === 'pending_approval') {
-      actions.push(
-        <Button key="send" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleStatusChange('sent')}>
-          <Send className="h-4 w-4 mr-2" />
-          Müşteriye Gönder
-        </Button>
-      );
-      actions.push(
-        <Button key="draft" variant="outline" onClick={() => handleStatusChange('draft')}>
-          Taslağa Çevir
-        </Button>
-      );
-    }
-    
-    if (proposal.status === 'sent') {
-      actions.push(
-        <Button key="accept" className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('accepted')}>
-          Kabul Edildi
-        </Button>
-      );
-      actions.push(
-        <Button key="reject" variant="destructive" onClick={() => handleStatusChange('rejected')}>
-          Reddedildi
-        </Button>
-      );
-    }
-    
-    if (proposal.status === 'accepted') {
-      actions.push(
-        <Button key="convert" onClick={handleConvertToOrder} className="bg-green-600 hover:bg-green-700">
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Siparişe Çevir
-        </Button>
-      );
-    }
-    
-    return actions.length > 0 ? (
-      <div className="flex flex-wrap gap-2 mt-4">
-        {actions}
-      </div>
-    ) : null;
+    // Status action butonları artık İşlemler dropdown menüsünde
+    return null;
+  };
+
+  const handleExportPDF = () => {
+    toast.info("PDF export özelliği yakında eklenecek");
+  };
+
+  const handleConvertToSale = () => {
+    toast.info("Satışa çevirme özelliği yakında eklenecek");
+  };
+
+  const handleSmartSave = () => {
+    handleSaveChanges(proposal.status);
+  };
+
+  // Status action fonksiyonları
+  const handleSendToCustomer = () => {
+    handleStatusChange('sent');
+  };
+
+  const handleSendForApproval = () => {
+    handleStatusChange('pending_approval');
+  };
+
+  const handleConvertToDraft = () => {
+    handleStatusChange('draft');
+  };
+
+  const handleAcceptProposal = () => {
+    handleStatusChange('accepted');
+  };
+
+  const handleRejectProposal = () => {
+    handleStatusChange('rejected');
   };
 
   return (
     <div>
       {/* Header Actions */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleBack}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Geri
-          </Button>
-          <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-lg font-semibold">Teklif Düzenle</h1>
-            <Badge className={proposalStatusColors[proposal.status]}>
-              {proposalStatusLabels[proposal.status]}
-            </Badge>
+      <div className="mb-6 p-6 bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleBack}
+              className="gap-2 hover:bg-white/60 transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Geri
+            </Button>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/60 rounded-xl shadow-sm">
+                <FileText className="h-5 w-5 text-slate-600" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-800">
+                  Teklif Düzenle
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge className={`${proposalStatusColors[proposal.status]} text-xs`}>
+                    {proposalStatusLabels[proposal.status]}
+                  </Badge>
+                  <span className="text-xs text-slate-500">
+                    {proposal.number || 'Teklif #' + id}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-
-          <Button 
-            variant="outline" 
-            onClick={() => handleSaveChanges(proposal.status)}
-            disabled={isSaving || !hasChanges}
-            size="sm"
-          >
-            {hasChanges ? "Değişiklikleri Kaydet" : "Kaydedildi"}
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                PDF Yazdır
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {templates.map(template => (
-                <DropdownMenuItem 
-                  key={template.id} 
-                  onClick={() => handlePdfPrint(template.id)}
-                  className="cursor-pointer"
+          
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={handleSmartSave}
+              disabled={isSaving || !hasChanges}
+              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+            >
+              <Save className="h-4 w-4" />
+              <span>{isSaving ? "Kaydediliyor..." : hasChanges ? "Değişiklikleri Kaydet" : "Kaydedildi"}</span>
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
                 >
-                  <FileText className="mr-2 h-4 w-4" />
-                  {template.name} {template.is_default && '(Varsayılan)'}
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="font-medium">İşlemler</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={handlePreview} className="gap-2 cursor-pointer">
+                  <Eye className="h-4 w-4" />
+                  <span>Önizle</span>
                 </DropdownMenuItem>
-              ))}
-              {templates.length === 0 && (
-                <DropdownMenuItem disabled>
-                  Şablon bulunamadı
+                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
+                  <FileDown className="h-4 w-4" />
+                  <span>PDF İndir</span>
                 </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button 
-            variant="outline" 
-            className="bg-red-600 hover:bg-red-700 text-white" 
-            size="sm"
-            onClick={handleDeleteClick}
-          >
-            <Trash className="h-4 w-4 mr-2" />
-            Sil
-          </Button>
+                <DropdownMenuItem onClick={handleSendEmail} className="gap-2 cursor-pointer">
+                  <Send className="h-4 w-4" />
+                  <span>E-posta Gönder</span>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
+                {/* Status Actions */}
+                {proposal.status === 'draft' && (
+                  <>
+                    <DropdownMenuItem onClick={handleSendToCustomer} className="gap-2 cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                      <Send className="h-4 w-4" />
+                      <span>Müşteriye Gönder</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSendForApproval} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
+                      <Clock className="h-4 w-4" />
+                      <span>Onaya Gönder</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                
+                {proposal.status === 'pending_approval' && (
+                  <>
+                    <DropdownMenuItem onClick={handleSendToCustomer} className="gap-2 cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                      <Send className="h-4 w-4" />
+                      <span>Müşteriye Gönder</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleConvertToDraft} className="gap-2 cursor-pointer text-gray-600 hover:text-gray-700 hover:bg-gray-50">
+                      <ArrowLeft className="h-4 w-4" />
+                      <span>Taslağa Çevir</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                
+                {proposal.status === 'sent' && (
+                  <>
+                    <DropdownMenuItem onClick={handleAcceptProposal} className="gap-2 cursor-pointer text-green-600 hover:text-green-700 hover:bg-green-50">
+                      <Check className="h-4 w-4" />
+                      <span>Kabul Edildi</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleRejectProposal} className="gap-2 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50">
+                      <XCircle className="h-4 w-4" />
+                      <span>Reddedildi</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                
+                {proposal.status === 'accepted' && (
+                  <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
+                    <ShoppingCart className="h-4 w-4" />
+                    <span>Siparişe Çevir</span>
+                  </DropdownMenuItem>
+                )}
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuItem onClick={handleConvertToSale} className="gap-2 cursor-pointer text-green-600 hover:text-green-700 hover:bg-green-50">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Satışa Çevir</span>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuItem onClick={handleDeleteClick} className="gap-2 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50">
+                  <Trash className="h-4 w-4" />
+                  <span>Sil</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
@@ -665,405 +721,86 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         {/* Top Row - Customer & Proposal Details Combined */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {/* Customer Information */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Müşteri Bilgileri</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 pt-0">
-              <div className="grid grid-cols-1 gap-3">
-                <CustomerSelector
-                  value={formData.customer_id}
-                  onChange={(customerId, customerName, companyName) => {
-                    handleFieldChange('customer_id', customerId);
-                    handleFieldChange('customer_company', companyName);
-                    handleFieldChange('contact_name', customerName);
-                  }}
-                  error=""
-                />
-                <ContactPersonInput
-                  value={formData.contact_name}
-                  onChange={(value) => handleFieldChange('contact_name', value)}
-                  customerId={formData.customer_id}
-                  error=""
-                />
-                <div>
-                  <EmployeeSelector
-                    value={formData.prepared_by || ""}
-                    onChange={(value) => {
-                      handleFieldChange('prepared_by', value);
-                      handleFieldChange('employee_id', value);
-                    }}
-                    error=""
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <CustomerInfoCard
+            data={{
+              customer_id: formData.customer_id,
+              contact_name: formData.contact_name,
+              prepared_by: formData.prepared_by,
+              employee_id: formData.employee_id,
+            }}
+            onChange={handleFieldChange}
+            errors={{}}
+            required={true}
+          />
 
           {/* Offer Details */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Teklif Detayları</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-0">
-              {/* Tarih Alanları - Altlı Üstlü */}
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="offer_date" className="text-sm font-medium text-gray-700">Teklif Tarihi</Label>
-                    <DatePicker
-                      date={formData.offer_date}
-                      onSelect={(date) => handleFieldChange('offer_date', date)}
-                      placeholder="Teklif tarihi seçin"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="validity_date" className="text-sm font-medium text-gray-700">
-                      Geçerlilik Tarihi <span className="text-red-500">*</span>
-                    </Label>
-                    <DatePicker
-                      date={formData.validity_date}
-                      onSelect={(date) => handleFieldChange('validity_date', date)}
-                      placeholder="Geçerlilik tarihi seçin"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Diğer Alanlar */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="offer_number" className="text-sm font-medium text-gray-700">Teklif No</Label>
-                  <Input
-                    id="offer_number"
-                    value={formData.offer_number}
-                    onChange={(e) => handleFieldChange('offer_number', e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="status" className="text-sm font-medium text-gray-700">Teklif Durumu</Label>
-                  <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Durum seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(proposalStatusLabels).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          <div className="flex items-center gap-2">
-                            <span className={`inline-block w-2 h-2 rounded-full ${proposalStatusColors[value as ProposalStatus]}`}></span>
-                            {label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Notlar Alanı */}
-              <div>
-                <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Notlar</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => handleFieldChange('notes', e.target.value)}
-                  placeholder="Teklif hakkında notlarınızı yazın..."
-                  className="mt-1 min-h-[80px] resize-none"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <ProposalDetailsCard
+            data={{
+              subject: formData.subject,
+              offer_date: formData.offer_date,
+              validity_date: formData.validity_date,
+              offer_number: formData.offer_number,
+              status: formData.status,
+              currency: formData.currency,
+              exchange_rate: formData.exchange_rate,
+              notes: formData.notes,
+            }}
+            onChange={handleFieldChange}
+            errors={{}}
+          />
         </div>
 
         {/* Products/Services Table - Full Width */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold">Ürün/Hizmet Listesi</CardTitle>
-              <Button onClick={addItem} size="sm" className="gap-2">
-                <Plus className="h-4 w-4" />
-                Satır Ekle
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-                {/* Kolon Başlıkları */}
-                <div className="grid grid-cols-12 gap-2 mb-3 px-1">
-                  <div className="col-span-5">
-                    <Label className="text-xs font-medium text-gray-600">Ürün/Hizmet</Label>
-                  </div>
-                  <div className="col-span-1">
-                    <Label className="text-xs font-medium text-gray-600">Miktar</Label>
-                  </div>
-                  <div className="col-span-1">
-                    <Label className="text-xs font-medium text-gray-600">Birim</Label>
-                  </div>
-                  <div className="col-span-1">
-                    <Label className="text-xs font-medium text-gray-600">Birim Fiyat</Label>
-                  </div>
-                  <div className="col-span-1">
-                    <Label className="text-xs font-medium text-gray-600">KDV %</Label>
-                  </div>
-                  <div className="col-span-1">
-                    <Label className="text-xs font-medium text-gray-600">İndirim</Label>
-                  </div>
-                  <div className="col-span-1">
-                    <Label className="text-xs font-medium text-gray-600">Toplam</Label>
-                  </div>
-                  <div className="col-span-1">
-                    <Label className="text-xs font-medium text-gray-600">İşlemler</Label>
-                  </div>
-                </div>
-
-                {/* Veri Satırları */}
-                <div className="space-y-2">
-                  {items.map((item, index) => (
-                    <div key={item.id} className="border rounded-lg p-1.5 bg-gray-50/50">
-                      <div className="grid grid-cols-12 gap-2 items-center">
-                        {/* Ürün/Hizmet */}
-                        <div className="col-span-5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-xs text-gray-600 min-w-[20px]">{item.row_number}.</span>
-                            <ProductSelector
-                              value={item.description || ''}
-                              onChange={(productName) => {
-                                handleItemChange(index, 'description', productName);
-                              }}
-                              onProductSelect={(product) => handleProductModalSelect(product, index)}
-                              placeholder="Ürün seçin..."
-                              className="flex-1 max-w-full"
-                            />
-                          </div>
-                        </div>
-                        
-                        {/* Miktar */}
-                        <div className="col-span-1">
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                            min="1"
-                            className="h-8 text-xs"
-                          />
-                        </div>
-                        
-                        {/* Birim */}
-                        <div className="col-span-1">
-                          <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
-                            {item.unit || 'adet'}
-                          </div>
-                        </div>
-                        
-                        {/* Birim Fiyat */}
-                        <div className="col-span-1">
-                          <div className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs">
-                            {formatCurrency(item.unit_price, item.currency || 'TRY')}
-                          </div>
-                        </div>
-                        
-                        {/* KDV % */}
-                        <div className="col-span-1">
-                          <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
-                            {item.tax_rate ? `%${item.tax_rate}` : '-'}
-                          </div>
-                        </div>
-                        
-                        {/* İndirim */}
-                        <div className="col-span-1">
-                          <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
-                            {item.discount_rate && item.discount_rate > 0 ? `%${item.discount_rate}` : '-'}
-                          </div>
-                        </div>
-                        
-                        {/* Toplam */}
-                        <div className="col-span-1">
-                          <div className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs">
-                            {formatCurrency(item.total_price, item.currency || 'TRY')}
-                          </div>
-                        </div>
-                        
-                        {/* Düzenle ve Sil Butonları */}
-                        <div className="col-span-1 flex gap-1 justify-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              const existingData = {
-                                name: item.name,
-                                description: item.description || '',
-                                quantity: item.quantity,
-                                unit: item.unit,
-                                unit_price: item.unit_price,
-                                vat_rate: item.tax_rate || 20,
-                                discount_rate: item.discount_rate || 0,
-                                currency: item.currency || formData.currency
-                              };
-                              
-                              setSelectedProduct(null);
-                              setEditingItemIndex(index);
-                              setEditingItemData(existingData);
-                              setProductModalOpen(true);
-                            }}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          {items.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeItem(index)}
-                              className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-                            >
-                              <Trash className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-          </CardContent>
-        </Card>
+        <ProductServiceCard
+          items={items}
+          onAddItem={addItem}
+          onRemoveItem={removeItem}
+          onUpdateItem={handleItemChange}
+          onMoveItemUp={undefined}
+          onMoveItemDown={undefined}
+          loading={false}
+        />
 
         {/* Terms and Financial Summary - Side by Side */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Terms & Conditions */}
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Check className="h-4 w-4" />
-                Şartlar ve Koşullar
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <ProposalFormTerms
-                paymentTerms={formData.payment_terms}
-                deliveryTerms={formData.delivery_terms}
-                warrantyTerms={formData.warranty_terms}
-                priceTerms={formData.price_terms}
-                otherTerms={formData.other_terms}
-                onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
-              />
-            </CardContent>
-          </Card>
+          <TermsConditionsCard
+            data={{
+              payment_terms: formData.payment_terms,
+              delivery_terms: formData.delivery_terms,
+              warranty_terms: formData.warranty_terms,
+              price_terms: formData.price_terms,
+              other_terms: formData.other_terms,
+            }}
+            onChange={(field, value) => handleFieldChange(field, value)}
+            errors={{}}
+          />
 
           {/* Financial Summary */}
-          <Card className="lg:col-span-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Calculator className="h-4 w-4" />
-                Finansal Özet
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-0">
-                {/* Multi-currency display */}
-                <div className="space-y-4">
-                  {Object.entries(calculationsByCurrency).map(([currency, totals]) => (
-                    <div key={currency} className="space-y-3">
-                      {Object.keys(calculationsByCurrency).length > 1 && (
-                        <div className="text-right text-sm font-medium text-primary">
-                          {currency} Toplamları
-                        </div>
-                      )}
-                      <div className="space-y-2 text-right">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-600">Brüt Toplam:</span>
-                          <span className="font-medium">{formatCurrency(totals.gross, currency)}</span>
-                        </div>
-                        
-                        {/* VAT Percentage Control */}
-                        <div className="border-t pt-2 space-y-2">
-                          <div className="text-xs text-center text-muted-foreground">
-                            KDV Oranı
-                          </div>
-                          <div className="flex gap-2">
-                            <Input
-                              type="number"
-                              value={formData.vat_percentage}
-                              onChange={(e) => {
-                                handleFieldChange('vat_percentage', Number(e.target.value));
-                              }}
-                              placeholder="20"
-                              min="0"
-                              max="100"
-                              step="0.1"
-                              className="flex-1 h-6 text-xs"
-                            />
-                            <div className="px-2 py-1 bg-muted text-xs flex items-center">
-                              %
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Global Discount Controls */}
-                        <div className="border-t pt-2 space-y-2">
-                          <div className="text-xs text-center text-muted-foreground">
-                            Genel İndirim
-                          </div>
-                          <div className="flex gap-2">
-                            <Select value={globalDiscountType} onValueChange={(value: 'percentage' | 'amount') => {
-                              setGlobalDiscountType(value);
-                              setHasChanges(true);
-                            }}>
-                              <SelectTrigger className="w-16 h-6 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="percentage">%</SelectItem>
-                                <SelectItem value="amount">₺</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            
-                            <Input
-                              type="number"
-                              value={globalDiscountValue}
-                              onChange={(e) => {
-                                setGlobalDiscountValue(Number(e.target.value));
-                                setHasChanges(true);
-                              }}
-                              placeholder="0"
-                              min="0"
-                              step={globalDiscountType === 'percentage' ? '0.1' : '0.01'}
-                              className="flex-1 h-6 text-xs"
-                            />
-                          </div>
-                        </div>
-                        
-                        {totals.discount > 0 && (
-                          <div className="flex justify-between text-red-600 text-xs">
-                            <span>İndirim:</span>
-                            <span>-{formatCurrency(totals.discount, currency)}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-600">Net Toplam:</span>
-                          <span className="font-medium">{formatCurrency(totals.net, currency)}</span>
-                        </div>
-                        
-                        {totals.vat > 0 && (
-                          <div className="flex justify-between text-xs">
-                            <span className="text-gray-600">KDV:</span>
-                            <span className="font-medium">{formatCurrency(totals.vat, currency)}</span>
-                          </div>
-                        )}
-                        
-                        <Separator className="my-2" />
-                        
-                        <div className="flex justify-between font-bold text-sm">
-                          <span>GENEL TOPLAM:</span>
-                          <span className="text-green-600">{formatCurrency(totals.grand, currency)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-            </CardContent>
-          </Card>
+          <FinancialSummaryCard
+            data={{
+              gross_total: Object.values(calculationsByCurrency)[0]?.gross || 0,
+              vat_percentage: formData.vat_percentage || 20,
+              discount_type: globalDiscountType,
+              discount_value: globalDiscountValue,
+              net_total: Object.values(calculationsByCurrency)[0]?.net || 0,
+              vat_amount: Object.values(calculationsByCurrency)[0]?.vat || 0,
+              total_amount: Object.values(calculationsByCurrency)[0]?.grand || 0,
+              currency: formData.currency || 'TRY',
+            }}
+            onChange={(field, value) => {
+              if (field === 'vat_percentage') {
+                handleFieldChange('vat_percentage', value);
+              } else if (field === 'discount_type') {
+                setGlobalDiscountType(value);
+                setHasChanges(true);
+              } else if (field === 'discount_value') {
+                setGlobalDiscountValue(value);
+                setHasChanges(true);
+              }
+            }}
+            errors={{}}
+          />
         </div>
 
         {/* Product Details Modal */}

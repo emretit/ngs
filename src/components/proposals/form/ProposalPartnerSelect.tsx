@@ -20,9 +20,10 @@ interface ProposalPartnerSelectProps {
   label?: string;
   placeholder?: string;
   hideLabel?: boolean;
+  required?: boolean;
 }
 
-const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel }: ProposalPartnerSelectProps) => {
+const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, required }: ProposalPartnerSelectProps) => {
   const navigate = useNavigate();
   const { setValue, watch } = useFormContext();
   const [isOpen, setIsOpen] = useState(false);
@@ -82,6 +83,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel }: P
         {!hideLabel && (
           <Label className="text-xs font-medium text-gray-700">
             {label ?? (partnerType === "customer" ? "Müşteri" : "Tedarikçi")}
+            {required && <span className="text-red-500 ml-1">*</span>}
           </Label>
         )}
         <Popover open={isOpen} onOpenChange={setIsOpen}>

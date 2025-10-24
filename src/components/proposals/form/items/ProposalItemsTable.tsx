@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertCircle } from "lucide-react";
+import { Trash2, AlertCircle, ArrowUp, ArrowDown, Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
@@ -28,6 +28,8 @@ interface ProposalItemsTableProps {
   items: ProposalItem[];
   handleItemChange: (index: number, field: keyof ProposalItem, value: any) => void;
   handleRemoveItem: (index: number) => void;
+  handleMoveItemUp?: (index: number) => void;
+  handleMoveItemDown?: (index: number) => void;
   selectedCurrency: string;
   formatCurrency: (amount: number, currency?: string) => string;
   currencyOptions: { value: string; label: string; symbol: string }[];
@@ -39,6 +41,8 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
   items,
   handleItemChange,
   handleRemoveItem,
+  handleMoveItemUp,
+  handleMoveItemDown,
   selectedCurrency,
   formatCurrency,
   currencyOptions,
@@ -273,22 +277,84 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
                   </TableCell>
                   
                   <TableCell className="py-3 px-4">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveItem(index)}
-                          className="h-8 w-8 p-0 opacity-70 group-hover:opacity-100 text-destructive hover:text-destructive/90"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Sil</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="left">
-                        <p>Teklif kalemini sil</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <div className="flex items-center gap-1">
+                      {/* Yukarı Ok Butonu */}
+                      {handleMoveItemUp && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMoveItemUp(index)}
+                              disabled={index === 0}
+                              className="h-8 w-8 p-0 opacity-70 group-hover:opacity-100 text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                              <span className="sr-only">Yukarı taşı</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            <p>Yukarı taşı</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      
+                      {/* Aşağı Ok Butonu */}
+                      {handleMoveItemDown && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMoveItemDown(index)}
+                              disabled={index === items.length - 1}
+                              className="h-8 w-8 p-0 opacity-70 group-hover:opacity-100 text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                              <span className="sr-only">Aşağı taşı</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            <p>Aşağı taşı</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      
+                      {/* Düzenle Butonu */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 opacity-70 group-hover:opacity-100 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <Edit className="h-4 w-4" />
+                            <span className="sr-only">Düzenle</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                          <p>Düzenle</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      
+                      {/* Sil Butonu */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveItem(index)}
+                            className="h-8 w-8 p-0 opacity-70 group-hover:opacity-100 text-destructive hover:text-destructive/90"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Sil</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                          <p>Teklif kalemini sil</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

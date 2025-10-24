@@ -115,6 +115,10 @@ export function useInfiniteScroll<T>(
       }
     } catch (err) {
       console.error('Error loading more data:', err);
+      // Hata durumunda kullanıcıya daha anlamlı mesaj göster
+      if (err instanceof Error && err.message.includes("company_id")) {
+        console.warn("Kullanıcı şirket bilgileri yüklenemedi, veriler gösterilemiyor");
+      }
     } finally {
       setIsLoadingMore(false);
       abortControllerRef.current = null;

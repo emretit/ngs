@@ -94,12 +94,18 @@ export const useProposals = (filters?: ProposalFilters) => {
 
 // New infinite scroll hook for proposals
 export const useProposalsInfiniteScroll = (filters?: ProposalFilters, pageSize: number = 20) => {
-  const { userData, loading: userLoading } = useCurrentUser();
+  const { userData, loading: userLoading, error: userError } = useCurrentUser();
   
   const fetchProposals = useCallback(async (page: number, pageSize: number) => {
-    // Kullanıcının company_id'si yoksa hata fırlat
+    // Kullanıcı verisi henüz yüklenmemişse bekle
+    if (userLoading) {
+      return { data: [], hasNextPage: false, totalCount: 0 };
+    }
+    
+    // Kullanıcının company_id'si yoksa boş sonuç döndür
     if (!userData?.company_id) {
-      throw new Error("Kullanıcının company_id'si bulunamadı");
+      console.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
+      return { data: [], hasNextPage: false, totalCount: 0 };
     }
 
     let query = supabase
@@ -178,7 +184,7 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters, pageSize: 
     isLoading: isLoading || userLoading,
     isLoadingMore,
     hasNextPage,
-    error,
+    error: error || userError,
     loadMore,
     refresh,
     totalCount,

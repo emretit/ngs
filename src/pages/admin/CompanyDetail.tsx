@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Heading } from "@/components/ui/heading";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save } from "lucide-react";
+import { useCreateCompany, useUpdateCompany } from "@/hooks/useCompanies";
 import {
   Form,
   FormControl,
@@ -40,8 +41,10 @@ const CompanyDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const isNew = id === 'new';
+  
+  const createMutation = useCreateCompany();
+  const updateMutation = useUpdateCompany();
 
   const { data: company, isLoading } = useQuery({
     queryKey: ['company', id],
@@ -93,42 +96,26 @@ const CompanyDetail = () => {
     }
   }, [company, form]);
 
-  const saveMutation = useMutation({
-    mutationFn: async (values: CompanyFormValues) => {
+  const onSubmit = async (values: CompanyFormValues) => {
+    try {
       if (isNew) {
-        const { error } = await supabase
-          .from('companies')
-          .insert([values]);
-        if (error) throw error;
+        await createMutation.mutateAsync(values);
       } else {
-        const { error } = await supabase
-          .from('companies')
-          .update(values)
-          .eq('id', id);
-        if (error) throw error;
+        await updateMutation.mutateAsync({ id: id!, updates: values });
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allCompanies'] });
-      queryClient.invalidateQueries({ queryKey: ['company', id] });
       toast({
         title: "Başarılı",
         description: isNew ? "Şirket oluşturuldu" : "Şirket güncellendi",
       });
       navigate('/admin/companies');
-    },
-    onError: (error) => {
+    } catch (error) {
       toast({
         title: "Hata",
         description: "İşlem sırasında bir hata oluştu",
         variant: "destructive",
       });
       console.error('Error saving company:', error);
-    },
-  });
-
-  const onSubmit = (values: CompanyFormValues) => {
-    saveMutation.mutate(values);
+    }
   };
 
   if (isLoading) {
@@ -331,9 +318,13 @@ const CompanyDetail = () => {
             <Button type="button" variant="outline" onClick={() => navigate('/admin/companies')}>
               İptal
             </Button>
-            <Button type="submit" disabled={saveMutation.isPending} className="gap-2">
+            <Button 
+              type="submit" 
+              disabled={createMutation.isPending || updateMutation.isPending} 
+              className="gap-2"
+            >
               <Save className="h-4 w-4" />
-              {saveMutation.isPending ? 'Kaydediliyor...' : 'Kaydet'}
+              {(createMutation.isPending || updateMutation.isPending) ? 'Kaydediliyor...' : 'Kaydet'}
             </Button>
           </div>
         </form>

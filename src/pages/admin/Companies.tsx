@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Heading } from "@/components/ui/heading";
 import { Plus, Search, Pencil, Power } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAllCompanies, useToggleCompanyStatus } from "@/hooks/useCompanies";
 import {
   Table,
   TableBody,
@@ -21,46 +20,9 @@ const Companies = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: companies, isLoading } = useQuery({
-    queryKey: ['allCompanies'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const toggleActiveMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const { error } = await supabase
-        .from('companies')
-        .update({ is_active: !isActive })
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allCompanies'] });
-      toast({
-        title: "Başarılı",
-        description: "Şirket durumu güncellendi",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Hata",
-        description: "Durum güncellenirken bir hata oluştu",
-        variant: "destructive",
-      });
-      console.error('Error toggling company status:', error);
-    },
-  });
+  const { data: companies, isLoading } = useAllCompanies();
+  const toggleActiveMutation = useToggleCompanyStatus();
 
   const filteredCompanies = companies?.filter(company =>
     company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

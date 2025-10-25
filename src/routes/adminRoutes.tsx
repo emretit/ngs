@@ -3,6 +3,7 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import Companies from "@/pages/admin/Companies";
 import CompanyDetail from "@/pages/admin/CompanyDetail";
 import CompanyUsers from "@/pages/admin/CompanyUsers";
+import CompanyFinancials from "@/pages/admin/CompanyFinancials";
 import AuditLogs from "@/pages/admin/AuditLogs";
 import SecurityMonitoring from "@/pages/admin/SecurityMonitoring";
 import UserDetail from "@/pages/admin/UserDetail";
@@ -29,6 +30,12 @@ export const adminRoutes: RouteConfig[] = [
   { 
     path: "/admin/companies/:id/users", 
     component: CompanyUsers, 
+    protected: true,
+    isAdmin: true,
+  },
+  { 
+    path: "/admin/companies/:id/financials", 
+    component: CompanyFinancials, 
     protected: true,
     isAdmin: true,
   },

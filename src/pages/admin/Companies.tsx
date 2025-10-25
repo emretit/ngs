@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Heading } from "@/components/ui/heading";
-import { Plus, Search, Pencil, Power, Trash2, Users } from "lucide-react";
+import { Plus, Search, Pencil, Power, Trash2, Users, Receipt } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAllCompanies, useToggleCompanyStatus, useDeleteCompany } from "@/hooks/useCompanies";
@@ -108,6 +108,7 @@ const Companies = () => {
               <TableHead>Telefon</TableHead>
               <TableHead>Domain</TableHead>
               <TableHead className="text-center">Kullanıcılar</TableHead>
+              <TableHead className="text-center">Faturalar</TableHead>
               <TableHead>Durum</TableHead>
               <TableHead>Oluşturulma</TableHead>
               <TableHead className="text-right">İşlemler</TableHead>
@@ -136,6 +137,17 @@ const Companies = () => {
                   >
                     <Users className="h-4 w-4" />
                     <span className="text-xs">Görüntüle</span>
+                  </Button>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/admin/companies/${company.id}/financials`)}
+                    className="gap-1"
+                  >
+                    <Receipt className="h-4 w-4" />
+                    <span className="text-xs">Finansal</span>
                   </Button>
                 </TableCell>
                 <TableCell>

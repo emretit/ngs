@@ -1,7 +1,8 @@
 import { RouteConfig } from "./types";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import Companies from "@/pages/admin/Companies";
-import CompanyDetail from "@/pages/admin/CompanyDetail";
+import CompanyEdit from "@/pages/admin/CompanyEdit";
+import CompanyDetailPage from "@/pages/admin/CompanyDetailPage";
 import CompanyUsers from "@/pages/admin/CompanyUsers";
 import CompanyFinancials from "@/pages/admin/CompanyFinancials";
 import AuditLogs from "@/pages/admin/AuditLogs";
@@ -22,8 +23,20 @@ export const adminRoutes: RouteConfig[] = [
     isAdmin: true,
   },
   { 
+    path: "/admin/companies/new", 
+    component: CompanyEdit, 
+    protected: true,
+    isAdmin: true,
+  },
+  { 
+    path: "/admin/companies/:id/edit", 
+    component: CompanyEdit, 
+    protected: true,
+    isAdmin: true,
+  },
+  { 
     path: "/admin/companies/:id", 
-    component: CompanyDetail, 
+    component: CompanyDetailPage, 
     protected: true,
     isAdmin: true,
   },

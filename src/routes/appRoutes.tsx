@@ -13,6 +13,7 @@ import { settingsRoutes } from "./settingsRoutes";
 import { purchaseRoutes } from "./purchaseRoutes";
 import { proposalRoutes } from "./proposalRoutes";
 import { vehicleRoutes } from "./vehicleRoutes";
+import { adminRoutes } from "./adminRoutes";
 
 
 import Deliveries from "@/pages/Deliveries";
@@ -39,6 +40,7 @@ export const appRoutes: RouteConfig[] = [
   ...settingsRoutes,
   ...proposalRoutes,
   ...vehicleRoutes,
+  ...adminRoutes,
   
 
   { path: "/deliveries", component: Deliveries, protected: true },

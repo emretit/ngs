@@ -7,7 +7,7 @@ Admin panel, sistemdeki tüm şirketleri yönetmek için oluşturulmuş özel bi
 ## 🔐 Super Admin Yetkisi
 
 ### Mevcut Super Admin'ler
-- **talip@ngsteknoloji.com** (Super Admin ✅)
+- **emre@ngsteknoloji.com** (Super Admin ✅)
 
 ### Yeni Super Admin Ekleme
 

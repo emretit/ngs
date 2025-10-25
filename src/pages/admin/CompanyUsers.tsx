@@ -1,12 +1,14 @@
-import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { ArrowLeft, User, Mail, Phone, Building } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, Building, Download, Key, UserCog, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
 import {
   Table,
   TableBody,
@@ -15,10 +17,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const CompanyUsers = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   const { data: company, isLoading: companyLoading } = useQuery({
     queryKey: ['company', id],
@@ -60,6 +72,49 @@ const CompanyUsers = () => {
     },
   });
 
+  const sendPasswordResetMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Başarılı",
+        description: "Şifre sıfırlama linki gönderildi",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Hata",
+        description: "Şifre sıfırlama linki gönderilirken hata oluştu",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const exportToExcel = () => {
+    if (!users || users.length === 0) return;
+
+    const exportData = users.map(user => ({
+      'Ad': user.first_name || '',
+      'Soyad': user.last_name || '',
+      'Email': user.email || '',
+      'Telefon': user.phone || '',
+      'Roller': user.user_roles?.map((r: any) => r.is_super_admin ? 'Super Admin' : r.role).join(', ') || '',
+      'Çalışan': user.employees?.[0] ? `${user.employees[0].first_name} ${user.employees[0].last_name}` : '',
+      'Pozisyon': user.employees?.[0]?.position || '',
+      'Kayıt Tarihi': new Date(user.created_at).toLocaleDateString('tr-TR')
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Kullanıcılar");
+    XLSX.writeFile(wb, `${company?.name || 'company'}-users-${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
   if (companyLoading || usersLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -70,14 +125,20 @@ const CompanyUsers = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/companies')}>
-          <ArrowLeft className="h-4 w-4" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/companies')}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Heading 
+            title={`${company?.name || 'Şirket'} - Kullanıcılar`}
+            description={`Toplam ${users?.length || 0} kullanıcı`}
+          />
+        </div>
+        <Button onClick={exportToExcel} variant="outline">
+          <Download className="h-4 w-4 mr-2" />
+          Excel Export
         </Button>
-        <Heading 
-          title={`${company?.name || 'Şirket'} - Kullanıcılar`}
-          description={`Toplam ${users?.length || 0} kullanıcı`}
-        />
       </div>
 
       {/* Statistics Cards */}
@@ -132,6 +193,7 @@ const CompanyUsers = () => {
                 <TableHead>Rol</TableHead>
                 <TableHead>Çalışan</TableHead>
                 <TableHead>Kayıt Tarihi</TableHead>
+                <TableHead>İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -184,6 +246,23 @@ const CompanyUsers = () => {
                   </TableCell>
                   <TableCell>
                     {new Date(user.created_at).toLocaleDateString('tr-TR')}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Link to={`/admin/users/${user.id}`}>
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => user.email && sendPasswordResetMutation.mutate(user.email)}
+                        disabled={sendPasswordResetMutation.isPending}
+                      >
+                        <Key className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

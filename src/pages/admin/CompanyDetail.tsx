@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Heading } from "@/components/ui/heading";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import { useCreateCompany, useUpdateCompany } from "@/hooks/useCompanies";
 import {
   Form,
@@ -42,6 +42,8 @@ const CompanyDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isNew = id === 'new';
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   
   const createMutation = useCreateCompany();
   const updateMutation = useUpdateCompany();
@@ -93,15 +95,71 @@ const CompanyDetail = () => {
         default_currency: company.default_currency || "₺",
         is_active: company.is_active,
       });
+      setLogoPreview(company.logo_url || null);
     }
   }, [company, form]);
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogoRemove = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+  };
+
+  const uploadLogo = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `company-logos/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('company-assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('company-assets')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      return null;
+    }
+  };
+
   const onSubmit = async (values: CompanyFormValues) => {
     try {
+      let logoUrl = logoPreview;
+
+      // Upload logo if a new file is selected
+      if (logoFile) {
+        const uploadedUrl = await uploadLogo(logoFile);
+        if (uploadedUrl) {
+          logoUrl = uploadedUrl;
+        }
+      }
+
+      const companyData = {
+        ...values,
+        logo_url: logoUrl,
+      };
+
       if (isNew) {
-        await createMutation.mutateAsync(values);
+        await createMutation.mutateAsync(companyData);
       } else {
-        await updateMutation.mutateAsync({ id: id!, updates: values });
+        await updateMutation.mutateAsync({ id: id!, updates: companyData });
       }
       toast({
         title: "Başarılı",
@@ -145,6 +203,42 @@ const CompanyDetail = () => {
               <CardTitle>Temel Bilgiler</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Logo Upload */}
+              <div className="space-y-2">
+                <FormLabel>Şirket Logosu</FormLabel>
+                <div className="flex items-center gap-4">
+                  {logoPreview ? (
+                    <div className="relative">
+                      <img src={logoPreview} alt="Logo Preview" className="h-24 w-24 object-contain border rounded-lg p-2" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={handleLogoRemove}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="h-24 w-24 border-2 border-dashed rounded-lg flex items-center justify-center text-muted-foreground">
+                      <Upload className="h-8 w-8" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="cursor-pointer"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PNG, JPG veya SVG. Maksimum 2MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <FormField
                 control={form.control}
                 name="name"

@@ -2,10 +2,20 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Heading } from "@/components/ui/heading";
-import { Plus, Search, Pencil, Power } from "lucide-react";
+import { Plus, Search, Pencil, Power, Trash2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useAllCompanies, useToggleCompanyStatus } from "@/hooks/useCompanies";
+import { useAllCompanies, useToggleCompanyStatus, useDeleteCompany } from "@/hooks/useCompanies";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -18,11 +28,40 @@ import { Badge } from "@/components/ui/badge";
 
 const Companies = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const { data: companies, isLoading } = useAllCompanies();
   const toggleActiveMutation = useToggleCompanyStatus();
+  const deleteMutation = useDeleteCompany();
+
+  const handleDeleteClick = (companyId: string) => {
+    setCompanyToDelete(companyId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!companyToDelete) return;
+
+    try {
+      await deleteMutation.mutateAsync(companyToDelete);
+      toast({
+        title: "Başarılı",
+        description: "Şirket silindi",
+      });
+    } catch (error) {
+      toast({
+        title: "Hata",
+        description: "Şirket silinirken bir hata oluştu",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setCompanyToDelete(null);
+    }
+  };
 
   const filteredCompanies = companies?.filter(company =>
     company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -68,6 +107,7 @@ const Companies = () => {
               <TableHead>Email</TableHead>
               <TableHead>Telefon</TableHead>
               <TableHead>Domain</TableHead>
+              <TableHead className="text-center">Kullanıcılar</TableHead>
               <TableHead>Durum</TableHead>
               <TableHead>Oluşturulma</TableHead>
               <TableHead className="text-right">İşlemler</TableHead>
@@ -76,10 +116,28 @@ const Companies = () => {
           <TableBody>
             {filteredCompanies?.map((company) => (
               <TableRow key={company.id}>
-                <TableCell className="font-medium">{company.name || '-'}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {company.logo_url && (
+                      <img src={company.logo_url} alt={company.name || ''} className="h-8 w-8 rounded object-cover" />
+                    )}
+                    {company.name || '-'}
+                  </div>
+                </TableCell>
                 <TableCell>{company.email || '-'}</TableCell>
                 <TableCell>{company.phone || '-'}</TableCell>
                 <TableCell>{company.domain || '-'}</TableCell>
+                <TableCell className="text-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/admin/companies/${company.id}/users`)}
+                    className="gap-1"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span className="text-xs">Görüntüle</span>
+                  </Button>
+                </TableCell>
                 <TableCell>
                   {company.is_active ? (
                     <Badge variant="default" className="bg-green-100 text-green-800">Aktif</Badge>
@@ -96,6 +154,7 @@ const Companies = () => {
                       variant="ghost"
                       size="icon"
                       onClick={() => navigate(`/admin/companies/${company.id}`)}
+                      title="Düzenle"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -103,8 +162,18 @@ const Companies = () => {
                       variant="ghost"
                       size="icon"
                       onClick={() => toggleActiveMutation.mutate({ id: company.id, isActive: company.is_active })}
+                      title={company.is_active ? 'Pasif Yap' : 'Aktif Yap'}
                     >
                       <Power className={`h-4 w-4 ${company.is_active ? 'text-green-600' : 'text-red-600'}`} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteClick(company.id)}
+                      title="Sil"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
@@ -113,6 +182,25 @@ const Companies = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Şirketi Silmek İstediğinize Emin Misiniz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bu işlem şirketi pasif hale getirecektir. Şirket verisi silinmez, sadece is_active = false olarak işaretlenir.
+              Gerektiğinde şirketi tekrar aktif hale getirebilirsiniz.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>İptal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
+              Sil
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

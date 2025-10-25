@@ -12,52 +12,43 @@ export default function VehicleMainPage() {
   const [activeTab, setActiveTab] = useState("vehicles");
 
   return (
-    <div className="space-y-6">
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-3xl font-bold">Araç Yönetimi</h1>
-                <p className="text-muted-foreground">Şirket araçlarınızı ve süreçlerini yönetin</p>
-              </div>
-            </div>
+    <div className="space-y-2">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="vehicles" className="flex items-center gap-2">
+            <Car className="h-4 w-4" />
+            Araçlar
+          </TabsTrigger>
+          <TabsTrigger value="operations" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Operasyonlar
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Belgeler & Sözleşmeler
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Analiz & Raporlar
+          </TabsTrigger>
+        </TabsList>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="vehicles" className="flex items-center gap-2">
-                  <Car className="h-4 w-4" />
-                  Araçlar
-                </TabsTrigger>
-                <TabsTrigger value="operations" className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  Operasyonlar
-                </TabsTrigger>
-                <TabsTrigger value="documents" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Belgeler & Sözleşmeler
-                </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Analiz & Raporlar
-                </TabsTrigger>
-              </TabsList>
+        <TabsContent value="vehicles" className="mt-0">
+          <VehicleListTab />
+        </TabsContent>
 
-              <TabsContent value="vehicles" className="space-y-4">
-                <VehicleListTab />
-              </TabsContent>
+        <TabsContent value="operations" className="mt-0">
+          <VehicleOperationsTab />
+        </TabsContent>
 
-              <TabsContent value="operations" className="space-y-4">
-                <VehicleOperationsTab />
-              </TabsContent>
+        <TabsContent value="documents" className="mt-0">
+          <VehicleDocumentsContractsTab />
+        </TabsContent>
 
-              <TabsContent value="documents" className="space-y-4">
-                <VehicleDocumentsContractsTab />
-              </TabsContent>
-
-              <TabsContent value="analytics" className="space-y-4">
-                <VehicleAnalyticsTab />
-              </TabsContent>
-            </Tabs>
-          </div>
+        <TabsContent value="analytics" className="mt-0">
+          <VehicleAnalyticsTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

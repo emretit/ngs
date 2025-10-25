@@ -1,11 +1,60 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, startTransition } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Building2,
+  Briefcase,
+  CreditCard,
+  FileText,
+  Home,
+  Settings,
+  ShoppingCart,
+  User,
+  Users,
+  Users2,
+  Wrench,
+  BarChart2,
+  BarChart3,
+  ListTodo,
+  PackageCheck,
+  Target,
+  Quote,
+  Truck,
+  RotateCcw,
+  TrendingUp,
+  Package,
+  Banknote,
+  Receipt,
+  Building,
+  UserCheck,
+  Calculator,
+  Zap,
+  Zap as ZapIcon,
+  FileEdit,
+  Car,
+  Fuel,
+  Calendar,
+  AlertTriangle,
+  DollarSign,
+  MapPin,
+  Gauge,
+  CheckSquare,
+  Workflow,
+  Plus,
+  LayoutDashboard,
+  ClipboardList,
+  MessageSquare,
+  ClipboardCheck,
+  ArrowRightLeft,
+  Shield,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import NavHeader from "./navbar/NavHeader";
 import NavLink from "./navbar/NavLink";
 import { navItems } from "./navbar/nav-config";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 
 interface NavbarProps {
   isCollapsed: boolean;
@@ -17,6 +66,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const navigate = useNavigate();
   const navRef = useRef<HTMLElement>(null);
   const { hasModuleAccess, isLoading: permissionsLoading } = usePermissions();
+  const { isSuperAdmin, isLoading: superAdminLoading } = useSuperAdmin();
   
   
   
@@ -225,6 +275,19 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
         className="flex-1 overflow-y-auto px-2 py-4 space-y-1 scrollbar-hide"
       >
         {navItems.map(renderNavItem)}
+        
+        {/* Admin Panel Link - Only visible to super admins */}
+        {!superAdminLoading && isSuperAdmin && (
+          <div className="pt-4 mt-4 border-t border-gray-700">
+            <NavLink
+              to="/admin"
+              icon={Shield}
+              label="Admin Panel"
+              isActive={location.pathname.startsWith('/admin')}
+              isCollapsed={isCollapsed}
+            />
+          </div>
+        )}
       </nav>
     </div>
   );

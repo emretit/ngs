@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type Company = {
@@ -46,4 +46,101 @@ export const useCompanies = () => {
   });
 
   return { company, isLoading };
+};
+
+// Admin: Get all companies
+export const useAllCompanies = () => {
+  return useQuery({
+    queryKey: ['allCompanies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Company[];
+    },
+  });
+};
+
+// Admin: Create company
+export const useCreateCompany = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (companyData: Partial<Company>) => {
+      const { data, error } = await supabase
+        .from('companies')
+        .insert([companyData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allCompanies'] });
+    },
+  });
+};
+
+// Admin: Update company
+export const useUpdateCompany = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Company> }) => {
+      const { data, error } = await supabase
+        .from('companies')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allCompanies'] });
+    },
+  });
+};
+
+// Admin: Delete company (soft delete by setting is_active to false)
+export const useDeleteCompany = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('companies')
+        .update({ is_active: false })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allCompanies'] });
+    },
+  });
+};
+
+// Admin: Toggle company active status
+export const useToggleCompanyStatus = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const { error } = await supabase
+        .from('companies')
+        .update({ is_active: !isActive })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allCompanies'] });
+    },
+  });
 };

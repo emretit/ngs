@@ -1,9 +1,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, TrendingUp, Clock, MoreHorizontal, Mail, Trash2, FileText, User } from "lucide-react";
+import { Plus, Users, TrendingUp, Clock, Mail, Trash2, FileText, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer } from "@/types/customer";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 interface CustomersHeaderProps {
@@ -74,47 +73,49 @@ const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
         
         {/* Sağ taraf - Butonlar */}
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <MoreHorizontal className="h-4 w-4" />
-                <span>İşlemler</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => {
-                toast.info("Müşteri raporu oluşturuluyor...");
-                console.log("Generating customer report:", customers);
-              }}>
-                <FileText className="h-4 w-4 mr-2" />
-                Rapor Oluştur
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => {
-                toast.info("Tüm müşterilere e-posta gönderiliyor...");
-                console.log("Sending email to all customers:", customers);
-              }}>
-                <Mail className="h-4 w-4 mr-2" />
-                Toplu E-posta
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => {
-                  toast.warning("Tüm müşteriler silinecek!", {
-                    action: {
-                      label: "Geri Al",
-                      onClick: () => console.log("Undo delete all customers"),
-                    },
-                  });
-                  console.log("Deleting all customers:", customers);
-                }}
-                className="text-red-600"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Tümünü Sil
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => {
+              toast.info("Müşteri raporu oluşturuluyor...");
+              console.log("Generating customer report:", customers);
+            }}
+          >
+            <FileText className="h-4 w-4" />
+            <span>Rapor</span>
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => {
+              toast.info("Tüm müşterilere e-posta gönderiliyor...");
+              console.log("Sending email to all customers:", customers);
+            }}
+          >
+            <Mail className="h-4 w-4" />
+            <span>Toplu E-posta</span>
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={() => {
+              toast.warning("Tüm müşteriler silinecek!", {
+                action: {
+                  label: "Geri Al",
+                  onClick: () => console.log("Undo delete all customers"),
+                },
+              });
+              console.log("Deleting all customers:", customers);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span>Tümünü Sil</span>
+          </Button>
 
           <Button 
             className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 

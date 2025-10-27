@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import { Customer } from '@/types/customer';
 
-export const exportToExcel = (customers: Customer[]) => {
+export const exportCustomersToExcel = (customers: Customer[]) => {
   // Prepare data for Excel export
   const excelData = customers.map(customer => ({
     'Ad': customer.name,

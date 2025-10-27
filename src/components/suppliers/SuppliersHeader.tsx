@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Building2, Clock, TrendingUp, Mail, Trash2, FileText } from "lucide-react";
+import { Plus, Building2, Clock, TrendingUp, Mail, Trash2, FileText, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Supplier } from "@/types/supplier";
 import { toast } from "sonner";
+import { exportSuppliersToExcel, exportSupplierTemplateToExcel } from "@/utils/supplierExcelUtils";
+import ImportDialog from "./excel/ImportDialog";
 
 interface SuppliersHeaderProps {
   suppliers?: Supplier[];
@@ -11,6 +13,7 @@ interface SuppliersHeaderProps {
 
 const SuppliersHeader = ({ suppliers = [] }: SuppliersHeaderProps) => {
   const navigate = useNavigate();
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   // Toplam tedarikçi sayısını hesapla
   const totalCount = suppliers.length;
@@ -77,6 +80,36 @@ const SuppliersHeader = ({ suppliers = [] }: SuppliersHeaderProps) => {
             variant="outline" 
             size="sm" 
             className="flex items-center gap-2"
+            onClick={() => exportSupplierTemplateToExcel()}
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            <span>Şablon İndir</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => exportSuppliersToExcel(suppliers)}
+          >
+            <Download className="h-4 w-4" />
+            <span>Excel İndir</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => setIsImportDialogOpen(true)}
+          >
+            <Upload className="h-4 w-4" />
+            <span>Excel Yükle</span>
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
             onClick={() => {
               toast.info("Tedarikçi raporu oluşturuluyor...");
               console.log("Generating supplier report:", suppliers);
@@ -126,6 +159,11 @@ const SuppliersHeader = ({ suppliers = [] }: SuppliersHeaderProps) => {
           </Button>
         </div>
       </div>
+
+      <ImportDialog 
+        isOpen={isImportDialogOpen} 
+        setIsOpen={setIsImportDialogOpen} 
+      />
     </>
   );
 };

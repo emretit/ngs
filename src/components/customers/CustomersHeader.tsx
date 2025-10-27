@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, TrendingUp, Clock, Mail, Trash2, FileText, User } from "lucide-react";
+import { Plus, Users, TrendingUp, Clock, Mail, Trash2, FileText, User, Download, Upload, FileSpreadsheet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer } from "@/types/customer";
 import { toast } from "sonner";
+import { exportCustomersToExcel, exportCustomerTemplateToExcel } from "@/utils/customerExcelUtils";
+import ImportDialog from "./excel/ImportDialog";
 
 interface CustomersHeaderProps {
   customers?: Customer[];
@@ -11,6 +13,7 @@ interface CustomersHeaderProps {
 
 const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
   const navigate = useNavigate();
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   // Toplam müşteri sayısını hesapla
   const totalCount = customers.length;
@@ -77,6 +80,36 @@ const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
             variant="outline" 
             size="sm" 
             className="flex items-center gap-2"
+            onClick={() => exportCustomerTemplateToExcel()}
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            <span>Şablon İndir</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => exportCustomersToExcel(customers)}
+          >
+            <Download className="h-4 w-4" />
+            <span>Excel İndir</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={() => setIsImportDialogOpen(true)}
+          >
+            <Upload className="h-4 w-4" />
+            <span>Excel Yükle</span>
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
             onClick={() => {
               toast.info("Müşteri raporu oluşturuluyor...");
               console.log("Generating customer report:", customers);
@@ -126,6 +159,11 @@ const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
           </Button>
         </div>
       </div>
+
+      <ImportDialog 
+        isOpen={isImportDialogOpen} 
+        setIsOpen={setIsImportDialogOpen} 
+      />
     </>
   );
 };

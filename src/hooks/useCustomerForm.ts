@@ -170,6 +170,16 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         einvoice_checked_at: einvoiceMukellefData?.isEinvoiceMukellef ? new Date().toISOString() : null,
       };
 
+      // Get current user's company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user?.id)
+        .maybeSingle();
+      
+      const company_id = profileData?.company_id;
+
       if (id) {
         // Update
         console.log('Updating data:', sanitizedData);
@@ -202,10 +212,11 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         console.log('Updated data:', updatedData);
         return updatedData;
       } else {
-        // Add new customer
+        // Add new customer - add company_id to sanitized data
+        const dataWithCompanyId = { ...sanitizedData, company_id };
         const { data: newData, error } = await supabase
           .from('customers')
-          .insert([sanitizedData])
+          .insert([dataWithCompanyId])
           .select()
           .maybeSingle();
         

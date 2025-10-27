@@ -3,6 +3,7 @@ import SuppliersHeader from "@/components/suppliers/SuppliersHeader";
 import SuppliersFilterBar from "@/components/suppliers/SuppliersFilterBar";
 import SuppliersContent from "@/components/suppliers/SuppliersContent";
 import SuppliersBulkActions from "@/components/suppliers/SuppliersBulkActions";
+import ExcelImportExport from "@/components/suppliers/ExcelImportExport";
 import { Supplier } from "@/types/supplier";
 import { toast } from "sonner";
 import { useSuppliersInfiniteScroll } from "@/hooks/useSuppliersInfiniteScroll";
@@ -53,6 +54,8 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         <SuppliersHeader 
           suppliers={suppliers || []}
         />
+        {/* Excel Actions */}
+        <ExcelImportExport suppliers={suppliers || []} />
         {/* Filters */}
         <SuppliersFilterBar
           searchQuery={searchQuery}

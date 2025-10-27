@@ -3,6 +3,7 @@ import CustomersHeader from "@/components/customers/CustomersHeader";
 import CustomersFilterBar from "@/components/customers/CustomersFilterBar";
 import CustomersContent from "@/components/customers/CustomersContent";
 import CustomersBulkActions from "@/components/customers/CustomersBulkActions";
+import ExcelImportExport from "@/components/customers/ExcelImportExport";
 import { Customer } from "@/types/customer";
 import { toast } from "sonner";
 import { useCustomersInfiniteScroll } from "@/hooks/useCustomersInfiniteScroll";
@@ -47,6 +48,8 @@ const Contacts = () => {
         <CustomersHeader 
           customers={customers || []}
         />
+        {/* Excel Actions */}
+        <ExcelImportExport customers={customers || []} />
         {/* Filters */}
         <CustomersFilterBar
           searchQuery={searchQuery}

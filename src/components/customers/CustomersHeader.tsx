@@ -1,12 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Users, TrendingUp, Clock, MoreHorizontal, Download, Upload, Mail, Trash2, FileText, User } from "lucide-react";
+import { Plus, Users, TrendingUp, Clock, MoreHorizontal, Mail, Trash2, FileText, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer } from "@/types/customer";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { exportToExcel } from "@/utils/customerExcelUtils";
-import ImportDialog from "./excel/ImportDialog";
 
 interface CustomersHeaderProps {
   customers?: Customer[];
@@ -14,7 +12,6 @@ interface CustomersHeaderProps {
 
 const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
   const navigate = useNavigate();
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   // Toplam müşteri sayısını hesapla
   const totalCount = customers.length;
@@ -27,23 +24,8 @@ const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
     return customer.balance < 0 ? sum + Math.abs(customer.balance) : sum;
   }, 0);
 
-  // Excel export
-  const handleExportExcel = () => {
-    try {
-      exportToExcel(customers);
-      toast.success("Müşteriler Excel'e aktarıldı");
-    } catch (error) {
-      toast.error("Excel'e aktarım sırasında hata oluştu");
-      console.error("Export error:", error);
-    }
-  };
-
   return (
     <>
-      <ImportDialog 
-        isOpen={isImportDialogOpen}
-        setIsOpen={setIsImportDialogOpen}
-      />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
         {/* Sol taraf - Başlık */}
         <div className="flex items-center gap-3">
@@ -100,15 +82,6 @@ const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleExportExcel}>
-                <Download className="h-4 w-4 mr-2" />
-                Excel'e Aktar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)}>
-                <Upload className="h-4 w-4 mr-2" />
-                Excel'den Yükle
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => {
                 toast.info("Müşteri raporu oluşturuluyor...");
                 console.log("Generating customer report:", customers);

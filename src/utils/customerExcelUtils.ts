@@ -58,6 +58,57 @@ export const exportToExcel = (customers: Customer[]) => {
   XLSX.writeFile(wb, fileName);
 };
 
+export const exportCustomerTemplateToExcel = () => {
+  // Template data with example row
+  const templateData = [
+    {
+      'Ad': 'Örnek Müşteri A.Ş.',
+      'E-posta': 'info@ornekmusteri.com',
+      'Cep Telefonu': '+90 555 123 4567',
+      'Ofis Telefonu': '+90 212 123 4567',
+      'Şirket': 'Örnek Müşteri A.Ş.',
+      'Tip': 'kurumsal',
+      'Durum': 'aktif',
+      'Temsilci': 'Ahmet Yılmaz',
+      'Bakiye': 15000,
+      'Adres': 'Örnek Mah. Örnek Cad. No:1 İstanbul',
+      'Vergi Numarası': '1234567890',
+      'Vergi Dairesi': 'Kadıköy',
+      'Şehir': 'İstanbul',
+      'İlçe': 'Kadıköy'
+    }
+  ];
+
+  // Create workbook and worksheet
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(templateData);
+
+  // Set column widths
+  const colWidths = [
+    { wch: 20 }, // Ad
+    { wch: 25 }, // E-posta
+    { wch: 15 }, // Cep Telefonu
+    { wch: 15 }, // Ofis Telefonu
+    { wch: 20 }, // Şirket
+    { wch: 10 }, // Tip
+    { wch: 12 }, // Durum
+    { wch: 15 }, // Temsilci
+    { wch: 15 }, // Bakiye
+    { wch: 30 }, // Adres
+    { wch: 15 }, // Vergi Numarası
+    { wch: 15 }, // Vergi Dairesi
+    { wch: 12 }, // Şehir
+    { wch: 12 }  // İlçe
+  ];
+  ws['!cols'] = colWidths;
+
+  // Add worksheet to workbook
+  XLSX.utils.book_append_sheet(wb, ws, 'Müşteri Şablonu');
+
+  // Save file
+  XLSX.writeFile(wb, 'musteri_sablonu.xlsx');
+};
+
 export const parseExcelFile = (file: File): Promise<Partial<Customer>[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

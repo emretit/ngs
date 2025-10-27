@@ -1,12 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Building2, Clock, TrendingUp, MoreHorizontal, Download, Upload, Mail, Trash2, FileText } from "lucide-react";
+import { Plus, Building2, Clock, TrendingUp, MoreHorizontal, Mail, Trash2, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Supplier } from "@/types/supplier";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { exportSuppliersToExcel } from "@/utils/supplierExcelUtils";
-import ImportDialog from "./excel/ImportDialog";
 
 interface SuppliersHeaderProps {
   suppliers?: Supplier[];
@@ -14,7 +12,6 @@ interface SuppliersHeaderProps {
 
 const SuppliersHeader = ({ suppliers = [] }: SuppliersHeaderProps) => {
   const navigate = useNavigate();
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   // Toplam tedarikçi sayısını hesapla
   const totalCount = suppliers.length;
@@ -27,23 +24,8 @@ const SuppliersHeader = ({ suppliers = [] }: SuppliersHeaderProps) => {
     return supplier.balance < 0 ? sum + Math.abs(supplier.balance) : sum;
   }, 0);
 
-  // Excel export
-  const handleExportExcel = () => {
-    try {
-      exportSuppliersToExcel(suppliers);
-      toast.success("Tedarikçiler Excel'e aktarıldı");
-    } catch (error) {
-      toast.error("Excel'e aktarım sırasında hata oluştu");
-      console.error("Export error:", error);
-    }
-  };
-
   return (
     <>
-      <ImportDialog 
-        isOpen={isImportDialogOpen}
-        setIsOpen={setIsImportDialogOpen}
-      />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
         {/* Sol taraf - Başlık */}
         <div className="flex items-center gap-3">
@@ -100,15 +82,6 @@ const SuppliersHeader = ({ suppliers = [] }: SuppliersHeaderProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleExportExcel}>
-                <Download className="h-4 w-4 mr-2" />
-                Excel'e Aktar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)}>
-                <Upload className="h-4 w-4 mr-2" />
-                Excel'den Yükle
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => {
                 toast.info("Tedarikçi raporu oluşturuluyor...");
                 console.log("Generating supplier report:", suppliers);

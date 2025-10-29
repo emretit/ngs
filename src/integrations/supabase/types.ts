@@ -274,6 +274,47 @@ export type Database = {
           },
         ]
       }
+      ai_insights: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          data_summary: Json | null
+          id: string
+          insight_text: string
+          insight_type: string
+          period_end: string
+          period_start: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          data_summary?: Json | null
+          id?: string
+          insight_text: string
+          insight_type: string
+          period_end: string
+          period_start: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          data_summary?: Json | null
+          id?: string
+          insight_text?: string
+          insight_type?: string
+          period_end?: string
+          period_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_insights_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approvals: {
         Row: {
           approver_id: string | null
@@ -1222,7 +1263,15 @@ export type Database = {
           customer_source: string | null
           district: string | null
           district_id: number | null
+          einvoice_address: string | null
           einvoice_alias_name: string | null
+          einvoice_checked_at: string | null
+          einvoice_city: string | null
+          einvoice_company_name: string | null
+          einvoice_district: string | null
+          einvoice_mersis_no: string | null
+          einvoice_sicil_no: string | null
+          einvoice_tax_office: string | null
           email: string | null
           establishment_date: string | null
           fax: string | null
@@ -1273,7 +1322,15 @@ export type Database = {
           customer_source?: string | null
           district?: string | null
           district_id?: number | null
+          einvoice_address?: string | null
           einvoice_alias_name?: string | null
+          einvoice_checked_at?: string | null
+          einvoice_city?: string | null
+          einvoice_company_name?: string | null
+          einvoice_district?: string | null
+          einvoice_mersis_no?: string | null
+          einvoice_sicil_no?: string | null
+          einvoice_tax_office?: string | null
           email?: string | null
           establishment_date?: string | null
           fax?: string | null
@@ -1324,7 +1381,15 @@ export type Database = {
           customer_source?: string | null
           district?: string | null
           district_id?: number | null
+          einvoice_address?: string | null
           einvoice_alias_name?: string | null
+          einvoice_checked_at?: string | null
+          einvoice_city?: string | null
+          einvoice_company_name?: string | null
+          einvoice_district?: string | null
+          einvoice_mersis_no?: string | null
+          einvoice_sicil_no?: string | null
+          einvoice_tax_office?: string | null
           email?: string | null
           establishment_date?: string | null
           fax?: string | null

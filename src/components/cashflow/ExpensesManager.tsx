@@ -16,6 +16,7 @@ import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Plus, Edit, Trash2, Wallet, FileText, Search, Filter, User, Tag } from "lucide-react";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
+import CategorySelector from "@/components/cashflow/CategorySelector";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -753,8 +754,8 @@ const ExpensesManager = () => {
     maxWidth="xl"
     headerColor="red"
   >
-    <div 
-      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+  <div 
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-1"
       onKeyDown={(e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleAddExpense(); }
         if (e.key === 'Escape') { e.preventDefault(); setIsAddDialogOpen(false); }
@@ -771,33 +772,6 @@ const ExpensesManager = () => {
               onSelect={(newDate) => newDate && setDate(newDate)}
               placeholder="Tarih seçin"
               className="w-full h-9"
-            />
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <Label>Çalışan</Label>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="company-expense"
-                  checked={expenseType === 'company'}
-                  onCheckedChange={(checked) => setExpenseType(checked ? 'company' : 'employee')}
-                />
-                <Label htmlFor="company-expense" className="text-sm font-normal cursor-pointer">
-                  Şirket
-                </Label>
-              </div>
-            </div>
-            <EmployeeSelector
-              value={selectedEmployee}
-              onChange={(value) => setSelectedEmployee(value)}
-              error=""
-              label=""
-              placeholder={expenseType === 'company' ? "Şirket masrafı" : "Çalışan seçin..."}
-              searchPlaceholder="Çalışan ara..."
-              loadingText="Çalışanlar yükleniyor..."
-              noResultsText="Çalışan bulunamadı"
-              triggerClassName="h-9"
-              disabled={expenseType === 'company'}
             />
           </div>
           <div className="space-y-1">
@@ -828,26 +802,44 @@ const ExpensesManager = () => {
             </div>
           </div>
           <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <Label>Çalışan</Label>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="company-expense"
+                  checked={expenseType === 'company'}
+                  onCheckedChange={(checked) => setExpenseType(checked ? 'company' : 'employee')}
+                />
+                <Label htmlFor="company-expense" className="text-sm font-normal cursor-pointer">
+                  Şirket
+                </Label>
+              </div>
+            </div>
+            <EmployeeSelector
+              value={selectedEmployee}
+              onChange={(value) => setSelectedEmployee(value)}
+              error=""
+              label=""
+              placeholder={expenseType === 'company' ? "Şirket masrafı" : "Çalışan seçin..."}
+              searchPlaceholder="Çalışan ara..."
+              loadingText="Çalışanlar yükleniyor..."
+              noResultsText="Çalışan bulunamadı"
+              triggerClassName="h-9"
+              disabled={expenseType === 'company'}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="category">Kategori <span className="text-red-500">*</span></Label>
-            <Select value={selectedCategoryOption} onValueChange={handleCategoryOptionChange}>
-              <SelectTrigger className="h-9 w-full">
-                <SelectValue placeholder="Kategori seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectGroup key={cat.id}>
-                    <SelectItem value={`cat:${cat.id}`}>{cat.name}</SelectItem>
-                    {subcategoriesList
-                      .filter(sc => sc.category_id === cat.id)
-                      .map(sc => (
-                        <SelectItem key={sc.id} value={`sub:${sc.id}`}>
-                          {sc.name} ({cat.name})
-                        </SelectItem>
-                      ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategorySelector
+              value={selectedCategoryOption}
+              onChange={handleCategoryOptionChange}
+              categories={categories}
+              subcategories={subcategoriesList}
+              showLabel={false}
+              placeholder="Kategori seçin"
+              triggerClassName="h-9"
+              className="mt-2"
+            />
           </div>
         </div>
       </div>
@@ -988,15 +980,12 @@ const ExpensesManager = () => {
                       key={idx}
                       type="button"
                       size="sm"
-                      variant={recurrenceDays.includes(String(idx + 1)) ? "default" : "outline"}
+                      variant={recurrenceDays[0] === String(idx + 1) ? "default" : "outline"}
                       className="h-8 text-xs"
                       onClick={() => {
                         const dayStr = String(idx + 1);
-                        setRecurrenceDays(prev =>
-                          prev.includes(dayStr)
-                            ? prev.filter(d => d !== dayStr)
-                            : [...prev, dayStr]
-                        );
+                        // Tek seçim: aynı günse temizle, değilse yalnızca bu gün
+                        setRecurrenceDays((prev) => (prev[0] === dayStr ? [] : [dayStr]));
                       }}
                     >
                       {day}

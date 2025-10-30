@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -67,7 +67,6 @@ const ExpensesManager = () => {
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [paidDate, setPaidDate] = useState<Date | null>(null);
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const [paymentAccountType, setPaymentAccountType] = useState<'cash' | 'bank' | 'credit_card' | 'partner' | ''>('');
   const [paymentAccountId, setPaymentAccountId] = useState<string>("");
   const [cashAccounts, setCashAccounts] = useState<Array<{id: string, label: string}>>([]);
@@ -78,6 +77,7 @@ const ExpensesManager = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<ExpenseItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [vatRate, setVatRate] = useState<string>('0');
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -252,6 +252,7 @@ const ExpensesManager = () => {
         .insert({
           type: 'expense',
           amount: parseFloat(amount),
+          vat_rate: parseFloat(vatRate),
           category_id: selectedCategory,
           subcategory: subcategory || null,
           description: description,
@@ -379,6 +380,7 @@ const ExpensesManager = () => {
       setIsRecurring(false);
       setPaymentAccountType('');
       setPaymentAccountId("");
+      setVatRate('0');
       fetchExpenses();
     } catch (error) {
       console.error('Error adding expense:', error);
@@ -509,195 +511,11 @@ const ExpensesManager = () => {
             <Tag className="mr-2 h-4 w-4" />
             Gelir-Masraf Kategorileri
           </Button>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-red-600 hover:bg-red-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Yeni Masraf
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Yeni Masraf Ekle</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="expenseType">Masraf Türü</Label>
-                  <Select value={expenseType} onValueChange={(value: 'company' | 'employee') => setExpenseType(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="company">Şirket Masrafı</SelectItem>
-                      <SelectItem value="employee">Çalışan Masrafı</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {expenseType === 'employee' && (
-                  <div>
-                    <EmployeeSelector
-                      value={selectedEmployee}
-                      onChange={(value) => setSelectedEmployee(value)}
-                      error=""
-                      label="Çalışan"
-                      placeholder="Çalışan seçin..."
-                      searchPlaceholder="Çalışan ara..."
-                      loadingText="Çalışanlar yükleniyor..."
-                      noResultsText="Çalışan bulunamadı"
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <Label htmlFor="category">Kategori</Label>
-                  <Select value={selectedCategoryOption} onValueChange={handleCategoryOptionChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Kategori veya alt kategori seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectGroup key={cat.id}>
-                          <SelectItem value={`cat:${cat.id}`}>{cat.name}</SelectItem>
-                          {subcategoriesList
-                            .filter(sc => sc.category_id === cat.id)
-                            .map(sc => (
-                              <SelectItem key={sc.id} value={`sub:${sc.id}`}>
-                                {sc.name} ({cat.name})
-                              </SelectItem>
-                            ))}
-                        </SelectGroup>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {/* Gelişmiş alanlar togglesi */}
-                <div className="flex items-center justify-between">
-                  <Label>Gelişmiş</Label>
-                  <Button variant="ghost" className="px-2 py-1 h-8" onClick={() => setShowAdvanced(!showAdvanced)}>
-                    {showAdvanced ? 'Gizle' : 'Göster'}
-                  </Button>
-                </div>
-                {showAdvanced && (
-                  <>
-                    <div>
-                      <Label htmlFor="subcategory">Alt Kategori</Label>
-                      <Input
-                        id="subcategory"
-                        value={subcategory}
-                        onChange={(e) => setSubcategory(e.target.value)}
-                        placeholder="Alt kategori"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="description">Açıklama</Label>
-                      <Textarea
-                        id="description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Masraf açıklaması"
-                        rows={3}
-                      />
-                    </div>
-                  </>
-                )}
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="amount">Tutar (₺)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="date">Tarih</Label>
-                    <EnhancedDatePicker
-                      date={date}
-                      onSelect={(newDate) => newDate && setDate(newDate)}
-                      placeholder="Tarih seçin"
-                    />
-                  </div>
-                </div>
-                
-                
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Ödendi mi?</Label>
-                  </div>
-                  <Switch checked={isPaid} onCheckedChange={(v) => setIsPaid(!!v)} />
-                </div>
-                <div className={`space-y-2 ${isPaid ? '' : 'opacity-50 pointer-events-none'}`}>
-                  <Label>Ödeme Tarihi</Label>
-                  <EnhancedDatePicker
-                    date={paidDate || undefined}
-                    onSelect={(d) => setPaidDate(d || null)}
-                    placeholder="Tarih seçin"
-                    disabled={!isPaid}
-                  />
-                </div>
-                <div className={`space-y-2 ${isPaid ? '' : 'opacity-50 pointer-events-none'}`}>
-                  <Label>Hesap Türü</Label>
-                  <Select value={paymentAccountType} onValueChange={(val: any) => { setPaymentAccountType(val); setPaymentAccountId(""); }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Hesap türü seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">Kasa</SelectItem>
-                      <SelectItem value="bank">Banka</SelectItem>
-                      <SelectItem value="credit_card">Kredi Kartı</SelectItem>
-                      <SelectItem value="partner">Ortak</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className={`space-y-2 ${isPaid ? '' : 'opacity-50 pointer-events-none'}`}>
-                  <Label>Hesap</Label>
-                  <Select value={paymentAccountId} onValueChange={setPaymentAccountId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Hesap seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentAccountType === 'cash' && cashAccounts.map(a => (
-                        <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
-                      ))}
-                      {paymentAccountType === 'bank' && bankAccounts.map(a => (
-                        <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
-                      ))}
-                      {paymentAccountType === 'credit_card' && creditCards.map(a => (
-                        <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
-                      ))}
-                      {paymentAccountType === 'partner' && partnerAccounts.map(a => (
-                        <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Tekrarlansın mı?</Label>
-                  </div>
-                  <Switch checked={isRecurring} onCheckedChange={(v) => setIsRecurring(!!v)} />
-                </div>
-              </div>
-                
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    İptal
-                  </Button>
-                  <Button onClick={handleAddExpense}>
-                    Kaydet
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button className="bg-red-600 hover:bg-red-700" onClick={() => setIsAddDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Yeni Masraf
+          </Button>
+          
         </div>
       </div>
 
@@ -913,6 +731,197 @@ const ExpensesManager = () => {
         onCancel={handleDeleteCancel}
         isLoading={isDeleting}
       />
+  <UnifiedDialog
+    isOpen={isAddDialogOpen}
+    onClose={() => setIsAddDialogOpen(false)}
+    title="Yeni Masraf Ekle"
+    maxWidth="md"
+    headerColor="red"
+  >
+    <div 
+      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+      onKeyDown={(e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleAddExpense(); }
+        if (e.key === 'Escape') { e.preventDefault(); setIsAddDialogOpen(false); }
+      }}
+    >
+      {/* Sol sütun: tarih üstte, ardından tür ve çalışan */}
+      <div className="space-y-2">
+        <div className="space-y-1">
+          <Label htmlFor="date">Tarih <span className="text-red-500">*</span></Label>
+          <EnhancedDatePicker
+            date={date}
+            onSelect={(newDate) => newDate && setDate(newDate)}
+            placeholder="Tarih seçin"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="expenseType">Masraf Türü</Label>
+          <Select value={expenseType} onValueChange={(value: 'company' | 'employee') => setExpenseType(value)}>
+            <SelectTrigger className="h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="company">Şirket Masrafı</SelectItem>
+              <SelectItem value="employee">Çalışan Masrafı</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {expenseType === 'employee' && (
+          <div>
+            <EmployeeSelector
+              value={selectedEmployee}
+              onChange={(value) => setSelectedEmployee(value)}
+              error=""
+              label="Çalışan"
+              placeholder="Çalışan seçin..."
+              searchPlaceholder="Çalışan ara..."
+              loadingText="Çalışanlar yükleniyor..."
+              noResultsText="Çalışan bulunamadı"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Sağ sütun: tutar+KDV üstte, ardından kategori */}
+      <div className="space-y-2">
+        <div className="space-y-1">
+          <Label htmlFor="amount">Tutar (KDV dahil, ₺) <span className="text-red-500">*</span></Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              className="w-32 h-8"
+              step="0.01"
+              min="0"
+              autoFocus
+            />
+            <Select value={vatRate} onValueChange={setVatRate}>
+              <SelectTrigger className="w-[110px] h-8">
+                <SelectValue placeholder="KDV" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">%0</SelectItem>
+                <SelectItem value="1">%1</SelectItem>
+                <SelectItem value="10">%10</SelectItem>
+                <SelectItem value="20">%20</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-xs text-muted-foreground">Girdiğin tutar KDV dahil kabul edilir. KDV oranını yan taraftan seç.</p>
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="category">Kategori <span className="text-red-500">*</span></Label>
+          <Select value={selectedCategoryOption} onValueChange={handleCategoryOptionChange}>
+            <SelectTrigger className="h-8">
+              <SelectValue placeholder="Kategori veya alt kategori seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectGroup key={cat.id}>
+                  <SelectItem value={`cat:${cat.id}`}>{cat.name}</SelectItem>
+                  {subcategoriesList
+                    .filter(sc => sc.category_id === cat.id)
+                    .map(sc => (
+                      <SelectItem key={sc.id} value={`sub:${sc.id}`}>
+                        {sc.name} ({cat.name})
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Ödeme alanları: yalnızca ödendi ise göster */}
+      <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Ödendi mi?</Label>
+          </div>
+          <Switch checked={isPaid} onCheckedChange={(v) => setIsPaid(!!v)} />
+        </div>
+        {isPaid && (
+          <div className="space-y-1">
+            <Label>Ödeme Tarihi</Label>
+            <EnhancedDatePicker
+              date={paidDate || undefined}
+              onSelect={(d) => setPaidDate(d || null)}
+              placeholder="Tarih seçin"
+            />
+          </div>
+        )}
+        {isPaid && (
+          <div className="space-y-1">
+            <Label>Hesap Türü</Label>
+            <Select value={paymentAccountType} onValueChange={(val: any) => { setPaymentAccountType(val); setPaymentAccountId(''); }}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Hesap türü seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Kasa</SelectItem>
+                <SelectItem value="bank">Banka</SelectItem>
+                <SelectItem value="credit_card">Kredi Kartı</SelectItem>
+                <SelectItem value="partner">Ortak</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {isPaid && (
+          <div className="space-y-1">
+            <Label>Hesap</Label>
+            <Select value={paymentAccountId} onValueChange={setPaymentAccountId}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Hesap seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                {paymentAccountType === 'cash' && cashAccounts.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+                ))}
+                {paymentAccountType === 'bank' && bankAccounts.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+                ))}
+                {paymentAccountType === 'credit_card' && creditCards.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+                ))}
+                {paymentAccountType === 'partner' && partnerAccounts.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+
+      {/* Açıklama en altta tam genişlik */}
+      <div className="sm:col-span-2">
+        <div className="space-y-1">
+          <Label htmlFor="description">Açıklama</Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Masraf açıklaması"
+            rows={2}
+          />
+        </div>
+      </div>
+
+      <div className="sm:col-span-2">
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={() => setIsAddDialogOpen(false)} />
+          <UnifiedDialogActionButton onClick={handleAddExpense}>Kaydet</UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </div>
+    </div>
+  </UnifiedDialog>
     </div>
   );
 };

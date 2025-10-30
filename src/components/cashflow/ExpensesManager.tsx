@@ -774,19 +774,7 @@ const ExpensesManager = () => {
             />
           </div>
           <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <Label>Çalışan</Label>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="company-expense"
-                  checked={expenseType === 'company'}
-                  onCheckedChange={(checked) => setExpenseType(checked ? 'company' : 'employee')}
-                />
-                <Label htmlFor="company-expense" className="text-sm font-normal cursor-pointer">
-                  Şirket
-                </Label>
-              </div>
-            </div>
+            <Label>Çalışan</Label>
             <EmployeeSelector
               value={selectedEmployee}
               onChange={(value) => setSelectedEmployee(value)}
@@ -799,6 +787,16 @@ const ExpensesManager = () => {
               triggerClassName="h-9"
               disabled={expenseType === 'company'}
             />
+            <div className="flex items-center space-x-2 pt-1">
+              <Switch
+                id="company-expense"
+                checked={expenseType === 'company'}
+                onCheckedChange={(checked) => setExpenseType(checked ? 'company' : 'employee')}
+              />
+              <Label htmlFor="company-expense" className="text-sm font-normal cursor-pointer text-muted-foreground">
+                Şirket masrafı
+              </Label>
+            </div>
           </div>
           <div className="space-y-1">
             <Label htmlFor="amount">Tutar (₺) <span className="text-red-500">*</span></Label>

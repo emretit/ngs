@@ -41,6 +41,7 @@ interface EmployeeSelectorProps {
   noResultsText?: string;
   showLabel?: boolean;
   className?: string;
+  triggerClassName?: string;
   disabled?: boolean;
 }
 
@@ -56,6 +57,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
   noResultsText = "Çalışan bulunamadı",
   showLabel = true,
   className = "",
+  triggerClassName = "",
   disabled = false
 }) => {
   const [open, setOpen] = useState(false);
@@ -122,7 +124,8 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              "w-full h-8 text-sm justify-between",
+              "w-full h-9 text-sm justify-between",
+              triggerClassName,
               !value && "text-muted-foreground",
               error && "border-red-500"
             )}

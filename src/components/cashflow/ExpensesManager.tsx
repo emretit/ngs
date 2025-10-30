@@ -760,23 +760,28 @@ const ExpensesManager = () => {
         if (e.key === 'Escape') { e.preventDefault(); setIsAddDialogOpen(false); }
       }}
     >
-      {/* Sol sütun: Temel bilgiler + Ödeme */}
-      <div className="space-y-4">
-        {/* Temel Bilgiler Bölümü */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Temel Bilgiler</h3>
-          
-          <div className="space-y-1">
-            <Label htmlFor="date">Tarih <span className="text-red-500">*</span></Label>
+      {/* Temel Bilgiler: iki sütunu kapla ve içeride iki kolon kullan */}
+      <div className="lg:col-span-2 space-y-3">
+        <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Temel Bilgiler</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between h-9">
+              <Label htmlFor="date">Tarih <span className="text-red-500">*</span></Label>
+              {/* Çalışan alanındaki toggle ile aynı yüksekliği korumak için görünmez yer tutucu */}
+              <div className="invisible flex items-center space-x-2">
+                <Switch id="date-spacer" />
+                <Label htmlFor="date-spacer" className="text-sm font-normal cursor-default">Şirket</Label>
+              </div>
+            </div>
             <EnhancedDatePicker
               date={date}
               onSelect={(newDate) => newDate && setDate(newDate)}
               placeholder="Tarih seçin"
+              className="w-full h-9 mt-[3px]"
             />
           </div>
-
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between h-9">
               <Label>Çalışan</Label>
               <div className="flex items-center space-x-2">
                 <Switch
@@ -798,10 +803,10 @@ const ExpensesManager = () => {
               searchPlaceholder="Çalışan ara..."
               loadingText="Çalışanlar yükleniyor..."
               noResultsText="Çalışan bulunamadı"
+              triggerClassName="h-9"
               disabled={expenseType === 'company'}
             />
           </div>
-
           <div className="space-y-1">
             <Label htmlFor="amount">Tutar (₺) <span className="text-red-500">*</span></Label>
             <div className="flex items-center gap-2">
@@ -811,7 +816,7 @@ const ExpensesManager = () => {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-32 h-9"
+                className="h-9 flex-1"
                 step="0.01"
                 min="0"
                 autoFocus
@@ -829,12 +834,11 @@ const ExpensesManager = () => {
               </Select>
             </div>
           </div>
-
           <div className="space-y-1">
             <Label htmlFor="category">Kategori <span className="text-red-500">*</span></Label>
             <Select value={selectedCategoryOption} onValueChange={handleCategoryOptionChange}>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Kategori veya alt kategori seçin" />
+              <SelectTrigger className="h-9 w-full">
+                <SelectValue placeholder="Kategori seçin" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
@@ -853,11 +857,12 @@ const ExpensesManager = () => {
             </Select>
           </div>
         </div>
+      </div>
 
-        {/* Ödeme Bilgileri Bölümü */}
-        <div className="space-y-3 pt-4 border-t">
+      {/* Sol sütun: Ödeme Bilgileri */}
+      <div className="space-y-4">
+        <div className="space-y-3">
           <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Ödeme Bilgileri</h3>
-          
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Ödeme Durumu</Label>
@@ -873,7 +878,6 @@ const ExpensesManager = () => {
               </div>
             </div>
           </div>
-
           {isPaid && (
             <>
               <div className="space-y-1">
@@ -882,13 +886,13 @@ const ExpensesManager = () => {
                   date={paidDate || undefined}
                   onSelect={(d) => setPaidDate(d || null)}
                   placeholder="Tarih seçin"
+                  className="w-full"
                 />
               </div>
-
               <div className="space-y-1">
                 <Label>Hesap Türü</Label>
                 <Select value={paymentAccountType} onValueChange={(val: any) => { setPaymentAccountType(val); setPaymentAccountId(''); }}>
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-9 w-full">
                     <SelectValue placeholder="Hesap türü seçin" />
                   </SelectTrigger>
                   <SelectContent>
@@ -899,11 +903,10 @@ const ExpensesManager = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-1">
                 <Label>Hesap</Label>
                 <Select value={paymentAccountId} onValueChange={setPaymentAccountId}>
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-9 w-full">
                     <SelectValue placeholder="Hesap seçin" />
                   </SelectTrigger>
                   <SelectContent>
@@ -927,7 +930,7 @@ const ExpensesManager = () => {
         </div>
       </div>
 
-      {/* Sağ sütun: Tekrarlama bilgileri */}
+      {/* Sağ sütun: Tekrarlama Bilgileri */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Tekrarlama Bilgileri</h3>
         
@@ -952,7 +955,7 @@ const ExpensesManager = () => {
             <div className="space-y-1">
               <Label>Tekrarlama Türü</Label>
               <Select value={recurrenceType} onValueChange={(val: any) => setRecurrenceType(val)}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 w-full">
                   <SelectValue placeholder="Tür seçin" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1030,6 +1033,7 @@ const ExpensesManager = () => {
                 date={recurrenceEndDate || undefined}
                 onSelect={(d) => setRecurrenceEndDate(d || null)}
                 placeholder="Seçmezseniz süresiz"
+                className="w-full"
               />
             </div>
           </>

@@ -759,29 +759,15 @@ const ExpensesManager = () => {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>Çalışan</Label>
-            <div className="flex items-center gap-2 text-sm">
-              <button
-                type="button"
-                onClick={() => setExpenseType('company')}
-                className={`px-2 py-1 rounded transition-colors ${
-                  expenseType === 'company' 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Şirket
-              </button>
-              <button
-                type="button"
-                onClick={() => setExpenseType('employee')}
-                className={`px-2 py-1 rounded transition-colors ${
-                  expenseType === 'employee' 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Çalışan
-              </button>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="company-expense"
+                checked={expenseType === 'company'}
+                onCheckedChange={(checked) => setExpenseType(checked ? 'company' : 'employee')}
+              />
+              <Label htmlFor="company-expense" className="text-sm font-normal cursor-pointer">
+                Şirket Masrafı
+              </Label>
             </div>
           </div>
           <EmployeeSelector

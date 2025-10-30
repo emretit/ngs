@@ -847,6 +847,12 @@ const ExpensesManager = () => {
           </div>
           <Switch checked={isPaid} onCheckedChange={(v) => setIsPaid(!!v)} />
         </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Tekrarlanan Masraf</Label>
+          </div>
+          <Switch checked={isRecurring} onCheckedChange={(v) => setIsRecurring(!!v)} />
+        </div>
         {isPaid && (
           <div className="space-y-1">
             <Label>Ödeme Tarihi</Label>

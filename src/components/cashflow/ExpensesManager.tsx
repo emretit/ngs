@@ -764,24 +764,17 @@ const ExpensesManager = () => {
       <div className="lg:col-span-2 space-y-3">
         <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Temel Bilgiler</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between h-9">
-              <Label htmlFor="date">Tarih <span className="text-red-500">*</span></Label>
-              {/* Çalışan alanındaki toggle ile aynı yüksekliği korumak için görünmez yer tutucu */}
-              <div className="invisible flex items-center space-x-2">
-                <Switch id="date-spacer" />
-                <Label htmlFor="date-spacer" className="text-sm font-normal cursor-default">Şirket</Label>
-              </div>
-            </div>
+          <div className="space-y-1">
+            <Label htmlFor="date">Tarih <span className="text-red-500">*</span></Label>
             <EnhancedDatePicker
               date={date}
               onSelect={(newDate) => newDate && setDate(newDate)}
               placeholder="Tarih seçin"
-              className="w-full h-9 mt-[3px]"
+              className="w-full h-9"
             />
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between h-9">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
               <Label>Çalışan</Label>
               <div className="flex items-center space-x-2">
                 <Switch

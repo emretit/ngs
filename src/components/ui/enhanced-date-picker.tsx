@@ -1,7 +1,7 @@
 import * as React from "react";
-import { format } from "date-fns";
+import { format, addMonths, subMonths, addYears, subYears } from "date-fns";
 import { tr } from "date-fns/locale";
-import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
@@ -26,13 +26,15 @@ function EnhancedCalendar({
   ...props
 }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = React.useState(props.month || new Date());
-  const [showMonthYearPicker, setShowMonthYearPicker] = React.useState(false);
+  const [showMonthPicker, setShowMonthPicker] = React.useState(false);
+  const [showYearPicker, setShowYearPicker] = React.useState(false);
 
   const handleMonthChange = (month: number, year: number, closePicker: boolean = true) => {
     const newDate = new Date(year, month);
     setCurrentMonth(newDate);
     if (closePicker) {
-      setShowMonthYearPicker(false);
+      setShowMonthPicker(false);
+      setShowYearPicker(false);
     }
     if (props.onMonthChange) {
       props.onMonthChange(newDate);
@@ -47,8 +49,8 @@ function EnhancedCalendar({
   const currentYear = currentMonth.getFullYear();
   const currentMonthIndex = currentMonth.getMonth();
 
-  // Generate year options (50 years back and 10 years forward)
-  const yearOptions = Array.from({ length: 61 }, (_, i) => currentYear - 50 + i);
+  // Generate year options (2020 to 2040)
+  const yearOptions = Array.from({ length: 21 }, (_, i) => 2020 + i);
 
   return (
     <DayPicker
@@ -61,24 +63,24 @@ function EnhancedCalendar({
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
+        caption: "flex justify-center pt-1 relative items-center mb-2",
         caption_label: "text-sm font-medium hidden", // Hide default caption
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+          "h-8 w-8 bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-primary/10 transition-all"
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+          "text-muted-foreground rounded-md w-11 font-medium text-[0.85rem]",
         row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+        cell: "h-11 w-11 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-primary/10 transition-all duration-200"
+          "h-11 w-11 p-0 font-medium text-base aria-selected:opacity-100 hover:bg-primary/10 hover:scale-110 transition-all duration-200"
         ),
         day_range_end: "day-range-end",
         day_selected:
@@ -96,67 +98,126 @@ function EnhancedCalendar({
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
         Caption: ({ displayMonth }) => (
-          <div className="relative">
-            {!showMonthYearPicker ? (
+          <div className="relative w-full">
+            <div className="flex items-center justify-between w-full px-1 gap-2">
+              {/* Yıl Geri Butonu */}
               <button
-                onClick={() => setShowMonthYearPicker(true)}
-                className="flex justify-center items-center w-full py-2 text-sm font-medium hover:bg-gray-50 rounded transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleMonthChange(displayMonth.getMonth(), displayMonth.getFullYear() - 1, true);
+                }}
+                className="h-8 w-8 p-0 opacity-60 hover:opacity-100 hover:bg-primary/10 rounded transition-all flex items-center justify-center shrink-0"
+                title="Önceki yıl"
               >
-                {months[displayMonth.getMonth()]} {displayMonth.getFullYear()}
+                <ChevronsLeft className="h-4 w-4" />
               </button>
-            ) : (
-              <div className="absolute top-0 left-0 right-0 z-50 bg-white border rounded-lg shadow-lg p-4">
-                <div className="space-y-3">
-                  {/* Year Selection */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Yıl</label>
-                    <Select
-                      value={displayMonth.getFullYear().toString()}
-                      onValueChange={(year) => handleMonthChange(displayMonth.getMonth(), parseInt(year), false)}
-                    >
-                      <SelectTrigger className="w-full h-8 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-48">
-                        {yearOptions.map((year) => (
-                          <SelectItem key={year} value={year.toString()}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
 
-                  {/* Month Grid */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-2">Ay</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {months.map((month, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleMonthChange(index, displayMonth.getFullYear(), false)}
-                          className={cn(
-                            "p-2 text-xs rounded transition-colors",
-                            index === displayMonth.getMonth()
-                              ? "bg-primary text-primary-foreground"
-                              : "text-gray-700 hover:bg-gray-100"
-                          )}
-                        >
-                          {month}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              {/* Ay Geri Butonu */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  const newDate = subMonths(displayMonth, 1);
+                  handleMonthChange(newDate.getMonth(), newDate.getFullYear(), true);
+                }}
+                className="h-8 w-8 p-0 opacity-60 hover:opacity-100 hover:bg-primary/10 rounded transition-all flex items-center justify-center shrink-0"
+                title="Önceki ay"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
 
-                  <div className="flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowMonthYearPicker(false)}
-                      className="text-xs"
+              {/* Ay Seçici */}
+              <button
+                onClick={() => {
+                  setShowMonthPicker(!showMonthPicker);
+                  setShowYearPicker(false);
+                }}
+                className="px-3 py-1.5 text-sm font-medium hover:bg-gray-50 rounded transition-colors"
+              >
+                {months[displayMonth.getMonth()]}
+              </button>
+
+              {/* Yıl Seçici */}
+              <button
+                onClick={() => {
+                  setShowYearPicker(!showYearPicker);
+                  setShowMonthPicker(false);
+                }}
+                className="px-3 py-1.5 text-sm font-medium hover:bg-gray-50 rounded transition-colors"
+              >
+                {displayMonth.getFullYear()}
+              </button>
+
+              {/* Ay İleri Butonu */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  const newDate = addMonths(displayMonth, 1);
+                  handleMonthChange(newDate.getMonth(), newDate.getFullYear(), true);
+                }}
+                className="h-8 w-8 p-0 opacity-60 hover:opacity-100 hover:bg-primary/10 rounded transition-all flex items-center justify-center shrink-0"
+                title="Sonraki ay"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+
+              {/* Yıl İleri Butonu */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleMonthChange(displayMonth.getMonth(), displayMonth.getFullYear() + 1, true);
+                }}
+                className="h-8 w-8 p-0 opacity-60 hover:opacity-100 hover:bg-primary/10 rounded transition-all flex items-center justify-center shrink-0"
+                title="Sonraki yıl"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Ay Seçim Popup */}
+            {showMonthPicker && (
+              <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border rounded-lg shadow-lg p-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {months.map((month, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        handleMonthChange(index, displayMonth.getFullYear(), true);
+                      }}
+                      className={cn(
+                        "p-2.5 text-sm rounded-md transition-all font-medium",
+                        index === displayMonth.getMonth()
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-gray-700 hover:bg-gray-100 hover:scale-105"
+                      )}
                     >
-                      Kapat
-                    </Button>
+                      {month}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Yıl Seçim Popup */}
+            {showYearPicker && (
+              <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border rounded-lg shadow-lg p-3">
+                <div className="max-h-64 overflow-y-auto">
+                  <div className="grid grid-cols-3 gap-2">
+                    {yearOptions.map((year) => (
+                      <button
+                        key={year}
+                        onClick={() => {
+                          handleMonthChange(displayMonth.getMonth(), year, true);
+                        }}
+                        className={cn(
+                          "p-2.5 text-sm rounded-md transition-all font-medium",
+                          year === displayMonth.getFullYear()
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-gray-700 hover:bg-gray-100 hover:scale-105"
+                        )}
+                      >
+                        {year}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>

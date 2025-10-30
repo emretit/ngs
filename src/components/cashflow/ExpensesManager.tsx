@@ -21,6 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { generateRecurringExpenses, createNextExpenseInstance } from "@/utils/recurringExpenseScheduler";
 
 interface ExpenseItem {
   id: string;
@@ -36,6 +37,8 @@ interface ExpenseItem {
   is_paid?: boolean;
   paid_date?: string | null;
   is_recurring?: boolean;
+  is_recurring_instance?: boolean;
+  parent_expense_id?: string | null;
   payment_account_type?: 'cash' | 'bank' | 'credit_card' | 'partner' | null;
   payment_account_id?: string | null;
 }
@@ -69,7 +72,6 @@ const ExpensesManager = () => {
   const [paidDate, setPaidDate] = useState<Date | null>(null);
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
   const [recurrenceType, setRecurrenceType] = useState<'daily' | 'weekly' | 'monthly' | ''>('');
-  const [recurrenceInterval, setRecurrenceInterval] = useState<number>(1);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
   const [recurrenceDays, setRecurrenceDays] = useState<string[]>([]);
   const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number>(1);
@@ -253,7 +255,22 @@ const ExpensesManager = () => {
         .eq('id', user.id)
         .single();
       if (!profile?.company_id) throw new Error('Şirket bilgisi bulunamadı');
-      const { error } = await supabase
+      // Eğer tekrarlanan masraf ise, önce toplam sayıyı hesapla
+      let totalRecurringCount = 1; // Default: sadece ana kayıt
+      if (isRecurring && recurrenceType) {
+        const tempInstances = generateRecurringExpenses(
+          date,
+          {
+            recurrence_type: recurrenceType,
+            recurrence_end_date: recurrenceEndDate ? recurrenceEndDate : undefined,
+            recurrence_days: recurrenceType === 'weekly' ? recurrenceDays : undefined,
+            recurrence_day_of_month: recurrenceType === 'monthly' ? recurrenceDayOfMonth : undefined,
+          }
+        );
+        totalRecurringCount = tempInstances.length;
+      }
+
+      const { data: insertedExpense, error } = await supabase
         .from('expenses')
         .insert({
           type: 'expense',
@@ -261,7 +278,9 @@ const ExpensesManager = () => {
           vat_rate: parseFloat(vatRate),
           category_id: selectedCategory,
           subcategory: subcategory || null,
-          description: description,
+          description: isRecurring && totalRecurringCount > 1
+            ? (description ? `${description} (1/${totalRecurringCount})` : `(1/${totalRecurringCount})`)
+            : description || null,
           date: format(date, 'yyyy-MM-dd'),
           expense_type: expenseType,
           employee_id: expenseType === 'employee' ? selectedEmployee : null,
@@ -269,7 +288,7 @@ const ExpensesManager = () => {
           paid_date: isPaid && paidDate ? format(paidDate, 'yyyy-MM-dd') : null,
           is_recurring: isRecurring,
           recurrence_type: isRecurring && recurrenceType ? recurrenceType : null,
-          recurrence_interval: isRecurring && recurrenceType ? recurrenceInterval : null,
+          recurrence_interval: isRecurring && recurrenceType ? 1 : null,
           recurrence_end_date: isRecurring && recurrenceEndDate ? format(recurrenceEndDate, 'yyyy-MM-dd') : null,
           recurrence_days: isRecurring && recurrenceType === 'weekly' ? recurrenceDays : null,
           recurrence_day_of_month: isRecurring && recurrenceType === 'monthly' ? recurrenceDayOfMonth : null,
@@ -277,9 +296,74 @@ const ExpensesManager = () => {
           payment_account_id: isPaid && paymentAccountId ? paymentAccountId : null,
           payment_amount: isPaid ? parseFloat(amount) : null,
           company_id: profile.company_id
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Eğer tekrarlanan masraf ise, gelecek örnekleri oluştur
+      if (isRecurring && recurrenceType && insertedExpense && totalRecurringCount > 1) {
+        try {
+          const instances = generateRecurringExpenses(
+            date,
+            {
+              recurrence_type: recurrenceType,
+              recurrence_end_date: recurrenceEndDate ? recurrenceEndDate : undefined,
+              recurrence_days: recurrenceType === 'weekly' ? recurrenceDays : undefined,
+              recurrence_day_of_month: recurrenceType === 'monthly' ? recurrenceDayOfMonth : undefined,
+            }
+          );
+
+          // Skip the first instance (already created)
+          const futureInstances = instances.slice(1);
+
+          if (futureInstances.length > 0) {
+            const totalCount = instances.length; // Ana + tekrarlananlar
+            const expensesToInsert = futureInstances.map((instance, index) => ({
+              type: 'expense',
+              amount: parseFloat(amount),
+              vat_rate: parseFloat(vatRate),
+              category_id: selectedCategory,
+              subcategory: subcategory || null,
+              description: description ? `${description} (${index + 2}/${totalCount})` : `(${index + 2}/${totalCount})`,
+              date: format(instance.date, 'yyyy-MM-dd'),
+              expense_type: expenseType,
+              employee_id: expenseType === 'employee' ? selectedEmployee : null,
+              is_paid: false, // Future expenses are not paid yet
+              paid_date: null,
+              is_recurring: false, // These are instances, not recurring templates
+              is_recurring_instance: true,
+              parent_expense_id: insertedExpense.id,
+              recurrence_type: null,
+              recurrence_interval: null,
+              recurrence_end_date: null,
+              recurrence_days: null,
+              recurrence_day_of_month: null,
+              payment_account_type: null,
+              payment_account_id: null,
+              payment_amount: null,
+              company_id: profile.company_id
+            }));
+
+            const { error: batchError } = await supabase
+              .from('expenses')
+              .insert(expensesToInsert);
+
+            if (batchError) {
+              console.error('Error creating recurring expense instances:', batchError);
+              toast({
+                title: "Uyarı",
+                description: "Ana masraf eklendi ama tekrarlayan kayıtlar oluşturulamadı",
+                variant: "destructive"
+              });
+            }
+          }
+        } catch (recurringError) {
+          console.error('Error generating recurring expenses:', recurringError);
+          // Continue anyway, the main expense was created
+        }
+      }
 
       // Eğer masraf ödendiyse ilgili hesap hareketini ve bakiyesini güncelle
       if (isPaid && paymentAccountType && paymentAccountId) {
@@ -390,7 +474,6 @@ const ExpensesManager = () => {
       setPaidDate(null);
       setIsRecurring(false);
       setRecurrenceType('');
-      setRecurrenceInterval(1);
       setRecurrenceEndDate(null);
       setRecurrenceDays([]);
       setRecurrenceDayOfMonth(1);
@@ -638,7 +721,6 @@ const ExpensesManager = () => {
                 <TableHead>Kategori / Alt Kategori</TableHead>
                 <TableHead>Ödeme</TableHead>
                 <TableHead>Ödeme Hesabı</TableHead>
-                <TableHead>Tekrarlı</TableHead>
                 <TableHead>Açıklama</TableHead>
                 <TableHead className="text-right">Tutar</TableHead>
                 <TableHead className="text-center">İşlemler</TableHead>
@@ -701,14 +783,9 @@ const ExpensesManager = () => {
                       <span>-</span>
                     )}
                   </TableCell>
-                  <TableCell>
-                    {expense.is_recurring ? (
-                      <Badge variant="default">Tekrarlı</Badge>
-                    ) : (
-                      <Badge variant="outline">Tekrarlı değil</Badge>
-                    )}
+                  <TableCell className="max-w-xs truncate">
+                    {expense.description || "-"}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">{expense.description || "-"}</TableCell>
                   <TableCell className="text-right font-medium">
                     ₺{expense.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                   </TableCell>
@@ -847,20 +924,17 @@ const ExpensesManager = () => {
       {/* Sol sütun: Ödeme Bilgileri */}
       <div className="space-y-4">
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Ödeme Bilgileri</h3>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Ödeme Durumu</Label>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is-paid"
-                  checked={isPaid}
-                  onCheckedChange={(v) => setIsPaid(!!v)}
-                />
-                <Label htmlFor="is-paid" className="text-sm font-normal cursor-pointer">
-                  Ödendi
-                </Label>
-              </div>
+          <div className="flex items-center justify-between border-b pb-2">
+            <h3 className="text-sm font-semibold text-gray-700">Ödeme Durumu</h3>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is-paid"
+                checked={isPaid}
+                onCheckedChange={(v) => setIsPaid(!!v)}
+              />
+              <Label htmlFor="is-paid" className="text-sm font-normal cursor-pointer">
+                Ödendi
+              </Label>
             </div>
           </div>
           {isPaid && (
@@ -917,59 +991,43 @@ const ExpensesManager = () => {
 
       {/* Sağ sütun: Tekrarlama Bilgileri */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Tekrarlama Bilgileri</h3>
-        
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label>Tekrarlanan Masraf</Label>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is-recurring"
-                checked={isRecurring}
-                onCheckedChange={(v) => setIsRecurring(!!v)}
-              />
-              <Label htmlFor="is-recurring" className="text-sm font-normal cursor-pointer">
-                Aktif
-              </Label>
-            </div>
+        <div className="flex items-center justify-between border-b pb-2">
+          <h3 className="text-sm font-semibold text-gray-700">Tekrarlanan Masraf</h3>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="is-recurring"
+              checked={isRecurring}
+              onCheckedChange={(v) => {
+                setIsRecurring(!!v);
+                // Tekrarlama aktifleştirildiğinde, bitiş tarihini otomatik olarak bir yıl sonraya ayarla
+                if (v) {
+                  const oneYearLater = new Date(date);
+                  oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+                  setRecurrenceEndDate(oneYearLater);
+                }
+              }}
+            />
+            <Label htmlFor="is-recurring" className="text-sm font-normal cursor-pointer">
+              Aktif
+            </Label>
           </div>
         </div>
 
         {isRecurring && (
           <>
             <div className="space-y-1">
-              <Label>Tekrarlama Türü</Label>
+              <Label>Tekrarlama Sıklığı</Label>
               <Select value={recurrenceType} onValueChange={(val: any) => setRecurrenceType(val)}>
                 <SelectTrigger className="h-9 w-full">
-                  <SelectValue placeholder="Tür seçin" />
+                  <SelectValue placeholder="Sıklık seçin" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">Günlük</SelectItem>
-                  <SelectItem value="weekly">Haftalık</SelectItem>
-                  <SelectItem value="monthly">Aylık</SelectItem>
+                  <SelectItem value="daily">Her Gün</SelectItem>
+                  <SelectItem value="weekly">Her Hafta</SelectItem>
+                  <SelectItem value="monthly">Her Ay</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            {recurrenceType && (
-              <div className="space-y-1">
-                <Label>Aralık</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    value={recurrenceInterval}
-                    onChange={(e) => setRecurrenceInterval(parseInt(e.target.value) || 1)}
-                    min="1"
-                    className="w-20 h-9"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {recurrenceType === 'daily' && 'gün'}
-                    {recurrenceType === 'weekly' && 'hafta'}
-                    {recurrenceType === 'monthly' && 'ay'}
-                  </span>
-                </div>
-              </div>
-            )}
 
             {recurrenceType === 'weekly' && (
               <div className="space-y-1">

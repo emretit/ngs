@@ -756,33 +756,46 @@ const ExpensesManager = () => {
           />
         </div>
 
-        <div>
-          <Label htmlFor="expenseType">Masraf Türü</Label>
-          <Select value={expenseType} onValueChange={(value: 'company' | 'employee') => setExpenseType(value)}>
-            <SelectTrigger className="h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="company">Şirket Masrafı</SelectItem>
-              <SelectItem value="employee">Çalışan Masrafı</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {expenseType === 'employee' && (
-          <div>
-            <EmployeeSelector
-              value={selectedEmployee}
-              onChange={(value) => setSelectedEmployee(value)}
-              error=""
-              label="Çalışan"
-              placeholder="Çalışan seçin..."
-              searchPlaceholder="Çalışan ara..."
-              loadingText="Çalışanlar yükleniyor..."
-              noResultsText="Çalışan bulunamadı"
-            />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Çalışan</Label>
+            <div className="flex items-center gap-2 text-sm">
+              <button
+                type="button"
+                onClick={() => setExpenseType('company')}
+                className={`px-2 py-1 rounded transition-colors ${
+                  expenseType === 'company' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                Şirket
+              </button>
+              <button
+                type="button"
+                onClick={() => setExpenseType('employee')}
+                className={`px-2 py-1 rounded transition-colors ${
+                  expenseType === 'employee' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
+              >
+                Çalışan
+              </button>
+            </div>
           </div>
-        )}
+          <EmployeeSelector
+            value={selectedEmployee}
+            onChange={(value) => setSelectedEmployee(value)}
+            error=""
+            label=""
+            placeholder={expenseType === 'company' ? "Şirket masrafı" : "Çalışan seçin..."}
+            searchPlaceholder="Çalışan ara..."
+            loadingText="Çalışanlar yükleniyor..."
+            noResultsText="Çalışan bulunamadı"
+            disabled={expenseType === 'company'}
+          />
+        </div>
       </div>
 
       {/* Sağ sütun: tutar+KDV üstte, ardından kategori */}

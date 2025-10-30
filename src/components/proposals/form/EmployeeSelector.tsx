@@ -41,6 +41,7 @@ interface EmployeeSelectorProps {
   noResultsText?: string;
   showLabel?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({ 
@@ -54,7 +55,8 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
   loadingText = "Çalışanlar yükleniyor...",
   noResultsText = "Çalışan bulunamadı",
   showLabel = true,
-  className = ""
+  className = "",
+  disabled = false
 }) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -118,6 +120,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            disabled={disabled}
             className={cn(
               "w-full h-8 text-sm justify-between",
               !value && "text-muted-foreground",

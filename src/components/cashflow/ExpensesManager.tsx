@@ -788,7 +788,7 @@ const ExpensesManager = () => {
       {/* Sağ sütun: tutar+KDV üstte, ardından kategori */}
       <div className="space-y-2">
         <div className="space-y-1">
-          <Label htmlFor="amount">Tutar (KDV dahil, ₺) <span className="text-red-500">*</span></Label>
+          <Label htmlFor="amount">Tutar (₺) <span className="text-red-500">*</span></Label>
           <div className="flex items-center gap-2">
             <Input
               id="amount"
@@ -813,7 +813,7 @@ const ExpensesManager = () => {
               </SelectContent>
             </Select>
           </div>
-          <p className="text-xs text-muted-foreground">Girdiğin tutar KDV dahil kabul edilir. KDV oranını yan taraftan seç.</p>
+
         </div>
 
         <div className="space-y-1">

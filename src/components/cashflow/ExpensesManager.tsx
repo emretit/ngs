@@ -67,6 +67,11 @@ const ExpensesManager = () => {
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [paidDate, setPaidDate] = useState<Date | null>(null);
   const [isRecurring, setIsRecurring] = useState<boolean>(false);
+  const [recurrenceType, setRecurrenceType] = useState<'daily' | 'weekly' | 'monthly' | ''>('');
+  const [recurrenceInterval, setRecurrenceInterval] = useState<number>(1);
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null);
+  const [recurrenceDays, setRecurrenceDays] = useState<string[]>([]);
+  const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState<number>(1);
   const [paymentAccountType, setPaymentAccountType] = useState<'cash' | 'bank' | 'credit_card' | 'partner' | ''>('');
   const [paymentAccountId, setPaymentAccountId] = useState<string>("");
   const [cashAccounts, setCashAccounts] = useState<Array<{id: string, label: string}>>([]);
@@ -262,6 +267,11 @@ const ExpensesManager = () => {
           is_paid: isPaid,
           paid_date: isPaid && paidDate ? format(paidDate, 'yyyy-MM-dd') : null,
           is_recurring: isRecurring,
+          recurrence_type: isRecurring && recurrenceType ? recurrenceType : null,
+          recurrence_interval: isRecurring && recurrenceType ? recurrenceInterval : null,
+          recurrence_end_date: isRecurring && recurrenceEndDate ? format(recurrenceEndDate, 'yyyy-MM-dd') : null,
+          recurrence_days: isRecurring && recurrenceType === 'weekly' ? recurrenceDays : null,
+          recurrence_day_of_month: isRecurring && recurrenceType === 'monthly' ? recurrenceDayOfMonth : null,
           payment_account_type: isPaid && paymentAccountType ? paymentAccountType : null,
           payment_account_id: isPaid && paymentAccountId ? paymentAccountId : null,
           payment_amount: isPaid ? parseFloat(amount) : null,
@@ -378,6 +388,11 @@ const ExpensesManager = () => {
       setIsPaid(false);
       setPaidDate(null);
       setIsRecurring(false);
+      setRecurrenceType('');
+      setRecurrenceInterval(1);
+      setRecurrenceEndDate(null);
+      setRecurrenceDays([]);
+      setRecurrenceDayOfMonth(1);
       setPaymentAccountType('');
       setPaymentAccountId("");
       setVatRate('0');
@@ -735,18 +750,18 @@ const ExpensesManager = () => {
     isOpen={isAddDialogOpen}
     onClose={() => setIsAddDialogOpen(false)}
     title="Yeni Masraf Ekle"
-    maxWidth="md"
+    maxWidth="xl"
     headerColor="red"
   >
     <div 
-      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+      className="grid grid-cols-1 lg:grid-cols-3 gap-4"
       onKeyDown={(e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleAddExpense(); }
         if (e.key === 'Escape') { e.preventDefault(); setIsAddDialogOpen(false); }
       }}
     >
-      {/* Sol sütun: tarih üstte, ardından tür ve çalışan */}
-      <div className="space-y-2">
+      {/* Sol sütun: Temel bilgiler */}
+      <div className="space-y-3">
         <div className="space-y-1">
           <Label htmlFor="date">Tarih <span className="text-red-500">*</span></Label>
           <EnhancedDatePicker
@@ -766,7 +781,7 @@ const ExpensesManager = () => {
                 onCheckedChange={(checked) => setExpenseType(checked ? 'company' : 'employee')}
               />
               <Label htmlFor="company-expense" className="text-sm font-normal cursor-pointer">
-                Şirket Masrafı
+                Şirket
               </Label>
             </div>
           </div>
@@ -782,10 +797,7 @@ const ExpensesManager = () => {
             disabled={expenseType === 'company'}
           />
         </div>
-      </div>
 
-      {/* Sağ sütun: tutar+KDV üstte, ardından kategori */}
-      <div className="space-y-2">
         <div className="space-y-1">
           <Label htmlFor="amount">Tutar (₺) <span className="text-red-500">*</span></Label>
           <div className="flex items-center gap-2">
@@ -795,13 +807,13 @@ const ExpensesManager = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-32 h-8"
+              className="w-32 h-9"
               step="0.01"
               min="0"
               autoFocus
             />
             <Select value={vatRate} onValueChange={setVatRate}>
-              <SelectTrigger className="w-[110px] h-8">
+              <SelectTrigger className="w-[110px] h-9">
                 <SelectValue placeholder="KDV" />
               </SelectTrigger>
               <SelectContent>
@@ -812,13 +824,12 @@ const ExpensesManager = () => {
               </SelectContent>
             </Select>
           </div>
-
         </div>
 
         <div className="space-y-1">
           <Label htmlFor="category">Kategori <span className="text-red-500">*</span></Label>
           <Select value={selectedCategoryOption} onValueChange={handleCategoryOptionChange}>
-            <SelectTrigger className="h-8">
+            <SelectTrigger className="h-9">
               <SelectValue placeholder="Kategori veya alt kategori seçin" />
             </SelectTrigger>
             <SelectContent>
@@ -839,74 +850,185 @@ const ExpensesManager = () => {
         </div>
       </div>
 
-      {/* Ödeme alanları: yalnızca ödendi ise göster */}
-      <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <Label>Ödendi mi?</Label>
+      {/* Orta sütun: Ödeme bilgileri */}
+      <div className="space-y-3 border-l border-r border-gray-200 pl-4 pr-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Ödeme Durumu</Label>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is-paid"
+                checked={isPaid}
+                onCheckedChange={(v) => setIsPaid(!!v)}
+              />
+              <Label htmlFor="is-paid" className="text-sm font-normal cursor-pointer">
+                Ödendi
+              </Label>
+            </div>
           </div>
-          <Switch checked={isPaid} onCheckedChange={(v) => setIsPaid(!!v)} />
         </div>
-        <div className="flex items-center justify-between">
-          <div>
+
+        {isPaid && (
+          <>
+            <div className="space-y-1">
+              <Label>Ödeme Tarihi</Label>
+              <EnhancedDatePicker
+                date={paidDate || undefined}
+                onSelect={(d) => setPaidDate(d || null)}
+                placeholder="Tarih seçin"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label>Hesap Türü</Label>
+              <Select value={paymentAccountType} onValueChange={(val: any) => { setPaymentAccountType(val); setPaymentAccountId(''); }}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Hesap türü seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Kasa</SelectItem>
+                  <SelectItem value="bank">Banka</SelectItem>
+                  <SelectItem value="credit_card">Kredi Kartı</SelectItem>
+                  <SelectItem value="partner">Ortak</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label>Hesap</Label>
+              <Select value={paymentAccountId} onValueChange={setPaymentAccountId}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Hesap seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {paymentAccountType === 'cash' && cashAccounts.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+                  ))}
+                  {paymentAccountType === 'bank' && bankAccounts.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+                  ))}
+                  {paymentAccountType === 'credit_card' && creditCards.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+                  ))}
+                  {paymentAccountType === 'partner' && partnerAccounts.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Sağ sütun: Tekrarlama bilgileri */}
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
             <Label>Tekrarlanan Masraf</Label>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is-recurring"
+                checked={isRecurring}
+                onCheckedChange={(v) => setIsRecurring(!!v)}
+              />
+              <Label htmlFor="is-recurring" className="text-sm font-normal cursor-pointer">
+                Aktif
+              </Label>
+            </div>
           </div>
-          <Switch checked={isRecurring} onCheckedChange={(v) => setIsRecurring(!!v)} />
         </div>
-        {isPaid && (
-          <div className="space-y-1">
-            <Label>Ödeme Tarihi</Label>
-            <EnhancedDatePicker
-              date={paidDate || undefined}
-              onSelect={(d) => setPaidDate(d || null)}
-              placeholder="Tarih seçin"
-            />
-          </div>
-        )}
-        {isPaid && (
-          <div className="space-y-1">
-            <Label>Hesap Türü</Label>
-            <Select value={paymentAccountType} onValueChange={(val: any) => { setPaymentAccountType(val); setPaymentAccountId(''); }}>
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Hesap türü seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cash">Kasa</SelectItem>
-                <SelectItem value="bank">Banka</SelectItem>
-                <SelectItem value="credit_card">Kredi Kartı</SelectItem>
-                <SelectItem value="partner">Ortak</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {isPaid && (
-          <div className="space-y-1">
-            <Label>Hesap</Label>
-            <Select value={paymentAccountId} onValueChange={setPaymentAccountId}>
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Hesap seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                {paymentAccountType === 'cash' && cashAccounts.map(a => (
-                  <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
-                ))}
-                {paymentAccountType === 'bank' && bankAccounts.map(a => (
-                  <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
-                ))}
-                {paymentAccountType === 'credit_card' && creditCards.map(a => (
-                  <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
-                ))}
-                {paymentAccountType === 'partner' && partnerAccounts.map(a => (
-                  <SelectItem key={a.id} value={a.id}>{a.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+
+        {isRecurring && (
+          <>
+            <div className="space-y-1">
+              <Label>Tekrarlama Türü</Label>
+              <Select value={recurrenceType} onValueChange={(val: any) => setRecurrenceType(val)}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Tür seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Günlük</SelectItem>
+                  <SelectItem value="weekly">Haftalık</SelectItem>
+                  <SelectItem value="monthly">Aylık</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {recurrenceType && (
+              <div className="space-y-1">
+                <Label>Aralık</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={recurrenceInterval}
+                    onChange={(e) => setRecurrenceInterval(parseInt(e.target.value) || 1)}
+                    min="1"
+                    className="w-20 h-9"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {recurrenceType === 'daily' && 'gün'}
+                    {recurrenceType === 'weekly' && 'hafta'}
+                    {recurrenceType === 'monthly' && 'ay'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {recurrenceType === 'weekly' && (
+              <div className="space-y-1">
+                <Label>Günler</Label>
+                <div className="grid grid-cols-7 gap-1">
+                  {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day, idx) => (
+                    <Button
+                      key={idx}
+                      type="button"
+                      size="sm"
+                      variant={recurrenceDays.includes(String(idx + 1)) ? "default" : "outline"}
+                      className="h-8 text-xs"
+                      onClick={() => {
+                        const dayStr = String(idx + 1);
+                        setRecurrenceDays(prev =>
+                          prev.includes(dayStr)
+                            ? prev.filter(d => d !== dayStr)
+                            : [...prev, dayStr]
+                        );
+                      }}
+                    >
+                      {day}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {recurrenceType === 'monthly' && (
+              <div className="space-y-1">
+                <Label>Ayın Günü</Label>
+                <Input
+                  type="number"
+                  value={recurrenceDayOfMonth}
+                  onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || 1)}
+                  min="1"
+                  max="31"
+                  className="w-20 h-9"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <Label>Bitiş Tarihi</Label>
+              <EnhancedDatePicker
+                date={recurrenceEndDate || undefined}
+                onSelect={(d) => setRecurrenceEndDate(d || null)}
+                placeholder="Seçmezseniz süresiz"
+              />
+            </div>
+          </>
         )}
       </div>
 
       {/* Açıklama en altta tam genişlik */}
-      <div className="sm:col-span-2">
+      <div className="lg:col-span-3">
         <div className="space-y-1">
           <Label htmlFor="description">Açıklama</Label>
           <Textarea
@@ -919,7 +1041,7 @@ const ExpensesManager = () => {
         </div>
       </div>
 
-      <div className="sm:col-span-2">
+      <div className="lg:col-span-3">
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={() => setIsAddDialogOpen(false)} />
           <UnifiedDialogActionButton onClick={handleAddExpense}>Kaydet</UnifiedDialogActionButton>

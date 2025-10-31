@@ -15,12 +15,26 @@ const HeroSection = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(220,38,38,0.08),transparent_60%)]"></div>
 
       <div className="relative mx-auto max-w-7xl text-center z-10">
-        {/* Floating Badge */}
+        {/* Dual Floating Badge */}
         <div className="flex justify-center mb-10 animate-fade-in">
-          <Badge className="px-6 py-2 text-sm font-medium bg-red-600/20 text-red-600 border border-red-500/30 hover:bg-red-600/30 transition-all duration-300 shadow-sm backdrop-blur-sm">
-            <Brain className="w-4 h-4 mr-2" />
-            {t('landing.hero.badge')}
-          </Badge>
+          <div className="inline-flex items-center rounded-full border border-red-500/30 overflow-hidden backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse">
+            {/* Beta Version Badge */}
+            <div className="px-4 py-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 flex items-center gap-2">
+              <span className="text-xl">🚀</span>
+              <span className="text-sm font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                Beta v0.4
+              </span>
+            </div>
+            {/* Separator */}
+            <div className="w-px h-6 bg-red-500/30"></div>
+            {/* AI Badge */}
+            <div className="px-4 py-2 bg-red-600/20 flex items-center gap-2">
+              <span className="text-xl">🧠</span>
+              <span className="text-sm font-semibold text-red-600">
+                {t('landing.hero.badge')}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Main Heading with gradient text */}

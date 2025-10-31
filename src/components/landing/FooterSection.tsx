@@ -127,7 +127,7 @@ const FooterSection = () => {
           <div className="flex flex-col lg:flex-row justify-between items-center space-y-6 lg:space-y-0">
             <div className="text-center lg:text-left">
               <p className="text-gray-400 text-sm mb-2">
-                {t("landing.footer.rights")}
+                {t("landing.footer.rights")} • <span className="text-gray-500">v0.4.0 Beta</span>
               </p>
               <div className="flex items-center justify-center lg:justify-start space-x-6 text-xs text-gray-500">
                 <a href="#" className="hover:text-red-400 transition-colors duration-300">{t("landing.footer.privacy")}</a>

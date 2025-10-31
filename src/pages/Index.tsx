@@ -105,8 +105,8 @@ const Index = () => {
       <header className="fixed top-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl shadow-2xl z-50 border-b border-red-500/20">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center group">
+            {/* Logo with Beta Badge */}
+            <div className="flex items-center gap-3 group">
               <div className="relative">
                 <img 
                   src="/logo.svg" 
@@ -114,6 +114,10 @@ const Index = () => {
                   className="h-9 w-auto transition-transform group-hover:scale-105"
                 />
                 <div className="absolute -inset-1 bg-red-100/50 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              {/* Beta Badge - Desktop Only */}
+              <div className="hidden lg:flex items-center px-2 py-1 rounded-md bg-red-500/10 border border-red-500/20 backdrop-blur-sm">
+                <span className="text-xs font-semibold text-red-400">Beta</span>
               </div>
             </div>
             {/* Navigation */}

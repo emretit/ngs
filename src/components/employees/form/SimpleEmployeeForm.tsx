@@ -195,58 +195,20 @@ const SimpleEmployeeForm = () => {
 
       if (error) throw error;
 
-      // Create user profile with the same email
-      if (newEmployee?.id) {
+      // Check if user profile already exists before inviting
+      if (newEmployee?.id && data.email) {
         try {
           // Check if user with this email already exists
           const { data: existingProfile } = await supabase
             .from('profiles')
-            .select('id')
+            .select('id, employee_id')
             .eq('email', data.email)
             .maybeSingle();
 
           if (!existingProfile) {
-            // Create a new profile for the employee
-            const { data: newProfile, error: profileError } = await supabase
-              .from('profiles')
-              .insert({
-                email: data.email,
-                full_name: `${data.first_name} ${data.last_name}`,
-                company_id: profile.company_id,
-                employee_id: newEmployee.id,
-                status: 'active',
-              })
-              .select()
-              .single();
-
-            if (profileError) {
-              console.error("Error creating user profile:", profileError);
-              // Don't throw - employee was created successfully
-              showError("Çalışan oluşturuldu ancak kullanıcı hesabı oluşturulamadı.");
-            } else if (newProfile?.id) {
-              // Update employee with user_id
-              await supabase
-                .from('employees')
-                .update({ user_id: newProfile.id })
-                .eq('id', newEmployee.id);
-
-              // Assign selected roles to the user
-              if (data.user_roles && data.user_roles.length > 0) {
-                const roleInserts = data.user_roles.map(roleName => ({
-                  user_id: newProfile.id,
-                  role: roleName,
-                }));
-
-                const { error: rolesError } = await supabase
-                  .from('user_roles')
-                  .insert(roleInserts);
-
-                if (rolesError) {
-                  console.error("Error assigning roles:", rolesError);
-                  showError("Roller atanırken hata oluştu.");
-                }
-              }
-            }
+            // Profile will be created automatically by invite-user function and handle_new_user trigger
+            // We just need to wait for it and then link employee_id
+            console.log("Profile will be created via invite-user function");
           } else {
             // Update existing profile's employee_id
             await supabase
@@ -353,11 +315,13 @@ const SimpleEmployeeForm = () => {
             .single();
 
           if (companyProfile?.company_id) {
-            const { error: inviteError } = await supabase.functions.invoke('invite-user', {
+            const { data: inviteResult, error: inviteError } = await supabase.functions.invoke('invite-user', {
               body: {
                 email: newEmployee.email,
                 inviting_company_id: companyProfile.company_id,
-                company_name: companyProfile.companies?.name || 'Şirket'
+                company_name: companyProfile.companies?.name || 'Şirket',
+                full_name: `${data.first_name} ${data.last_name}`,
+                employee_id: newEmployee.id
               }
             });
 
@@ -366,6 +330,44 @@ const SimpleEmployeeForm = () => {
               showSuccess("Çalışan oluşturuldu ancak davet maili gönderilemedi", { duration: 2000 });
             } else {
               inviteSent = true;
+              
+              // After invite, wait a bit for handle_new_user trigger to create profile
+              // Then update profile with employee_id and assign roles
+              setTimeout(async () => {
+                const { data: newProfile } = await supabase
+                  .from('profiles')
+                  .select('id')
+                  .eq('email', newEmployee.email)
+                  .maybeSingle();
+
+                if (newProfile?.id) {
+                  // Update profile with employee_id
+                  await supabase
+                    .from('profiles')
+                    .update({ employee_id: newEmployee.id })
+                    .eq('id', newProfile.id);
+
+                  // Update employee with user_id
+                  await supabase
+                    .from('employees')
+                    .update({ user_id: newProfile.id })
+                    .eq('id', newEmployee.id);
+
+                  // Assign selected roles to the user
+                  if (data.user_roles && data.user_roles.length > 0) {
+                    const roleInserts = data.user_roles.map(roleName => ({
+                      user_id: newProfile.id,
+                      role: roleName,
+                      company_id: companyProfile.company_id,
+                    }));
+
+                    await supabase
+                      .from('user_roles')
+                      .insert(roleInserts);
+                  }
+                }
+              }, 2000); // Wait 2 seconds for trigger to complete
+
               showSuccess("Çalışan oluşturuldu ve davet maili gönderildi", { duration: 2000 });
             }
           }

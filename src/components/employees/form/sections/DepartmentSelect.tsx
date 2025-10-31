@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { Plus, Trash2 } from "lucide-react";
 import { Control } from "react-hook-form";
 import { EmployeeFormValues } from "../hooks/useEmployeeForm";
@@ -27,6 +29,11 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newDepartmentName, setNewDepartmentName] = useState("");
   const [newDepartmentDescription, setNewDepartmentDescription] = useState("");
+
+  // Confirmation dialog states
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchDepartments();
@@ -56,6 +63,26 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
 
     setIsLoading(true);
     try {
+      // Get current user's company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Kullanıcı bilgisi bulunamadı");
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        toast.error("Şirket bilgisi bulunamadı");
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('departments')
         .insert({
@@ -63,50 +90,80 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
           description: newDepartmentDescription.trim() || null,
           is_default: false,
           is_active: true,
-          sort_order: 999
+          sort_order: 999,
+          company_id: profile.company_id
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Check for duplicate key error
+        if (error.code === '23505' && error.message.includes('departments_name_key')) {
+          toast.error("Bu departman adı başka bir şirket tarafından kullanılıyor. Lütfen farklı bir ad deneyin.");
+          setIsLoading(false);
+          return;
+        }
+        throw error;
+      }
 
       // Add to local state
       setDepartments(prev => [...prev, data]);
-      
+
       // Reset form and close dialog
       setNewDepartmentName("");
       setNewDepartmentDescription("");
       setIsDialogOpen(false);
 
       toast.success("Yeni departman başarıyla eklendi!");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding department:', error);
-      toast.error("Departman eklenirken hata oluştu");
+
+      // Handle duplicate key error
+      if (error?.code === '23505' && error?.message?.includes('departments_name_key')) {
+        toast.error("Bu departman adı zaten kullanılıyor. Lütfen farklı bir ad deneyin.");
+      } else {
+        toast.error("Departman eklenirken hata oluştu");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteDepartment = async (departmentId: string) => {
-    if (!confirm("Bu departmanı silmek istediğinizden emin misiniz?")) {
-      return;
-    }
+  const handleDeleteDepartmentClick = (department: Department, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDepartmentToDelete(department);
+    setIsDeleteDialogOpen(true);
+  };
 
+  const handleDeleteDepartmentConfirm = async () => {
+    if (!departmentToDelete) return;
+
+    setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('departments')
         .update({ is_active: false })
-        .eq('id', departmentId);
+        .eq('id', departmentToDelete.id);
 
       if (error) throw error;
 
       // Remove from local state
-      setDepartments(prev => prev.filter(dept => dept.id !== departmentId));
+      setDepartments(prev => prev.filter(dept => dept.id !== departmentToDelete.id));
       toast.success("Departman başarıyla silindi!");
     } catch (error) {
       console.error('Error deleting department:', error);
       toast.error("Departman silinirken hata oluştu");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setDepartmentToDelete(null);
     }
+  };
+
+  const handleDeleteDepartmentCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setDepartmentToDelete(null);
   };
 
   return (
@@ -125,40 +182,58 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
               }
             }} value={field.value}>
               <FormControl>
-                <SelectTrigger className="h-7 text-xs">
-                  <SelectValue placeholder="Departman seçin" />
+                <SelectTrigger className="h-7 text-xs bg-background border-border hover:border-primary transition-colors">
+                  <SelectValue placeholder="Departman seçin">
+                    {field.value ? (
+                      <span className="text-sm font-medium">{field.value}</span>
+                    ) : (
+                      "Departman seçin"
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
               </FormControl>
-              <SelectContent>
+              <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
                 {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.name}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{dept.name}</span>
-                      {!dept.is_default && (
+                  <div key={dept.id} className="group relative">
+                    <SelectItem
+                      value={dept.name}
+                      className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50 data-[highlighted]:bg-muted/50 pr-10 transition-colors"
+                    >
+                      <div className="flex flex-col gap-1 w-full">
+                        <span className="font-medium text-sm text-foreground">{dept.name}</span>
+                        {dept.description && (
+                          <span className="text-xs text-muted-foreground leading-relaxed whitespace-normal break-words">
+                            {dept.description}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+
+                    {/* Delete button positioned outside SelectItem */}
+                    {!dept.is_default && (
+                      <div className="absolute top-2 right-2 z-10">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 ml-2"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteDepartment(dept.id);
-                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
+                          type="button"
+                          onClick={(e) => handleDeleteDepartmentClick(dept, e)}
                         >
-                          <Trash2 className="h-3 w-3 text-red-500" />
+                          <Trash2 size={12} />
                         </Button>
-                      )}
-                    </div>
-                  </SelectItem>
+                      </div>
+                    )}
+                  </div>
                 ))}
-                
+
                 {/* Add new department option */}
-                <SelectItem 
-                  value="add_new" 
-                  className="text-primary font-medium cursor-pointer"
+                <SelectItem
+                  value="add_new"
+                  className="cursor-pointer hover:bg-primary/10 focus:bg-primary/10 data-[highlighted]:bg-primary/10 p-3 border-t border-border mt-1"
                 >
                   <div className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Yeni Departman Ekle
+                    <Plus size={16} className="text-primary" />
+                    <span className="text-sm font-medium text-primary">Yeni Departman Ekle</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -177,21 +252,29 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Departman Adı *</label>
+              <Label htmlFor="departmentName" className="text-xs font-medium text-gray-700">
+                Departman Adı *
+              </Label>
               <Input
+                id="departmentName"
                 placeholder="Departman adı giriniz"
                 value={newDepartmentName}
                 onChange={(e) => setNewDepartmentName(e.target.value)}
+                className="h-9 text-sm"
                 autoFocus
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Açıklama</label>
+              <Label htmlFor="departmentDescription" className="text-xs font-medium text-gray-700">
+                Açıklama
+              </Label>
               <Input
+                id="departmentDescription"
                 placeholder="Departman açıklaması (isteğe bağlı)"
                 value={newDepartmentDescription}
                 onChange={(e) => setNewDepartmentDescription(e.target.value)}
+                className="h-9 text-sm"
               />
             </div>
 
@@ -199,6 +282,7 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={() => {
                   setIsDialogOpen(false);
                   setNewDepartmentName("");
@@ -208,7 +292,9 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
               >
                 İptal
               </Button>
-              <Button 
+              <Button
+                type="button"
+                size="sm"
                 onClick={handleAddDepartment}
                 disabled={isLoading || !newDepartmentName.trim()}
               >
@@ -218,6 +304,20 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Departmanı Sil"
+        description={`"${departmentToDelete?.name || 'Bu departman'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteDepartmentConfirm}
+        onCancel={handleDeleteDepartmentCancel}
+        isLoading={isDeleting}
+      />
     </>
   );
 };

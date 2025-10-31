@@ -69,7 +69,7 @@ const SignUp = () => {
       navigate("/signin");
     } catch (error: any) {
       console.error("Signup error:", error);
-      const msg = String(error?.message || "");
+      const msg = String(error?.message || error || "");
       let errorMessage = "Kayıt sırasında bir hata oluştu.";
       if (msg.includes('already registered') || msg.includes('already been registered')) {
         errorMessage = "Bu e-posta adresi zaten kayıtlı.";

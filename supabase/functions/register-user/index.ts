@@ -44,8 +44,17 @@ serve(async (req) => {
 
     if (createUserError) {
       console.error('Auth user oluşturma hatası:', createUserError);
+      
+      // Kullanıcı dostu hata mesajları
+      let userMessage = 'Kullanıcı oluşturulamadı';
+      if (createUserError.message?.includes('already been registered') || createUserError.message?.includes('already registered')) {
+        userMessage = 'Bu e-posta adresi zaten kayıtlı.';
+      } else if (createUserError.message?.includes('Invalid email')) {
+        userMessage = 'Geçersiz e-posta adresi.';
+      }
+      
       return new Response(
-        JSON.stringify({ error: 'Kullanıcı oluşturulamadı', details: createUserError.message }),
+        JSON.stringify({ error: userMessage, details: createUserError.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

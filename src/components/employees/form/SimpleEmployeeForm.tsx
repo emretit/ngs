@@ -23,7 +23,7 @@ const formSchema = z.object({
   // Basic Information
   first_name: z.string().min(2, "İsim en az 2 karakter olmalıdır"),
   last_name: z.string().min(2, "Soyisim en az 2 karakter olmalıdır"),
-  email: z.string().email("Geçersiz e-posta adresi"),
+  email: z.string().email("Geçersiz e-posta adresi").min(1, "E-posta adresi gereklidir"),
   phone: z.string().optional(),
   position: z.string().min(2, "Pozisyon gereklidir"),
   department: z.string().min(2, "Departman gereklidir"),
@@ -115,6 +115,14 @@ const SimpleEmployeeForm = () => {
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
+    
+    // Show more detailed loading message
+    const loadingMessage = data.email 
+      ? "Çalışan oluşturuluyor ve davet maili gönderiliyor..." 
+      : "Çalışan oluşturuluyor...";
+    
+    console.log(loadingMessage);
+    
     try {
       // Get user session and company_id
       const { data: { user } } = await supabase.auth.getUser();
@@ -333,7 +341,44 @@ const SimpleEmployeeForm = () => {
         }
       }
 
-      showSuccess("Çalışan başarıyla oluşturuldu", { duration: 1000 });
+      // Send invitation email if employee has an email
+      let inviteSent = false;
+      if (newEmployee?.email) {
+        try {
+          // Get company info for the invitation email
+          const { data: companyProfile } = await supabase
+            .from('profiles')
+            .select('company_id, companies(name)')
+            .eq('id', user.id)
+            .single();
+
+          if (companyProfile?.company_id) {
+            const { error: inviteError } = await supabase.functions.invoke('invite-user', {
+              body: {
+                email: newEmployee.email,
+                inviting_company_id: companyProfile.company_id,
+                company_name: companyProfile.companies?.name || 'Şirket'
+              }
+            });
+
+            if (inviteError) {
+              console.error('Davet maili gönderilemedi:', inviteError);
+              showSuccess("Çalışan oluşturuldu ancak davet maili gönderilemedi", { duration: 2000 });
+            } else {
+              inviteSent = true;
+              showSuccess("Çalışan oluşturuldu ve davet maili gönderildi", { duration: 2000 });
+            }
+          }
+        } catch (inviteError) {
+          console.error('Davet maili gönderilirken hata:', inviteError);
+          showSuccess("Çalışan oluşturuldu ancak davet maili gönderilemedi", { duration: 2000 });
+        }
+      }
+      
+      // Show success message if invite wasn't sent
+      if (!inviteSent && !newEmployee?.email) {
+        showSuccess("Çalışan başarıyla oluşturuldu", { duration: 1000 });
+      }
       
       // Navigate to the employee details page
       if (newEmployee?.id) {

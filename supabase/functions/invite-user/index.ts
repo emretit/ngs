@@ -14,13 +14,19 @@ const corsHeaders = {
 const APP_URL = "https://pafta.app";
 
 serve(async (req) => {
+  console.log("🚀 invite-user function called");
+  
   // CORS preflight
   if (req.method === "OPTIONS") {
+    console.log("✅ OPTIONS request handled");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log("📝 Request method:", req.method);
+    
     if (req.method !== "POST") {
+      console.log("❌ Invalid method:", req.method);
       return new Response(JSON.stringify({ error: "Sadece POST desteklenir" }), {
         status: 405,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -28,27 +34,37 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
+    console.log("📦 Request body:", JSON.stringify(body));
+    
     const { email, inviting_company_id, company_name } = body as {
       email?: string;
       inviting_company_id?: string;
       company_name?: string;
     };
+    
+    console.log("📧 Email:", email, "Company ID:", inviting_company_id, "Company Name:", company_name);
 
     if (!email) {
+      console.log("❌ Email missing");
       return new Response(
         JSON.stringify({ error: "Email gereklidir" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    
+    console.log("✅ Email validation passed");
 
     // Supabase service role client
+    console.log("🔧 Creating Supabase client...");
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+    console.log("✅ Supabase client created");
 
     // Şirket adını belirle (id varsa DB'den çek, yoksa gönderilen ya da varsayılan)
     let companyName = company_name || "Şirketiniz";
+    console.log("🏢 Initial company name:", companyName);
     if (inviting_company_id) {
       const { data: companyData, error: companyError } = await supabase
         .from("companies")
@@ -63,6 +79,7 @@ serve(async (req) => {
     }
 
     // Kullanıcı/profil var mı kontrol et
+    console.log("🔍 Checking for existing profile...");
     const { data: existingProfile, error: profileError } = await supabase
       .from("profiles")
       .select("id")
@@ -70,17 +87,22 @@ serve(async (req) => {
       .maybeSingle();
 
     if (profileError) {
-      console.error("Profil kontrol hatası:", profileError);
+      console.error("❌ Profil kontrol hatası:", profileError);
       return new Response(
         JSON.stringify({ error: "Profil kontrolü sırasında hata oluştu" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    
+    console.log("📊 Existing profile:", existingProfile ? "Found" : "Not found");
 
     // Resend hazırla
+    console.log("📬 Initializing Resend...");
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+    console.log("✅ Resend initialized");
 
     if (existingProfile) {
+      console.log("♻️ Existing profile found, sending recovery link...");
       // Mevcut kullanıcı: recovery linki üret ve InviteSetup'a yönlendir
       const { data: recoveryData, error: recoveryError } = await supabase.auth.admin.generateLink({
         type: "recovery",
@@ -91,7 +113,7 @@ serve(async (req) => {
       });
 
       if (recoveryError || !recoveryData?.properties?.action_link) {
-        console.error("Recovery link hatası:", recoveryError);
+        console.error("❌ Recovery link hatası:", recoveryError);
         return new Response(
           JSON.stringify({ error: "Şifre sıfırlama bağlantısı oluşturulamadı" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -99,6 +121,7 @@ serve(async (req) => {
       }
 
       const resetUrl = recoveryData.properties.action_link;
+      console.log("✅ Recovery link generated");
       const emailResponse = await resend.emails.send({
         from: "PAFTA.APP <noreply@pafta.app>",
         to: [email],
@@ -254,18 +277,20 @@ serve(async (req) => {
       });
 
       if ((emailResponse as any)?.error) {
-        console.error("Resend e-posta hatası:", (emailResponse as any).error);
+        console.error("❌ Resend e-posta hatası:", (emailResponse as any).error);
         return new Response(
           JSON.stringify({ error: "E-posta gönderilemedi" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
+      console.log("✅ Recovery email sent successfully");
       return new Response(
         JSON.stringify({ success: true, message: `${email} adresine şifre belirleme maili gönderildi` }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
+      console.log("🆕 New user, sending invite link...");
       // Yeni kullanıcı: invite linki üret ve InviteSetup'a yönlendir
       const { data: inviteData, error: inviteError } = await supabase.auth.admin.generateLink({
         type: "invite",
@@ -279,7 +304,7 @@ serve(async (req) => {
       });
 
       if (inviteError || !inviteData?.properties?.action_link) {
-        console.error("Invite linki oluşturulamadı:", inviteError);
+        console.error("❌ Invite linki oluşturulamadı:", inviteError);
         return new Response(
           JSON.stringify({ error: "Davet bağlantısı oluşturulamadı" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -287,6 +312,7 @@ serve(async (req) => {
       }
 
       const inviteUrl = inviteData.properties.action_link;
+      console.log("✅ Invite link generated");
       const emailResponse = await resend.emails.send({
         from: "PAFTA.APP <noreply@pafta.app>",
         to: [email],
@@ -442,20 +468,21 @@ serve(async (req) => {
       });
 
       if ((emailResponse as any)?.error) {
-        console.error("Resend e-posta hatası:", (emailResponse as any).error);
+        console.error("❌ Resend e-posta hatası:", (emailResponse as any).error);
         return new Response(
           JSON.stringify({ error: "E-posta gönderilemedi" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
+      console.log("✅ Invite email sent successfully");
       return new Response(
         JSON.stringify({ success: true, message: `${email} adresine davet e-postası gönderildi` }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
   } catch (error) {
-    console.error("invite-user hata:", error);
+    console.error("❌ invite-user hata:", error);
     return new Response(
       JSON.stringify({ error: "Sunucu hatası" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -144,10 +144,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { user: null, error };
       }
 
-      if (data?.error) {
-        console.error('Register function error:', data.error);
-        return { user: null, error: { message: data.error } };
-      }
+    if (data?.error) {
+      console.error('Register function error:', data.error);
+      // Include details if available for better error messages
+      const errorMessage = data.details || data.error;
+      return { user: null, error: { message: errorMessage } };
+    }
 
       // Return success - user needs to confirm email
       return { user: data?.user || null, error: null };

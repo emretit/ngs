@@ -71,7 +71,7 @@ const SignUp = () => {
       console.error("Signup error:", error);
       const msg = String(error?.message || "");
       let errorMessage = "Kayıt sırasında bir hata oluştu.";
-      if (msg.includes('User already registered')) {
+      if (msg.includes('already registered') || msg.includes('already been registered')) {
         errorMessage = "Bu e-posta adresi zaten kayıtlı.";
       } else if (msg.includes('Invalid email')) {
         errorMessage = "Geçerli bir e-posta adresi girin.";

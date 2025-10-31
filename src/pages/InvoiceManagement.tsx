@@ -90,7 +90,7 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
                     <Receipt className="h-4 w-4" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-gray-900">Satış Faturaları</h2>
+                    <h2 className="text-sm font-bold text-gray-900">Satış Faturaları (Bu Ay)</h2>
                     <p className="text-xs text-gray-500">Müşteri faturaları</p>
                   </div>
                 </div>
@@ -141,7 +141,7 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
                     <Receipt className="h-4 w-4" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-gray-900">Alış Faturaları</h2>
+                    <h2 className="text-sm font-bold text-gray-900">Alış Faturaları (Bu Ay)</h2>
                     <p className="text-xs text-gray-500">Tedarikçi faturaları</p>
                   </div>
                 </div>
@@ -192,7 +192,7 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
                     <FileText className="h-4 w-4" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-gray-900">E-Fatura</h2>
+                    <h2 className="text-sm font-bold text-gray-900">E-Fatura (Bu Ay)</h2>
                     <p className="text-xs text-gray-500">Gelen e-faturalar</p>
                   </div>
                 </div>

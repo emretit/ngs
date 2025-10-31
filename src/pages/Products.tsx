@@ -6,6 +6,7 @@ import ProductListFilters from "@/components/products/ProductListFilters";
 import ProductListTable from "@/components/products/ProductListTable";
 import ProductGrid from "@/components/products/ProductGrid";
 import ProductImportDialog from "@/components/products/excel/ProductImportDialog";
+import ProductsBulkActions from "@/components/products/ProductsBulkActions";
 import { exportProductsToExcel, exportProductTemplateToExcel } from "@/utils/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -227,39 +228,11 @@ const Products = () => {
 
         {/* Bulk Actions */}
         {selectedProducts.length > 0 && (
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium">
-                {selectedProducts.length} ürün seçildi
-              </span>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleBulkAction('activate')}
-                  className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
-                >
-                  Aktifleştir
-                </button>
-                <button
-                  onClick={() => handleBulkAction('deactivate')}
-                  className="text-sm px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
-                >
-                  Pasifleştir
-                </button>
-                <button
-                  onClick={() => handleBulkAction('update_category')}
-                  className="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                >
-                  Kategori Güncelle
-                </button>
-              </div>
-            </div>
-            <button
-              onClick={handleClearSelection}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Seçimi Temizle
-            </button>
-          </div>
+          <ProductsBulkActions
+            selectedProducts={selectedProducts}
+            onClearSelection={handleClearSelection}
+            onBulkAction={handleBulkAction}
+          />
         )}
 
         {isLoading ? (

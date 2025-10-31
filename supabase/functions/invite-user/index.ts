@@ -1,129 +1,83 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { Resend } from "https://esm.sh/resend@4.0.0";
 
-// Genel CORS başlıkları
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-// Uygulama URL'i (redirect için zorunlu)
-// Not: Lovable ortamında env değişkenleri kullanılamaz, bu nedenle sabit URL kullanıyoruz
 const APP_URL = "https://pafta.app";
 
 serve(async (req) => {
-  console.log("🚀 invite-user function called");
-  
-  // CORS preflight
-  if (req.method === "OPTIONS") {
-    console.log("✅ OPTIONS request handled");
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("📝 Request method:", req.method);
-    
-    if (req.method !== "POST") {
-      console.log("❌ Invalid method:", req.method);
-      return new Response(JSON.stringify({ error: "Sadece POST desteklenir" }), {
-        status: 405,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const body = await req.json().catch(() => ({}));
-    console.log("📦 Request body:", JSON.stringify(body));
-    
-    const { email, inviting_company_id, company_name } = body as {
-      email?: string;
-      inviting_company_id?: string;
-      company_name?: string;
-    };
-    
-    console.log("📧 Email:", email, "Company ID:", inviting_company_id, "Company Name:", company_name);
+    const { email, inviting_company_id, company_name } = await req.json();
 
     if (!email) {
-      console.log("❌ Email missing");
       return new Response(
-        JSON.stringify({ error: "Email gereklidir" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: 'Email gereklidir' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    console.log("✅ Email validation passed");
 
-    // Supabase service role client
-    console.log("🔧 Creating Supabase client...");
+    console.log('📧 Invite request for:', email);
+
+    // Supabase client with service role
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-    console.log("✅ Supabase client created");
 
-    // Şirket adını belirle (id varsa DB'den çek, yoksa gönderilen ya da varsayılan)
-    let companyName = company_name || "Şirketiniz";
-    console.log("🏢 Initial company name:", companyName);
+    // Get company name if company_id provided
+    let companyName = company_name || 'Şirketiniz';
     if (inviting_company_id) {
-      const { data: companyData, error: companyError } = await supabase
-        .from("companies")
-        .select("name")
-        .eq("id", inviting_company_id)
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('name')
+        .eq('id', inviting_company_id)
         .maybeSingle();
 
-      if (companyError) {
-        console.error("Şirket bilgisi alınamadı:", companyError);
-      }
       if (companyData?.name) companyName = companyData.name;
     }
 
-    // Kullanıcı/profil var mı kontrol et
-    console.log("🔍 Checking for existing profile...");
-    const { data: existingProfile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", email)
+    // Check if profile already exists
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
       .maybeSingle();
 
-    if (profileError) {
-      console.error("❌ Profil kontrol hatası:", profileError);
-      return new Response(
-        JSON.stringify({ error: "Profil kontrolü sırasında hata oluştu" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    console.log("📊 Existing profile:", existingProfile ? "Found" : "Not found");
+    console.log(existingProfile ? '♻️ Existing user' : '🆕 New user');
 
-    // Resend hazırla
-    console.log("📬 Initializing Resend...");
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-    console.log("✅ Resend initialized");
+    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
     if (existingProfile) {
-      console.log("♻️ Existing profile found, sending recovery link...");
-      // Mevcut kullanıcı: recovery linki üret ve InviteSetup'a yönlendir
-      const { data: recoveryData, error: recoveryError } = await supabase.auth.admin.generateLink({
-        type: "recovery",
+      // Existing user: send recovery link
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'recovery',
         email,
         options: {
-          redirectTo: `${APP_URL}/invite-setup?email=${encodeURIComponent(email)}`,
-        },
+          redirectTo: `${APP_URL}/invite-setup?email=${encodeURIComponent(email)}`
+        }
       });
 
-      if (recoveryError || !recoveryData?.properties?.action_link) {
-        console.error("❌ Recovery link hatası:", recoveryError);
+      if (linkError || !linkData?.properties?.action_link) {
+        console.error('Recovery link error:', linkError);
         return new Response(
-          JSON.stringify({ error: "Şifre sıfırlama bağlantısı oluşturulamadı" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: 'Şifre sıfırlama bağlantısı oluşturulamadı' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      const resetUrl = recoveryData.properties.action_link;
-      console.log("✅ Recovery link generated");
-      const emailResponse = await resend.emails.send({
-        from: "PAFTA.APP <noreply@pafta.app>",
+      const resetUrl = linkData.properties.action_link;
+
+      await resend.emails.send({
+        from: 'PAFTA.APP <noreply@pafta.app>',
         to: [email],
         subject: `${companyName} şirketine davet edildiniz`,
         html: `
@@ -164,12 +118,11 @@ serve(async (req) => {
                 font-weight: bold;
                 letter-spacing: 2px;
                 margin-bottom: 10px;
-                color: #8B0000;
               }
               .header-subtitle {
                 font-size: 16px;
                 margin: 0;
-                color: #8B0000;
+                opacity: 0.9;
               }
               .content {
                 padding: 40px 30px;
@@ -273,48 +226,39 @@ serve(async (req) => {
             </div>
           </body>
           </html>
-        `,
+        `
       });
 
-      if ((emailResponse as any)?.error) {
-        console.error("❌ Resend e-posta hatası:", (emailResponse as any).error);
-        return new Response(
-          JSON.stringify({ error: "E-posta gönderilemedi" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      console.log("✅ Recovery email sent successfully");
+      console.log('✅ Recovery email sent');
       return new Response(
         JSON.stringify({ success: true, message: `${email} adresine şifre belirleme maili gönderildi` }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
-      console.log("🆕 New user, sending invite link...");
-      // Yeni kullanıcı: invite linki üret ve InviteSetup'a yönlendir
-      const { data: inviteData, error: inviteError } = await supabase.auth.admin.generateLink({
-        type: "invite",
+      // New user: send invite link
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'invite',
         email,
         options: {
           redirectTo: `${APP_URL}/invite-setup?email=${encodeURIComponent(email)}`,
           data: inviting_company_id
             ? { invited_by_company_id: inviting_company_id, company_name: companyName }
-            : { company_name: companyName },
-        },
+            : { company_name: companyName }
+        }
       });
 
-      if (inviteError || !inviteData?.properties?.action_link) {
-        console.error("❌ Invite linki oluşturulamadı:", inviteError);
+      if (linkError || !linkData?.properties?.action_link) {
+        console.error('Invite link error:', linkError);
         return new Response(
-          JSON.stringify({ error: "Davet bağlantısı oluşturulamadı" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: 'Davet bağlantısı oluşturulamadı' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      const inviteUrl = inviteData.properties.action_link;
-      console.log("✅ Invite link generated");
-      const emailResponse = await resend.emails.send({
-        from: "PAFTA.APP <noreply@pafta.app>",
+      const inviteUrl = linkData.properties.action_link;
+
+      await resend.emails.send({
+        from: 'PAFTA.APP <noreply@pafta.app>',
         to: [email],
         subject: `${companyName} şirketine davet edildiniz`,
         html: `
@@ -355,12 +299,11 @@ serve(async (req) => {
                 font-weight: bold;
                 letter-spacing: 2px;
                 margin-bottom: 10px;
-                color: #8B0000;
               }
               .header-subtitle {
                 font-size: 16px;
                 margin: 0;
-                color: #8B0000;
+                opacity: 0.9;
               }
               .content {
                 padding: 40px 30px;
@@ -464,28 +407,21 @@ serve(async (req) => {
             </div>
           </body>
           </html>
-        `,
+        `
       });
 
-      if ((emailResponse as any)?.error) {
-        console.error("❌ Resend e-posta hatası:", (emailResponse as any).error);
-        return new Response(
-          JSON.stringify({ error: "E-posta gönderilemedi" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      console.log("✅ Invite email sent successfully");
+      console.log('✅ Invite email sent');
       return new Response(
-        JSON.stringify({ success: true, message: `${email} adresine davet e-postası gönderildi` }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, message: `${email} adresine davet maili gönderildi` }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
   } catch (error) {
-    console.error("❌ invite-user hata:", error);
+    console.error('Invite error:', error);
     return new Response(
-      JSON.stringify({ error: "Sunucu hatası" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: 'Sunucu hatası' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

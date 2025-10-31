@@ -11,6 +11,7 @@ import {
 import { ArrowUpDown, ChevronUp, ChevronDown, Edit, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toastUtils";
@@ -137,6 +138,23 @@ const ProductListTable = ({
           <Table className="border-collapse">
             <TableHeader>
               <TableRow className="bg-gray-50 border-b">
+                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 w-[50px]">
+                  <Checkbox
+                    checked={selectedProducts.length > 0 && selectedProducts.length === products?.length}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        products?.forEach(p => {
+                          if (!selectedProducts.some(sp => sp.id === p.id)) {
+                            onProductSelect?.(p);
+                          }
+                        });
+                      } else {
+                        products?.forEach(p => onProductSelect?.(p));
+                      }
+                    }}
+                    indeterminate={selectedProducts.length > 0 && selectedProducts.length < (products?.length || 0)}
+                  />
+                </TableHead>
                 <TableHead 
                   className={cn(
                     "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
@@ -195,24 +213,32 @@ const ProductListTable = ({
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     Yükleniyor...
                   </TableCell>
                 </TableRow>
               ) : products?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     Ürün bulunamadı
                   </TableCell>
                 </TableRow>
               ) : (
-                products?.map((product) => (
-                  <TableRow 
-                    key={product.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/product-details/${product.id}`)}
-                  >
-                    <TableCell className="font-medium">{product.name}</TableCell>
+                products?.map((product) => {
+                  const isSelected = selectedProducts.some(p => p.id === product.id);
+                  return (
+                    <TableRow 
+                      key={product.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/product-details/${product.id}`)}
+                    >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => onProductSelect?.(product)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.sku || "-"}</TableCell>
                     <TableCell>
                       {product.product_categories?.name || "Kategorisiz"}
@@ -254,8 +280,9 @@ const ProductListTable = ({
                         </Button>
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

@@ -15,6 +15,7 @@ import { AddressSection } from "./sections/AddressSection";
 import { EmergencyContactSection } from "./sections/EmergencyContactSection";
 import { SalarySection } from "./sections/SalarySection";
 import { DocumentUploadSection, DocumentFile } from "./sections/DocumentUploadSection";
+import { RoleSection } from "./sections/RoleSection";
 import BackButton from "@/components/ui/back-button";
 import { UserPlus, Save } from "lucide-react";
 
@@ -61,6 +62,9 @@ const formSchema = z.object({
   transport_allowance: z.number().optional(),
   balance: z.number().optional(),
   notes: z.string().optional(),
+
+  // User Roles
+  user_roles: z.array(z.string()).optional().default([]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -105,6 +109,7 @@ const SimpleEmployeeForm = () => {
       transport_allowance: 0,
       balance: 0,
       notes: "",
+      user_roles: [],
     },
   });
 
@@ -181,6 +186,101 @@ const SimpleEmployeeForm = () => {
         .single();
 
       if (error) throw error;
+
+      // Create user profile with the same email
+      if (newEmployee?.id) {
+        try {
+          // Check if user with this email already exists
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', data.email)
+            .maybeSingle();
+
+          if (!existingProfile) {
+            // Create a new profile for the employee
+            const { data: newProfile, error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                email: data.email,
+                full_name: `${data.first_name} ${data.last_name}`,
+                company_id: profile.company_id,
+                employee_id: newEmployee.id,
+                status: 'active',
+              })
+              .select()
+              .single();
+
+            if (profileError) {
+              console.error("Error creating user profile:", profileError);
+              // Don't throw - employee was created successfully
+              showError("Çalışan oluşturuldu ancak kullanıcı hesabı oluşturulamadı.");
+            } else if (newProfile?.id) {
+              // Update employee with user_id
+              await supabase
+                .from('employees')
+                .update({ user_id: newProfile.id })
+                .eq('id', newEmployee.id);
+
+              // Assign selected roles to the user
+              if (data.user_roles && data.user_roles.length > 0) {
+                const roleInserts = data.user_roles.map(roleName => ({
+                  user_id: newProfile.id,
+                  role: roleName,
+                }));
+
+                const { error: rolesError } = await supabase
+                  .from('user_roles')
+                  .insert(roleInserts);
+
+                if (rolesError) {
+                  console.error("Error assigning roles:", rolesError);
+                  showError("Roller atanırken hata oluştu.");
+                }
+              }
+            }
+          } else {
+            // Update existing profile's employee_id
+            await supabase
+              .from('profiles')
+              .update({ employee_id: newEmployee.id })
+              .eq('id', existingProfile.id);
+
+            // Update employee with user_id
+            await supabase
+              .from('employees')
+              .update({ user_id: existingProfile.id })
+              .eq('id', newEmployee.id);
+
+            // Assign selected roles to the existing user
+            if (data.user_roles && data.user_roles.length > 0) {
+              // First, delete existing roles
+              await supabase
+                .from('user_roles')
+                .delete()
+                .eq('user_id', existingProfile.id);
+
+              // Then insert new roles
+              const roleInserts = data.user_roles.map(roleName => ({
+                user_id: existingProfile.id,
+                role: roleName,
+              }));
+
+              const { error: rolesError } = await supabase
+                .from('user_roles')
+                .insert(roleInserts);
+
+              if (rolesError) {
+                console.error("Error assigning roles:", rolesError);
+                showError("Roller atanırken hata oluştu.");
+              }
+            }
+          }
+        } catch (userError: any) {
+          console.error("Error creating/updating user:", userError);
+          // Don't throw - employee was created successfully
+        }
+      }
 
       // Upload documents if any
       if (documents.length > 0 && newEmployee?.id) {
@@ -326,8 +426,11 @@ const SimpleEmployeeForm = () => {
             </div>
           </div>
 
+          {/* Kullanıcı Yetkileri */}
+          <RoleSection control={form.control} />
+
           {/* Özlük Dosyaları */}
-          <DocumentUploadSection 
+          <DocumentUploadSection
             onDocumentsChange={setDocuments}
           />
         </form>

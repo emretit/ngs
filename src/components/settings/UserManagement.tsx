@@ -6,10 +6,8 @@ import { UserFilterBar } from "./UserFilterBar";
 import { ModernUserList } from "./ModernUserList";
 import { UserManagementHeader } from "./UserManagementHeader";
 import { CompactRoleManagement } from "./CompactRoleManagement";
-import { InviteUserDialog } from "./InviteUserDialog";
 import { UserWithRoles } from "./types";
-import { Button } from "@/components/ui/button";
-import { Shield, Plus, Users } from "lucide-react";
+import { Shield, Users } from "lucide-react";
 
 export const UserManagement = () => {
   const { toast } = useToast();
@@ -247,7 +245,9 @@ export const UserManagement = () => {
                   </p>
                 </div>
               </div>
-              <InviteUserDialog />
+              <div className="text-xs text-muted-foreground bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                Kullanıcılar çalışan eklenirken otomatik oluşturulur
+              </div>
             </div>
 
             {isLoading ? (

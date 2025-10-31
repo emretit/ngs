@@ -19,12 +19,10 @@ import {
 } from "@/components/ui/select";
 import { UserAvatar } from "./components/UserAvatar";
 import { UserActions } from "./components/UserActions";
-import { Mail, Building2, Shield, Users as UsersIcon, UserPlus, Link2, CheckCircle2, Settings } from "lucide-react";
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Mail, Building2, Users as UsersIcon, CheckCircle2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 
 type ModernUserListProps = {
   users: UserWithRoles[];
@@ -34,22 +32,6 @@ type ModernUserListProps = {
 export const ModernUserList = ({ users, isLoading }: ModernUserListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [selectedRole, setSelectedRole] = useState<{ [key: string]: string }>({});
-
-  // Fetch all employees
-  const { data: allEmployees = [] } = useQuery({
-    queryKey: ['employees', 'all'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('id, first_name, last_name, position, department')
-        .order('first_name');
-      
-      if (error) throw error;
-      return data || [];
-    }
-  });
 
   // Update user role
   const updateRoleMutation = useMutation({
@@ -80,39 +62,8 @@ export const ModernUserList = ({ users, isLoading }: ModernUserListProps) => {
     },
   });
 
-  // Update employee matching
-  const updateEmployeeMutation = useMutation({
-    mutationFn: async ({ userId, employeeId }: { userId: string; employeeId: string | null }) => {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ employee_id: employeeId })
-        .eq("id", userId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast({
-        title: "Başarılı",
-        description: "Çalışan eşleştirmesi güncellendi",
-      });
-      setEditingUserId(null);
-    },
-    onError: () => {
-      toast({
-        title: "Hata",
-        description: "Eşleştirme güncellenirken bir hata oluştu",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleRoleChange = (userId: string, role: string) => {
     updateRoleMutation.mutate({ userId, role });
-  };
-
-  const handleEmployeeMatch = (userId: string, employeeId: string) => {
-    updateEmployeeMutation.mutate({ userId, employeeId });
   };
 
   if (isLoading) {
@@ -151,9 +102,8 @@ export const ModernUserList = ({ users, isLoading }: ModernUserListProps) => {
 
   return (
     <div className="divide-y divide-gray-100">
-      {users.map((user, index) => {
+      {users.map((user) => {
         const currentRole = user.user_roles?.[0]?.role || '';
-        const isEditing = editingUserId === user.id;
         
         return (
           <div 
@@ -214,46 +164,20 @@ export const ModernUserList = ({ users, isLoading }: ModernUserListProps) => {
                 </Select>
               </div>
 
-              {/* Employee Match */}
+              {/* Employee Match - Read-only display */}
               <div className="w-[200px]">
-                {isEditing ? (
-                  <div className="flex items-center gap-2">
-                    <EmployeeSelector
-                      value={user.employee_id || ''}
-                      onChange={(employeeId) => handleEmployeeMatch(user.id, employeeId)}
-                      className="h-9 text-xs flex-1 border-gray-200"
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-9 w-9 p-0"
-                      onClick={() => setEditingUserId(null)}
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-2">
-                    {user.employees ? (
-                      <div className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
-                        <span className="truncate text-muted-foreground">
-                          {user.employees.first_name} {user.employees.last_name}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground flex-1">Eşleştirilmedi</span>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => setEditingUserId(user.id)}
-                    >
-                      <Link2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {user.employees ? (
+                    <div className="flex items-center gap-1.5 text-xs flex-1 min-w-0">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                      <span className="truncate text-muted-foreground">
+                        {user.employees.first_name} {user.employees.last_name}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-amber-600 flex-1">Çalışan kaydı yok</span>
+                  )}
+                </div>
               </div>
 
               {/* Actions */}

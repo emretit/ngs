@@ -1,7 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Receipt, FileText, BarChart3, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Receipt, FileText, BarChart3, Plus, TrendingUp } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useSalesInvoices } from "@/hooks/useSalesInvoices";
+import { useIncomingInvoices } from "@/hooks/useIncomingInvoices";
+import { formatCurrency } from "@/utils/formatters";
 
 interface InvoiceManagementProps {
   isCollapsed: boolean;
@@ -9,137 +12,246 @@ interface InvoiceManagementProps {
 }
 
 const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementProps) => {
-  const invoiceModules = [
-    {
-      title: "Satış Faturaları",
-      description: "Müşteri faturalarının yönetimi ve takibi",
-      icon: Receipt,
-      path: "/sales-invoices",
-      color: "from-primary/5 via-primary/10 to-primary/5",
-      iconBg: "bg-primary/10",
-      iconColor: "text-primary"
-    },
-    {
-      title: "Alış Faturaları", 
-      description: "Tedarikçi faturalarının yönetimi ve takibi",
-      icon: Receipt,
-      path: "/purchase-invoices",
-      color: "from-success/5 via-success/10 to-success/5",
-      iconBg: "bg-success/10",
-      iconColor: "text-success"
-    },
-    {
-      title: "E-Fatura Yönetimi",
-      description: "Elektronik fatura entegrasyonu ve işlemleri",
-      icon: FileText,
-      path: "/purchase/e-invoice",
-      color: "from-accent/5 via-accent/10 to-accent/5",
-      iconBg: "bg-accent/10",
-      iconColor: "text-accent"
-    },
-    {
-      title: "Fatura Analizi",
-      description: "Aylık fatura analizleri ve performans raporları",
-      icon: BarChart3,
-      path: "/invoices/analysis",
-      color: "from-warning/5 via-warning/10 to-warning/5",
-      iconBg: "bg-warning/10",
-      iconColor: "text-warning"
-    }
-  ];
+  const navigate = useNavigate();
+  
+  const { invoices: salesInvoices, isLoading: salesLoading } = useSalesInvoices();
+  
+  const getCurrentMonthRange = () => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return {
+      start: startOfMonth.toISOString().split('T')[0],
+      end: endOfMonth.toISOString().split('T')[0]
+    };
+  };
+  
+  const currentMonth = getCurrentMonthRange();
+  const { incomingInvoices, isLoading: incomingLoading } = useIncomingInvoices({ 
+    startDate: currentMonth.start, 
+    endDate: currentMonth.end 
+  });
+
+  // Satış faturaları istatistikleri
+  const totalSalesInvoices = salesInvoices?.length || 0;
+  const pendingSalesInvoices = salesInvoices?.filter(inv => inv.odeme_durumu === 'odenmedi').length || 0;
+  const totalSalesAmount = salesInvoices?.reduce((sum, inv) => sum + (inv.toplam_tutar || 0), 0) || 0;
+  const paidSalesInvoices = salesInvoices?.filter(inv => inv.odeme_durumu === 'odendi').length || 0;
+
+  // E-Fatura istatistikleri
+  const totalIncomingInvoices = incomingInvoices?.length || 0;
+  const totalIncomingAmount = incomingInvoices?.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0) || 0;
 
   return (
-    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-foreground">
-            Fatura Yönetimi
-          </h1>
-          <p className="text-muted-foreground">
-            Tüm fatura işlemlerinizi tek yerden yönetin
-          </p>
+    <>
+      {/* Clean Header Section - CRM gibi */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-r from-primary to-primary/80 rounded-lg text-white shadow-lg">
+              <Receipt className="h-5 w-5" />
+            </div>
+            <div className="space-y-0.5">
+              <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                Fatura Yönetimi
+              </h1>
+              <p className="text-xs text-muted-foreground/70">
+                Tüm fatura işlemlerinizi takip edin ve yönetin
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span>Güncel</span>
+          </div>
         </div>
       </div>
 
-      {/* Main Modules Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        {invoiceModules.map((module) => {
-          const IconComponent = module.icon;
-          return (
-            <Link key={module.path} to={module.path}>
-              <Card className="h-full hover:shadow-xl transition-all duration-300 group cursor-pointer border-0 shadow-md overflow-hidden">
-                <div className={`absolute inset-0 bg-gradient-to-br ${module.color} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                <CardHeader className="relative pb-4">
-                  <div className={`w-14 h-14 rounded-xl ${module.iconBg} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:shadow-lg transition-all duration-300`}>
-                    <IconComponent className={`h-7 w-7 ${module.iconColor}`} />
-                  </div>
-                  <CardTitle className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
-                    {module.title}
-                  </CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    {module.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="relative">
-                  <div className="flex items-center justify-end">
-                    <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                      <ArrowRight className="h-4 w-4" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="mt-12">
-        <h2 className="text-xl font-semibold text-foreground mb-6">Hızlı İşlemler</h2>
+      <div className="space-y-6">
+        {/* Ana Fatura Kartları - CRM Dashboard gibi */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link to="/sales-invoices/create">
-            <Button 
-              variant="outline" 
-              className="w-full h-auto p-4 flex flex-col items-start justify-start hover:shadow-md hover:border-primary transition-all duration-200"
-            >
-              <Receipt className="h-5 w-5 mb-2 text-primary" />
-              <span className="font-medium">Yeni Satış Faturası</span>
-            </Button>
-          </Link>
           
-          <Link to="/purchase-invoices">
-            <Button 
-              variant="outline" 
-              className="w-full h-auto p-4 flex flex-col items-start justify-start hover:shadow-md hover:border-primary transition-all duration-200"
-            >
-              <Receipt className="h-5 w-5 mb-2 text-primary" />
-              <span className="font-medium">Yeni Alış Faturası</span>
-            </Button>
-          </Link>
+          {/* Satış Faturaları Card */}
+          <div 
+            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-blue-200 cursor-pointer"
+            onClick={() => navigate("/sales-invoices")}
+          >
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                    <Receipt className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-gray-900">Satış Faturaları</h2>
+                    <p className="text-xs text-gray-500">Müşteri faturaları</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/sales-invoices/create");
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Summary Content */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Toplam Fatura</span>
+                  <span className="text-sm font-bold text-gray-900">{totalSalesInvoices}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Ödenmemiş</span>
+                  <span className="text-sm font-bold text-orange-600">{pendingSalesInvoices}</span>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Toplam Tutar</span>
+                    <span className="text-sm font-bold text-green-600">{formatCurrency(totalSalesAmount, 'TRY')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <Link to="/purchase/e-invoice">
-            <Button 
-              variant="outline" 
-              className="w-full h-auto p-4 flex flex-col items-start justify-start hover:shadow-md hover:border-primary transition-all duration-200"
-            >
-              <FileText className="h-5 w-5 mb-2 text-primary" />
-              <span className="font-medium">E-Fatura Kontrol</span>
-            </Button>
-          </Link>
+          {/* Alış Faturaları Card */}
+          <div 
+            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-green-200 cursor-pointer"
+            onClick={() => navigate("/purchase-invoices")}
+          >
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg text-green-600">
+                    <Receipt className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-gray-900">Alış Faturaları</h2>
+                    <p className="text-xs text-gray-500">Tedarikçi faturaları</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/purchase-invoices");
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Yeni
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Summary Content */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Bu Ay</span>
+                  <span className="text-sm font-bold text-gray-900">-</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Bekleyen</span>
+                  <span className="text-sm font-bold text-orange-600">-</span>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Toplam</span>
+                    <span className="text-sm font-bold text-gray-600">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <Link to="/invoices/analysis">
-            <Button
-              variant="outline"
-              className="w-full h-auto p-4 flex flex-col items-start justify-start hover:shadow-md hover:border-primary transition-all duration-200"
-            >
-              <BarChart3 className="h-5 w-5 mb-2 text-primary" />
-              <span className="font-medium">Fatura Analizi</span>
-            </Button>
-          </Link>
+          {/* E-Fatura Card */}
+          <div 
+            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200 cursor-pointer"
+            onClick={() => navigate("/purchase/e-invoice")}
+          >
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-gray-900">E-Fatura</h2>
+                    <p className="text-xs text-gray-500">Gelen e-faturalar</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Summary Content */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Bu Ay</span>
+                  <span className="text-sm font-bold text-gray-900">{totalIncomingInvoices}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">İşlenmemiş</span>
+                  <span className="text-sm font-bold text-orange-600">-</span>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Toplam Tutar</span>
+                    <span className="text-sm font-bold text-purple-600">{formatCurrency(totalIncomingAmount, 'TRY')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Fatura Analizi Card */}
+          <div 
+            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-orange-200 cursor-pointer"
+            onClick={() => navigate("/invoices/analysis")}
+          >
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
+                    <BarChart3 className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-gray-900">Fatura Analizi</h2>
+                    <p className="text-xs text-gray-500">Aylık raporlar</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Summary Content */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Kayıtlı Aylar</span>
+                  <span className="text-sm font-bold text-gray-900">-</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Ortalama</span>
+                  <span className="text-sm font-bold text-green-600">-</span>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3 text-green-600" />
+                    <span className="text-xs text-gray-600">Analiz Hazır</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

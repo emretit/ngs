@@ -40,29 +40,13 @@ const OrdersList = ({ isCollapsed, setIsCollapsed }: OrdersListProps) => {
           setSelectedCustomer={setSelectedCustomer}
         />
         {/* Content */}
-        {activeView === "table" ? (
-          <OrdersContent
-            searchQuery={searchQuery}
-            selectedStatus={selectedStatus}
-            selectedCustomer={selectedCustomer}
-            onSelectOrder={handleSelectOrder}
-            activeView={activeView}
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 bg-gradient-to-br from-card via-muted/20 to-background rounded-2xl shadow-2xl border border-border/10">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                <span className="text-2xl">🚧</span>
-              </div>
-              <h3 className="text-lg font-semibold text-muted-foreground">
-                Bu görünüm yakında gelecek
-              </h3>
-              <p className="text-muted-foreground">
-                {activeView} görünümü henüz hazır değil.
-              </p>
-            </div>
-          </div>
-        )}
+        <OrdersContent
+          searchQuery={searchQuery}
+          selectedStatus={selectedStatus}
+          selectedCustomer={selectedCustomer}
+          onSelectOrder={handleSelectOrder}
+          activeView={activeView}
+        />
       </div>
   );
 };

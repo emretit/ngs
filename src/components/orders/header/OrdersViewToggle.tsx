@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, List } from "lucide-react";
+import { Columns, List } from "lucide-react";
 
-export type ViewType = "table" | "cards";
+export type ViewType = "table" | "kanban";
 
 interface OrdersViewToggleProps {
   activeView: ViewType;
@@ -23,13 +23,13 @@ const OrdersViewToggle = ({ activeView, setActiveView }: OrdersViewToggleProps) 
       </Button>
       <Button
         type="button"
-        variant={activeView === "cards" ? "default" : "ghost"}
+        variant={activeView === "kanban" ? "default" : "ghost"}
         size="sm"
         className="rounded-none"
-        onClick={() => setActiveView("cards")}
+        onClick={() => setActiveView("kanban")}
       >
-        <LayoutGrid className="h-4 w-4 mr-2" />
-        Kartlar
+        <Columns className="h-4 w-4 mr-2" />
+        Kanban
       </Button>
     </div>
   );

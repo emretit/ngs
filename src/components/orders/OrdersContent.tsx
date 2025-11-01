@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OrdersTable from "./OrdersTable";
+import OrdersKanbanBoard from "./kanban/OrdersKanbanBoard";
 import { ViewType } from "./header/OrdersViewToggle";
 import { useOrders } from "@/hooks/useOrders";
-import { Order } from "@/types/orders";
+import { Order, OrderStatus } from "@/types/orders";
 
 interface OrdersContentProps {
   searchQuery: string;
@@ -21,7 +22,7 @@ const OrdersContent = ({
   activeView
 }: OrdersContentProps) => {
   const navigate = useNavigate();
-  const { orders, isLoading, error, filters, setFilters } = useOrders();
+  const { orders, isLoading, error, filters, setFilters, updateStatusMutation } = useOrders();
 
   // Local filters'ı hook filters ile senkronize et
   const handleFilterChange = (key: string, value: string) => {
@@ -80,6 +81,15 @@ const OrdersContent = ({
     console.log("Print order:", order);
   };
 
+  const handleUpdateOrderStatus = async (id: string, status: OrderStatus) => {
+    try {
+      await updateStatusMutation.mutateAsync({ id, status });
+    } catch (error) {
+      console.error("Sipariş durumu güncellenirken hata:", error);
+      throw error;
+    }
+  };
+
   if (error) {
     return (
       <div className="text-center p-8 text-red-600">
@@ -113,9 +123,16 @@ const OrdersContent = ({
             onPrintOrder={handlePrintOrder}
           />
         ) : (
-          <div className="text-center p-8 text-muted-foreground">
-            <p>Kart görünümü yakında eklenecek...</p>
-          </div>
+          <OrdersKanbanBoard
+            orders={orders}
+            onOrderClick={handleSelectOrder}
+            onEdit={handleEditOrder}
+            onDelete={handleDeleteOrder}
+            onConvertToInvoice={handleConvertToInvoice}
+            onConvertToService={handleConvertToService}
+            onPrint={handlePrintOrder}
+            onUpdateOrderStatus={handleUpdateOrderStatus}
+          />
         )}
       </div>
     </div>

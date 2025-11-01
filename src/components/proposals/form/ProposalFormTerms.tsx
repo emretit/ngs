@@ -20,6 +20,8 @@ interface ProposalTermsProps {
   priceTerms?: string;
   otherTerms?: string;
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  showOnlyPayment?: boolean; // Sadece ödeme şartları dropdown'unu göster
+  showOnlyLabel?: boolean; // Sadece label göster, açıklamayı gösterme (SelectTrigger'da)
 }
 
 interface Term {
@@ -60,7 +62,9 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   warrantyTerms,
   priceTerms,
   otherTerms,
-  onInputChange
+  onInputChange,
+  showOnlyPayment = false,
+  showOnlyLabel = false
 }) => {
   // State to hold all available terms (predefined + custom from DB)
   const [availableTerms, setAvailableTerms] = useState<{[key: string]: Term[]}>({
@@ -281,13 +285,17 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     return matchingTerm?.id || '';
   };
 
-  const renderDropdown = (category: 'payment' | 'delivery' | 'warranty' | 'price', title: string, placeholder: string) => (
+  const renderDropdown = (category: 'payment' | 'delivery' | 'warranty' | 'price', title: string, placeholder: string) => {
+    const currentValue = getCurrentValue(category);
+    const selectedTerm = currentValue ? availableTerms[category].find(t => t.id === currentValue) : null;
+    
+    return (
     <div className="space-y-2">
       <Label className="text-xs font-medium text-gray-700">{title}</Label>
       
       {/* Dropdown for predefined terms */}
       <Select 
-        value={getCurrentValue(category)}
+        value={currentValue}
         onValueChange={(value) => {
           if (value === 'add_custom') {
             setCurrentCategory(category);
@@ -297,8 +305,12 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           }
         }}
       >
-        <SelectTrigger className="w-full h-14 text-xs bg-background border-border hover:border-primary transition-colors">
-          <SelectValue placeholder={placeholder} />
+        <SelectTrigger className={`w-full ${showOnlyLabel ? 'h-7' : 'h-14'} text-xs bg-background border-border hover:border-primary transition-colors`}>
+          {showOnlyLabel && selectedTerm ? (
+            <span>{selectedTerm.label}</span>
+          ) : (
+            <SelectValue placeholder={placeholder} />
+          )}
         </SelectTrigger>
         <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
           {availableTerms[category].map((term) => (
@@ -344,44 +356,53 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
       </Select>
     </div>
   );
+  };
 
   return (
     <div className="space-y-6">
       <CardContent className="p-0 space-y-6">
         {/* Predefined Terms Selection */}
-        <div className="space-y-4">
-          {/* İlk satır */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {showOnlyPayment ? (
+          <div className="space-y-4">
             {renderDropdown('payment', 'Ödeme Şartları', 'Ödeme koşulu seçin')}
-            {renderDropdown('delivery', 'Teslimat', 'Teslimat koşulu seçin')}
           </div>
-          
-          {/* İkinci satır */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {renderDropdown('warranty', 'Garanti Şartları', 'Garanti koşulu seçin')}
-            {renderDropdown('price', 'Fiyat', 'Fiyat koşulu seçin')}
+        ) : (
+          <div className="space-y-4">
+            {/* İlk satır */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {renderDropdown('payment', 'Ödeme Şartları', 'Ödeme koşulu seçin')}
+              {renderDropdown('delivery', 'Teslimat', 'Teslimat koşulu seçin')}
+            </div>
+            
+            {/* İkinci satır */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {renderDropdown('warranty', 'Garanti Şartları', 'Garanti koşulu seçin')}
+              {renderDropdown('price', 'Fiyat', 'Fiyat koşulu seçin')}
+            </div>
           </div>
-        </div>
+        )}
 
 
         {/* Other Terms Input */}
-        <div className="space-y-2">
-          <Label htmlFor="other_terms" className="text-xs font-medium text-gray-700">Diğer Şartlar</Label>
-          <Textarea
-            id="other_terms"
-            name="other_terms"
-            value={otherTerms || ""}
-            onChange={(e) => {
-              console.log('🔍 ProposalFormTerms - Other Terms onChange:', {
-                name: e.target.name,
-                value: e.target.value
-              });
-              onInputChange(e);
-            }}
-            placeholder="Ekstra şartlar ve notlar buraya yazılabilir"
-            className="h-7 text-xs"
-          />
-        </div>
+        {!showOnlyPayment && (
+          <div className="space-y-2">
+            <Label htmlFor="other_terms" className="text-xs font-medium text-gray-700">Diğer Şartlar</Label>
+            <Textarea
+              id="other_terms"
+              name="other_terms"
+              value={otherTerms || ""}
+              onChange={(e) => {
+                console.log('🔍 ProposalFormTerms - Other Terms onChange:', {
+                  name: e.target.name,
+                  value: e.target.value
+                });
+                onInputChange(e);
+              }}
+              placeholder="Ekstra şartlar ve notlar buraya yazılabilir"
+              className="h-7 text-xs"
+            />
+          </div>
+        )}
       </CardContent>
 
       {/* Add Term Dialog */}

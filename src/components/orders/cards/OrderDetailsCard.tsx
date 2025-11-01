@@ -64,31 +64,6 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 pt-0 px-3 pb-3">
-        {/* Tahmini Teslimat ve Evrak No */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <Label htmlFor="expected_delivery_date" className="text-xs font-medium text-gray-700">
-              Tahmini Teslimat
-            </Label>
-            <DatePicker
-              date={formData.expected_delivery_date}
-              onSelect={(date) => handleFieldChange('expected_delivery_date', date)}
-              placeholder="Tahmini teslimat"
-              className="h-7 text-xs"
-            />
-          </div>
-          <div>
-            <Label htmlFor="document_number" className="text-xs font-medium text-gray-700">Evrak No</Label>
-            <Input
-              id="document_number"
-              value={formData.document_number || ""}
-              onChange={(e) => handleFieldChange('document_number', e.target.value)}
-              placeholder="Evrak no girin"
-              className="mt-1 h-7 text-xs"
-            />
-          </div>
-        </div>
-
         {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
         {formData.currency && formData.currency !== "TRY" && (
           <div>
@@ -110,41 +85,6 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
             </p>
           </div>
         )}
-
-        {/* Ödeme Şekli */}
-        <div>
-          <Label htmlFor="payment_method" className="text-xs font-medium text-gray-700">Ödeme Şekli</Label>
-          <Textarea
-            id="payment_method"
-            value={formData.payment_method || ""}
-            onChange={(e) => handleFieldChange('payment_method', e.target.value)}
-            placeholder="Ödeme şeklini yazın..."
-            className="mt-1 h-12 text-xs resize-none"
-          />
-        </div>
-
-        {/* Fatura Bilgileri */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <Label htmlFor="invoice_number" className="text-xs font-medium text-gray-700">Fatura No</Label>
-            <Input
-              id="invoice_number"
-              value={formData.invoice_number || ""}
-              onChange={(e) => handleFieldChange('invoice_number', e.target.value)}
-              placeholder="Fatura numarası"
-              className="mt-1 h-7 text-xs"
-            />
-          </div>
-          <div>
-            <Label htmlFor="invoice_date" className="text-xs font-medium text-gray-700">Fatura Tarihi</Label>
-            <DatePicker
-              date={formData.invoice_date}
-              onSelect={(date) => handleFieldChange('invoice_date', date)}
-              placeholder="Fatura tarihi seçin"
-              className="h-7 text-xs"
-            />
-          </div>
-        </div>
 
         {/* Durum Checkboxları */}
         <div className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg border border-gray-200">

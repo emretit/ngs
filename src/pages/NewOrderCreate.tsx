@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
 import ProposalPreviewModal from "@/components/proposals/form/ProposalPreviewModal";
 import OrderCustomerInfoCard from "@/components/orders/cards/OrderCustomerInfoCard";
-import OrderDetailsCard from "@/components/orders/cards/OrderDetailsCard";
 import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
 import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
@@ -648,22 +647,12 @@ const NewOrderCreate = () => {
 
       {/* Main Content */}
       <div className="space-y-3">
-        {/* Top Row - Customer & Order Details */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-          {/* Customer & Delivery Information */}
-          <OrderCustomerInfoCard
-            formData={formData}
-            handleFieldChange={handleFieldChange}
-            errors={{}}
-          />
-
-          {/* Order Details */}
-          <OrderDetailsCard
-            formData={formData}
-            handleFieldChange={handleFieldChange}
-            errors={{}}
-          />
-        </div>
+        {/* Customer & Delivery Information - Yan yana */}
+        <OrderCustomerInfoCard
+          formData={formData}
+          handleFieldChange={handleFieldChange}
+          errors={{}}
+        />
 
         {/* Products/Services Table - Full Width */}
         <ProductServiceCard

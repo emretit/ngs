@@ -16,7 +16,7 @@ const OrdersList = ({ isCollapsed, setIsCollapsed }: OrdersListProps) => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedCustomer, setSelectedCustomer] = useState("all");
   const handleCreateOrder = () => {
-    navigate("/orders/create");
+    navigate("/orders/new");
   };
   const handleSelectOrder = (order: Order) => {
     // TODO: Navigate to order detail page

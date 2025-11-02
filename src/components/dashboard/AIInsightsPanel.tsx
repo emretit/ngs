@@ -44,8 +44,9 @@ export const AIInsightsPanel = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => generateInsight(30)}
+                onClick={(e) => generateInsight({ periodDays: 30, forceRefresh: e.shiftKey })}
                 disabled={isGenerating || isLoading}
+                title={latestInsight ? "Normal: Bugünkü cache / Shift+Tıkla: Yeniden oluştur" : "İçgörü oluştur"}
               >
                 <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
               </Button>
@@ -118,7 +119,7 @@ export const AIInsightsPanel = () => {
                 </p>
               </div>
               <Button
-                onClick={() => generateInsight(30)}
+                onClick={(e) => generateInsight({ periodDays: 30, forceRefresh: e.shiftKey })}
                 disabled={isGenerating}
                 className="gap-2"
               >

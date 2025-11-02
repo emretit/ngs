@@ -36,7 +36,7 @@ export const useAIInsights = () => {
       return data as AIInsight | null;
     },
     enabled: !!userData?.company_id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours - daily cache
   });
 
   // Fetch insight history
@@ -56,14 +56,14 @@ export const useAIInsights = () => {
       return data as AIInsight[];
     },
     enabled: !!userData?.company_id,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours - daily cache
   });
 
   // Generate new insight
   const generateMutation = useMutation({
-    mutationFn: async (periodDays: number = 30) => {
+    mutationFn: async ({ periodDays = 30, forceRefresh = false }: { periodDays?: number; forceRefresh?: boolean }) => {
       const { data, error } = await supabase.functions.invoke('generate-insights', {
-        body: { period_days: periodDays }
+        body: { period_days: periodDays, force_refresh: forceRefresh }
       });
 
       if (error) throw error;
@@ -82,10 +82,15 @@ export const useAIInsights = () => {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Invalidate and refetch insights
       queryClient.invalidateQueries({ queryKey: ['ai-insights'] });
-      showSuccess('Yeni içgörü oluşturuldu');
+      
+      if (data?.cached) {
+        showSuccess('Bugünkü içgörü yüklendi (Cache)');
+      } else {
+        showSuccess('Yeni içgörü oluşturuldu');
+      }
     },
     onError: (error: Error) => {
       console.error('Error generating insight:', error);

@@ -63,7 +63,7 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
   };
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-2">
         <TasksPageHeader 
           onCreateTask={handleAddTask} 
           activeView={activeView}

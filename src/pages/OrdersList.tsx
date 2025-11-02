@@ -23,7 +23,7 @@ const OrdersList = ({ isCollapsed, setIsCollapsed }: OrdersListProps) => {
     navigate(`/orders/${order.id}`);
   };
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
         {/* Header */}
         <OrdersPageHeader
           onCreateOrder={handleCreateOrder}

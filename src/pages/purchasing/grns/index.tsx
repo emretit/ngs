@@ -47,7 +47,7 @@ export default function GRNsList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Mal Kabul Notları (GRN)</h1>
+          <h1 className="text-3xl font-bold">Mal Kabul Notları</h1>
           <p className="text-muted-foreground">Teslim alınan malları kaydedin</p>
         </div>
         <Button onClick={() => navigate("/purchase-orders")}>

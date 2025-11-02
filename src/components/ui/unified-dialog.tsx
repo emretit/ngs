@@ -60,13 +60,13 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className={cn(
-        "bg-white rounded-xl shadow-2xl w-full mx-auto max-h-[95vh] overflow-hidden",
+        "bg-white rounded-xl shadow-2xl w-full mx-auto max-h-[95vh] flex flex-col overflow-hidden",
         maxWidthClasses[maxWidth],
         className
       )}>
         {/* Header */}
         <div className={cn(
-          "flex items-center justify-between p-4 border-b bg-gradient-to-r",
+          "flex items-center justify-between p-4 border-b bg-gradient-to-r flex-shrink-0",
           headerColorClasses[headerColor]
         )}>
           <div className="flex items-center space-x-2">
@@ -85,8 +85,8 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-4">
+        {/* Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto scrollbar-hide p-3">
           {children}
         </div>
       </div>
@@ -105,7 +105,7 @@ export const UnifiedDialogFooter: React.FC<UnifiedDialogFooterProps> = ({
   className
 }) => {
   return (
-    <div className={cn("flex justify-end space-x-2 pt-4 border-t", className)}>
+    <div className={cn("flex justify-end space-x-2 pt-3 border-t flex-shrink-0 mt-auto", className)}>
       {children}
     </div>
   );

@@ -9,7 +9,6 @@ import OpportunityFilterBar from "@/components/opportunities/OpportunityFilterBa
 import { OpportunityDetailSheet } from "@/components/crm/OpportunityDetailSheet";
 import OpportunityBulkActions from "@/components/opportunities/OpportunityBulkActions";
 import OpportunitiesContent from "@/components/opportunities/OpportunitiesContent";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
@@ -187,38 +186,33 @@ const Opportunities = () => {
           <div className="h-96 flex items-center justify-center">
             <div className="text-red-500">Fırsatlar yüklenirken bir hata oluştu</div>
           </div>
+        ) : activeView === "kanban" ? (
+          <OpportunityKanbanBoard
+            opportunities={groupedOpportunities}
+            onDragEnd={handleDragEnd}
+            onOpportunityClick={handleOpportunityClick}
+            onOpportunitySelect={handleOpportunitySelect}
+            selectedOpportunities={selectedOpportunities}
+            onUpdateOpportunityStatus={handleUpdateOpportunityStatus}
+            onEdit={handleEditOpportunity}
+            onDelete={handleDeleteOpportunityClick}
+            onConvertToProposal={handleConvertToProposal}
+            onPlanMeeting={handlePlanMeeting}
+          />
         ) : (
-          <Tabs value={activeView} className="w-full">
-            <TabsContent value="kanban" className="mt-0">
-              <OpportunityKanbanBoard
-                opportunities={groupedOpportunities}
-                onDragEnd={handleDragEnd}
-                onOpportunityClick={handleOpportunityClick}
-                onOpportunitySelect={handleOpportunitySelect}
-                selectedOpportunities={selectedOpportunities}
-                onUpdateOpportunityStatus={handleUpdateOpportunityStatus}
-                onEdit={handleEditOpportunity}
-                onDelete={handleDeleteOpportunityClick}
-                onConvertToProposal={handleConvertToProposal}
-                onPlanMeeting={handlePlanMeeting}
-              />
-            </TabsContent>
-            <TabsContent value="list" className="mt-0">
-              <OpportunitiesContent
-                opportunities={(opportunitiesData as Opportunity[]) || []}
-                isLoading={isLoading}
-                isLoadingMore={isLoadingMore}
-                hasNextPage={hasNextPage}
-                loadMore={loadMore}
-                totalCount={totalCount}
-                error={error}
-                onSelectOpportunity={handleOpportunityClick}
-                searchQuery={filterKeyword}
-                statusFilter={statusFilter}
-                priorityFilter={priorityFilter}
-              />
-            </TabsContent>
-          </Tabs>
+          <OpportunitiesContent
+            opportunities={(opportunitiesData as Opportunity[]) || []}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasNextPage={hasNextPage}
+            loadMore={loadMore}
+            totalCount={totalCount}
+            error={error}
+            onSelectOpportunity={handleOpportunityClick}
+            searchQuery={filterKeyword}
+            statusFilter={statusFilter}
+            priorityFilter={priorityFilter}
+          />
         )}
       </div>
       {selectedOpportunity && (

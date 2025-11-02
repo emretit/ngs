@@ -26,22 +26,21 @@ const ProposalTableHeader: React.FC<ProposalTableHeaderProps> = ({
   const renderSortableHeader = (label: string, field: ProposalSortField, className?: string) => (
     <TableHead
       className={cn(
-        "cursor-pointer hover:bg-muted/50 h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide",
+        "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
+        "cursor-pointer hover:bg-slate-200",
         className
       )}
       onClick={() => handleSort(field)}
     >
-      <div className="flex items-center">
-        <span>
-          {field === 'number' && '📄 '}
-          {field === 'customer_name' && '🏢 '}
-          {field === 'status' && '📊 '}
-          {field === 'total_amount' && '💰 '}
-          {field === 'employee_name' && '👤 '}
-          {field === 'created_at' && '📅 '}
-          {field === 'valid_until' && '⏰ '}
-          {label}
-        </span>
+      <div className="flex items-center gap-1">
+        {field === 'number' && <span className="text-lg mr-2">📄</span>}
+        {field === 'customer_name' && <span className="text-lg mr-2">🏢</span>}
+        {field === 'status' && <span className="text-lg mr-2">📊</span>}
+        {field === 'total_amount' && <span className="text-lg mr-2">💰</span>}
+        {field === 'employee_name' && <span className="text-lg mr-2">👤</span>}
+        {field === 'created_at' && <span className="text-lg mr-2">📅</span>}
+        {field === 'valid_until' && <span className="text-lg mr-2">⏰</span>}
+        <span>{label}</span>
         {getSortIcon(field)}
       </div>
     </TableHead>
@@ -49,15 +48,20 @@ const ProposalTableHeader: React.FC<ProposalTableHeaderProps> = ({
 
   return (
     <TableHeader>
-      <TableRow className="bg-gray-50 border-b">
-        {renderSortableHeader("Teklif No", "number", "w-[15%]")}
-        {renderSortableHeader("Müşteri Bilgileri", "customer_name", "w-[20%]")}
-        {renderSortableHeader("Durum", "status", "w-[10%] text-center")}
-        {renderSortableHeader("Satış Temsilcisi", "employee_name", "w-[15%]")}
-        {renderSortableHeader("Toplam Tutar", "total_amount", "w-[12%] text-center")}
-        {renderSortableHeader("Oluşturma Tarihi", "created_at", "w-[10%] text-center")}
-        {renderSortableHeader("Geçerlilik", "valid_until", "w-[10%] text-center")}
-        <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
+      <TableRow className="bg-slate-100 border-b border-slate-200">
+        {renderSortableHeader("Teklif No", "number")}
+        {renderSortableHeader("Müşteri Bilgileri", "customer_name")}
+        {renderSortableHeader("Durum", "status", "text-center")}
+        {renderSortableHeader("Satış Temsilcisi", "employee_name")}
+        {renderSortableHeader("Toplam Tutar", "total_amount", "text-center")}
+        {renderSortableHeader("Oluşturma Tarihi", "created_at", "text-center")}
+        {renderSortableHeader("Geçerlilik", "valid_until", "text-center")}
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">
+          <div className="flex items-center justify-end gap-1">
+            <span className="text-lg mr-2">⚙️</span>
+            <span>İşlemler</span>
+          </div>
+        </TableHead>
       </TableRow>
     </TableHeader>
   );

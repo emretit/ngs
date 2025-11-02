@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,14 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCustomerSelect } from "@/hooks/useCustomerSelect";
-import { useEmployeeNames } from "@/hooks/useEmployeeNames";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Building, User, Mail, Phone, Plus, X, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { Card, CardContent } from "@/components/ui/card";
+import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
+import CustomerSelector from "@/components/proposals/form/CustomerSelector";
 
 interface OpportunityFormProps {
   isOpen: boolean;
@@ -25,10 +23,7 @@ interface OpportunityFormProps {
 const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { customers, isLoading: customersLoading } = useCustomerSelect();
-  const { employees, isLoading: employeesLoading } = useEmployeeNames();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [customerPopoverOpen, setCustomerPopoverOpen] = useState(false);
   
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -48,16 +43,6 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
     description: ""
   });
 
-  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
-  const [newCustomerData, setNewCustomerData] = useState({
-    company: "",
-    name: "",
-    email: "",
-    phone: "",
-    city: "",
-    address: ""
-  });
-  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
   const [opportunityTypes, setOpportunityTypes] = useState<Array<{id: number, name: string, display_name: string}>>([]);
   const [editingType, setEditingType] = useState<{id: number, name: string, display_name: string} | null>(null);
   const [newTypeName, setNewTypeName] = useState("");
@@ -92,6 +77,10 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
 
   const handleEmployeeChange = (value: string) => {
     setFormData(prev => ({ ...prev, employee_id: value }));
+  };
+
+  const handleCustomerChange = (customerId: string, customerName: string, companyName: string) => {
+    setFormData(prev => ({ ...prev, customer_id: customerId }));
   };
 
   // Fırsat tipi yönetimi
@@ -214,84 +203,6 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
     setOpportunityTypeToDelete(null);
   };
 
-  const handleCustomerSelect = (customerId: string) => {
-    setFormData(prev => ({ ...prev, customer_id: customerId }));
-    setCustomerPopoverOpen(false);
-    setShowNewCustomerForm(false);
-  };
-
-  const selectedCustomer = customers?.find(customer => customer.id === formData.customer_id);
-
-  const handleNewCustomerSubmit = async () => {
-    
-    if (!newCustomerData.company.trim() || !newCustomerData.name.trim()) {
-      toast({
-        title: "Hata",
-        description: "Şirket adı ve iletişim kişisi zorunludur",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsCreatingCustomer(true);
-    
-    try {
-      const { data: newCustomer, error } = await supabase
-        .from("customers")
-                     .insert({
-               company: newCustomerData.company,
-               name: newCustomerData.name,
-               email: newCustomerData.email || null,
-               mobile_phone: newCustomerData.phone || null,
-               city: newCustomerData.city || null,
-               address: newCustomerData.address || null,
-               type: "kurumsal",
-               status: "potansiyel", // Potansiyel müşteri olarak ekle
-               balance: 0
-             })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Yeni müşteriyi seç
-      setFormData(prev => ({ ...prev, customer_id: newCustomer.id }));
-      setShowNewCustomerForm(false);
-      setCustomerPopoverOpen(false);
-      
-      // Form'u temizle
-      setNewCustomerData({
-        company: "",
-        name: "",
-        email: "",
-        phone: "",
-        city: "",
-        address: ""
-      });
-
-      // Customers listesini yenile
-      queryClient.invalidateQueries({ queryKey: ["customers-select"] });
-      
-      toast({
-        title: "Başarılı",
-        description: "Yeni müşteri eklendi ve seçildi",
-      });
-    } catch (error) {
-      console.error("Error creating customer:", error);
-      toast({
-        title: "Hata",
-        description: "Müşteri oluşturulurken bir hata oluştu",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingCustomer(false);
-    }
-  };
-
-  const handleNewCustomerChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewCustomerData(prev => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -337,27 +248,17 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       });
 
       // Reset form and close
-              setFormData({
-          title: "",
-          customer_id: "",
-          employee_id: "",
-          value: "",
-          currency: "TRY",
-          status: "new",
-          priority: "medium",
-          opportunity_type: opportunityTypes.length > 0 ? opportunityTypes[0].name : "general",
-          expected_close_date: "",
-          description: ""
-        });
-      setCustomerPopoverOpen(false);
-      setShowNewCustomerForm(false);
-      setNewCustomerData({
-        company: "",
-        name: "",
-        email: "",
-        phone: "",
-        city: "",
-        address: ""
+      setFormData({
+        title: "",
+        customer_id: "",
+        employee_id: "",
+        value: "",
+        currency: "TRY",
+        status: "new",
+        priority: "medium",
+        opportunity_type: opportunityTypes.length > 0 ? opportunityTypes[0].name : "general",
+        expected_close_date: "",
+        description: ""
       });
       onClose();
     } catch (error) {
@@ -377,213 +278,68 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       isOpen={isOpen}
       onClose={onClose}
       title="Yeni Fırsat Ekle"
-      maxWidth="xl"
+      maxWidth="lg"
       headerColor="blue"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Fırsat Başlığı</Label>
-            <Input 
-              id="title" 
-              name="title" 
-              value={formData.title} 
-              onChange={handleChange} 
-              required 
-            />
+      <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
+          <div className="space-y-3">
+          {/* Başlık ve Açıklama */}
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="title" className="text-sm font-medium text-gray-700">Fırsat Başlığı *</Label>
+              <Input 
+                id="title" 
+                name="title" 
+                value={formData.title} 
+                onChange={handleChange} 
+                placeholder="Fırsat başlığını girin"
+                className="h-8"
+                required 
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <Label htmlFor="description" className="text-sm font-medium text-gray-700">Açıklama</Label>
+              <Textarea 
+                id="description" 
+                name="description" 
+                value={formData.description} 
+                onChange={handleChange} 
+                placeholder="Fırsat detaylarını girin"
+                rows={2}
+                className="resize-none h-8"
+              />
+            </div>
           </div>
-          
-          <div>
-            <Label htmlFor="customer_id">Müşteri</Label>
-            <Popover open={customerPopoverOpen} onOpenChange={setCustomerPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={customerPopoverOpen}
-                  className={cn(
-                    "w-full justify-between",
-                    !formData.customer_id && "text-muted-foreground"
-                  )}
-                  disabled={customersLoading}
-                >
-                  {selectedCustomer
-                    ? selectedCustomer.company 
-                      ? `${selectedCustomer.name} (${selectedCustomer.company})`
-                      : selectedCustomer.name
-                    : "Müşteri ara..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Müşteri ara..." />
-                  
-                  {/* Yeni Müşteri Ekle Bölümü - En Üstte */}
-                  <div className="border-b pb-2">
-                    {!showNewCustomerForm ? (
-                      <CommandItem
-                        onSelect={() => setShowNewCustomerForm(true)}
-                        className="hover:bg-muted/50 transition-colors cursor-pointer text-primary"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        <span className="font-medium">Yeni Müşteri Ekle</span>
-                      </CommandItem>
-                    ) : (
-                      <div className="p-3 bg-muted/30 rounded-md space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium">Yeni Müşteri Bilgileri</h4>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowNewCustomerForm(false)}
-                            className="h-6 w-6 p-0"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label htmlFor="company" className="text-xs">Şirket Adı *</Label>
-                              <Input
-                                id="company"
-                                name="company"
-                                value={newCustomerData.company}
-                                onChange={handleNewCustomerChange}
-                                placeholder="Şirket adı"
-                                className="h-8 text-xs"
-                                required
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="name" className="text-xs">İletişim Kişisi *</Label>
-                              <Input
-                                id="name"
-                                name="name"
-                                value={newCustomerData.name}
-                                onChange={handleNewCustomerChange}
-                                placeholder="Ad soyad"
-                                className="h-8 text-xs"
-                                required
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label htmlFor="email" className="text-xs">Email</Label>
-                              <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={newCustomerData.email}
-                                onChange={handleNewCustomerChange}
-                                placeholder="email@example.com"
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="phone" className="text-xs">Telefon</Label>
-                              <Input
-                                id="phone"
-                                name="phone"
-                                value={newCustomerData.phone}
-                                onChange={handleNewCustomerChange}
-                                placeholder="05xx xxx xx xx"
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label htmlFor="city" className="text-xs">Şehir</Label>
-                              <Input
-                                id="city"
-                                name="city"
-                                value={newCustomerData.city}
-                                onChange={handleNewCustomerChange}
-                                placeholder="İstanbul"
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="address" className="text-xs">Adres</Label>
-                              <Input
-                                id="address"
-                                name="address"
-                                value={newCustomerData.address}
-                                onChange={handleNewCustomerChange}
-                                placeholder="Kısa adres"
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="flex gap-2 pt-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={isCreatingCustomer}
-                              className="flex-1 h-8 text-xs"
-                              onClick={handleNewCustomerSubmit}
-                            >
-                              {isCreatingCustomer ? "Ekleniyor..." : "Kaydet"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setShowNewCustomerForm(false)}
-                              className="h-8 text-xs"
-                            >
-                              İptal
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <CommandList>
-                    <CommandEmpty>Müşteri bulunamadı.</CommandEmpty>
-                    <CommandGroup>
-                      {customers?.map((customer) => (
-                        <CommandItem
-                          key={customer.id}
-                          value={`${customer.name} ${customer.company || ''}`}
-                          onSelect={() => handleCustomerSelect(customer.id)}
-                          data-selected={formData.customer_id === customer.id}
-                          className="hover:bg-muted/50 data-[selected=true]:bg-accent/10 data-[selected=true]:text-accent-foreground transition-colors cursor-pointer"
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              formData.customer_id === customer.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-medium">{customer.name}</span>
-                            {customer.company && (
-                              <span className="text-sm text-muted-foreground">{customer.company}</span>
-                            )}
-                            {customer.email && (
-                              <span className="text-xs text-muted-foreground">{customer.email}</span>
-                            )}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-          
+
+          {/* Müşteri ve Sorumlu Kişi */}
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor="value">Tahmini Değer</Label>
+            <div className="space-y-1">
+              <CustomerSelector
+                value={formData.customer_id}
+                onChange={handleCustomerChange}
+                error=""
+              />
+            </div>
+            
+            <div className="space-y-1">
+              <EmployeeSelector
+                value={formData.employee_id}
+                onChange={handleEmployeeChange}
+                label="Sorumlu Kişi"
+                placeholder="Sorumlu kişi seçin..."
+                searchPlaceholder="Çalışan ara..."
+                noResultsText="Çalışan bulunamadı"
+                showLabel={true}
+              />
+            </div>
+          </div>
+
+          {/* Değer ve Para Birimi */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="value" className="text-sm font-medium text-gray-700">Tahmini Değer</Label>
               <Input 
                 id="value" 
                 name="value" 
@@ -592,15 +348,16 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                 value={formData.value} 
                 onChange={handleChange} 
                 placeholder="0.00"
+                className="h-8"
               />
             </div>
-            <div>
-              <Label htmlFor="currency">Para Birimi</Label>
+            <div className="space-y-1">
+              <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
               <Select 
                 value={formData.currency} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}
               >
-                <SelectTrigger id="currency">
+                <SelectTrigger id="currency" className="h-8">
                   <SelectValue placeholder="Para birimi seçin" />
                 </SelectTrigger>
                 <SelectContent>
@@ -613,14 +370,15 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
             </div>
           </div>
           
+          {/* Öncelik ve Fırsat Tipi */}
           <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor="priority">Öncelik</Label>
+            <div className="space-y-1">
+              <Label htmlFor="priority" className="text-sm font-medium text-gray-700">Öncelik</Label>
               <Select 
                 value={formData.priority} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
               >
-                <SelectTrigger id="priority">
+                <SelectTrigger id="priority" className="h-8">
                   <SelectValue placeholder="Öncelik seçin" />
                 </SelectTrigger>
                 <SelectContent>
@@ -631,8 +389,8 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="opportunity_type">Fırsat Tipi</Label>
+            <div className="space-y-1">
+              <Label htmlFor="opportunity_type" className="text-sm font-medium text-gray-700">Fırsat Tipi</Label>
               
               <Select 
                 value={formData.opportunity_type} 
@@ -644,7 +402,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                   }
                 }}
               >
-                <SelectTrigger id="opportunity_type" className="w-full bg-background border-border hover:border-primary transition-colors">
+                <SelectTrigger id="opportunity_type" className="w-full h-8 bg-background border-border hover:border-primary transition-colors">
                   <SelectValue placeholder="Fırsat tipi seçin" />
                 </SelectTrigger>
                 <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
@@ -746,7 +504,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                   
                   {/* Add custom option */}
                   <SelectItem value="add_custom" className="cursor-pointer hover:bg-primary/10 focus:bg-primary/10 data-[highlighted]:bg-primary/10 p-3 border-t border-border mt-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Plus size={16} className="text-primary" />
                       <span className="text-sm font-medium text-primary">Yeni fırsat tipi ekle</span>
                     </div>
@@ -777,7 +535,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
                         }}
                       />
                     </div>
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-1.5 justify-end">
                       <Button 
                         size="sm" 
                         variant="outline"
@@ -803,56 +561,27 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
             </div>
           </div>
           
-          <div>
-            <Label htmlFor="employee">Sorumlu Kişi</Label>
-            
-            <Select value={formData.employee_id} onValueChange={handleEmployeeChange}>
-              <SelectTrigger className="w-full bg-background border-border hover:border-primary transition-colors">
-                <SelectValue placeholder="Sorumlu kişi seçin" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
-                {employeesLoading ? (
-                  <SelectItem value="" disabled>Yükleniyor...</SelectItem>
-                ) : (
-                  employees?.map((employee) => (
-                    <SelectItem 
-                      key={employee.id} 
-                      value={employee.id}
-                      className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50 data-[highlighted]:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex flex-col gap-1 w-full">
-                        <span className="font-medium text-sm text-foreground">{employee.first_name} {employee.last_name}</span>
-                      </div>
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label htmlFor="expected_close_date">Beklenen Kapanış Tarihi</Label>
-            <Input 
-              id="expected_close_date" 
-              name="expected_close_date" 
-              type="date" 
-              value={formData.expected_close_date} 
-              onChange={handleChange} 
-              min={new Date().toISOString().split('T')[0]}
+          {/* Beklenen Kapanış Tarihi */}
+          <div className="space-y-1">
+            <UnifiedDatePicker
+              label="Beklenen Kapanış Tarihi"
+              date={formData.expected_close_date ? new Date(formData.expected_close_date + 'T00:00:00') : undefined}
+              onSelect={(date) => {
+                if (date) {
+                  // Timezone kaymasını önlemek için yerel tarih formatını kullan
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  setFormData(prev => ({ ...prev, expected_close_date: `${year}-${month}-${day}` }));
+                } else {
+                  setFormData(prev => ({ ...prev, expected_close_date: "" }));
+                }
+              }}
+              placeholder="Tarih seçin"
             />
           </div>
-          
-          <div>
-            <Label htmlFor="description">Açıklama</Label>
-            <Textarea 
-              id="description" 
-              name="description" 
-              value={formData.description} 
-              onChange={handleChange} 
-              rows={3} 
-            />
           </div>
-          
+        </div>
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={onClose} disabled={isSubmitting} />
           <UnifiedDialogActionButton

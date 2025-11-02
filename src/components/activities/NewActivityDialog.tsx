@@ -198,12 +198,14 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
       isOpen={isOpen}
       onClose={handleClose}
       title="Yeni Aktivite"
-      maxWidth="md"
+      maxWidth="lg"
       headerColor="blue"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Başlık ve Açıklama */}
+      <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
           <div className="space-y-3">
+          {/* Başlık ve Açıklama */}
+          <div className="space-y-2">
             <div className="space-y-1">
               <Label htmlFor="title" className="text-sm font-medium text-gray-700">Başlık *</Label>
               <Input
@@ -230,7 +232,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           </div>
 
           {/* Hızlı Seçimler */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <OpportunitySelector
               value={selectedOpportunityId}
               onChange={setSelectedOpportunityId}
@@ -253,7 +255,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           </div>
 
           {/* Müşteri ve Son Tarih */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <CustomerSelector
                 value={selectedCustomerId}
@@ -282,7 +284,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           </div>
 
           {/* Durum ve Önem */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
             <div className="flex items-center space-x-3">
               <Label className="text-xs font-medium text-gray-700">Durum</Label>
               <select
@@ -312,8 +314,8 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           </div>
 
           {/* Tekrar Eden Görev */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-2">
                 <Switch
                   id="is_recurring"
@@ -328,8 +330,8 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
             </div>
 
             {isRecurring && (
-              <div className="p-3 bg-blue-50 rounded-lg space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="p-2 bg-blue-50 rounded-lg space-y-2">
+                <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <Label className="text-xs font-medium text-gray-600">Tekrar Türü</Label>
                     <select
@@ -420,7 +422,7 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
 
           {/* İlişkili Öğe Bilgileri */}
           {(relatedItemId || relatedItemTitle) && (
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <h4 className="text-sm font-medium text-blue-900">İlişkili Öğe</h4>
@@ -432,7 +434,8 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
               )}
             </div>
           )}
-
+          </div>
+        </div>
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={handleClose} disabled={isLoading} />
           <UnifiedDialogActionButton

@@ -1,9 +1,11 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseInvoice, InvoiceStatus } from "@/types/purchase";
 import { toast } from "sonner";
+import { useInfiniteScroll } from "./useInfiniteScroll";
+import { useCurrentUser } from "./useCurrentUser";
 
 export const usePurchaseInvoices = () => {
   const queryClient = useQueryClient();
@@ -207,5 +209,104 @@ export const usePurchaseInvoices = () => {
     updateInvoiceMutation,
     recordPaymentMutation,
     deleteInvoiceMutation,
+  };
+};
+
+// Purchase Invoices Filters Interface
+export interface PurchaseInvoiceFilters {
+  status?: string;
+  search?: string;
+  supplier_id?: string;
+  dateRange?: { from: Date | null; to: Date | null };
+}
+
+// Infinite scroll hook for purchase invoices
+export const usePurchaseInvoicesInfiniteScroll = (filters?: PurchaseInvoiceFilters, pageSize: number = 20) => {
+  const { userData, loading: userLoading } = useCurrentUser();
+
+  const fetchInvoices = useCallback(async (page: number, pageSize: number) => {
+    if (!userData?.company_id) {
+      throw new Error("Kullanıcının company_id'si bulunamadı");
+    }
+
+    let query = supabase
+      .from('purchase_invoices')
+      .select(`
+        *,
+        supplier:suppliers(id, name, company, tax_number, email),
+        purchase_order:purchase_orders(id, order_number)
+      `, { count: 'exact' })
+      .eq('company_id', userData.company_id);
+
+    // Apply filters
+    if (filters?.status && filters.status !== 'all') {
+      query = query.eq('status', filters.status);
+    }
+
+    if (filters?.search) {
+      query = query.or(`invoice_number.ilike.%${filters.search}%,notes.ilike.%${filters.search}%`);
+    }
+
+    if (filters?.supplier_id && filters.supplier_id !== 'all') {
+      query = query.eq('supplier_id', filters.supplier_id);
+    }
+
+    if (filters?.dateRange?.from) {
+      query = query.gte('invoice_date', filters.dateRange.from.toISOString().split('T')[0]);
+    }
+
+    if (filters?.dateRange?.to) {
+      query = query.lte('invoice_date', filters.dateRange.to.toISOString().split('T')[0]);
+    }
+
+    // Apply pagination
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await query
+      .order('invoice_date', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error("Error fetching purchase invoices:", error);
+      throw error;
+    }
+
+    return {
+      data: data || [],
+      totalCount: count || 0,
+      hasNextPage: data ? data.length === pageSize : false,
+    };
+  }, [userData?.company_id, JSON.stringify(filters)]);
+
+  const {
+    data: invoices,
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    error,
+    loadMore,
+    refresh,
+    totalCount,
+  } = useInfiniteScroll(
+    ["purchase-invoices-infinite", JSON.stringify(filters), userData?.company_id],
+    fetchInvoices,
+    {
+      pageSize,
+      enabled: !!userData?.company_id,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+    }
+  );
+
+  return {
+    data: invoices,
+    isLoading: isLoading || userLoading,
+    isLoadingMore,
+    hasNextPage,
+    error,
+    loadMore,
+    refresh,
+    totalCount,
   };
 };

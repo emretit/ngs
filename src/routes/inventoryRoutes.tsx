@@ -1,7 +1,7 @@
 import { RouteConfig } from "./types";
-import InventoryDashboard from "@/pages/inventory/InventoryDashboard";
-import InventoryTransactions from "@/pages/inventory/InventoryTransactions";
-import Production from "@/pages/inventory/Production";
+import InventoryDashboard from "@/pages/inventory/InventoryDashboard.tsx";
+import InventoryTransactions from "@/pages/inventory/InventoryTransactions.tsx";
+import Production from "@/pages/inventory/Production.tsx";
 
 // Define inventory routes
 export const inventoryRoutes: RouteConfig[] = [

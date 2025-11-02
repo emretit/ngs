@@ -33,29 +33,27 @@ export const OrdersTableHeader = ({
 
   return (
     <TableHeader>
-      <TableRow className="bg-gray-50 border-b">
+      <TableRow className="bg-slate-100 border-b border-slate-200">
         {columns.map((column) => (
           column.visible && (
             <TableHead 
               key={column.id}
               className={cn(
-                "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide",
-                column.sortable ? 'cursor-pointer hover:bg-muted/50' : '',
+                "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
+                column.sortable ? 'cursor-pointer hover:bg-slate-200' : '',
                 column.id === 'actions' ? 'text-right' : ''
               )}
               onClick={column.sortable && onSort ? () => onSort(column.id) : undefined}
             >
-              <div className={cn("flex items-center", column.id === 'actions' ? 'justify-end' : '')}>
-                <span>
-                  {column.id === 'order_number' && '📋 '}
-                  {column.id === 'customer' && '🏢 '}
-                  {column.id === 'status' && '📊 '}
-                  {column.id === 'total_amount' && '💰 '}
-                  {column.id === 'order_date' && '📅 '}
-                  {column.id === 'delivery_date' && '🚚 '}
-                  {column.id === 'actions' && '⚙️ '}
-                  {column.label}
-                </span>
+              <div className={cn("flex items-center gap-1", column.id === 'actions' ? 'justify-end' : '')}>
+                {column.id === 'order_number' && <span className="text-lg mr-2">📋</span>}
+                {column.id === 'customer' && <span className="text-lg mr-2">🏢</span>}
+                {column.id === 'status' && <span className="text-lg mr-2">📊</span>}
+                {column.id === 'total_amount' && <span className="text-lg mr-2">💰</span>}
+                {column.id === 'order_date' && <span className="text-lg mr-2">📅</span>}
+                {column.id === 'delivery_date' && <span className="text-lg mr-2">🚚</span>}
+                {column.id === 'actions' && <span className="text-lg mr-2">⚙️</span>}
+                <span>{column.label}</span>
                 {column.sortable && getSortIcon(column.id)}
               </div>
             </TableHead>

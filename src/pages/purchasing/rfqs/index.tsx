@@ -15,18 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, FileText } from "lucide-react";
 import { useRFQs } from "@/hooks/useRFQs";
 import { format } from "date-fns";
-
-const getStatusBadge = (status: string) => {
-  const variants = {
-    draft: { label: "Taslak", variant: "secondary" as const },
-    sent: { label: "Gönderildi", variant: "default" as const },
-    received: { label: "Teklif Alındı", variant: "default" as const },
-    closed: { label: "Kapatıldı", variant: "default" as const },
-    cancelled: { label: "İptal", variant: "destructive" as const },
-  };
-  const config = variants[status as keyof typeof variants] || variants.draft;
-  return <Badge variant={config.variant}>{config.label}</Badge>;
-};
+import StatusBadge from "@/components/common/StatusBadge";
 
 export default function RFQsList() {
   const navigate = useNavigate();
@@ -47,7 +36,7 @@ export default function RFQsList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Teklif Talepleri (RFQ)</h1>
+          <h1 className="text-3xl font-bold">Teklif Talepleri</h1>
           <p className="text-muted-foreground">Tedarikçilerden teklif alın ve karşılaştırın</p>
         </div>
         <Button onClick={() => navigate("/purchase-rfqs/new")}>
@@ -101,7 +90,7 @@ export default function RFQsList() {
                     onClick={() => navigate(`/purchase-rfqs/${rfq.id}`)}
                   >
                     <TableCell className="font-medium">{rfq.rfq_number}</TableCell>
-                    <TableCell>{getStatusBadge(rfq.status)}</TableCell>
+                    <TableCell><StatusBadge status={rfq.status} /></TableCell>
                     <TableCell>
                       {rfq.due_date ? format(new Date(rfq.due_date), 'dd.MM.yyyy') : '-'}
                     </TableCell>

@@ -65,37 +65,39 @@ const OpportunitiesContent = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className="p-6 bg-white rounded-xl relative overflow-hidden">
-        <div className="relative z-10">
-          <OpportunitiesTable
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="pb-6">
+        <div className="-mx-4">
+          <div className="px-4">
+            <OpportunitiesTable
             opportunities={opportunities}
             isLoading={isLoading}
             onSelectOpportunity={onSelectOpportunity}
             searchQuery={searchQuery}
             statusFilter={statusFilter}
             priorityFilter={priorityFilter}
-          />
-          
-          {/* Infinite scroll trigger: buton kaldırıldı, sadece otomatik yükleme ve spinner */}
-          {!isLoading && hasNextPage && (
-            <div ref={loadMoreRef} className="flex justify-center py-4">
-              {isLoadingMore && (
-                <div className="flex items-center space-x-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm text-gray-600">Daha fazla fırsat yükleniyor...</span>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Tüm fırsatlar yüklendi mesajı */}
-          {!hasNextPage && opportunities.length > 0 && (
-            <div className="text-center py-4 text-sm text-gray-500">
-              Tüm fırsatlar yüklendi
-            </div>
-          )}
+            />
+          </div>
         </div>
+        
+        {/* Infinite scroll trigger: buton kaldırıldı, sadece otomatik yükleme ve spinner */}
+        {!isLoading && hasNextPage && (
+          <div ref={loadMoreRef} className="flex justify-center py-4">
+            {isLoadingMore && (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-gray-600">Daha fazla fırsat yükleniyor...</span>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Tüm fırsatlar yüklendi mesajı */}
+        {!hasNextPage && opportunities.length > 0 && (
+          <div className="text-center py-4 text-sm text-gray-500">
+            Tüm fırsatlar yüklendi
+          </div>
+        )}
       </div>
     </div>
   );

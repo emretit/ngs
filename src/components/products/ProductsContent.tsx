@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { Product } from "@/types/product";
 import ProductListTable from "./ProductListTable";
@@ -77,55 +76,52 @@ const ProductsContent = ({
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="pb-6">
-        <Tabs value={activeView} className="w-full">
-            <TabsContent value="grid" className="mt-0">
-              <ProductGrid
-                products={products}
-                isLoading={isLoading}
-                isLoadingMore={isLoadingMore}
-                hasNextPage={hasNextPage}
-                loadMore={loadMore}
-                onProductClick={onProductClick}
-                onProductSelect={onProductSelect}
-                selectedProducts={selectedProducts}
-              />
-            </TabsContent>
-            <TabsContent value="table" className="mt-0">
-              <ProductListTable
-                products={products}
-                isLoading={isLoading}
-                isLoadingMore={isLoadingMore}
-                hasNextPage={hasNextPage}
-                loadMore={loadMore}
-                totalCount={totalCount || 0}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSortFieldChange={onSortFieldChange}
-                onProductClick={onProductClick}
-                onProductSelect={onProductSelect}
-                selectedProducts={selectedProducts}
-              />
-            </TabsContent>
-          </Tabs>
-          
-          {/* Infinite scroll trigger */}
-          {!isLoading && hasNextPage && (
-            <div ref={loadMoreRef} className="flex justify-center py-4">
-              {isLoadingMore && (
-                <div className="flex items-center space-x-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm text-gray-600">Daha fazla ürün yükleniyor...</span>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Tüm ürünler yüklendi mesajı */}
-          {!hasNextPage && products.length > 0 && (
-            <div className="text-center py-4 text-sm text-gray-500">
-              Tüm ürünler yüklendi
-            </div>
-          )}
+        {activeView === "grid" ? (
+          <ProductGrid
+            products={products}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasNextPage={hasNextPage}
+            loadMore={loadMore}
+            onProductClick={onProductClick}
+            onProductSelect={onProductSelect}
+            selectedProducts={selectedProducts}
+          />
+        ) : (
+          <ProductListTable
+            products={products}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasNextPage={hasNextPage}
+            loadMore={loadMore}
+            totalCount={totalCount || 0}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortFieldChange={onSortFieldChange}
+            onProductClick={onProductClick}
+            onProductSelect={onProductSelect}
+            selectedProducts={selectedProducts}
+          />
+        )}
+        
+        {/* Infinite scroll trigger */}
+        {!isLoading && hasNextPage && (
+          <div ref={loadMoreRef} className="flex justify-center py-4">
+            {isLoadingMore && (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-gray-600">Daha fazla ürün yükleniyor...</span>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Tüm ürünler yüklendi mesajı */}
+        {!hasNextPage && products.length > 0 && (
+          <div className="text-center py-4 text-sm text-gray-500">
+            Tüm ürünler yüklendi
+          </div>
+        )}
       </div>
     </div>
   );

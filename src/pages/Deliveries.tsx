@@ -1,67 +1,138 @@
-import { useState } from "react";
-import { Package, Calendar, MapPin, CheckCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import DeliveriesHeader from "@/components/deliveries/DeliveriesHeader";
+import DeliveriesFilterBar from "@/components/deliveries/DeliveriesFilterBar";
+import DeliveriesContent from "@/components/deliveries/DeliveriesContent";
+import DeliveryForm from "@/components/deliveries/DeliveryForm";
+import { useDeliveries } from "@/hooks/useDeliveries";
+import { Delivery } from "@/types/deliveries";
+
 interface DeliveriesProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
+
 const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { 
+    deliveries, 
+    isLoading, 
+    filters, 
+    setFilters,
+  } = useDeliveries();
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [shippingMethodFilter, setShippingMethodFilter] = useState("all");
+  const [customerFilter, setCustomerFilter] = useState("all");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [showDeliveryForm, setShowDeliveryForm] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>(undefined);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | undefined>(undefined);
+
+  // Route kontrolü: /deliveries/new ise dialog'u aç
+  useEffect(() => {
+    if (location.pathname === "/deliveries/new") {
+      const orderId = searchParams.get("orderId");
+      const invoiceId = searchParams.get("invoiceId");
+      setSelectedOrderId(orderId || undefined);
+      setSelectedInvoiceId(invoiceId || undefined);
+      setShowDeliveryForm(true);
+      // URL'i temizle ama history'de kalsın (geri butonu için)
+    }
+  }, [location.pathname, searchParams]);
+
+  // URL parametrelerinden orderId veya invoiceId al (eski yöntem için)
+  useEffect(() => {
+    const orderId = searchParams.get("orderId");
+    const invoiceId = searchParams.get("invoiceId");
+    if ((orderId || invoiceId) && location.pathname === "/deliveries") {
+      setSelectedOrderId(orderId || undefined);
+      setSelectedInvoiceId(invoiceId || undefined);
+      setShowDeliveryForm(true);
+      // URL'den parametreleri temizle
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams, location.pathname]);
+
+  const handleDeliveryClick = (delivery: Delivery) => {
+    navigate(`/deliveries/${delivery.id}`);
+  };
+
+  const handleCreateDelivery = () => {
+    setSelectedOrderId(undefined);
+    setSelectedInvoiceId(undefined);
+    setShowDeliveryForm(true);
+  };
+
+  const handleCloseDeliveryForm = () => {
+    setShowDeliveryForm(false);
+    setSelectedOrderId(undefined);
+    setSelectedInvoiceId(undefined);
+    // Eğer /deliveries/new route'undaysak, ana sayfaya yönlendir
+    if (location.pathname === "/deliveries/new") {
+      navigate("/deliveries", { replace: true });
+    }
+  };
+
+  // Filtreleri hook'a aktar
+  useEffect(() => {
+    setFilters({
+      ...filters,
+      status: statusFilter === "all" ? undefined : statusFilter as any,
+      shipping_method: shippingMethodFilter === "all" ? undefined : shippingMethodFilter as any,
+      customer_id: customerFilter === "all" ? undefined : customerFilter,
+      search: searchQuery,
+      dateRange: {
+        from: startDate || null,
+        to: endDate || null,
+      },
+    });
+  }, [searchQuery, statusFilter, shippingMethodFilter, customerFilter, startDate, endDate]);
+
   return (
-    <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-card rounded-lg p-6 border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Bekleyen Teslimatlar</p>
-                <p className="text-2xl font-bold">12</p>
-              </div>
-              <Package className="h-8 w-8 text-orange-500" />
-            </div>
-          </div>
-          <div className="bg-card rounded-lg p-6 border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Bugün Teslim Edilecek</p>
-                <p className="text-2xl font-bold">5</p>
-              </div>
-              <Calendar className="h-8 w-8 text-blue-500" />
-            </div>
-          </div>
-          <div className="bg-card rounded-lg p-6 border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Tamamlanan Teslimatlar</p>
-                <p className="text-2xl font-bold">48</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-card rounded-lg border">
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Son Teslimatlar</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <Package className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">SIP-2024-001</p>
-                    <p className="text-sm text-muted-foreground">ABC Teknoloji Ltd.</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Teslimat Tarihi</p>
-                    <p className="font-medium">15 Ocak 2024</p>
-                  </div>
-                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                    Teslim Edildi
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <>
+      <div className="space-y-2">
+        <DeliveriesHeader 
+          deliveries={deliveries}
+          onCreateDelivery={handleCreateDelivery}
+        />
+        <DeliveriesFilterBar 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedStatus={statusFilter}
+          setSelectedStatus={setStatusFilter}
+          selectedShippingMethod={shippingMethodFilter}
+          setSelectedShippingMethod={setShippingMethodFilter}
+          selectedCustomer={customerFilter}
+          setSelectedCustomer={setCustomerFilter}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+        />
+        <DeliveriesContent
+          deliveries={deliveries}
+          isLoading={isLoading}
+          error={null}
+          onSelectDelivery={handleDeliveryClick}
+          searchQuery={searchQuery}
+          statusFilter={statusFilter}
+        />
       </div>
+
+      {showDeliveryForm && (
+        <DeliveryForm
+          orderId={selectedOrderId}
+          salesInvoiceId={selectedInvoiceId}
+          onClose={handleCloseDeliveryForm}
+        />
+      )}
+    </>
   );
 };
+
 export default Deliveries;

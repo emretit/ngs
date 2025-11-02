@@ -84,10 +84,11 @@ const TasksContent = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className="p-6 bg-white rounded-xl relative overflow-hidden">
-        <div className="relative z-10">
-          <TasksTable
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="pb-6">
+        <div className="-mx-4">
+          <div className="px-4">
+            <TasksTable
             tasks={tasks}
             isLoading={isLoading}
             onSelectTask={handleSelectTask}
@@ -95,14 +96,14 @@ const TasksContent = ({
             selectedEmployee={selectedEmployee}
             selectedType={selectedType}
             selectedStatus={selectedStatus}
-          />
-
-          <TaskDetailPanel
-            task={selectedTask}
-            isOpen={isDetailOpen}
-            onClose={handleCloseDetail}
-          />
+            />
+          </div>
         </div>
+        <TaskDetailPanel
+          task={selectedTask}
+          isOpen={isDetailOpen}
+          onClose={handleCloseDetail}
+        />
       </div>
     </div>
   );

@@ -34,26 +34,25 @@ const OpportunitiesTableHeader: React.FC<OpportunitiesTableHeaderProps> = ({
       : <ChevronDown className="h-4 w-4 ml-1" />;
   };
 
-  const renderSortableHeader = (label: string, field: OpportunitySortField, width?: string) => (
+  const renderSortableHeader = (label: string, field: OpportunitySortField, className?: string) => (
     <TableHead 
       className={cn(
-        "cursor-pointer hover:bg-muted/50 h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide",
-        width
+        "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
+        "cursor-pointer hover:bg-slate-200",
+        className
       )}
       onClick={() => handleSort(field)}
     >
-      <div className="flex items-center">
-        <span>
-          {field === 'title' && '📋 '}
-          {field === 'customer' && '🏢 '}
-          {field === 'status' && '📊 '}
-          {field === 'value' && '💰 '}
-          {field === 'priority' && '⚡ '}
-          {field === 'employee' && '👤 '}
-          {field === 'expected_close_date' && '📅 '}
-          {field === 'created_at' && '📅 '}
-          {label}
-        </span>
+      <div className="flex items-center gap-1">
+        {field === 'title' && <span className="text-lg mr-2">📋</span>}
+        {field === 'customer' && <span className="text-lg mr-2">🏢</span>}
+        {field === 'status' && <span className="text-lg mr-2">📊</span>}
+        {field === 'value' && <span className="text-lg mr-2">💰</span>}
+        {field === 'priority' && <span className="text-lg mr-2">⚡</span>}
+        {field === 'employee' && <span className="text-lg mr-2">👤</span>}
+        {field === 'expected_close_date' && <span className="text-lg mr-2">📅</span>}
+        {field === 'created_at' && <span className="text-lg mr-2">📅</span>}
+        <span>{label}</span>
         {getSortIcon(field)}
       </div>
     </TableHead>
@@ -61,17 +60,20 @@ const OpportunitiesTableHeader: React.FC<OpportunitiesTableHeaderProps> = ({
   
   return (
     <TableHeader>
-      <TableRow className="bg-gray-50 border-b">
-        {renderSortableHeader("Fırsat Başlığı", "title", "w-[20%]")}
-        {renderSortableHeader("Müşteri Bilgileri", "customer", "w-[20%]")}
-        {renderSortableHeader("Durum", "status", "w-[8%]")}
-        {renderSortableHeader("Değer", "value", "w-[10%]")}
-        {renderSortableHeader("Öncelik", "priority", "w-[8%]")}
-        {renderSortableHeader("Sorumlu", "employee", "w-[8%]")}
-        {renderSortableHeader("Hedef Tarih", "expected_close_date", "w-[8%]")}
-        {renderSortableHeader("Oluşturulma", "created_at", "w-[8%]")}
-        <TableHead className="text-right h-12 px-4 align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide w-[10%]">
-          ⚙️ İşlemler
+      <TableRow className="bg-slate-100 border-b border-slate-200">
+        {renderSortableHeader("Fırsat Başlığı", "title")}
+        {renderSortableHeader("Müşteri Bilgileri", "customer")}
+        {renderSortableHeader("Durum", "status", "text-center")}
+        {renderSortableHeader("Değer", "value", "text-right")}
+        {renderSortableHeader("Öncelik", "priority", "text-center")}
+        {renderSortableHeader("Sorumlu", "employee")}
+        {renderSortableHeader("Hedef Tarih", "expected_close_date", "text-center")}
+        {renderSortableHeader("Oluşturulma", "created_at", "text-center")}
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">
+          <div className="flex items-center justify-end gap-1">
+            <span className="text-lg mr-2">⚙️</span>
+            <span>İşlemler</span>
+          </div>
         </TableHead>
       </TableRow>
     </TableHeader>

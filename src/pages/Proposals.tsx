@@ -14,7 +14,6 @@ import ProposalsHeader from "@/components/proposals/ProposalsHeader";
 import ProposalsFilterBar from "@/components/proposals/ProposalsFilterBar";
 import ProposalsContent from "@/components/proposals/ProposalsContent";
 import ProposalsBulkActions from "@/components/proposals/ProposalsBulkActions";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 const Proposals = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -154,32 +153,27 @@ const Proposals = () => {
           <div className="h-96 flex items-center justify-center">
             <div className="text-red-500">Teklifler yüklenirken bir hata oluştu</div>
           </div>
+        ) : activeView === "kanban" ? (
+          <ProposalKanban
+            proposals={kanbanProposals} 
+            onProposalSelect={handleProposalClick}
+            onStatusChange={handleProposalStatusChange}
+          />
         ) : (
-          <Tabs value={activeView} className="w-full">
-            <TabsContent value="kanban" className="mt-0">
-              <ProposalKanban
-                proposals={kanbanProposals} 
-                onProposalSelect={handleProposalClick}
-                onStatusChange={handleProposalStatusChange}
-              />
-            </TabsContent>
-            <TabsContent value="list" className="mt-0">
-              <ProposalsContent
-                proposals={(proposals as Proposal[]) || []}
-                isLoading={isLoading}
-                isLoadingMore={isLoadingMore}
-                hasNextPage={hasNextPage}
-                loadMore={loadMore}
-                totalCount={totalCount}
-                error={error}
-                onProposalSelect={handleProposalClick}
-                onStatusChange={handleProposalStatusChange}
-                searchQuery={searchQuery}
-                statusFilter={selectedStatus}
-                employeeFilter={selectedEmployee}
-              />
-            </TabsContent>
-          </Tabs>
+          <ProposalsContent
+            proposals={(proposals as Proposal[]) || []}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasNextPage={hasNextPage}
+            loadMore={loadMore}
+            totalCount={totalCount}
+            error={error}
+            onProposalSelect={handleProposalClick}
+            onStatusChange={handleProposalStatusChange}
+            searchQuery={searchQuery}
+            statusFilter={selectedStatus}
+            employeeFilter={selectedEmployee}
+          />
         )}
       </div>
 

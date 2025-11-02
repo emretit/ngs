@@ -2,34 +2,16 @@ import React from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, ExternalLink, Pencil } from "lucide-react";
+import { FileText, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { PurchaseOrder } from "@/hooks/usePurchaseOrders";
+import StatusBadge from "@/components/common/StatusBadge";
 
 interface PurchaseOrdersTableProps {
   orders: PurchaseOrder[];
   isLoading: boolean;
   onOrderSelect: (order: PurchaseOrder) => void;
 }
-
-const getStatusBadge = (status: string) => {
-  const statusConfig: Record<string, { label: string; className: string }> = {
-    draft: { label: "Taslak", className: "bg-gray-100 text-gray-800 border-gray-300" },
-    submitted: { label: "Onayda", className: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-    confirmed: { label: "Onaylandı", className: "bg-green-100 text-green-800 border-green-300" },
-    partial_received: { label: "Kısmi Teslim", className: "bg-blue-100 text-blue-800 border-blue-300" },
-    received: { label: "Teslim Alındı", className: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-    cancelled: { label: "İptal", className: "bg-red-100 text-red-800 border-red-300" },
-  };
-
-  const config = statusConfig[status] || statusConfig.draft;
-
-  return (
-    <Badge variant="outline" className={config.className}>
-      {config.label}
-    </Badge>
-  );
-};
 
 const PurchaseOrdersTable = ({ orders, isLoading, onOrderSelect }: PurchaseOrdersTableProps) => {
   if (isLoading && orders.length === 0) {
@@ -97,7 +79,7 @@ const PurchaseOrdersTable = ({ orders, isLoading, onOrderSelect }: PurchaseOrder
                   )}
                 </div>
               </TableCell>
-              <TableCell>{getStatusBadge(order.status)}</TableCell>
+              <TableCell><StatusBadge status={order.status} /></TableCell>
               <TableCell>{format(new Date(order.order_date), "dd.MM.yyyy")}</TableCell>
               <TableCell>
                 {order.expected_delivery_date

@@ -90,8 +90,21 @@ serve(async (req) => {
     
     console.log('❌ No cached insight found for today, generating new one...');
 
-    // Fetch data from last period
-    const [proposalsResult, paymentsResult, customersResult, expensesResult] = await Promise.all([
+    // Fetch data from last period - comprehensive analysis
+    const [
+      proposalsResult, 
+      paymentsResult, 
+      customersResult, 
+      expensesResult,
+      opportunitiesResult,
+      activitiesResult,
+      salesInvoicesResult,
+      employeesResult,
+      bankTransactionsResult,
+      checksResult,
+      suppliersResult,
+      purchaseInvoicesResult
+    ] = await Promise.all([
       // Proposals data
       supabaseClient
         .from('proposals')
@@ -109,7 +122,7 @@ serve(async (req) => {
       // Customers data
       supabaseClient
         .from('customers')
-        .select('created_at')
+        .select('created_at, status')
         .eq('company_id', profile.company_id)
         .gte('created_at', periodStart.toISOString()),
       
@@ -120,6 +133,61 @@ serve(async (req) => {
         .eq('company_id', profile.company_id)
         .eq('transaction_type', 'expense')
         .gte('transaction_date', periodStart.toISOString()),
+      
+      // Opportunities data
+      supabaseClient
+        .from('opportunities')
+        .select('status, estimated_value, created_at, expected_close_date')
+        .eq('company_id', profile.company_id)
+        .gte('created_at', periodStart.toISOString()),
+      
+      // Activities data
+      supabaseClient
+        .from('activities')
+        .select('status, priority, created_at, due_date')
+        .eq('company_id', profile.company_id)
+        .gte('created_at', periodStart.toISOString()),
+      
+      // Sales Invoices
+      supabaseClient
+        .from('sales_invoices')
+        .select('total_amount, status, invoice_date')
+        .eq('company_id', profile.company_id)
+        .gte('invoice_date', periodStart.toISOString()),
+      
+      // Employees (active count)
+      supabaseClient
+        .from('employees')
+        .select('id, is_active, created_at')
+        .eq('company_id', profile.company_id),
+      
+      // Bank Transactions
+      supabaseClient
+        .from('bank_transactions')
+        .select('amount, transaction_type, transaction_date')
+        .eq('company_id', profile.company_id)
+        .gte('transaction_date', periodStart.toISOString()),
+      
+      // Checks
+      supabaseClient
+        .from('checks')
+        .select('amount, status, due_date, check_type')
+        .eq('company_id', profile.company_id)
+        .gte('issue_date', periodStart.toISOString()),
+      
+      // Suppliers
+      supabaseClient
+        .from('suppliers')
+        .select('created_at')
+        .eq('company_id', profile.company_id)
+        .gte('created_at', periodStart.toISOString()),
+      
+      // Purchase Invoices
+      supabaseClient
+        .from('purchase_invoices')
+        .select('total_amount, status, invoice_date')
+        .eq('company_id', profile.company_id)
+        .gte('invoice_date', periodStart.toISOString()),
     ]);
 
     // Calculate metrics
@@ -127,25 +195,78 @@ serve(async (req) => {
     const payments = paymentsResult.data || [];
     const customers = customersResult.data || [];
     const expenses = expensesResult.data || [];
+    const opportunities = opportunitiesResult.data || [];
+    const activities = activitiesResult.data || [];
+    const salesInvoices = salesInvoicesResult.data || [];
+    const employees = employeesResult.data || [];
+    const bankTransactions = bankTransactionsResult.data || [];
+    const checks = checksResult.data || [];
+    const suppliers = suppliersResult.data || [];
+    const purchaseInvoices = purchaseInvoicesResult.data || [];
 
+    const now = new Date();
+
+    // Proposal metrics
     const totalProposals = proposals.length;
     const acceptedProposals = proposals.filter(p => p.status === 'accepted' || p.status === 'won').length;
     const acceptanceRate = totalProposals > 0 ? Math.round((acceptedProposals / totalProposals) * 100) : 0;
-    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    const newCustomers = customers.length;
     
-    const now = new Date();
+    // Payment metrics
+    const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
     const overduePayments = payments
       .filter(p => p.due_date && new Date(p.due_date) < now && p.amount > 0)
       .reduce((sum, p) => sum + (p.amount || 0), 0);
     
+    // Customer metrics
+    const newCustomers = customers.length;
+    const activeCustomers = customers.filter(c => c.status === 'aktif').length;
+    
+    // Expense metrics
     const totalExpenses = expenses.reduce((sum, e) => sum + Math.abs(e.amount || 0), 0);
+    
+    // Opportunity metrics
+    const totalOpportunities = opportunities.length;
+    const wonOpportunities = opportunities.filter(o => o.status === 'won').length;
+    const opportunityValue = opportunities.reduce((sum, o) => sum + (o.estimated_value || 0), 0);
+    const conversionRate = totalOpportunities > 0 ? Math.round((wonOpportunities / totalOpportunities) * 100) : 0;
+    
+    // Activity metrics
+    const totalActivities = activities.length;
+    const completedActivities = activities.filter(a => a.status === 'completed').length;
+    const overdueActivities = activities.filter(a => a.due_date && new Date(a.due_date) < now && a.status !== 'completed').length;
+    
+    // Invoice metrics
+    const totalSalesInvoices = salesInvoices.reduce((sum, i) => sum + (i.total_amount || 0), 0);
+    const paidInvoices = salesInvoices.filter(i => i.status === 'paid').length;
+    const totalPurchaseInvoices = purchaseInvoices.reduce((sum, i) => sum + (i.total_amount || 0), 0);
+    
+    // Employee metrics
+    const activeEmployees = employees.filter(e => e.is_active).length;
+    const newEmployees = employees.filter(e => e.created_at && new Date(e.created_at) >= periodStart).length;
+    
+    // Bank transaction metrics
+    const bankIncome = bankTransactions.filter(t => t.transaction_type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0);
+    const bankExpense = bankTransactions.filter(t => t.transaction_type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
+    
+    // Check metrics
+    const receivableChecks = checks.filter(c => c.check_type === 'tahsil_edilecek').reduce((sum, c) => sum + (c.amount || 0), 0);
+    const payableChecks = checks.filter(c => c.check_type === 'odenecek').reduce((sum, c) => sum + (c.amount || 0), 0);
+    const overdueChecks = checks.filter(c => c.due_date && new Date(c.due_date) < now && c.status !== 'odendi').length;
+    
+    // Supplier metrics
+    const newSuppliers = suppliers.length;
 
     // Get previous period for comparison
     const previousPeriodStart = new Date(periodStart);
     previousPeriodStart.setDate(previousPeriodStart.getDate() - period_days);
     
-    const [prevProposalsResult, prevPaymentsResult, prevCustomersResult] = await Promise.all([
+    const [
+      prevProposalsResult, 
+      prevPaymentsResult, 
+      prevCustomersResult,
+      prevOpportunitiesResult,
+      prevActivitiesResult
+    ] = await Promise.all([
       supabaseClient
         .from('proposals')
         .select('status, total_amount')
@@ -166,11 +287,27 @@ serve(async (req) => {
         .eq('company_id', profile.company_id)
         .gte('created_at', previousPeriodStart.toISOString())
         .lt('created_at', periodStart.toISOString()),
+      
+      supabaseClient
+        .from('opportunities')
+        .select('status')
+        .eq('company_id', profile.company_id)
+        .gte('created_at', previousPeriodStart.toISOString())
+        .lt('created_at', periodStart.toISOString()),
+      
+      supabaseClient
+        .from('activities')
+        .select('status')
+        .eq('company_id', profile.company_id)
+        .gte('created_at', previousPeriodStart.toISOString())
+        .lt('created_at', periodStart.toISOString()),
     ]);
 
     const prevProposals = prevProposalsResult.data || [];
     const prevPayments = prevPaymentsResult.data || [];
     const prevCustomers = prevCustomersResult.data || [];
+    const prevOpportunities = prevOpportunitiesResult.data || [];
+    const prevActivities = prevActivitiesResult.data || [];
 
     const proposalChange = prevProposals.length > 0 
       ? Math.round(((totalProposals - prevProposals.length) / prevProposals.length) * 100) 
@@ -184,24 +321,75 @@ serve(async (req) => {
     const customerChange = prevCustomers.length > 0 
       ? Math.round(((newCustomers - prevCustomers.length) / prevCustomers.length) * 100) 
       : 0;
+    
+    const opportunityChange = prevOpportunities.length > 0
+      ? Math.round(((totalOpportunities - prevOpportunities.length) / prevOpportunities.length) * 100)
+      : 0;
+    
+    const activityChange = prevActivities.length > 0
+      ? Math.round(((totalActivities - prevActivities.length) / prevActivities.length) * 100)
+      : 0;
 
     // Prepare data summary for AI
     const dataSummary = {
+      // Proposals
       totalProposals,
       acceptedProposals,
       acceptanceRate,
-      totalRevenue: Math.round(totalRevenue),
-      newCustomers,
-      overduePayments: Math.round(overduePayments),
-      totalExpenses: Math.round(totalExpenses),
       proposalChange,
+      
+      // Revenue & Payments
+      totalRevenue: Math.round(totalRevenue),
+      overduePayments: Math.round(overduePayments),
       revenueChange,
+      
+      // Customers
+      newCustomers,
+      activeCustomers,
       customerChange,
+      
+      // Expenses
+      totalExpenses: Math.round(totalExpenses),
+      
+      // Opportunities (Sales Pipeline)
+      totalOpportunities,
+      wonOpportunities,
+      opportunityValue: Math.round(opportunityValue),
+      conversionRate,
+      opportunityChange,
+      
+      // Activities (Operational)
+      totalActivities,
+      completedActivities,
+      overdueActivities,
+      activityChange,
+      
+      // Invoices
+      totalSalesInvoices: Math.round(totalSalesInvoices),
+      paidInvoices,
+      totalPurchaseInvoices: Math.round(totalPurchaseInvoices),
+      
+      // Employees
+      activeEmployees,
+      newEmployees,
+      
+      // Bank Transactions
+      bankIncome: Math.round(bankIncome),
+      bankExpense: Math.round(bankExpense),
+      
+      // Checks
+      receivableChecks: Math.round(receivableChecks),
+      payableChecks: Math.round(payableChecks),
+      overdueChecks,
+      
+      // Suppliers
+      newSuppliers,
+      
       period_days,
     };
 
     // Check if there's enough data
-    if (totalProposals === 0 && payments.length === 0 && newCustomers === 0) {
+    if (totalProposals === 0 && payments.length === 0 && newCustomers === 0 && totalOpportunities === 0 && totalActivities === 0) {
       return new Response(
         JSON.stringify({ 
           error: 'no_data',
@@ -235,20 +423,46 @@ FORMAT:
 [Emoji] [Başlık] - [Trend açıklaması]. [Eylem önerisi veya dikkat noktası].`;
 
     const userPrompt = `
-SON ${period_days} GÜN VERİ ÖZETİ:
-- Toplam Teklif: ${dataSummary.totalProposals}
-- Kabul Edilen: ${dataSummary.acceptedProposals} (%${dataSummary.acceptanceRate})
-- Toplam Gelir: ₺${dataSummary.totalRevenue.toLocaleString('tr-TR')}
-- Yeni Müşteri: ${dataSummary.newCustomers}
+SON ${period_days} GÜN İŞ VERİLERİ ÖZETİ:
+
+📊 SATIŞ & TEKLİFLER:
+- Toplam Teklif: ${dataSummary.totalProposals} (${dataSummary.proposalChange > 0 ? '+' : ''}${dataSummary.proposalChange}%)
+- Kabul Edilen: ${dataSummary.acceptedProposals} (%${dataSummary.acceptanceRate} kabul oranı)
+- Satış Faturaları: ₺${dataSummary.totalSalesInvoices.toLocaleString('tr-TR')} (${dataSummary.paidInvoices} ödendi)
+
+💰 GELİR & ÖDEME:
+- Toplam Gelir: ₺${dataSummary.totalRevenue.toLocaleString('tr-TR')} (${dataSummary.revenueChange > 0 ? '+' : ''}${dataSummary.revenueChange}%)
 - Geciken Ödeme: ₺${dataSummary.overduePayments.toLocaleString('tr-TR')}
+- Banka Giriş: ₺${dataSummary.bankIncome.toLocaleString('tr-TR')}
+- Banka Çıkış: ₺${dataSummary.bankExpense.toLocaleString('tr-TR')}
+
+🎯 FIRSAT & DÖNÜŞÜM:
+- Fırsat Sayısı: ${dataSummary.totalOpportunities} (${dataSummary.opportunityChange > 0 ? '+' : ''}${dataSummary.opportunityChange}%)
+- Kazanılan: ${dataSummary.wonOpportunities} (%${dataSummary.conversionRate} dönüşüm)
+- Fırsat Değeri: ₺${dataSummary.opportunityValue.toLocaleString('tr-TR')}
+
+✅ OPERASYONEL:
+- Toplam Görev: ${dataSummary.totalActivities} (${dataSummary.activityChange > 0 ? '+' : ''}${dataSummary.activityChange}%)
+- Tamamlanan: ${dataSummary.completedActivities}
+- Geciken Görev: ${dataSummary.overdueActivities}
+
+👥 MÜŞTERİ & ÇALIŞAN:
+- Yeni Müşteri: ${dataSummary.newCustomers} (${dataSummary.customerChange > 0 ? '+' : ''}${dataSummary.customerChange}%)
+- Aktif Müşteri: ${dataSummary.activeCustomers}
+- Aktif Çalışan: ${dataSummary.activeEmployees}
+- Yeni Çalışan: ${dataSummary.newEmployees}
+
+💳 ÇEK & ALACAK:
+- Tahsil Edilecek Çek: ₺${dataSummary.receivableChecks.toLocaleString('tr-TR')}
+- Ödenecek Çek: ₺${dataSummary.payableChecks.toLocaleString('tr-TR')}
+- Vadesi Geçmiş Çek: ${dataSummary.overdueChecks}
+
+🛒 ALIŞ & GİDER:
+- Toplam Alış Faturası: ₺${dataSummary.totalPurchaseInvoices.toLocaleString('tr-TR')}
 - Toplam Gider: ₺${dataSummary.totalExpenses.toLocaleString('tr-TR')}
+- Yeni Tedarikçi: ${dataSummary.newSuppliers}
 
-Önceki dönem ile karşılaştırma:
-- Teklif sayısı değişimi: ${dataSummary.proposalChange > 0 ? '+' : ''}${dataSummary.proposalChange}%
-- Gelir değişimi: ${dataSummary.revenueChange > 0 ? '+' : ''}${dataSummary.revenueChange}%
-- Müşteri değişimi: ${dataSummary.customerChange > 0 ? '+' : ''}${dataSummary.customerChange}%
-
-Bu verilere göre en önemli 2-3 içgörüyü ver.`;
+Bu kapsamlı verilere göre işletmenin durumunu özetleyen 2-3 kritik içgörü ver. En önemli trendleri ve dikkat edilmesi gereken noktaları vurgula.`;
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

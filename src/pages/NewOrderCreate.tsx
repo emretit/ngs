@@ -715,7 +715,11 @@ const NewOrderCreate = () => {
           open={previewModalOpen}
           onOpenChange={setPreviewModalOpen}
           formData={formData}
-          items={items}
+          items={items.map(item => ({
+            ...item,
+            name: item.name || 'Ürün',
+            unit: item.unit || 'adet'
+          }))}
           calculationsByCurrency={calculationsByCurrency}
           onExportPDF={handleExportPDF}
           onSendEmail={handleSendEmail}

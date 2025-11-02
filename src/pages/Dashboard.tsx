@@ -5,7 +5,6 @@ import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
 import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import AIDashboardAnalytics from "@/components/dashboard/AIDashboardAnalytics";
 import { AIInsightsPanel } from "@/components/dashboard/AIInsightsPanel";
 import { Target, Users, LayoutGrid, FileText, Activity, Calendar, CheckCircle, DollarSign, ChevronRight } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -37,9 +36,6 @@ const Dashboard = () => {
 
       {/* Main Content Container */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
-        {/* AI Native Analytics */}
-        <AIDashboardAnalytics />
-
         {/* AI Insights Panel */}
         <AIInsightsPanel />
 

@@ -21,29 +21,31 @@ serve(async (req) => {
       });
     }
 
-    // Create Supabase client with user's auth
-    const supabaseClient = createClient(
+    // Create Supabase client for auth verification
+    const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    // Get user's company_id
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Verify JWT and get user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser(token);
     
     if (userError || !user) {
       console.error('Auth error:', userError);
-      return new Response(JSON.stringify({ error: 'Unauthorized', details: userError?.message }), {
+      return new Response(JSON.stringify({ error: 'Unauthorized', details: userError?.message || 'Auth session missing!' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     console.log('User authenticated:', user.id);
+
+    // Create service role client for database operations
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')

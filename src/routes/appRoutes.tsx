@@ -2,6 +2,7 @@ import { RouteConfig } from "./types";
 import { publicRoutes } from "./publicRoutes";
 import { dashboardRoutes } from "./dashboardRoutes";
 import { productRoutes } from "./productRoutes";
+import { inventoryRoutes } from "./inventoryRoutes";
 import { customerRoutes } from "./customerRoutes";
 import { supplierRoutes } from "./supplierRoutes";
 import { employeeRoutes } from "./employeeRoutes";
@@ -28,6 +29,7 @@ export const appRoutes: RouteConfig[] = [
   ...publicRoutes,
   ...dashboardRoutes,
   ...productRoutes,
+  ...inventoryRoutes,
   ...customerRoutes,
   ...supplierRoutes,
   ...employeeRoutes,
@@ -44,6 +46,7 @@ export const appRoutes: RouteConfig[] = [
   
 
   { path: "/deliveries", component: Deliveries, protected: true },
+  { path: "/deliveries/new", component: Deliveries, protected: true },
   { path: "/returns", component: Returns, protected: true },
   { path: "/invoices", component: InvoiceManagement, protected: true },
   { path: "/invoices/analysis", component: InvoiceAnalysis, protected: true },

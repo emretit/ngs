@@ -43,7 +43,8 @@ import {
   ClipboardList,
   MessageSquare,
   ClipboardCheck,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Factory
 } from "lucide-react";
 
 export const navItems = [
@@ -114,27 +115,27 @@ export const navItems = [
       {
         path: "/purchase-requests",
         icon: FileText,
-        label: "Talepler (PR)",
+        label: "Talepler",
       },
       {
         path: "/purchase-rfqs",
         icon: MessageSquare,
-        label: "Teklif İst. (RFQ)",
+        label: "Teklif İst.",
       },
       {
         path: "/purchase-orders",
         icon: ShoppingCart,
-        label: "Siparişler (PO)",
+        label: "Siparişler",
       },
       {
         path: "/purchase-grns",
         icon: ClipboardCheck,
-        label: "Teslimatlar (GRN)",
+        label: "Teslimatlar",
       },
       {
         path: "/vendor-invoices",
         icon: Receipt,
-        label: "Faturalar (AP)",
+        label: "Faturalar",
       },
     ],
   },
@@ -207,11 +208,29 @@ export const navItems = [
       },
     ],
   },
-  // 9. Ürünler
+  // 9. Stok Yönetimi
   {
-    path: "/products",
+    path: "/inventory",
     icon: Package,
-    label: "Ürünler",
+    label: "Stok Yönetimi",
+    hasDropdown: true,
+    items: [
+      {
+        path: "/products",
+        icon: Package,
+        label: "Ürünler",
+      },
+      {
+        path: "/inventory/transactions",
+        icon: ArrowRightLeft,
+        label: "Depo İşlemleri",
+      },
+      {
+        path: "/production",
+        icon: Factory,
+        label: "Üretim",
+      },
+    ],
   },
   // 10. Çalışanlar
   {

@@ -61,9 +61,9 @@ export const useAIInsights = () => {
 
   // Generate new insight
   const generateMutation = useMutation({
-    mutationFn: async ({ periodDays = 30, forceRefresh = false }: { periodDays?: number; forceRefresh?: boolean }) => {
+    mutationFn: async ({ periodDays = 30 }: { periodDays?: number }) => {
       const { data, error } = await supabase.functions.invoke('generate-insights', {
-        body: { period_days: periodDays, force_refresh: forceRefresh }
+        body: { period_days: periodDays }
       });
 
       if (error) throw error;

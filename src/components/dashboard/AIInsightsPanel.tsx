@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, RefreshCw, History } from "lucide-react";
+import { Sparkles, History } from "lucide-react";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import { useState } from "react";
 import { InsightHistoryDialog } from "./InsightHistoryDialog";
@@ -32,25 +32,14 @@ export const AIInsightsPanel = () => {
               <Sparkles className="h-5 w-5 text-primary animate-pulse" />
               AI İçgörüleri
             </CardTitle>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowHistory(true)}
-                disabled={isLoading}
-              >
-                <History className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => generateInsight({ periodDays: 30, forceRefresh: e.shiftKey })}
-                disabled={isGenerating || isLoading}
-                title={latestInsight ? "Normal: Bugünkü cache / Shift+Tıkla: Yeniden oluştur" : "İçgörü oluştur"}
-              >
-                <RefreshCw className={`h-4 w-4 ${isGenerating ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowHistory(true)}
+              disabled={isLoading}
+            >
+              <History className="h-4 w-4" />
+            </Button>
           </div>
         </CardHeader>
 
@@ -119,7 +108,7 @@ export const AIInsightsPanel = () => {
                 </p>
               </div>
               <Button
-                onClick={(e) => generateInsight({ periodDays: 30, forceRefresh: e.shiftKey })}
+                onClick={() => generateInsight({ periodDays: 30 })}
                 disabled={isGenerating}
                 className="gap-2"
               >

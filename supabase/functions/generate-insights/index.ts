@@ -63,36 +63,32 @@ serve(async (req) => {
 
     console.log('Company ID:', profile.company_id);
 
-    const { period_days = 30, force_refresh = false } = await req.json();
+    const { period_days = 30 } = await req.json();
     const periodStart = new Date();
     periodStart.setDate(periodStart.getDate() - period_days);
     const periodEnd = new Date();
 
-    // Check for today's cached insight (unless force_refresh is true)
-    if (!force_refresh) {
-      const today = periodEnd.toISOString().split('T')[0];
-      
-      const { data: existingInsight, error: cacheError } = await supabaseClient
-        .from('ai_insights')
-        .select('*')
-        .eq('company_id', profile.company_id)
-        .eq('period_end', today)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      if (existingInsight && !cacheError) {
-        console.log('✅ Returning cached insight from today:', today);
-        return new Response(
-          JSON.stringify({ insight: existingInsight, cached: true }), 
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      console.log('❌ No cached insight found for today, generating new one...');
-    } else {
-      console.log('🔄 Force refresh requested, bypassing cache...');
+    // Check for today's cached insight
+    const today = periodEnd.toISOString().split('T')[0];
+    
+    const { data: existingInsight, error: cacheError } = await supabaseClient
+      .from('ai_insights')
+      .select('*')
+      .eq('company_id', profile.company_id)
+      .eq('period_end', today)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (existingInsight && !cacheError) {
+      console.log('✅ Returning cached insight from today:', today);
+      return new Response(
+        JSON.stringify({ insight: existingInsight, cached: true }), 
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+    
+    console.log('❌ No cached insight found for today, generating new one...');
 
     // Fetch data from last period
     const [proposalsResult, paymentsResult, customersResult, expensesResult] = await Promise.all([

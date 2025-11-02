@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { Download, Upload, FileSpreadsheet } from 'lucide-react';
-import { exportToExcel, exportCustomerTemplateToExcel } from '@/utils/customerExcelUtils';
+import { Upload, FileSpreadsheet } from 'lucide-react';
+import { exportCustomerTemplateToExcel } from '@/utils/customerExcelUtils';
 import type { Customer } from '@/types/customer';
 
 interface ExcelActionsProps {
@@ -9,10 +9,6 @@ interface ExcelActionsProps {
 }
 
 const ExcelActions = ({ customers, onImportClick }: ExcelActionsProps) => {
-  const handleExport = () => {
-    exportToExcel(customers);
-  };
-
   const handleDownloadTemplate = () => {
     exportCustomerTemplateToExcel();
   };
@@ -27,16 +23,6 @@ const ExcelActions = ({ customers, onImportClick }: ExcelActionsProps) => {
       >
         <FileSpreadsheet className="h-4 w-4" />
         Şablon İndir
-      </Button>
-      
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="flex items-center gap-2" 
-        onClick={handleExport}
-      >
-        <Download className="h-4 w-4" />
-        Excel İndir
       </Button>
       
       <Button 

@@ -1,18 +1,15 @@
-import { useState, useMemo, useCallback, useEffect, memo } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import ProductListHeader from "@/components/products/ProductListHeader";
-import ProductListFilters from "@/components/products/ProductListFilters";
-import ProductListTable from "@/components/products/ProductListTable";
-import ProductGrid from "@/components/products/ProductGrid";
-import ProductImportDialog from "@/components/products/excel/ProductImportDialog";
+import ProductsHeader from "@/components/products/ProductsHeader";
+import ProductsFilterBar from "@/components/products/ProductsFilterBar";
+import ProductsContent from "@/components/products/ProductsContent";
 import ProductsBulkActions from "@/components/products/ProductsBulkActions";
-import { exportProductsToExcel, exportProductTemplateToExcel } from "@/utils/excelUtils";
+import { exportProductsToExcel } from "@/utils/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-
+import { useProductsInfiniteScroll } from "@/hooks/useProductsInfiniteScroll";
 import { Product } from "@/types/product";
+import { toast } from "sonner";
 
 const Products = () => {
   const navigate = useNavigate();
@@ -24,12 +21,9 @@ const Products = () => {
   
   // Debounced search query
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [sortField, setSortField] = useState<"name" | "price" | "stock_quantity" | "category">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const pageSize = 20;
 
   // Debounce search query
   useEffect(() => {
@@ -52,77 +46,28 @@ const Products = () => {
     },
   });
 
-  // Use infinite scroll for products with optimized caching
+  // Use products infinite scroll hook
   const {
     data: products,
     isLoading,
     isLoadingMore,
     hasNextPage,
-    error,
     loadMore,
     refresh,
-    totalCount
-  } = useInfiniteScroll<Product>(
-    ['products', debouncedSearchQuery, categoryFilter, stockFilter, sortField, sortDirection],
-    async (page: number, size: number) => {
-      let query = supabase
-        .from("products")
-        .select(`
-          *,
-          product_categories (
-            id,
-            name
-          )
-        `, { count: 'exact' });
+    totalCount,
+    error
+  } = useProductsInfiniteScroll({
+    search: debouncedSearchQuery,
+    category: categoryFilter,
+    stock: stockFilter,
+    sortField,
+    sortDirection
+  });
 
-      // Apply filters
-      if (debouncedSearchQuery) {
-        query = query.or(`name.ilike.%${debouncedSearchQuery}%,sku.ilike.%${debouncedSearchQuery}%`);
-      }
-
-      if (categoryFilter && categoryFilter !== "all") {
-        query = query.eq("category_id", categoryFilter);
-      }
-
-      if (stockFilter !== "all") {
-        switch (stockFilter) {
-          case "out_of_stock":
-            query = query.eq("stock_quantity", 0);
-            break;
-          case "low_stock":
-            query = query.gt("stock_quantity", 0).lte("stock_quantity", 5);
-            break;
-          case "in_stock":
-            query = query.gt("stock_quantity", 5);
-            break;
-        }
-      }
-
-      // Apply sorting
-      const orderField = sortField === "category" ? "product_categories(name)" : sortField;
-      query = query.order(orderField, { ascending: sortDirection === "asc" });
-
-      // Apply pagination
-      const from = (page - 1) * size;
-      const to = from + size - 1;
-
-      const { data, error, count } = await query.range(from, to);
-
-      if (error) throw error;
-
-      return {
-        data: data || [],
-        totalCount: count || 0,
-        hasNextPage: data && data.length === size
-      };
-    },
-    { 
-      pageSize,
-      staleTime: 10 * 60 * 1000, // 10 dakika cache
-      gcTime: 30 * 60 * 1000, // 30 dakika garbage collection
-      refetchOnWindowFocus: false // Pencere odaklandığında yeniden çekme
-    }
-  );
+  if (error) {
+    toast.error("Ürünler yüklenirken bir hata oluştu");
+    console.error("Error loading products:", error);
+  }
 
   const handleSort = useCallback((field: "name" | "price" | "stock_quantity" | "category") => {
     if (field === sortField) {
@@ -134,8 +79,6 @@ const Products = () => {
   }, [sortField, sortDirection]);
 
   const handleProductClick = useCallback((product: Product) => {
-    setSelectedProduct(product);
-    // Navigate to product detail page
     navigate(`/products/${product.id}`);
   }, [navigate]);
 
@@ -153,8 +96,12 @@ const Products = () => {
   }, []);
 
   const handleBulkAction = useCallback(async (action: string) => {
-    console.log('Bulk action:', action, selectedProducts);
-    // Implement bulk actions here
+    if (action === 'export') {
+      exportProductsToExcel(selectedProducts);
+    } else {
+      console.log('Bulk action:', action, selectedProducts);
+      // Implement other bulk actions here
+    }
   }, [selectedProducts]);
 
   const handleImportSuccess = useCallback(() => {
@@ -162,129 +109,67 @@ const Products = () => {
     refresh();
   }, [queryClient, refresh]);
 
-  const handleDownloadTemplate = useCallback(() => {
-    exportProductTemplateToExcel();
-  }, []);
-
-  const handleExportExcel = useCallback(() => {
-    exportProductsToExcel(products as any);
-  }, [products]);
-
-  const handleImportExcel = useCallback(() => {
-    setIsImportDialogOpen(true);
-  }, []);
-
-  // Filtre değişikliklerini optimize et
-  const handleSearchChange = useCallback((query: string) => {
-    setSearchQuery(query);
-  }, []);
-
-  const handleCategoryFilterChange = useCallback((category: string) => {
-    setCategoryFilter(category);
-  }, []);
-
-  const handleStockFilterChange = useCallback((stock: string) => {
-    setStockFilter(stock);
-  }, []);
-
-  // Flatten products for display
-  const flatProducts = products || [];
-
-  // Group products by status for header stats
-  const groupedProducts = {
-    all: flatProducts,
-    in_stock: flatProducts.filter(p => p.stock_quantity > 5),
-    low_stock: flatProducts.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 5),
-    out_of_stock: flatProducts.filter(p => p.stock_quantity === 0),
-    active: flatProducts.filter(p => p.is_active),
-    inactive: flatProducts.filter(p => !p.is_active),
-  };
-
   return (
-    <>
-      <div className="space-y-2">
-        {/* Header */}
-        <ProductListHeader
-          activeView={activeView}
-          setActiveView={setActiveView}
-          products={groupedProducts}
-          totalProducts={totalCount || 0}
-          onDownloadTemplate={handleDownloadTemplate}
-          onExportExcel={handleExportExcel}
-          onImportExcel={handleImportExcel}
-          onBulkAction={handleBulkAction}
-        />
-
-        {/* Filters */}
-        <ProductListFilters
-          search={searchQuery}
-          setSearch={handleSearchChange}
-          categoryFilter={categoryFilter}
-          setCategoryFilter={handleCategoryFilterChange}
-          stockFilter={stockFilter}
-          setStockFilter={handleStockFilterChange}
-          categories={categories}
-        />
-
-        {/* Bulk Actions */}
-        {selectedProducts.length > 0 && (
-          <ProductsBulkActions
-            selectedProducts={selectedProducts}
-            onClearSelection={handleClearSelection}
-            onBulkAction={handleBulkAction}
-          />
-        )}
-
-        {isLoading ? (
-          <div className="flex items-center justify-center h-[400px]">
-            <div className="text-center space-y-4">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-muted-foreground">Ürünler yükleniyor...</p>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="h-96 flex items-center justify-center">
-            <div className="text-red-500">Ürünler yüklenirken bir hata oluştu</div>
-          </div>
-        ) : (
-          <Tabs value={activeView} className="w-full">
-            <TabsContent value="grid" className="mt-0">
-              <ProductGrid
-                products={flatProducts}
-                isLoading={isLoading}
-                isLoadingMore={isLoadingMore}
-                hasNextPage={hasNextPage}
-                loadMore={loadMore}
-                onProductClick={handleProductClick}
-                onProductSelect={handleProductSelect}
-                selectedProducts={selectedProducts}
-              />
-            </TabsContent>
-            <TabsContent value="table" className="mt-0">
-              <ProductListTable
-                products={flatProducts}
-                isLoading={isLoading}
-                isLoadingMore={isLoadingMore}
-                hasNextPage={hasNextPage}
-                loadMore={loadMore}
-                totalCount={totalCount || 0}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSortFieldChange={handleSort}
-                onProductClick={handleProductClick}
-                onProductSelect={handleProductSelect}
-                selectedProducts={selectedProducts}
-              />
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
-      <ProductImportDialog
-        isOpen={isImportDialogOpen}
-        setIsOpen={setIsImportDialogOpen}
+    <div className="space-y-2">
+      {/* Header */}
+      <ProductsHeader 
+        products={products || []}
+        activeView={activeView}
+        setActiveView={setActiveView}
+      />
+      
+      {/* Filters */}
+      <ProductsFilterBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        stockFilter={stockFilter}
+        setStockFilter={setStockFilter}
+        categories={categories}
+      />
+      
+      {/* Bulk Actions - Always visible */}
+      <ProductsBulkActions 
+        selectedProducts={selectedProducts}
+        onClearSelection={handleClearSelection}
+        onBulkAction={handleBulkAction}
         onImportSuccess={handleImportSuccess}
       />
-    </>
+      
+      {isLoading ? (
+        <div className="flex items-center justify-center h-[400px]">
+          <div className="text-center space-y-4">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="text-muted-foreground">Ürünler yükleniyor...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="h-96 flex items-center justify-center">
+          <div className="text-red-500">Ürünler yüklenirken bir hata oluştu</div>
+        </div>
+      ) : (
+        <ProductsContent
+          products={products || []}
+          isLoading={isLoading}
+          isLoadingMore={isLoadingMore}
+          hasNextPage={hasNextPage}
+          loadMore={loadMore}
+          totalCount={totalCount}
+          error={error}
+          activeView={activeView}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSortFieldChange={handleSort}
+          onProductClick={handleProductClick}
+          onProductSelect={handleProductSelect}
+          selectedProducts={selectedProducts}
+          searchQuery={searchQuery}
+          categoryFilter={categoryFilter}
+          stockFilter={stockFilter}
+        />
+      )}
+    </div>
   );
 };
 

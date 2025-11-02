@@ -32,7 +32,7 @@ const CustomersTableHeader = ({ columns, sortField, sortDirection, onSort, hasSe
 
   return (
     <TableHeader>
-      <TableRow className="bg-gray-50 border-b">
+      <TableRow className="bg-slate-100 border-b border-slate-200">
       {hasSelection && (
         <TableHead className="w-[40px] py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
           <Checkbox
@@ -46,7 +46,7 @@ const CustomersTableHeader = ({ columns, sortField, sortDirection, onSort, hasSe
           key={column.id}
           className={cn(
             "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
-            column.sortable && "cursor-pointer hover:bg-muted/50"
+            column.sortable && "cursor-pointer hover:bg-slate-200"
           )}
           onClick={column.sortable ? () => onSort(column.id) : undefined}
         >

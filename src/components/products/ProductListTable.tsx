@@ -1,24 +1,15 @@
 import { memo, useCallback, useState } from "react";
-import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ArrowUpDown, ChevronUp, ChevronDown, Edit, Trash } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+import { Table, TableBody } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import InfiniteScroll from "@/components/ui/infinite-scroll";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import ProductsTableHeader from "./table/ProductsTableHeader";
+import ProductsTableRow from "./table/ProductsTableRow";
+import ProductsTableSkeleton from "./table/ProductsTableSkeleton";
+import InfiniteScroll from "@/components/ui/infinite-scroll";
+import { TableRow, TableCell } from "@/components/ui/table";
 
 interface Product {
   id: string;
@@ -61,7 +52,6 @@ const ProductListTable = ({
   sortField,
   sortDirection,
   onSortFieldChange,
-  onProductClick,
   onProductSelect,
   selectedProducts = []
 }: ProductListTableProps) => {
@@ -72,14 +62,6 @@ const ProductListTable = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const getSortIcon = (field: string) => {
-    if (field !== sortField) return null;
-    
-    return sortDirection === "asc" 
-      ? <ChevronUp className="h-4 w-4 ml-1" />
-      : <ChevronDown className="h-4 w-4 ml-1" />;
-  };
 
   const handleEdit = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -130,174 +112,93 @@ const ProductListTable = ({
     }).format(price);
   }, []);
 
-  return (
-    <div className="bg-gradient-to-br from-card via-muted/20 to-background rounded-2xl shadow-2xl border border-border/10 backdrop-blur-xl relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 opacity-50"></div>
-      <div className="relative z-10 p-6">
-        <div className="overflow-x-auto">
-          <Table className="border-collapse">
-            <TableHeader>
-              <TableRow className="bg-gray-50 border-b">
-                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 w-[50px]">
-                  <Checkbox
-                    checked={selectedProducts.length > 0 && selectedProducts.length === products?.length}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        products?.forEach(p => {
-                          if (!selectedProducts.some(sp => sp.id === p.id)) {
-                            onProductSelect?.(p);
-                          }
-                        });
-                      } else {
-                        products?.forEach(p => onProductSelect?.(p));
-                      }
-                    }}
-                    indeterminate={selectedProducts.length > 0 && selectedProducts.length < (products?.length || 0)}
-                  />
-                </TableHead>
-                <TableHead 
-                  className={cn(
-                    "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
-                  )}
-                  onClick={() => onSortFieldChange("name")}
-                >
-                  <div className="flex items-center">
-                    <span>📦 Ürün Adı</span>
-                    {getSortIcon("name")}
-                  </div>
-                </TableHead>
-                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  🏷️ SKU
-                </TableHead>
-                <TableHead 
-                  className={cn(
-                    "h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
-                  )}
-                  onClick={() => onSortFieldChange("category")}
-                >
-                  <div className="flex items-center">
-                    <span>📂 Kategori</span>
-                    {getSortIcon("category")}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className={cn(
-                    "h-12 px-4 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
-                  )}
-                  onClick={() => onSortFieldChange("price")}
-                >
-                  <div className="flex items-center justify-end">
-                    <span>💰 Fiyat</span>
-                    {getSortIcon("price")}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className={cn(
-                    "h-12 px-4 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide cursor-pointer hover:bg-muted/50"
-                  )}
-                  onClick={() => onSortFieldChange("stock_quantity")}
-                >
-                  <div className="flex items-center justify-end">
-                    <span>📊 Stok</span>
-                    {getSortIcon("stock_quantity")}
-                  </div>
-                </TableHead>
-                <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  🟢 Durum
-                </TableHead>
-                <TableHead className="h-12 px-4 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  ⚙️ İşlemler
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
-                    Yükleniyor...
-                  </TableCell>
-                </TableRow>
-              ) : products?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
-                    Ürün bulunamadı
-                  </TableCell>
-                </TableRow>
-              ) : (
-                products?.map((product) => {
-                  const isSelected = selectedProducts.some(p => p.id === product.id);
-                  return (
-                    <TableRow 
-                      key={product.id} 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/product-details/${product.id}`)}
-                    >
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => onProductSelect?.(product)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.sku || "-"}</TableCell>
-                    <TableCell>
-                      {product.product_categories?.name || "Kategorisiz"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatPrice(product.price, product.currency)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <span>{product.stock_quantity}</span>
-                        {product.stock_quantity <= 0 ? (
-                          <Badge variant="destructive">Stokta Yok</Badge>
-                        ) : product.stock_quantity <= product.min_stock_level ? (
-                          <Badge variant="warning">Az Stok</Badge>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={product.is_active ? "default" : "secondary"}>
-                        {product.is_active ? "Aktif" : "Pasif"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => handleEdit(product.id, e)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                          onClick={(e) => handleDeleteClick(product, e)}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+  const handleProductSelectToggle = useCallback((product: Product) => {
+    const isSelected = selectedProducts.some(p => p.id === product.id);
+    if (isSelected) {
+      // Seçimi kaldır
+      onProductSelect?.(product);
+    } else {
+      // Seç
+      onProductSelect?.(product);
+    }
+  }, [selectedProducts, onProductSelect]);
 
-        {/* Infinite Scroll Trigger */}
-        <InfiniteScroll
-          hasNextPage={hasNextPage}
-          isLoadingMore={isLoadingMore}
-          onLoadMore={loadMore}
-          className="mt-4"
-        >
-          <div />
-        </InfiniteScroll>
+  const handleSelectAll = useCallback((checked: boolean) => {
+    if (checked) {
+      products?.forEach(p => {
+        if (!selectedProducts.some(sp => sp.id === p.id)) {
+          onProductSelect?.(p);
+        }
+      });
+    } else {
+      products?.forEach(p => onProductSelect?.(p));
+    }
+  }, [products, selectedProducts, onProductSelect]);
+
+  if (isLoading && (!products || products.length === 0)) {
+    return <ProductsTableSkeleton />;
+  }
+
+  return (
+    <div className="-mx-4">
+      <div className="px-4">
+        <Table>
+        <ProductsTableHeader 
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={onSortFieldChange}
+          hasSelection={true}
+          onSelectAll={handleSelectAll}
+          isAllSelected={selectedProducts.length > 0 && selectedProducts.length === (products?.length || 0)}
+          totalProducts={totalCount}
+        />
+        <TableBody>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                Yükleniyor...
+              </TableCell>
+            </TableRow>
+          ) : products?.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                Ürün bulunamadı
+              </TableCell>
+            </TableRow>
+          ) : (
+            products?.map((product) => {
+              const isSelected = selectedProducts.some(p => p.id === product.id);
+              return (
+                <ProductsTableRow
+                  key={product.id}
+                  product={product}
+                  formatPrice={formatPrice}
+                  onSelect={onProductSelect}
+                  onSelectToggle={handleProductSelectToggle}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteClick}
+                  isSelected={isSelected}
+                />
+              );
+            })
+          )}
+        </TableBody>
+        </Table>
       </div>
+
+      {/* Infinite Scroll Trigger */}
+      {hasNextPage && (
+        <div className="px-4">
+          <InfiniteScroll
+            hasNextPage={hasNextPage}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={loadMore}
+            className="mt-4"
+          >
+            <div />
+          </InfiniteScroll>
+        </div>
+      )}
 
       {/* Confirmation Dialog */}
       <ConfirmationDialogComponent

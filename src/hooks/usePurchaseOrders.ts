@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useInfiniteScroll } from './useInfiniteScroll';
+import { useCurrentUser } from './useCurrentUser';
+import { useCallback } from 'react';
 
 export interface PurchaseOrder {
   id: string;
@@ -417,4 +420,108 @@ export const useUpdatePOStatus = () => {
       });
     },
   });
+};
+
+// Purchase Orders Filters Interface
+export interface PurchaseOrderFilters {
+  status?: string;
+  search?: string;
+  supplier_id?: string;
+  warehouse_id?: string;
+  dateRange?: { from: Date | null; to: Date | null };
+}
+
+// Infinite scroll hook for purchase orders
+export const usePurchaseOrdersInfiniteScroll = (filters?: PurchaseOrderFilters, pageSize: number = 20) => {
+  const { userData, loading: userLoading } = useCurrentUser();
+
+  const fetchOrders = useCallback(async (page: number, pageSize: number) => {
+    if (!userData?.company_id) {
+      throw new Error("Kullanıcının company_id'si bulunamadı");
+    }
+
+    let query = supabase
+      .from('purchase_orders')
+      .select(`
+        *,
+        supplier:suppliers!purchase_orders_supplier_id_fkey(id, name, email, phone, address),
+        items:purchase_order_items(*)
+      `, { count: 'exact' })
+      .eq('company_id', userData.company_id);
+
+    // Apply filters
+    if (filters?.status && filters.status !== 'all') {
+      query = query.eq('status', filters.status);
+    }
+
+    if (filters?.search) {
+      query = query.or(`order_number.ilike.%${filters.search}%,notes.ilike.%${filters.search}%`);
+    }
+
+    if (filters?.supplier_id && filters.supplier_id !== 'all') {
+      query = query.eq('supplier_id', filters.supplier_id);
+    }
+
+    if (filters?.warehouse_id && filters.warehouse_id !== 'all') {
+      query = query.eq('warehouse_id', filters.warehouse_id);
+    }
+
+    if (filters?.dateRange?.from) {
+      query = query.gte('order_date', filters.dateRange.from.toISOString().split('T')[0]);
+    }
+
+    if (filters?.dateRange?.to) {
+      query = query.lte('order_date', filters.dateRange.to.toISOString().split('T')[0]);
+    }
+
+    // Apply pagination
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error("Error fetching purchase orders:", error);
+      throw error;
+    }
+
+    return {
+      data: data || [],
+      totalCount: count || 0,
+      hasNextPage: data ? data.length === pageSize : false,
+    };
+  }, [userData?.company_id, JSON.stringify(filters)]);
+
+  const {
+    data: orders,
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    error,
+    loadMore,
+    refresh,
+    totalCount,
+  } = useInfiniteScroll(
+    ["purchase-orders-infinite", JSON.stringify(filters), userData?.company_id],
+    fetchOrders,
+    {
+      pageSize,
+      enabled: !!userData?.company_id,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+    }
+  );
+
+  return {
+    data: orders,
+    isLoading: isLoading || userLoading,
+    isLoadingMore,
+    hasNextPage,
+    error,
+    loadMore,
+    refresh,
+    totalCount,
+  };
 };

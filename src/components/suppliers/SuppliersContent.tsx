@@ -71,10 +71,9 @@ const SuppliersContent = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className="p-6 bg-white rounded-xl relative overflow-hidden">
-        <div className="relative z-10">
-          <SuppliersTable
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="pb-6">
+        <SuppliersTable
             suppliers={suppliers}
             isLoading={isLoading}
             totalCount={totalCount || 0}
@@ -106,7 +105,6 @@ const SuppliersContent = ({
               Tüm tedarikçiler yüklendi
             </div>
           )}
-        </div>
       </div>
     </div>
   );

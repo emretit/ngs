@@ -303,8 +303,9 @@ const CustomersTable = ({
   }
 
   return (
-    <div>
-      <Table>
+    <div className="-mx-4">
+      <div className="px-4">
+        <Table>
         <CustomersTableHeader 
           columns={columns} 
           sortField={sortField}
@@ -345,7 +346,8 @@ const CustomersTable = ({
             ))
           )}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
       
       {/* Confirmation Dialog */}
       <ConfirmationDialogComponent

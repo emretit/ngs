@@ -302,8 +302,10 @@ const SuppliersTable = ({
     );
   }
 
-  return (<>
-    <Table>
+  return (
+    <div className="-mx-4">
+      <div className="px-4">
+        <Table>
       <SuppliersTableHeader 
         columns={columns} 
         sortField={sortField}
@@ -343,23 +345,25 @@ const SuppliersTable = ({
             />
           ))
         )}
-      </TableBody>
-    </Table>
-
-    {/* Confirmation Dialog */}
-    <ConfirmationDialogComponent
-      open={isDeleteDialogOpen}
-      onOpenChange={setIsDeleteDialogOpen}
-      title="Tedarikçiyi Sil"
-      description={`"${supplierToDelete?.company || supplierToDelete?.name || 'Bu tedarikçi'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-      confirmText="Sil"
-      cancelText="İptal"
-      variant="destructive"
-      onConfirm={handleDeleteSupplierConfirm}
-      onCancel={handleDeleteSupplierCancel}
-      isLoading={isDeleting}
-    />
-  </> );
+        </TableBody>
+        </Table>
+      </div>
+      
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Tedarikçiyi Sil"
+        description={`"${supplierToDelete?.company || supplierToDelete?.name || 'Bu tedarikçi'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteSupplierConfirm}
+        onCancel={handleDeleteSupplierCancel}
+        isLoading={isDeleting}
+      />
+    </div>
+  );
 };
 
 export default SuppliersTable;

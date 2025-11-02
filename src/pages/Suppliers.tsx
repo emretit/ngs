@@ -3,7 +3,6 @@ import SuppliersHeader from "@/components/suppliers/SuppliersHeader";
 import SuppliersFilterBar from "@/components/suppliers/SuppliersFilterBar";
 import SuppliersContent from "@/components/suppliers/SuppliersContent";
 import SuppliersBulkActions from "@/components/suppliers/SuppliersBulkActions";
-import ExcelImportExport from "@/components/suppliers/ExcelImportExport";
 import { Supplier } from "@/types/supplier";
 import { toast } from "sonner";
 import { useSuppliersInfiniteScroll } from "@/hooks/useSuppliersInfiniteScroll";
@@ -54,8 +53,6 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         <SuppliersHeader 
           suppliers={suppliers || []}
         />
-        {/* Excel Actions */}
-        <ExcelImportExport suppliers={suppliers || []} />
         {/* Filters */}
         <SuppliersFilterBar
           searchQuery={searchQuery}
@@ -65,12 +62,10 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
           selectedType={selectedType}
           setSelectedType={setSelectedType}
         />
-        {selectedSuppliers.length > 0 && (
-          <SuppliersBulkActions 
-            selectedSuppliers={selectedSuppliers}
-            onClearSelection={handleClearSelection}
-          />
-        )}
+        <SuppliersBulkActions 
+          selectedSuppliers={selectedSuppliers}
+          onClearSelection={handleClearSelection}
+        />
         {isLoading ? (
           <div className="flex items-center justify-center h-[400px]">
             <div className="text-center space-y-4">

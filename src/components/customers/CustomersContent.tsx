@@ -71,10 +71,9 @@ const CustomersContent = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className="p-6 bg-white rounded-xl relative overflow-hidden">
-        <div className="relative z-10">
-          <CustomersTable
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="pb-6">
+        <CustomersTable
             customers={customers}
             isLoading={isLoading}
             totalCount={totalCount || 0}
@@ -106,7 +105,6 @@ const CustomersContent = ({
               Tüm müşteriler yüklendi
             </div>
           )}
-        </div>
       </div>
     </div>
   );

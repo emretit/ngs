@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePurchaseOrdersInfiniteScroll } from "@/hooks/usePurchaseOrders";
+import { usePurchaseOrdersInfiniteScroll, PurchaseOrder } from "@/hooks/usePurchaseOrders";
 import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -73,7 +73,7 @@ const PurchaseOrdersList = () => {
     <>
       <div className="space-y-2">
         {/* Header */}
-        <PurchaseOrdersHeader orders={orders || []} />
+        <PurchaseOrdersHeader orders={(orders as PurchaseOrder[]) || []} />
 
         {/* Filters */}
         <PurchaseOrdersFilterBar
@@ -105,7 +105,7 @@ const PurchaseOrdersList = () => {
           </div>
         ) : (
           <PurchaseOrdersContent
-            orders={orders || []}
+            orders={(orders as PurchaseOrder[]) || []}
             isLoading={isLoading}
             isLoadingMore={isLoadingMore}
             hasNextPage={hasNextPage}

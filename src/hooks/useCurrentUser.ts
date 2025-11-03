@@ -8,6 +8,8 @@ interface UserData {
   email: string;
   company_id: string | null;
   employee_id: string | null;
+  phone?: string;
+  avatar_url?: string;
 }
 
 export const useCurrentUser = () => {

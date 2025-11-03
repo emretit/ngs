@@ -8,7 +8,7 @@ interface WorkOrdersKanbanBoardProps {
   onWorkOrderClick: (workOrder: WorkOrder) => void;
   onEdit?: (workOrder: WorkOrder) => void;
   onDelete?: (workOrderId: string) => void;
-  onStatusChange?: (workOrderId: string, status: WorkOrderStatus) => Promise<void>;
+  onStatusChange?: (workOrderId: string, status: WorkOrderStatus) => Promise<void> | void;
 }
 
 const columns = [

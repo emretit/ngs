@@ -13,7 +13,7 @@ interface WorkOrdersContentProps {
   onSelectWorkOrder: (workOrder: WorkOrder) => void;
   onEditWorkOrder?: (workOrder: WorkOrder) => void;
   onDeleteWorkOrder?: (workOrderId: string) => void;
-  onStatusChange?: (workOrderId: string, status: WorkOrderStatus) => void;
+  onStatusChange?: (workOrderId: string, status: WorkOrderStatus) => Promise<void> | void;
   searchQuery?: string;
   statusFilter?: string;
 }

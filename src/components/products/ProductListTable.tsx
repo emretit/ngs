@@ -10,22 +10,7 @@ import ProductsTableRow from "./table/ProductsTableRow";
 import ProductsTableSkeleton from "./table/ProductsTableSkeleton";
 import InfiniteScroll from "@/components/ui/infinite-scroll";
 import { TableRow, TableCell } from "@/components/ui/table";
-
-interface Product {
-  id: string;
-  name: string;
-  sku: string | null;
-  price: number;
-  currency: string;
-  stock_quantity: number;
-  min_stock_level: number;
-  status: string;
-  is_active: boolean;
-  product_categories: {
-    id: string;
-    name: string;
-  } | null;
-}
+import { Product } from "@/types/product";
 
 interface ProductListTableProps {
   products: Product[] | undefined;

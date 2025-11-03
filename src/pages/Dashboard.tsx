@@ -32,13 +32,17 @@ const Dashboard = () => {
       />
 
       {/* Global Search Bar */}
-      <GlobalSearchBar />
+      <div className="mt-4">
+        <GlobalSearchBar />
+      </div>
+
+      {/* AI Insights Panel - Ayrı kart olarak */}
+      <div className="mt-4">
+        <AIInsightsPanel />
+      </div>
 
       {/* Main Content Container */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
-        {/* AI Insights Panel */}
-        <AIInsightsPanel />
-
+      <div className="mt-4 bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
         {/* KPI Metrics Grid */}
         <MetricsGrid
           financialData={financialData}

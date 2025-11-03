@@ -69,7 +69,7 @@ export const EmployeeDeletionDialog = ({
               <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
                 <div className="flex items-center gap-2 text-warning text-sm font-medium">
                   <UserX className="h-4 w-4" />
-                  Bu çalışan bir kullanıcı hesabıyla eşleştirilmiş
+                  Bu çalışanın bir kullanıcı hesabı var
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   Çalışanı silerken kullanıcı hesabı ile ne yapılmasını istiyorsunuz?
@@ -91,7 +91,7 @@ export const EmployeeDeletionDialog = ({
                     <div>
                       <div className="font-medium text-sm">Sadece Çalışanı Sil</div>
                       <div className="text-xs text-muted-foreground">
-                        Kullanıcı hesabı korunur, sadece eşleştirme kaldırılır
+                        Kullanıcı hesabı korunur, sadece çalışan kaydı silinir
                       </div>
                     </div>
                   </div>
@@ -121,7 +121,7 @@ export const EmployeeDeletionDialog = ({
           ) : (
             <div className="text-center py-2">
               <p className="text-sm text-muted-foreground">
-                Bu çalışan herhangi bir kullanıcı hesabıyla eşleştirilmemiş.
+                Bu çalışanın henüz bir kullanıcı hesabı yok (email bekleniyor).
                 Çalışan kaydı silinecek.
               </p>
             </div>

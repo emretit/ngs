@@ -26,7 +26,7 @@ const GlobalSearchBar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const debouncedQuery = useDebounce(searchQuery, 300);
-  const { results, isLoading } = useGlobalSearch(debouncedQuery);
+  const { results, isLoading, error } = useGlobalSearch(debouncedQuery);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,7 +59,15 @@ const GlobalSearchBar = () => {
 
   // Show/hide dropdown based on query and results
   useEffect(() => {
-    setIsOpen(searchQuery.length >= 2 && (results.length > 0 || !isLoading));
+    // Only show dropdown if:
+    // 1. Query is at least 2 characters
+    // 2. Either we have results OR we're still loading (showing loading state)
+    // 3. Don't show if there's an error and no results
+    const shouldShow = searchQuery.length >= 2 && (
+      (results.length > 0) || 
+      (isLoading && searchQuery.length >= 2)
+    );
+    setIsOpen(shouldShow);
     setSelectedIndex(-1); // Reset selection when results change
   }, [searchQuery, results, isLoading]);
 
@@ -218,7 +226,7 @@ const GlobalSearchBar = () => {
 
   return (
     <div 
-      className="w-full mx-auto mb-8 px-4 sm:px-0" 
+      className="w-full mx-auto px-4 sm:px-0" 
       ref={containerRef}
       role="search"
     >
@@ -235,7 +243,7 @@ const GlobalSearchBar = () => {
               )}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-foreground">
+              <h2 className="text-base font-bold text-foreground">
                 {mode === "search" ? "Hızlı Arama" : "AI Analytics"}
               </h2>
               <p className="text-xs text-muted-foreground">
@@ -274,7 +282,7 @@ const GlobalSearchBar = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="🔍 Müşteri, teklif, çalışan, ürün veya fırsat ara..."
-                className="w-full pl-5 pr-32 h-14 text-base bg-background border-2 border-border/50 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 shadow-sm hover:shadow-md placeholder:text-muted-foreground/60 font-medium"
+                className="w-full pl-5 pr-32 h-14 text-sm bg-background border-2 border-border/50 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 shadow-sm hover:shadow-md placeholder:text-muted-foreground/60 font-medium"
                 aria-label="Global arama"
                 aria-expanded={isOpen}
                 aria-controls="search-results"
@@ -425,14 +433,22 @@ const GlobalSearchBar = () => {
           </>
         )}
 
-        {/* Results Dropdown - Modern Design */}
+            {/* Results Dropdown - Modern Design */}
         {isOpen && (
           <div 
             id="search-results"
             role="listbox"
             className="absolute top-full left-0 right-0 mt-4 bg-background border-2 border-border/50 rounded-2xl shadow-2xl max-h-[min(500px,70vh)] overflow-hidden z-50 animate-in slide-in-from-top-4 fade-in-0 duration-300"
           >
-            {results.length === 0 && !isLoading ? (
+            {error ? (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-destructive/10 rounded-2xl flex items-center justify-center">
+                  <X className="h-8 w-8 text-destructive" />
+                </div>
+                <p className="text-foreground font-semibold text-base mb-1">Arama sırasında hata oluştu</p>
+                <p className="text-sm text-muted-foreground">Lütfen sayfayı yenileyip tekrar deneyin</p>
+              </div>
+            ) : results.length === 0 && !isLoading ? (
               <div className="p-8 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-muted/50 rounded-2xl flex items-center justify-center">
                   <Search className="h-8 w-8 text-muted-foreground/50" />

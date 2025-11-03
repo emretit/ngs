@@ -164,7 +164,7 @@ export const ModernUserList = ({ users, isLoading }: ModernUserListProps) => {
                 </Select>
               </div>
 
-              {/* Employee Match - Read-only display */}
+              {/* Employee Info - Her çalışan otomatik olarak bir kullanıcıdır */}
               <div className="w-[200px]">
                 <div className="flex items-center gap-2">
                   {user.employees ? (
@@ -175,7 +175,7 @@ export const ModernUserList = ({ users, isLoading }: ModernUserListProps) => {
                       </span>
                     </div>
                   ) : (
-                    <span className="text-xs text-amber-600 flex-1">Çalışan kaydı yok</span>
+                    <span className="text-xs text-muted-foreground flex-1">Sadece kullanıcı</span>
                   )}
                 </div>
               </div>

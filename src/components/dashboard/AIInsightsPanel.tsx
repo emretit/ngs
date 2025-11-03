@@ -28,7 +28,7 @@ export const AIInsightsPanel = () => {
       <Card className="overflow-hidden border-primary/20 shadow-lg hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-background pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-xl">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="h-5 w-5 text-primary animate-pulse" />
               AI İçgörüleri
             </CardTitle>
@@ -65,7 +65,7 @@ export const AIInsightsPanel = () => {
           ) : latestInsight ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                <p className="text-base leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">
                   {latestInsight.insight_text}
                 </p>
               </div>

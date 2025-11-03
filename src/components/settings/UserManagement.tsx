@@ -109,11 +109,12 @@ export const UserManagement = () => {
       }
 
       // Aynı company_id'deki tüm kullanıcıları çek
+      // Her çalışan zaten bir kullanıcı olduğu için user_id üzerinden employee bilgilerini al
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select(`
           *,
-          employees!profiles_employee_id_fkey (
+          employees!employees_user_id_fkey (
             id,
             first_name,
             last_name,

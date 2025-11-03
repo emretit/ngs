@@ -289,6 +289,11 @@ export const navItems = [
         icon: FileText,
         label: "PDF Şablonları",
       },
+      {
+        path: "/settings/audit-logs",
+        icon: ClipboardList,
+        label: "Denetim Günlüğü",
+      },
     ],
   },
 ];

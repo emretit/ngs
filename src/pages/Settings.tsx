@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings2, Users, UserCheck, Zap, Wrench, FileText, CreditCard } from "lucide-react";
+import { Settings2, Users, UserCheck, Zap, Wrench, FileText, CreditCard, ClipboardList } from "lucide-react";
 interface SettingsProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
@@ -175,6 +175,25 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                     </h3>
                     <p className="text-sm text-gray-600">
                       PDF şablonlarını yönetin
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {/* Denetim Günlüğü */}
+              <div 
+                onClick={() => navigate("/settings/audit-logs")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                    <ClipboardList className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                      Denetim Günlüğü
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Sistem aktivite logları ve değişiklik geçmişi
                     </p>
                   </div>
                 </div>

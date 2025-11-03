@@ -56,7 +56,7 @@ export const EmployeeManagement = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">Çalışan Yönetimi</h2>
-            <p className="text-muted-foreground">Şirket çalışanlarını yönetin ve kullanıcı hesaplarıyla eşleştirin</p>
+            <p className="text-muted-foreground">Şirket çalışanlarını yönetin. Her çalışan otomatik olarak bir kullanıcı hesabına sahiptir.</p>
           </div>
           <Button disabled>
             <Plus className="h-4 w-4 mr-2" />
@@ -173,14 +173,14 @@ export const EmployeeManagement = () => {
                         <>
                           <UserCheck className="h-4 w-4 text-green-600" />
                           <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
-                            Eşleştirilmiş
+                            Kullanıcı Mevcut
                           </Badge>
                         </>
                       ) : (
                         <>
                           <UserX className="h-4 w-4 text-gray-500" />
                           <Badge variant="secondary">
-                            Eşleştirilmemiş
+                            Email Bekleniyor
                           </Badge>
                         </>
                       )}

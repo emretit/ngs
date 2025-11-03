@@ -7,6 +7,7 @@ import PdfTemplatesSettings from "@/pages/settings/PdfTemplatesSettings";
 import PdfTemplateEditor from "@/pages/templates/PdfTemplateEditor";
 import NotificationSettings from "@/pages/NotificationSettings";
 import Subscription from "@/pages/settings/Subscription";
+import AuditLogs from "@/pages/admin/AuditLogs";
 import { RouteConfig } from "./types";
 
 // Define settings routes
@@ -17,6 +18,7 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/settings/nilvera", component: NilveraSettingsPage, protected: true },
   { path: "/settings/system", component: SystemSettingsPage, protected: true },
   { path: "/settings/pdf-templates", component: PdfTemplatesSettings, protected: true },
+  { path: "/settings/audit-logs", component: AuditLogs, protected: true },
   { path: "/settings/notifications", component: NotificationSettings, protected: true },
   { path: "/pdf-templates/new", component: PdfTemplateEditor, protected: true },
   { path: "/pdf-templates/edit/:templateId", component: PdfTemplateEditor, protected: true },

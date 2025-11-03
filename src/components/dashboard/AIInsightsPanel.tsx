@@ -2,12 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, History } from "lucide-react";
 import { useAIInsights } from "@/hooks/useAIInsights";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { InsightHistoryDialog } from "./InsightHistoryDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
-export const AIInsightsPanel = () => {
+export const AIInsightsPanel = memo(() => {
   const { latestInsight, isLoading, generateInsight, isGenerating } = useAIInsights();
   const [showHistory, setShowHistory] = useState(false);
 
@@ -126,4 +126,4 @@ export const AIInsightsPanel = () => {
       />
     </>
   );
-};
+});

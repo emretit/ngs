@@ -10,13 +10,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";
+import { memo } from "react";
 
 interface InsightHistoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const InsightHistoryDialog = ({ open, onOpenChange }: InsightHistoryDialogProps) => {
+export const InsightHistoryDialog = memo(({ open, onOpenChange }: InsightHistoryDialogProps) => {
   const { insightHistory, isLoadingHistory } = useAIInsights();
 
   const formatDate = (dateString: string) => {
@@ -118,4 +119,4 @@ export const InsightHistoryDialog = ({ open, onOpenChange }: InsightHistoryDialo
       </DialogContent>
     </Dialog>
   );
-};
+});

@@ -68,14 +68,16 @@ serve(async (req) => {
     periodStart.setDate(periodStart.getDate() - period_days);
     const periodEnd = new Date();
 
-    // Check for today's cached insight
+    // Check for today's cached insight - strict same-day check
     const today = periodEnd.toISOString().split('T')[0];
+    const todayStart = `${today}T00:00:00.000Z`;
     
     const { data: existingInsight, error: cacheError } = await supabaseClient
       .from('ai_insights')
       .select('*')
       .eq('company_id', profile.company_id)
       .eq('period_end', today)
+      .gte('created_at', todayStart)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -168,11 +170,12 @@ serve(async (req) => {
         .eq('company_id', profile.company_id)
         .gte('transaction_date', periodStart.toISOString()),
       
-      // Checks
+      // Checks (with NULL safety for issue_date)
       supabaseClient
         .from('checks')
-        .select('amount, status, due_date, check_type')
+        .select('amount, status, due_date, check_type, issue_date')
         .eq('company_id', profile.company_id)
+        .not('issue_date', 'is', null)
         .gte('issue_date', periodStart.toISOString()),
       
       // Suppliers

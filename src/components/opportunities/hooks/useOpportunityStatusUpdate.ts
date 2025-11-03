@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { OpportunityStatus, opportunityStatusLabels } from "@/types/crm";
+import { logger } from "@/utils/logger";
 
 export const useOpportunityStatusUpdate = () => {
   const queryClient = useQueryClient();
@@ -32,7 +33,7 @@ export const useOpportunityStatusUpdate = () => {
       });
     },
     onError: (error) => {
-      console.error("Error updating opportunity status:", error);
+      logger.error("Error updating opportunity status", error);
       toast.error("Hata", {
         description: "Fırsat durumu güncellenirken bir hata oluştu.",
         className: "bg-red-50 border-red-200",

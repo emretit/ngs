@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "./useCurrentUser";
 import { showError, showSuccess, showWarning } from "@/utils/toastUtils";
+import { logger } from "@/utils/logger";
 
 export type AIInsight = {
   id: string;
@@ -37,6 +38,9 @@ export const useAIInsights = () => {
     },
     enabled: !!userData?.company_id,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours - daily cache
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Fetch insight history
@@ -57,6 +61,9 @@ export const useAIInsights = () => {
     },
     enabled: !!userData?.company_id,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours - daily cache
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Generate new insight
@@ -93,7 +100,7 @@ export const useAIInsights = () => {
       }
     },
     onError: (error: Error) => {
-      console.error('Error generating insight:', error);
+      logger.error('Error generating insight', error);
       
       if (error.message.includes('limit')) {
         showWarning(error.message);

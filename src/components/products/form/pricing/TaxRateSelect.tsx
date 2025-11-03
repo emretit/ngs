@@ -33,7 +33,7 @@ const TaxRateSelect = ({ form }: TaxRateSelectProps) => {
             value={field.value.toString()}
           >
             <FormControl>
-              <SelectTrigger className="h-9 text-sm">
+              <SelectTrigger className="h-7 text-xs">
                 <SelectValue placeholder="KDV oranı seçiniz" />
               </SelectTrigger>
             </FormControl>

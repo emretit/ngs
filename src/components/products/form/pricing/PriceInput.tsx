@@ -43,7 +43,7 @@ const PriceInput = ({ form, name, label, description, isRequired = false, showVa
                 type="number" 
                 min="0" 
                 step="0.01"
-                className="h-9 text-sm"
+                className="h-7 text-xs"
                 {...field}
                 value={field.value || ''}
                 onChange={(e) => {

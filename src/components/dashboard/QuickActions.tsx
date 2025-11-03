@@ -31,7 +31,7 @@ const QuickActions = () => {
     {
       label: "Ürün Ekle",
       icon: Package,
-      onClick: () => navigate("/products/new"),
+      onClick: () => navigate("/product-form"),
       color: "text-purple-600 dark:text-purple-400",
       bgColor: "bg-purple-50 dark:bg-purple-950",
     },

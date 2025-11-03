@@ -167,11 +167,7 @@ export const navItems = [
         icon: FileText,
         label: "E-Fatura",
       },
-      {
-        path: "/invoices/analysis",
-        icon: BarChart3,
-        label: "Fatura Analizi",
-      },
+      
     ],
   },
   // 8. Nakit Akış
@@ -205,6 +201,11 @@ export const navItems = [
         path: "/cashflow/loans",
         icon: Calculator,
         label: "Krediler",
+      },
+      {
+        path: "/cashflow/categories",
+        icon: ListTodo,
+        label: "Kategoriler",
       },
     ],
   },

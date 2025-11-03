@@ -79,7 +79,7 @@ const Products = () => {
   }, [sortField, sortDirection]);
 
   const handleProductClick = useCallback((product: Product) => {
-    navigate(`/products/${product.id}`);
+    navigate(`/product-details/${product.id}`);
   }, [navigate]);
 
   const handleProductSelect = useCallback((product: Product) => {

@@ -54,10 +54,10 @@ const ProductInventory = ({
   const showThreshold = stockThreshold && stockThreshold !== minStockLevel;
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+    <Card className="rounded-xl">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
             <Boxes className="h-5 w-5" />
             Stok Bilgileri
           </h2>
@@ -70,9 +70,9 @@ const ProductInventory = ({
           </Button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">Stok Miktarı</span>
+            <span className="text-xs text-gray-500">Stok Miktarı</span>
             <div className="flex items-center gap-2">
               {isEditing ? (
                 <Input
@@ -82,10 +82,10 @@ const ProductInventory = ({
                     ...prev,
                     stockQuantity: e.target.valueAsNumber
                   }))}
-                  className="w-32 text-right"
+                  className="w-28 h-7 text-xs text-right"
                 />
               ) : (
-                <span className="text-lg font-medium">
+                <span className="text-sm font-medium">
                   {stockQuantity} {unit}
                 </span>
               )}
@@ -93,7 +93,7 @@ const ProductInventory = ({
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">Minimum Stok Seviyesi</span>
+            <span className="text-xs text-gray-500">Minimum Stok Seviyesi</span>
             {isEditing ? (
               <Input
                 type="number"
@@ -102,7 +102,7 @@ const ProductInventory = ({
                   ...prev,
                   minStockLevel: e.target.valueAsNumber
                 }))}
-                className="w-32 text-right"
+                className="w-28 h-7 text-xs text-right"
               />
             ) : (
               <span>{minStockLevel} {unit}</span>
@@ -111,7 +111,7 @@ const ProductInventory = ({
 
           {(isEditing || showThreshold) && (
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Stok Alarm Eşiği</span>
+              <span className="text-xs text-gray-500">Stok Alarm Eşiği</span>
               {isEditing ? (
                 <Input
                   type="number"
@@ -120,7 +120,7 @@ const ProductInventory = ({
                     ...prev,
                     stockThreshold: e.target.valueAsNumber
                   }))}
-                  className="w-32 text-right"
+                  className="w-28 h-7 text-xs text-right"
                 />
               ) : (
                 <span>{stockThreshold} {unit}</span>
@@ -147,7 +147,7 @@ const ProductInventory = ({
 
           {lastPurchaseDate && (
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">Son Alım Tarihi</span>
+              <span className="text-xs text-gray-500">Son Alım Tarihi</span>
               <span>{format(new Date(lastPurchaseDate), 'dd.MM.yyyy')}</span>
             </div>
           )}

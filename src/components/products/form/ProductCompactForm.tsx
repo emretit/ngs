@@ -104,16 +104,21 @@ const ProductCompactForm = ({
       {/* Top Row - Basic Info & Stock Management */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* Basic Information Card */}
-        <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-          <CardHeader className="pb-2 pt-2.5">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
-                <Package className="h-4 w-4 text-blue-600" />
+        <Card className="rounded-xl">
+          <CardHeader className="pb-2 pt-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
+                  <Package className="h-4 w-4 text-blue-600" />
+                </div>
+                Temel Bilgiler
+              </CardTitle>
+              <div className="ml-4">
+                <ProductStatusSwitch form={form} />
               </div>
-              Temel Bilgiler
-            </CardTitle>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3 pt-0 px-3 pb-3">
+          <CardContent className="space-y-3 pt-0">
             {/* Ürün Adı - Tam Genişlik */}
             <FormField
               control={form.control}
@@ -124,7 +129,7 @@ const ProductCompactForm = ({
                   <FormControl>
                     <Input 
                       placeholder="Ürün adı giriniz" 
-                      className="h-9 text-sm" 
+                      className="h-7 text-xs" 
                       {...field} 
                     />
                   </FormControl>
@@ -144,7 +149,7 @@ const ProductCompactForm = ({
                     <FormControl>
                       <Input 
                         placeholder="SKU giriniz" 
-                        className="h-9 text-sm" 
+                        className="h-7 text-xs" 
                         {...field} 
                         value={field.value || ''} 
                       />
@@ -167,7 +172,7 @@ const ProductCompactForm = ({
                   <FormControl>
                     <Textarea
                       placeholder="Ürün açıklaması giriniz"
-                      className="resize-none min-h-[80px] text-sm"
+                      className="resize-none min-h-[80px] text-xs"
                       {...field}
                       value={field.value || ''}
                     />
@@ -176,12 +181,14 @@ const ProductCompactForm = ({
                 </FormItem>
               )}
             />
+
+            
           </CardContent>
         </Card>
 
         {/* Stock Management Card */}
-        <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-          <CardHeader className="pb-2 pt-2.5">
+        <Card className="rounded-xl">
+          <CardHeader className="pb-2 pt-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
                 <Archive className="h-4 w-4 text-green-600" />
@@ -189,7 +196,7 @@ const ProductCompactForm = ({
               Stok Yönetimi
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 pt-0 px-3 pb-3">
+          <CardContent className="space-y-3 pt-0">
             {/* Stock Quantity and Unit */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <FormField
@@ -202,7 +209,7 @@ const ProductCompactForm = ({
                       <Input 
                         type="number" 
                         placeholder="0" 
-                        className="h-9 text-sm" 
+                        className="h-7 text-xs" 
                         {...field} 
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
                       />
@@ -223,7 +230,7 @@ const ProductCompactForm = ({
                     <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">Birim</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-9 text-sm">
+                        <SelectTrigger className="h-7 text-xs">
                           <SelectValue placeholder="Adet" />
                         </SelectTrigger>
                       </FormControl>
@@ -260,7 +267,7 @@ const ProductCompactForm = ({
                       <Input 
                         type="number" 
                         placeholder="0" 
-                        className="h-9 text-sm" 
+                        className="h-7 text-xs" 
                         {...field} 
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
                       />
@@ -283,7 +290,7 @@ const ProductCompactForm = ({
                       <Input 
                         type="number" 
                         placeholder="0" 
-                        className="h-9 text-sm" 
+                        className="h-7 text-xs" 
                         {...field} 
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
                       />
@@ -318,10 +325,10 @@ const ProductCompactForm = ({
       </div>
 
       {/* Second Row - Pricing & Additional Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Pricing Card */}
-        <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-          <CardHeader className="pb-2 pt-2.5">
+        <Card className="rounded-xl">
+          <CardHeader className="pb-2 pt-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-50 to-orange-50/50 border border-orange-200/50">
                 <DollarSign className="h-4 w-4 text-orange-600" />
@@ -329,15 +336,15 @@ const ProductCompactForm = ({
               Fiyatlandırma ve Vergi
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 pt-0 px-3 pb-3">
+          <CardContent className="space-y-2 pt-0">
             {/* Currency and Tax Rate */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <CurrencySelect form={form} />
               <TaxRateSelect form={form} />
             </div>
 
-            {/* Price Inputs */}
-            <div className="space-y-3">
+            {/* Price Inputs - compact two-column */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <PriceInput 
                 form={form} 
                 name="price" 
@@ -354,8 +361,8 @@ const ProductCompactForm = ({
             </div>
 
             {/* Price Preview */}
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Fiyat Önizleme</h4>
+            <div className="mt-2 p-2 bg-gray-50 rounded-lg">
+              <h4 className="text-xs font-medium text-gray-700 mb-1">Fiyat Önizleme</h4>
               <PricePreviewCard 
                 price={price || 0}
                 taxRate={taxRate || 20}
@@ -367,8 +374,8 @@ const ProductCompactForm = ({
         </Card>
 
         {/* Additional Info Card */}
-        <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-          <CardHeader className="pb-2 pt-2.5">
+        <Card className="rounded-xl">
+          <CardHeader className="pb-2 pt-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
                 <Settings className="h-4 w-4 text-purple-600" />
@@ -376,11 +383,14 @@ const ProductCompactForm = ({
               Ek Bilgiler
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 pt-0 px-3 pb-3">
-            <SupplierSelect form={form} />
-            <BarcodeInput form={form} />
-            <ProductStatusSwitch form={form} />
-            <ImageUploader form={form} />
+          <CardContent className="space-y-2 pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <SupplierSelect form={form} />
+              <BarcodeInput form={form} />
+              <div className="md:col-span-2">
+                <ImageUploader form={form} />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

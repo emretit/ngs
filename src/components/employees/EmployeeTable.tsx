@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Trash } from "lucide-react";
@@ -6,8 +6,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import type { Employee } from "@/types/employee";
@@ -17,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteEmployee } from "@/hooks/useEmployeeMutations";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import EmployeeTableHeader from "@/components/employees/table/EmployeeTableHeader";
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -42,6 +41,73 @@ const EmployeeTable = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sortField, setSortField] = useState<string>("hire_date");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>("desc");
+
+  const [columns] = useState([
+    { id: "name", label: "👤 Çalışan", visible: true, sortable: true, align: 'left' as const },
+    { id: "department", label: "🏢 Departman", visible: true, sortable: true, align: 'left' as const },
+    { id: "contact", label: "📞 İletişim", visible: true, sortable: false, align: 'left' as const },
+    { id: "hire_date", label: "📅 Başlama", visible: true, sortable: true, align: 'center' as const },
+    { id: "net_salary", label: "💰 Net", visible: true, sortable: true, align: 'right' as const },
+    { id: "manual_employer_sgk_cost", label: "🏥 Netten Brüte", visible: true, sortable: true, align: 'right' as const },
+    { id: "meal_allowance", label: "🍽️ Yemek", visible: true, sortable: true, align: 'right' as const },
+    { id: "transport_allowance", label: "🚗 Ulaşım", visible: true, sortable: true, align: 'right' as const },
+    { id: "total_employer_cost", label: "🏢 Toplam", visible: true, sortable: true, align: 'right' as const },
+    { id: "balance", label: "💳 Bakiye", visible: true, sortable: true, align: 'right' as const },
+    { id: "status", label: "📊 Durum", visible: true, sortable: true, align: 'center' as const },
+    { id: "actions", label: "⚙️ İşlemler", visible: true, sortable: false, align: 'right' as const },
+  ]);
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedEmployees = useMemo(() => {
+    const list = [...employees];
+    const getValue = (e: Employee, field: string): any => {
+      switch (field) {
+        case 'name':
+          return `${e.first_name ?? ''} ${e.last_name ?? ''}`.toLowerCase();
+        case 'department':
+          return `${e.department ?? ''} ${e.position ?? ''}`.toLowerCase();
+        case 'contact':
+          return `${e.email ?? ''} ${e.phone ?? ''}`.toLowerCase();
+        case 'hire_date':
+          return e.hire_date ? new Date(e.hire_date).getTime() : 0;
+        case 'net_salary':
+          return e.net_salary ?? 0;
+        case 'manual_employer_sgk_cost':
+          return e.manual_employer_sgk_cost ?? 0;
+        case 'meal_allowance':
+          return e.meal_allowance ?? 0;
+        case 'transport_allowance':
+          return e.transport_allowance ?? 0;
+        case 'total_employer_cost':
+          return e.total_employer_cost ?? 0;
+        case 'balance':
+          return e.balance ?? 0;
+        case 'status':
+          return (e.status ?? '').toString();
+        default:
+          return '';
+      }
+    };
+
+    list.sort((a, b) => {
+      const av = getValue(a, sortField);
+      const bv = getValue(b, sortField);
+      if (av === bv) return 0;
+      const comp = av > bv ? 1 : -1;
+      return sortDirection === 'asc' ? comp : -comp;
+    });
+    return list;
+  }, [employees, sortField, sortDirection]);
   
   const formatCurrency = (amount: number | null | undefined) => {
     if (!amount) return "-";
@@ -87,62 +153,22 @@ const EmployeeTable = ({
     return (
       <div className="relative">
         <Table className="border-collapse">
-            <TableHeader>
-              <TableRow className="bg-gray-50/80 border-b border-gray-200/60">
-                {onEmployeeSelectToggle && (
-                  <TableHead className="h-12 w-[40px] px-3 text-center align-middle font-bold text-foreground/80 text-sm tracking-wide">
-                    <Checkbox
-                      checked={selectedEmployees.length === employees.length && employees.length > 0}
-                      onCheckedChange={(checked) => {
-                        if (setSelectedEmployees) {
-                          if (checked) {
-                            setSelectedEmployees(employees);
-                          } else {
-                            setSelectedEmployees([]);
-                          }
-                        }
-                      }}
-                    />
-                  </TableHead>
-                )}
-                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  👤 Çalışan
-                </TableHead>
-                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🏢 Departman
-                </TableHead>
-                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  📞 İletişim
-                </TableHead>
-                <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  📅 Başlama
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  💰 Net
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🏥 Netten Brüte
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🍽️ Yemek
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🚗 Ulaşım
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🏢 Toplam
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  💳 Bakiye
-                </TableHead>
-                <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  📊 Durum
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  ⚙️ İşlemler
-                </TableHead>
-              </TableRow>
-            </TableHeader>
+            <EmployeeTableHeader
+              columns={columns}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={() => {}}
+              hasSelection={Boolean(onEmployeeSelectToggle)}
+              onSelectAll={(checked: boolean) => {
+                if (!setSelectedEmployees) return;
+                if (checked) {
+                  setSelectedEmployees(employees);
+                } else {
+                  setSelectedEmployees([]);
+                }
+              }}
+              isAllSelected={selectedEmployees.length === employees.length && employees.length > 0}
+            />
             <TableBody>
               {Array.from({ length: 5 }).map((_, index) => (
                 <TableRow key={index} className="h-12 border-b border-gray-100/60">
@@ -215,62 +241,22 @@ const EmployeeTable = ({
     <>
       <div className="relative">
         <Table className="border-collapse">
-            <TableHeader>
-              <TableRow className="bg-gray-50/80 border-b border-gray-200/60">
-                {onEmployeeSelectToggle && (
-                  <TableHead className="h-12 w-[40px] px-3 text-center align-middle font-bold text-foreground/80 text-sm tracking-wide">
-                    <Checkbox
-                      checked={selectedEmployees.length === employees.length && employees.length > 0}
-                      onCheckedChange={(checked) => {
-                        if (setSelectedEmployees) {
-                          if (checked) {
-                            setSelectedEmployees(employees);
-                          } else {
-                            setSelectedEmployees([]);
-                          }
-                        }
-                      }}
-                    />
-                  </TableHead>
-                )}
-                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  👤 Çalışan
-                </TableHead>
-                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🏢 Departman
-                </TableHead>
-                <TableHead className="h-12 px-3 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  📞 İletişim
-                </TableHead>
-                <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  📅 Başlama
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  💰 Net
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🏥 Netten Brüte
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🍽️ Yemek
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🚗 Ulaşım
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  🏢 Toplam
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  💳 Bakiye
-                </TableHead>
-                <TableHead className="h-12 px-3 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-xs tracking-wide">
-                  📊 Durum
-                </TableHead>
-                <TableHead className="h-12 px-3 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-                  ⚙️ İşlemler
-                </TableHead>
-              </TableRow>
-            </TableHeader>
+            <EmployeeTableHeader
+              columns={columns}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              hasSelection={Boolean(onEmployeeSelectToggle)}
+              onSelectAll={(checked: boolean) => {
+                if (!setSelectedEmployees) return;
+                if (checked) {
+                  setSelectedEmployees(employees);
+                } else {
+                  setSelectedEmployees([]);
+                }
+              }}
+              isAllSelected={selectedEmployees.length === employees.length && employees.length > 0}
+            />
             <TableBody>
               {employees.length === 0 ? (
                 <TableRow>
@@ -283,7 +269,7 @@ const EmployeeTable = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                employees.map((employee) => {
+                sortedEmployees.map((employee) => {
                   const isSelected = selectedEmployees.some(e => e.id === employee.id);
                   return (
                     <TableRow 

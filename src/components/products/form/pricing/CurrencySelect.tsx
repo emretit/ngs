@@ -53,6 +53,7 @@ const CurrencySelect = ({ form }: CurrencySelectProps) => {
                 value={field.value || "TRY"}
                 onValueChange={field.onChange}
                 currencyOptions={currencyOptions}
+                triggerClassName="h-7 text-xs"
               />
             </FormControl>
             <FormMessage className="text-xs" />

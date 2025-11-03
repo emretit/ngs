@@ -135,9 +135,9 @@ const ProductPricing = ({
   ];
   
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden rounded-xl">
       {showAlert && (
-        <Alert variant="default" className="border-orange-300 bg-orange-50 p-3 mt-0 rounded-none">
+        <Alert variant="default" className="border-orange-300 bg-orange-50 p-2 mt-0 rounded-none">
           <AlertCircle className="h-4 w-4 text-orange-500" />
           <AlertDescription className="text-sm text-orange-700">
             Para birimi değiştirildiğinde, döviz kuru otomatik olarak güncellenecektir.
@@ -145,9 +145,9 @@ const ProductPricing = ({
         </Alert>
       )}
       
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
             Fiyat Bilgileri
           </h2>
@@ -161,28 +161,26 @@ const ProductPricing = ({
           </Button>
         </div>
         
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">Satış Fiyatı</span>
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-500">Satış Fiyatı</span>
             {isEditing ? (
               <Input
                 type="number"
-                value={editValues.price}
+                  value={editValues.price}
                 onChange={(e) => setEditValues(prev => ({
                   ...prev,
                   price: e.target.valueAsNumber || 0
                 }))}
-                className="w-32 text-right"
+                  className="w-28 h-7 text-xs text-right"
               />
             ) : (
-              <span className="text-lg font-medium">{formatPrice(price)}</span>
+              <span className="text-sm font-medium">{formatPrice(price)}</span>
             )}
-          </div>
-
-
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">Alış Fiyatı</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-500">Alış Fiyatı</span>
             {isEditing ? (
               <Input
                 type="number"
@@ -191,17 +189,18 @@ const ProductPricing = ({
                   ...prev,
                   purchasePrice: e.target.value ? e.target.valueAsNumber : null
                 }))}
-                className="w-32 text-right"
+                  className="w-28 h-7 text-xs text-right"
               />
             ) : purchasePrice ? (
-              <span className="text-lg font-medium">{formatPrice(purchasePrice)}</span>
+              <span className="text-sm font-medium">{formatPrice(purchasePrice)}</span>
             ) : (
               <span>-</span>
             )}
+            </div>
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">KDV Oranı</span>
+            <span className="text-xs text-gray-500">KDV Oranı</span>
             {isEditing ? (
               <Select 
                 value={String(editValues.taxRate)}
@@ -210,7 +209,7 @@ const ProductPricing = ({
                   taxRate: parseInt(value)
                 }))}
               >
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-28 h-7 text-xs">
                   <SelectValue placeholder="KDV Oranı" />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,7 +228,7 @@ const ProductPricing = ({
 
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
-              <span className="text-sm text-gray-500">Para Birimi</span>
+              <span className="text-xs text-gray-500">Para Birimi</span>
             </div>
             {isEditing ? (
               <div className="flex flex-col items-end">
@@ -237,7 +236,7 @@ const ProductPricing = ({
                   value={editValues.currency}
                   onValueChange={handleCurrencyChange}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-28 h-7 text-xs">
                     <SelectValue placeholder="Para birimi seç" />
                   </SelectTrigger>
                   <SelectContent>

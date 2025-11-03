@@ -153,7 +153,7 @@ export const useGlobalSearch = (query: string) => {
           title: result.item.name,
           subtitle: result.item.sku,
           category: "Ürün" as const,
-          url: `/products/${result.item.id}`,
+          url: `/product-details/${result.item.id}`,
         }))
       );
     }

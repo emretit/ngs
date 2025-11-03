@@ -1,19 +1,20 @@
-import React from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, Package, MoreHorizontal, Truck, MapPin } from "lucide-react";
 import { Delivery, DeliveryStatus, ShippingMethod } from "@/types/deliveries";
+import DeliveriesTableHeader from "./table/DeliveriesTableHeader";
 
 interface DeliveriesTableProps {
   deliveries: Delivery[];
@@ -30,12 +31,37 @@ const DeliveriesTable = ({
   searchQuery,
   statusFilter
 }: DeliveriesTableProps) => {
+  // Sorting state
+  const [sortField, setSortField] = useState<string>('planlanan_tarih');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  // Columns definition
+  const columns = [
+    { id: 'teslimat_no', label: 'Teslimat No', visible: true, sortable: true },
+    { id: 'musteri', label: 'Müşteri', visible: true, sortable: true },
+    { id: 'planlanan_tarih', label: 'Planlanan Tarih', visible: true, sortable: true },
+    { id: 'teslim_tarihi', label: 'Teslim Tarihi', visible: true, sortable: true },
+    { id: 'sevkiyat', label: 'Sevkiyat', visible: true, sortable: false },
+    { id: 'durum', label: 'Durum', visible: true, sortable: false },
+    { id: 'actions', label: 'İşlemler', visible: true, sortable: false }
+  ];
+
+  // Handle sort
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
   // Metinleri kısalt
   const shortenText = (text: string, maxLength: number = 25) => {
     if (!text) return "";
-    
+
     if (text.length <= maxLength) return text;
-    
+
     return text.substring(0, maxLength - 3) + "...";
   };
 
@@ -44,18 +70,48 @@ const DeliveriesTable = ({
     return shortenText(customerName, 35);
   };
 
-  // Filter deliveries based on criteria
-  const filteredDeliveries = deliveries.filter(delivery => {
-    const matchesSearch = !searchQuery || 
-      delivery.delivery_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (delivery.customer?.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (delivery.customer?.company?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (delivery.tracking_number?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-      
-    const matchesStatus = statusFilter === "all" || delivery.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Filter and sort deliveries
+  const filteredDeliveries = deliveries
+    .filter(delivery => {
+      const matchesSearch = !searchQuery ||
+        delivery.delivery_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (delivery.customer?.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (delivery.customer?.company?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (delivery.tracking_number?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+
+      const matchesStatus = statusFilter === "all" || delivery.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'teslimat_no':
+          aValue = a.delivery_number || '';
+          bValue = b.delivery_number || '';
+          break;
+        case 'musteri':
+          aValue = a.customer?.company || a.customer?.name || '';
+          bValue = b.customer?.company || b.customer?.name || '';
+          break;
+        case 'planlanan_tarih':
+          aValue = a.planned_delivery_date ? new Date(a.planned_delivery_date).getTime() : 0;
+          bValue = b.planned_delivery_date ? new Date(b.planned_delivery_date).getTime() : 0;
+          break;
+        case 'teslim_tarihi':
+          aValue = a.actual_delivery_date ? new Date(a.actual_delivery_date).getTime() : 0;
+          bValue = b.actual_delivery_date ? new Date(b.actual_delivery_date).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   const getStatusBadge = (status: DeliveryStatus) => {
     switch (status) {
@@ -94,27 +150,23 @@ const DeliveriesTable = ({
   if (isLoading) {
     return (
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📦 Teslimat No</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Müşteri</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Planlanan Tarih</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Teslim Tarihi</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">🚚 Sevkiyat</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📊 Durum</TableHead>
-            <TableHead className="w-[50px] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
-          </TableRow>
-        </TableHeader>
+        <DeliveriesTableHeader
+          columns={columns}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          hasSelection={false}
+        />
         <TableBody>
           {Array.from({ length: 5 }).map((_, index) => (
             <TableRow key={index}>
-              <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-              <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-32" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-24" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-20" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-20" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-8 w-8" /></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -124,17 +176,13 @@ const DeliveriesTable = ({
 
   return (
     <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">📦 Teslimat No</TableHead>
-          <TableHead className="w-[25%] font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Müşteri</TableHead>
-          <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Planlanan Tarih</TableHead>
-          <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Teslim Tarihi</TableHead>
-          <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-center">🚚 Sevkiyat</TableHead>
-          <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">📊 Durum</TableHead>
-          <TableHead className="w-[9%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
-        </TableRow>
-      </TableHeader>
+      <DeliveriesTableHeader
+        columns={columns}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        hasSelection={false}
+      />
       <TableBody>
         {filteredDeliveries.length === 0 ? (
           <TableRow>
@@ -144,9 +192,9 @@ const DeliveriesTable = ({
           </TableRow>
         ) : (
           filteredDeliveries.map((delivery) => (
-            <TableRow 
-              key={delivery.id} 
-              onClick={() => onSelectDelivery(delivery)} 
+            <TableRow
+              key={delivery.id}
+              onClick={() => onSelectDelivery(delivery)}
               className="cursor-pointer hover:bg-blue-50 h-8"
             >
               <TableCell className="font-medium py-1 px-2 text-xs">
@@ -213,7 +261,7 @@ const DeliveriesTable = ({
               <TableCell className="text-center py-1 px-1">
                 {getStatusBadge(delivery.status)}
               </TableCell>
-              <TableCell className="py-1 px-1">
+              <TableCell className="py-1 px-1" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-end space-x-1">
                   <Button
                     variant="ghost"

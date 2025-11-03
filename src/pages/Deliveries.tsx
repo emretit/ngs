@@ -4,7 +4,7 @@ import DeliveriesHeader from "@/components/deliveries/DeliveriesHeader";
 import DeliveriesFilterBar from "@/components/deliveries/DeliveriesFilterBar";
 import DeliveriesContent from "@/components/deliveries/DeliveriesContent";
 import DeliveryForm from "@/components/deliveries/DeliveryForm";
-import { useDeliveries } from "@/hooks/useDeliveries";
+import { useDeliveriesInfiniteScroll } from "@/hooks/useDeliveriesInfiniteScroll";
 import { Delivery } from "@/types/deliveries";
 
 interface DeliveriesProps {
@@ -16,13 +16,7 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { 
-    deliveries, 
-    isLoading, 
-    filters, 
-    setFilters,
-  } = useDeliveries();
-  
+  // Define filters BEFORE using them in the hook
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [shippingMethodFilter, setShippingMethodFilter] = useState("all");
@@ -32,7 +26,23 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
   const [showDeliveryForm, setShowDeliveryForm] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>(undefined);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | undefined>(undefined);
-
+  const {
+    data: deliveries = [],
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    loadMore,
+    totalCount,
+    error
+  } = useDeliveriesInfiniteScroll({
+    search: searchQuery,
+    status: statusFilter,
+    shipping_method: shippingMethodFilter,
+    customer_id: customerFilter,
+    startDate,
+    endDate
+  });
+  
   // Route kontrolü: /deliveries/new ise dialog'u aç
   useEffect(() => {
     if (location.pathname === "/deliveries/new") {
@@ -78,20 +88,7 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
     }
   };
 
-  // Filtreleri hook'a aktar
-  useEffect(() => {
-    setFilters({
-      ...filters,
-      status: statusFilter === "all" ? undefined : statusFilter as any,
-      shipping_method: shippingMethodFilter === "all" ? undefined : shippingMethodFilter as any,
-      customer_id: customerFilter === "all" ? undefined : customerFilter,
-      search: searchQuery,
-      dateRange: {
-        from: startDate || null,
-        to: endDate || null,
-      },
-    });
-  }, [searchQuery, statusFilter, shippingMethodFilter, customerFilter, startDate, endDate]);
+  // useDeliveriesInfiniteScroll filtreleri doğrudan dependency olarak alıyor
 
   return (
     <>
@@ -117,10 +114,13 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
         <DeliveriesContent
           deliveries={deliveries}
           isLoading={isLoading}
-          error={null}
+          error={error}
           onSelectDelivery={handleDeliveryClick}
           searchQuery={searchQuery}
           statusFilter={statusFilter}
+          isLoadingMore={isLoadingMore}
+          hasNextPage={hasNextPage}
+          loadMore={loadMore}
         />
       </div>
 

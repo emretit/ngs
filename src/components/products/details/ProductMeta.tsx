@@ -16,30 +16,28 @@ const ProductMeta = ({
   isActive
 }: ProductMetaProps) => {
   return (
-    <Card>
-      <CardContent className="p-6">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Tag className="h-5 w-5" />
-          Diğer Bilgiler
+    <Card className="rounded-xl">
+      <CardContent className="p-4">
+        <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
+          <Tag className="h-4 w-4" />
+          Ek Bilgiler
         </h2>
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-sm text-gray-500">Durum</label>
+            <label className="text-xs text-gray-500">Durum</label>
             <p className="mt-1">
-              <Badge variant={isActive ? "default" : "secondary"}>
+              <Badge variant={isActive ? "default" : "secondary"} className="h-6 px-2 text-[11px]">
                 {isActive ? "Aktif" : "Pasif"}
               </Badge>
             </p>
           </div>
-          
           <div>
-            <label className="text-sm text-gray-500">Oluşturulma Tarihi</label>
-            <p className="mt-1">{format(new Date(createdAt), 'dd.MM.yyyy HH:mm')}</p>
+            <label className="text-xs text-gray-500">Oluşturulma</label>
+            <p className="mt-1 text-sm">{format(new Date(createdAt), 'dd.MM.yyyy HH:mm')}</p>
           </div>
-
           <div>
-            <label className="text-sm text-gray-500">Son Güncelleme</label>
-            <p className="mt-1">{format(new Date(updatedAt), 'dd.MM.yyyy HH:mm')}</p>
+            <label className="text-xs text-gray-500">Son Güncelleme</label>
+            <p className="mt-1 text-sm">{format(new Date(updatedAt), 'dd.MM.yyyy HH:mm')}</p>
           </div>
         </div>
       </CardContent>

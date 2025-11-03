@@ -254,15 +254,13 @@ const Employees = () => {
         positions={positions}
       />
 
-      {/* Bulk Actions */}
-      {selectedEmployees.length > 0 && (
-        <EmployeesBulkActions
-          selectedEmployees={selectedEmployees}
-          onClearSelection={handleClearSelection}
-          onBulkPayroll={handleBulkPayroll}
-          onBulkPayment={handleBulkPayment}
-        />
-      )}
+      {/* Bulk Actions - her zaman göster (müşteriler sayfası ile tutarlılık) */}
+      <EmployeesBulkActions
+        selectedEmployees={selectedEmployees}
+        onClearSelection={handleClearSelection}
+        onBulkPayroll={handleBulkPayroll}
+        onBulkPayment={handleBulkPayment}
+      />
 
 
       {/* Content */}
@@ -278,18 +276,16 @@ const Employees = () => {
           <div className="text-red-500">Çalışanlar yüklenirken bir hata oluştu</div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="p-6 bg-white rounded-xl relative overflow-hidden">
-            <div className="relative z-10">
-              <EmployeeList 
-                employees={employees}
-                isLoading={isLoading}
-                viewMode={viewMode}
-                onEmployeeSelectToggle={handleEmployeeSelect}
-                selectedEmployees={selectedEmployees}
-                setSelectedEmployees={setSelectedEmployees}
-              />
-            </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="pb-6">
+            <EmployeeList
+              employees={employees}
+              isLoading={isLoading}
+              viewMode={viewMode}
+              onEmployeeSelectToggle={handleEmployeeSelect}
+              selectedEmployees={selectedEmployees}
+              setSelectedEmployees={setSelectedEmployees}
+            />
           </div>
         </div>
       )}

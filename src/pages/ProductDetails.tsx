@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import ProductDetailsHeader from "@/components/products/details/ProductDetailsHeader";
-import ProductDetailsTabs from "@/components/products/details/ProductDetailsTabs";
+import ProductDetailsCompact from "@/components/products/details/ProductDetailsCompact";
 import { showSuccess, showError } from "@/utils/toastUtils";
 const ProductDetails = () => {
   const { id } = useParams();
@@ -40,7 +40,8 @@ const ProductDetails = () => {
         console.error("Error fetching product:", error);
         showError("Ürün bilgilerini alırken bir hata oluştu");
       }
-    }
+    },
+    enabled: !!id
   });
   const updateProductMutation = useMutation({
     mutationFn: async (updates: Partial<Product>) => {
@@ -78,7 +79,7 @@ const ProductDetails = () => {
     <>
       <ProductDetailsHeader product={product} isLoading={isLoading} />
       <div className="mt-4">
-        <ProductDetailsTabs
+        <ProductDetailsCompact
           product={product}
           onUpdate={updateProductMutation.mutate}
         />

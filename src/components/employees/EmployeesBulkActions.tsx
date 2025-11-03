@@ -11,11 +11,12 @@ interface EmployeesBulkActionsProps {
 }
 
 const EmployeesBulkActions = ({ selectedEmployees, onClearSelection, onBulkPayroll, onBulkPayment }: EmployeesBulkActionsProps) => {
+  const hasSelection = selectedEmployees.length > 0;
   return (
     <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
       <div className="flex items-center space-x-2">
         <span className="text-sm font-medium text-blue-900">
-          {selectedEmployees.length} çalışan seçildi
+          {hasSelection ? `${selectedEmployees.length} çalışan seçildi` : "Çalışan seçilmedi"}
         </span>
       </div>
       
@@ -25,6 +26,7 @@ const EmployeesBulkActions = ({ selectedEmployees, onClearSelection, onBulkPayro
           size="sm"
           onClick={onBulkPayroll}
           className="text-purple-700 border-purple-300 hover:bg-purple-100"
+          disabled={!hasSelection}
         >
           <Calculator className="h-4 w-4 mr-1" />
           Toplu Tahakkuk
@@ -35,6 +37,7 @@ const EmployeesBulkActions = ({ selectedEmployees, onClearSelection, onBulkPayro
           size="sm"
           onClick={onBulkPayment}
           className="text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+          disabled={!hasSelection}
         >
           <CreditCard className="h-4 w-4 mr-1" />
           Toplu Ödeme
@@ -53,6 +56,7 @@ const EmployeesBulkActions = ({ selectedEmployees, onClearSelection, onBulkPayro
           variant="outline"
           size="sm"
           className="text-green-700 border-green-300 hover:bg-green-100"
+          disabled={!hasSelection}
         >
           <Mail className="h-4 w-4 mr-1" />
           Toplu E-posta
@@ -62,6 +66,7 @@ const EmployeesBulkActions = ({ selectedEmployees, onClearSelection, onBulkPayro
           variant="outline"
           size="sm"
           className="text-orange-700 border-orange-300 hover:bg-orange-100"
+          disabled={!hasSelection}
         >
           <UserX className="h-4 w-4 mr-1" />
           Pasif Yap
@@ -71,20 +76,23 @@ const EmployeesBulkActions = ({ selectedEmployees, onClearSelection, onBulkPayro
           variant="outline"
           size="sm"
           className="text-red-700 border-red-300 hover:bg-red-100"
+          disabled={!hasSelection}
         >
           <Trash2 className="h-4 w-4 mr-1" />
           Sil
         </Button>
         
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClearSelection}
-          className="text-gray-600 hover:bg-gray-100"
-        >
-          <X className="h-4 w-4 mr-1" />
-          Seçimi Temizle
-        </Button>
+        {hasSelection && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClearSelection}
+            className="text-gray-600 hover:bg-gray-100"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Seçimi Temizle
+          </Button>
+        )}
       </div>
     </div>
   );

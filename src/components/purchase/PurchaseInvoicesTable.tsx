@@ -1,18 +1,20 @@
-import React from "react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, Download, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import PurchaseInvoicesTableHeader from "./table/PurchaseInvoicesTableHeader";
 
 interface PurchaseInvoicesTableProps {
   invoices: any[];
@@ -20,6 +22,9 @@ interface PurchaseInvoicesTableProps {
   earchiveInvoices: any[];
   isLoading: boolean;
   onSelectInvoice: (invoice: any) => void;
+  onInvoiceSelectToggle?: (invoice: any) => void;
+  selectedInvoices?: any[];
+  setSelectedInvoices?: (invoices: any[]) => void;
   onDownloadPdf?: (invoiceId: string, type: string) => void;
   searchQuery?: string;
   documentTypeFilter?: string;
@@ -32,11 +37,39 @@ const PurchaseInvoicesTable = ({
   earchiveInvoices,
   isLoading,
   onSelectInvoice,
+  onInvoiceSelectToggle,
+  selectedInvoices = [],
+  setSelectedInvoices,
   onDownloadPdf,
   searchQuery,
   documentTypeFilter,
   statusFilter
 }: PurchaseInvoicesTableProps) => {
+  // Sorting state
+  const [sortField, setSortField] = useState<string>('tarih');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  // Columns definition
+  const columns = [
+    { id: 'fatura_no', label: 'Fatura No', visible: true, sortable: true },
+    { id: 'tedarikci', label: 'Tedarikçi', visible: true, sortable: true },
+    { id: 'tarih', label: 'Tarih', visible: true, sortable: true },
+    { id: 'tutar', label: 'Tutar', visible: true, sortable: true },
+    { id: 'durum', label: 'Durum', visible: true, sortable: false },
+    { id: 'tip', label: 'Tip', visible: true, sortable: false },
+    { id: 'actions', label: 'İşlemler', visible: true, sortable: false }
+  ];
+
+  // Handle sort
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -119,7 +152,7 @@ const PurchaseInvoicesTable = ({
         supplier_name: invoice.supplier?.name,
         supplier_company: invoice.supplier?.company
       });
-      
+
       return {
         ...invoice,
         sourceType: 'purchase',
@@ -131,8 +164,8 @@ const PurchaseInvoicesTable = ({
         displayStatus: invoice.status
       };
     }),
-    ...filterInvoices(incomingInvoices, 'incoming').filter(invoice => 
-      invoice.status?.toLowerCase().includes('alındı') || 
+    ...filterInvoices(incomingInvoices, 'incoming').filter(invoice =>
+      invoice.status?.toLowerCase().includes('alındı') ||
       invoice.responseStatus?.toLowerCase().includes('received')
     ).map(invoice => ({
       ...invoice,
@@ -144,7 +177,7 @@ const PurchaseInvoicesTable = ({
       displayAmount: invoice.totalAmount,
       displayStatus: 'received'
     })),
-    ...filterInvoices(earchiveInvoices, 'earchive_received').filter(invoice => 
+    ...filterInvoices(earchiveInvoices, 'earchive_received').filter(invoice =>
       invoice.status?.toLowerCase().includes('succeed') ||
       invoice.statusCode?.toLowerCase().includes('succeed')
     ).map(invoice => ({
@@ -157,35 +190,70 @@ const PurchaseInvoicesTable = ({
       displayAmount: invoice.totalAmount,
       displayStatus: 'received'
     }))
-  ].sort((a, b) => b.sortDate - a.sortDate);
+  ].sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortField) {
+      case 'fatura_no':
+        aValue = a.displayNumber || '';
+        bValue = b.displayNumber || '';
+        break;
+      case 'tedarikci':
+        aValue = a.displaySupplier || '';
+        bValue = b.displaySupplier || '';
+        break;
+      case 'tarih':
+        aValue = a.sortDate || 0;
+        bValue = b.sortDate || 0;
+        break;
+      case 'tutar':
+        aValue = a.displayAmount || 0;
+        bValue = b.displayAmount || 0;
+        break;
+      default:
+        return b.sortDate - a.sortDate; // Default to date descending
+    }
+
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
   
   // Debug için allInvoices'ı da logla
   console.log('🔍 PurchaseInvoicesTable - allInvoices:', allInvoices);
 
+  // Tüm faturaları seç/kaldır
+  const handleSelectAll = () => {
+    if (selectedInvoices.length === allInvoices.length) {
+      setSelectedInvoices?.([]);
+    } else {
+      setSelectedInvoices?.(allInvoices);
+    }
+  };
+
   if (isLoading) {
     return (
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📄 Fatura No</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Tedarikçi</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Tarih</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">💰 Tutar</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📋 Durum</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📋 Tip</TableHead>
-            <TableHead className="w-[50px] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
-          </TableRow>
-        </TableHeader>
+        <PurchaseInvoicesTableHeader
+          columns={columns}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          hasSelection={true}
+          isAllSelected={false}
+        />
         <TableBody>
           {Array.from({ length: 5 }).map((_, index) => (
             <TableRow key={index}>
-              <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-              <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-              <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-4" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-32" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-24" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-20" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-4 w-16" /></TableCell>
+              <TableCell className="py-2 px-3"><Skeleton className="h-6 w-6" /></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -195,38 +263,41 @@ const PurchaseInvoicesTable = ({
 
   return (
     <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">📄 Fatura No</TableHead>
-          <TableHead className="w-[25%] font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Tedarikçi</TableHead>
-          <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Tarih</TableHead>
-          <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-center">💰 Tutar</TableHead>
-          <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">📋 Durum</TableHead>
-          <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-center">📋 Tip</TableHead>
-          <TableHead className="w-[6%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
-        </TableRow>
-      </TableHeader>
+      <PurchaseInvoicesTableHeader
+        columns={columns}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        hasSelection={true}
+        onSelectAll={handleSelectAll}
+        isAllSelected={selectedInvoices.length === allInvoices.length && allInvoices.length > 0}
+      />
       <TableBody>
         {allInvoices.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+            <TableCell colSpan={8} className="text-center py-8 text-gray-500">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Henüz fatura bulunmuyor</p>
             </TableCell>
           </TableRow>
         ) : (
           allInvoices.map((invoice, index) => (
-            <TableRow 
-              key={`${invoice.sourceType}-${invoice.id}-${index}`} 
-              onClick={() => onSelectInvoice(invoice)} 
+            <TableRow
+              key={`${invoice.sourceType}-${invoice.id}-${index}`}
               className="cursor-pointer hover:bg-blue-50 h-8"
             >
-              <TableCell className="font-medium py-1 px-2 text-xs">
+              <TableCell className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={selectedInvoices.some(inv => inv.id === invoice.id && inv.sourceType === invoice.sourceType)}
+                  onCheckedChange={() => onInvoiceSelectToggle?.(invoice)}
+                />
+              </TableCell>
+              <TableCell className="font-medium py-2 px-3 text-xs" onClick={() => onSelectInvoice(invoice)}>
                 <span className="text-blue-600">
                   {invoice.displayNumber}
                 </span>
               </TableCell>
-              <TableCell className="py-1 px-2">
+              <TableCell className="py-2 px-3" onClick={() => onSelectInvoice(invoice)}>
                 <div className="flex flex-col space-y-0.5">
                   <span className="text-xs font-medium">
                     {invoice.displaySupplier}
@@ -238,20 +309,20 @@ const PurchaseInvoicesTable = ({
                   )}
                 </div>
               </TableCell>
-              <TableCell className="text-center py-1 px-1 text-xs">
+              <TableCell className="text-center py-2 px-3 text-xs" onClick={() => onSelectInvoice(invoice)}>
                 {format(new Date(invoice.invoiceDate), "dd MMM yyyy", { locale: tr })}
               </TableCell>
-              <TableCell className="text-center py-1 px-1 text-xs font-medium">
+              <TableCell className="text-center py-2 px-3 text-xs font-medium" onClick={() => onSelectInvoice(invoice)}>
                 {formatCurrency(invoice.displayAmount)}
               </TableCell>
-              <TableCell className="text-center py-1 px-1">
+              <TableCell className="text-center py-2 px-3" onClick={() => onSelectInvoice(invoice)}>
                 {getStatusBadge(invoice.displayStatus)}
               </TableCell>
-              <TableCell className="text-center py-1 px-1">
+              <TableCell className="text-center py-2 px-3" onClick={() => onSelectInvoice(invoice)}>
                 {getDocumentTypeBadge(invoice.sourceType)}
               </TableCell>
-              <TableCell className="py-1 px-1">
-                <div className="flex justify-end space-x-1">
+              <TableCell className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-end space-x-0.5">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -259,9 +330,9 @@ const PurchaseInvoicesTable = ({
                       e.stopPropagation();
                       onSelectInvoice(invoice);
                     }}
-                    className="h-6 w-6 hover:bg-blue-100"
+                    className="h-4 w-4 hover:bg-blue-100"
                   >
-                    <Eye className="h-3 w-3" />
+                    <Eye className="h-2.5 w-2.5" />
                   </Button>
                   {(invoice.sourceType === 'earchive_received') && onDownloadPdf && (
                     <Button 
@@ -271,9 +342,9 @@ const PurchaseInvoicesTable = ({
                         e.stopPropagation();
                         onDownloadPdf(invoice.id, 'e-arşiv');
                       }}
-                      className="h-6 w-6 hover:bg-gray-100 text-blue-600"
+                      className="h-4 w-4 hover:bg-gray-100 text-blue-600"
                     >
-                      <Download className="h-3 w-3" />
+                      <Download className="h-2.5 w-2.5" />
                     </Button>
                   )}
                 </div>

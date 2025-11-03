@@ -52,53 +52,63 @@ const ProductDetailsHeader = ({ product, isLoading }: ProductDetailsHeaderProps)
   if (isLoading || !product) return null;
 
   return (
-    <>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container flex h-16 items-center">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/products")}>
+    <div className="container">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+        {/* Sol - Geri, ikon, başlık */}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/products")} className="h-8 w-8">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center gap-2 ml-4">
+          <div className="p-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg text-white shadow-lg">
             <Package2 className="h-5 w-5" />
-            <h1 className="text-lg font-semibold">{product.name}</h1>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" onClick={() => duplicateProductMutation.mutate()}>
-              <Copy className="h-4 w-4 mr-2" />
-              Kopyala
-            </Button>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              PDF
-            </Button>
-            <Button onClick={() => navigate(`/product-form/${product.id}`)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Düzenle
-            </Button>
+          <div className="space-y-0.5">
+            <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              {product.name}
+            </h1>
+            <p className="text-xs text-muted-foreground/70">SKU: {product.sku || 'N/A'}</p>
           </div>
         </div>
-      </div>
 
-      <div className="container py-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Badge variant={product.is_active ? "default" : "secondary"}>
+        {/* Orta - rozetler */}
+        <div className="flex flex-wrap gap-1.5 justify-center flex-1 items-center">
+          <Badge variant={product.is_active ? "default" : "secondary"} className="h-6 px-2 text-[11px]">
             {product.is_active ? "Aktif" : "Pasif"}
           </Badge>
-          <Badge variant={
-            product.stock_quantity <= 0 ? "destructive" : 
-            product.stock_quantity <= product.min_stock_level ? "warning" : 
-            "default"
-          }>
-            {product.stock_quantity <= 0 ? "Stokta Yok" : 
-             product.stock_quantity <= product.min_stock_level ? "Düşük Stok" : 
+          <Badge
+            variant={
+              product.stock_quantity <= 0 ? "destructive" :
+              product.stock_quantity <= product.min_stock_level ? "warning" :
+              "default"
+            }
+            className="h-6 px-2 text-[11px]"
+          >
+            {product.stock_quantity <= 0 ? "Stokta Yok" :
+             product.stock_quantity <= product.min_stock_level ? "Düşük Stok" :
              "Stokta"}
           </Badge>
-          <span className="text-sm text-muted-foreground">
-            SKU: {product.sku || "N/A"}
-          </span>
+        </div>
+
+        {/* Sağ - butonlar */}
+        <div className="flex items-center gap-2">
+          <Button 
+            className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
+            onClick={() => navigate(`/product-form/${product.id}`)}
+          >
+            <Edit className="h-4 w-4" />
+            <span>Düzenle</span>
+          </Button>
+          <Button variant="outline" onClick={() => duplicateProductMutation.mutate()}>
+            <Copy className="h-4 w-4 mr-2" />
+            Kopyala
+          </Button>
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            PDF
+          </Button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -47,6 +47,9 @@ const employeeFormSchema = z.object({
   transport_allowance: z.number().optional(),
   notes: z.string().optional(),
   balance: z.number().optional(),
+  
+  // Kullanıcı Yetkileri
+  user_roles: z.array(z.string()).optional().default([]),
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeFormSchema>;
@@ -108,6 +111,7 @@ export const useEmployeeForm = (employee?: Employee) => {
     transport_allowance: employee.transport_allowance || undefined,
     notes: employee.salary_notes || "",
     balance: employee.balance || undefined,
+    user_roles: [], // TODO: Get user roles from employee if exists
   } : {
     first_name: "",
     last_name: "",
@@ -141,6 +145,7 @@ export const useEmployeeForm = (employee?: Employee) => {
     transport_allowance: undefined,
     notes: "",
     balance: undefined,
+    user_roles: [],
   };
 
   const form = useForm<EmployeeFormValues>({

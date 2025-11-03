@@ -8,6 +8,7 @@ import { AddressSection } from "./sections/AddressSection";
 import { EmergencyContactSection } from "./sections/EmergencyContactSection";
 import { SalarySection } from "./sections/SalarySection";
 import { DocumentUploadSection, DocumentFile } from "./sections/DocumentUploadSection";
+import { RoleSection } from "./sections/RoleSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,6 +45,9 @@ export const EmployeeEditForm = ({
             <EmergencyContactSection control={form.control} />
           </div>
         </div>
+
+        {/* Kullanıcı Yetkileri */}
+        <RoleSection control={form.control} />
 
         {/* Özlük Dosyaları */}
         <DocumentUploadSection 

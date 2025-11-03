@@ -9,6 +9,12 @@ export interface Supplier {
   type: "bireysel" | "kurumsal";
   status: "aktif" | "pasif" | "potansiyel";
   representative: string | null;
+  employees?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    position: string;
+  } | null;
   balance: number;
   address: string | null;
   tax_number: string | null;

@@ -4,18 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
 import { Customer } from "@/types/customer";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -64,10 +60,23 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
   const { data: accounts } = useQuery({
     queryKey: ["payment-accounts"],
     queryFn: async () => {
+      // Şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Kullanıcı bulunamadı");
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
+
       const { data, error } = await supabase
         .from('accounts')
         .select('id, name, account_type, bank_name')
         .eq('is_active', true)
+        .eq('company_id', profile.company_id)
         .order('account_type', { ascending: true })
         .order('name', { ascending: true });
 
@@ -227,26 +236,46 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Yeni Ödeme Ekle</DialogTitle>
-        </DialogHeader>
+    <UnifiedDialog
+      isOpen={open}
+      onClose={(isOpen) => onOpenChange(isOpen)}
+      title="Yeni Ödeme Ekle"
+      maxWidth="xl"
+      headerColor="green"
+    >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div 
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto pr-1"
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { 
+              e.preventDefault(); 
+              form.handleSubmit(onSubmit)(); 
+            }
+            if (e.key === 'Escape') { 
+              e.preventDefault(); 
+              onOpenChange(false); 
+            }
+          }}
+        >
+          {/* Temel Bilgiler: iki sütunu kapla ve içeride iki kolon kullan */}
+          <div className="lg:col-span-2 space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Temel Bilgiler</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tutar</FormLabel>
+                    <FormLabel>Tutar <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                        value={field.value}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        value={field.value || ""}
+                        placeholder="0.00"
+                        className="h-9"
+                        autoFocus
                       />
                     </FormControl>
                     <FormMessage />
@@ -259,10 +288,10 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
                 name="payment_direction"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ödeme Yönü</FormLabel>
+                    <FormLabel>Ödeme Yönü <span className="text-red-500">*</span></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9">
                           <SelectValue placeholder="Ödeme yönü seçin" />
                         </SelectTrigger>
                       </FormControl>
@@ -276,23 +305,44 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
                 )}
               />
 
-
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {selectedPaymentType === 'hesap' && (
               <FormField
                 control={form.control}
-                name="account_type"
+                name="payment_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hesap Türü</FormLabel>
+                    <FormLabel>Ödeme Tarihi <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <EnhancedDatePicker
+                        date={field.value}
+                        onSelect={(newDate) => newDate && field.onChange(newDate)}
+                        placeholder="Tarih seçin"
+                        className="w-full h-9"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          {/* Sol sütun: Hesap Bilgileri */}
+          {selectedPaymentType === 'hesap' && (
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Hesap Bilgileri</h3>
+                <FormField
+                  control={form.control}
+                  name="account_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hesap Türü <span className="text-red-500">*</span></FormLabel>
                     <Select onValueChange={(value) => {
                       field.onChange(value);
                       form.setValue("account_id", "");
                     }} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                          <SelectTrigger className="h-9 w-full">
                           <SelectValue placeholder="Hesap türü seçin" />
                         </SelectTrigger>
                       </FormControl>
@@ -306,18 +356,17 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
                     <FormMessage />
                   </FormItem>
                 )}
-              />)}
+                />
 
-              {selectedPaymentType === 'hesap' && (
               <FormField
                 control={form.control}
                 name="account_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hesap</FormLabel>
+                      <FormLabel>Hesap <span className="text-red-500">*</span></FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                          <SelectTrigger className="h-9 w-full">
                           <SelectValue placeholder="Hesap seçin" />
                         </SelectTrigger>
                       </FormControl>
@@ -347,73 +396,48 @@ export function PaymentDialog({ open, onOpenChange, customer, defaultPaymentType
                     <FormMessage />
                   </FormItem>
                 )}
-              />)}
+                />
+              </div>
+            </div>
+          )}
 
+          {/* Sağ sütun: Açıklama (eğer hesap seçiliyse) veya tam genişlik (değilse) */}
+          <div className={selectedPaymentType === 'hesap' ? "space-y-4" : "lg:col-span-2"}>
+            <div className="space-y-1">
               <FormField
                 control={form.control}
-                name="payment_date"
+                name="description"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Ödeme Tarihi</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
+                  <FormItem>
+                    <FormLabel>Açıklama</FormLabel>
                         <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Tarih seçin</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
+                      <Textarea 
+                        {...field} 
+                        placeholder="Ödeme açıklaması"
+                        rows={selectedPaymentType === 'hesap' ? 6 : 3}
+                        className="resize-none"
+                      />
                         </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                        />
-                      </PopoverContent>
-                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Açıklama</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-                İptal
-              </Button>
-              <Button type="submit">Kaydet</Button>
             </div>
-          </form>
+
+          <div className="lg:col-span-2">
+            <UnifiedDialogFooter>
+              <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} />
+              <UnifiedDialogActionButton 
+                onClick={form.handleSubmit(onSubmit)}
+                variant="default"
+              >
+                Kaydet
+              </UnifiedDialogActionButton>
+            </UnifiedDialogFooter>
+          </div>
+            </div>
         </Form>
-      </DialogContent>
-    </Dialog>
+    </UnifiedDialog>
   );
 }

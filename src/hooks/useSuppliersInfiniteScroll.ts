@@ -12,7 +12,15 @@ export const useSuppliersInfiniteScroll = (filters: UseSuppliersFilters = {}) =>
   const fetchSuppliers = async (page: number, pageSize: number) => {
     let query = supabase
       .from("suppliers")
-      .select("*", { count: 'exact' });
+      .select(`
+        *,
+        employees!suppliers_representative_uuid_fkey(
+          id,
+          first_name,
+          last_name,
+          position
+        )
+      `, { count: 'exact' });
 
     // Apply filters
     if (filters.search) {

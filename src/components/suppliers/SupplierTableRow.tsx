@@ -55,7 +55,9 @@ const SupplierTableRow = ({ supplier }: SupplierTableRowProps) => {
         </span>
       </TableCell>
       <TableCell className="px-4 py-3 text-gray-600">
-        {supplier.representative || '-'}
+        {supplier.employees 
+          ? `${supplier.employees.first_name} ${supplier.employees.last_name}` 
+          : '-'}
       </TableCell>
       <TableCell className="px-4 py-3">
         <span className={`font-semibold ${supplier.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>

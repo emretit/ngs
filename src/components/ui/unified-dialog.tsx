@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 
 interface UnifiedDialogProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: ((open: boolean) => void) | (() => void);
   title: string;
   children: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl";
@@ -43,6 +43,21 @@ const dotColorClasses = {
   gray: "bg-gray-500"
 };
 
+const UnifiedDialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
+    {...props}
+  />
+));
+UnifiedDialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+
 export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   isOpen,
   onClose,
@@ -53,17 +68,27 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   showCloseButton = true,
   className
 }) => {
-  if (!isOpen) {
-    return null;
+  const handleOpenChange = (open: boolean) => {
+    if (onClose.length === 0) {
+      // Eski kullanım: () => void
+      (onClose as () => void)();
+    } else {
+      // Yeni kullanım: (open: boolean) => void
+      (onClose as (open: boolean) => void)(open);
   }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className={cn(
-        "bg-white rounded-xl shadow-2xl w-full mx-auto max-h-[95vh] flex flex-col overflow-hidden",
+    <DialogPrimitive.Root open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogPrimitive.Portal>
+        <UnifiedDialogOverlay />
+        <DialogPrimitive.Content
+          className={cn(
+            "fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] bg-white rounded-xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden p-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         maxWidthClasses[maxWidth],
         className
-      )}>
+          )}
+        >
         {/* Header */}
         <div className={cn(
           "flex items-center justify-between p-4 border-b bg-gradient-to-r flex-shrink-0",
@@ -74,14 +99,14 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
             <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           </div>
           {showCloseButton && (
-            <button
-              onClick={onClose}
+              <DialogPrimitive.Close
               className="p-1 hover:bg-gray-100 rounded-full transition-colors"
             >
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
+                <span className="sr-only">Kapat</span>
+              </DialogPrimitive.Close>
           )}
         </div>
 
@@ -89,8 +114,9 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
         <div className="flex-1 overflow-y-auto scrollbar-hide p-3">
           {children}
         </div>
-      </div>
-    </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 };
 

@@ -97,7 +97,9 @@ export const ContactInfo = ({ supplier, onUpdate }: ContactInfoProps) => {
                 <span>Temsilci</span>
               </div>
               <div className="text-xs font-medium text-gray-900 truncate">
-                {supplier.representative || <span className="text-gray-400 italic">Atanmamış</span>}
+                {supplier.employees 
+                  ? `${supplier.employees.first_name} ${supplier.employees.last_name}` 
+                  : <span className="text-gray-400 italic">Atanmamış</span>}
               </div>
             </div>
 

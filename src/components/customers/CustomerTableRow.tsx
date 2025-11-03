@@ -14,6 +14,12 @@ interface CustomerTableRowProps {
     type: "bireysel" | "kurumsal";
     status: "aktif" | "pasif" | "potansiyel";
     representative: string | null;
+    employees?: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      position: string;
+    } | null;
     balance: number;
     address: string | null;
   };
@@ -66,7 +72,9 @@ const CustomerTableRow = ({ customer }: CustomerTableRowProps) => {
         </span>
       </TableCell>
       <TableCell className="px-4 py-3 text-gray-600">
-        {customer.representative || '-'}
+        {customer.employees 
+          ? `${customer.employees.first_name} ${customer.employees.last_name}` 
+          : '-'}
       </TableCell>
       <TableCell className="px-4 py-3">
         <span className={`font-semibold ${customer.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>

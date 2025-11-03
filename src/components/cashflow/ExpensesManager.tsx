@@ -826,7 +826,7 @@ const ExpensesManager = () => {
       />
   <UnifiedDialog
     isOpen={isAddDialogOpen}
-    onClose={() => setIsAddDialogOpen(false)}
+    onClose={(isOpen) => !isOpen && setIsAddDialogOpen(false)}
     title="Yeni Masraf Ekle"
     maxWidth="xl"
     headerColor="red"

@@ -12,7 +12,15 @@ export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) =>
   const fetchCustomers = async (page: number, pageSize: number) => {
     let query = supabase
       .from("customers")
-      .select("*", { count: 'exact' });
+      .select(`
+        *,
+        employees!fk_customers_representative(
+          id,
+          first_name,
+          last_name,
+          position
+        )
+      `, { count: 'exact' });
 
     // Apply filters
     if (filters.search) {

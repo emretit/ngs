@@ -135,97 +135,162 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
             fd.set("status", status);
             saveMutation.mutate(fd);
           }}
-          className="space-y-4"
+          className="flex flex-col h-full"
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+              e.preventDefault();
+              const form = e.currentTarget as HTMLFormElement;
+              form.requestSubmit();
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              onOpenChange(false);
+            }
+          }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="check_number">Çek No</Label>
-              <Input id="check_number" name="check_number" defaultValue={editingCheck?.check_number || ""} required />
-            </div>
-            <div>
-              <Label>Banka</Label>
-              <Select value={bankName} onValueChange={setBankName}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Banka seçin" />
-                </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {banks.map((b) => (
-                    <SelectItem key={b.id} value={b.name}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <UnifiedDatePicker
-              label="Düzenleme Tarihi"
-              date={issueDate}
-              onSelect={setIssueDate}
-              placeholder="Tarih seçin"
-              required
-            />
-            <UnifiedDatePicker
-              label="Vade Tarihi"
-              date={dueDate}
-              onSelect={setDueDate}
-              placeholder="Tarih seçin"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="amount">Tutar</Label>
-              <Input id="amount" name="amount" type="number" step="0.01" defaultValue={editingCheck?.amount || ""} required />
-            </div>
-            <div>
-              <Label>Durum</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Durum" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Beklemede</SelectItem>
-                  <SelectItem value="odenecek">Ödenecek</SelectItem>
-                  <SelectItem value="odendi">Ödendi</SelectItem>
-                  <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
-                </SelectContent>
-              </Select>
-              <input type="hidden" name="status" value={status} />
+        <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
+          <div className="space-y-4">
+          {/* Temel Bilgiler */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Temel Bilgiler</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="check_number" className="text-sm font-medium text-gray-700">
+                  Çek No <span className="text-red-500">*</span>
+                </Label>
+                <Input 
+                  id="check_number" 
+                  name="check_number" 
+                  defaultValue={editingCheck?.check_number || ""} 
+                  placeholder="Çek numarasını girin"
+                  className="h-9"
+                  autoFocus
+                  required 
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-gray-700">
+                  Banka <span className="text-red-500">*</span>
+                </Label>
+                <Select value={bankName} onValueChange={setBankName}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Banka seçin" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {banks.map((b) => (
+                      <SelectItem key={b.id} value={b.name}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="issuer_name">Keşideci (çeki düzenleyen)</Label>
-              <FormProvider {...issuerForm}>
-                <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
-              </FormProvider>
-              <input type="hidden" id="issuer_name" name="issuer_name" value={issuerName} />
-              <input type="hidden" name="issuer_customer_id" value={issuerSelectedId} />
-              <input type="hidden" name="issuer_supplier_id" value={issuerSupplierId} />
-            </div>
-            <div>
-              <Label htmlFor="payee">Lehtar (çeki alan)</Label>
-              <FormProvider {...payeeForm}>
-                <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
-              </FormProvider>
-              <input type="hidden" id="payee" name="payee" value={payeeName} />
-              <input type="hidden" name="payee_customer_id" value={payeeSelectedId} />
-              <input type="hidden" name="payee_supplier_id" value={payeeSupplierId} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="notes">Notlar</Label>
-              <Textarea id="notes" name="notes" defaultValue={editingCheck?.notes || ""} />
+          {/* Tarih Bilgileri */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <UnifiedDatePicker
+                label="Düzenleme Tarihi"
+                date={issueDate}
+                onSelect={setIssueDate}
+                placeholder="Tarih seçin"
+                required
+              />
+              <UnifiedDatePicker
+                label="Vade Tarihi"
+                date={dueDate}
+                onSelect={setDueDate}
+                placeholder="Tarih seçin"
+                required
+              />
             </div>
           </div>
 
+          {/* Tutar ve Durum */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="amount" className="text-sm font-medium text-gray-700">
+                  Tutar <span className="text-red-500">*</span>
+                </Label>
+                <Input 
+                  id="amount" 
+                  name="amount" 
+                  type="number" 
+                  step="0.01" 
+                  defaultValue={editingCheck?.amount || ""} 
+                  placeholder="0.00"
+                  className="h-9"
+                  required 
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-gray-700">
+                  Durum <span className="text-red-500">*</span>
+                </Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Durum seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Beklemede</SelectItem>
+                    <SelectItem value="odenecek">Ödenecek</SelectItem>
+                    <SelectItem value="odendi">Ödendi</SelectItem>
+                    <SelectItem value="karsilik_yok">Karşılıksız</SelectItem>
+                  </SelectContent>
+                </Select>
+                <input type="hidden" name="status" value={status} />
+              </div>
+            </div>
+          </div>
+
+          {/* Taraf Bilgileri */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">Taraf Bilgileri</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="issuer_name" className="text-sm font-medium text-gray-700">
+                  Keşideci (çeki düzenleyen)
+                </Label>
+                <FormProvider {...issuerForm}>
+                  <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
+                </FormProvider>
+                <input type="hidden" id="issuer_name" name="issuer_name" value={issuerName} />
+                <input type="hidden" name="issuer_customer_id" value={issuerSelectedId} />
+                <input type="hidden" name="issuer_supplier_id" value={issuerSupplierId} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="payee" className="text-sm font-medium text-gray-700">
+                  Lehtar (çeki alan)
+                </Label>
+                <FormProvider {...payeeForm}>
+                  <ProposalPartnerSelect partnerType="customer" hideLabel placeholder="Firma seçin..." />
+                </FormProvider>
+                <input type="hidden" id="payee" name="payee" value={payeeName} />
+                <input type="hidden" name="payee_customer_id" value={payeeSelectedId} />
+                <input type="hidden" name="payee_supplier_id" value={payeeSupplierId} />
+              </div>
+            </div>
+          </div>
+
+          {/* Notlar */}
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Notlar</Label>
+              <Textarea 
+                id="notes" 
+                name="notes" 
+                defaultValue={editingCheck?.notes || ""} 
+                placeholder="Ek notlar..."
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          </div>
+        </div>
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} disabled={saveMutation.isPending} />
           <UnifiedDialogActionButton

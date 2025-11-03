@@ -140,7 +140,9 @@ const SuppliersTableRow = ({
 
       {/* Temsilci */}
       <TableCell className="py-2 px-2 text-xs text-gray-600">
-        {supplier.representative || '-'}
+        {supplier.employees 
+          ? `${supplier.employees.first_name} ${supplier.employees.last_name}` 
+          : '-'}
       </TableCell>
 
       {/* Bakiye */}

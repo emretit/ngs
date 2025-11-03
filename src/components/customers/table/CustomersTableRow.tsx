@@ -140,7 +140,9 @@ const CustomersTableRow = ({
 
       {/* Temsilci */}
       <TableCell className="py-2 px-2 text-xs text-gray-600">
-        {customer.representative || '-'}
+        {customer.employees 
+          ? `${customer.employees.first_name} ${customer.employees.last_name}` 
+          : '-'}
       </TableCell>
 
       {/* Bakiye */}

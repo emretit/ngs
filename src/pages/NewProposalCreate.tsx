@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CalendarDays, Plus, Trash, Calculator, Check, Edit, FileText, ArrowUp, ArrowDown, Eye, Download, Mail, MoreHorizontal, Save, FileDown, Send, ShoppingCart, TrendingUp, ArrowRight } from "lucide-react";
+import { CalendarDays, Plus, Trash, Calculator, Check, Edit, FileText, ArrowUp, ArrowDown, Eye, Download, Mail, MoreHorizontal, Save, FileDown, Send, ShoppingCart, ArrowRight } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
@@ -556,11 +556,6 @@ const NewProposalCreate = () => {
     // navigate("/orders/create", { state: { proposalData: formData, items } });
   };
 
-  const handleConvertToSale = () => {
-    // TODO: Implement convert to sale functionality
-    toast.info("Teklif satışa çevrildi! Satış sayfasına yönlendiriliyorsunuz...");
-    // navigate("/sales/create", { state: { proposalData: formData, items } });
-  };
 
   return (
     <div>
@@ -630,10 +625,6 @@ const NewProposalCreate = () => {
                 <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
                   <ShoppingCart className="h-4 w-4" />
                   <span>Siparişe Çevir</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleConvertToSale} className="gap-2 cursor-pointer text-green-600 hover:text-green-700 hover:bg-green-50">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Satışa Çevir</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

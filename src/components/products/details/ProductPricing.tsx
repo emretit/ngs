@@ -1,5 +1,5 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, Edit2, Check, X, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -139,32 +139,35 @@ const ProductPricing = ({
       {showAlert && (
         <Alert variant="default" className="border-orange-300 bg-orange-50 p-2 mt-0 rounded-none">
           <AlertCircle className="h-4 w-4 text-orange-500" />
-          <AlertDescription className="text-sm text-orange-700">
+          <AlertDescription className="text-xs text-orange-700">
             Para birimi değiştirildiğinde, döviz kuru otomatik olarak güncellenecektir.
           </AlertDescription>
         </Alert>
       )}
       
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+      <CardHeader className="pb-2 pt-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-50 to-orange-50/50 border border-orange-200/50">
+              <DollarSign className="h-4 w-4 text-orange-600" />
+            </div>
             Fiyat Bilgileri
-          </h2>
+          </CardTitle>
           <Button
             variant="ghost"
             size="icon"
+            className="h-7 w-7"
             onClick={() => setIsEditing(!isEditing)}
             disabled={isSaving}
           >
             <Edit2 className="h-4 w-4" />
           </Button>
         </div>
-        
-        <div className="space-y-3">
+      </CardHeader>
+      <CardContent className="space-y-3 pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-500">Satış Fiyatı</span>
+              <label className="text-xs font-medium text-gray-700">Satış Fiyatı</label>
             {isEditing ? (
               <Input
                 type="number"
@@ -180,7 +183,7 @@ const ProductPricing = ({
             )}
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-500">Alış Fiyatı</span>
+              <label className="text-xs font-medium text-gray-700">Alış Fiyatı</label>
             {isEditing ? (
               <Input
                 type="number"
@@ -200,7 +203,7 @@ const ProductPricing = ({
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500">KDV Oranı</span>
+            <label className="text-xs font-medium text-gray-700">KDV Oranı</label>
             {isEditing ? (
               <Select 
                 value={String(editValues.taxRate)}
@@ -227,9 +230,7 @@ const ProductPricing = ({
           </div>
 
           <div className="flex justify-between items-center">
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Para Birimi</span>
-            </div>
+            <label className="text-xs font-medium text-gray-700">Para Birimi</label>
             {isEditing ? (
               <div className="flex flex-col items-end">
                 <Select
@@ -286,7 +287,6 @@ const ProductPricing = ({
               </Button>
             </div>
           )}
-        </div>
       </CardContent>
     </Card>
   );

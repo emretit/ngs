@@ -2,18 +2,23 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { Department } from "./types";
 
 export const useEmployeeDepartments = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const { toast } = useToast();
+  const { userData } = useCurrentUser();
 
   useEffect(() => {
+    if (!userData?.company_id) return;
+
     const fetchDepartments = async () => {
       try {
         const { data, error } = await supabase
           .from('departments')
-          .select('*') as { data: Department[] | null; error: Error | null };
+          .select('*')
+          .eq('company_id', userData.company_id) as { data: Department[] | null; error: Error | null };
 
         if (error) {
           throw error;
@@ -39,12 +44,14 @@ export const useEmployeeDepartments = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'departments'
+          table: 'departments',
+          filter: `company_id=eq.${userData.company_id}`
         },
         async () => {
           const { data } = await supabase
             .from('departments')
-            .select('*') as { data: Department[] | null };
+            .select('*')
+            .eq('company_id', userData.company_id) as { data: Department[] | null };
           setDepartments(data || []);
         }
       )
@@ -53,7 +60,7 @@ export const useEmployeeDepartments = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [toast]);
+  }, [toast, userData?.company_id]);
 
   return departments;
 };

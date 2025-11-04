@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { FormFields } from "./FormFields";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface EditableEmployeeDetailsProps {
   employee: Employee;
@@ -32,27 +33,24 @@ export const EditableEmployeeDetails = ({
 
   const [formData, setFormData] = useState<Partial<Employee>>(employee);
   const [departments, setDepartments] = useState<{ name: string }[]>([]);
+  const { userData } = useCurrentUser();
 
   // Fetch departments
   useEffect(() => {
+    if (!userData?.company_id) return;
+    
     const fetchDepartments = async () => {
       const { data } = await supabase
         .from('departments')
         .select('name')
+        .eq('company_id', userData.company_id)
         .order('name');
       
-      setDepartments(data || [
-        { name: "Mühendislik" },
-        { name: "Satış" },
-        { name: "Pazarlama" },
-        { name: "Finans" },
-        { name: "İnsan Kaynakları" },
-        { name: "Operasyon" }
-      ]);
+      setDepartments(data || []);
     };
 
     fetchDepartments();
-  }, []);
+  }, [userData?.company_id]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

@@ -2,7 +2,10 @@ import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import ServicePageHeader from "@/components/service/ServicePageHeader";
-import ServiceStatsCards from "@/components/service/ServiceStatsCards";
+import ServiceKanbanBoard from "@/components/service/ServiceKanbanBoard";
+import ServiceMapView from "@/components/service/ServiceMapView";
+import ResourceSchedulingView from "@/components/service/ResourceSchedulingView";
+import ServiceGanttView from "@/components/service/ServiceGanttView";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, CalendarDays, Users, Clock, AlertCircle, CheckCircle, XCircle, Pause, ChevronLeft, ChevronRight, Eye, EyeOff, User, MapPin, Search, Filter, ChevronUp, ChevronDown, Calendar, Trash2, Edit } from "lucide-react";
 import ServiceViewToggle from "@/components/service/ServiceViewToggle";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar as BigCalendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addDays as dateFnsAddDays, isSameDay as dateFnsIsSameDay } from 'date-fns';
@@ -20,6 +23,8 @@ import { tr } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { formatDate, startOfWeek as getStartOfWeek, isSameDay, addDaysToDate } from '@/utils/dateUtils';
 import { ConfirmationDialogComponent } from '@/components/ui/confirmation-dialog';
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { toast } from "@/hooks/use-toast";
 
 const localizer = dateFnsLocalizer({
   format,
@@ -32,6 +37,7 @@ const localizer = dateFnsLocalizer({
 const ServicePage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { userData } = useCurrentUser();
   // Silme onayı için state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<ServiceRequest | null>(null);
@@ -41,12 +47,16 @@ const ServicePage = () => {
   const [showCompletedServices, setShowCompletedServices] = useState(true);
   const [showResourceView, setShowResourceView] = useState(true);
   const [assignedServices, setAssignedServices] = useState<Map<string, string>>(new Map());
-  const [activeView, setActiveView] = useState<"calendar" | "list">("calendar");
+  const [activeView, setActiveView] = useState<"calendar" | "list" | "kanban" | "map" | "scheduling">("calendar");
   // URL parametresinden view'ı kontrol et
   useEffect(() => {
     const viewParam = searchParams.get('view');
     if (viewParam === 'list') {
       setActiveView('list');
+    } else if (viewParam === 'kanban') {
+      setActiveView('kanban');
+    } else if (viewParam === 'map') {
+      setActiveView('map');
     }
   }, [searchParams]);
   // Liste görünümü için state'ler
@@ -56,29 +66,75 @@ const ServicePage = () => {
   const [sortField, setSortField] = useState<"title" | "priority" | "created_at">("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const { data: serviceRequests, isLoading, error, deleteServiceRequest } = useServiceRequests();
+  const queryClient = useQueryClient();
+
+  // Durum güncelleme mutation'ı
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ requestId, newStatus }: { requestId: string, newStatus: string }) => {
+      const { data, error } = await supabase
+        .from('service_requests')
+        .update({ service_status: newStatus })
+        .eq('id', requestId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-requests'] });
+      toast({
+        title: "Başarılı",
+        description: "Servis durumu güncellendi.",
+      });
+    },
+    onError: (error) => {
+      console.error('Durum güncelleme hatası:', error);
+      toast({
+        title: "Hata",
+        description: "Servis durumu güncellenirken bir hata oluştu.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Durum güncelleme handler'ı
+  const handleUpdateStatus = (requestId: string, newStatus: string) => {
+    updateStatusMutation.mutate({ requestId, newStatus });
+  };
   // Teknisyenleri getir
   const { data: technicians } = useQuery({
-    queryKey: ['technicians'],
+    queryKey: ['technicians', userData?.company_id],
     queryFn: async () => {
+      if (!userData?.company_id) {
+        return [];
+      }
       const { data, error } = await supabase
         .from('employees')
         .select('*')
+        .eq('company_id', userData.company_id)
         .eq('department', 'Teknik')
         .eq('status', 'aktif');
       if (error) throw error;
       return data;
     },
+    enabled: !!userData?.company_id,
   });
   // Müşteri verilerini getir
   const { data: customers } = useQuery({
-    queryKey: ['customers'],
+    queryKey: ['customers', userData?.company_id],
     queryFn: async () => {
+      if (!userData?.company_id) {
+        return [];
+      }
       const { data, error } = await supabase
         .from('customers')
-        .select('id, name, company');
+        .select('id, name, company')
+        .eq('company_id', userData.company_id);
       if (error) throw error;
       return data;
     },
+    enabled: !!userData?.company_id,
   });
   const handleSelectRequest = (request: ServiceRequest) => {
     navigate(`/service/edit/${request.id}`);
@@ -105,55 +161,9 @@ const ServicePage = () => {
     };
     return colors[priority as keyof typeof colors] || '#6b7280';
   };
-  // Test verisi - sadece atanmış servisler
-  const testEvents = [
-    {
-      id: '1',
-      title: 'Klima Bakımı',
-      start: new Date(2024, 8, 10, 9, 0),
-      end: new Date(2024, 8, 10, 11, 0),
-      resourceId: 'tech1',
-      priority: 'high',
-      status: 'in_progress',
-      location: 'Ofis A',
-      serviceType: 'Bakım',
-      description: 'Aylık rutin klima bakımı',
-    },
-    {
-      id: '2',
-      title: 'Elektrik Panosu Kontrolü',
-      start: new Date(2024, 8, 10, 14, 0),
-      end: new Date(2024, 8, 10, 16, 0),
-      resourceId: 'tech2',
-      priority: 'medium',
-      status: 'assigned',
-      location: 'Ofis B',
-      serviceType: 'Kontrol',
-      description: 'Elektrik panosunda rutin kontrol',
-    },
-    {
-      id: '3',
-      title: 'Network Kurulumu',
-      start: new Date(2024, 8, 11, 10, 0),
-      end: new Date(2024, 8, 11, 12, 0),
-      resourceId: 'tech3',
-      priority: 'urgent',
-      status: 'new',
-      location: 'Yeni Ofis',
-      serviceType: 'Kurulum',
-      description: 'Yeni ofis için network altyapısı kurulumu',
-    }
-  ];
-  const testTechnicians = [
-    { id: 'tech1', first_name: 'Can', last_name: 'Öztürk' },
-    { id: 'tech2', first_name: 'Zeynep', last_name: 'Arslan' },
-    { id: 'tech3', first_name: 'Ahmet', last_name: 'Yılmaz' },
-    { id: 'tech4', first_name: 'Mehmet', last_name: 'Kaya' },
-    { id: 'tech5', first_name: 'Ali', last_name: 'Demir' },
-  ];
   // Calendar events'leri oluştur
   const calendarEvents = useMemo(() => {
-    const allEvents = [...testEvents];
+    const allEvents: any[] = [];
     // Gerçek servis taleplerini de ekle
     if (serviceRequests && serviceRequests.length > 0) {
       const realEvents = serviceRequests.map(request => ({
@@ -227,9 +237,11 @@ const ServicePage = () => {
   }, [showCompletedServices, serviceRequests, assignedServices, searchQuery, statusFilter, priorityFilter]);
   // Resources'ları oluştur
   const resources = useMemo(() => {
-    // Veritabanından gelen teknisyenler varsa onları kullan, yoksa test verilerini kullan
-    const techList = technicians && technicians.length > 0 ? technicians : testTechnicians;
-    return techList.map(tech => ({
+    // Sadece veritabanından gelen teknisyenleri kullan
+    if (!technicians || technicians.length === 0) {
+      return [];
+    }
+    return technicians.map(tech => ({
       resourceId: tech.id,
       title: `${tech.first_name} ${tech.last_name}`,
     }));
@@ -312,15 +324,6 @@ const ServicePage = () => {
     }, {} as { [key: string]: ServiceRequest[] });
   }, [serviceRequests]);
 
-  // İstatistikleri hesapla
-  const stats = {
-    total: serviceRequests?.length || 0,
-    new: serviceRequests?.filter(r => r.service_status === 'new').length || 0,
-    inProgress: serviceRequests?.filter(r => r.service_status === 'in_progress').length || 0,
-    completed: serviceRequests?.filter(r => r.service_status === 'completed').length || 0,
-    urgent: serviceRequests?.filter(r => r.service_priority === 'urgent').length || 0,
-    unassigned: serviceRequests?.filter(r => !r.assigned_technician).length || 0,
-  };
   return (
     <>
       <div className="space-y-6">
@@ -330,8 +333,88 @@ const ServicePage = () => {
           onCreateRequest={() => navigate("/service/new")}
           serviceRequests={groupedServiceRequests}
         />
+        
         {/* Content based on view */}
-        {activeView === "calendar" ? (
+        {activeView === "scheduling" ? (
+          /* Gantt Chart View */
+          <ServiceGanttView
+            serviceRequests={serviceRequests || []}
+            technicians={technicians || []}
+            onSelectService={handleSelectRequest}
+            onUpdateAssignment={async (serviceId, technicianId, startTime, endTime) => {
+              // Servis atama güncellemesi
+              const { error } = await supabase
+                .from('service_requests')
+                .update({
+                  assigned_technician: technicianId,
+                  issue_date: startTime.toISOString(),
+                  service_due_date: endTime.toISOString(),
+                  service_status: 'assigned'
+                })
+                .eq('id', serviceId);
+
+              if (error) {
+                toast({
+                  title: "Hata",
+                  description: "Servis ataması güncellenirken bir hata oluştu.",
+                  variant: "destructive",
+                });
+              } else {
+                queryClient.invalidateQueries({ queryKey: ['service-requests'] });
+                toast({
+                  title: "Başarılı",
+                  description: "Servis teknisyene atandı.",
+                });
+              }
+            }}
+          />
+        ) : activeView === "map" ? (
+          /* Map View */
+          <ServiceMapView
+            serviceRequests={serviceRequests || []}
+            technicians={technicians || []}
+            onSelectService={handleSelectRequest}
+          />
+        ) : activeView === "kanban" ? (
+          /* Kanban Board View */
+          <>
+            {/* Filters for Kanban View */}
+            <div className="flex flex-col sm:flex-row gap-4 p-6 bg-gradient-to-r from-card/80 to-muted/40 rounded-xl border border-border/30 shadow-lg backdrop-blur-sm">
+              <div className="relative w-[400px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Servis adı, lokasyon veya açıklama ile ara..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Öncelik" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tüm Öncelikler</SelectItem>
+                  <SelectItem value="urgent">Acil</SelectItem>
+                  <SelectItem value="high">Yüksek</SelectItem>
+                  <SelectItem value="medium">Orta</SelectItem>
+                  <SelectItem value="low">Düşük</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <ServiceKanbanBoard
+              serviceRequests={serviceRequests || []}
+              technicians={technicians || []}
+              customers={customers || []}
+              onSelectRequest={handleSelectRequest}
+              onDeleteService={handleDeleteService}
+              onUpdateStatus={handleUpdateStatus}
+              searchQuery={searchQuery}
+              priorityFilter={priorityFilter}
+            />
+          </>
+        ) : activeView === "calendar" ? (
           /* React Big Calendar */
           <>
             {/* Filters for Calendar View */}
@@ -383,7 +466,15 @@ const ServicePage = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentDate(new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000))}
+                      onClick={() => {
+                        if (view === Views.DAY) {
+                          setCurrentDate(new Date(currentDate.getTime() - 24 * 60 * 60 * 1000));
+                        } else if (view === Views.WEEK) {
+                          setCurrentDate(new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000));
+                        } else if (view === Views.MONTH) {
+                          setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate()));
+                        }
+                      }}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -391,7 +482,15 @@ const ServicePage = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentDate(new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000))}
+                      onClick={() => {
+                        if (view === Views.DAY) {
+                          setCurrentDate(new Date(currentDate.getTime() + 24 * 60 * 60 * 1000));
+                        } else if (view === Views.WEEK) {
+                          setCurrentDate(new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000));
+                        } else if (view === Views.MONTH) {
+                          setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+                        }
+                      }}
                       className="h-8 w-8 p-0"
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -489,51 +588,78 @@ const ServicePage = () => {
                       </div>
                       {/* Gün sütunları Container - Teknisyen Satırlarıyla Aynı Yapı */}
                       <div className="flex flex-1">
-                      {Array.from({ length: 7 }, (_, i) => {
-                        const date = addDaysToDate(getStartOfWeek(currentDate), i);
-                        const turkishDays = {
-                          'Sunday': 'Pazar    ',
-                          'Monday': 'Pazartesi',
-                          'Tuesday': 'Salı     ',
-                          'Wednesday': 'Çarşamba',
-                          'Thursday': 'Perşembe ',
-                          'Friday': 'Cuma     ',
-                          'Saturday': 'Cumartesi'
-                        };
-                        const dayName = format(date, 'EEEE', { locale: tr });
-                        const turkishDay = turkishDays[dayName as keyof typeof turkishDays] || dayName;
-                        const isToday = isSameDay(date, new Date());
-                        const isWeekend = i === 5 || i === 6;
-                        return (
-                          <div 
-                            key={i} 
-                            className={`flex-1 p-3 text-center transition-all duration-300 ${
-                              isToday ? 'bg-gradient-to-b from-blue-50 to-blue-100 border-b-2 border-blue-400' :
-                              isWeekend ? 'bg-gradient-to-b from-orange-50 to-orange-100' : 
-                              'bg-gradient-to-b from-gray-50 to-gray-100'
-                            } ${i < 6 ? 'border-r border-gray-200/60' : ''} hover:bg-gradient-to-b hover:from-gray-100 hover:to-gray-150`}
-                            style={{ flexBasis: 'calc(100% / 7)', maxWidth: 'calc(100% / 7)', boxSizing: 'border-box' }}
-                          >
-                            <div className={`text-xs font-semibold ${
-                              isToday ? 'text-blue-700' : 
-                              isWeekend ? 'text-orange-700' : 
-                              'text-gray-600'
-                            }`}>
-                              {turkishDay}
+                      {(() => {
+                        let daysToShow = 7;
+                        let startDate = getStartOfWeek(currentDate);
+                        
+                        if (view === Views.DAY) {
+                          daysToShow = 1;
+                          startDate = currentDate;
+                        } else if (view === Views.WEEK) {
+                          daysToShow = 7;
+                          startDate = getStartOfWeek(currentDate);
+                        } else if (view === Views.MONTH) {
+                          // Ay görünümü için ayın ilk gününü al
+                          const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                          startDate = getStartOfWeek(monthStart);
+                          // Ayın son gününü al
+                          const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                          // Ayın son gününün haftasının son gününü al (Pazar günü)
+                          const monthEndWeekStart = getStartOfWeek(monthEnd);
+                          const monthEndWeekEnd = new Date(monthEndWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+                          // İki tarih arasındaki gün sayısını hesapla
+                          daysToShow = Math.ceil((monthEndWeekEnd.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                        }
+                        
+                        return Array.from({ length: daysToShow }, (_, i) => {
+                          const date = addDaysToDate(startDate, i);
+                          const turkishDays = {
+                            'Sunday': 'Pazar    ',
+                            'Monday': 'Pazartesi',
+                            'Tuesday': 'Salı     ',
+                            'Wednesday': 'Çarşamba',
+                            'Thursday': 'Perşembe ',
+                            'Friday': 'Cuma     ',
+                            'Saturday': 'Cumartesi'
+                          };
+                          const dayName = format(date, 'EEEE', { locale: tr });
+                          const turkishDay = turkishDays[dayName as keyof typeof turkishDays] || dayName;
+                          const isToday = isSameDay(date, new Date());
+                          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                          const flexBasis = view === Views.DAY ? '100%' : view === Views.MONTH ? `calc(100% / ${daysToShow})` : 'calc(100% / 7)';
+                          const maxWidth = view === Views.DAY ? '100%' : view === Views.MONTH ? `calc(100% / ${daysToShow})` : 'calc(100% / 7)';
+                          
+                          return (
+                            <div 
+                              key={i} 
+                              className={`flex-1 p-3 text-center transition-all duration-300 ${
+                                isToday ? 'bg-gradient-to-b from-blue-50 to-blue-100 border-b-2 border-blue-400' :
+                                isWeekend ? 'bg-gradient-to-b from-orange-50 to-orange-100' : 
+                                'bg-gradient-to-b from-gray-50 to-gray-100'
+                              } ${i < daysToShow - 1 ? 'border-r border-gray-200/60' : ''} hover:bg-gradient-to-b hover:from-gray-100 hover:to-gray-150`}
+                              style={{ flexBasis, maxWidth, boxSizing: 'border-box' }}
+                            >
+                              <div className={`text-xs font-semibold ${
+                                isToday ? 'text-blue-700' : 
+                                isWeekend ? 'text-orange-700' : 
+                                'text-gray-600'
+                              }`}>
+                                {turkishDay}
+                              </div>
+                              <div className={`text-sm font-bold mt-1 ${
+                                isToday ? 'text-blue-800' : 
+                                isWeekend ? 'text-orange-800' : 
+                                'text-gray-800'
+                              }`}>
+                                {formatDate(date, 'dd MMM')}
+                              </div>
+                              {isToday && (
+                                <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1 shadow-sm"></div>
+                              )}
                             </div>
-                            <div className={`text-sm font-bold mt-1 ${
-                              isToday ? 'text-blue-800' : 
-                              isWeekend ? 'text-orange-800' : 
-                              'text-gray-800'
-                            }`}>
-                              {formatDate(date, 'dd MMM')}
-                            </div>
-                            {isToday && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto mt-1 shadow-sm"></div>
-                            )}
-                          </div>
-                        );
-                      })}
+                          );
+                        });
+                      })()}
                       </div>
                     </div>
                     {resources.map((tech, techIndex) => (
@@ -554,25 +680,51 @@ const ServicePage = () => {
                         {/* Gün Hücreleri Container - Eşit Dağılım */}
                         <div className="flex flex-1">
                         {/* Gün hücreleri - Modern Drag & Drop */}
-                        {Array.from({ length: 7 }, (_, i) => {
-                          const date = addDaysToDate(getStartOfWeek(currentDate), i);
-                          const isToday = isSameDay(date, new Date());
-                          const isWeekend = i === 5 || i === 6;
-                          // Bu teknisyen ve günde servis var mı kontrol et
-                          const dayServices = calendarEvents.filter(event => {
-                            const eventDate = new Date(event.start);
-                            return isSameDay(eventDate, date) && event.resourceId === tech.resourceId;
-                          });
-                          return (
+                        {(() => {
+                          let daysToShow = 7;
+                          let startDate = getStartOfWeek(currentDate);
+                          
+                          if (view === Views.DAY) {
+                            daysToShow = 1;
+                            startDate = currentDate;
+                          } else if (view === Views.WEEK) {
+                            daysToShow = 7;
+                            startDate = getStartOfWeek(currentDate);
+                          } else if (view === Views.MONTH) {
+                            // Ay görünümü için ayın ilk gününü al
+                            const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                            startDate = getStartOfWeek(monthStart);
+                            // Ayın son gününü al
+                            const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                            // Ayın son gününün haftasının son gününü al (Pazar günü)
+                            const monthEndWeekStart = getStartOfWeek(monthEnd);
+                            const monthEndWeekEnd = new Date(monthEndWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+                            // İki tarih arasındaki gün sayısını hesapla
+                            daysToShow = Math.ceil((monthEndWeekEnd.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                          }
+                          
+                          return Array.from({ length: daysToShow }, (_, i) => {
+                            const date = addDaysToDate(startDate, i);
+                            const isToday = isSameDay(date, new Date());
+                            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                            // Bu teknisyen ve günde servis var mı kontrol et
+                            const dayServices = calendarEvents.filter(event => {
+                              const eventDate = new Date(event.start);
+                              return isSameDay(eventDate, date) && event.resourceId === tech.resourceId;
+                            });
+                            const flexBasis = view === Views.DAY ? '100%' : view === Views.MONTH ? `calc(100% / ${daysToShow})` : 'calc(100% / 7)';
+                            const maxWidth = view === Views.DAY ? '100%' : view === Views.MONTH ? `calc(100% / ${daysToShow})` : 'calc(100% / 7)';
+                            
+                            return (
                         <div 
                           key={i} 
                           className={`flex-1 p-3 min-h-20 relative group transition-all duration-300 ${
                             isToday ? 'bg-blue-50/40 border-l border-blue-200' :
                             isWeekend ? 'bg-orange-50/30' : 
                             'bg-white hover:bg-blue-50/20'
-                          } ${i < 6 ? 'border-r border-gray-200/60' : ''} 
+                          } ${i < daysToShow - 1 ? 'border-r border-gray-200/60' : ''} 
                           hover:shadow-inner cursor-pointer`}
-                          style={{ flexBasis: 'calc(100% / 7)', maxWidth: 'calc(100% / 7)', boxSizing: 'border-box' }}
+                          style={{ flexBasis, maxWidth, boxSizing: 'border-box' }}
                           onDrop={(e) => {
                             e.preventDefault();
                             e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300', 'border-2', 'border-dashed');
@@ -653,7 +805,8 @@ const ServicePage = () => {
                               )}
                             </div>
                           );
-                        })}
+                          });
+                        })()}
                         </div>
                       </div>
                     ))}

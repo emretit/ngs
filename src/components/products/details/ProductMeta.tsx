@@ -1,6 +1,6 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Tag } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Settings } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
@@ -17,27 +17,31 @@ const ProductMeta = ({
 }: ProductMetaProps) => {
   return (
     <Card className="rounded-xl">
-      <CardContent className="p-4">
-        <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
-          <Tag className="h-4 w-4" />
+      <CardHeader className="pb-2 pt-3">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
+            <Settings className="h-4 w-4 text-purple-600" />
+          </div>
           Ek Bilgiler
-        </h2>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-0">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs text-gray-500">Durum</label>
-            <p className="mt-1">
+            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Durum</label>
+            <div className="mt-1">
               <Badge variant={isActive ? "default" : "secondary"} className="h-6 px-2 text-[11px]">
                 {isActive ? "Aktif" : "Pasif"}
               </Badge>
-            </p>
+            </div>
           </div>
           <div>
-            <label className="text-xs text-gray-500">Oluşturulma</label>
-            <p className="mt-1 text-sm">{format(new Date(createdAt), 'dd.MM.yyyy HH:mm')}</p>
+            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Oluşturulma</label>
+            <p className="text-sm">{format(new Date(createdAt), 'dd.MM.yyyy HH:mm')}</p>
           </div>
           <div>
-            <label className="text-xs text-gray-500">Son Güncelleme</label>
-            <p className="mt-1 text-sm">{format(new Date(updatedAt), 'dd.MM.yyyy HH:mm')}</p>
+            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Son Güncelleme</label>
+            <p className="text-sm">{format(new Date(updatedAt), 'dd.MM.yyyy HH:mm')}</p>
           </div>
         </div>
       </CardContent>

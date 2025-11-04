@@ -79,6 +79,8 @@ const SignUp = () => {
         errorMessage = "Şifre en az 6 karakter olmalıdır.";
       } else if (msg.includes('Signup disabled')) {
         errorMessage = "Kayıt şu anda devre dışı.";
+      } else if (msg.includes('davet edilmiş olmanız gerekiyor') || msg.includes('invited')) {
+        errorMessage = "Kayıt olmak için davet edilmiş olmanız gerekiyor. Lütfen admin ile iletişime geçin.";
       } else if (msg) {
         errorMessage = msg;
       }

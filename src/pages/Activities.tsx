@@ -22,6 +22,8 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
   const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | null>(null);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [activeView, setActiveView] = useState<ViewType>("table");
   const [isNewActivityDialogOpen, setIsNewActivityDialogOpen] = useState(false);
   const navigate = useNavigate();
@@ -45,7 +47,9 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
     searchQuery,
     selectedEmployee: selectedAssignee,
     selectedType,
-    selectedStatus
+    selectedStatus,
+    startDate,
+    endDate
   });
   const handleAddTask = () => {
     setIsNewActivityDialogOpen(true);
@@ -80,6 +84,10 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
           selectedStatus={selectedStatus}
           setSelectedStatus={setSelectedStatus}
           employees={employees}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
         />
         {activeView === "table" && (
           <TasksContent 
@@ -87,6 +95,8 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
             selectedEmployee={selectedAssignee}
             selectedType={selectedType}
             selectedStatus={selectedStatus}
+            startDate={startDate}
+            endDate={endDate}
           />
         )}
         {activeView === "kanban" && (
@@ -95,6 +105,8 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
             selectedEmployee={selectedAssignee}
             selectedType={selectedType}
             selectedStatus={selectedStatus}
+            startDate={startDate}
+            endDate={endDate}
           />
         )}
         {activeView === "calendar" && (
@@ -103,6 +115,8 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
             selectedEmployee={selectedAssignee}
             selectedType={selectedType}
             selectedStatus={selectedStatus}
+            startDate={startDate}
+            endDate={endDate}
           />
         )}
         {activeView === "myday" && (
@@ -111,6 +125,8 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
             selectedEmployee={selectedAssignee}
             selectedType={selectedType}
             selectedStatus={selectedStatus}
+            startDate={startDate}
+            endDate={endDate}
           />
         )}
       </div>

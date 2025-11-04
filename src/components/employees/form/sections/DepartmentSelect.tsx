@@ -11,6 +11,7 @@ import { Control } from "react-hook-form";
 import { EmployeeFormValues } from "../hooks/useEmployeeForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface Department {
   id: string;
@@ -29,6 +30,7 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newDepartmentName, setNewDepartmentName] = useState("");
   const [newDepartmentDescription, setNewDepartmentDescription] = useState("");
+  const { userData } = useCurrentUser();
 
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -36,14 +38,19 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    fetchDepartments();
-  }, []);
+    if (userData?.company_id) {
+      fetchDepartments();
+    }
+  }, [userData?.company_id]);
 
   const fetchDepartments = async () => {
+    if (!userData?.company_id) return;
+    
     try {
       const { data, error } = await supabase
         .from('departments')
         .select('*')
+        .eq('company_id', userData.company_id)
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
@@ -137,14 +144,15 @@ export const DepartmentSelect = ({ control }: DepartmentSelectProps) => {
   };
 
   const handleDeleteDepartmentConfirm = async () => {
-    if (!departmentToDelete) return;
+    if (!departmentToDelete || !userData?.company_id) return;
 
     setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('departments')
         .update({ is_active: false })
-        .eq('id', departmentToDelete.id);
+        .eq('id', departmentToDelete.id)
+        .eq('company_id', userData.company_id);
 
       if (error) throw error;
 

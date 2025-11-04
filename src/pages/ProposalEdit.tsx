@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download, MoreHorizontal, Save, FileDown, Eye, TrendingUp, ArrowRight, Building2, CalendarDays, XCircle } from "lucide-react";
+import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download, MoreHorizontal, Save, FileDown, Eye, ArrowRight, Building2, CalendarDays, XCircle } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
@@ -167,6 +167,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           ...item,
           id: item.id || crypto.randomUUID(),
           row_number: index + 1,
+          name: item.name || (item as any).product_name || item.description || '', // Ensure name field exists
+          description: item.description || item.name || (item as any).product_name || '', // Ensure description field exists
         }));
         setItems(initialItems);
       } else {
@@ -545,9 +547,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     toast.info("PDF export özelliği yakında eklenecek");
   };
 
-  const handleConvertToSale = () => {
-    toast.info("Satışa çevirme özelliği yakında eklenecek");
-  };
 
   const handleSmartSave = () => {
     handleSaveChanges(proposal.status);
@@ -685,18 +684,11 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                   </>
                 )}
                 
-                {proposal.status === 'accepted' && (
-                  <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
-                    <ShoppingCart className="h-4 w-4" />
-                    <span>Siparişe Çevir</span>
-                  </DropdownMenuItem>
-                )}
-                
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuItem onClick={handleConvertToSale} className="gap-2 cursor-pointer text-green-600 hover:text-green-700 hover:bg-green-50">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Satışa Çevir</span>
+                <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
+                  <ShoppingCart className="h-4 w-4" />
+                  <span>Siparişe Çevir</span>
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator />

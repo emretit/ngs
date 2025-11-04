@@ -76,15 +76,15 @@ const ProductDetails = () => {
   );
   }
   return (
-    <>
+    <div>
       <ProductDetailsHeader product={product} isLoading={isLoading} />
-      <div className="mt-4">
+      <div className="mt-6">
         <ProductDetailsCompact
           product={product}
           onUpdate={updateProductMutation.mutate}
         />
       </div>
-    </>
+    </div>
   );
 };
 export default ProductDetails;

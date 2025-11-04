@@ -11,9 +11,11 @@ interface MyDayViewProps {
   selectedEmployee: string | null;
   selectedType: string | null;
   selectedStatus: TaskStatus | null;
+  startDate?: Date | undefined;
+  endDate?: Date | undefined;
 }
 
-const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus }: MyDayViewProps) => {
+const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus, startDate, endDate }: MyDayViewProps) => {
   const { userData, displayName, loading } = useCurrentUser();
   
   const { tasks, isLoading, error } = useKanbanTasks({
@@ -21,7 +23,9 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
     selectedEmployee,
     selectedType,
     selectedStatus,
-    isMyDay: true // Bu önemli - "Benim Günüm" filtresini aktif eder
+    isMyDay: true, // Bu önemli - "Benim Günüm" filtresini aktif eder
+    startDate,
+    endDate
   });
 
   if (loading || isLoading) {

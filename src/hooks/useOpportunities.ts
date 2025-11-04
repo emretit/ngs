@@ -6,6 +6,7 @@ import { Opportunity, OpportunityStatus, OpportunitiesState } from "@/types/crm"
 import { DropResult } from "@hello-pangea/dnd";
 import { useToast } from "@/components/ui/use-toast";
 import { useInfiniteScroll } from "./useInfiniteScroll";
+import { useCurrentUser } from "./useCurrentUser";
 
 interface UseOpportunitiesFilters {
   search?: string;
@@ -19,18 +20,30 @@ interface UseOpportunitiesFilters {
 export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Infinite scroll için query fonksiyonu
   const fetchOpportunities = async (page: number, pageSize: number) => {
+    // Company_id kontrolü - güvenlik için
+    if (!userData?.company_id) {
+      console.warn('No company_id found for user');
+      return {
+        data: [],
+        totalCount: 0,
+        hasNextPage: false
+      };
+    }
+
     let query = supabase
       .from("opportunities")
       .select(`
         *,
         customer:customer_id (*),
         employee:employee_id (*)
-      `, { count: 'exact' });
+      `, { count: 'exact' })
+      .eq("company_id", userData.company_id); // Company_id filtresi eklendi
 
     // Apply filters
     if (filters.search) {
@@ -127,11 +140,11 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     refresh,
     totalCount
   } = useInfiniteScroll(
-    ["opportunities", JSON.stringify(filters)],
+    ["opportunities", userData?.company_id, JSON.stringify(filters)],
     fetchOpportunities,
     {
       pageSize: 20, // Her 20 fırsatta bir yükle
-      enabled: true,
+      enabled: !!userData?.company_id, // Company_id yüklenene kadar bekle
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 dakika
       gcTime: 10 * 60 * 1000, // 10 dakika
@@ -162,10 +175,15 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
   // Handle drag and drop updates
   const updateOpportunityMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: OpportunityStatus }) => {
+      if (!userData?.company_id) {
+        throw new Error('Şirket bilgisi bulunamadı');
+      }
+      
       const { error } = await supabase
         .from("opportunities")
         .update({ status, updated_at: new Date().toISOString() })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("company_id", userData.company_id); // Company_id kontrolü eklendi
 
       if (error) throw error;
       return { id, status };
@@ -205,10 +223,15 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
   // Function for updating opportunity status (for custom columns)
   const handleUpdateOpportunityStatus = async (id: string, status: string) => {
     try {
+      if (!userData?.company_id) {
+        throw new Error('Şirket bilgisi bulunamadı');
+      }
+      
       const { error } = await supabase
         .from("opportunities")
         .update({ status, updated_at: new Date().toISOString() })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("company_id", userData.company_id); // Company_id kontrolü eklendi
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -236,6 +259,10 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     opportunity: Partial<Opportunity> & { id: string }
   ) => {
     try {
+      if (!userData?.company_id) {
+        throw new Error('Şirket bilgisi bulunamadı');
+      }
+      
       const updateData: any = { ...opportunity };
       delete updateData.customer;
       delete updateData.employee;
@@ -248,7 +275,8 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
       const { error } = await supabase
         .from("opportunities")
         .update(updateData)
-        .eq("id", opportunity.id);
+        .eq("id", opportunity.id)
+        .eq("company_id", userData.company_id); // Company_id kontrolü eklendi
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });

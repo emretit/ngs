@@ -11,6 +11,8 @@ interface UseKanbanTasksProps {
   selectedType?: string | null;
   selectedStatus?: TaskStatus | "all" | null;
   isMyDay?: boolean;
+  startDate?: Date | undefined;
+  endDate?: Date | undefined;
 }
 
 interface KanbanTasks {
@@ -25,7 +27,9 @@ export const useKanbanTasks = ({
   selectedEmployee = null,
   selectedType = null,
   selectedStatus = null,
-  isMyDay = false
+  isMyDay = false,
+  startDate,
+  endDate
 }: UseKanbanTasksProps) => {
   const { userData } = useCurrentUser();
   const { getClient } = useAuth();
@@ -37,14 +41,14 @@ export const useKanbanTasks = ({
   });
 
   const { data: tasks = [], isLoading, error } = useQuery({
-    queryKey: ["activities", userData?.company_id],
+    queryKey: ["activities", userData?.company_id, startDate, endDate],
     queryFn: async () => {
       if (!userData?.company_id) {
         return [];
       }
 
       const client = getClient();
-      const { data, error } = await client
+      let query = client
         .from("activities")
         .select(`
           *,
@@ -55,8 +59,22 @@ export const useKanbanTasks = ({
             avatar_url
           )
         `)
-        .eq("company_id", userData.company_id)
-        .order("created_at", { ascending: false });
+        .eq("company_id", userData.company_id);
+
+      // Tarih filtresi
+      if (startDate) {
+        query = query.gte("created_at", startDate.toISOString());
+      }
+      if (endDate) {
+        // End date için günün sonunu ekle (23:59:59)
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        query = query.lte("created_at", endDateTime.toISOString());
+      }
+
+      query = query.order("created_at", { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching tasks:", error);

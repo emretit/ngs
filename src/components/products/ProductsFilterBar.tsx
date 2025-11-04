@@ -1,7 +1,9 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Package } from "lucide-react";
+import { Search, Filter, Package, Warehouse } from "lucide-react";
 
 interface ProductsFilterBarProps {
   searchQuery: string;
@@ -10,6 +12,8 @@ interface ProductsFilterBarProps {
   setCategoryFilter: (value: string) => void;
   stockFilter: string;
   setStockFilter: (value: string) => void;
+  warehouseFilter?: string;
+  setWarehouseFilter?: (value: string) => void;
   categories: { id: string; name: string }[];
 }
 
@@ -20,8 +24,35 @@ const ProductsFilterBar = ({
   setCategoryFilter,
   stockFilter,
   setStockFilter,
+  warehouseFilter = "all",
+  setWarehouseFilter,
   categories
 }: ProductsFilterBarProps) => {
+  // Depoları getir
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ["warehouses"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (!profile?.company_id) return [];
+
+      const { data, error } = await supabase
+        .from("warehouses")
+        .select("id, name, code")
+        .eq("company_id", profile.company_id)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   return (
     <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
       <div className="relative min-w-[250px] flex-1">
@@ -48,6 +79,23 @@ const ProductsFilterBar = ({
           ))}
         </SelectContent>
       </Select>
+
+      {setWarehouseFilter && (
+        <Select value={warehouseFilter} onValueChange={setWarehouseFilter}>
+          <SelectTrigger className="w-[180px]">
+            <Warehouse className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Depo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm Depolar</SelectItem>
+            {warehouses.map((warehouse) => (
+              <SelectItem key={warehouse.id} value={warehouse.id}>
+                {warehouse.name}{warehouse.code ? ` (${warehouse.code})` : ''}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       <Select value={stockFilter} onValueChange={setStockFilter}>
         <SelectTrigger className="w-[180px]">

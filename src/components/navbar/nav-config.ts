@@ -44,7 +44,8 @@ import {
   MessageSquare,
   ClipboardCheck,
   ArrowRightLeft,
-  Factory
+  Factory,
+  Warehouse
 } from "lucide-react";
 
 export const navItems = [
@@ -222,9 +223,9 @@ export const navItems = [
         label: "Ürünler",
       },
       {
-        path: "/inventory/transactions",
-        icon: ArrowRightLeft,
-        label: "Depo İşlemleri",
+        path: "/inventory/warehouses",
+        icon: Warehouse,
+        label: "Depolar",
       },
       {
         path: "/production",

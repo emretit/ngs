@@ -24,7 +24,7 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, variant, className, ...props }) {
+      {toasts.map(function ({ id, title, description, action, variant, className, duration, ...props }) {
         return (
           <Toast 
             key={id} 
@@ -33,6 +33,7 @@ export function Toaster() {
               "bg-background border shadow-lg",
               className
             )}
+            duration={duration || 1000}
             {...props}
           >
             <div className="flex items-start gap-3">

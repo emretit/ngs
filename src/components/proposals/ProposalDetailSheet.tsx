@@ -171,7 +171,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
                   <div key={item.id || index} className="p-4 bg-muted/30 rounded-lg border">
                     <div className="space-y-2">
                       <div className="flex justify-between items-start">
-                        <h4 className="font-medium text-sm">{item.name}</h4>
+                        <h4 className="font-medium text-sm">{item.name || (item as any).product_name || 'Ürün adı belirtilmemiş'}</h4>
                         <span className="text-sm font-semibold text-primary">
                           {formatMoney(item.total_price)}
                         </span>

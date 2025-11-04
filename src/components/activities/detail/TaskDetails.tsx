@@ -4,26 +4,19 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Task, TaskStatus, SubTask } from "@/types/task";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, X, Star, Phone, Mail, MessageSquare, Calendar, User, Edit2, Clock, CheckCircle2 } from "lucide-react";
+import { Star, Edit2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { UnifiedDatePicker } from "@/components/ui/unified-dialog";
+import { UnifiedDatePicker, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import OpportunitySelector from "@/components/opportunities/OpportunitySelector";
 import CustomerSelector from "@/components/proposals/form/CustomerSelector";
 import { SubtaskManager } from "./subtasks";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 interface TaskDetailsProps {
   task: Task | null;
@@ -58,6 +51,7 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
       setIsImportant(task.priority === 'high');
       setDueDate(task.due_date ? new Date(task.due_date) : undefined);
       setSelectedAssigneeId(task.assignee_id || "");
+      setSelectedOpportunityId(task.opportunity_id || "");
       setSubtasks(task.subtasks || []);
       setEditingValues(task);
     }
@@ -145,6 +139,7 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
       priority: isImportant ? 'high' as const : 'medium' as const,
       due_date: dueDate?.toISOString(),
       assignee_id: selectedAssigneeId || null,
+      opportunity_id: selectedOpportunityId || null,
     };
     
     await updateTaskMutation.mutateAsync({
@@ -164,97 +159,78 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="sm:max-w-xl md:max-w-2xl overflow-y-auto border-l border-gray-200 bg-white">
-        <SheetHeader className="text-left border-b pb-4 mb-4">
-          {/* Modern Header with Gradient Background */}
-          <div className="flex items-center justify-between p-4 -m-4 mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+      <SheetContent className="sm:max-w-xl md:max-w-2xl overflow-hidden p-0 flex flex-col bg-white">
+        {/* Header - UnifiedDialog stilinde */}
+        <div className="flex items-center p-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">{task.title}</h2>
-                <div className="flex items-center text-xs text-gray-600 mt-0.5 space-x-3">
-                  <div className="flex items-center">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    <span>Oluşturulma: {formatDate(task.created_at)}</span>
-                  </div>
-                  {task.updated_at && task.updated_at !== task.created_at && (
-                    <div className="flex items-center">
-                      <Edit2 className="h-3 w-3 mr-1" />
-                      <span>Revize: {formatDate(task.updated_at)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs px-2 py-1 rounded-full bg-white text-gray-700 border border-gray-200">
-                {status === 'todo' && 'Yapılacak'}
-                {status === 'in_progress' && 'Devam Ediyor'}
-                {status === 'completed' && 'Tamamlandı'}
-                {status === 'postponed' && 'Ertelendi'}
-              </span>
+            <h2 className="text-lg font-semibold text-gray-900">Aktivite Detayları</h2>
             </div>
           </div>
           
-        </SheetHeader>
-        
-        <div className="mt-4 space-y-4">
-          <div className="space-y-3">
-              <div>
-                <Label className="text-xs">Başlık</Label>
+        {/* Scrollable Content - NewActivityDialog form yapısı */}
+        <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
+          <div className="p-3 space-y-3">
+            {/* Başlık ve Açıklama */}
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <Label htmlFor="title" className="text-sm font-medium text-gray-700">Başlık *</Label>
                 <Input 
+                  id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-8 text-sm"
+                  placeholder="Aktivite başlığını girin"
+                  className="h-8"
+                  required
                 />
               </div>
               
-              <div>
-                <Label className="text-xs text-gray-800">Açıklama</Label>
+              <div className="space-y-1">
+                <Label htmlFor="description" className="text-sm font-medium text-gray-700">Açıklama</Label>
                 <Textarea 
+                  id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="h-12 text-xs resize-none" 
+                  placeholder="Aktivite detaylarını girin"
+                  rows={2}
+                  className="resize-none h-8"
                 />
               </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs text-gray-800">Durum</Label>
-                  <Select 
-                    value={status}
-                    onValueChange={(val) => setStatus(val as TaskStatus)}
-                  >
-                    <SelectTrigger className="border-gray-200 focus:ring-gray-100">
-                      <SelectValue placeholder="Durum seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todo">Yapılacak</SelectItem>
-                      <SelectItem value="in_progress">Devam Ediyor</SelectItem>
-                      <SelectItem value="completed">Tamamlandı</SelectItem>
-                      <SelectItem value="postponed">Ertelendi</SelectItem>
-                    </SelectContent>
-                  </Select>
+            </div>
+
+            {/* Hızlı Seçimler */}
+            <div className="grid grid-cols-2 gap-2">
+              <OpportunitySelector
+                value={selectedOpportunityId}
+                onChange={setSelectedOpportunityId}
+                label="Fırsat"
+                placeholder="Fırsat seçin..."
+                searchPlaceholder="Fırsat ara..."
+                noResultsText="Fırsat bulunamadı"
+                showLabel={true}
+              />
+
+              <EmployeeSelector
+                value={selectedAssigneeId}
+                onChange={setSelectedAssigneeId}
+                label="Görevli"
+                placeholder="Görevli seçin..."
+                searchPlaceholder="Çalışan ara..."
+                noResultsText="Çalışan bulunamadı"
+                showLabel={true}
+              />
                 </div>
-                <div>
-                  <Label className="text-xs text-gray-800">Öncelik</Label>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="is_important"
-                      checked={isImportant}
-                      onCheckedChange={setIsImportant}
-                    />
-                    <Label htmlFor="is_important" className="flex items-center space-x-1 cursor-pointer">
-                      <Star className={`h-4 w-4 ${isImportant ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
-                      <span>Önemli</span>
-                    </Label>
-                  </div>
-                </div>
+
+            {/* Müşteri ve Son Tarih */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <CustomerSelector
+                  value={selectedCustomerId}
+                  onChange={handleCustomerChange}
+                  error=""
+                />
               </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs text-gray-800">Son Tarih</Label>
+              <div className="space-y-1">
                   <UnifiedDatePicker
                     label="Son Tarih"
                     date={dueDate}
@@ -262,22 +238,42 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
                     placeholder="Tarih seçin"
                   />
                 </div>
-                <div>
-                  <Label className="text-xs text-gray-800">Görevli</Label>
-                  <EmployeeSelector
-                    value={selectedAssigneeId}
-                    onChange={setSelectedAssigneeId}
-                    placeholder="Görevli seçin..."
-                    searchPlaceholder="Çalışan ara..."
-                    noResultsText="Çalışan bulunamadı"
-                    showLabel={false}
-                  />
+            </div>
+
+            {/* Durum ve Önem */}
+            <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Label className="text-xs font-medium text-gray-700">Durum</Label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                  className="text-xs border-0 bg-transparent focus:ring-0 focus:outline-none font-normal"
+                >
+                  <option value="todo">Yapılacak</option>
+                  <option value="in_progress">Devam Ediyor</option>
+                  <option value="completed">Tamamlandı</option>
+                  <option value="postponed">Ertelendi</option>
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is_important"
+                  checked={isImportant}
+                  onCheckedChange={setIsImportant}
+                  className="scale-90"
+                />
+                <Label htmlFor="is_important" className="flex items-center space-x-1 cursor-pointer text-sm">
+                  <Star className={`h-4 w-4 ${isImportant ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
+                  <span>Önemli</span>
+                </Label>
                 </div>
               </div>
 
               {/* Alt Görevler */}
-              <div>
-                <Label className="text-gray-800">Alt Görevler</Label>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Alt Görevler</Label>
+              <div className="p-2 bg-gray-50 rounded-lg">
                 <SubtaskManager 
                   task={{...task, subtasks}} 
                   onUpdate={handleUpdateSubtasks} 
@@ -286,22 +282,9 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
               </div>
             </div>
             
-            <div className="flex justify-end mt-4">
-              <Button 
-                onClick={handleSaveChanges}
-                disabled={updateTaskMutation.isPending}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                Değişiklikleri Kaydet
-              </Button>
-            </div>
-          </div>
-
-         {/* Geçmiş Bilgileri */}
-         <div className="space-y-3">
-           <h3 className="text-sm font-medium text-gray-800 border-b pb-1">Görev Geçmişi</h3>
-            
+            {/* Görev Geçmişi */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Görev Geçmişi</Label>
             <div className="space-y-2">
               <div className="flex items-start space-x-2 p-2 bg-gray-50 rounded-lg">
                 <div className="p-1.5 rounded-full bg-green-100">
@@ -341,20 +324,24 @@ const TaskDetails = ({ task, isOpen, onClose }: TaskDetailsProps) => {
                   </div>
                 </div>
               )}
+              </div>
+            </div>
             </div>
           </div>
         
-        <SheetFooter className="flex justify-end pt-3 mt-4 border-t">
-          <Button 
+        {/* Footer - UnifiedDialogFooter stili */}
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={onClose} disabled={updateTaskMutation.isPending} />
+          <UnifiedDialogActionButton
             onClick={handleSaveChanges}
-            variant="outline" 
-            size="sm"
-            className="border-gray-200 text-gray-700 hover:bg-gray-50 text-xs"
+            variant="primary"
+            disabled={updateTaskMutation.isPending}
+            loading={updateTaskMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700"
           >
-            <Save className="mr-1 h-3 w-3" />
-            Kaydet
-          </Button>
-        </SheetFooter>
+            Değişiklikleri Kaydet
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
       </SheetContent>
     </Sheet>
   );

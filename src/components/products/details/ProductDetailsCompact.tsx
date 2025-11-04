@@ -1,6 +1,7 @@
 import { Product } from "@/types/product";
 import ProductGeneralInfo from "@/components/products/details/ProductGeneralInfo";
 import ProductInventory from "@/components/products/details/ProductInventory";
+import ProductWarehouseStock from "@/components/products/details/ProductWarehouseStock";
 import ProductPricing from "@/components/products/details/ProductPricing";
 import ProductRelated from "@/components/products/details/ProductRelated";
 import ProductMeta from "@/components/products/details/ProductMeta";
@@ -12,7 +13,7 @@ interface ProductDetailsCompactProps {
 
 const ProductDetailsCompact = ({ product, onUpdate }: ProductDetailsCompactProps) => {
 	return (
-		<div className="container">
+		<div className="space-y-4">
 			{/* Row 1: General + Inventory */}
 			<div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 				<ProductGeneralInfo product={product} onUpdate={onUpdate as any} />
@@ -27,8 +28,17 @@ const ProductDetailsCompact = ({ product, onUpdate }: ProductDetailsCompactProps
 				/>
 			</div>
 
+			{/* Row 1.5: Warehouse Stock */}
+			<div>
+				<ProductWarehouseStock
+					productId={product.id}
+					totalStock={product.stock_quantity}
+					unit={product.unit}
+				/>
+			</div>
+
 			{/* Row 2: Pricing + Meta */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 				<ProductPricing
 					price={product.price}
 					currency={product.currency}
@@ -45,7 +55,7 @@ const ProductDetailsCompact = ({ product, onUpdate }: ProductDetailsCompactProps
 			</div>
 
 			{/* Row 3: Related */}
-			<div className="mt-4">
+			<div>
 				<ProductRelated 
 					categoryId={product.category_id}
 					currentProductId={product.id}

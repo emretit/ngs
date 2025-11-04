@@ -12,6 +12,7 @@ import { BulkPaymentDialog } from "@/components/employees/BulkPaymentDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, TrendingUp, FileDown, Building2 } from "lucide-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const Employees = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,17 +79,22 @@ const Employees = () => {
   });
 
   // Fetch departments
+  const { userData } = useCurrentUser();
   const { data: departments = [] } = useQuery({
-    queryKey: ['departments'],
+    queryKey: ['departments', userData?.company_id],
     queryFn: async () => {
+      if (!userData?.company_id) return [];
+      
       const { data, error } = await supabase
         .from('departments')
         .select('id, name')
+        .eq('company_id', userData.company_id)
         .order('name');
       
       if (error) throw error;
       return data;
     },
+    enabled: !!userData?.company_id,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     gcTime: 10 * 60 * 1000, // 10 minutes
   });

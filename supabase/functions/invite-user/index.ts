@@ -57,12 +57,12 @@ serve(async (req) => {
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
     if (existingProfile) {
-      // Existing user: send recovery link
+      // Existing user: send recovery link to set password page
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: 'recovery',
         email,
         options: {
-          redirectTo: `${APP_URL}/invite-setup?email=${encodeURIComponent(email)}`
+          redirectTo: `${APP_URL}/set-password?email=${encodeURIComponent(email)}`
         }
       });
 

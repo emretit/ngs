@@ -1,5 +1,4 @@
 import React from "react";
-import { TableCell } from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -21,7 +20,7 @@ export const OpportunityStatusCell = ({
   onStatusChange 
 }: OpportunityStatusCellProps) => {
   return (
-    <TableCell onClick={(e) => e.stopPropagation()}>
+    <div onClick={(e) => e.stopPropagation()}>
       <Select
         value={status}
         onValueChange={(value) => onStatusChange(opportunityId, value as OpportunityStatus)}
@@ -43,6 +42,6 @@ export const OpportunityStatusCell = ({
           ))}
         </SelectContent>
       </Select>
-    </TableCell>
+    </div>
   );
 };

@@ -1,6 +1,6 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Boxes, Edit2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Archive, Edit2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -55,24 +55,27 @@ const ProductInventory = ({
 
   return (
     <Card className="rounded-xl">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold flex items-center gap-2">
-            <Boxes className="h-5 w-5" />
+      <CardHeader className="pb-2 pt-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
+              <Archive className="h-4 w-4 text-green-600" />
+            </div>
             Stok Bilgileri
-          </h2>
+          </CardTitle>
           <Button
             variant="ghost"
             size="icon"
+            className="h-7 w-7"
             onClick={() => setIsEditing(!isEditing)}
           >
             <Edit2 className="h-4 w-4" />
           </Button>
         </div>
-
-        <div className="space-y-3">
+      </CardHeader>
+      <CardContent className="space-y-3 pt-0">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500">Stok Miktarı</span>
+            <label className="text-xs font-medium text-gray-700">Stok Miktarı</label>
             <div className="flex items-center gap-2">
               {isEditing ? (
                 <Input
@@ -93,7 +96,7 @@ const ProductInventory = ({
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500">Minimum Stok Seviyesi</span>
+            <label className="text-xs font-medium text-gray-700">Minimum Stok Seviyesi</label>
             {isEditing ? (
               <Input
                 type="number"
@@ -111,7 +114,7 @@ const ProductInventory = ({
 
           {(isEditing || showThreshold) && (
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-500">Stok Alarm Eşiği</span>
+              <label className="text-xs font-medium text-gray-700">Stok Alarm Eşiği</label>
               {isEditing ? (
                 <Input
                   type="number"
@@ -131,13 +134,13 @@ const ProductInventory = ({
           {supplier && (
             <>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">Tedarikçi</span>
-                <span className="font-medium">{supplier.name}</span>
+                <label className="text-xs font-medium text-gray-700">Tedarikçi</label>
+                <span className="text-sm font-medium">{supplier.name}</span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">Tedarikçi İletişim</span>
-                <div className="text-right">
+                <label className="text-xs font-medium text-gray-700">Tedarikçi İletişim</label>
+                <div className="text-right text-xs">
                   <div>{supplier.email}</div>
                   <div>{supplier.phone}</div>
                 </div>
@@ -147,7 +150,7 @@ const ProductInventory = ({
 
           {lastPurchaseDate && (
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-500">Son Alım Tarihi</span>
+              <label className="text-xs font-medium text-gray-700">Son Alım Tarihi</label>
               <span>{format(new Date(lastPurchaseDate), 'dd.MM.yyyy')}</span>
             </div>
           )}
@@ -172,7 +175,6 @@ const ProductInventory = ({
               </Button>
             </div>
           )}
-        </div>
       </CardContent>
     </Card>
   );

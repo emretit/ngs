@@ -22,6 +22,12 @@ export function parseProposalData(data: any): Proposal | null {
       if (typeof data.items === 'string') {
         data.items = JSON.parse(data.items) as ProposalItem[];
       }
+      // Transform items: product_name -> name, discount -> discount_rate
+      data.items = data.items.map((item: any) => ({
+        ...item,
+        name: item.name || item.product_name || '', // product_name'den name'e map et
+        discount_rate: item.discount_rate !== undefined ? item.discount_rate : (item.discount || 0), // discount'u discount_rate'e map et
+      }));
     } else {
       data.items = [];
     }

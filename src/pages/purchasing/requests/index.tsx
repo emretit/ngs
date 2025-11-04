@@ -5,6 +5,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import PurchaseRequestsHeader from "@/components/purchasing/requests/PurchaseRequestsHeader";
 import PurchaseRequestsFilterBar from "@/components/purchasing/requests/PurchaseRequestsFilterBar";
 import PurchaseRequestsContent from "@/components/purchasing/requests/PurchaseRequestsContent";
@@ -23,17 +24,22 @@ const PurchaseRequestsList = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Fetch departments data
+  const { userData } = useCurrentUser();
   const { data: departments = [] } = useQuery({
-    queryKey: ['departments'],
+    queryKey: ['departments', userData?.company_id],
     queryFn: async () => {
+      if (!userData?.company_id) return [];
+      
       const { data, error } = await supabase
         .from('departments')
         .select('id, name')
+        .eq('company_id', userData.company_id)
         .order('name');
       
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!userData?.company_id
   });
 
   // Use only infinite scroll hook for both stats and list - debounced search kullanılıyor

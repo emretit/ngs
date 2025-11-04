@@ -18,6 +18,7 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
+  const [warehouseFilter, setWarehouseFilter] = useState("all");
   
   // Debounced search query
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -126,6 +127,8 @@ const Products = () => {
         setCategoryFilter={setCategoryFilter}
         stockFilter={stockFilter}
         setStockFilter={setStockFilter}
+        warehouseFilter={warehouseFilter}
+        setWarehouseFilter={setWarehouseFilter}
         categories={categories}
       />
       

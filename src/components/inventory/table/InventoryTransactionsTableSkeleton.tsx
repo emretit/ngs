@@ -1,0 +1,58 @@
+import React from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const InventoryTransactionsTableSkeleton = () => {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow className="bg-gray-50 border-b">
+          <TableHead className="w-[40px] py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
+            <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+          </TableHead>
+          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🔢 İşlem No</TableHead>
+          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">📦 İşlem Tipi</TableHead>
+          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">📅 Tarih</TableHead>
+          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🏭 Depo</TableHead>
+          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">📊 Ürün Sayısı</TableHead>
+          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🟢 Durum</TableHead>
+          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">⚙️ İşlemler</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Array.from({ length: 5 }).map((_, index) => (
+          <TableRow key={index} className="h-8">
+            <TableCell className="py-2 px-3">
+              <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+            </TableCell>
+            <TableCell className="py-2 px-3">
+              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+            </TableCell>
+            <TableCell className="py-2 px-3">
+              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+            </TableCell>
+            <TableCell className="py-2 px-3">
+              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+            </TableCell>
+            <TableCell className="py-2 px-3">
+              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+            </TableCell>
+            <TableCell className="py-2 px-3">
+              <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+            </TableCell>
+            <TableCell className="py-2 px-3">
+              <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse" />
+            </TableCell>
+            <TableCell className="py-2 px-3 text-right">
+              <div className="flex items-center justify-end gap-0.5">
+                <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
+
+export default InventoryTransactionsTableSkeleton;
+

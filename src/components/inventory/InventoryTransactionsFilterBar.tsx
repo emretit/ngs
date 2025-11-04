@@ -3,6 +3,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Filter, Calendar, Warehouse } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { TransactionType, TransactionStatus } from "@/types/inventory";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface InventoryTransactionsFilterBarProps {
   searchQuery: string;
@@ -17,6 +19,7 @@ interface InventoryTransactionsFilterBarProps {
   setStartDate?: (value: Date | undefined) => void;
   endDate?: Date | undefined;
   setEndDate?: (value: Date | undefined) => void;
+  hideWarehouseFilter?: boolean;
 }
 
 const InventoryTransactionsFilterBar = ({
@@ -31,8 +34,32 @@ const InventoryTransactionsFilterBar = ({
   startDate,
   setStartDate,
   endDate,
-  setEndDate
+  setEndDate,
+  hideWarehouseFilter = false
 }: InventoryTransactionsFilterBarProps) => {
+  // Fetch warehouses
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ["warehouses"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      const { data, error } = await supabase
+        .from("warehouses")
+        .select("id, name, code")
+        .eq("company_id", profile?.company_id)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   return (
     <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
       <div className="relative min-w-[250px] flex-1">
@@ -73,16 +100,22 @@ const InventoryTransactionsFilterBar = ({
         </SelectContent>
       </Select>
 
+      {!hideWarehouseFilter && (
       <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
-        <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[180px]">
           <Warehouse className="mr-2 h-4 w-4" />
           <SelectValue placeholder="Depo" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tüm Depolar</SelectItem>
-          {/* TODO: Warehouse options will be populated from API */}
+            {warehouses.map((warehouse) => (
+              <SelectItem key={warehouse.id} value={warehouse.id}>
+                {warehouse.name}{warehouse.code ? ` (${warehouse.code})` : ''}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
+      )}
       
       {setStartDate && setEndDate && (
         <div className="flex items-center gap-2">

@@ -2,6 +2,7 @@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter, User, Calendar } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 import { TaskStatus } from "@/types/task";
 import { getStatusDisplay } from "../utils/taskDisplayUtils";
 
@@ -27,6 +28,10 @@ interface TasksFilterBarProps {
   selectedStatus: TaskStatus | null;
   setSelectedStatus: (value: TaskStatus | null) => void;
   employees?: TaskFilterEmployee[];
+  startDate?: Date | undefined;
+  setStartDate?: (value: Date | undefined) => void;
+  endDate?: Date | undefined;
+  setEndDate?: (value: Date | undefined) => void;
 }
 
 const TasksFilterBar = ({
@@ -38,7 +43,11 @@ const TasksFilterBar = ({
   setSelectedType,
   selectedStatus,
   setSelectedStatus,
-  employees
+  employees,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate
 }: TasksFilterBarProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
@@ -101,6 +110,23 @@ const TasksFilterBar = ({
           <SelectItem value="general">Genel</SelectItem>
         </SelectContent>
       </Select>
+
+      {setStartDate && setEndDate && (
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <DatePicker
+            date={startDate}
+            onSelect={setStartDate}
+            placeholder="Başlangıç"
+          />
+          <span className="text-muted-foreground text-sm">-</span>
+          <DatePicker
+            date={endDate}
+            onSelect={setEndDate}
+            placeholder="Bitiş"
+          />
+        </div>
+      )}
     </div>
   );
 };

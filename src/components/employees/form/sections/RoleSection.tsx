@@ -89,18 +89,18 @@ export const RoleSection = ({ control }: RoleSectionProps) => {
                     }}
                   />
                 </FormControl>
-              </div>
+          </div>
               <FormMessage />
             </FormItem>
           )}
         />
 
         {/* Roller Dropdown */}
-        <FormField
-          control={control}
-          name="user_roles"
-          render={({ field }) => (
-            <FormItem>
+          <FormField
+            control={control}
+            name="user_roles"
+            render={({ field }) => (
+              <FormItem>
               <FormLabel className="text-xs font-medium text-gray-700">Kullanıcı Rolleri</FormLabel>
               <Select
                 value=""
@@ -119,16 +119,16 @@ export const RoleSection = ({ control }: RoleSectionProps) => {
                 <SelectContent>
                   {roles.map((role) => (
                     <SelectItem 
-                      key={role.id} 
+                      key={role.id}
                       value={role.name}
                       disabled={selectedRoles.includes(role.name)}
                     >
-                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                         <span>{role.name}</span>
-                        {role.name === 'Admin' && (
+                          {role.name === 'Admin' && (
                           <Badge variant="destructive" className="text-xs h-4 px-1">
-                            Yönetici
-                          </Badge>
+                              Yönetici
+                            </Badge>
                         )}
                       </div>
                     </SelectItem>
@@ -172,10 +172,10 @@ export const RoleSection = ({ control }: RoleSectionProps) => {
                   Henüz rol tanımlanmamış. Lütfen önce ayarlardan rol oluşturun.
                 </p>
               )}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
       </CardContent>
     </Card>
   );

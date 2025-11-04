@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Circle, Clock, CheckCircle2, XCircle, AlertTriangle, Wrench, AlertCircle } from "lucide-react";
 import ServiceViewToggle from "./ServiceViewToggle";
 
-type ViewType = "calendar" | "list";
+type ViewType = "calendar" | "list" | "kanban" | "map" | "scheduling";
 
 interface ServicePageHeaderProps {
   activeView: ViewType;

@@ -14,6 +14,8 @@ interface TasksCalendarProps {
   selectedEmployee: string | null;
   selectedType: string | null;
   selectedStatus: TaskStatus | null;
+  startDate?: Date | undefined;
+  endDate?: Date | undefined;
 }
 
 // Setup the localizer for react-big-calendar
@@ -36,7 +38,9 @@ const TasksCalendar = ({
   searchQuery,
   selectedEmployee,
   selectedType,
-  selectedStatus
+  selectedStatus,
+  startDate,
+  endDate
 }: TasksCalendarProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -44,11 +48,11 @@ const TasksCalendar = ({
   const { getClient } = useAuth();
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ["activities", userData?.company_id],
+    queryKey: ["activities", userData?.company_id, startDate, endDate],
     queryFn: async () => {
       if (!userData?.company_id) return [];
       const client = getClient();
-      const { data, error } = await client
+      let query = client
         .from("activities")
         .select(`
           *,
@@ -59,8 +63,22 @@ const TasksCalendar = ({
             avatar_url
           )
         `)
-        .eq("company_id", userData.company_id)
-        .order("created_at", { ascending: false });
+        .eq("company_id", userData.company_id);
+
+      // Tarih filtresi
+      if (startDate) {
+        query = query.gte("created_at", startDate.toISOString());
+      }
+      if (endDate) {
+        // End date için günün sonunu ekle (23:59:59)
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        query = query.lte("created_at", endDateTime.toISOString());
+      }
+
+      query = query.order("created_at", { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching tasks:", error);

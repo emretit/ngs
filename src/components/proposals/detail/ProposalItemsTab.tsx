@@ -61,7 +61,7 @@ export const ProposalItemsTab = ({ proposal }: ProposalItemsTabProps) => {
             <TableBody>
               {proposal.items?.map((item, index) => (
                 <TableRow key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell className="font-medium">{item.name || (item as any).product_name || 'Ürün adı belirtilmemiş'}</TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
                   <TableCell className="text-right">{formatMoney(item.unit_price)}</TableCell>
                   <TableCell className="text-right">%{item.tax_rate || 0}</TableCell>

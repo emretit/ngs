@@ -203,7 +203,7 @@ const ProposalPreviewModal: React.FC<ProposalPreviewModalProps> = ({
                           <td className="py-2 px-3 text-sm">{item.row_number}</td>
                           <td className="py-2 px-3 text-sm">
                             <div>
-                              <div className="font-medium">{item.name || "-"}</div>
+                              <div className="font-medium">{item.name || (item as any).product_name || "-"}</div>
                               {item.description && (
                                 <div className="text-xs text-gray-500 mt-1">{item.description}</div>
                               )}

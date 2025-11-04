@@ -1,6 +1,6 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Package2, Maximize2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Package, Maximize2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -28,45 +28,49 @@ const ProductGeneralInfo = ({ product, onUpdate }: ProductGeneralInfoProps) => {
 
   return (
     <Card className="rounded-xl">
-      <CardContent className="p-4">
-        <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
-          <Package2 className="h-5 w-5" />
+      <CardHeader className="pb-2 pt-3">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
+            <Package className="h-4 w-4 text-blue-600" />
+          </div>
           Genel Bilgiler
-        </h2>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-0">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
-              <label className="text-xs text-gray-500">Ürün Adı</label>
-              <p className="mt-1 text-sm font-medium">{product.name}</p>
+              <label className="text-xs font-medium text-gray-700 mb-1.5 block">Ürün Adı</label>
+              <p className="text-sm font-medium">{product.name}</p>
             </div>
 
             <div>
-              <label className="text-xs text-gray-500">Kategori</label>
-              <p className="mt-1">
+              <label className="text-xs font-medium text-gray-700 mb-1.5 block">Kategori</label>
+              <div className="mt-1">
                 {product.product_categories ? (
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="text-xs">
                     {product.product_categories.name}
                   </Badge>
                 ) : (
-                  "Kategorisiz"
+                  <span className="text-xs text-gray-500">Kategorisiz</span>
                 )}
-              </p>
+              </div>
             </div>
 
             <div>
-              <label className="text-xs text-gray-500">SKU</label>
-              <p className="mt-1 text-sm">{product.sku || "SKU girilmemiş"}</p>
+              <label className="text-xs font-medium text-gray-700 mb-1.5 block">SKU</label>
+              <p className="text-sm">{product.sku || "SKU girilmemiş"}</p>
             </div>
 
             <div>
-              <label className="text-xs text-gray-500">Barkod</label>
-              <p className="mt-1 text-sm">{product.barcode || "Barkod girilmemiş"}</p>
+              <label className="text-xs font-medium text-gray-700 mb-1.5 block">Barkod</label>
+              <p className="text-sm">{product.barcode || "Barkod girilmemiş"}</p>
             </div>
 
             <div>
-              <label className="text-xs text-gray-500">Açıklama</label>
+              <label className="text-xs font-medium text-gray-700 mb-1.5 block">Açıklama</label>
               <div 
-                className="mt-1 prose prose-sm max-w-none"
+                className="mt-1 prose prose-sm max-w-none text-xs"
                 dangerouslySetInnerHTML={{ 
                   __html: product.formatted_description?.html || product.description || "Açıklama bulunmuyor" 
                 }}
@@ -75,6 +79,7 @@ const ProductGeneralInfo = ({ product, onUpdate }: ProductGeneralInfoProps) => {
           </div>
 
           <div>
+            <label className="text-xs font-medium text-gray-700 mb-1.5 block">Ürün Görseli</label>
             <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
               <DialogTrigger asChild>
                 <div className="relative cursor-pointer group">
@@ -83,15 +88,15 @@ const ProductGeneralInfo = ({ product, onUpdate }: ProductGeneralInfoProps) => {
                       <img
                         src={product.image_url}
                         alt={product.name}
-                        className="w-full h-56 object-cover rounded-lg"
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200"
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                         <Maximize2 className="h-6 w-6 text-white" />
                       </div>
                     </>
                   ) : (
-                    <div className="w-full h-56 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400">Görsel Yok</span>
+                    <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                      <span className="text-xs text-gray-400">Görsel Yok</span>
                     </div>
                   )}
                 </div>

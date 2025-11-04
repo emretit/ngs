@@ -68,13 +68,20 @@ const ProductsTableRow = ({
 
       {/* Stok */}
       <TableCell className="py-2 px-3 text-right">
-        <div className="flex items-center justify-end gap-2">
-          <span className="text-xs text-gray-600">{product.stock_quantity}</span>
-          {product.stock_quantity <= 0 ? (
-            <Badge variant="destructive" className="text-xs">Stokta Yok</Badge>
-          ) : product.stock_quantity <= product.min_stock_level ? (
-            <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-800 border-yellow-200">Az Stok</Badge>
-          ) : null}
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-xs font-medium text-gray-900">{product.stock_quantity}</span>
+            <span className="text-xs text-gray-500">{product.unit}</span>
+          </div>
+          <div className="flex items-center justify-end gap-1">
+            {product.stock_quantity <= 0 ? (
+              <Badge variant="destructive" className="text-xs">Stokta Yok</Badge>
+            ) : product.stock_quantity <= product.min_stock_level ? (
+              <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-800 border-yellow-200">Az Stok</Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs bg-green-50 text-green-800 border-green-200">Stokta</Badge>
+            )}
+          </div>
         </div>
       </TableCell>
 

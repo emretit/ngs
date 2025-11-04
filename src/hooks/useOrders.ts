@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -11,9 +11,12 @@ import {
   OrderStats
 } from "@/types/orders";
 import { toast } from "sonner";
+import { useCurrentUser } from "./useCurrentUser";
+import { useInfiniteScroll } from "./useInfiniteScroll";
 
 export const useOrders = () => {
   const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
   const [filters, setFilters] = useState<OrderFilters>({
     status: 'all',
     customer_id: 'all',
@@ -25,6 +28,12 @@ export const useOrders = () => {
 
   // Orders listesini getir
   const fetchOrders = async (): Promise<Order[]> => {
+    // Company_id kontrolü - güvenlik için
+    if (!userData?.company_id) {
+      console.warn('No company_id found for user');
+      return [];
+    }
+
     let query = supabase
       .from("orders")
       .select(`
@@ -33,6 +42,7 @@ export const useOrders = () => {
         employee:employees(id, first_name, last_name, email, department),
         proposal:proposals(id, number, title, status)
       `)
+      .eq("company_id", userData.company_id)
       .order("created_at", { ascending: false });
 
     // Status filtresi
@@ -129,11 +139,23 @@ export const useOrders = () => {
     // Ana sipariş verilerini hazırla
     const { items, ...orderDetails } = orderData;
     
+    // Company_id al
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", userData.user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      toast.error("Şirket bilgisi bulunamadı");
+      throw new Error("Company ID not found");
+    }
+    
     const orderInsertData = {
       ...orderDetails,
       employee_id: orderDetails.employee_id || userData.user.id,
       status: orderDetails.status || 'pending' as OrderStatus,
-      company_id: '64c481ef-2e0d-4fde-aa3c-76b2e83b4c0e', // TODO: Dinamik company_id
+      company_id: profile.company_id,
     };
 
     // Sipariş oluştur
@@ -163,7 +185,7 @@ export const useOrders = () => {
         item_group: item.item_group || 'product',
         stock_status: item.stock_status,
         sort_order: item.sort_order || index + 1,
-        company_id: '64c481ef-2e0d-4fde-aa3c-76b2e83b4c0e', // TODO: Dinamik company_id
+        company_id: profile.company_id,
       }));
 
       const { error: itemsError } = await supabase
@@ -220,6 +242,18 @@ export const useOrders = () => {
         throw deleteError;
       }
 
+      // Company_id al
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!profile?.company_id) {
+        toast.error("Şirket bilgisi bulunamadı");
+        throw new Error("Company ID not found");
+      }
+
       // Yeni items'ları ekle
       const orderItems = items.map((item, index) => ({
         order_id: id,
@@ -234,7 +268,7 @@ export const useOrders = () => {
         item_group: item.item_group || 'product',
         stock_status: item.stock_status,
         sort_order: item.sort_order || index + 1,
-        company_id: '64c481ef-2e0d-4fde-aa3c-76b2e83b4c0e', // TODO: Dinamik company_id
+        company_id: profile.company_id,
       }));
 
       const { error: itemsError } = await supabase
@@ -253,10 +287,16 @@ export const useOrders = () => {
 
   // Sipariş durumu güncelle
   const updateOrderStatus = async ({ id, status }: { id: string, status: OrderStatus }): Promise<Order> => {
+    if (!userData?.company_id) {
+      toast.error("Şirket bilgisi bulunamadı");
+      throw new Error("Company ID not found");
+    }
+
     const { error } = await supabase
       .from("orders")
       .update({ status })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("company_id", userData.company_id);
 
     if (error) {
       toast.error("Sipariş durumu güncellenirken hata oluştu");
@@ -269,10 +309,16 @@ export const useOrders = () => {
 
   // Sipariş sil
   const deleteOrder = async (id: string): Promise<void> => {
+    if (!userData?.company_id) {
+      toast.error("Şirket bilgisi bulunamadı");
+      throw new Error("Company ID not found");
+    }
+
     const { error } = await supabase
       .from("orders")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("company_id", userData.company_id);
 
     if (error) {
       toast.error("Sipariş silinirken hata oluştu");
@@ -284,9 +330,25 @@ export const useOrders = () => {
 
   // Sipariş istatistiklerini getir
   const fetchOrderStats = async (): Promise<OrderStats> => {
+    // Company_id kontrolü - güvenlik için
+    if (!userData?.company_id) {
+      return {
+        total: 0,
+        pending: 0,
+        confirmed: 0,
+        processing: 0,
+        shipped: 0,
+        delivered: 0,
+        completed: 0,
+        cancelled: 0,
+        total_value: 0
+      };
+    }
+
     const { data: orders, error } = await supabase
       .from("orders")
-      .select("status, total_amount");
+      .select("status, total_amount")
+      .eq("company_id", userData.company_id);
 
     if (error) {
       console.error("Order stats error:", error);
@@ -327,13 +389,15 @@ export const useOrders = () => {
 
   // React Query hooks
   const { data: orders, isLoading, error, refetch } = useQuery({
-    queryKey: ['orders', filters],
+    queryKey: ['orders', userData?.company_id, filters],
     queryFn: fetchOrders,
+    enabled: !!userData?.company_id,
   });
 
   const { data: orderStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['orderStats'],
+    queryKey: ['orderStats', userData?.company_id],
     queryFn: fetchOrderStats,
+    enabled: !!userData?.company_id,
   });
 
   const getOrderWithItems = (id: string) => {
@@ -402,5 +466,112 @@ export const useOrders = () => {
     updateOrderMutation,
     updateStatusMutation,
     deleteOrderMutation,
+  };
+};
+
+// Infinite scroll hook for orders
+export const useOrdersInfiniteScroll = (filters?: OrderFilters, pageSize: number = 20) => {
+  const { userData, loading: userLoading, error: userError } = useCurrentUser();
+  
+  const fetchOrders = useCallback(async (page: number, pageSize: number) => {
+    // Kullanıcı verisi henüz yüklenmemişse bekle
+    if (userLoading) {
+      return { data: [], hasNextPage: false, totalCount: 0 };
+    }
+    
+    // Kullanıcının company_id'si yoksa boş sonuç döndür
+    if (!userData?.company_id) {
+      console.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
+      return { data: [], hasNextPage: false, totalCount: 0 };
+    }
+
+    let query = supabase
+      .from("orders")
+      .select(`
+        *,
+        customer:customers(id, name, company, email, mobile_phone, office_phone, address, tax_number, tax_office),
+        employee:employees(id, first_name, last_name, email, department),
+        proposal:proposals(id, number, title, status)
+      `, { count: 'exact' })
+      .eq("company_id", userData.company_id);
+    
+    // Apply filters
+    if (filters?.status && filters.status !== 'all') {
+      query = query.eq("status", filters.status);
+    }
+
+    // Customer filtresi
+    if (filters?.customer_id && filters.customer_id !== 'all') {
+      query = query.eq("customer_id", filters.customer_id);
+    }
+
+    // Arama filtresi
+    if (filters?.search) {
+      query = query.or(`
+        order_number.ilike.%${filters.search}%,
+        title.ilike.%${filters.search}%,
+        customer:customers.name.ilike.%${filters.search}%,
+        customer:customers.company.ilike.%${filters.search}%
+      `);
+    }
+
+    // Tarih aralığı filtresi
+    if (filters?.dateRange?.from) {
+      query = query.gte("created_at", filters.dateRange.from.toISOString());
+    }
+    if (filters?.dateRange?.to) {
+      query = query.lte("created_at", filters.dateRange.to.toISOString());
+    }
+
+    // Apply pagination
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await query
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error("Error fetching orders:", error);
+      throw error;
+    }
+
+    return {
+      data: (data || []) as Order[],
+      totalCount: count || 0,
+      hasNextPage: data ? data.length === pageSize : false,
+    };
+  }, [userData?.company_id, filters?.status, filters?.customer_id, filters?.search, filters?.dateRange?.from, filters?.dateRange?.to, userLoading]);
+
+  // Use infinite scroll hook
+  const {
+    data: orders,
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    error,
+    loadMore,
+    refresh,
+    totalCount,
+  } = useInfiniteScroll(
+    ["orders-infinite", JSON.stringify(filters), userData?.company_id],
+    fetchOrders,
+    {
+      pageSize,
+      enabled: !!userData?.company_id,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+    }
+  );
+
+  return {
+    data: orders,
+    isLoading: isLoading || userLoading,
+    isLoadingMore,
+    hasNextPage,
+    error: error || userError,
+    loadMore,
+    refresh,
+    totalCount,
   };
 };

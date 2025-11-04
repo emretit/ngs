@@ -1,12 +1,24 @@
-import React from "react";
-import InventoryTransactionsTable from "./InventoryTransactionsTable";
+import React, { useEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 import { InventoryTransaction } from "@/types/inventory";
+import InventoryTransactionsTable from "./InventoryTransactionsTable";
+import InventoryTransactionsGrid from "./InventoryTransactionsGrid";
 
 interface InventoryTransactionsContentProps {
   transactions: InventoryTransaction[];
   isLoading: boolean;
+  isLoadingMore?: boolean;
+  hasNextPage?: boolean;
+  loadMore?: () => void;
+  totalCount?: number;
   error: any;
+  activeView: "grid" | "table";
+  sortField: "transaction_number" | "transaction_date" | "transaction_type" | "status";
+  sortDirection: "asc" | "desc";
+  onSortFieldChange: (field: "transaction_number" | "transaction_date" | "transaction_type" | "status") => void;
   onSelectTransaction: (transaction: InventoryTransaction) => void;
+  onTransactionSelect: (transaction: InventoryTransaction) => void;
+  selectedTransactions?: InventoryTransaction[];
   searchQuery?: string;
   typeFilter?: string;
   statusFilter?: string;
@@ -15,12 +27,44 @@ interface InventoryTransactionsContentProps {
 const InventoryTransactionsContent = ({
   transactions,
   isLoading,
+  isLoadingMore = false,
+  hasNextPage = false,
+  loadMore,
+  totalCount,
   error,
+  activeView,
+  sortField,
+  sortDirection,
+  onSortFieldChange,
   onSelectTransaction,
+  onTransactionSelect,
+  selectedTransactions = [],
   searchQuery,
   typeFilter,
   statusFilter
 }: InventoryTransactionsContentProps) => {
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (!loadMore || !hasNextPage || isLoadingMore || isLoading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
+
   if (error) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -30,18 +74,54 @@ const InventoryTransactionsContent = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className="p-6 bg-white rounded-xl relative overflow-hidden">
-        <div className="relative z-10">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="pb-6">
+        {activeView === "grid" ? (
+          <InventoryTransactionsGrid
+            transactions={transactions}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasNextPage={hasNextPage}
+            loadMore={loadMore}
+            onSelectTransaction={onSelectTransaction}
+            onTransactionSelect={onTransactionSelect}
+            selectedTransactions={selectedTransactions}
+          />
+        ) : (
           <InventoryTransactionsTable
             transactions={transactions}
             isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasNextPage={hasNextPage}
+            loadMore={loadMore}
+            totalCount={totalCount || 0}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortFieldChange={onSortFieldChange}
             onSelectTransaction={onSelectTransaction}
-            searchQuery={searchQuery}
-            typeFilter={typeFilter}
-            statusFilter={statusFilter}
+            onTransactionSelect={onTransactionSelect}
+            selectedTransactions={selectedTransactions}
           />
+        )}
+        
+        {/* Infinite scroll trigger */}
+        {!isLoading && hasNextPage && (
+          <div ref={loadMoreRef} className="flex justify-center py-4">
+            {isLoadingMore && (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm text-gray-600">Daha fazla işlem yükleniyor...</span>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Tüm işlemler yüklendi mesajı */}
+        {!hasNextPage && transactions.length > 0 && (
+          <div className="text-center py-4 text-sm text-gray-500">
+            Tüm işlemler yüklendi
         </div>
+        )}
       </div>
     </div>
   );

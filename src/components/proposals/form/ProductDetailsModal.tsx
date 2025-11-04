@@ -103,18 +103,24 @@ const ProductDetailsModal = ({
   }, [selectedCurrency]);
 
   const calculateTotals = () => {
-    const subtotal = quantity * (unitPrice || 0);
-    const discountAmount = (subtotal * (discountRate || 0)) / 100;
+    // Ensure all values are valid numbers
+    const qty = Number(quantity) || 0;
+    const price = Number(unitPrice) || 0;
+    const discount = Number(discountRate) || 0;
+    const vat = Number(vatRate) || 20;
+
+    const subtotal = qty * price;
+    const discountAmount = (subtotal * discount) / 100;
     const netAmount = subtotal - discountAmount;
-    const vatAmount = (netAmount * (vatRate || 20)) / 100;
+    const vatAmount = (netAmount * vat) / 100;
     const total = netAmount + vatAmount;
 
     return {
-      subtotal,
-      discountAmount,
-      netAmount,
-      vatAmount,
-      total
+      subtotal: isNaN(subtotal) ? 0 : subtotal,
+      discountAmount: isNaN(discountAmount) ? 0 : discountAmount,
+      netAmount: isNaN(netAmount) ? 0 : netAmount,
+      vatAmount: isNaN(vatAmount) ? 0 : vatAmount,
+      total: isNaN(total) ? 0 : total
     };
   };
 
@@ -197,7 +203,10 @@ const ProductDetailsModal = ({
                   id="quantity"
                   type="number"
                   value={quantity || 1}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setQuantity(value === "" ? 1 : Number(value) || 1);
+                  }}
                   min="1"
                   className="flex-1 h-7 text-xs"
                   placeholder="Miktar"
@@ -274,7 +283,10 @@ const ProductDetailsModal = ({
                   id="discount"
                   type="number"
                   value={discountRate || 0}
-                  onChange={(e) => setDiscountRate(Number(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setDiscountRate(value === "" ? 0 : Number(value) || 0);
+                  }}
                   step="0.01"
                   max="100"
                   placeholder="0"

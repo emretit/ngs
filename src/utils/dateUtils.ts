@@ -41,3 +41,15 @@ export const isSameDay = (date1: Date, date2: Date): boolean => {
 export const addDaysToDate = (date: Date, amount: number): Date => {
   return addDays(date, amount);
 };
+
+/**
+ * Format time from a date
+ * @param date - Date to format
+ * @param formatStr - Format string (default: 'HH:mm')
+ * @returns Formatted time string
+ */
+export const formatTime = (date: Date | string | null | undefined, formatStr: string = 'HH:mm'): string => {
+  if (!date) return '';
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return format(dateObj, formatStr, { locale: tr });
+};

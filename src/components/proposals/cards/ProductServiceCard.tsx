@@ -99,8 +99,9 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-xs text-gray-600 min-w-[20px]">{item.row_number}.</span>
                     <ProductSelector
-                      value={item.description || ''}
+                      value={item.name || item.description || ''}
                       onChange={(productName) => {
+                        onItemChange(index, 'name', productName);
                         onItemChange(index, 'description', productName);
                       }}
                       onProductSelect={(product) => onProductModalSelect(product, index)}

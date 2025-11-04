@@ -96,7 +96,7 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
         )}>
           <div className="flex items-center space-x-2">
             <div className={cn("w-2 h-2 rounded-full", dotColorClasses[headerColor])}></div>
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            <DialogPrimitive.Title className="text-lg font-semibold text-gray-900">{title}</DialogPrimitive.Title>
           </div>
           {showCloseButton && (
               <DialogPrimitive.Close

@@ -16,10 +16,12 @@ export const capitalizeFirstLetter = (string: string): string => {
  * @returns The formatted currency string
  */
 export const formatCurrency = (amount: number, currency = 'TRY'): string => {
+  // Handle NaN, undefined, null, or invalid numbers
+  const validAmount = isNaN(amount) || !isFinite(amount) ? 0 : amount;
   return new Intl.NumberFormat('tr-TR', { 
     style: 'currency', 
     currency: currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(amount);
+  }).format(validAmount);
 };

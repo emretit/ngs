@@ -426,7 +426,7 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
               <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} />
               <UnifiedDialogActionButton 
                 onClick={form.handleSubmit(onSubmit)}
-                variant="default"
+                variant="primary"
               >
                 Kaydet
               </UnifiedDialogActionButton>

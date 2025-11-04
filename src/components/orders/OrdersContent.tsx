@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 
 interface OrdersContentProps {
   searchQuery: string;
-  selectedStatus: string;
+  selectedStatus: string | OrderStatus | "all";
   selectedCustomer: string;
   onSelectOrder: (order: Order) => void;
   activeView: ViewType;
@@ -38,7 +38,7 @@ const OrdersContent = ({
     totalCount,
   } = useOrdersInfiniteScroll(
     {
-      status: selectedStatus,
+      status: (selectedStatus === "" ? "all" : selectedStatus) as OrderStatus | "all",
       customer_id: selectedCustomer,
       search: searchQuery,
       dateRange: { from: null, to: null },
@@ -108,9 +108,16 @@ const OrdersContent = ({
   };
 
   if (error || kanbanError) {
+    const errorObj = error || kanbanError;
+    const errorMessage = typeof errorObj === 'string' 
+      ? errorObj 
+      : errorObj instanceof Error 
+      ? errorObj.message 
+      : 'Bilinmeyen bir hata oluştu';
+      
     return (
       <div className="text-center p-8 text-red-600">
-        <p>Hata oluştu: {(error || kanbanError)?.message}</p>
+        <p>Hata oluştu: {errorMessage}</p>
         <button 
           onClick={() => window.location.reload()} 
           className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200"

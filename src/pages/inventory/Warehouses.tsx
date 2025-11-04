@@ -189,6 +189,7 @@ const Warehouses = () => {
         <WarehousesContent
           warehouses={warehouses?.data || []}
           isLoading={isLoading}
+          error={error}
           activeView={activeView}
           sortField={sortField}
           sortDirection={sortDirection}

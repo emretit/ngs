@@ -239,48 +239,7 @@ export default function EInvoiceProcess() {
     refetchOnWindowFocus: false,
   });
 
-  useEffect(() => {
-    if (invoiceId) {
-      loadInvoiceDetails().catch((error) => {
-        console.error('❌ Error loading invoice details:', error);
-        toast({
-          title: "Hata",
-          description: error.message || "Fatura detayları yüklenirken bir hata oluştu",
-          variant: "destructive",
-        });
-        // Hata durumunda geri dön
-        navigate('/purchasing/invoices');
-      });
-    }
-  }, [invoiceId, loadInvoiceDetails, navigate, toast]);
-
-  // Tedarikçi eşleştirmesi için ayrı fonksiyon - useCallback ile optimize et
-  const matchSupplier = useCallback(async () => {
-    if (!invoice || !suppliers.length) return;
-    setSupplierMatchStatus('searching');
-    const matchingSupplier = suppliers.find(s => 
-      s.tax_number === invoice.supplier_tax_number
-    );
-    if (matchingSupplier) {
-      setSelectedSupplierId(matchingSupplier.id);
-      setSupplierMatchStatus('found');
-      console.log('✅ Tedarikçi otomatik eşleştirildi:', matchingSupplier.name);
-    } else {
-      setSupplierMatchStatus('not_found');
-      console.log('⚠️ Tedarikçi bulunamadı:', invoice.supplier_tax_number);
-    }
-  }, [invoice, suppliers]);
-
-  // Tedarikçi eşleştirmesi için useEffect
-  useEffect(() => {
-    if (invoice && suppliers.length > 0) {
-      matchSupplier();
-    }
-  }, [invoice, suppliers, matchSupplier]);
-  
-  // Loading state'i hesapla
-  const isLoading = !invoice || isLoadingProducts || isLoadingSuppliers;
-  
+  // Load invoice details - MUST be defined before the useEffect that uses it
   const loadInvoiceDetails = useCallback(async () => {
     try {
       console.log('🔄 Loading invoice details for:', invoiceId);
@@ -519,6 +478,51 @@ export default function EInvoiceProcess() {
       throw error;
     }
   }, [invoiceId, toast]);
+
+  useEffect(() => {
+    if (invoiceId) {
+      loadInvoiceDetails().catch((error) => {
+        console.error('❌ Error loading invoice details:', error);
+        toast({
+          title: "Hata",
+          description: error.message || "Fatura detayları yüklenirken bir hata oluştu",
+          variant: "destructive",
+        });
+        // Hata durumunda geri dön
+        navigate('/purchasing/invoices');
+      });
+    }
+  }, [invoiceId, loadInvoiceDetails, navigate, toast]);
+
+  // Tedarikçi eşleştirmesi için ayrı fonksiyon - useCallback ile optimize et
+  const matchSupplier = useCallback(async () => {
+    if (!invoice || !suppliers.length) return;
+    setSupplierMatchStatus('searching');
+    const matchingSupplier = suppliers.find(s => 
+      s.tax_number === invoice.supplier_tax_number
+    );
+    if (matchingSupplier) {
+      setSelectedSupplierId(matchingSupplier.id);
+      setSupplierMatchStatus('found');
+      console.log('✅ Tedarikçi otomatik eşleştirildi:', matchingSupplier.name);
+    } else {
+      setSupplierMatchStatus('not_found');
+      console.log('⚠️ Tedarikçi bulunamadı:', invoice.supplier_tax_number);
+    }
+  }, [invoice, suppliers]);
+
+  // Tedarikçi eşleştirmesi için useEffect
+  useEffect(() => {
+    if (invoice && suppliers.length > 0) {
+      matchSupplier();
+    }
+  }, [invoice, suppliers, matchSupplier]);
+  
+  // Loading state'i hesapla
+  const isLoading = !invoice || isLoadingProducts || isLoadingSuppliers;
+  
+  // loadInvoiceDetails moved earlier to avoid hoisting issue - it's now defined before the useEffect that uses it
+  
   const handleManualMatch = useCallback((itemIndex: number, productId: string) => {
     setMatchingItems(prev => {
       const updatedMatching = [...prev];

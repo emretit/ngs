@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, getStatusConfig } from "@/utils/cashflowUtils";
 import CheckCreateDialog, { CheckRecord } from "@/components/shared/CheckCreateDialog";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
+import { format } from "date-fns";
 
 interface Check {
   id: string;

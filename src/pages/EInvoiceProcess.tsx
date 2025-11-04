@@ -241,9 +241,18 @@ export default function EInvoiceProcess() {
 
   useEffect(() => {
     if (invoiceId) {
-      loadInvoiceDetails();
+      loadInvoiceDetails().catch((error) => {
+        console.error('❌ Error loading invoice details:', error);
+        toast({
+          title: "Hata",
+          description: error.message || "Fatura detayları yüklenirken bir hata oluştu",
+          variant: "destructive",
+        });
+        // Hata durumunda geri dön
+        navigate('/purchasing/invoices');
+      });
     }
-  }, [invoiceId]);
+  }, [invoiceId, loadInvoiceDetails, navigate, toast]);
 
   // Tedarikçi eşleştirmesi için ayrı fonksiyon - useCallback ile optimize et
   const matchSupplier = useCallback(async () => {
@@ -271,22 +280,157 @@ export default function EInvoiceProcess() {
   
   // Loading state'i hesapla
   const isLoading = !invoice || isLoadingProducts || isLoadingSuppliers;
-  const loadInvoiceDetails = async () => {
+  
+  const loadInvoiceDetails = useCallback(async () => {
     try {
       console.log('🔄 Loading invoice details for:', invoiceId);
-      // First get the invoice from incoming invoices
+      
+      // Şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Kullanıcı bulunamadı");
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        throw new Error("Şirket bilgisi bulunamadı");
+      }
+
+      // Önce veritabanından kontrol et (veriban_incoming_invoices tablosu)
+      const { data: dbInvoice, error: dbError } = await supabase
+        .from('veriban_incoming_invoices')
+        .select('*')
+        .eq('invoice_uuid', invoiceId)
+        .eq('company_id', profile.company_id)
+        .maybeSingle();
+      
+      // Veritabanında fatura bulunduysa
+      if (dbInvoice && !dbError) {
+        console.log('✅ Fatura veritabanından bulundu:', dbInvoice.invoice_number);
+        // Veritabanından bulunan fatura için detayları al
+        const { data: detailsData, error: detailsError } = await supabase.functions.invoke('nilvera-invoice-details', {
+          body: {
+            invoiceId: dbInvoice.invoice_uuid,
+            envelopeUUID: dbInvoice.invoice_uuid
+          }
+        });
+        
+        if (detailsError) throw detailsError;
+        if (!detailsData?.success) {
+          throw new Error(detailsData?.error || 'Fatura detayları alınamadı');
+        }
+        
+        // Veritabanındaki faturayı kullan
+        const invoiceData = {
+          id: dbInvoice.invoice_uuid,
+          invoiceNumber: dbInvoice.invoice_number,
+          supplierName: dbInvoice.customer_title,
+          supplierTaxNumber: dbInvoice.customer_register_number,
+          invoiceDate: dbInvoice.issue_time || new Date().toISOString(),
+          dueDate: null,
+          totalAmount: dbInvoice.payable_amount || 0,
+          taxAmount: dbInvoice.tax_total_amount || 0,
+          currency: dbInvoice.currency_code || 'TRY',
+          envelopeUUID: dbInvoice.invoice_uuid
+        };
+        
+        const items: EInvoiceItem[] = detailsData.invoiceDetails?.items?.map((item: any, index: number) => ({
+          id: `item-${index}`,
+          line_number: index + 1,
+          product_name: item.description || 'Açıklama yok',
+          product_code: item.productCode,
+          quantity: item.quantity || 1,
+          unit: item.unit || 'Adet',
+          unit_price: item.unitPrice || 0,
+          tax_rate: item.taxRate || 18,
+          discount_rate: item.discountRate || 0,
+          line_total: item.totalAmount || 0,
+          tax_amount: item.taxAmount || 0,
+          gtip_code: item.gtipCode,
+          description: item.description
+        })) || [];
+        
+        const supplierDetails = detailsData.invoiceDetails?.supplierInfo || detailsData.invoiceDetails?.companyInfo || {};
+        const invoiceDetails: EInvoiceDetails = {
+          id: invoiceData.id,
+          invoice_number: invoiceData.invoiceNumber,
+          supplier_name: invoiceData.supplierName,
+          supplier_tax_number: invoiceData.supplierTaxNumber,
+          invoice_date: invoiceData.invoiceDate,
+          due_date: invoiceData.dueDate,
+          currency: invoiceData.currency || 'TRY',
+          subtotal: invoiceData.totalAmount - invoiceData.taxAmount,
+          tax_total: invoiceData.taxAmount,
+          total_amount: invoiceData.totalAmount,
+          items,
+          supplier_details: {
+            company_name: supplierDetails.companyName || supplierDetails.name || invoiceData.supplierName,
+            tax_number: supplierDetails.taxNumber || supplierDetails.vkn || invoiceData.supplierTaxNumber,
+            trade_registry_number: supplierDetails.tradeRegistryNumber || supplierDetails.ticaretSicilNo,
+            mersis_number: supplierDetails.mersisNumber || supplierDetails.mersisNo,
+            email: supplierDetails.email || supplierDetails.eMail,
+            phone: supplierDetails.phone || supplierDetails.telefon || supplierDetails.phoneNumber,
+            website: supplierDetails.website || supplierDetails.webSite,
+            fax: supplierDetails.fax || supplierDetails.faks,
+            address: {
+              street: supplierDetails.address?.street || supplierDetails.adres?.sokak || supplierDetails.addressLine,
+              district: supplierDetails.address?.district || supplierDetails.adres?.ilce || supplierDetails.district,
+              city: supplierDetails.address?.city || supplierDetails.adres?.il || supplierDetails.city,
+              postal_code: supplierDetails.address?.postal_code || supplierDetails.adres?.postaKodu || supplierDetails.postalCode,
+              country: supplierDetails.address?.country || supplierDetails.adres?.ulke || supplierDetails.country || 'Türkiye'
+            },
+            bank_info: {
+              bank_name: supplierDetails.bankInfo?.bankName || supplierDetails.banka?.bankaAdi,
+              iban: supplierDetails.bankInfo?.iban || supplierDetails.banka?.iban,
+              account_number: supplierDetails.bankInfo?.accountNumber || supplierDetails.banka?.hesapNo
+            }
+          }
+        };
+        
+        setInvoice(invoiceDetails);
+        setFormData({
+          invoice_date: invoiceDetails.invoice_date.split('T')[0],
+          due_date: invoiceDetails.due_date ? invoiceDetails.due_date.split('T')[0] : '',
+          payment_terms: '30 gün',
+          notes: `E-faturadan aktarılan alış faturası - Orijinal No: ${invoiceDetails.invoice_number}`,
+          project_id: '',
+          expense_category_id: ''
+        });
+        const initialMatching: ProductMatchingItem[] = invoiceDetails.items.map(item => ({
+          invoice_item: item
+        }));
+        setMatchingItems(initialMatching);
+        console.log('✅ Invoice details loaded from database:', invoiceDetails);
+        return;
+      }
+      
+      // Veritabanında bulunamazsa, API'den dinamik tarih aralığı ile ara
+      const now = new Date();
+      const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      
+      console.log('🔍 Searching in API with date range:', sixMonthsAgo.toISOString(), 'to', endDate.toISOString());
+      
       const { data: invoicesData, error: invoicesError } = await supabase.functions.invoke('nilvera-incoming-invoices', {
         body: { 
           filters: {
-            startDate: '2025-08-31T00:00:00.000Z',
-            endDate: '2025-09-29T23:59:59.999Z'
+            startDate: sixMonthsAgo.toISOString(),
+            endDate: endDate.toISOString()
           }
         }
       });
       if (invoicesError) throw invoicesError;
-      const invoiceData = invoicesData?.invoices?.find((inv: any) => inv.id === invoiceId);
+      const invoiceData = invoicesData?.invoices?.find((inv: any) => inv.id === invoiceId || inv.invoice_uuid === invoiceId);
       if (!invoiceData) {
-        throw new Error('Fatura bulunamadı');
+        toast({
+          title: "Fatura Bulunamadı",
+          description: `Fatura ID: ${invoiceId} ile eşleşen fatura bulunamadı. Lütfen faturanın son 6 ay içinde olduğundan emin olun.`,
+          variant: "destructive",
+        });
+        throw new Error(`Fatura bulunamadı (ID: ${invoiceId}). Son 6 ay içindeki faturalarda arama yapıldı.`);
       }
       // Then get detailed invoice items
       const { data: detailsData, error: detailsError } = await supabase.functions.invoke('nilvera-invoice-details', {
@@ -370,9 +514,11 @@ export default function EInvoiceProcess() {
       setMatchingItems(initialMatching);
       console.log('✅ Invoice details loaded:', invoiceDetails);
     } catch (error: any) {
-      throw new Error(error.message || 'Fatura detayları yüklenirken hata oluştu');
+      console.error('❌ Error in loadInvoiceDetails:', error);
+      // Hata zaten toast ile gösterildi, sadece tekrar fırlat
+      throw error;
     }
-  };
+  }, [invoiceId, toast]);
   const handleManualMatch = useCallback((itemIndex: number, productId: string) => {
     setMatchingItems(prev => {
       const updatedMatching = [...prev];

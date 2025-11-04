@@ -25,9 +25,24 @@ export const useBankAccounts = () => {
   return useQuery({
     queryKey: ["bankAccounts"],
     queryFn: async () => {
+      // Şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Kullanıcı bulunamadı");
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        throw new Error("Şirket bilgisi bulunamadı");
+      }
+
       const { data, error } = await supabase
         .from("bank_accounts")
         .select("*")
+        .eq('company_id', profile.company_id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

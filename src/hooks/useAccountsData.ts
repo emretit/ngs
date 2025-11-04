@@ -93,9 +93,12 @@ export function useBankAccounts() {
   return useQuery({
     queryKey: ['bank-accounts'],
     queryFn: async () => {
+      const companyId = await fetchCompanyId();
+
       const { data, error } = await supabase
         .from('bank_accounts')
         .select('*')
+        .eq('company_id', companyId)
         .eq('is_active', true)
         .order('bank_name', { ascending: true });
 
@@ -113,9 +116,12 @@ export function useCreditCards() {
   return useQuery({
     queryKey: ['credit-cards'],
     queryFn: async () => {
+      const companyId = await fetchCompanyId();
+
       const { data, error } = await supabase
         .from('credit_cards')
         .select('*')
+        .eq('company_id', companyId)
         .eq('status', 'active')
         .order('card_name', { ascending: true });
 
@@ -186,12 +192,14 @@ export function useAllAccounts() {
         supabase
           .from('bank_accounts')
           .select('*')
+          .eq('company_id', companyId)
           .eq('is_active', true)
           .order('bank_name', { ascending: true }),
         
         supabase
           .from('credit_cards')
           .select('*')
+          .eq('company_id', companyId)
           .eq('status', 'active')
           .order('card_name', { ascending: true }),
         

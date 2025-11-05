@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { List, CalendarDays, LayoutGrid, Map, GanttChart } from "lucide-react";
 
-type ViewType = "calendar" | "list" | "kanban" | "map" | "scheduling";
+type ViewType = "list" | "kanban" | "map" | "scheduling";
 
 interface ServiceViewToggleProps {
   activeView: ViewType;
@@ -12,16 +12,6 @@ interface ServiceViewToggleProps {
 const ServiceViewToggle = ({ activeView, setActiveView }: ServiceViewToggleProps) => {
   return (
     <div className="flex rounded-md overflow-hidden border shadow-sm">
-      <Button
-        type="button"
-        variant={activeView === "calendar" ? "default" : "ghost"}
-        size="sm"
-        className="rounded-none"
-        onClick={() => setActiveView("calendar")}
-      >
-        <CalendarDays className="h-4 w-4 mr-2" />
-        Takvim
-      </Button>
       <Button
         type="button"
         variant={activeView === "kanban" ? "default" : "ghost"}

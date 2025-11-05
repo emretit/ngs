@@ -26,11 +26,7 @@ const SystemSettingsPage = ({ isCollapsed, setIsCollapsed }: SystemSettingsPageP
           </div>
         </div>
         {/* Content */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200/60 overflow-hidden">
-          <div className="p-6">
-            <SystemSettings />
-          </div>
-        </div>
+        <SystemSettings />
       </div>
   );
 };

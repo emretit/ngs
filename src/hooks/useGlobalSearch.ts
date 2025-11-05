@@ -8,7 +8,7 @@ export interface SearchResult {
   id: string;
   title: string;
   subtitle?: string;
-  category: "Müşteri" | "Çalışan" | "Teklif" | "Ürün" | "Görev" | "Sipariş" | "Fırsat" | "Tedarikçi";
+  category: "Müşteri" | "Çalışan" | "Teklif" | "Ürün" | "Görev" | "Sipariş" | "Fırsat" | "Tedarikçi" | "Satış Faturası" | "Satın Alma Faturası" | "Teslimat" | "Satın Alma Siparişi" | "Araç";
   url: string;
 }
 
@@ -21,6 +21,11 @@ interface SearchData {
   orders: any[];
   opportunities: any[];
   suppliers: any[];
+  salesInvoices: any[];
+  purchaseInvoices: any[];
+  deliveries: any[];
+  purchaseOrders: any[];
+  vehicles: any[];
 }
 
 export const useGlobalSearch = (query: string) => {
@@ -44,10 +49,15 @@ export const useGlobalSearch = (query: string) => {
             orders: [],
             opportunities: [],
             suppliers: [],
+            salesInvoices: [],
+            purchaseInvoices: [],
+            deliveries: [],
+            purchaseOrders: [],
+            vehicles: [],
           };
         }
 
-        // Core business entities - En çok kullanılan 8 kategori
+        // Core business entities - En çok kullanılan kategoriler
         const [
           customersResult, 
           employeesResult, 
@@ -57,15 +67,25 @@ export const useGlobalSearch = (query: string) => {
           ordersResult,
           opportunitiesResult,
           suppliersResult,
+          salesInvoicesResult,
+          purchaseInvoicesResult,
+          deliveriesResult,
+          purchaseOrdersResult,
+          vehiclesResult,
         ] = await Promise.all([
           supabase.from("customers").select("id, name, email, office_phone, company").eq("company_id", companyId).limit(100),
           supabase.from("employees").select("id, first_name, last_name, email, phone, position").eq("company_id", companyId).limit(100),
-          supabase.from("proposals").select("id, title, customer_id").eq("company_id", companyId).limit(100),
-          supabase.from("products").select("id, name, sku, description").eq("company_id", companyId).limit(100),
-          supabase.from("activities").select("id, title, description, type, status").eq("company_id", companyId).limit(100),
-          supabase.from("orders").select("id, order_number, title, status").eq("company_id", companyId).limit(100),
-          supabase.from("opportunities").select("id, title, status, value").eq("company_id", companyId).limit(100),
+          supabase.from("proposals").select("id, title, number, customer_id, customer:customer_id(name)").eq("company_id", companyId).limit(100),
+          supabase.from("products").select("id, name, sku, barcode, description").eq("company_id", companyId).limit(100),
+          supabase.from("activities").select("id, title, description, type, status, assignee_id, employee:assignee_id(first_name, last_name)").eq("company_id", companyId).limit(100),
+          supabase.from("orders").select("id, order_number, title, status, customer_id, customer:customer_id(name)").eq("company_id", companyId).limit(100),
+          supabase.from("opportunities").select("id, title, status, value, customer_id, customer:customer_id(name)").eq("company_id", companyId).limit(100),
           supabase.from("suppliers").select("id, name, email, company, office_phone").eq("company_id", companyId).limit(100),
+          supabase.from("sales_invoices").select("id, fatura_no, customer_id, toplam_tutar, customer:customer_id(name)").eq("company_id", companyId).limit(100),
+          supabase.from("purchase_invoices").select("id, invoice_number, supplier_id, total_amount, supplier:supplier_id(name)").eq("company_id", companyId).limit(100),
+          supabase.from("deliveries").select("id, delivery_number, customer_id, status, customer:customer_id(name)").eq("company_id", companyId).limit(100),
+          supabase.from("purchase_orders").select("id, order_number, supplier_id, status, supplier:supplier_id(name)").eq("company_id", companyId).limit(100),
+          supabase.from("vehicles").select("id, plate_number, brand, model").eq("company_id", companyId).limit(100),
         ]);
 
         // Check for errors in each query (log but don't fail)
@@ -78,6 +98,11 @@ export const useGlobalSearch = (query: string) => {
           { name: 'orders', result: ordersResult },
           { name: 'opportunities', result: opportunitiesResult },
           { name: 'suppliers', result: suppliersResult },
+          { name: 'salesInvoices', result: salesInvoicesResult },
+          { name: 'purchaseInvoices', result: purchaseInvoicesResult },
+          { name: 'deliveries', result: deliveriesResult },
+          { name: 'purchaseOrders', result: purchaseOrdersResult },
+          { name: 'vehicles', result: vehiclesResult },
         ];
 
         queries.forEach(({ name, result }) => {
@@ -95,6 +120,11 @@ export const useGlobalSearch = (query: string) => {
           orders: ordersResult.data || [],
           opportunities: opportunitiesResult.data || [],
           suppliers: suppliersResult.data || [],
+          salesInvoices: salesInvoicesResult.data || [],
+          purchaseInvoices: purchaseInvoicesResult.data || [],
+          deliveries: deliveriesResult.data || [],
+          purchaseOrders: purchaseOrdersResult.data || [],
+          vehicles: vehiclesResult.data || [],
         } as SearchData;
       } catch (error) {
         console.error('Error in global search query:', error);
@@ -108,6 +138,11 @@ export const useGlobalSearch = (query: string) => {
           orders: [],
           opportunities: [],
           suppliers: [],
+          salesInvoices: [],
+          purchaseInvoices: [],
+          deliveries: [],
+          purchaseOrders: [],
+          vehicles: [],
         };
       }
     },
@@ -161,7 +196,7 @@ export const useGlobalSearch = (query: string) => {
     // Search proposals
     if (searchData.proposals.length > 0) {
       const proposalFuse = new Fuse(searchData.proposals, {
-        keys: ["title"],
+        keys: ["title", "number", "customer.name"],
         threshold: 0.3,
       });
       const proposalResults = proposalFuse.search(query).slice(0, 5);
@@ -169,7 +204,7 @@ export const useGlobalSearch = (query: string) => {
         ...proposalResults.map((result) => ({
           id: result.item.id,
           title: result.item.title,
-          subtitle: "Teklif",
+          subtitle: result.item.customer?.name || result.item.number || "Teklif",
           category: "Teklif" as const,
           url: `/proposals/${result.item.id}`,
         }))
@@ -179,7 +214,7 @@ export const useGlobalSearch = (query: string) => {
     // Search products
     if (searchData.products.length > 0) {
       const productFuse = new Fuse(searchData.products, {
-        keys: ["name", "sku", "description"],
+        keys: ["name", "sku", "barcode", "description"],
         threshold: 0.3,
       });
       const productResults = productFuse.search(query).slice(0, 5);
@@ -187,7 +222,7 @@ export const useGlobalSearch = (query: string) => {
         ...productResults.map((result) => ({
           id: result.item.id,
           title: result.item.name,
-          subtitle: result.item.sku,
+          subtitle: result.item.sku || result.item.barcode || "Ürün",
           category: "Ürün" as const,
           url: `/product-details/${result.item.id}`,
         }))
@@ -197,7 +232,7 @@ export const useGlobalSearch = (query: string) => {
     // Search activities/tasks
     if (searchData.activities.length > 0) {
       const activityFuse = new Fuse(searchData.activities, {
-        keys: ["title", "description"],
+        keys: ["title", "description", "employee.first_name", "employee.last_name"],
         threshold: 0.3,
       });
       const activityResults = activityFuse.search(query).slice(0, 5);
@@ -205,7 +240,7 @@ export const useGlobalSearch = (query: string) => {
         ...activityResults.map((result) => ({
           id: result.item.id,
           title: result.item.title,
-          subtitle: result.item.type || result.item.status,
+          subtitle: result.item.employee ? `${result.item.employee.first_name} ${result.item.employee.last_name}` : (result.item.type || result.item.status),
           category: "Görev" as const,
           url: `/activities?id=${result.item.id}`,
         }))
@@ -215,7 +250,7 @@ export const useGlobalSearch = (query: string) => {
     // Search orders
     if (searchData.orders.length > 0) {
       const orderFuse = new Fuse(searchData.orders, {
-        keys: ["order_number", "title"],
+        keys: ["order_number", "title", "customer.name"],
         threshold: 0.3,
       });
       const orderResults = orderFuse.search(query).slice(0, 5);
@@ -223,7 +258,7 @@ export const useGlobalSearch = (query: string) => {
         ...orderResults.map((result) => ({
           id: result.item.id,
           title: result.item.title || result.item.order_number,
-          subtitle: `Sipariş #${result.item.order_number || result.item.id.substring(0, 8)}`,
+          subtitle: result.item.customer?.name || `Sipariş #${result.item.order_number || result.item.id.substring(0, 8)}`,
           category: "Sipariş" as const,
           url: `/orders/purchase/edit/${result.item.id}`,
         }))
@@ -233,7 +268,7 @@ export const useGlobalSearch = (query: string) => {
     // Search opportunities
     if (searchData.opportunities.length > 0) {
       const opportunityFuse = new Fuse(searchData.opportunities, {
-        keys: ["title"],
+        keys: ["title", "customer.name"],
         threshold: 0.3,
       });
       const opportunityResults = opportunityFuse.search(query).slice(0, 5);
@@ -241,7 +276,7 @@ export const useGlobalSearch = (query: string) => {
         ...opportunityResults.map((result) => ({
           id: result.item.id,
           title: result.item.title,
-          subtitle: result.item.status ? `Durum: ${result.item.status}` : "Fırsat",
+          subtitle: result.item.customer?.name || (result.item.status ? `Durum: ${result.item.status}` : "Fırsat"),
           category: "Fırsat" as const,
           url: `/opportunities?opportunityId=${result.item.id}`,
         }))
@@ -262,6 +297,96 @@ export const useGlobalSearch = (query: string) => {
           subtitle: result.item.company || result.item.email,
           category: "Tedarikçi" as const,
           url: `/suppliers/${result.item.id}`,
+        }))
+      );
+    }
+
+    // Search sales invoices
+    if (searchData.salesInvoices.length > 0) {
+      const salesInvoiceFuse = new Fuse(searchData.salesInvoices, {
+        keys: ["fatura_no", "customer.name"],
+        threshold: 0.3,
+      });
+      const salesInvoiceResults = salesInvoiceFuse.search(query).slice(0, 5);
+      allResults.push(
+        ...salesInvoiceResults.map((result) => ({
+          id: result.item.id,
+          title: result.item.fatura_no || `Fatura #${result.item.id.substring(0, 8)}`,
+          subtitle: result.item.customer?.name || (result.item.toplam_tutar ? `${result.item.toplam_tutar} TRY` : "Satış Faturası"),
+          category: "Satış Faturası" as const,
+          url: `/sales-invoices/${result.item.id}`,
+        }))
+      );
+    }
+
+    // Search purchase invoices
+    if (searchData.purchaseInvoices.length > 0) {
+      const purchaseInvoiceFuse = new Fuse(searchData.purchaseInvoices, {
+        keys: ["invoice_number", "supplier.name"],
+        threshold: 0.3,
+      });
+      const purchaseInvoiceResults = purchaseInvoiceFuse.search(query).slice(0, 5);
+      allResults.push(
+        ...purchaseInvoiceResults.map((result) => ({
+          id: result.item.id,
+          title: result.item.invoice_number || `Fatura #${result.item.id.substring(0, 8)}`,
+          subtitle: result.item.supplier?.name || (result.item.total_amount ? `${result.item.total_amount} TRY` : "Satın Alma Faturası"),
+          category: "Satın Alma Faturası" as const,
+          url: `/purchase-invoices`,
+        }))
+      );
+    }
+
+    // Search deliveries
+    if (searchData.deliveries.length > 0) {
+      const deliveryFuse = new Fuse(searchData.deliveries, {
+        keys: ["delivery_number", "customer.name"],
+        threshold: 0.3,
+      });
+      const deliveryResults = deliveryFuse.search(query).slice(0, 5);
+      allResults.push(
+        ...deliveryResults.map((result) => ({
+          id: result.item.id,
+          title: result.item.delivery_number || `Teslimat #${result.item.id.substring(0, 8)}`,
+          subtitle: result.item.customer?.name || result.item.status || "Teslimat",
+          category: "Teslimat" as const,
+          url: `/deliveries/${result.item.id}`,
+        }))
+      );
+    }
+
+    // Search purchase orders
+    if (searchData.purchaseOrders.length > 0) {
+      const purchaseOrderFuse = new Fuse(searchData.purchaseOrders, {
+        keys: ["order_number", "supplier.name"],
+        threshold: 0.3,
+      });
+      const purchaseOrderResults = purchaseOrderFuse.search(query).slice(0, 5);
+      allResults.push(
+        ...purchaseOrderResults.map((result) => ({
+          id: result.item.id,
+          title: result.item.order_number || `Sipariş #${result.item.id.substring(0, 8)}`,
+          subtitle: result.item.supplier?.name || result.item.status || "Satın Alma Siparişi",
+          category: "Satın Alma Siparişi" as const,
+          url: `/purchase-orders/${result.item.id}`,
+        }))
+      );
+    }
+
+    // Search vehicles
+    if (searchData.vehicles.length > 0) {
+      const vehicleFuse = new Fuse(searchData.vehicles, {
+        keys: ["plate_number", "brand", "model"],
+        threshold: 0.3,
+      });
+      const vehicleResults = vehicleFuse.search(query).slice(0, 5);
+      allResults.push(
+        ...vehicleResults.map((result) => ({
+          id: result.item.id,
+          title: result.item.plate_number || `${result.item.brand} ${result.item.model}`,
+          subtitle: result.item.brand && result.item.model ? `${result.item.brand} ${result.item.model}` : "Araç",
+          category: "Araç" as const,
+          url: `/vehicles/${result.item.id}`,
         }))
       );
     }

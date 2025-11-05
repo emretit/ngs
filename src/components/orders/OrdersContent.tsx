@@ -3,11 +3,18 @@ import { useNavigate } from "react-router-dom";
 import OrdersTable from "./OrdersTable";
 import OrdersKanbanBoard from "./kanban/OrdersKanbanBoard";
 import { ViewType } from "./header/OrdersViewToggle";
-import { useOrders, useOrdersInfiniteScroll } from "@/hooks/useOrders";
+import { useOrders } from "@/hooks/useOrders";
 import { Order, OrderStatus } from "@/types/orders";
 import { Loader2 } from "lucide-react";
 
 interface OrdersContentProps {
+  orders: Order[];
+  isLoading: boolean;
+  isLoadingMore?: boolean;
+  hasNextPage?: boolean;
+  loadMore?: () => void;
+  totalCount?: number;
+  error?: any;
   searchQuery: string;
   selectedStatus: string | OrderStatus | "all";
   selectedCustomer: string;
@@ -16,6 +23,13 @@ interface OrdersContentProps {
 }
 
 const OrdersContent = ({
+  orders,
+  isLoading,
+  isLoadingMore = false,
+  hasNextPage = false,
+  loadMore,
+  totalCount,
+  error,
   searchQuery,
   selectedStatus,
   selectedCustomer,
@@ -24,32 +38,9 @@ const OrdersContent = ({
 }: OrdersContentProps) => {
   const navigate = useNavigate();
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const pageSize = 20;
-  
-  // For table view, use infinite scroll
-  const {
-    data: orders,
-    isLoading,
-    isLoadingMore,
-    hasNextPage,
-    error,
-    loadMore,
-    refresh,
-    totalCount,
-  } = useOrdersInfiniteScroll(
-    {
-      status: (selectedStatus === "" ? "all" : selectedStatus) as OrderStatus | "all",
-      customer_id: selectedCustomer,
-      search: searchQuery,
-      dateRange: { from: null, to: null },
-      page: 1,
-      pageSize,
-    },
-    pageSize
-  );
 
   // For kanban view, use the original hook
-  const { orders: kanbanOrders, isLoading: kanbanLoading, error: kanbanError, updateStatusMutation } = useOrders();
+  const { orders: kanbanOrders, isLoading: kanbanLoading, error: kanbanError, updateStatusMutation, refetch: refetchKanban } = useOrders();
 
   // Intersection Observer for infinite scroll (only for table view)
   useEffect(() => {
@@ -70,11 +61,6 @@ const OrdersContent = ({
 
     return () => observer.disconnect();
   }, [loadMore, hasNextPage, isLoadingMore, isLoading, activeView]);
-
-  // Refresh when filters change
-  useEffect(() => {
-    refresh();
-  }, [searchQuery, selectedStatus, selectedCustomer]);
 
   const handleSelectOrder = (order: Order) => {
     if (onSelectOrder) {
@@ -107,7 +93,7 @@ const OrdersContent = ({
     console.log("Print order:", order);
   };
 
-  if (error || kanbanError) {
+  if ((error || kanbanError) && activeView === "kanban") {
     const errorObj = error || kanbanError;
     const errorMessage = typeof errorObj === 'string' 
       ? errorObj 
@@ -131,7 +117,10 @@ const OrdersContent = ({
   const handleUpdateOrderStatus = async (id: string, status: OrderStatus) => {
     try {
       await updateStatusMutation.mutateAsync({ id, status });
-      refresh(); // Refresh after status update
+      // Mutation already invalidates queries, but we can manually refetch kanban if needed
+      if (activeView === "kanban" && refetchKanban) {
+        refetchKanban();
+      }
     } catch (error) {
       console.error("Sipariş durumu güncellenirken hata:", error);
       throw error;
@@ -147,7 +136,7 @@ const OrdersContent = ({
               <div className="px-4">
                 <OrdersTable
                   orders={orders}
-                  isLoading={isLoading}
+                  isLoading={false}
                   onSelectOrder={onSelectOrder}
                   searchQuery={searchQuery}
                   selectedStatus={selectedStatus}

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import {
   Activity,
   FileText,
@@ -25,25 +26,25 @@ interface ActivityLog {
 
 const RecentActivitiesTimeline = () => {
   const navigate = useNavigate();
+  const { userData, loading: userLoading } = useCurrentUser();
 
   const { data: activities, isLoading } = useQuery({
-    queryKey: ["dashboard-recent-activities"],
+    queryKey: ["dashboard-recent-activities", userData?.employee_id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const companyId = user?.user_metadata?.company_id;
-
-      if (!companyId) return [];
+      if (!userData?.company_id || !userData?.employee_id) return [];
 
       const { data, error } = await supabase
         .from("activities")
         .select("id, title, type, created_at")
-        .eq("company_id", companyId)
+        .eq("company_id", userData.company_id)
+        .eq("assignee_id", userData.employee_id)
         .order("created_at", { ascending: false })
-        .limit(8);
+        .limit(5);
 
       if (error) throw error;
       return data as ActivityLog[];
     },
+    enabled: !!userData?.company_id && !!userData?.employee_id && !userLoading,
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -113,7 +114,7 @@ const RecentActivitiesTimeline = () => {
         </Button>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isLoading || userLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="animate-pulse">

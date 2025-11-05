@@ -20,6 +20,23 @@ export type Company = {
   updated_by: string | null;
   tax_office: string | null;
   website: string | null;
+  // Adres detayları
+  city: string | null;
+  district: string | null;
+  country: string | null;
+  postal_code: string | null;
+  // Ticari bilgiler
+  trade_registry_number: string | null;
+  mersis_number: string | null;
+  // E-Fatura
+  einvoice_alias_name: string | null;
+  // Banka bilgileri
+  bank_name: string | null;
+  iban: string | null;
+  account_number: string | null;
+  // Diğer
+  sector: string | null;
+  establishment_date: string | null;
 };
 
 export const useCompanies = () => {

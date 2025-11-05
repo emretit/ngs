@@ -3,7 +3,6 @@ import { Order, OrderStatus } from "@/types/orders";
 import { useState } from "react";
 import { OrdersTableHeader } from "./table/OrdersTableHeader";
 import { OrdersTableRow } from "./table/OrdersTableRow";
-import OrdersTableSkeleton from "./table/OrdersTableSkeleton";
 import OrdersTableEmpty from "./table/OrdersTableEmpty";
 
 interface Column {
@@ -93,10 +92,6 @@ const OrdersTable = ({
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
     return 0;
   });
-
-  if (isLoading && (!orders || orders.length === 0)) {
-    return <OrdersTableSkeleton />;
-  }
 
   return (
     <div className="overflow-x-auto">

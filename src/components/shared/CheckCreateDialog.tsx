@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface Bank { id: string; name: string; short_name?: string | null }
 
@@ -24,6 +25,7 @@ export interface CheckRecord {
   payee?: string;
   status?: string;
   notes?: string | null;
+  check_type?: "incoming" | "outgoing";
 }
 
 interface CheckCreateDialogProps {
@@ -38,6 +40,23 @@ interface CheckCreateDialogProps {
 
 export default function CheckCreateDialog({ open, onOpenChange, editingCheck, setEditingCheck, onSaved, defaultCheckType = "incoming", defaultStatus }: CheckCreateDialogProps) {
   const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
+  const { data: companyData } = useQuery({
+    queryKey: ["company", userData?.company_id],
+    queryFn: async () => {
+      if (!userData?.company_id) return null;
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, name")
+        .eq("id", userData.company_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userData?.company_id,
+    staleTime: 5 * 60 * 1000,
+  });
+  const companyName = companyData?.name || "";
 
   const { data: banks = [] } = useQuery({
     queryKey: ["banks", { active: true }],
@@ -72,10 +91,13 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
     },
   });
 
-  // Determine check type from editingCheck if exists (incoming if payee is NGS İLETİŞİM, otherwise outgoing)
+  // Determine check type: prefer stored field, else fallback to default
   const determineCheckType = (): "incoming" | "outgoing" => {
     if (editingCheck) {
-      return (editingCheck.payee === "NGS İLETİŞİM" || editingCheck.payee === "NGS İLETİŞİM A.Ş.") ? "incoming" : "outgoing";
+      if (editingCheck.check_type === "incoming" || editingCheck.check_type === "outgoing") {
+        return editingCheck.check_type;
+      }
+      return defaultCheckType;
     }
     return defaultCheckType;
   };
@@ -142,10 +164,11 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
         due_date: formData.get("due_date") as string,
         amount: parseFloat((formData.get("amount") as string) || "0"),
         bank: formData.get("bank") as string,
-        issuer_name: checkType === "outgoing" ? "NGS İLETİŞİM" : (formData.get("issuer_name") as string || ""),
-        payee: checkType === "incoming" ? "NGS İLETİŞİM" : (formData.get("payee") as string || ""),
+        issuer_name: checkType === "outgoing" ? (companyName || "") : (formData.get("issuer_name") as string || ""),
+        payee: checkType === "incoming" ? (companyName || "") : (formData.get("payee") as string || ""),
         status: formData.get("status") as string,
         notes: (formData.get("notes") as string) || null,
+        check_type: checkType,
       };
 
       // Ciro edildi durumunda
@@ -408,7 +431,7 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
                     <Input 
                       id="payee" 
                       name="payee" 
-                      value="NGS İLETİŞİM" 
+                      value={companyName} 
                       disabled
                       className="bg-gray-50 h-9"
                     />
@@ -423,7 +446,7 @@ export default function CheckCreateDialog({ open, onOpenChange, editingCheck, se
                     <Input 
                       id="issuer_name" 
                       name="issuer_name" 
-                      value="NGS İLETİŞİM" 
+                      value={companyName} 
                       disabled
                       className="bg-gray-50 h-9"
                     />

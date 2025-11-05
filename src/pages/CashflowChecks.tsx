@@ -27,6 +27,7 @@ interface Check {
   status: string;
   notes?: string;
   created_at: string;
+  check_type?: 'incoming' | 'outgoing';
 }
 
 interface Bank {
@@ -83,17 +84,9 @@ const CashflowChecks = () => {
     },
   });
 
-  // Gelen çekler
-  const allIncomingChecks = checks.filter(check => 
-    (check.payee === 'NGS İLETİŞİM' || check.payee === 'NGS İLETİŞİM A.Ş.') &&
-    !['ciro_edildi'].includes(check.status)
-  );
-
-  // Giden çekler
-  const allOutgoingChecks = checks.filter(check => 
-    (check.issuer_name === 'NGS İLETİŞİM' || check.issuer_name === 'NGS İLETİŞİM A.Ş.') ||
-    check.status === 'ciro_edildi'
-  );
+  // Gelen/Giden çekler (check_type alanına göre)
+  const allIncomingChecks = checks.filter(check => check.check_type === 'incoming');
+  const allOutgoingChecks = checks.filter(check => check.check_type === 'outgoing');
 
   // Filtrelenmiş gelen çekler
   const incomingChecks = useMemo(() => {

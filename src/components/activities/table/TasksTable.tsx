@@ -5,7 +5,6 @@ import { Task, TaskStatus } from "@/types/task";
 import TasksTableHeader from "./TasksTableHeader";
 import TasksTableRow from "./TasksTableRow";
 import TasksTableEmpty from "./TasksTableEmpty";
-import TasksTableLoading from "./TasksTableLoading";
 import { filterTasks } from "./utils/filterTasks";
 import { useTaskOperations } from "./useTaskOperations";
 import { useSortedTasks } from "./useSortedTasks";
@@ -54,10 +53,6 @@ export const TasksTable = ({
       setSortDirection("asc");
     }
   };
-
-  if (isLoading) {
-    return <TasksTableLoading />;
-  }
 
   return (
     <Table>

@@ -95,7 +95,7 @@ const OpportunitiesContent = ({
         {/* Tüm fırsatlar yüklendi mesajı */}
         {!hasNextPage && opportunities.length > 0 && (
           <div className="text-center py-4 text-sm text-gray-500">
-            Tüm fırsatlar yüklendi
+            Tüm fırsatlar yüklendi ({totalCount || opportunities.length} fırsat)
           </div>
         )}
       </div>

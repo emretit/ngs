@@ -13,6 +13,7 @@ import { ViewType } from "@/components/activities/header/TasksViewToggle";
 import TasksKanban from "@/components/activities/TasksKanban";
 import TasksCalendar from "@/components/activities/calendar/TasksCalendar";
 import MyDayView from "@/components/activities/myday/MyDayView";
+import { useActivitiesInfiniteScroll } from "@/hooks/useActivitiesInfiniteScroll";
 interface ActivitiesPageProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
@@ -51,6 +52,29 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
     startDate,
     endDate
   });
+
+  // Table view için infinite scroll hook
+  const {
+    data: tasks,
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    error,
+    loadMore,
+    refresh,
+    totalCount,
+  } = useActivitiesInfiniteScroll(
+    {
+      searchQuery,
+      selectedEmployee: selectedAssignee,
+      selectedType,
+      selectedStatus: selectedStatus || undefined,
+      startDate,
+      endDate,
+    },
+    20
+  );
+
   const handleAddTask = () => {
     setIsNewActivityDialogOpen(true);
   };
@@ -90,14 +114,34 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
           setEndDate={setEndDate}
         />
         {activeView === "table" && (
-          <TasksContent 
-            searchQuery={searchQuery}
-            selectedEmployee={selectedAssignee}
-            selectedType={selectedType}
-            selectedStatus={selectedStatus}
-            startDate={startDate}
-            endDate={endDate}
-          />
+          isLoading ? (
+            <div className="flex items-center justify-center h-[400px]">
+              <div className="text-center space-y-4">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p className="text-muted-foreground">Aktiviteler yükleniyor...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="h-96 flex items-center justify-center">
+              <div className="text-red-500">Aktiviteler yüklenirken bir hata oluştu</div>
+            </div>
+          ) : (
+            <TasksContent 
+              tasks={tasks}
+              isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
+              hasNextPage={hasNextPage}
+              loadMore={loadMore}
+              totalCount={totalCount}
+              error={error}
+              searchQuery={searchQuery}
+              selectedEmployee={selectedAssignee}
+              selectedType={selectedType}
+              selectedStatus={selectedStatus}
+              startDate={startDate}
+              endDate={endDate}
+            />
+          )
         )}
         {activeView === "kanban" && (
           <TasksKanban

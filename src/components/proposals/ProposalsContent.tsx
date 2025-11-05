@@ -97,7 +97,7 @@ const ProposalsContent = ({
         {/* Tüm teklifler yüklendi mesajı */}
         {!hasNextPage && proposals.length > 0 && (
           <div className="text-center py-4 text-sm text-gray-500">
-            Tüm teklifler yüklendi
+            Tüm teklifler yüklendi ({totalCount || proposals.length} teklif)
           </div>
         )}
       </div>

@@ -224,6 +224,15 @@ const GlobalSearchBar = () => {
     return acc;
   }, {} as Record<string, typeof results>);
 
+  // Track selected category for filtering
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const categories = Object.keys(groupedResults);
+  
+  // Filter results based on selected category
+  const filteredResults = selectedCategory === "all" 
+    ? results 
+    : groupedResults[selectedCategory] || [];
+
   return (
     <div 
       className="w-full mx-auto px-4 sm:px-0" 
@@ -457,14 +466,61 @@ const GlobalSearchBar = () => {
                 <p className="text-sm text-muted-foreground">Farklı anahtar kelimeler deneyin</p>
               </div>
             ) : (
-              <div className="overflow-y-auto max-h-[min(500px,70vh)]">
-                {Object.entries(groupedResults).map(([category, categoryResults]) => (
-                  <div key={category} className="mb-2 last:mb-0">
-                    <div className="px-5 py-3 text-xs font-bold text-primary uppercase tracking-wider bg-gradient-to-r from-primary/10 via-primary/5 to-background sticky top-0 z-10 border-b border-border/50 backdrop-blur-sm">
-                      {category}
+              <div className="flex h-[500px]">
+                {/* Left Column - Categories */}
+                <div className="w-64 border-r border-border/50 bg-muted/20">
+                  <div className="px-4 py-3 border-b border-border/50">
+                    <h3 className="font-bold text-sm text-foreground">Kateogriler</h3>
+                  </div>
+                  <ScrollArea className="h-[calc(500px-49px)]">
+                    <div className="p-2 space-y-1">
+                      <button
+                        onClick={() => setSelectedCategory("all")}
+                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                          selectedCategory === "all"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>Tümü</span>
+                          <Badge variant="secondary" className="ml-2 text-xs">
+                            {results.length}
+                          </Badge>
+                        </div>
+                      </button>
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => setSelectedCategory(category)}
+                          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                            selectedCategory === category
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{category}</span>
+                            <Badge variant="secondary" className="ml-2 text-xs">
+                              {groupedResults[category].length}
+                            </Badge>
+                          </div>
+                        </button>
+                      ))}
                     </div>
-                    <div className="py-1">
-                      {categoryResults.map((result) => {
+                  </ScrollArea>
+                </div>
+
+                {/* Right Column - Results */}
+                <div className="flex-1 bg-background">
+                  <div className="px-4 py-3 border-b border-border/50">
+                    <h3 className="font-bold text-sm text-foreground">
+                      {selectedCategory === "all" ? "Tüm Sonuçlar" : selectedCategory}
+                    </h3>
+                  </div>
+                  <ScrollArea className="h-[calc(500px-49px)]">
+                    <div className="p-2 space-y-1">
+                      {filteredResults.map((result) => {
                         const globalIndex = results.indexOf(result);
                         const isSelected = selectedIndex === globalIndex;
                         return (
@@ -474,10 +530,10 @@ const GlobalSearchBar = () => {
                             onMouseEnter={() => setSelectedIndex(globalIndex)}
                             role="option"
                             aria-selected={isSelected}
-                            className={`w-full text-left px-5 py-4 transition-all duration-200 focus:outline-none border-l-4 group ${
+                            className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none group ${
                               isSelected 
-                                ? "bg-primary/10 border-l-primary shadow-sm" 
-                                : "border-l-transparent hover:bg-muted/50 hover:border-l-primary/30"
+                                ? "bg-primary/10 shadow-sm" 
+                                : "hover:bg-muted/50"
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -492,12 +548,17 @@ const GlobalSearchBar = () => {
                                     {result.subtitle}
                                   </div>
                                 )}
+                                <div className="mt-1">
+                                  <Badge variant="outline" className="text-xs">
+                                    {result.category}
+                                  </Badge>
+                                </div>
                               </div>
                               <div className={`ml-3 opacity-0 group-hover:opacity-100 transition-opacity ${
                                 isSelected ? "opacity-100" : ""
                               }`}>
-                                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-                                  <span className="text-primary text-xs">→</span>
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                  <span className="text-primary text-sm">→</span>
                                 </div>
                               </div>
                             </div>
@@ -505,8 +566,8 @@ const GlobalSearchBar = () => {
                         );
                       })}
                     </div>
-                  </div>
-                ))}
+                  </ScrollArea>
+                </div>
               </div>
             )}
           </div>

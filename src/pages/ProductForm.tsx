@@ -51,12 +51,6 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
             <Button
               type="submit"
               form="product-form"
-              onClick={() => {
-                console.group("[ProductForm] Save button click");
-                console.log("Button clicked. Route id:", id);
-                console.log("Submitting form with id=product-form via native submit");
-                console.groupEnd();
-              }}
               className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
             >
               <Save className="h-4 w-4" />

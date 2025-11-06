@@ -13,12 +13,8 @@ export const useProductFormActions = (
   const navigate = useNavigate();
 
   const onSubmit = async (values: ProductFormSchema, addAnother = false) => {
-    console.group("[useProductFormActions] onSubmit");
-    console.log("Mode:", isEditing ? "update" : "create", "productId:", productId);
-    console.log("All form values:", values);
-    console.log("Form values company_id:", values.company_id);
-      setIsSubmitting(true);
-      try {
+    setIsSubmitting(true);
+    try {
         // Prepare data by ensuring null values for empty strings in UUID fields
         const preparedData = {
           ...values,
@@ -30,10 +26,6 @@ export const useProductFormActions = (
             company_id: values.company_id || "5a9c24d2-876e-4eb6-aea5-19328bc38a3a"
         };
         
-        console.group("[useProductFormActions] Prepared data");
-        console.log(preparedData);
-        console.log("company_id:", preparedData.company_id);
-        console.groupEnd();
       
       if (isEditing && productId) {
         const updateData = {
@@ -49,16 +41,13 @@ export const useProductFormActions = (
           updated_at: new Date().toISOString()
         };
 
-        console.group("[useProductFormActions] Updating existing product");
-        console.log(updateData);
-        console.groupEnd();
         const { error } = await supabase
           .from("products")
           .update(updateData)
           .eq("id", productId);
 
         if (error) {
-          console.error("[useProductFormActions] Supabase update error:", error);
+          console.error("Supabase update error:", error);
           let errorMessage = "Ürün güncellenirken bir hata oluştu";
           
           // Provide more specific error message based on the error code
@@ -131,7 +120,6 @@ export const useProductFormActions = (
           throw error;
         }
 
-        console.log("[useProductFormActions] Product created successfully:", data);
         showSuccess("Ürün başarıyla oluşturuldu", { duration: 900 });
         
         if (addAnother) {
@@ -143,12 +131,11 @@ export const useProductFormActions = (
       }
       return { resetForm: false };
     } catch (error) {
-      console.error("[useProductFormActions] onSubmit error:", error);
+      console.error("Submit error:", error);
       showError("Ürün kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.");
       return { resetForm: false };
     } finally {
       setIsSubmitting(false);
-      console.groupEnd();
     }
   };
 

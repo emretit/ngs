@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Plus, Circle, Clock, CheckCircle2, XCircle, AlertTriangle, Wrench, AlertCircle } from "lucide-react";
 import ServiceViewToggle from "./ServiceViewToggle";
 
-type ViewType = "calendar" | "list" | "kanban" | "map" | "scheduling";
+type ViewType = "list" | "kanban" | "map" | "scheduling";
 
 interface ServicePageHeaderProps {
   activeView: ViewType;
-  setActiveView: (view: ViewType) => void;
+  setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   onCreateRequest: () => void;
   serviceRequests?: { [key: string]: any[] };
 }

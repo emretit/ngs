@@ -27,44 +27,29 @@ const ProductFormWrapper = () => {
     return () => subscription.unsubscribe();
   }, [form]);
 
-  const handleSubmit = async (values: any, addAnother = false) => {
-    console.group("[ProductFormWrapper] Form submit");
-    console.log("isEditing:", isEditing, "productId:", productId);
-    console.log("Incoming values:", values);
+  const handleSubmit = async (values: any, addAnother = false): Promise<{ resetForm: boolean }> => {
     try {
       // Validate form before submission
       const isValid = await form.trigger(undefined, { shouldFocus: true });
       if (!isValid) {
-        const errors = form.formState.errors as Record<string, any>;
-        const errorEntries = Object.entries(errors).map(([key, value]) => ({ field: key, message: value?.message }));
         showError("Lütfen formdaki hataları düzeltin");
-        console.group("[ProductFormWrapper] Validation errors");
-        console.table(errorEntries);
-        console.log("Raw errors:", errors);
-        console.groupEnd();
         return { resetForm: false };
       }
       
       // Ensure currency is properly set before submission
       if (!values.currency || values.currency.trim() === "") {
-        values.currency = "TRY"; // Default to TRY if no currency is specified
+        values.currency = "TRY";
       }
       
-      console.log("Submitting to actions. addAnother:", addAnother);
       const result = await onSubmit(values, addAnother);
-      console.log("Action result:", result);
       if (result.resetForm) {
-        console.log("Resetting form after successful submission");
         form.reset();
       }
       return result;
     } catch (error) {
-      console.error("[ProductFormWrapper] Submit handler error:", error);
+      console.error("Submit error:", error);
       showError("Form işlenirken beklenmeyen bir hata oluştu");
       return { resetForm: false };
-    }
-    finally {
-      console.groupEnd();
     }
   };
 

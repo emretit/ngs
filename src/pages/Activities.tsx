@@ -133,7 +133,7 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
               hasNextPage={hasNextPage}
               loadMore={loadMore}
               totalCount={totalCount}
-              error={error}
+              error={typeof error === 'string' ? new Error(error) : error}
               searchQuery={searchQuery}
               selectedEmployee={selectedAssignee}
               selectedType={selectedType}

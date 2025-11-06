@@ -43,6 +43,18 @@ export const productSchema = z.object({
   purchase_price: z.coerce.number().min(0, "Alış fiyatı 0'dan küçük olamaz").nullable().optional(),
   price_includes_vat: z.boolean().optional().default(false),
   purchase_price_includes_vat: z.boolean().optional().default(false),
+  // Ek bilgiler - yeni kolonlar
+  max_stock_level: z.coerce.number().min(0, "Maksimum stok seviyesi 0'dan küçük olamaz").nullable().optional(),
+  weight: z.coerce.number().min(0, "Ağırlık 0'dan küçük olamaz").nullable().optional(),
+  dimensions: z.string().nullable().optional().transform(val => val || null),
+  warranty_period: z.coerce.number().min(0, "Garanti süresi 0'dan küçük olamaz").nullable().optional(),
+  tags: z.string().nullable().optional().transform(val => {
+    if (!val || val.trim() === "") return null;
+    // Virgülle ayrılmış tag'leri array'e çevir
+    return val.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0);
+  }),
+  attachments: z.any().optional().default([]), // JSONB için any kullanıyoruz
+  vat_included: z.boolean().nullable().optional(),
 });
 
 export type ProductFormSchema = z.infer<typeof productSchema>;

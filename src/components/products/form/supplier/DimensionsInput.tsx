@@ -4,32 +4,36 @@ import {
   FormField, 
   FormItem, 
   FormLabel, 
-  FormMessage 
+  FormMessage,
+  FormDescription
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { ProductFormSchema } from "../ProductFormSchema";
 
-interface BarcodeInputProps {
+interface DimensionsInputProps {
   form: UseFormReturn<ProductFormSchema>;
 }
 
-const BarcodeInput = ({ form }: BarcodeInputProps) => {
+const DimensionsInput = ({ form }: DimensionsInputProps) => {
   return (
     <FormField
       control={form.control}
-      name="barcode"
+      name="dimensions"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">Barkod</FormLabel>
+          <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">Boyutlar</FormLabel>
           <FormControl>
             <Input 
-              placeholder="Barkod giriniz" 
+              placeholder="Boyut giriniz"
               className="h-7 text-xs"
-              {...field} 
-              value={field.value || ''}
+              {...field}
+              value={field.value ?? ''}
             />
           </FormControl>
+          <FormDescription className="text-xs text-gray-500">
+            Ürünün boyutları (isteğe bağlı)
+          </FormDescription>
           <FormMessage className="text-xs" />
         </FormItem>
       )}
@@ -37,4 +41,5 @@ const BarcodeInput = ({ form }: BarcodeInputProps) => {
   );
 };
 
-export default BarcodeInput;
+export default DimensionsInput;
+

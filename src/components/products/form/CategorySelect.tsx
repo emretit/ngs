@@ -154,7 +154,7 @@ const CategorySelect = ({ form }: CategorySelectProps) => {
               value={field.value || ""}
             >
               <FormControl>
-                <SelectTrigger className="h-9 text-sm">
+                <SelectTrigger className="h-7 text-xs">
                   <SelectValue placeholder="Kategori seçiniz" />
                 </SelectTrigger>
               </FormControl>

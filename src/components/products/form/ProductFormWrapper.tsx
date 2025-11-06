@@ -28,19 +28,21 @@ const ProductFormWrapper = () => {
   }, [form]);
 
   const handleSubmit = async (values: any, addAnother = false) => {
-    console.log("Form submission handler called with values:", values);
+    console.group("[ProductFormWrapper] Form submit");
+    console.log("isEditing:", isEditing, "productId:", productId);
+    console.log("Incoming values:", values);
     try {
       // Validate form before submission
-      const isValid = await form.trigger();
+      const isValid = await form.trigger(undefined, { shouldFocus: true });
       if (!isValid) {
-        const errorKeys = Object.keys(form.formState.errors);
-        if (errorKeys.length > 0) {
-          showError("Lütfen formdaki hataları düzeltin");
-          // More detailed error display in console
-          const errorMessages = errorKeys.map(key => `${key}: ${form.formState.errors[key]?.message}`);
-          console.error("Form validation errors:", errorMessages);
-          return { resetForm: false };
-        }
+        const errors = form.formState.errors as Record<string, any>;
+        const errorEntries = Object.entries(errors).map(([key, value]) => ({ field: key, message: value?.message }));
+        showError("Lütfen formdaki hataları düzeltin");
+        console.group("[ProductFormWrapper] Validation errors");
+        console.table(errorEntries);
+        console.log("Raw errors:", errors);
+        console.groupEnd();
+        return { resetForm: false };
       }
       
       // Ensure currency is properly set before submission
@@ -48,16 +50,21 @@ const ProductFormWrapper = () => {
         values.currency = "TRY"; // Default to TRY if no currency is specified
       }
       
+      console.log("Submitting to actions. addAnother:", addAnother);
       const result = await onSubmit(values, addAnother);
+      console.log("Action result:", result);
       if (result.resetForm) {
         console.log("Resetting form after successful submission");
         form.reset();
       }
       return result;
     } catch (error) {
-      console.error("Error in form submission handler:", error);
+      console.error("[ProductFormWrapper] Submit handler error:", error);
       showError("Form işlenirken beklenmeyen bir hata oluştu");
       return { resetForm: false };
+    }
+    finally {
+      console.groupEnd();
     }
   };
 
@@ -65,7 +72,7 @@ const ProductFormWrapper = () => {
   return (
     <div className="w-full">
       <Form {...form}>
-        <form id="product-form" onSubmit={form.handleSubmit((values) => handleSubmit(values, false))}>
+        <form id="product-form" noValidate onSubmit={form.handleSubmit((values) => handleSubmit(values, false))}>
           <ProductCompactForm 
             form={form} 
             onSubmit={handleSubmit}

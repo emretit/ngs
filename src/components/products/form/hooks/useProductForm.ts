@@ -36,6 +36,14 @@ export const useProductForm = () => {
       category_id: "",
       supplier_id: "",
       company_id: "5a9c24d2-876e-4eb6-aea5-19328bc38a3a",
+      // Ek bilgiler - yeni kolonlar
+      max_stock_level: null,
+      weight: null,
+      dimensions: null,
+      warranty_period: null,
+      tags: null,
+      attachments: [],
+      vat_included: null,
     },
   });
 
@@ -68,6 +76,11 @@ export const useProductForm = () => {
         if (error) throw error;
 
         if (data) {
+          // Tags array'i string'e çevir (virgülle ayrılmış)
+          const tagsString = Array.isArray(data.tags) && data.tags.length > 0
+            ? data.tags.join(", ")
+            : null;
+
           form.reset({
             ...data,
             description: data.description || "",
@@ -78,6 +91,14 @@ export const useProductForm = () => {
             supplier_id: data.supplier_id || "",
             discount_rate: data.discount_rate || 0,
             stock_threshold: data.stock_threshold || data.min_stock_level, // Default to min_stock_level if not set
+            // Ek bilgiler - yeni kolonlar
+            max_stock_level: data.max_stock_level || null,
+            weight: data.weight || null,
+            dimensions: data.dimensions || null,
+            warranty_period: data.warranty_period || null,
+            tags: tagsString,
+            attachments: data.attachments || [],
+            vat_included: data.vat_included ?? null,
           });
         }
       } catch (error) {

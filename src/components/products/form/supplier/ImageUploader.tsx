@@ -10,9 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface ImageUploaderProps {
   form: UseFormReturn<ProductFormSchema>;
+  compact?: boolean;
 }
 
-const ImageUploader = ({ form }: ImageUploaderProps) => {
+const ImageUploader = ({ form, compact = false }: ImageUploaderProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -109,7 +110,7 @@ const ImageUploader = ({ form }: ImageUploaderProps) => {
         <FormItem>
           <FormLabel>Ürün Görseli</FormLabel>
           <Card 
-            className={`relative h-64 flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition-colors ${
+            className={`relative ${compact ? "h-40 p-3" : "h-64 p-6"} flex flex-col items-center justify-center border-2 border-dashed rounded-lg transition-colors ${
               dragActive ? "border-primary bg-primary/5" : "border-border"
             }`}
             onDragEnter={handleDrag}
@@ -122,7 +123,7 @@ const ImageUploader = ({ form }: ImageUploaderProps) => {
                 <img
                   src={field.value}
                   alt="Ürün görseli"
-                  className="w-full h-full object-contain rounded-md"
+                  className={`w-full h-full object-contain rounded-md`}
                 />
                 <button
                   type="button"
@@ -146,11 +147,11 @@ const ImageUploader = ({ form }: ImageUploaderProps) => {
               </div>
             ) : (
               <>
-                <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                <p className="text-sm text-center text-muted-foreground mb-2">
+                <Upload className={`${compact ? "h-7 w-7" : "h-10 w-10"} text-muted-foreground mb-2`} />
+                <p className={`text-center text-muted-foreground mb-2 ${compact ? "text-xs" : "text-sm"}`}>
                   Resmi buraya sürükleyip bırakın veya dosya seçin
                 </p>
-                <label className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 cursor-pointer">
+                <label className={`inline-flex items-center justify-center rounded-md bg-primary ${compact ? "h-8 px-3 text-xs" : "h-9 px-4 text-sm"} font-medium text-primary-foreground hover:bg-primary/90 cursor-pointer`}>
                   Dosya Seç
                   <Input
                     type="file"

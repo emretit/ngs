@@ -31,6 +31,11 @@ import BarcodeInput from "./supplier/BarcodeInput";
 import ProductStatusSwitch from "./supplier/ProductStatusSwitch";
 import ImageUploader from "./supplier/ImageUploader";
 import CategorySelect from "./CategorySelect";
+import MaxStockLevelInput from "./supplier/MaxStockLevelInput";
+import WeightInput from "./supplier/WeightInput";
+import DimensionsInput from "./supplier/DimensionsInput";
+import WarrantyPeriodInput from "./supplier/WarrantyPeriodInput";
+import TagsInput from "./supplier/TagsInput";
 
 interface ProductCompactFormProps {
   form: UseFormReturn<ProductFormSchema>;
@@ -182,6 +187,9 @@ const ProductCompactForm = ({
               )}
             />
 
+          {/* Etiketler - Temel Bilgiler'e taşındı */}
+          <TagsInput form={form} />
+
             
           </CardContent>
         </Card>
@@ -304,6 +312,11 @@ const ProductCompactForm = ({
               />
             </div>
 
+            {/* Max Stock Level */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <MaxStockLevelInput form={form} />
+            </div>
+
             {/* Stock Status Display */}
             <div className="mt-4 p-3 bg-gray-50 rounded-lg">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Stok Durumu</h4>
@@ -336,15 +349,15 @@ const ProductCompactForm = ({
               Fiyatlandırma ve Vergi
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 pt-0">
+          <CardContent className="space-y-3 pt-0">
             {/* Currency and Tax Rate */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <CurrencySelect form={form} />
               <TaxRateSelect form={form} />
             </div>
 
             {/* Price Inputs - compact two-column */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <PriceInput 
                 form={form} 
                 name="price" 
@@ -383,13 +396,24 @@ const ProductCompactForm = ({
               Ek Bilgiler
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 pt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <CardContent className="space-y-4 pt-0">
+            {/* Row 1: Image (left) + Physical Attributes (right) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <ImageUploader form={form} compact />
+              <div className="space-y-3">
+                <h4 className="text-xs font-medium text-gray-700">Fiziksel Özellikler</h4>
+                <div className="space-y-3">
+                  <WeightInput form={form} />
+                  <DimensionsInput form={form} />
+                  <WarrantyPeriodInput form={form} />
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Supplier + Barcode */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <SupplierSelect form={form} />
               <BarcodeInput form={form} />
-              <div className="md:col-span-2">
-                <ImageUploader form={form} />
-              </div>
             </div>
           </CardContent>
         </Card>

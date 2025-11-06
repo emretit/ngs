@@ -13,9 +13,10 @@ export const useProductFormActions = (
   const navigate = useNavigate();
 
   const onSubmit = async (values: ProductFormSchema, addAnother = false) => {
-    console.log("Product submission started:", { values, isEditing, productId });
-      console.log("Form values company_id:", values.company_id);
-      console.log("All form values:", values);
+    console.group("[useProductFormActions] onSubmit");
+    console.log("Mode:", isEditing ? "update" : "create", "productId:", productId);
+    console.log("All form values:", values);
+    console.log("Form values company_id:", values.company_id);
       setIsSubmitting(true);
       try {
         // Prepare data by ensuring null values for empty strings in UUID fields
@@ -29,23 +30,35 @@ export const useProductFormActions = (
             company_id: values.company_id || "5a9c24d2-876e-4eb6-aea5-19328bc38a3a"
         };
         
-        console.log("Prepared data for submission:", preparedData);
-        console.log("Prepared data company_id:", preparedData.company_id);
+        console.group("[useProductFormActions] Prepared data");
+        console.log(preparedData);
+        console.log("company_id:", preparedData.company_id);
+        console.groupEnd();
       
       if (isEditing && productId) {
         const updateData = {
           ...preparedData,
+          // Ek bilgiler - yeni kolonlar
+          max_stock_level: preparedData.max_stock_level || null,
+          weight: preparedData.weight || null,
+          dimensions: preparedData.dimensions || null,
+          warranty_period: preparedData.warranty_period || null,
+          tags: preparedData.tags || null,
+          attachments: preparedData.attachments || [],
+          vat_included: preparedData.vat_included ?? null,
           updated_at: new Date().toISOString()
         };
 
-        console.log("Updating existing product:", updateData);
+        console.group("[useProductFormActions] Updating existing product");
+        console.log(updateData);
+        console.groupEnd();
         const { error } = await supabase
           .from("products")
           .update(updateData)
           .eq("id", productId);
 
         if (error) {
-          console.error("Error updating product:", error);
+          console.error("[useProductFormActions] Supabase update error:", error);
           let errorMessage = "Ürün güncellenirken bir hata oluştu";
           
           // Provide more specific error message based on the error code
@@ -61,8 +74,8 @@ export const useProductFormActions = (
           throw error;
         }
 
-        showSuccess("Ürün başarıyla güncellendi", { duration: 1000 });
-        navigate(`/product-details/${productId}`);
+        showSuccess("Ürün başarıyla güncellendi", { duration: 900 });
+        navigate(`/products`);
       } else {
         // Create a new product with explicit fields that match the database schema
         const { data, error } = await supabase
@@ -88,6 +101,14 @@ export const useProductFormActions = (
             category_id: preparedData.category_id,
             supplier_id: preparedData.supplier_id,
             company_id: preparedData.company_id,
+            // Ek bilgiler - yeni kolonlar
+            max_stock_level: preparedData.max_stock_level || null,
+            weight: preparedData.weight || null,
+            dimensions: preparedData.dimensions || null,
+            warranty_period: preparedData.warranty_period || null,
+            tags: preparedData.tags || null,
+            attachments: preparedData.attachments || [],
+            vat_included: preparedData.vat_included ?? null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -110,23 +131,24 @@ export const useProductFormActions = (
           throw error;
         }
 
-        console.log("Product created successfully:", data);
-        showSuccess("Ürün başarıyla oluşturuldu", { duration: 1000 });
+        console.log("[useProductFormActions] Product created successfully:", data);
+        showSuccess("Ürün başarıyla oluşturuldu", { duration: 900 });
         
         if (addAnother) {
           // We'll handle form reset in the component
           return { resetForm: true };
-        } else if (data && data[0]) {
-          navigate(`/product-details/${data[0].id}`);
+        } else {
+          navigate(`/products`);
         }
       }
       return { resetForm: false };
     } catch (error) {
-      console.error("Error saving product:", error);
+      console.error("[useProductFormActions] onSubmit error:", error);
       showError("Ürün kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.");
       return { resetForm: false };
     } finally {
       setIsSubmitting(false);
+      console.groupEnd();
     }
   };
 

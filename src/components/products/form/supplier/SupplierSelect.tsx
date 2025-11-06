@@ -37,7 +37,7 @@ const SupplierSelect = ({ form }: SupplierSelectProps) => {
             value={field.value || "none"}
           >
             <FormControl>
-              <SelectTrigger className="h-9 text-sm">
+              <SelectTrigger className="h-7 text-xs">
                 <SelectValue placeholder="Tedarikçi seçiniz" />
               </SelectTrigger>
             </FormControl>

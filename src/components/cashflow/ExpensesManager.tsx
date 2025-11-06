@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, Edit, Trash2, Wallet, FileText, Search, Filter, User, Tag } from "lucide-react";
+import { CalendarIcon, Edit, Trash2, Wallet, FileText, Search, Filter, User, Tag } from "lucide-react";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import CategorySelector from "@/components/cashflow/CategorySelector";
 import { useToast } from "@/components/ui/use-toast";
@@ -53,12 +52,18 @@ const EXPENSE_CATEGORIES = [
   "Seyahat Masrafları"
 ];
 
-const ExpensesManager = () => {
-  const navigate = useNavigate();
+interface ExpensesManagerProps {
+  triggerAddDialog?: number;
+  startDate: Date;
+  endDate: Date;
+  onStartDateChange: (date: Date) => void;
+  onEndDateChange: (date: Date) => void;
+  onTotalAmountChange?: (amount: number) => void;
+}
+
+const ExpensesManager = ({ triggerAddDialog, startDate, endDate, onStartDateChange, onEndDateChange, onTotalAmountChange }: ExpensesManagerProps) => {
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [startDate, setStartDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  const [endDate, setEndDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0));
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCategoryOption, setSelectedCategoryOption] = useState("");
@@ -226,6 +231,13 @@ const ExpensesManager = () => {
     fetchPaymentAccounts();
     fetchExpenses();
   }, [startDate, endDate]);
+
+  // Dışarıdan dialog açılması için effect
+  useEffect(() => {
+    if (triggerAddDialog !== undefined && triggerAddDialog > 0) {
+      setIsAddDialogOpen(true);
+    }
+  }, [triggerAddDialog]);
 
   const handleAddExpense = async () => {
     if (!selectedCategory || !amount || !date) {
@@ -563,6 +575,13 @@ const ExpensesManager = () => {
 
   const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
+  // Toplam tutarı parent component'e gönder
+  useEffect(() => {
+    if (onTotalAmountChange) {
+      onTotalAmountChange(totalAmount);
+    }
+  }, [totalAmount, onTotalAmountChange]);
+
   // Hesap adını bulmak için fonksiyon
   const getAccountName = (accountType: string, accountId: string) => {
     if (!accountType || !accountId) return '-';
@@ -587,36 +606,6 @@ const ExpensesManager = () => {
 
   return (
     <div className="space-y-4">
-      {/* Enhanced Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
-            <div className="text-sm text-green-700 font-medium">
-              {format(startDate, 'dd MMM', { locale: tr })} - {format(endDate, 'dd MMM yyyy', { locale: tr })}
-            </div>
-            <div className="w-px h-4 bg-green-300"></div>
-            <div className="text-lg font-bold text-green-800">
-              ₺{totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/cashflow/categories')}
-            className="border-gray-300 hover:bg-gray-50"
-          >
-            <Tag className="mr-2 h-4 w-4" />
-            Gelir-Masraf Kategorileri
-          </Button>
-          <Button className="bg-red-600 hover:bg-red-700" onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Yeni Masraf
-          </Button>
-          
-        </div>
-      </div>
 
       {/* Filters - Teklifler sayfası gibi tek satırda */}
       <div className="flex flex-col sm:flex-row gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
@@ -681,14 +670,14 @@ const ExpensesManager = () => {
           <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           <EnhancedDatePicker
             date={startDate}
-            onSelect={(newDate) => newDate && setStartDate(newDate)}
+            onSelect={(newDate) => newDate && onStartDateChange(newDate)}
             placeholder="Başlangıç"
             className="w-32 text-xs"
           />
           <span className="text-muted-foreground text-sm">-</span>
           <EnhancedDatePicker
             date={endDate}
-            onSelect={(newDate) => newDate && setEndDate(newDate)}
+            onSelect={(newDate) => newDate && onEndDateChange(newDate)}
             placeholder="Bitiş"
             className="w-32 text-xs"
           />

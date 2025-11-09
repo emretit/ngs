@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Trash } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -56,7 +56,7 @@ const EmployeeTable = ({
     { id: "total_employer_cost", label: "🏢 Toplam", visible: true, sortable: true, align: 'right' as const },
     { id: "balance", label: "💳 Bakiye", visible: true, sortable: true, align: 'right' as const },
     { id: "status", label: "📊 Durum", visible: true, sortable: true, align: 'center' as const },
-    { id: "actions", label: "⚙️ İşlemler", visible: true, sortable: false, align: 'right' as const },
+    { id: "actions", label: "⚙️ İşlemler", visible: true, sortable: false, align: 'center' as const },
   ]);
 
   const handleSort = (field: string) => {
@@ -222,8 +222,8 @@ const EmployeeTable = ({
                   <TableCell className="py-2 px-3">
                     <Skeleton className="h-6 w-16 rounded-full" />
                   </TableCell>
-                  <TableCell className="py-2 px-3 text-right">
-                    <div className="flex justify-end space-x-2">
+                  <TableCell className="py-2 px-3 text-center">
+                    <div className="flex justify-center space-x-2">
                       <Skeleton className="h-8 w-8 rounded-lg" />
                       <Skeleton className="h-8 w-8 rounded-lg" />
                       <Skeleton className="h-8 w-8 rounded-lg" />
@@ -344,21 +344,8 @@ const EmployeeTable = ({
                     <TableCell className="py-2 px-3">
                       <StatusBadge status={employee.status} />
                     </TableCell>
-                    <TableCell className="py-2 px-3 text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/employees/${employee.id}`);
-                          }}
-                          className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                          title="Görüntüle"
-                        >
-                          <span className="sr-only">Görüntüle</span>
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                    <TableCell className="py-2 px-3 text-center">
+                      <div className="flex justify-center space-x-2">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -366,21 +353,19 @@ const EmployeeTable = ({
                             e.stopPropagation();
                             navigate(`/employees/${employee.id}/edit`);
                           }}
-                          className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                          className="h-8 w-8"
                           title="Düzenle"
                         >
-                          <span className="sr-only">Düzenle</span>
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={(e) => handleDeleteClick(employee, e)}
-                          className="h-8 w-8 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                           title="Sil"
                           disabled={deleteEmployeeMutation.isPending}
                         >
-                          <span className="sr-only">Sil</span>
                           <Trash className="h-4 w-4" />
                         </Button>
                       </div>

@@ -24,6 +24,16 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
+      // Önce kullanıcının company_id'sini al
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      const companyId = profile?.company_id;
+
       const { data, error } = await supabase
         .from("products")
         .select("*")
@@ -31,7 +41,35 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
         .order("name");
       
       if (error) throw error;
-      return data as Product[];
+
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      // Warehouse_stock tablosundan toplam stok miktarlarını çek
+      const productIds = data.map(p => p.id);
+      let stockMap = new Map<string, number>();
+
+      if (companyId && productIds.length > 0) {
+        const { data: stockData } = await supabase
+          .from("warehouse_stock")
+          .select("product_id, quantity")
+          .in("product_id", productIds)
+          .eq("company_id", companyId);
+
+        if (stockData) {
+          stockData.forEach((stock: { product_id: string; quantity: number }) => {
+            const current = stockMap.get(stock.product_id) || 0;
+            stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+          });
+        }
+      }
+
+      // Ürünleri stok bilgisiyle birleştir
+      return data.map(product => ({
+        ...product,
+        stock_quantity: stockMap.get(product.id) || 0
+      })) as Product[];
     },
   });
 

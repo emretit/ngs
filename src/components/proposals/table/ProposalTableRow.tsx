@@ -4,12 +4,12 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { Eye, PenLine, MoreHorizontal, Trash2, Download, FileText } from "lucide-react";
+import { Edit2, MoreHorizontal, Trash2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProposalStatusCell } from "./ProposalStatusCell";
 import { useNavigate } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 import { useProposalCalculations } from "@/hooks/proposals/useProposalCalculations";
 import { formatProposalAmount } from "@/services/workflow/proposalWorkflow";
@@ -180,27 +180,57 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
       </TableCell>
       <TableCell className="text-center p-4 text-sm">{formatDate(proposal.created_at)}</TableCell>
       <TableCell className="text-center p-4 text-sm">{formatDate(proposal.valid_until)}</TableCell>
-      <TableCell className="p-4 text-right">
-        <div className="flex justify-end space-x-2">
+      <TableCell className="p-4 text-center">
+        <div className="flex justify-center space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleEdit}
+            className="h-8 w-8"
+            title="Düzenle"
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+          
           <Button
             variant="ghost"
             size="icon"
             onClick={(e) => {
               e.stopPropagation();
-              onSelect(proposal);
+              onDelete(proposal);
             }}
-            className="h-8 w-8"
+            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+            title="Sil"
           >
-            <Eye className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={(e) => e.stopPropagation()}
-            className="h-8 w-8"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          
+          {templates && templates.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-8 w-8"
+                  title="Daha Fazla"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {templates.map((template) => (
+                  <DropdownMenuItem
+                    key={template.id}
+                    onClick={(e) => handlePdfPrintClick(e, template.id)}
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    {template.name || 'PDF Yazdır'}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </TableCell>
     </TableRow>

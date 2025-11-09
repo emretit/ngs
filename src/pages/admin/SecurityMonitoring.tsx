@@ -288,7 +288,7 @@ const SecurityMonitoring = () => {
                   <TableHead>Kullanıcı</TableHead>
                   <TableHead>Şirket</TableHead>
                   <TableHead>İşlem Sayısı</TableHead>
-                  <TableHead>İşlemler</TableHead>
+                  <TableHead className="text-center">İşlemler</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

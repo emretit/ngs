@@ -15,7 +15,7 @@ const OpportunitiesTableLoading = () => {
           <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-left">👤 Sorumlu</TableHead>
           <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Hedef Tarih</TableHead>
           <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Oluşturulma</TableHead>
-          <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
+          <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">⚙️ İşlemler</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -29,7 +29,12 @@ const OpportunitiesTableLoading = () => {
             <TableCell className="p-4"><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
             <TableCell className="p-4 text-center"><Skeleton className="h-4 w-20" /></TableCell>
             <TableCell className="p-4 text-center"><Skeleton className="h-4 w-20" /></TableCell>
-            <TableCell className="p-4 text-right"><Skeleton className="h-8 w-8" /></TableCell>
+            <TableCell className="p-4 text-center">
+              <div className="flex items-center justify-center gap-2">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 w-8" />
+              </div>
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>

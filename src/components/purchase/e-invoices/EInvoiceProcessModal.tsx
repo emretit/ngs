@@ -199,6 +199,17 @@ export default function EInvoiceProcessModal({
 
   const createNewProduct = async (item: InvoiceItem) => {
     try {
+      // Kullanıcının company_id'sini al
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      const companyId = profile?.company_id;
+
+      // Stock artık warehouse_stock tablosunda tutulduğu için products tablosuna 0 olarak kaydediyoruz
       const { data, error } = await supabase
         .from('products')
         .insert([{
@@ -208,7 +219,7 @@ export default function EInvoiceProcessModal({
           price: item.unitPrice,
           currency: invoice.currency,
           tax_rate: item.vatRate,
-          stock_quantity: 0,
+          stock_quantity: 0, // Products tablosunda stok artık kullanılmıyor
           min_stock_level: 0,
           stock_threshold: 0,
           unit: item.unit,
@@ -216,7 +227,8 @@ export default function EInvoiceProcessModal({
           category_type: 'diğer',
           product_type: 'fiziksel',
           status: 'aktif',
-          is_active: true
+          is_active: true,
+          company_id: companyId
         }])
         .select()
         .single();

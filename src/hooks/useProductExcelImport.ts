@@ -164,6 +164,17 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
         if (existingProduct) {
           duplicateCount++;
         } else {
+          // Kullanıcının company_id'sini al
+          const { data: { user } } = await supabase.auth.getUser();
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("company_id")
+            .eq("id", user?.id)
+            .single();
+
+          const companyId = profile?.company_id;
+          const stockQuantity = Number(row.stock_quantity);
+
           // Prepare product data for insertion
           const productData = {
             name: row.name.trim(),
@@ -172,7 +183,7 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
             barcode: row.barcode ? row.barcode.toString().trim() : "",
             price: Number(row.price),
             discount_price: row.discount_price && row.discount_price !== '' ? Number(row.discount_price) : null,
-            stock_quantity: Number(row.stock_quantity),
+            stock_quantity: 0, // Products tablosunda stok artık kullanılmıyor
             min_stock_level: row.min_stock_level ? Number(row.min_stock_level) : 0,
             stock_threshold: row.stock_threshold && row.stock_threshold !== '' ? Number(row.stock_threshold) : 0,
             tax_rate: Number(row.tax_rate),
@@ -184,18 +195,50 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
             is_active: Boolean(row.is_active),
             image_url: null,
             category_id: null,
-            supplier_id: null
+            supplier_id: null,
+            company_id: companyId
           };
           
           // Insert new product
-          const { error: insertError } = await supabase
+          const { data: insertedProduct, error: insertError } = await supabase
             .from('products')
-            .insert(productData);
+            .insert(productData)
+            .select()
+            .single();
             
           if (insertError) {
             console.error('Error inserting product:', insertError);
             failedCount++;
           } else {
+            // Eğer stok miktarı varsa ve company_id varsa, warehouse_stock'a ekle
+            if (insertedProduct && companyId && stockQuantity > 0) {
+              // Company'nin Ana Depo'sunu bul
+              const { data: warehouses } = await supabase
+                .from("warehouses")
+                .select("id")
+                .eq("company_id", companyId)
+                .eq("warehouse_type", "main")
+                .eq("is_active", true)
+                .limit(1)
+                .maybeSingle();
+
+              if (warehouses) {
+                const { error: stockError } = await supabase
+                  .from("warehouse_stock")
+                  .insert({
+                    company_id: companyId,
+                    product_id: insertedProduct.id,
+                    warehouse_id: warehouses.id,
+                    quantity: stockQuantity,
+                    reserved_quantity: 0,
+                    last_transaction_date: new Date().toISOString()
+                  });
+
+                if (stockError) {
+                  console.error('Error adding stock to warehouse:', stockError);
+                }
+              }
+            }
             successCount++;
           }
         }

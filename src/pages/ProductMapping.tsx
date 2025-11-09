@@ -75,15 +75,57 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
   const loadExistingProducts = async () => {
     try {
       console.log('🔄 Mevcut ürünler yükleniyor...');
+      
+      // Kullanıcının company_id'sini al
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      const companyId = profile?.company_id;
+
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, sku, price, category_type, stock_quantity, unit, tax_rate')
+        .select('id, name, sku, price, category_type, unit, tax_rate')
         .eq('is_active', true)
         .order('name');
       if (error) throw error;
-      console.log('✅ Mevcut ürünler yüklendi:', data?.length || 0);
-      setExistingProducts(data || []);
-      return data || [];
+
+      if (!data || data.length === 0) {
+        setExistingProducts([]);
+        return [];
+      }
+
+      // Warehouse_stock tablosundan toplam stok miktarlarını çek
+      const productIds = data.map(p => p.id);
+      let stockMap = new Map<string, number>();
+
+      if (companyId && productIds.length > 0) {
+        const { data: stockData } = await supabase
+          .from('warehouse_stock')
+          .select('product_id, quantity')
+          .in('product_id', productIds)
+          .eq('company_id', companyId);
+
+        if (stockData) {
+          stockData.forEach((stock: { product_id: string; quantity: number }) => {
+            const current = stockMap.get(stock.product_id) || 0;
+            stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+          });
+        }
+      }
+
+      // Ürünleri stok bilgisiyle birleştir
+      const productsWithStock = data.map(product => ({
+        ...product,
+        stock_quantity: stockMap.get(product.id) || 0
+      }));
+
+      console.log('✅ Mevcut ürünler yüklendi:', productsWithStock.length);
+      setExistingProducts(productsWithStock);
+      return productsWithStock;
     } catch (error) {
       console.error('❌ Mevcut ürünler yüklenemedi:', error);
       toast({
@@ -231,7 +273,17 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       for (const mapping of processedMappings) {
         try {
           if (mapping.action === 'create') {
-            // Yeni ürün oluştur
+            // Kullanıcının company_id'sini al
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("company_id")
+              .eq("id", user?.id)
+              .single();
+
+            const companyId = profile?.company_id;
+
+            // Yeni ürün oluştur (stock_quantity products tablosuna 0 olarak kaydediliyor)
             const { data: newProduct, error } = await supabase
               .from('products')
               .insert({
@@ -245,14 +297,42 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                 product_type: 'physical',
                 status: 'active',
                 is_active: true,
-                stock_quantity: 0,
+                stock_quantity: 0, // Products tablosunda stok artık kullanılmıyor
                 min_stock_level: 0,
                 stock_threshold: 0,
+                company_id: companyId,
                 description: `Nilvera faturasından aktarılan ürün - Fatura No: ${invoice.invoiceNumber}`,
               })
               .select()
               .single();
             if (error) throw error;
+            
+            // Eğer stok miktarı varsa ve company_id varsa, warehouse_stock'a ekle
+            if (newProduct && companyId && mapping.parsedProduct.quantity > 0) {
+              // Company'nin Ana Depo'sunu bul
+              const { data: warehouses } = await supabase
+                .from("warehouses")
+                .select("id")
+                .eq("company_id", companyId)
+                .eq("warehouse_type", "main")
+                .eq("is_active", true)
+                .limit(1)
+                .maybeSingle();
+
+              if (warehouses) {
+                await supabase
+                  .from("warehouse_stock")
+                  .insert({
+                    company_id: companyId,
+                    product_id: newProduct.id,
+                    warehouse_id: warehouses.id,
+                    quantity: mapping.parsedProduct.quantity || 0,
+                    reserved_quantity: 0,
+                    last_transaction_date: new Date().toISOString()
+                  });
+              }
+            }
+            
             results.push({ type: 'created', product: newProduct });
           } else if (mapping.action === 'update' && mapping.selectedProductId) {
             // Mevcut ürünü güncelle

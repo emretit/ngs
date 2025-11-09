@@ -18,7 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/product";
-import { AlertCircle, CheckCircle, AlertTriangle, Package, Tag, Loader2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, Package, Tag, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface ProductListProps {
@@ -116,14 +116,8 @@ const ProductList: React.FC<ProductListProps> = ({
           Düşük Stok
         </Badge>
       );
-    } else {
-      return (
-        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-          <CheckCircle className="h-3 w-3 mr-1" />
-          Stokta
-        </Badge>
-      );
     }
+    return null;
   };
 
   const toggleSortOrder = () => {

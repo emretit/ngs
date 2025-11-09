@@ -69,8 +69,8 @@ const OpportunitiesTableHeader: React.FC<OpportunitiesTableHeaderProps> = ({
         {renderSortableHeader("Sorumlu", "employee")}
         {renderSortableHeader("Hedef Tarih", "expected_close_date", "text-center")}
         {renderSortableHeader("Oluşturulma", "created_at", "text-center")}
-        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">
-          <div className="flex items-center justify-end gap-1">
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
+          <div className="flex items-center justify-center gap-1">
             <span className="text-lg mr-2">⚙️</span>
             <span>İşlemler</span>
           </div>

@@ -67,7 +67,7 @@ export default function RFQsList() {
               <TableHead>Davet Edilen</TableHead>
               <TableHead>Teklif Sayısı</TableHead>
               <TableHead>Güncelleme</TableHead>
-              <TableHead className="w-[100px]">İşlemler</TableHead>
+              <TableHead className="w-[100px] text-center">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -99,17 +99,19 @@ export default function RFQsList() {
                       <Badge variant="outline">{quotesCount} / {vendorsCount}</Badge>
                     </TableCell>
                     <TableCell>{format(new Date(rfq.updated_at), 'dd.MM.yyyy')}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/purchase-rfqs/${rfq.id}`);
-                        }}
-                      >
-                        Detay
-                      </Button>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/purchase-rfqs/${rfq.id}`);
+                          }}
+                        >
+                          Detay
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

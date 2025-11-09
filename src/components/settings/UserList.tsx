@@ -32,7 +32,7 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
               <TableHead>Rol</TableHead>
               <TableHead>Durum</TableHead>
               <TableHead>Kayıt Tarihi</TableHead>
-              <TableHead className="text-right">İşlemler</TableHead>
+              <TableHead className="text-center">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -50,8 +50,8 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
                 <TableCell><Skeleton className="h-6 w-20 rounded-md" /></TableCell>
                 <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                <TableCell className="text-right">
-                  <Skeleton className="h-8 w-8 rounded-md ml-auto" />
+                <TableCell className="text-center">
+                  <Skeleton className="h-8 w-8 rounded-md mx-auto" />
                 </TableCell>
               </TableRow>
             ))}
@@ -70,7 +70,7 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
             <TableHead>Rol</TableHead>
             <TableHead>Durum</TableHead>
             <TableHead>Kayıt Tarihi</TableHead>
-            <TableHead className="text-right">İşlemler</TableHead>
+            <TableHead className="text-center">İşlemler</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -103,12 +103,14 @@ export const UserList = ({ users, isLoading }: UserListProps) => {
                 <TableCell className="text-muted-foreground">
                   {user.created_at && new Date(user.created_at).toLocaleDateString('tr-TR')}
                 </TableCell>
-                <TableCell className="text-right">
-                  <UserActions 
-                    user={user}
-                    onResetPassword={() => resetPasswordMutation.mutate(user.email || '')}
-                    onDeactivate={() => deactivateUserMutation.mutate(user.id)}
-                  />
+                <TableCell className="text-center">
+                  <div className="flex justify-center">
+                    <UserActions 
+                      user={user}
+                      onResetPassword={() => resetPasswordMutation.mutate(user.email || '')}
+                      onDeactivate={() => deactivateUserMutation.mutate(user.id)}
+                    />
+                  </div>
                 </TableCell>
               </TableRow>
             ))

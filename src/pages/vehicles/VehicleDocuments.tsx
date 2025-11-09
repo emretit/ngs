@@ -173,7 +173,7 @@ export default function VehicleDocuments() {
                 <TableHead>Dosya Adı</TableHead>
                 <TableHead>Tarih</TableHead>
                 <TableHead>Durum</TableHead>
-                <TableHead className="text-right">İşlemler</TableHead>
+                <TableHead className="text-center">İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -204,11 +204,13 @@ export default function VehicleDocuments() {
                       <Badge variant="default">Geçerli</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Download className="h-3 w-3" />
-                      İndir
-                    </Button>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <Button variant="outline" size="sm" className="gap-1">
+                        <Download className="h-3 w-3" />
+                        İndir
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

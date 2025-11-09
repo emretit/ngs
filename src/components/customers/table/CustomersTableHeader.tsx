@@ -45,12 +45,16 @@ const CustomersTableHeader = ({ columns, sortField, sortDirection, onSort, hasSe
         <TableHead
           key={column.id}
           className={cn(
-            "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
+            "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide",
+            column.id === 'actions' ? "text-center" : "text-left",
             column.sortable && "cursor-pointer hover:bg-slate-200"
           )}
           onClick={column.sortable ? () => onSort(column.id) : undefined}
         >
-          <div className="flex items-center gap-1">
+          <div className={cn(
+            "flex items-center gap-1",
+            column.id === 'actions' ? "justify-center" : ""
+          )}>
             {column.id === 'company' && <span className="text-lg mr-2">🏢</span>}
             {column.id === 'name' && <span className="text-lg mr-2">👤</span>}
             {column.id === 'contact' && <span className="text-lg mr-2">📞</span>}

@@ -1,6 +1,6 @@
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Eye, Edit } from "lucide-react";
+import { Edit2, MoreHorizontal, Trash2 } from "lucide-react";
 import { Warehouse } from "@/types/warehouse";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +12,7 @@ interface WarehousesTableRowProps {
   onSelect?: (warehouse: Warehouse) => void;
   onSelectToggle?: (warehouse: Warehouse) => void;
   onView: (warehouse: Warehouse) => void;
+  onDelete?: (warehouse: Warehouse) => void;
   isSelected?: boolean;
 }
 
@@ -20,6 +21,7 @@ const WarehousesTableRow = ({
   onSelect, 
   onSelectToggle,
   onView,
+  onDelete,
   isSelected = false
 }: WarehousesTableRowProps) => {
   const navigate = useNavigate();
@@ -115,18 +117,7 @@ const WarehousesTableRow = ({
 
       {/* İşlemler */}
       <TableCell className="py-2 px-3">
-        <div className="flex justify-end space-x-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onView(warehouse);
-            }}
-            className="h-4 w-4 hover:bg-blue-100"
-          >
-            <Eye className="h-2.5 w-2.5" />
-          </Button>
+        <div className="flex justify-center space-x-2">
           <Button
             variant="ghost"
             size="icon"
@@ -134,10 +125,26 @@ const WarehousesTableRow = ({
               e.stopPropagation();
               navigate(`/inventory/warehouses/${warehouse.id}/edit`);
             }}
-            className="h-4 w-4 hover:bg-blue-100"
+            className="h-8 w-8"
+            title="Düzenle"
           >
-            <Edit className="h-2.5 w-2.5" />
+            <Edit2 className="h-4 w-4" />
           </Button>
+          
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(warehouse);
+              }}
+              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+              title="Sil"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </TableCell>
     </TableRow>

@@ -68,7 +68,7 @@ const CompanyUsersTab = ({ companyId }: CompanyUsersTabProps) => {
               <TableHead>Rol</TableHead>
               <TableHead>Oluşturulma</TableHead>
               <TableHead>Son Güncelleme</TableHead>
-              <TableHead className="text-right">İşlemler</TableHead>
+              <TableHead className="text-center">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -114,16 +114,18 @@ const CompanyUsersTab = ({ companyId }: CompanyUsersTabProps) => {
                   <TableCell>
                     {user.updated_at ? format(new Date(user.updated_at), 'dd.MM.yyyy') : '-'}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/admin/users/${user.id}`)}
-                      className="gap-2"
-                    >
-                      <Eye className="h-4 w-4" />
-                      Detay
-                    </Button>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/admin/users/${user.id}`)}
+                        className="gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Detay
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

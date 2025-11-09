@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/custom-tabs";
 import { Product } from "@/types/product";
 import ProductInventory from "./ProductInventory";
-import ProductWarehouseStock from "./ProductWarehouseStock";
 import { ProductStockMovements } from "./ProductStockMovements";
 import ProductRelated from "./ProductRelated";
 import { ProductOrdersTab } from "./ProductOrdersTab";
@@ -128,8 +127,9 @@ export const ProductTabs = ({ product, onUpdate }: ProductTabsProps) => {
       </CustomTabsList>
 
       <CustomTabsContent value="stock">
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <ProductInventory
+            productId={product.id}
             stockQuantity={product.stock_quantity}
             minStockLevel={product.min_stock_level}
             stockThreshold={product.stock_threshold}
@@ -137,11 +137,6 @@ export const ProductTabs = ({ product, onUpdate }: ProductTabsProps) => {
             supplier={product.suppliers || null}
             lastPurchaseDate={product.last_purchase_date || null}
             onUpdate={onUpdate}
-          />
-          <ProductWarehouseStock
-            productId={product.id}
-            totalStock={product.stock_quantity}
-            unit={product.unit}
           />
           <ProductStockMovements productId={product.id} />
         </div>

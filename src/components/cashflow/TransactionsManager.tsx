@@ -24,7 +24,6 @@ import {
   X, 
   Search, 
   Download, 
-  Eye, 
   Edit, 
   Trash2,
   FileText,
@@ -531,7 +530,7 @@ const TransactionsManager = () => {
                 <TableHead>Açıklama</TableHead>
                 <TableHead className="text-right">Tutar</TableHead>
                 <TableHead>Ek</TableHead>
-                <TableHead className="text-right">İşlemler</TableHead>
+                <TableHead className="text-center">İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -563,19 +562,22 @@ const TransactionsManager = () => {
                       </Button>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
+                  <TableCell className="text-center">
+                    <div className="flex justify-center space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Düzenle"
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
-                        size="sm"
+                        size="icon"
                         onClick={() => handleDeleteClick(transaction.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        title="Sil"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

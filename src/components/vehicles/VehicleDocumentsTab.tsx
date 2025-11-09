@@ -197,7 +197,7 @@ export default function VehicleDocumentsTab() {
                 <TableHead>Veren Kurum</TableHead>
                 <TableHead>Veriliş Tarihi</TableHead>
                 <TableHead>Son Geçerlilik</TableHead>
-                <TableHead>İşlemler</TableHead>
+                <TableHead className="text-center">İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -242,11 +242,13 @@ export default function VehicleDocumentsTab() {
                       </div>
                     )}
                   </TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm" className="gap-1">
-                      <Download className="h-3 w-3" />
-                      İndir
-                    </Button>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <Button variant="outline" size="sm" className="gap-1">
+                        <Download className="h-3 w-3" />
+                        İndir
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

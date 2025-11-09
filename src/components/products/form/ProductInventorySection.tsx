@@ -92,7 +92,7 @@ const ProductInventorySection = ({ form }: ProductInventorySectionProps) => {
                   />
                 </FormControl>
                 <FormDescription>
-                  Sistemdeki mevcut ürün miktarını girin
+                  Yeni ürün oluştururken stok miktarını girin. Stok Ana Depo'ya kaydedilecektir. (Mevcut ürünlerde stok depo bazlı yönetilir)
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
-  MoreHorizontal,
-  Eye,
   Edit,
   Trash,
   Star
@@ -13,12 +11,6 @@ import {
 import { Opportunity } from "@/types/crm";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
 import { OpportunityStatusCell } from "./OpportunityStatusCell";
 
 interface OpportunitiesTableRowProps {
@@ -173,56 +165,37 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
         {formatDate(opportunity.created_at)}
       </TableCell>
       
-      <TableCell className="p-4 text-right">
-        <div className="flex justify-end space-x-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelectOpportunity(opportunity);
-            }}
-            className="h-8 w-8"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {onEditOpportunity && (
-                <DropdownMenuItem 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditOpportunity(opportunity);
-                  }}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  <span>Düzenle</span>
-                </DropdownMenuItem>
-              )}
-              {onDeleteOpportunity && (
-                <DropdownMenuItem 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteOpportunity(opportunity);
-                  }}
-                  className="text-red-600"
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  <span>Sil</span>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+      <TableCell className="p-4 text-center">
+        <div className="flex justify-center space-x-2">
+          {onEditOpportunity && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditOpportunity(opportunity);
+              }}
+              className="h-8 w-8"
+              title="Düzenle"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {onDeleteOpportunity && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteOpportunity(opportunity);
+              }}
+              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+              title="Sil"
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </TableCell>
     </TableRow>

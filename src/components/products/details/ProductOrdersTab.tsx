@@ -110,7 +110,7 @@ export const ProductOrdersTab = ({ productId }: ProductOrdersTabProps) => {
               <TableHead className="text-right">Toplam</TableHead>
               <TableHead>Durum</TableHead>
               <TableHead>Tarih</TableHead>
-              <TableHead className="text-right">İşlem</TableHead>
+              <TableHead className="text-center">İşlem</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -138,16 +138,18 @@ export const ProductOrdersTab = ({ productId }: ProductOrdersTabProps) => {
                   <TableCell>
                     {order?.order_date ? formatDate(order.order_date) : formatDate(item.created_at)}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/orders/${order?.id}`);
-                      }}
-                      className="text-primary hover:text-primary/80 flex items-center gap-1"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </button>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/orders/${order?.id}`);
+                        }}
+                        className="text-primary hover:text-primary/80 flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

@@ -11,20 +11,60 @@ interface ReportsInventorySectionProps {
 }
 
 export default function ReportsInventorySection({ isExpanded, onToggle, searchParams }: ReportsInventorySectionProps) {
+  // Önce kullanıcının company_id'sini al
   const { data: stockValue } = useQuery({
     queryKey: ['stockValue'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (!profile?.company_id) {
+        return { totalValue: 0, totalCost: 0, profit: 0 };
+      }
+
+      // Ürünleri çek
+      const { data: products } = await supabase
         .from('products')
-        .select('price, quantity, cost');
+        .select('id, price, purchase_price')
+        .eq('company_id', profile.company_id);
       
-      const totalValue = (data || []).reduce((sum, product) => 
-        sum + ((product.price || 0) * (product.quantity || 0)), 0
-      );
+      if (!products || products.length === 0) {
+        return { totalValue: 0, totalCost: 0, profit: 0 };
+      }
+
+      // Ürün ID'lerini al
+      const productIds = products.map(p => p.id);
+
+      // Warehouse_stock tablosundan toplam stok miktarlarını çek
+      const { data: stockData } = await supabase
+        .from('warehouse_stock')
+        .select('product_id, quantity')
+        .in('product_id', productIds)
+        .eq('company_id', profile.company_id);
+
+      // Stok verilerini product_id'ye göre grupla ve topla
+      const stockMap = new Map<string, number>();
+      if (stockData) {
+        stockData.forEach((stock: { product_id: string; quantity: number }) => {
+          const current = stockMap.get(stock.product_id) || 0;
+          stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+        });
+      }
+
+      // Toplam değer ve maliyet hesapla
+      const totalValue = products.reduce((sum, product) => {
+        const stock = stockMap.get(product.id) || 0;
+        return sum + ((product.price || 0) * stock);
+      }, 0);
       
-      const totalCost = (data || []).reduce((sum, product) => 
-        sum + ((product.cost || 0) * (product.quantity || 0)), 0
-      );
+      const totalCost = products.reduce((sum, product) => {
+        const stock = stockMap.get(product.id) || 0;
+        return sum + ((product.purchase_price || 0) * stock);
+      }, 0);
       
       return { totalValue, totalCost, profit: totalValue - totalCost };
     },
@@ -34,15 +74,51 @@ export default function ReportsInventorySection({ isExpanded, onToggle, searchPa
   const { data: fastMovers } = useQuery({
     queryKey: ['fastMovers'],
     queryFn: async () => {
-      // Note: This would require sales data to properly calculate movement
-      // For now, showing products with high quantity as proxy for fast movers
-      const { data } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (!profile?.company_id) return [];
+
+      // Ürünleri çek
+      const { data: products } = await supabase
         .from('products')
-        .select('name, quantity, price')
-        .gt('quantity', 0)
-        .order('quantity', { ascending: false })
-        .limit(5);
-      return data || [];
+        .select('id, name, price')
+        .eq('company_id', profile.company_id);
+      
+      if (!products || products.length === 0) return [];
+
+      const productIds = products.map(p => p.id);
+
+      // Warehouse_stock tablosundan toplam stok miktarlarını çek
+      const { data: stockData } = await supabase
+        .from('warehouse_stock')
+        .select('product_id, quantity')
+        .in('product_id', productIds)
+        .eq('company_id', profile.company_id);
+
+      // Stok verilerini product_id'ye göre grupla ve topla
+      const stockMap = new Map<string, number>();
+      if (stockData) {
+        stockData.forEach((stock: { product_id: string; quantity: number }) => {
+          const current = stockMap.get(stock.product_id) || 0;
+          stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+        });
+      }
+
+      // Ürünleri stok miktarına göre sırala ve en yüksek 5'ini al
+      return products
+        .map(product => ({
+          name: product.name,
+          quantity: stockMap.get(product.id) || 0,
+          price: product.price
+        }))
+        .filter(p => p.quantity > 0)
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 5);
     },
     enabled: isExpanded
   });
@@ -50,14 +126,51 @@ export default function ReportsInventorySection({ isExpanded, onToggle, searchPa
   const { data: slowMovers } = useQuery({
     queryKey: ['slowMovers'],
     queryFn: async () => {
-      // Products with low quantity or zero quantity
-      const { data } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (!profile?.company_id) return [];
+
+      // Ürünleri çek
+      const { data: products } = await supabase
         .from('products')
-        .select('name, quantity, price')
-        .lte('quantity', 10)
-        .order('quantity', { ascending: true })
-        .limit(5);
-      return data || [];
+        .select('id, name, price')
+        .eq('company_id', profile.company_id);
+      
+      if (!products || products.length === 0) return [];
+
+      const productIds = products.map(p => p.id);
+
+      // Warehouse_stock tablosundan toplam stok miktarlarını çek
+      const { data: stockData } = await supabase
+        .from('warehouse_stock')
+        .select('product_id, quantity')
+        .in('product_id', productIds)
+        .eq('company_id', profile.company_id);
+
+      // Stok verilerini product_id'ye göre grupla ve topla
+      const stockMap = new Map<string, number>();
+      if (stockData) {
+        stockData.forEach((stock: { product_id: string; quantity: number }) => {
+          const current = stockMap.get(stock.product_id) || 0;
+          stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+        });
+      }
+
+      // Ürünleri stok miktarına göre sırala ve düşük stoklu 5'ini al
+      return products
+        .map(product => ({
+          name: product.name,
+          quantity: stockMap.get(product.id) || 0,
+          price: product.price
+        }))
+        .filter(p => p.quantity <= 10)
+        .sort((a, b) => a.quantity - b.quantity)
+        .slice(0, 5);
     },
     enabled: isExpanded
   });
@@ -65,12 +178,50 @@ export default function ReportsInventorySection({ isExpanded, onToggle, searchPa
   const { data: lowStockItems } = useQuery({
     queryKey: ['lowStockItems'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (!profile?.company_id) return [];
+
+      // Ürünleri çek
+      const { data: products } = await supabase
         .from('products')
-        .select('name, quantity, min_stock_level')
-        .filter('quantity', 'lte', 'min_stock_level')
-        .order('quantity', { ascending: true });
-      return data || [];
+        .select('id, name, min_stock_level')
+        .eq('company_id', profile.company_id);
+      
+      if (!products || products.length === 0) return [];
+
+      const productIds = products.map(p => p.id);
+
+      // Warehouse_stock tablosundan toplam stok miktarlarını çek
+      const { data: stockData } = await supabase
+        .from('warehouse_stock')
+        .select('product_id, quantity')
+        .in('product_id', productIds)
+        .eq('company_id', profile.company_id);
+
+      // Stok verilerini product_id'ye göre grupla ve topla
+      const stockMap = new Map<string, number>();
+      if (stockData) {
+        stockData.forEach((stock: { product_id: string; quantity: number }) => {
+          const current = stockMap.get(stock.product_id) || 0;
+          stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+        });
+      }
+
+      // Ürünleri stok miktarına göre filtrele ve sırala
+      return products
+        .map(product => ({
+          name: product.name,
+          quantity: stockMap.get(product.id) || 0,
+          min_stock_level: product.min_stock_level || 0
+        }))
+        .filter(p => p.quantity <= p.min_stock_level)
+        .sort((a, b) => a.quantity - b.quantity);
     },
     enabled: isExpanded
   });

@@ -118,7 +118,7 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
           <TableHead className="text-right">Fiyat</TableHead>
           <TableHead className="text-right">Stok</TableHead>
           <TableHead>Durum</TableHead>
-          <TableHead className="text-right">İşlemler</TableHead>
+          <TableHead className="text-center">İşlemler</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -139,11 +139,9 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
             <TableCell className="text-right">
               <div className="flex items-center justify-end gap-2">
                 <span>{product.stock_quantity}</span>
-                {product.stock_quantity <= 0 ? (
-                  <Badge variant="destructive">Stokta Yok</Badge>
-                ) : product.stock_quantity <= product.min_stock_level ? (
+                {product.stock_quantity > 0 && product.stock_quantity <= product.min_stock_level && (
                   <Badge variant="warning">Az Stok</Badge>
-                ) : null}
+                )}
               </div>
             </TableCell>
             <TableCell>
@@ -151,20 +149,23 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
                 {product.is_active ? "Aktif" : "Pasif"}
               </Badge>
             </TableCell>
-            <TableCell className="text-right">
-              <div className="flex justify-end gap-2">
+            <TableCell className="text-center">
+              <div className="flex justify-center space-x-2">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={(e) => handleEdit(product.id, e)}
+                  className="h-8 w-8"
+                  title="Düzenle"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                  className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                   onClick={(e) => handleDeleteClick(product, e)}
+                  title="Sil"
                 >
                   <Trash className="h-4 w-4" />
                 </Button>

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Download, Star, MoreVertical, Pencil, Eye, Power } from 'lucide-react';
+import { Plus, Download, Star, MoreVertical, Pencil, Power } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -245,7 +245,7 @@ export default function VendorsPage() {
                 <TableHead>Etiketler</TableHead>
                 <TableHead>Aktif</TableHead>
                 <TableHead>Güncellenme</TableHead>
-                <TableHead className="text-right">İşlemler</TableHead>
+                <TableHead className="text-center">İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -287,28 +287,31 @@ export default function VendorsPage() {
                   <TableCell>
                     {format(new Date(vendor.updated_at), 'dd.MM.yyyy')}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-background z-50">
-                        <DropdownMenuItem onClick={() => handleOpenDrawer(vendor)}>
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Düzenle
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Görüntüle
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleStatus(vendor)}>
-                          <Power className="h-4 w-4 mr-2" />
-                          {vendor.is_active ? 'Devre Dışı Bırak' : 'Aktif Et'}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenDrawer(vendor)}
+                        className="h-8 w-8"
+                        title="Düzenle"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" title="Daha Fazla">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-background z-50">
+                          <DropdownMenuItem onClick={() => handleToggleStatus(vendor)}>
+                            <Power className="h-4 w-4 mr-2" />
+                            {vendor.is_active ? 'Devre Dışı Bırak' : 'Aktif Et'}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

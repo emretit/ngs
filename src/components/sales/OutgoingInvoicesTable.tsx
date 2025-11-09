@@ -134,7 +134,7 @@ const OutgoingInvoicesTable: React.FC<OutgoingInvoicesTableProps> = ({
               <TableHead>Tarih</TableHead>
               <TableHead>Tutar</TableHead>
               <TableHead>Durum</TableHead>
-              <TableHead>İşlemler</TableHead>
+              <TableHead className="text-center">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -173,14 +173,16 @@ const OutgoingInvoicesTable: React.FC<OutgoingInvoicesTableProps> = ({
                 <TableCell>
                   {getStatusBadge(invoice)}
                 </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center space-x-2">
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={() => {
                         console.log('Invoice details:', invoice);
                       }}
+                      className="h-8 w-8"
+                      title="Detayları Görüntüle"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>

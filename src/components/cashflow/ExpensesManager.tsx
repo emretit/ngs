@@ -779,15 +779,16 @@ const ExpensesManager = ({ triggerAddDialog, startDate, endDate, onStartDateChan
                     ₺{expense.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Button variant="ghost" size="sm">
+                    <div className="flex items-center justify-center space-x-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" title="Düzenle">
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
-                        size="sm"
+                        size="icon"
                         onClick={() => handleDeleteClick(expense)}
-                        className="text-red-600 hover:text-red-700"
+                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        title="Sil"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

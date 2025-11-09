@@ -193,7 +193,7 @@ const CompanyUsers = () => {
                 <TableHead>Rol</TableHead>
                 <TableHead>Çalışan</TableHead>
                 <TableHead>Kayıt Tarihi</TableHead>
-                <TableHead>İşlemler</TableHead>
+                <TableHead className="text-center">İşlemler</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -247,18 +247,20 @@ const CompanyUsers = () => {
                   <TableCell>
                     {new Date(user.created_at).toLocaleDateString('tr-TR')}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center space-x-2">
                       <Link to={`/admin/users/${user.id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Detayları Görüntüle">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
                       <Button 
                         variant="ghost" 
-                        size="sm"
+                        size="icon"
                         onClick={() => user.email && sendPasswordResetMutation.mutate(user.email)}
                         disabled={sendPasswordResetMutation.isPending}
+                        className="h-8 w-8"
+                        title="Şifre Sıfırla"
                       >
                         <Key className="h-4 w-4" />
                       </Button>

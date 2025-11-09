@@ -67,6 +67,16 @@ export const useProductForm = () => {
       if (!id) return;
 
       try {
+        // Önce kullanıcının company_id'sini al
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("company_id")
+          .eq("id", user?.id)
+          .single();
+
+        const companyId = profile?.company_id;
+
         const { data, error } = await supabase
           .from("products")
           .select("*")
@@ -76,6 +86,20 @@ export const useProductForm = () => {
         if (error) throw error;
 
         if (data) {
+          // Warehouse_stock tablosundan toplam stok miktarını çek
+          let stockQuantity = 0;
+          if (companyId) {
+            const { data: stockData } = await supabase
+              .from("warehouse_stock")
+              .select("quantity")
+              .eq("product_id", id)
+              .eq("company_id", companyId);
+
+            if (stockData && stockData.length > 0) {
+              stockQuantity = stockData.reduce((sum, stock) => sum + (Number(stock.quantity) || 0), 0);
+            }
+          }
+
           // Sadece veritabanında mevcut olan kolonları kullan
           form.reset({
             name: data.name || "",
@@ -84,7 +108,7 @@ export const useProductForm = () => {
             barcode: data.barcode || "",
             price: data.price || 0,
             discount_rate: data.discount_rate || 0,
-            stock_quantity: data.stock_quantity || 0,
+            stock_quantity: stockQuantity, // Warehouse_stock'tan gelen toplam stok
             min_stock_level: data.min_stock_level || 0,
             stock_threshold: data.stock_threshold || data.min_stock_level || 0,
             tax_rate: data.tax_rate || 20,

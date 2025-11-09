@@ -32,6 +32,16 @@ export const useProductSearchDialog = (
     queryKey: ["products"],
     queryFn: async () => {
       try {
+        // Önce kullanıcının company_id'sini al
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("company_id")
+          .eq("id", user?.id)
+          .single();
+
+        const companyId = profile?.company_id;
+
         const { data, error } = await supabase
           .from("products")
           .select("*, product_categories(*)")
@@ -39,10 +49,43 @@ export const useProductSearchDialog = (
         
         if (error) throw error;
         
-        // Add a suppliers property to each product (null for now)
+        if (!data || data.length === 0) {
+          return [];
+        }
+
+        // Ürün ID'lerini al
+        const productIds = data.map(p => p.id);
+
+        // Warehouse_stock tablosundan toplam stok miktarlarını çek
+        let stockQuery = supabase
+          .from("warehouse_stock")
+          .select("product_id, quantity")
+          .in("product_id", productIds);
+
+        if (companyId) {
+          stockQuery = stockQuery.eq("company_id", companyId);
+        }
+
+        const { data: stockData, error: stockError } = await stockQuery;
+
+        if (stockError) {
+          console.error("Error fetching warehouse stock:", stockError);
+        }
+
+        // Stok verilerini product_id'ye göre grupla ve topla
+        const stockMap = new Map<string, number>();
+        if (stockData) {
+          stockData.forEach((stock: { product_id: string; quantity: number }) => {
+            const current = stockMap.get(stock.product_id) || 0;
+            stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+          });
+        }
+
+        // Add a suppliers property to each product (null for now) and update stock_quantity
         return (data || []).map(product => ({
           ...product,
-          suppliers: null
+          suppliers: null,
+          stock_quantity: stockMap.get(product.id) || 0
         }));
       } catch (error) {
         console.error("Error fetching products:", error);

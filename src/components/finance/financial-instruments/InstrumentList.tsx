@@ -23,7 +23,7 @@ const InstrumentList = () => {
           <TableHead>Banka</TableHead>
           <TableHead className="text-right">Tutar</TableHead>
           <TableHead>Durum</TableHead>
-          <TableHead>İşlemler</TableHead>
+          <TableHead className="text-center">İşlemler</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -39,8 +39,8 @@ const InstrumentList = () => {
               Beklemede
             </span>
           </TableCell>
-          <TableCell>
-            <div className="flex gap-2">
+          <TableCell className="text-center">
+            <div className="flex justify-center gap-2">
               <Button size="sm" variant="outline" className="flex items-center gap-1">
                 <Check className="h-3 w-3" />
                 <span>Tahsil Et</span>

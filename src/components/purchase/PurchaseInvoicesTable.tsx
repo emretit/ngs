@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Download, FileText } from "lucide-react";
+import { Edit2, Trash2, Download, FileText, MoreHorizontal } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import PurchaseInvoicesTableHeader from "./table/PurchaseInvoicesTableHeader";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 interface PurchaseInvoicesTableProps {
   invoices: any[];
@@ -321,8 +322,8 @@ const PurchaseInvoicesTable = ({
               <TableCell className="text-center py-2 px-3" onClick={() => onSelectInvoice(invoice)}>
                 {getDocumentTypeBadge(invoice.sourceType)}
               </TableCell>
-              <TableCell className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-end space-x-0.5">
+              <TableCell className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-center space-x-2">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -330,22 +331,48 @@ const PurchaseInvoicesTable = ({
                       e.stopPropagation();
                       onSelectInvoice(invoice);
                     }}
-                    className="h-4 w-4 hover:bg-blue-100"
+                    className="h-8 w-8"
+                    title="Düzenle"
                   >
-                    <Eye className="h-2.5 w-2.5" />
+                    <Edit2 className="h-4 w-4" />
                   </Button>
-                  {(invoice.sourceType === 'earchive_received') && onDownloadPdf && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDownloadPdf(invoice.id, 'e-arşiv');
-                      }}
-                      className="h-4 w-4 hover:bg-gray-100 text-blue-600"
-                    >
-                      <Download className="h-2.5 w-2.5" />
-                    </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: onDelete eklenmeli
+                    }}
+                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    title="Sil"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  
+                  {(invoice.sourceType === 'earchive_received' && onDownloadPdf) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-8 w-8"
+                          title="Daha Fazla"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          onDownloadPdf(invoice.id, 'e-arşiv');
+                        }}>
+                          <Download className="h-4 w-4 mr-2" />
+                          PDF İndir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
               </TableCell>

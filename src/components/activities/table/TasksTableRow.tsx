@@ -4,8 +4,8 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
   MoreHorizontal,
-  Eye,
-  Trash,
+  Edit2,
+  Trash2,
   CheckCircle2,
   RefreshCw,
   Star
@@ -123,8 +123,8 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
           </Badge>
         </div>
       </TableCell>
-      <TableCell className="p-4 text-right">
-        <div className="flex justify-end">
+      <TableCell className="p-4 text-center">
+        <div className="flex justify-center space-x-2">
           <Button
             variant="ghost"
             size="icon"
@@ -133,9 +133,24 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
               onSelectTask(task);
             }}
             className="h-8 w-8"
+            title="Düzenle"
           >
-            <Eye className="h-4 w-4" />
+            <Edit2 className="h-4 w-4" />
           </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteTask(task.id);
+            }}
+            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+            title="Sil"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -143,6 +158,7 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
                 size="icon" 
                 className="h-8 w-8"
                 onClick={(e) => e.stopPropagation()}
+                title="Daha Fazla"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -159,16 +175,6 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
                   <span>Tamamla</span>
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteTask(task.id);
-                }}
-                className="text-red-600"
-              >
-                <Trash className="mr-2 h-4 w-4" />
-                <span>Sil</span>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

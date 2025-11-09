@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Factory, MoreHorizontal, Edit, Trash2, PlayCircle } from "lucide-react";
+import { Edit2, Factory, MoreHorizontal, Trash2, PlayCircle } from "lucide-react";
 import { WorkOrder, WorkOrderStatus } from "@/types/production";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
@@ -73,7 +73,7 @@ const WorkOrdersTable = ({
             <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Durum</TableHead>
             <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Planlanan Başlangıç</TableHead>
             <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Planlanan Bitiş</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-right">İşlemler</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">İşlemler</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -113,7 +113,7 @@ const WorkOrdersTable = ({
           <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Durum</TableHead>
           <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Planlanan Başlangıç</TableHead>
           <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Planlanan Bitiş</TableHead>
-          <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-right">İşlemler</TableHead>
+          <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">İşlemler</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -145,82 +145,76 @@ const WorkOrdersTable = ({
                 ? format(new Date(workOrder.planned_end_date), "dd MMM yyyy", { locale: tr })
                 : '-'}
             </TableCell>
-            <TableCell className="text-right">
-              <div className="flex justify-end items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onSelectWorkOrder(workOrder)}
-                  className="h-8 w-8 p-0"
-                  title="Detayları Görüntüle"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    {onEditWorkOrder && (
-                      <DropdownMenuItem onClick={() => onEditWorkOrder(workOrder)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Düzenle
-                      </DropdownMenuItem>
-                    )}
-                    
-                    {onStatusChange && (
-                      <>
-                        {workOrder.status !== 'planned' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(workOrder.id, 'planned')}>
-                            <PlayCircle className="h-4 w-4 mr-2" />
-                            Planlandı Yap
-                          </DropdownMenuItem>
-                        )}
-                        {workOrder.status !== 'in_progress' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(workOrder.id, 'in_progress')}>
-                            <Factory className="h-4 w-4 mr-2" />
-                            Üretimde Yap
-                          </DropdownMenuItem>
-                        )}
-                        {workOrder.status !== 'completed' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(workOrder.id, 'completed')}>
-                            <PlayCircle className="h-4 w-4 mr-2" />
-                            Tamamlandı Yap
-                          </DropdownMenuItem>
-                        )}
-                        {workOrder.status !== 'cancelled' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(workOrder.id, 'cancelled')}>
-                            <PlayCircle className="h-4 w-4 mr-2" />
-                            İptal Et
-                          </DropdownMenuItem>
-                        )}
-                      </>
-                    )}
-                    
-                    {onDeleteWorkOrder && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (confirm('İş emrini silmek istediğinizden emin misiniz?')) {
-                              onDeleteWorkOrder(workOrder.id);
-                            }
-                          }}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Sil
+            <TableCell className="text-center">
+              <div className="flex justify-center items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                {onEditWorkOrder && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEditWorkOrder(workOrder)}
+                    className="h-8 w-8"
+                    title="Düzenle"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {onDeleteWorkOrder && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (confirm('İş emrini silmek istediğinizden emin misiniz?')) {
+                        onDeleteWorkOrder(workOrder.id);
+                      }
+                    }}
+                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    title="Sil"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {onStatusChange && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Daha Fazla"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      {workOrder.status !== 'planned' && (
+                        <DropdownMenuItem onClick={() => onStatusChange(workOrder.id, 'planned')}>
+                          <PlayCircle className="h-4 w-4 mr-2" />
+                          Planlandı Yap
                         </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      )}
+                      {workOrder.status !== 'in_progress' && (
+                        <DropdownMenuItem onClick={() => onStatusChange(workOrder.id, 'in_progress')}>
+                          <Factory className="h-4 w-4 mr-2" />
+                          Üretimde Yap
+                        </DropdownMenuItem>
+                      )}
+                      {workOrder.status !== 'completed' && (
+                        <DropdownMenuItem onClick={() => onStatusChange(workOrder.id, 'completed')}>
+                          <PlayCircle className="h-4 w-4 mr-2" />
+                          Tamamlandı Yap
+                        </DropdownMenuItem>
+                      )}
+                      {workOrder.status !== 'cancelled' && (
+                        <DropdownMenuItem onClick={() => onStatusChange(workOrder.id, 'cancelled')}>
+                          <PlayCircle className="h-4 w-4 mr-2" />
+                          İptal Et
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </TableCell>
           </TableRow>

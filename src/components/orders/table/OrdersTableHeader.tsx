@@ -41,11 +41,11 @@ export const OrdersTableHeader = ({
               className={cn(
                 "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
                 column.sortable ? 'cursor-pointer hover:bg-slate-200' : '',
-                column.id === 'actions' ? 'text-right' : ''
+                column.id === 'actions' ? 'text-center' : ''
               )}
               onClick={column.sortable && onSort ? () => onSort(column.id) : undefined}
             >
-              <div className={cn("flex items-center gap-1", column.id === 'actions' ? 'justify-end' : '')}>
+              <div className={cn("flex items-center gap-1", column.id === 'actions' ? 'justify-center' : '')}>
                 {column.id === 'order_number' && <span className="text-lg mr-2">📋</span>}
                 {column.id === 'customer' && <span className="text-lg mr-2">🏢</span>}
                 {column.id === 'status' && <span className="text-lg mr-2">📊</span>}

@@ -1,7 +1,6 @@
 import { Product } from "@/types/product";
 import ProductGeneralInfo from "@/components/products/details/ProductGeneralInfo";
 import ProductInventory from "@/components/products/details/ProductInventory";
-import ProductWarehouseStock from "@/components/products/details/ProductWarehouseStock";
 import ProductPricing from "@/components/products/details/ProductPricing";
 import ProductRelated from "@/components/products/details/ProductRelated";
 import ProductMeta from "@/components/products/details/ProductMeta";
@@ -18,6 +17,7 @@ const ProductDetailsCompact = ({ product, onUpdate }: ProductDetailsCompactProps
 			<div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 				<ProductGeneralInfo product={product} onUpdate={onUpdate as any} />
 				<ProductInventory
+					productId={product.id}
 					stockQuantity={product.stock_quantity}
 					minStockLevel={product.min_stock_level}
 					stockThreshold={product.stock_threshold}
@@ -25,15 +25,6 @@ const ProductDetailsCompact = ({ product, onUpdate }: ProductDetailsCompactProps
 					supplier={product.suppliers || null}
 					lastPurchaseDate={product.last_purchase_date || null}
 					onUpdate={onUpdate as any}
-				/>
-			</div>
-
-			{/* Row 1.5: Warehouse Stock */}
-			<div>
-				<ProductWarehouseStock
-					productId={product.id}
-					totalStock={product.stock_quantity}
-					unit={product.unit}
 				/>
 			</div>
 

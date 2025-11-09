@@ -159,7 +159,7 @@ const SuppliersTableRow = ({
 
       {/* İşlemler */}
       <TableCell className="py-2 px-2">
-        <div className="flex justify-end space-x-0.5">
+        <div className="flex justify-center space-x-2">
           <Button
             variant="ghost"
             size="icon"
@@ -167,9 +167,23 @@ const SuppliersTableRow = ({
               e.stopPropagation();
               navigate(`/suppliers/${supplier.id}/edit`);
             }}
-            className="h-4 w-4 hover:bg-blue-100"
+            className="h-8 w-8"
+            title="Düzenle"
           >
-            <Edit2 className="h-2.5 w-2.5" />
+            <Edit2 className="h-4 w-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(supplier);
+            }}
+            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+            title="Sil"
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
           
           <DropdownMenu>
@@ -178,18 +192,13 @@ const SuppliersTableRow = ({
                 variant="ghost"
                 size="icon"
                 onClick={(e) => e.stopPropagation()}
-                className="h-4 w-4 hover:bg-blue-100"
+                className="h-8 w-8"
+                title="Daha Fazla"
               >
-                <MoreHorizontal className="h-2.5 w-2.5" />
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/suppliers/${supplier.id}`);
-              }}>
-                Detayları Görüntüle
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation();
                 onStatusChange(supplier.id, 'aktif');
@@ -207,16 +216,6 @@ const SuppliersTableRow = ({
                 onStatusChange(supplier.id, 'potansiyel');
               }}>
                 Potansiyel Yap
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(supplier);
-                }}
-                className="text-red-600"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Sil
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

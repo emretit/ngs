@@ -1,6 +1,6 @@
 
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Phone, Mail, Edit2, Trash2, MoreHorizontal } from "lucide-react";
+import { Phone, Mail, Edit2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Supplier } from "@/types/supplier";
 
@@ -64,10 +64,10 @@ const SupplierTableRow = ({ supplier }: SupplierTableRowProps) => {
           {supplier.balance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
         </span>
       </TableCell>
-      <TableCell className="px-4 py-3 text-right">
-        <div className="flex items-center justify-end gap-2">
+      <TableCell className="px-4 py-3 text-center">
+        <div className="flex items-center justify-center space-x-2">
           <button 
-            className="p-1 hover:bg-gray-100 rounded"
+            className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/suppliers/${supplier.id}/edit`);
@@ -76,16 +76,10 @@ const SupplierTableRow = ({ supplier }: SupplierTableRowProps) => {
             <Edit2 className="h-4 w-4 text-gray-500" />
           </button>
           <button 
-            className="p-1 hover:bg-gray-100 rounded"
+            className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded text-red-500 hover:text-red-600 hover:bg-red-50"
             onClick={(e) => e.stopPropagation()}
           >
-            <Trash2 className="h-4 w-4 text-gray-500" />
-          </button>
-          <button 
-            className="p-1 hover:bg-gray-100 rounded"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MoreHorizontal className="h-4 w-4 text-gray-500" />
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </TableCell>

@@ -53,13 +53,15 @@ const SalesInvoicesTableHeader = ({
             key={column.id}
             className={cn(
               "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide",
-              column.id === 'tarih' || column.id === 'tutar' || column.id === 'tip' || column.id === 'e_fatura' ? "text-center" : "text-left",
-              column.id === 'actions' && "text-right",
+              column.id === 'tarih' || column.id === 'tutar' || column.id === 'tip' || column.id === 'e_fatura' || column.id === 'actions' ? "text-center" : "text-left",
               column.sortable && "cursor-pointer hover:bg-slate-200"
             )}
             onClick={column.sortable ? () => onSort(column.id) : undefined}
           >
-            <div className="flex items-center gap-1 justify-center">
+            <div className={cn(
+              "flex items-center gap-1",
+              column.id === 'actions' || column.id === 'tarih' || column.id === 'tutar' || column.id === 'tip' || column.id === 'e_fatura' ? "justify-center" : "justify-start"
+            )}>
               {column.id === 'fatura_no' && <span className="text-lg mr-2">📄</span>}
               {column.id === 'musteri' && <span className="text-lg mr-2">👤</span>}
               {column.id === 'tarih' && <span className="text-lg mr-2">📅</span>}

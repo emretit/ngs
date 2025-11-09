@@ -13,9 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Download, FileText, MoreHorizontal } from "lucide-react";
+import { Edit2, Trash2, Download, FileText, MoreHorizontal } from "lucide-react";
 import EInvoiceStatusBadge from "./EInvoiceStatusBadge";
 import SalesInvoicesTableHeader from "./table/SalesInvoicesTableHeader";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface SalesInvoicesTableProps {
   invoices: any[];
@@ -273,8 +274,8 @@ const SalesInvoicesTable = ({
                   }}
                 />
               </TableCell>
-              <TableCell className="py-2 px-3">
-                <div className="flex justify-end space-x-0.5">
+              <TableCell className="py-2 px-3 text-center">
+                <div className="flex justify-center space-x-2">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -282,18 +283,41 @@ const SalesInvoicesTable = ({
                       e.stopPropagation();
                       onSelectInvoice(invoice);
                     }}
-                    className="h-4 w-4 hover:bg-blue-100"
+                    className="h-8 w-8"
+                    title="Düzenle"
                   >
-                    <Eye className="h-2.5 w-2.5" />
+                    <Edit2 className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
+                  
+                  <Button
+                    variant="ghost"
                     size="icon"
-                    onClick={(e) => e.stopPropagation()}
-                    className="h-4 w-4 hover:bg-gray-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: onDelete eklenmeli
+                    }}
+                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    title="Sil"
                   >
-                    <MoreHorizontal className="h-2.5 w-2.5" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-8 w-8"
+                        title="Daha Fazla"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {/* Dropdown içeriği eklenecek */}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </TableCell>
             </TableRow>

@@ -15,7 +15,7 @@ const InventoryTransactionsTableSkeleton = () => {
           <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🏭 Depo</TableHead>
           <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">📊 Ürün Sayısı</TableHead>
           <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🟢 Durum</TableHead>
-          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">⚙️ İşlemler</TableHead>
+          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">⚙️ İşlemler</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -42,9 +42,10 @@ const InventoryTransactionsTableSkeleton = () => {
             <TableCell className="py-2 px-3">
               <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse" />
             </TableCell>
-            <TableCell className="py-2 px-3 text-right">
-              <div className="flex items-center justify-end gap-0.5">
-                <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+            <TableCell className="py-2 px-3 text-center">
+              <div className="flex items-center justify-center gap-2">
+                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
+                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
               </div>
             </TableCell>
           </TableRow>

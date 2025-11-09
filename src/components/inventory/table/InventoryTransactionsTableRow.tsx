@@ -1,6 +1,6 @@
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Eye } from "lucide-react";
+import { Edit2, MoreHorizontal, Printer, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { InventoryTransaction } from "@/types/inventory";
@@ -8,12 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft, ClipboardList } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 interface InventoryTransactionsTableRowProps {
   transaction: InventoryTransaction;
   onSelect?: (transaction: InventoryTransaction) => void;
   onSelectToggle?: (transaction: InventoryTransaction) => void;
   onView: (transaction: InventoryTransaction) => void;
+  onEdit?: (transaction: InventoryTransaction) => void;
+  onDelete?: (transaction: InventoryTransaction) => void;
+  onPrint?: (transaction: InventoryTransaction) => void;
   isSelected?: boolean;
 }
 
@@ -22,6 +26,9 @@ const InventoryTransactionsTableRow = ({
   onSelect, 
   onSelectToggle,
   onView,
+  onEdit,
+  onDelete,
+  onPrint,
   isSelected = false
 }: InventoryTransactionsTableRowProps) => {
   const getTypeBadge = () => {
@@ -139,18 +146,63 @@ const InventoryTransactionsTableRow = ({
 
       {/* İşlemler */}
       <TableCell className="py-2 px-3">
-        <div className="flex justify-end space-x-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onView(transaction);
-            }}
-            className="h-4 w-4 hover:bg-blue-100"
-          >
-            <Eye className="h-2.5 w-2.5" />
-          </Button>
+        <div className="flex justify-center space-x-2">
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(transaction);
+              }}
+              className="h-8 w-8"
+              title="Düzenle"
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(transaction);
+              }}
+              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+              title="Sil"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+          
+          {(onPrint) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-8 w-8"
+                  title="Daha Fazla"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onPrint && (
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    onPrint(transaction);
+                  }}>
+                    <Printer className="h-4 w-4 mr-2" />
+                    Yazdır
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </TableCell>
     </TableRow>

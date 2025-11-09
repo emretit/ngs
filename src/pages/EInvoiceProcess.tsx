@@ -1048,7 +1048,7 @@ export default function EInvoiceProcess() {
                         <TableHead className="min-w-48">Fatura Kalemi</TableHead>
                         <TableHead className="w-20 text-right">Miktar</TableHead>
                         <TableHead className="min-w-64">Eşleşen Ürün</TableHead>
-                        <TableHead className="w-32">İşlemler</TableHead>
+                        <TableHead className="w-32 text-center">İşlemler</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

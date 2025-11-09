@@ -124,15 +124,58 @@ export const useCreateGRN = () => {
 
       if (linesError) throw linesError;
 
-      // Update PO line received quantities
+      // Update PO line received quantities and update warehouse stock
       for (const line of formData.lines) {
         if (line.qc_status !== 'rejected') {
+          // Update PO line received quantity
           await supabase
             .from('purchase_order_items')
             .update({
               received_quantity: supabase.sql`received_quantity + ${line.received_quantity}`,
             })
             .eq('id', line.po_line_id);
+
+          // Get product_id from purchase_order_items
+          const { data: poLine } = await supabase
+            .from('purchase_order_items')
+            .select('product_id')
+            .eq('id', line.po_line_id)
+            .single();
+
+          // If product_id exists and warehouse_id is provided, update warehouse_stock
+          if (poLine?.product_id && formData.warehouse_id && line.received_quantity > 0) {
+            // Check if warehouse_stock record exists
+            const { data: existingStock } = await supabase
+              .from('warehouse_stock')
+              .select('id, quantity')
+              .eq('product_id', poLine.product_id)
+              .eq('warehouse_id', formData.warehouse_id)
+              .eq('company_id', profile.company_id)
+              .maybeSingle();
+
+            if (existingStock) {
+              // Update existing stock
+              await supabase
+                .from('warehouse_stock')
+                .update({
+                  quantity: supabase.sql`quantity + ${line.received_quantity}`,
+                  last_transaction_date: new Date().toISOString()
+                })
+                .eq('id', existingStock.id);
+            } else {
+              // Insert new stock record
+              await supabase
+                .from('warehouse_stock')
+                .insert({
+                  company_id: profile.company_id,
+                  product_id: poLine.product_id,
+                  warehouse_id: formData.warehouse_id,
+                  quantity: line.received_quantity,
+                  reserved_quantity: 0,
+                  last_transaction_date: new Date().toISOString()
+                });
+            }
+          }
         }
       }
 
@@ -156,6 +199,9 @@ export const useCreateGRN = () => {
           .update({ status: 'partial_received' })
           .eq('id', formData.po_id);
       }
+
+      // Invalidate products queries to refresh stock
+      queryClient.invalidateQueries({ queryKey: ['products'] });
 
       return grn;
     },

@@ -198,7 +198,7 @@ const SupplierInvoicesTab = ({ supplierId, supplierName }: SupplierInvoicesTabPr
                       <TableHead>Tutar</TableHead>
                       <TableHead>Durum</TableHead>
                       <TableHead>Para Birimi</TableHead>
-                      <TableHead>İşlemler</TableHead>
+                      <TableHead className="text-center">İşlemler</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -229,12 +229,14 @@ const SupplierInvoicesTab = ({ supplierId, supplierName }: SupplierInvoicesTabPr
                         <TableCell>
                           <Badge variant="outline">{invoice.currency}</Badge>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center space-x-2">
                             <Button
                               variant="ghost"
-                              size="sm"
+                              size="icon"
                               onClick={() => handleInvoiceClick(invoice.id, 'purchase')}
+                              className="h-8 w-8"
+                              title="Detayları Görüntüle"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -276,7 +278,7 @@ const SupplierInvoicesTab = ({ supplierId, supplierName }: SupplierInvoicesTabPr
                       <TableHead>Tutar</TableHead>
                       <TableHead>Durum</TableHead>
                       <TableHead>Para Birimi</TableHead>
-                      <TableHead>İşlemler</TableHead>
+                      <TableHead className="text-center">İşlemler</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

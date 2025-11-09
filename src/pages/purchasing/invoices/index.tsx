@@ -94,7 +94,7 @@ export default function VendorInvoicesList() {
               <TableHead>Para Birimi</TableHead>
               <TableHead>Bağlı PO</TableHead>
               <TableHead>Güncelleme</TableHead>
-              <TableHead className="w-[100px]">İşlemler</TableHead>
+              <TableHead className="w-[100px] text-center">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,17 +128,19 @@ export default function VendorInvoicesList() {
                   <TableCell>{invoice.currency}</TableCell>
                   <TableCell>{invoice.po?.order_number || '-'}</TableCell>
                   <TableCell>{format(new Date(invoice.updated_at), 'dd.MM.yyyy')}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/vendor-invoices/${invoice.id}`);
-                      }}
-                    >
-                      Detay
-                    </Button>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/vendor-invoices/${invoice.id}`);
+                        }}
+                      >
+                        Detay
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

@@ -31,6 +31,7 @@ export const useProductFormActions = (
       
       if (isEditing && productId) {
         // Sadece veritabanında mevcut olan kolonları gönder
+        // Stock artık warehouse_stock tablosunda tutulduğu için products tablosunda güncellenmiyor
         const updateData: any = {
           name: preparedData.name,
           description: preparedData.description || null,
@@ -38,7 +39,7 @@ export const useProductFormActions = (
           barcode: preparedData.barcode || null,
           price: preparedData.price,
           discount_rate: preparedData.discount_rate || 0,
-          stock_quantity: preparedData.stock_quantity || 0,
+          stock_quantity: 0, // Products tablosunda stok artık kullanılmıyor
           min_stock_level: preparedData.min_stock_level || 0,
           stock_threshold: preparedData.stock_threshold || preparedData.min_stock_level || 0,
           tax_rate: preparedData.tax_rate,
@@ -120,9 +121,15 @@ export const useProductFormActions = (
           updated_at: new Date().toISOString()
         };
 
+        // Stock artık warehouse_stock tablosunda tutulduğu için products tablosuna 0 olarak kaydediyoruz
+        const insertDataWithoutStock = {
+          ...insertData,
+          stock_quantity: 0 // Products tablosunda stok artık kullanılmıyor
+        };
+
         const { data, error } = await supabase
           .from("products")
-          .insert(insertData)
+          .insert(insertDataWithoutStock)
           .select();
 
         if (error) {
@@ -142,6 +149,45 @@ export const useProductFormActions = (
           
           showError(errorMessage);
           throw error;
+        }
+
+        // Eğer stok miktarı varsa, warehouse_stock tablosuna ekle
+        if (data && data.length > 0 && preparedData.stock_quantity > 0 && preparedData.company_id) {
+          const productId = data[0].id;
+          
+          // Company'nin Ana Depo'sunu bul
+          const { data: warehouses, error: warehouseError } = await supabase
+            .from("warehouses")
+            .select("id")
+            .eq("company_id", preparedData.company_id)
+            .eq("warehouse_type", "main")
+            .eq("is_active", true)
+            .limit(1)
+            .maybeSingle();
+
+          if (!warehouseError && warehouses) {
+            // Ana Depo'ya stok ekle
+            const { error: stockError } = await supabase
+              .from("warehouse_stock")
+              .insert({
+                company_id: preparedData.company_id,
+                product_id: productId,
+                warehouse_id: warehouses.id,
+                quantity: preparedData.stock_quantity || 0,
+                reserved_quantity: 0,
+                last_transaction_date: new Date().toISOString()
+              });
+
+            if (stockError) {
+              console.error("Error adding stock to warehouse:", stockError);
+              // Hata olsa bile ürün oluşturuldu, sadece stok eklenemedi
+              showWarning("Ürün oluşturuldu ancak stok eklenirken bir hata oluştu. Lütfen stok girişi yapın.");
+            }
+          } else {
+            // Ana Depo bulunamadı, uyarı ver
+            console.warn("Ana Depo bulunamadı, stok eklenemedi");
+            showWarning("Ürün oluşturuldu ancak stok eklenemedi. Lütfen stok girişi yapın.");
+          }
         }
 
         showSuccess("Ürün başarıyla oluşturuldu", { duration: 900 });

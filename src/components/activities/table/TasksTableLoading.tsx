@@ -45,8 +45,8 @@ const TasksTableLoading = () => {
               <span>Durum</span>
             </div>
           </TableHead>
-          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">
-            <div className="flex items-center justify-end gap-1">
+          <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
+            <div className="flex items-center justify-center gap-1">
               <span className="text-lg mr-2">⚙️</span>
               <span>İşlemler</span>
             </div>
@@ -62,7 +62,7 @@ const TasksTableLoading = () => {
             <TableCell className="p-4"><Skeleton className="h-4 w-20" /></TableCell>
             <TableCell className="p-4"><Skeleton className="h-4 w-32" /></TableCell>
             <TableCell className="p-4"><Skeleton className="h-4 w-16" /></TableCell>
-            <TableCell className="p-4 text-right"><Skeleton className="h-4 w-4" /></TableCell>
+            <TableCell className="p-4 text-center"><Skeleton className="h-4 w-4 mx-auto" /></TableCell>
           </TableRow>
         ))}
       </TableBody>

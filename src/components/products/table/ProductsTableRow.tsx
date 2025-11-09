@@ -73,15 +73,11 @@ const ProductsTableRow = ({
             <span className="text-xs font-medium text-gray-900">{product.stock_quantity}</span>
             <span className="text-xs text-gray-500">{product.unit}</span>
           </div>
-          <div className="flex items-center justify-end gap-1">
-            {product.stock_quantity <= 0 ? (
-              <Badge variant="destructive" className="text-xs">Stokta Yok</Badge>
-            ) : product.stock_quantity <= product.min_stock_level ? (
+          {product.stock_quantity > 0 && product.stock_quantity <= product.min_stock_level && (
+            <div className="flex items-center justify-end gap-1">
               <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-800 border-yellow-200">Az Stok</Badge>
-            ) : (
-              <Badge variant="outline" className="text-xs bg-green-50 text-green-800 border-green-200">Stokta</Badge>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </TableCell>
 
@@ -105,22 +101,24 @@ const ProductsTableRow = ({
 
       {/* İşlemler */}
       <TableCell className="py-2 px-3">
-        <div className="flex justify-end space-x-0.5">
+        <div className="flex justify-center space-x-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={(e) => onEdit(product.id, e)}
-            className="h-4 w-4 hover:bg-blue-100"
+            className="h-8 w-8"
+            title="Düzenle"
           >
-            <Edit className="h-2.5 w-2.5" />
+            <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-4 w-4 text-red-500 hover:text-red-600 hover:bg-red-50"
+            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
             onClick={(e) => onDelete(product, e)}
+            title="Sil"
           >
-            <Trash className="h-2.5 w-2.5" />
+            <Trash className="h-4 w-4" />
           </Button>
         </div>
       </TableCell>

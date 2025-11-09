@@ -155,7 +155,7 @@ export function VendorContactsManager({ vendorId }: VendorContactsManagerProps) 
               <TableHead>E-posta</TableHead>
               <TableHead>Telefon</TableHead>
               <TableHead>Rol</TableHead>
-              <TableHead className="text-right">İşlemler</TableHead>
+              <TableHead className="text-center">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -168,19 +168,23 @@ export function VendorContactsManager({ vendorId }: VendorContactsManagerProps) 
                 <TableCell>{contact.email || '-'}</TableCell>
                 <TableCell>{contact.phone || '-'}</TableCell>
                 <TableCell>{contact.role || '-'}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                <TableCell className="text-center">
+                  <div className="flex justify-center space-x-2">
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={() => handleOpenDialog(contact)}
+                      className="h-8 w-8"
+                      title="Düzenle"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={() => handleDeleteClick(contact)}
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      title="Sil"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Clock, AlertCircle, User, MapPin, Search, Filter, ChevronUp, ChevronDown, Calendar, Trash2, Edit, Eye } from "lucide-react";
+import { Users, Clock, AlertCircle, User, MapPin, Search, Filter, ChevronUp, ChevronDown, Calendar, Trash2, Edit } from "lucide-react";
 import ServiceViewToggle from "@/components/service/ServiceViewToggle";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -536,8 +536,8 @@ const ServicePage = () => {
                               {service.service_due_date ? formatDate(service.service_due_date) : 'Tarih belirtilmemiş'}
                             </div>
                           </TableCell>
-                          <TableCell className="px-4 py-4 text-right">
-                            <div className="flex justify-end gap-2">
+                          <TableCell className="px-4 py-4 text-center">
+                            <div className="flex justify-center space-x-2">
                               {/* Düzenle Butonu */}
                               <Button
                                 variant="ghost"
@@ -546,21 +546,10 @@ const ServicePage = () => {
                                   e.stopPropagation();
                                   handleSelectRequest(service);
                                 }}
+                                className="h-8 w-8"
                                 title="Düzenle"
                               >
                                 <Edit className="h-4 w-4" />
-                              </Button>
-                              {/* Detay Butonu */}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSelectRequest(service);
-                                }}
-                                title="Detayları Görüntüle"
-                              >
-                                <Eye className="h-4 w-4" />
                               </Button>
                               {/* Silme Butonu */}
                               <Button
@@ -570,7 +559,7 @@ const ServicePage = () => {
                                   e.stopPropagation();
                                   handleDeleteService(service);
                                 }}
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                                 title="Sil"
                               >
                                 <Trash2 className="h-4 w-4" />

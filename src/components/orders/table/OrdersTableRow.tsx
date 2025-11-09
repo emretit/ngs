@@ -4,7 +4,6 @@ import { Order, OrderStatus } from "@/types/orders";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { 
-  Eye, 
   Edit, 
   MoreHorizontal, 
   Trash2, 
@@ -159,15 +158,16 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
       </TableCell>
       <TableCell className="text-center p-4 text-sm">{formatDate(order.order_date)}</TableCell>
       <TableCell className="text-center p-4 text-sm">{formatDate(order.delivery_date)}</TableCell>
-      <TableCell className="p-4 text-right">
-        <div className="flex items-center justify-end space-x-2">
+      <TableCell className="p-4 text-center">
+        <div className="flex items-center justify-center space-x-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleEdit}
             className="h-8 w-8"
+            title="Düzenle"
           >
-            <Eye className="h-4 w-4" />
+            <Edit className="h-4 w-4" />
           </Button>
           
           <DropdownMenu>
@@ -177,13 +177,6 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleEdit}>
-                <Edit className="h-4 w-4 mr-2" />
-                Düzenle
-              </DropdownMenuItem>
-              
-              <DropdownMenuSeparator />
-              
               <DropdownMenuItem onClick={handleConvertToInvoice}>
                 <Receipt className="h-4 w-4 mr-2" />
                 Faturaya Çevir

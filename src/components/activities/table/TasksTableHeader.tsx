@@ -54,8 +54,8 @@ const TasksTableHeader: React.FC<TasksTableHeaderProps> = ({
         {renderSortableHeader("Sorumlu", "assignee")}
         {renderSortableHeader("İlişkili Öğe", "related_item")}
         {renderSortableHeader("Durum", "status")}
-        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">
-          <div className="flex items-center justify-end gap-1">
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
+          <div className="flex items-center justify-center gap-1">
             <span className="text-lg mr-2">⚙️</span>
             <span>İşlemler</span>
           </div>

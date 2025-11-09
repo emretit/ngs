@@ -77,7 +77,7 @@ export default function GRNsList() {
               <TableHead>Durum</TableHead>
               <TableHead>Teslim Tarihi</TableHead>
               <TableHead>Teslim Alan</TableHead>
-              <TableHead className="w-[100px]">İşlemler</TableHead>
+              <TableHead className="w-[100px] text-center">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -102,17 +102,19 @@ export default function GRNsList() {
                     {format(new Date(grn.received_date), 'dd.MM.yyyy HH:mm')}
                   </TableCell>
                   <TableCell>{grn.received_by_user?.email || '-'}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/purchase-grns/${grn.id}`);
-                      }}
-                    >
-                      Detay
-                    </Button>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/purchase-grns/${grn.id}`);
+                        }}
+                      >
+                        Detay
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

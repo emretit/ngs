@@ -106,6 +106,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
 
     setIsSaving(true);
     try {
+      // Stock artık warehouse_stock tablosunda tutulduğu için products tablosuna 0 olarak kaydediyoruz
       const { data: newProduct, error } = await supabase
         .from("products")
         .insert({
@@ -120,7 +121,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
           product_type: "physical",
           status: "active",
           is_active: true,
-          stock_quantity: 0,
+          stock_quantity: 0, // Products tablosunda stok artık kullanılmıyor
           min_stock_level: 0,
           stock_threshold: 0,
           company_id: userProfile.company_id,

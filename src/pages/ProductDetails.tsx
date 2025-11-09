@@ -17,6 +17,17 @@ const ProductDetails = () => {
     queryKey: ["product", id],
     queryFn: async () => {
       if (!id) return null;
+      
+      // Önce kullanıcının company_id'sini al
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      const companyId = profile?.company_id;
+
       const { data: productData, error } = await supabase
         .from("products")
         .select(`
@@ -35,6 +46,20 @@ const ProductDetails = () => {
       }
       
       if (!productData) return null;
+
+      // Warehouse_stock tablosundan toplam stok miktarını çek
+      let stockQuantity = 0;
+      if (companyId) {
+        const { data: stockData } = await supabase
+          .from("warehouse_stock")
+          .select("quantity")
+          .eq("product_id", id)
+          .eq("company_id", companyId);
+
+        if (stockData) {
+          stockQuantity = stockData.reduce((sum, stock) => sum + Number(stock.quantity || 0), 0);
+        }
+      }
       
       const transformedData: Product = {
         ...productData,
@@ -43,7 +68,8 @@ const ProductDetails = () => {
         related_products: [],
         product_categories: productData.product_categories || null,
         suppliers: null,
-        stock_threshold: productData.stock_threshold || productData.min_stock_level
+        stock_threshold: productData.stock_threshold || productData.min_stock_level,
+        stock_quantity: stockQuantity // Warehouse_stock'tan gelen toplam stok
       };
       return transformedData;
     },

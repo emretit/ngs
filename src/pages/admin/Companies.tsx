@@ -67,7 +67,7 @@ const Companies = () => {
               <TableHead>Domain</TableHead>
               <TableHead>Durum</TableHead>
               <TableHead>Oluşturulma</TableHead>
-              <TableHead className="text-right">İşlemler</TableHead>
+              <TableHead className="text-center">İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -94,16 +94,18 @@ const Companies = () => {
                 <TableCell>
                   {new Date(company.created_at).toLocaleDateString('tr-TR')}
                 </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(`/admin/companies/${company.id}`)}
-                    className="gap-2"
-                  >
-                    <Eye className="h-4 w-4" />
-                    Detay
-                  </Button>
+                <TableCell className="text-center">
+                  <div className="flex justify-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/admin/companies/${company.id}`)}
+                      className="gap-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Detay
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

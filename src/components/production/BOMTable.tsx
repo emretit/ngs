@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Settings, Package, MoreHorizontal, Edit, Trash2, Copy } from "lucide-react";
+import { Settings, Package, MoreHorizontal, Edit, Trash2, Copy } from "lucide-react";
 import { BOM } from "@/types/production";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
@@ -54,7 +54,7 @@ const BOMTable = ({
             <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Versiyon</TableHead>
             <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Durum</TableHead>
             <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Son Güncelleme</TableHead>
-            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-right">İşlemler</TableHead>
+            <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">İşlemler</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -94,7 +94,7 @@ const BOMTable = ({
           <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Versiyon</TableHead>
           <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Durum</TableHead>
           <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">Son Güncelleme</TableHead>
-          <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-right">İşlemler</TableHead>
+          <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">İşlemler</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -131,60 +131,57 @@ const BOMTable = ({
                 ? format(new Date(bom.updated_at), "dd MMM yyyy", { locale: tr })
                 : '-'}
             </TableCell>
-            <TableCell className="text-right">
-              <div className="flex justify-end items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onSelectBOM(bom)}
-                  className="h-8 w-8 p-0"
-                  title="Detayları Görüntüle"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    {onEditBOM && (
-                      <DropdownMenuItem onClick={() => onEditBOM(bom)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Düzenle
-                      </DropdownMenuItem>
-                    )}
-                    
-                    {onDuplicateBOM && (
+            <TableCell className="text-center">
+              <div className="flex justify-center items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                {onEditBOM && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEditBOM(bom)}
+                    className="h-8 w-8"
+                    title="Düzenle"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {onDeleteBOM && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (confirm('Ürün reçetesini silmek istediğinizden emin misiniz?')) {
+                        onDeleteBOM(bom.id);
+                      }
+                    }}
+                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    title="Sil"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                {onDuplicateBOM && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Daha Fazla"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem onClick={() => onDuplicateBOM(bom)}>
                         <Copy className="h-4 w-4 mr-2" />
                         Kopyala
                       </DropdownMenuItem>
-                    )}
-                    
-                    {onDeleteBOM && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (confirm('Ürün reçetesini silmek istediğinizden emin misiniz?')) {
-                              onDeleteBOM(bom.id);
-                            }
-                          }}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Sil
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </TableCell>
           </TableRow>

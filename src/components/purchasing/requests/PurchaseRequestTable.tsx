@@ -2,7 +2,7 @@ import React from "react";
 import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileText, Building2, AlertCircle, User, DollarSign, Calendar, Settings, Eye } from "lucide-react";
+import { FileText, Building2, AlertCircle, User, DollarSign, Calendar, Settings, Edit2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
 
@@ -81,8 +81,8 @@ const PurchaseRequestTable = ({ requests, isLoading, onRequestSelect, onStatusCh
                 <span>Tahmini Tutar</span>
               </div>
             </TableHead>
-            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">
-              <div className="flex items-center justify-end gap-2">
+            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+              <div className="flex items-center justify-center gap-2">
                 <Settings className="h-4 w-4" />
                 <span>İşlemler</span>
               </div>
@@ -161,8 +161,8 @@ const PurchaseRequestTable = ({ requests, isLoading, onRequestSelect, onStatusCh
               <span>Tahmini Tutar</span>
             </div>
           </TableHead>
-          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-right">
-            <div className="flex items-center justify-end gap-2">
+          <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">
+            <div className="flex items-center justify-center gap-2">
               <Settings className="h-4 w-4" />
               <span>İşlemler</span>
             </div>
@@ -225,18 +225,34 @@ const PurchaseRequestTable = ({ requests, isLoading, onRequestSelect, onStatusCh
               <TableCell className="text-sm text-center font-semibold py-3 px-2">
                 ₺{estimatedTotal.toFixed(2)}
               </TableCell>
-              <TableCell className="text-right py-3 px-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/purchase-requests/${req.id}`);
-                  }}
-                  className="h-8 w-8 p-0"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
+              <TableCell className="text-center py-3 px-2">
+                <div className="flex justify-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/purchase-requests/${req.id}`);
+                    }}
+                    className="h-8 w-8"
+                    title="Düzenle"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: onDelete eklenmeli
+                    }}
+                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    title="Sil"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           );

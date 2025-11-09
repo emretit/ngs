@@ -17,7 +17,7 @@ const SuppliersTableSkeleton = () => {
           <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-left">🤝 Temsilci</TableHead>
           <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">💰 Bakiye</TableHead>
           <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Oluşturma Tarihi</TableHead>
-          <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-right">⚙️ İşlemler</TableHead>
+          <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-center">⚙️ İşlemler</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -56,8 +56,8 @@ const SuppliersTableSkeleton = () => {
             <TableCell className="py-2 px-2 text-center">
               <div className="h-4 w-20 bg-gray-200 rounded animate-pulse mx-auto" />
             </TableCell>
-            <TableCell className="py-2 px-2 text-right">
-              <div className="flex items-center justify-end gap-2">
+            <TableCell className="py-2 px-2 text-center">
+              <div className="flex items-center justify-center gap-2">
                 <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
                 <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
               </div>

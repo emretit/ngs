@@ -29,28 +29,62 @@ const ProductWarehouseStock = ({
 
       if (!profile?.company_id) return [];
 
-      // Depoları getir
-      const { data: warehouses, error: warehousesError } = await supabase
-        .from("warehouses")
-        .select("id, name, code, warehouse_type")
+      // Warehouse_stock tablosundan gerçek stok verilerini çek
+      const { data: stockData, error: stockError } = await supabase
+        .from("warehouse_stock")
+        .select(`
+          id,
+          quantity,
+          reserved_quantity,
+          available_quantity,
+          last_transaction_date,
+          warehouse_id,
+          warehouses (
+            id,
+            name,
+            code,
+            warehouse_type
+          )
+        `)
+        .eq("product_id", productId)
         .eq("company_id", profile.company_id)
-        .eq("is_active", true)
-        .order("name");
+        .order("warehouses(name)");
 
-      if (warehousesError) throw warehousesError;
+      if (stockError) throw stockError;
 
-      // TODO: inventory_transactions tablosu hazır olduğunda gerçek stok miktarlarını hesapla
-      // Şimdilik her depoda eşit dağılım gösterelim veya toplam stokun bir kısmını gösterelim
-      // Şimdilik sadece depo listesini göster, gerçek stok miktarları inventory_transactions'dan gelecek
-      
-      return (warehouses || []).map((warehouse) => ({
-        warehouse_id: warehouse.id,
-        warehouse_name: warehouse.name,
-        warehouse_code: warehouse.code,
-        warehouse_type: warehouse.warehouse_type,
-        // TODO: Gerçek stok miktarını inventory_transactions'dan hesapla
-        stock_quantity: 0, // Şimdilik 0 göster, gerçek değer inventory_transactions'dan gelecek
-        estimated_stock: null as number | null
+      // Eğer hiç warehouse_stock kaydı yoksa, aktif depoları göster (stok 0 ile)
+      if (!stockData || stockData.length === 0) {
+        const { data: warehouses, error: warehousesError } = await supabase
+          .from("warehouses")
+          .select("id, name, code, warehouse_type")
+          .eq("company_id", profile.company_id)
+          .eq("is_active", true)
+          .order("name");
+
+        if (warehousesError) throw warehousesError;
+
+        return (warehouses || []).map((warehouse) => ({
+          warehouse_id: warehouse.id,
+          warehouse_name: warehouse.name,
+          warehouse_code: warehouse.code,
+          warehouse_type: warehouse.warehouse_type,
+          stock_quantity: 0,
+          reserved_quantity: 0,
+          available_quantity: 0,
+          last_transaction_date: null,
+        }));
+      }
+
+      // Warehouse_stock verilerini formatla
+      return stockData.map((stock) => ({
+        warehouse_id: stock.warehouse_id,
+        warehouse_name: (stock.warehouses as any)?.name || 'Bilinmeyen Depo',
+        warehouse_code: (stock.warehouses as any)?.code,
+        warehouse_type: (stock.warehouses as any)?.warehouse_type,
+        stock_quantity: Number(stock.quantity) || 0,
+        reserved_quantity: Number(stock.reserved_quantity) || 0,
+        available_quantity: Number(stock.available_quantity) || 0,
+        last_transaction_date: stock.last_transaction_date,
       }));
     },
   });
@@ -77,6 +111,7 @@ const ProductWarehouseStock = ({
 
   const warehouses = warehouseStock || [];
   const hasStockData = warehouses.some(w => w.stock_quantity > 0);
+  const totalWarehouseStock = warehouses.reduce((sum, w) => sum + (w.stock_quantity || 0), 0);
 
   return (
     <Card className="rounded-xl">
@@ -100,9 +135,9 @@ const ProductWarehouseStock = ({
               <span className="text-xs font-medium text-gray-700">Toplam Stok</span>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-gray-900">
-                  {totalStock} {unit}
+                  {totalWarehouseStock > 0 ? totalWarehouseStock : totalStock} {unit}
                 </span>
-                {totalStock > 0 ? (
+                {(totalWarehouseStock > 0 || totalStock > 0) ? (
                   <CheckCircle className="h-4 w-4 text-green-600" />
                 ) : (
                   <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -141,33 +176,42 @@ const ProductWarehouseStock = ({
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {warehouse.stock_quantity > 0 ? (
-                      <>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {warehouse.stock_quantity} {unit}
-                        </span>
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-sm text-gray-400">-</span>
-                        <span className="text-xs text-gray-500">
-                          {hasStockData ? 'Stok yok' : 'Hesaplanıyor...'}
-                        </span>
-                      </>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2">
+                      {warehouse.stock_quantity > 0 ? (
+                        <>
+                          <span className="text-sm font-semibold text-gray-900">
+                            {warehouse.stock_quantity} {unit}
+                          </span>
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-sm text-gray-400">0 {unit}</span>
+                        </>
+                      )}
+                    </div>
+                    {warehouse.reserved_quantity > 0 && (
+                      <div className="text-xs text-orange-600">
+                        Rezerve: {warehouse.reserved_quantity} {unit}
+                      </div>
+                    )}
+                    {warehouse.available_quantity !== warehouse.stock_quantity && warehouse.stock_quantity > 0 && (
+                      <div className="text-xs text-blue-600">
+                        Kullanılabilir: {warehouse.available_quantity} {unit}
+                      </div>
                     )}
                   </div>
                 </div>
               ))}
             </div>
 
-            {!hasStockData && warehouses.length > 0 && (
+            {warehouses.length > 0 && totalWarehouseStock === 0 && totalStock === 0 && (
               <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-xs text-blue-700">
                   <AlertTriangle className="h-3 w-3 inline mr-1" />
-                  Depo bazlı stok miktarları henüz hesaplanmıyor. 
-                  Stok işlemleri aktif olduğunda burada görünecek.
+                  Bu ürünün hiçbir deposunda stok bulunmuyor. 
+                  Stok girişi yapıldığında burada görünecek.
                 </p>
               </div>
             )}

@@ -6,10 +6,11 @@ import { Warehouse } from "@/types/warehouse";
 import { InventoryTransaction } from "@/types/inventory";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Warehouse as WarehouseIcon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import WarehouseDetailsHeader from "@/components/warehouses/details/WarehouseDetailsHeader";
+import { WarehouseInfo } from "@/components/warehouses/details/WarehouseInfo";
 import InventoryTransactionsContent from "@/components/inventory/InventoryTransactionsContent";
 import InventoryTransactionsFilterBar from "@/components/inventory/InventoryTransactionsFilterBar";
 import InventoryTransactionsBulkActions from "@/components/inventory/InventoryTransactionsBulkActions";
@@ -221,186 +222,30 @@ const WarehouseDetails = () => {
     );
   }
 
-  const getTypeLabel = (type?: string) => {
-    switch (type) {
-      case 'main':
-        return 'Ana Depo';
-      case 'sub':
-        return 'Alt Depo';
-      case 'virtual':
-        return 'Sanal Depo';
-      case 'transit':
-        return 'Geçici Depo';
-      default:
-        return 'Depo';
-    }
+  const handleEdit = () => {
+    navigate(`/inventory/warehouses/${id}/edit`);
   };
 
-  const getTypeColor = (type?: string) => {
-    switch (type) {
-      case 'main':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'sub':
-        return 'bg-purple-100 text-purple-800 border-purple-300';
-      case 'virtual':
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-      case 'transit':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
+  const handleWarehouseUpdate = (updatedWarehouse: Warehouse) => {
+    // Update handled by query invalidation
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/inventory/warehouses')}
-            className="h-8 w-8 p-0"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white shadow-lg">
-            <WarehouseIcon className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">{warehouse.name}</h1>
-            <p className="text-xs text-muted-foreground/70">
-              Depo bilgileri ve işlem geçmişi
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => navigate(`/inventory/warehouses/${id}/edit`)}
-        >
-          <Edit className="h-4 w-4 mr-2" />
-          Düzenle
-        </Button>
-      </div>
-
-      {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Durum</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge 
-              variant="outline" 
-              className={warehouse.is_active 
-                ? "bg-green-100 text-green-800 border-green-300" 
-                : "bg-gray-100 text-gray-800 border-gray-300"
-              }
-            >
-              {warehouse.is_active ? "Aktif" : "Pasif"}
-            </Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Depo Tipi</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge variant="outline" className={getTypeColor(warehouse.warehouse_type)}>
-              {getTypeLabel(warehouse.warehouse_type)}
-            </Badge>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Toplam İşlem</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{transactionStats.total}</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {transactionStats.completed} tamamlandı
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="info" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="info">Bilgiler</TabsTrigger>
-          <TabsTrigger value="transactions">İşlemler ({transactions.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="info" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Genel Bilgiler</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Depo Adı</label>
-                  <p className="text-sm font-medium">{warehouse.name}</p>
-                </div>
-                {warehouse.code && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Kod</label>
-                    <p className="text-sm font-medium">{warehouse.code}</p>
-                  </div>
-                )}
-                {warehouse.address && (
-                  <div className="col-span-2">
-                    <label className="text-sm font-medium text-muted-foreground">Adres</label>
-                    <p className="text-sm">{warehouse.address}</p>
-                  </div>
-                )}
-                {warehouse.city && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Şehir</label>
-                    <p className="text-sm">{warehouse.city}{warehouse.district ? `, ${warehouse.district}` : ''}</p>
-                  </div>
-                )}
-                {warehouse.phone && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Telefon</label>
-                    <p className="text-sm">{warehouse.phone}</p>
-                  </div>
-                )}
-                {warehouse.email && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">E-posta</label>
-                    <p className="text-sm">{warehouse.email}</p>
-                  </div>
-                )}
-                {warehouse.manager_name && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Sorumlu</label>
-                    <p className="text-sm">{warehouse.manager_name}</p>
-                    {warehouse.manager_phone && (
-                      <p className="text-xs text-muted-foreground">{warehouse.manager_phone}</p>
-                    )}
-                  </div>
-                )}
-                {warehouse.capacity && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Kapasite</label>
-                    <p className="text-sm">{warehouse.capacity} {warehouse.capacity_unit || 'birim'}</p>
-                  </div>
-                )}
-              </div>
-              {warehouse.notes && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Notlar</label>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{warehouse.notes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="transactions" className="space-y-4">
+    <>
+      <WarehouseDetailsHeader
+        warehouse={warehouse}
+        id={id || ''}
+        onEdit={handleEdit}
+        onUpdate={handleWarehouseUpdate}
+      />
+      <div className="space-y-4 mt-4">
+        <WarehouseInfo
+          warehouse={warehouse}
+          onUpdate={handleWarehouseUpdate}
+        />
+        
+        {/* İşlemler Section */}
+        <div className="space-y-4">
           {/* İşlemler Header */}
           <div className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-sm">
             <div className="flex items-center gap-3">
@@ -497,9 +342,9 @@ const WarehouseDetails = () => {
               statusFilter={statusFilter}
             />
           )}
-        </TabsContent>
-      </Tabs>
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
 

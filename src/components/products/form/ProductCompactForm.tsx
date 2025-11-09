@@ -20,8 +20,7 @@ import { UseFormReturn, useWatch } from "react-hook-form";
 import { ProductFormSchema } from "./ProductFormSchema";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle, CheckCircle, AlertTriangle, Package, DollarSign, Archive, Settings, Save, Copy } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertCircle, CheckCircle, AlertTriangle, Package, DollarSign, Archive, Settings } from "lucide-react";
 import CurrencySelect from "./pricing/CurrencySelect";
 import PriceInput from "./pricing/PriceInput";
 import TaxRateSelect from "./pricing/TaxRateSelect";
@@ -43,7 +42,6 @@ interface ProductCompactFormProps {
   isSubmitting: boolean;
   isEditing: boolean;
   productId?: string;
-  onDuplicate: () => void;
 }
 
 const ProductCompactForm = ({ 
@@ -51,8 +49,7 @@ const ProductCompactForm = ({
   onSubmit, 
   isSubmitting, 
   isEditing, 
-  productId, 
-  onDuplicate 
+  productId
 }: ProductCompactFormProps) => {
   // Watch form values for real-time updates
   const watchedValues = useWatch({
@@ -418,20 +415,6 @@ const ProductCompactForm = ({
           </CardContent>
         </Card>
       </div>
-      {/* Duplicate Button - Only show in edit mode */}
-      {isEditing && (
-        <div className="flex items-center justify-end gap-3 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onDuplicate}
-            className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
-          >
-            <Copy className="h-4 w-4" />
-            <span className="font-medium">Kopyala</span>
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

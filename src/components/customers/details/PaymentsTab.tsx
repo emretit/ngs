@@ -28,7 +28,7 @@ export const PaymentsTab = ({ customer }: PaymentsTabProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select('amount, payment_direction, status')
+        .select('amount, payment_direction')
         .eq('customer_id', customer.id);
 
       if (error) throw error;
@@ -36,8 +36,7 @@ export const PaymentsTab = ({ customer }: PaymentsTabProps) => {
       const stats = {
         totalIncoming: 0,
         totalOutgoing: 0,
-        pendingCount: 0,
-        completedCount: 0,
+        totalCount: 0,
       };
 
       data?.forEach(payment => {
@@ -46,12 +45,7 @@ export const PaymentsTab = ({ customer }: PaymentsTabProps) => {
         } else if (payment.payment_direction === 'outgoing') {
           stats.totalOutgoing += Number(payment.amount);
         }
-
-        if (payment.status === 'pending') {
-          stats.pendingCount++;
-        } else if (payment.status === 'completed') {
-          stats.completedCount++;
-        }
+        stats.totalCount++;
       });
 
       return stats;
@@ -134,16 +128,16 @@ export const PaymentsTab = ({ customer }: PaymentsTabProps) => {
               {isLoadingStats ? (
                 <div className="w-8 h-6 bg-gray-200 animate-pulse rounded" />
               ) : (
-                (paymentStats?.pendingCount || 0) + (paymentStats?.completedCount || 0)
+                paymentStats?.totalCount || 0
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground">
               {isLoadingStats ? (
                 <div className="w-20 h-3 bg-gray-200 animate-pulse rounded" />
               ) : (
-                `${paymentStats?.completedCount || 0} tamamlandı, ${paymentStats?.pendingCount || 0} bekliyor`
+                `Toplam ${paymentStats?.totalCount || 0} işlem`
               )}
-            </p>
+            </div>
           </CardContent>
         </Card>
       </div>

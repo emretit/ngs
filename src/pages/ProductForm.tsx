@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText, ArrowLeft, Save } from "lucide-react";
@@ -14,6 +14,19 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const title = id ? "Ürün Düzenle" : "Yeni Ürün Ekle";
+  const [submitForm, setSubmitForm] = useState<(() => void) | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleFormReady = useCallback((submitFn: () => void, submitting: boolean) => {
+    setSubmitForm(() => submitFn);
+    setIsSubmitting(submitting);
+  }, []);
+
+  const handleSaveClick = () => {
+    if (submitForm) {
+      submitForm();
+    }
+  };
   
   return (
     <div>
@@ -49,12 +62,12 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
           {/* Action Buttons */}
           <div className="flex items-center gap-3">
             <Button
-              type="submit"
-              form="product-form"
+              onClick={handleSaveClick}
+              disabled={isSubmitting || !submitForm}
               className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
             >
               <Save className="h-4 w-4" />
-              <span>{id ? "Değişiklikleri Kaydet" : "Kaydet"}</span>
+              <span>{isSubmitting ? "Kaydediliyor..." : id ? "Değişiklikleri Kaydet" : "Kaydet"}</span>
             </Button>
           </div>
         </div>
@@ -62,7 +75,7 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
 
       {/* Main Content */}
       <div className="space-y-4">
-        <ProductFormWrapper />
+        <ProductFormWrapper onFormReady={handleFormReady} />
       </div>
       
       <Toaster />

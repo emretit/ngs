@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError, showWarning } from "@/utils/toastUtils";
 import { ProductFormSchema } from "../ProductFormSchema";
@@ -11,6 +12,7 @@ export const useProductFormActions = (
   setIsSubmitting: (value: boolean) => void
 ) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const onSubmit = async (values: ProductFormSchema, addAnother = false) => {
     setIsSubmitting(true);
@@ -28,15 +30,28 @@ export const useProductFormActions = (
         
       
       if (isEditing && productId) {
-        const updateData = {
-          ...preparedData,
-          // Ek bilgiler - yeni kolonlar
-          max_stock_level: preparedData.max_stock_level || null,
-          weight: preparedData.weight || null,
-          dimensions: preparedData.dimensions || null,
-          warranty_period: preparedData.warranty_period || null,
-          tags: preparedData.tags || null,
-          attachments: preparedData.attachments || [],
+        // Sadece veritabanında mevcut olan kolonları gönder
+        const updateData: any = {
+          name: preparedData.name,
+          description: preparedData.description || null,
+          sku: preparedData.sku || null,
+          barcode: preparedData.barcode || null,
+          price: preparedData.price,
+          discount_rate: preparedData.discount_rate || 0,
+          stock_quantity: preparedData.stock_quantity || 0,
+          min_stock_level: preparedData.min_stock_level || 0,
+          stock_threshold: preparedData.stock_threshold || preparedData.min_stock_level || 0,
+          tax_rate: preparedData.tax_rate,
+          unit: preparedData.unit,
+          is_active: preparedData.is_active,
+          currency: preparedData.currency,
+          category_type: preparedData.category_type,
+          product_type: preparedData.product_type,
+          status: preparedData.status,
+          image_url: preparedData.image_url || null,
+          category_id: preparedData.category_id,
+          supplier_id: preparedData.supplier_id,
+          company_id: preparedData.company_id,
           vat_included: preparedData.vat_included ?? null,
           updated_at: new Date().toISOString()
         };
@@ -57,6 +72,8 @@ export const useProductFormActions = (
             errorMessage = "Belirtilen kategori veya tedarikçi bulunamadı";
           } else if (error.code === "42703") {
             errorMessage = "Veritabanı sütun ismi uyumsuzluğu. Lütfen sistem yöneticinize başvurun.";
+          } else if (error.message) {
+            errorMessage = `${errorMessage}: ${error.message}`;
           }
           
           showError(errorMessage);
@@ -64,43 +81,48 @@ export const useProductFormActions = (
         }
 
         showSuccess("Ürün başarıyla güncellendi", { duration: 900 });
+        
+        // Invalidate products queries to refresh the table
+        await queryClient.invalidateQueries({ queryKey: ["products"] });
+        // Also invalidate the specific product query
+        if (productId) {
+          await queryClient.invalidateQueries({ queryKey: ["product", productId] });
+        }
+        
         navigate(`/products`);
+        return { resetForm: false };
       } else {
         // Create a new product with explicit fields that match the database schema
+        // Sadece veritabanında mevcut olan kolonları gönder
+        const insertData: any = {
+          name: preparedData.name,
+          description: preparedData.description || null,
+          sku: preparedData.sku || null,
+          barcode: preparedData.barcode || null,
+          price: preparedData.price,
+          discount_rate: preparedData.discount_rate || 0,
+          stock_quantity: preparedData.stock_quantity || 0,
+          min_stock_level: preparedData.min_stock_level || 0,
+          stock_threshold: preparedData.stock_threshold || preparedData.min_stock_level || 0,
+          tax_rate: preparedData.tax_rate,
+          unit: preparedData.unit,
+          is_active: preparedData.is_active,
+          currency: preparedData.currency,
+          category_type: preparedData.category_type,
+          product_type: preparedData.product_type,
+          status: preparedData.status,
+          image_url: preparedData.image_url || null,
+          category_id: preparedData.category_id,
+          supplier_id: preparedData.supplier_id,
+          company_id: preparedData.company_id,
+          vat_included: preparedData.vat_included ?? null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
         const { data, error } = await supabase
           .from("products")
-          .insert({
-            name: preparedData.name,
-            description: preparedData.description,
-            sku: preparedData.sku,
-            barcode: preparedData.barcode,
-            price: preparedData.price,
-            discount_rate: preparedData.discount_rate,
-            stock_quantity: preparedData.stock_quantity,
-            min_stock_level: preparedData.min_stock_level,
-            stock_threshold: preparedData.stock_threshold,
-            tax_rate: preparedData.tax_rate,
-            unit: preparedData.unit,
-            is_active: preparedData.is_active,
-            currency: preparedData.currency,
-            category_type: preparedData.category_type,
-            product_type: preparedData.product_type,
-            status: preparedData.status,
-            image_url: preparedData.image_url,
-            category_id: preparedData.category_id,
-            supplier_id: preparedData.supplier_id,
-            company_id: preparedData.company_id,
-            // Ek bilgiler - yeni kolonlar
-            max_stock_level: preparedData.max_stock_level || null,
-            weight: preparedData.weight || null,
-            dimensions: preparedData.dimensions || null,
-            warranty_period: preparedData.warranty_period || null,
-            tags: preparedData.tags || null,
-            attachments: preparedData.attachments || [],
-            vat_included: preparedData.vat_included ?? null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
+          .insert(insertData)
           .select();
 
         if (error) {
@@ -114,6 +136,8 @@ export const useProductFormActions = (
             errorMessage = "Belirtilen kategori veya tedarikçi bulunamadı";
           } else if (error.code === "42703") {
             errorMessage = "Veritabanı sütun ismi uyumsuzluğu. Lütfen sistem yöneticinize başvurun.";
+          } else if (error.message) {
+            errorMessage = `${errorMessage}: ${error.message}`;
           }
           
           showError(errorMessage);
@@ -122,17 +146,29 @@ export const useProductFormActions = (
 
         showSuccess("Ürün başarıyla oluşturuldu", { duration: 900 });
         
+        // Invalidate products queries to refresh the table
+        await queryClient.invalidateQueries({ queryKey: ["products"] });
+        
         if (addAnother) {
           // We'll handle form reset in the component
           return { resetForm: true };
         } else {
           navigate(`/products`);
+          return { resetForm: false };
         }
       }
-      return { resetForm: false };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Submit error:", error);
-      showError("Ürün kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.");
+      let errorMessage = "Ürün kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.";
+      
+      // Daha detaylı hata mesajı göster
+      if (error?.message) {
+        errorMessage = `${errorMessage} (${error.message})`;
+      } else if (error?.code) {
+        errorMessage = `${errorMessage} (Hata kodu: ${error.code})`;
+      }
+      
+      showError(errorMessage);
       return { resetForm: false };
     } finally {
       setIsSubmitting(false);
@@ -171,14 +207,23 @@ export const useProductFormActions = (
 
         if (error) throw error;
 
+        // Invalidate products queries to refresh the table
+        await queryClient.invalidateQueries({ queryKey: ["products"] });
+
         showSuccess("Ürün başarıyla kopyalandı", { duration: 1000 });
         if (data) {
           navigate(`/product-form/${data.id}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error duplicating product:", error);
-      showError("Ürün kopyalanırken bir hata oluştu. Lütfen tekrar deneyin.");
+      let errorMessage = "Ürün kopyalanırken bir hata oluştu. Lütfen tekrar deneyin.";
+      
+      if (error?.message) {
+        errorMessage = `${errorMessage} (${error.message})`;
+      }
+      
+      showError(errorMessage);
     }
   };
 

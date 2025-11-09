@@ -14,7 +14,7 @@ type ToastOptions = {
  * @param options Optional configuration options
  */
 export const showSuccess = (message: string, options?: ToastOptions) => {
-  logger.info(`Success: ${message}`);
+  logger.info(`Success: ${message}`, options);
   return toast({
     title: "Başarılı",
     description: message,

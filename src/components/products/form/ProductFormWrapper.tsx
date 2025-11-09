@@ -4,10 +4,14 @@ import { useProductForm } from "./hooks/useProductForm";
 import { useProductFormActions } from "./hooks/useProductFormActions";
 import ProductCompactForm from "./ProductCompactForm";
 import { Form } from "@/components/ui/form";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { showError, showWarning } from "@/utils/toastUtils";
 
-const ProductFormWrapper = () => {
+interface ProductFormWrapperProps {
+  onFormReady?: (submitFn: () => void, isSubmitting: boolean) => void;
+}
+
+const ProductFormWrapper = ({ onFormReady }: ProductFormWrapperProps) => {
   const { form, isEditing, isSubmitting, setIsSubmitting, productId } = useProductForm();
   const { onSubmit, handleDuplicate } = useProductFormActions(
     isEditing, 
@@ -27,44 +31,57 @@ const ProductFormWrapper = () => {
     return () => subscription.unsubscribe();
   }, [form]);
 
-  const handleSubmit = async (values: any, addAnother = false): Promise<{ resetForm: boolean }> => {
+  const handleSubmit = useCallback(async (values: any, addAnother = false): Promise<{ resetForm: boolean }> => {
+    // Ensure currency is properly set before submission
+    if (!values.currency || values.currency.trim() === "") {
+      values.currency = "TRY";
+    }
+    
     try {
-      // Validate form before submission
-      const isValid = await form.trigger(undefined, { shouldFocus: true });
-      if (!isValid) {
-        showError("Lütfen formdaki hataları düzeltin");
-        return { resetForm: false };
-      }
-      
-      // Ensure currency is properly set before submission
-      if (!values.currency || values.currency.trim() === "") {
-        values.currency = "TRY";
-      }
-      
       const result = await onSubmit(values, addAnother);
-      if (result.resetForm) {
+      if (result?.resetForm) {
         form.reset();
       }
-      return result;
+      return result || { resetForm: false };
     } catch (error) {
       console.error("Submit error:", error);
-      showError("Form işlenirken beklenmeyen bir hata oluştu");
+      // Error handling zaten onSubmit içinde yapılıyor
       return { resetForm: false };
     }
-  };
+  }, [form, onSubmit]);
+
+  // Expose submit function to parent component
+  useEffect(() => {
+    if (onFormReady) {
+      const submitForm = async () => {
+        const isValid = await form.trigger();
+        if (isValid) {
+          form.handleSubmit(async (values) => {
+            await handleSubmit(values, false);
+          })();
+        }
+      };
+      onFormReady(submitForm, isSubmitting);
+    }
+  }, [form, isSubmitting, onFormReady, handleSubmit]);
 
 
   return (
     <div className="w-full">
       <Form {...form}>
-        <form id="product-form" noValidate onSubmit={form.handleSubmit((values) => handleSubmit(values, false))}>
+        <form 
+          id="product-form" 
+          noValidate 
+          onSubmit={form.handleSubmit(async (values) => {
+            await handleSubmit(values, false);
+          })}
+        >
           <ProductCompactForm 
             form={form} 
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             isEditing={isEditing}
             productId={productId}
-            onDuplicate={handleDuplicate}
           />
         </form>
       </Form>

@@ -1,16 +1,22 @@
-import { useParams } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import ProductDetailsHeader from "@/components/products/details/ProductDetailsHeader";
-import ProductDetailsCompact from "@/components/products/details/ProductDetailsCompact";
-import { showSuccess, showError } from "@/utils/toastUtils";
+import { ProductInfo } from "@/components/products/details/ProductInfo";
+import { ProductTabs } from "@/components/products/details/ProductTabs";
+import { showError } from "@/utils/toastUtils";
+
 const ProductDetails = () => {
   const { id } = useParams();
-  const queryClient = useQueryClient();
-  const { data: product, isLoading } = useQuery({
+  const navigate = useNavigate();
+  const [product, setProduct] = useState<Product | null>(null);
+  
+  const { data: fetchedProduct, isLoading, refetch } = useQuery({
     queryKey: ["product", id],
     queryFn: async () => {
+      if (!id) return null;
       const { data: productData, error } = await supabase
         .from("products")
         .select(`
@@ -21,8 +27,15 @@ const ProductDetails = () => {
           )
         `)
         .eq("id", id)
-        .single();
-      if (error) throw error;
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Error fetching product:", error);
+        throw error;
+      }
+      
+      if (!productData) return null;
+      
       const transformedData: Product = {
         ...productData,
         formatted_description: {},
@@ -30,61 +43,86 @@ const ProductDetails = () => {
         related_products: [],
         product_categories: productData.product_categories || null,
         suppliers: null,
-        // Make sure stock_threshold is available, default to min_stock_level if not set
         stock_threshold: productData.stock_threshold || productData.min_stock_level
       };
       return transformedData;
     },
-    meta: {
-      onError: (error: Error) => {
-        console.error("Error fetching product:", error);
-        showError("Ürün bilgilerini alırken bir hata oluştu");
-      }
-    },
-    enabled: !!id
+    enabled: !!id,
   });
-  const updateProductMutation = useMutation({
-    mutationFn: async (updates: Partial<Product>) => {
+
+  const handleEdit = () => {
+    navigate(`/product-form/${id}`);
+  };
+
+  const handleProductUpdate = (updatedProduct: Product) => {
+    setProduct(updatedProduct);
+  };
+
+  const handleUpdate = async (updates: Partial<Product>) => {
+    if (!id) return;
+    
+    try {
       const { error } = await supabase
         .from("products")
         .update(updates)
         .eq("id", id);
+      
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["product", id] });
-      showSuccess("Ürün başarıyla güncellendi", { duration: 1000 });
-    },
-    onError: (error) => {
+      
+      await refetch();
+    } catch (error) {
       console.error("Error updating product:", error);
       showError("Ürün güncellenirken bir hata oluştu");
-    },
-  });
+    }
+  };
+
+  const currentProduct = product || fetchedProduct;
+
   if (isLoading) {
     return (
-    <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 border-4 border-t-blue-600 border-blue-200 rounded-full animate-spin"></div>
+          <span className="text-gray-600">Ürün bilgileri yükleniyor...</span>
         </div>
-  );
+      </div>
+    );
   }
-  if (!product) {
+
+  if (!currentProduct) {
     return (
-    <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Ürün bulunamadı</h2>
-          <p className="text-gray-600">Bu ürün mevcut değil veya silinmiş olabilir.</p>
+      <div className="text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
         </div>
-  );
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Ürün bulunamadı</h2>
+        <p className="text-gray-600">Bu ürün mevcut değil veya silinmiş olabilir.</p>
+      </div>
+    );
   }
+
   return (
-    <div>
-      <ProductDetailsHeader product={product} isLoading={isLoading} />
-      <div className="mt-6">
-        <ProductDetailsCompact
-          product={product}
-          onUpdate={updateProductMutation.mutate}
+    <>
+      <ProductDetailsHeader
+        product={currentProduct}
+        id={id || ''}
+        onEdit={handleEdit}
+        onUpdate={handleProductUpdate}
+      />
+      <div className="space-y-4 mt-4">
+        <ProductInfo
+          product={currentProduct}
+          onUpdate={handleProductUpdate}
+        />
+        <ProductTabs 
+          product={currentProduct} 
+          onUpdate={handleUpdate}
         />
       </div>
-    </div>
+    </>
   );
 };
+
 export default ProductDetails;

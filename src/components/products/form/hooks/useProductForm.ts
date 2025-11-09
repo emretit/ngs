@@ -76,29 +76,36 @@ export const useProductForm = () => {
         if (error) throw error;
 
         if (data) {
-          // Tags array'i string'e çevir (virgülle ayrılmış)
-          const tagsString = Array.isArray(data.tags) && data.tags.length > 0
-            ? data.tags.join(", ")
-            : null;
-
+          // Sadece veritabanında mevcut olan kolonları kullan
           form.reset({
-            ...data,
+            name: data.name || "",
             description: data.description || "",
             sku: data.sku || "",
             barcode: data.barcode || "",
+            price: data.price || 0,
+            discount_rate: data.discount_rate || 0,
+            stock_quantity: data.stock_quantity || 0,
+            min_stock_level: data.min_stock_level || 0,
+            stock_threshold: data.stock_threshold || data.min_stock_level || 0,
+            tax_rate: data.tax_rate || 20,
+            unit: data.unit || "piece",
+            is_active: data.is_active ?? true,
+            currency: data.currency || "TRY",
+            category_type: data.category_type || "product",
+            product_type: data.product_type || "physical",
+            status: data.status || "active",
             image_url: data.image_url || null,
             category_id: data.category_id || "",
             supplier_id: data.supplier_id || "",
-            discount_rate: data.discount_rate || 0,
-            stock_threshold: data.stock_threshold || data.min_stock_level, // Default to min_stock_level if not set
-            // Ek bilgiler - yeni kolonlar
-            max_stock_level: data.max_stock_level || null,
-            weight: data.weight || null,
-            dimensions: data.dimensions || null,
-            warranty_period: data.warranty_period || null,
-            tags: tagsString,
-            attachments: data.attachments || [],
+            company_id: data.company_id || "5a9c24d2-876e-4eb6-aea5-19328bc38a3a",
             vat_included: data.vat_included ?? null,
+            // Veritabanında olmayan kolonlar için default değerler
+            max_stock_level: null,
+            weight: null,
+            dimensions: null,
+            warranty_period: null,
+            tags: null,
+            attachments: [],
           });
         }
       } catch (error) {

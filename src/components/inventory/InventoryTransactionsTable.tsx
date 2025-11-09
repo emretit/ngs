@@ -25,6 +25,11 @@ interface InventoryTransactionsTableProps {
   onSelectTransaction?: (transaction: InventoryTransaction) => void;
   onTransactionSelect?: (transaction: InventoryTransaction) => void;
   selectedTransactions?: InventoryTransaction[];
+  onEdit?: (transaction: InventoryTransaction) => void;
+  onDelete?: (transaction: InventoryTransaction) => void;
+  onApprove?: (transaction: InventoryTransaction) => void;
+  onCancel?: (transaction: InventoryTransaction) => void;
+  onPrint?: (transaction: InventoryTransaction) => void;
 }
 
 const InventoryTransactionsTable = ({
@@ -39,7 +44,12 @@ const InventoryTransactionsTable = ({
   onSortFieldChange,
   onSelectTransaction,
   onTransactionSelect,
-  selectedTransactions = []
+  selectedTransactions = [],
+  onEdit,
+  onDelete,
+  onApprove,
+  onCancel,
+  onPrint,
 }: InventoryTransactionsTableProps) => {
 
   const handleTransactionSelectToggle = useCallback((transaction: InventoryTransaction) => {
@@ -106,6 +116,11 @@ const InventoryTransactionsTable = ({
                   onSelectToggle={handleTransactionSelectToggle}
                   onView={onSelectTransaction}
                   isSelected={isSelected}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onApprove={onApprove}
+                  onCancel={onCancel}
+                  onPrint={onPrint}
                 />
               );
             })

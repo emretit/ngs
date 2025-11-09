@@ -223,6 +223,16 @@ export const navItems = [
         label: "Ürünler",
       },
       {
+        path: "/inventory/transactions",
+        icon: ArrowRightLeft,
+        label: "Stok Hareketleri",
+      },
+      {
+        path: "/inventory/counts",
+        icon: ClipboardList,
+        label: "Stok Sayımları",
+      },
+      {
         path: "/inventory/warehouses",
         icon: Warehouse,
         label: "Depolar",

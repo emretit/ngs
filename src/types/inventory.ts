@@ -1,4 +1,4 @@
-// Inventory Transactions (Depo İşlemleri) için TypeScript type tanımları
+// Inventory Transactions (Stok Hareketleri) için TypeScript type tanımları
 
 export type TransactionType = 
   | 'giris'      // Stok Girişi
@@ -114,6 +114,7 @@ export interface InventoryTransactionFilters {
   transaction_type?: TransactionType | 'all';
   status?: TransactionStatus | 'all';
   warehouse_id?: string | 'all';
+  product_id?: string;
   search?: string;
   dateRange?: {
     from: Date | null;

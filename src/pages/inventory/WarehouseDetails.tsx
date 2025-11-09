@@ -249,7 +249,7 @@ const WarehouseDetails = () => {
           {/* İşlemler Header */}
           <div className="flex items-center justify-between p-3 bg-white rounded-md border border-gray-200 shadow-sm">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold">Depo İşlemleri</h2>
+              <h2 className="text-lg font-semibold">Stok Hareketleri</h2>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">
                   Toplam: {transactionStats.total}

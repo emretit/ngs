@@ -1,70 +1,45 @@
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Edit2, MoreHorizontal, Printer, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { InventoryTransaction } from "@/types/inventory";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft, ClipboardList } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import {
+  MoreHorizontal,
+  Edit2,
+  Trash2,
+  CheckCircle2,
+  Printer,
+  XCircle
+} from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 
-interface InventoryTransactionsTableRowProps {
+interface InventoryCountsTableRowProps {
   transaction: InventoryTransaction;
-  onSelect?: (transaction: InventoryTransaction) => void;
-  onSelectToggle?: (transaction: InventoryTransaction) => void;
   onView: (transaction: InventoryTransaction) => void;
   onEdit?: (transaction: InventoryTransaction) => void;
   onDelete?: (transaction: InventoryTransaction) => void;
   onApprove?: (transaction: InventoryTransaction) => void;
   onCancel?: (transaction: InventoryTransaction) => void;
   onPrint?: (transaction: InventoryTransaction) => void;
-  isSelected?: boolean;
 }
 
-const InventoryTransactionsTableRow = ({ 
+const InventoryCountsTableRow = ({ 
   transaction, 
-  onSelect, 
-  onSelectToggle,
   onView,
   onEdit,
   onDelete,
   onApprove,
   onCancel,
   onPrint,
-  isSelected = false
-}: InventoryTransactionsTableRowProps) => {
-  const getTypeBadge = () => {
-    switch (transaction.transaction_type) {
-      case 'giris':
-        return <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">⬇️ Giriş</Badge>;
-      case 'cikis':
-        return <Badge variant="outline" className="border-red-500 text-red-700 bg-red-50">⬆️ Çıkış</Badge>;
-      case 'transfer':
-        return <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">↔️ Transfer</Badge>;
-      case 'sayim':
-        return <Badge variant="outline" className="border-purple-500 text-purple-700 bg-purple-50">📋 Sayım</Badge>;
-      default:
-        return <Badge variant="outline">{transaction.transaction_type}</Badge>;
-    }
-  };
-
-  const getTypeIcon = () => {
-    switch (transaction.transaction_type) {
-      case 'giris':
-        return <ArrowDownToLine className="h-3 w-3 text-green-600" />;
-      case 'cikis':
-        return <ArrowUpFromLine className="h-3 w-3 text-red-600" />;
-      case 'transfer':
-        return <ArrowRightLeft className="h-3 w-3 text-blue-600" />;
-      case 'sayim':
-        return <ClipboardList className="h-3 w-3 text-purple-600" />;
-      default:
-        return null;
-    }
-  };
-
+}: InventoryCountsTableRowProps) => {
   const getStatusBadge = () => {
     switch (transaction.status) {
       case 'pending':
@@ -82,32 +57,13 @@ const InventoryTransactionsTableRow = ({
 
   return (
     <TableRow 
-      className={`cursor-pointer hover:bg-blue-50 h-8 ${isSelected ? 'bg-blue-50' : ''}`}
+      className="cursor-pointer hover:bg-purple-50 h-8"
       onClick={() => onView(transaction)}
     >
-      {/* Checkbox */}
-      {onSelectToggle && (
-        <TableCell className="py-2 px-3">
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={() => onSelectToggle(transaction)}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </TableCell>
-      )}
-
-      {/* İşlem No */}
+      {/* Sayım No */}
       <TableCell className="py-2 px-3">
         <div className="text-xs font-medium text-gray-900">
           {transaction.transaction_number || 'N/A'}
-        </div>
-      </TableCell>
-
-      {/* İşlem Tipi */}
-      <TableCell className="py-2 px-3">
-        <div className="flex items-center gap-2">
-          {getTypeIcon()}
-          {getTypeBadge()}
         </div>
       </TableCell>
 
@@ -148,6 +104,11 @@ const InventoryTransactionsTableRow = ({
         {getStatusBadge()}
       </TableCell>
 
+      {/* Referans */}
+      <TableCell className="py-2 px-3 text-xs text-gray-600">
+        {transaction.reference_number || '-'}
+      </TableCell>
+
       {/* İşlemler */}
       <TableCell className="py-2 px-3">
         <div className="flex justify-center space-x-2">
@@ -183,11 +144,11 @@ const InventoryTransactionsTableRow = ({
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => e.stopPropagation()}
+              <Button 
+                variant="ghost" 
+                size="icon" 
                 className="h-8 w-8"
+                onClick={(e) => e.stopPropagation()}
                 title="Daha Fazla"
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -239,5 +200,4 @@ const InventoryTransactionsTableRow = ({
   );
 };
 
-export default InventoryTransactionsTableRow;
-
+export default InventoryCountsTableRow;

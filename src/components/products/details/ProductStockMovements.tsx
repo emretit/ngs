@@ -1,11 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, ArrowRightLeft, ArrowDown, ArrowUp, Package } from "lucide-react";
+import { TrendingUp, ArrowRightLeft, ArrowDown, ArrowUp, Package, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface ProductStockMovementsProps {
   productId: string;
@@ -27,6 +29,7 @@ interface StockMovement {
 }
 
 export const ProductStockMovements = ({ productId }: ProductStockMovementsProps) => {
+  const navigate = useNavigate();
   const { data: movements = [], isLoading } = useQuery({
     queryKey: ['product-stock-movements', productId],
     queryFn: async () => {
@@ -140,12 +143,23 @@ export const ProductStockMovements = ({ productId }: ProductStockMovementsProps)
     return (
       <Card className="rounded-lg border border-gray-200">
         <CardHeader className="pb-2 pt-3">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-            </div>
-            Stok Hareketleri
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
+                <TrendingUp className="h-4 w-4 text-blue-600" />
+              </div>
+              Stok Hareketleri
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              onClick={() => navigate(`/inventory/transactions?product_id=${productId}`)}
+            >
+              Tümünü Gör
+              <ExternalLink className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
@@ -160,12 +174,23 @@ export const ProductStockMovements = ({ productId }: ProductStockMovementsProps)
   return (
     <Card className="rounded-lg border border-gray-200">
       <CardHeader className="pb-2 pt-3">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
-            <TrendingUp className="h-4 w-4 text-blue-600" />
-          </div>
-          Stok Hareketleri
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
+              <TrendingUp className="h-4 w-4 text-blue-600" />
+            </div>
+            Stok Hareketleri
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            onClick={() => navigate(`/inventory/transactions?product_id=${productId}`)}
+          >
+            Tümünü Gör
+            <ExternalLink className="h-3 w-3 ml-1" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="max-h-[400px] overflow-y-auto">

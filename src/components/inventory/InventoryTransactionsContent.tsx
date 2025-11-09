@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { InventoryTransaction } from "@/types/inventory";
 import InventoryTransactionsTable from "./InventoryTransactionsTable";
-import InventoryTransactionsGrid from "./InventoryTransactionsGrid";
+import InventoryTransactionDetailPanel from "./InventoryTransactionDetailPanel";
 
 interface InventoryTransactionsContentProps {
   transactions: InventoryTransaction[];
@@ -22,6 +22,11 @@ interface InventoryTransactionsContentProps {
   searchQuery?: string;
   typeFilter?: string;
   statusFilter?: string;
+  onEdit?: (transaction: InventoryTransaction) => void;
+  onDelete?: (transaction: InventoryTransaction) => void;
+  onApprove?: (transaction: InventoryTransaction) => void;
+  onCancel?: (transaction: InventoryTransaction) => void;
+  onPrint?: (transaction: InventoryTransaction) => void;
 }
 
 const InventoryTransactionsContent = ({
@@ -41,8 +46,15 @@ const InventoryTransactionsContent = ({
   selectedTransactions = [],
   searchQuery,
   typeFilter,
-  statusFilter
+  statusFilter,
+  onEdit,
+  onDelete,
+  onApprove,
+  onCancel,
+  onPrint,
 }: InventoryTransactionsContentProps) => {
+  const [selectedTransaction, setSelectedTransaction] = useState<InventoryTransaction | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Intersection Observer for infinite scroll
@@ -65,6 +77,19 @@ const InventoryTransactionsContent = ({
     return () => observer.disconnect();
   }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
 
+  const handleSelectTransaction = (transaction: InventoryTransaction) => {
+    setSelectedTransaction(transaction);
+    setIsDetailOpen(true);
+    if (onSelectTransaction) {
+      onSelectTransaction(transaction);
+    }
+  };
+
+  const handleCloseDetail = () => {
+    setIsDetailOpen(false);
+    setSelectedTransaction(null);
+  };
+
   if (error) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -76,33 +101,25 @@ const InventoryTransactionsContent = ({
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="pb-6">
-        {activeView === "grid" ? (
-          <InventoryTransactionsGrid
-            transactions={transactions}
-            isLoading={isLoading}
-            isLoadingMore={isLoadingMore}
-            hasNextPage={hasNextPage}
-            loadMore={loadMore}
-            onSelectTransaction={onSelectTransaction}
-            onTransactionSelect={onTransactionSelect}
-            selectedTransactions={selectedTransactions}
-          />
-        ) : (
-          <InventoryTransactionsTable
-            transactions={transactions}
-            isLoading={isLoading}
-            isLoadingMore={isLoadingMore}
-            hasNextPage={hasNextPage}
-            loadMore={loadMore}
-            totalCount={totalCount || 0}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSortFieldChange={onSortFieldChange}
-            onSelectTransaction={onSelectTransaction}
-            onTransactionSelect={onTransactionSelect}
-            selectedTransactions={selectedTransactions}
-          />
-        )}
+        <InventoryTransactionsTable
+          transactions={transactions}
+          isLoading={isLoading}
+          isLoadingMore={isLoadingMore}
+          hasNextPage={hasNextPage}
+          loadMore={loadMore}
+          totalCount={totalCount || 0}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSortFieldChange={onSortFieldChange}
+          onSelectTransaction={handleSelectTransaction}
+          onTransactionSelect={onTransactionSelect}
+          selectedTransactions={selectedTransactions}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onApprove={onApprove}
+          onCancel={onCancel}
+          onPrint={onPrint}
+        />
         
         {/* Infinite scroll trigger */}
         {!isLoading && hasNextPage && (
@@ -122,6 +139,13 @@ const InventoryTransactionsContent = ({
             Tüm işlemler yüklendi
         </div>
         )}
+        
+        {/* Detail Panel */}
+        <InventoryTransactionDetailPanel
+          transaction={selectedTransaction}
+          isOpen={isDetailOpen}
+          onClose={handleCloseDetail}
+        />
       </div>
     </div>
   );

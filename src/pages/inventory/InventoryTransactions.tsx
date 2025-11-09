@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect, memo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import InventoryTransactionsHeader from "@/components/inventory/InventoryTransactionsHeader";
 import InventoryTransactionsFilterBar from "@/components/inventory/InventoryTransactionsFilterBar";
 import InventoryTransactionsContent from "@/components/inventory/InventoryTransactionsContent";
 import InventoryTransactionsBulkActions from "@/components/inventory/InventoryTransactionsBulkActions";
+import StockEntryExitDialog from "@/components/inventory/StockEntryExitDialog";
 import { useInventoryTransactions } from "@/hooks/useInventoryTransactions";
 import { InventoryTransaction } from "@/types/inventory";
 import { toast } from "sonner";
@@ -16,8 +16,7 @@ interface InventoryTransactionsProps {
 
 const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransactionsProps) => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [activeView, setActiveView] = useState<"grid" | "table">("table");
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -25,11 +24,16 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   
+  // URL'den product_id parametresini al
+  const productIdFromUrl = searchParams.get("product_id");
+  
   // Debounced search query
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"transaction_number" | "transaction_date" | "transaction_type" | "status">("transaction_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedTransactions, setSelectedTransactions] = useState<InventoryTransaction[]>([]);
+  const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
+  const [stockDialogType, setStockDialogType] = useState<'giris' | 'cikis'>('giris');
 
   // Debounce search query
   useEffect(() => {
@@ -43,9 +47,11 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
   const { 
     transactions, 
     isLoading, 
-    stats,
     filters, 
     setFilters,
+    refetch,
+    approveTransaction,
+    cancelTransaction,
   } = useInventoryTransactions();
 
   // Filtreleri hook'a aktar
@@ -55,13 +61,14 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
       transaction_type: typeFilter === "all" ? undefined : typeFilter as any,
       status: statusFilter === "all" ? undefined : statusFilter as any,
       warehouse_id: warehouseFilter === "all" ? undefined : warehouseFilter,
+      product_id: productIdFromUrl || undefined,
       search: debouncedSearchQuery,
       dateRange: {
         from: startDate || null,
         to: endDate || null,
       },
     }));
-  }, [debouncedSearchQuery, typeFilter, statusFilter, warehouseFilter, startDate, endDate, setFilters]);
+  }, [debouncedSearchQuery, typeFilter, statusFilter, warehouseFilter, startDate, endDate, productIdFromUrl, setFilters]);
 
   const handleSort = useCallback((field: "transaction_number" | "transaction_date" | "transaction_type" | "status") => {
     if (field === sortField) {
@@ -73,8 +80,9 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
   }, [sortField, sortDirection]);
 
   const handleTransactionClick = useCallback((transaction: InventoryTransaction) => {
-    navigate(`/inventory/transactions/${transaction.id}`);
-  }, [navigate]);
+    // Panel açılması InventoryTransactionsContent içinde handleSelectTransaction ile yapılıyor
+    // Bu fonksiyon artık kullanılmıyor ama prop olarak geçiliyor, boş bırakıyoruz
+  }, []);
 
   const handleTransactionSelect = useCallback((transaction: InventoryTransaction) => {
     setSelectedTransactions(prev => {
@@ -104,12 +112,68 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
     }
   }, [selectedTransactions]);
 
-  const handleCreateTransaction = useCallback((type: string) => {
-    navigate(`/inventory/transactions/${type}/new`);
+  const handleCreateTransaction = useCallback((type: 'giris' | 'cikis' | 'transfer' | 'sayim') => {
+    if (type === 'giris' || type === 'cikis') {
+      setStockDialogType(type);
+      setIsStockDialogOpen(true);
+    } else {
+      // Transfer ve sayım için sayfa navigasyonu
+      navigate(`/inventory/transactions/${type}/new`);
+    }
   }, [navigate]);
 
+  const handleEdit = useCallback((transaction: InventoryTransaction) => {
+    const type = transaction.transaction_type;
+    if (type === 'giris' || type === 'cikis') {
+      // Giriş/Çıkış için dialog aç
+      setStockDialogType(type);
+      setIsStockDialogOpen(true);
+    } else {
+      navigate(`/inventory/transactions/${type}/${transaction.id}/edit`);
+    }
+  }, [navigate]);
+
+  const handleDelete = useCallback(async (transaction: InventoryTransaction) => {
+    if (window.confirm(`${transaction.transaction_number} numaralı işlemi silmek istediğinize emin misiniz?`)) {
+      try {
+        // TODO: Delete functionality - şimdilik sadece toast göster
+        toast.error("Silme işlemi yakında eklenecek");
+      } catch (error) {
+        toast.error("İşlem silinirken hata oluştu");
+      }
+    }
+  }, []);
+
+  const handleApprove = useCallback(async (transaction: InventoryTransaction) => {
+    try {
+      await approveTransaction(transaction.id);
+      toast.success("İşlem onaylandı ve stok güncellendi");
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "İşlem onaylanırken hata oluştu");
+    }
+  }, [approveTransaction, refetch]);
+
+  const handleCancel = useCallback(async (transaction: InventoryTransaction) => {
+    if (window.confirm(`${transaction.transaction_number} numaralı işlemi iptal etmek istediğinize emin misiniz?`)) {
+      try {
+        await cancelTransaction(transaction.id);
+        toast.success("İşlem iptal edildi");
+        refetch();
+      } catch (error: any) {
+        toast.error(error.message || "İşlem iptal edilirken hata oluştu");
+      }
+    }
+  }, [cancelTransaction, refetch]);
+
+  const handlePrint = useCallback((transaction: InventoryTransaction) => {
+    // TODO: Print functionality
+    toast.info("Yazdırma işlemi yakında eklenecek");
+  }, []);
+
+
   // İlk yükleme sırasında loading göster (hook'lardan SONRA kontrol et)
-  if (isLoading && (!transactions || !stats)) {
+  if (isLoading && !transactions) {
     return (
       <div className="flex items-center justify-center h-[400px]">
         <div className="text-center space-y-4">
@@ -124,10 +188,6 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
     <div className="space-y-2">
       {/* Header */}
       <InventoryTransactionsHeader 
-        stats={stats}
-        transactions={transactions || []}
-        activeView={activeView}
-        setActiveView={setActiveView}
         onCreateTransaction={handleCreateTransaction}
       />
       
@@ -163,21 +223,36 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
         </div>
       ) : (
       <InventoryTransactionsContent
-          transactions={transactions || []}
+        transactions={transactions || []}
         isLoading={isLoading}
         error={null}
-          activeView={activeView}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSortFieldChange={handleSort}
+        activeView="table"
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSortFieldChange={handleSort}
         onSelectTransaction={handleTransactionClick}
-          onTransactionSelect={handleTransactionSelect}
-          selectedTransactions={selectedTransactions}
+        onTransactionSelect={handleTransactionSelect}
+        selectedTransactions={selectedTransactions}
         searchQuery={searchQuery}
         typeFilter={typeFilter}
         statusFilter={statusFilter}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onApprove={handleApprove}
+        onCancel={handleCancel}
+        onPrint={handlePrint}
       />
       )}
+
+      {/* Stok Giriş/Çıkış Dialog */}
+      <StockEntryExitDialog
+        isOpen={isStockDialogOpen}
+        onClose={() => setIsStockDialogOpen(false)}
+        transactionType={stockDialogType}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
     </div>
   );
 };

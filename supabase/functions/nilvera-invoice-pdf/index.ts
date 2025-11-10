@@ -150,9 +150,22 @@ serve(async (req: Request) => {
       console.error('❌ Status:', pdfResponse.status);
       console.error('❌ Status Text:', pdfResponse.statusText);
       console.error('❌ URL:', pdfApiUrl);
-      console.error('❌ Error Response:', errorText);
       console.error('❌ Invoice ID:', invoiceId);
       console.error('❌ Invoice Type:', invoiceType);
+      
+      // Check if errorText is actually base64 PDF data
+      // Base64 encoded "%PDF" starts with "JVBERi0"
+      if (errorText && errorText.startsWith('JVBERi0')) {
+        console.log('✅ Error response contains base64 PDF data!');
+        console.log('✅ PDF base64 length:', errorText.length);
+        
+        const size = Math.ceil(errorText.length * 3 / 4);
+        const responseBody = `{"success":true,"pdfData":"${errorText}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi (non-200 response)"}`;
+        
+        return new Response(responseBody, {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       
       let errorMessage = `PDF indirme başarısız (HTTP ${pdfResponse.status})`;
       if (pdfResponse.status === 404) {
@@ -164,7 +177,9 @@ serve(async (req: Request) => {
           const errorJson = JSON.parse(errorText);
           errorMessage = errorJson.message || errorJson.error || errorMessage;
         } catch {
-          errorMessage = `${errorMessage}: ${errorText.substring(0, 200)}`;
+          // Limit error text length to avoid huge error messages
+          const preview = errorText.length > 200 ? errorText.substring(0, 200) + '...' : errorText;
+          errorMessage = `${errorMessage}: ${preview}`;
         }
       }
       

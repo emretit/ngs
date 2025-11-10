@@ -5,12 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Plus, History } from "lucide-react";
 import { Product } from "@/types/product";
 import { formatCurrency } from "@/utils/formatters";
 import { useCurrencyManagement } from "@/components/proposals/form/items/hooks/useCurrencyManagement";
 import CurrencySelector from "@/components/proposals/form/items/product-dialog/components/price-section/CurrencySelector";
 import QuantityDepoSection from "@/components/proposals/form/items/product-dialog/components/QuantityDepoSection";
+import ProductPriceHistoryDialog from "./ProductPriceHistoryDialog";
 
 interface ProductDetailsModalProps {
   open: boolean;
@@ -59,6 +61,7 @@ const ProductDetailsModal = ({
   const [isManualPriceEdit, setIsManualPriceEdit] = useState(false);
   const [selectedDepo, setSelectedDepo] = useState("");
   const [manualExchangeRate, setManualExchangeRate] = useState<number | null>(null);
+  const [priceHistoryOpen, setPriceHistoryOpen] = useState(false);
 
   // Currency management
   const {
@@ -206,27 +209,33 @@ const ProductDetailsModal = ({
   // Don't render if neither product nor existingData is provided
   if (!product && !existingData) return null;
 
+  const dialogTitle = (
+    <div className="flex items-center justify-between w-full gap-3">
+      <span className="truncate">{product ? product.name : (existingData ? existingData.name : "Ürün Detayları")}</span>
+      {product?.sku && (
+        <span className="text-sm font-normal text-gray-500 whitespace-nowrap flex-shrink-0">
+          {product.sku}
+        </span>
+      )}
+    </div>
+  );
+
   return (
     <UnifiedDialog
       isOpen={open}
       onClose={() => onOpenChange(false)}
-      title={product ? product.name : (existingData ? existingData.name : "Ürün Detayları")}
+      title={dialogTitle}
       maxWidth="lg"
       headerColor="blue"
       className="max-h-[90vh] overflow-y-auto"
     >
-      {product?.sku && (
-        <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
-          <p className="text-xs text-blue-700">Ürün Kodu: {product.sku}</p>
-        </div>
-      )}
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* Warnings Section */}
         {(product && showStockWarning) || (product && showCurrencyWarning) ? (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {product && showStockWarning && (
-              <Alert variant="destructive" className="py-2">
+              <Alert variant="destructive" className="py-1">
                 <AlertDescription className="text-xs">
                   <strong>Stok Uyarısı!</strong> Seçilen miktar ({quantity}) mevcut stoktan ({product.stock_quantity}) fazla.
                 </AlertDescription>
@@ -234,7 +243,7 @@ const ProductDetailsModal = ({
             )}
 
             {product && showCurrencyWarning && (
-              <Alert className="py-2">
+              <Alert className="py-1">
                 <AlertDescription className="text-xs">
                   <strong>Para Birimi Uyarısı!</strong> Bu ürün kartındaki fiyat ({originalCurrency}) ile seçilen para birimi ({selectedCurrency}) farklı.
                   Günlük kur üzerinden otomatik olarak fiyat hesaplanmıştır. Dilerseniz hesaplanan rakamı değiştirebilirsiniz.
@@ -245,14 +254,14 @@ const ProductDetailsModal = ({
         ) : null}
 
         {/* Main Form Section - Compact Layout */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Miktar + Depo Seçimi */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <Label htmlFor="quantity" className="text-xs font-medium text-gray-600">
                 Miktar
               </Label>
-              <div className="flex gap-2 mt-1">
+              <div className="flex gap-1.5 mt-0.5">
                 <Input
                   id="quantity"
                   type="number"
@@ -311,7 +320,7 @@ const ProductDetailsModal = ({
                 <Label htmlFor="unit_price" className="text-xs font-medium text-gray-600">
                   Birim Fiyat
                 </Label>
-                <div className="flex gap-2 mt-1">
+                <div className="flex gap-1.5 mt-0.5">
                   <Input
                     id="unit_price"
                     type="number"
@@ -348,7 +357,7 @@ const ProductDetailsModal = ({
                 <Label className="text-xs font-medium text-gray-600">
                   1 {selectedCurrency} = ₺
                 </Label>
-                <div className="mt-1">
+                <div className="mt-0.5">
                   <Input
                     type="number"
                     value={currentExchangeRate.toFixed(4)}
@@ -367,12 +376,12 @@ const ProductDetailsModal = ({
           </div>
 
           {/* İndirim ve KDV */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <Label htmlFor="discount" className="text-xs font-medium text-gray-600">
                 İndirim
               </Label>
-              <div className="flex mt-1">
+              <div className="flex mt-0.5">
                 <Input
                   id="discount"
                   type="number"
@@ -403,7 +412,7 @@ const ProductDetailsModal = ({
                 KDV Oranı
               </Label>
               <Select value={(vatRate || 20).toString()} onValueChange={(value) => setVatRate(Number(value))}>
-                <SelectTrigger className="mt-1 h-7 text-xs">
+                <SelectTrigger className="mt-0.5 h-7 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -428,18 +437,33 @@ const ProductDetailsModal = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Açıklama"
               rows={2}
-              className="mt-1 resize-none text-xs"
+              className="mt-0.5 resize-none text-xs"
             />
           </div>
 
           {/* Hesaplama Özeti */}
-          <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-700">Hesaplama Özeti</span>
+              {product?.id && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPriceHistoryOpen(true)}
+                  className="h-6 px-2 text-xs"
+                >
+                  <History className="h-3 w-3 mr-1" />
+                  Fiyat Geçmişi
+                </Button>
+              )}
+            </div>
             {selectedCurrency !== "TRY" && (
-              <div className="text-xs text-muted-foreground mb-2 pb-2 border-b border-gray-300 text-center">
+              <div className="text-xs text-muted-foreground mb-1.5 pb-1.5 border-b border-gray-300 text-center">
                 1 {selectedCurrency} = {currentExchangeRate.toFixed(4)} ₺
               </div>
             )}
-            <div className="text-xs text-gray-600 space-y-1 mb-2">
+            <div className="text-xs text-gray-600 space-y-0.5 mb-1.5">
               <div className="flex justify-between items-center">
                 <span>Ara Toplam:</span>
                 <div className="flex items-center">
@@ -497,7 +521,7 @@ const ProductDetailsModal = ({
                 </div>
               </div>
             </div>
-            <div className="flex justify-between items-center text-sm font-bold pt-2 border-t border-gray-300">
+            <div className="flex justify-between items-center text-sm font-bold pt-1.5 border-t border-gray-300">
               <span className="text-gray-700">TOPLAM</span>
               <div className="flex items-center">
                 <span className="w-24 text-center text-blue-600">
@@ -533,6 +557,16 @@ const ProductDetailsModal = ({
           </UnifiedDialogActionButton>
         </UnifiedDialogFooter>
       </div>
+
+      {/* Fiyat Geçmişi Dialog */}
+      {product?.id && (
+        <ProductPriceHistoryDialog
+          open={priceHistoryOpen}
+          onOpenChange={setPriceHistoryOpen}
+          productId={product.id}
+          productName={product.name}
+        />
+      )}
     </UnifiedDialog>
   );
 };

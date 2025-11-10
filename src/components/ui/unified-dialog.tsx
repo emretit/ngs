@@ -8,7 +8,7 @@ import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 interface UnifiedDialogProps {
   isOpen: boolean;
   onClose: ((open: boolean) => void) | (() => void);
-  title: string;
+  title: string | React.ReactNode;
   children: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl";
   headerColor?: "blue" | "green" | "red" | "yellow" | "purple" | "gray";
@@ -94,13 +94,13 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
           "flex items-center justify-between p-4 border-b bg-gradient-to-r flex-shrink-0",
           headerColorClasses[headerColor]
         )}>
-          <div className="flex items-center space-x-2">
-            <div className={cn("w-2 h-2 rounded-full", dotColorClasses[headerColor])}></div>
-            <DialogPrimitive.Title className="text-lg font-semibold text-gray-900">{title}</DialogPrimitive.Title>
+          <div className="flex items-center space-x-2 flex-1 min-w-0">
+            <div className={cn("w-2 h-2 rounded-full flex-shrink-0", dotColorClasses[headerColor])}></div>
+            <DialogPrimitive.Title className="text-lg font-semibold text-gray-900 truncate">{title}</DialogPrimitive.Title>
           </div>
           {showCloseButton && (
               <DialogPrimitive.Close
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 ml-2"
             >
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -29,35 +29,78 @@ export const useNilveraPdf = () => {
       }
 
       console.log('✅ PDF downloaded successfully, size:', data.size, 'bytes');
+      console.log('📊 Response data:', { 
+        success: data.success, 
+        hasPdfData: !!data.pdfData, 
+        pdfDataLength: data.pdfData?.length,
+        size: data.size,
+        mimeType: data.mimeType 
+      });
 
-      // Convert base64 to blob
-      const pdfData = data.pdfData;
-      const byteCharacters = atob(pdfData);
-      const byteNumbers = new Array(byteCharacters.length);
-      
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
-
-      // Create object URL and open in new tab
-      const url = URL.createObjectURL(blob);
-      const newWindow = window.open(url, '_blank');
-      
-      if (!newWindow) {
-        throw new Error('Pop-up engelleyici nedeniyle yeni sekme açılamadı');
+      if (!data.pdfData) {
+        console.error('❌ PDF verisi yok!', data);
+        throw new Error('PDF verisi alınamadı');
       }
 
-      // Clean up object URL after a delay
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 1000);
-
-      toast.success(`${invoiceType} PDF'i yeni sekmede açıldı`);
+      // Base64 string'i temizle (boşluk, yeni satır karakterleri vs.)
+      const base64Data = data.pdfData.replace(/[\s\n\r]/g, '');
       
-      return { success: true, url };
+      console.log('✅ Base64 data cleaned, length:', base64Data.length);
+      console.log('🔍 Base64 preview (first 100 chars):', base64Data.substring(0, 100));
+
+      // Base64'in geçerli olup olmadığını kontrol et
+      if (base64Data.length === 0) {
+        throw new Error('Base64 verisi boş');
+      }
+
+      // Base64'i binary'ye dönüştür ve blob oluştur
+      try {
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        console.log('✅ Blob created, size:', blob.size, 'bytes');
+        
+        if (blob.size === 0) {
+          throw new Error('Blob boyutu sıfır - PDF verisi geçersiz');
+        }
+
+        // Blob URL oluştur
+        const blobUrl = URL.createObjectURL(blob);
+        console.log('✅ Blob URL created:', blobUrl);
+        
+        // Yeni sekmede aç
+        const newWindow = window.open(blobUrl, '_blank');
+        
+        if (!newWindow) {
+          URL.revokeObjectURL(blobUrl);
+          throw new Error('Pop-up engelleyici nedeniyle yeni sekme açılamadı');
+        }
+
+        // Window kapanınca URL'yi temizle
+        newWindow.addEventListener('beforeunload', () => {
+          URL.revokeObjectURL(blobUrl);
+        });
+        
+        // Güvenlik için 10 dakika sonra da temizle
+        setTimeout(() => {
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch (e) {
+            // URL zaten temizlenmiş olabilir
+          }
+        }, 10 * 60 * 1000);
+
+        toast.success(`${invoiceType} PDF'i yeni sekmede açıldı`);
+        return { success: true, url: blobUrl };
+      } catch (decodeError) {
+        console.error('❌ Base64 decode hatası:', decodeError);
+        throw new Error(`PDF verisi decode edilemedi: ${decodeError instanceof Error ? decodeError.message : 'Bilinmeyen hata'}`);
+      }
 
     } catch (error) {
       console.error('❌ PDF download and open error:', error);

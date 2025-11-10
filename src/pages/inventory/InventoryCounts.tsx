@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, memo } from "react";
+import { useState, useCallback, useEffect, memo, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import InventoryCountsHeader from "@/components/inventory/InventoryCountsHeader";
 import InventoryCountsFilterBar from "@/components/inventory/InventoryCountsFilterBar";
@@ -44,24 +44,10 @@ const InventoryCounts = ({ isCollapsed, setIsCollapsed }: InventoryCountsProps) 
     cancelTransaction,
   } = useInventoryTransactions();
 
-  // İlk yüklemede sayım filtresini set et
+  // Filtreleri hook'a aktar - tek useEffect ile optimize edildi
   useEffect(() => {
     setFilters({
       transaction_type: 'sayim' as any,
-      status: "all",
-      warehouse_id: "all",
-      search: "",
-      dateRange: { from: null, to: null },
-      page: 1,
-      pageSize: 20,
-    });
-  }, [setFilters]);
-  
-  // Filtreleri hook'a aktar
-  useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      transaction_type: 'sayim' as any, // Sadece sayım
       status: statusFilter === "all" ? undefined : statusFilter as any,
       warehouse_id: warehouseFilter === "all" ? undefined : warehouseFilter,
       search: debouncedSearchQuery,
@@ -69,11 +55,10 @@ const InventoryCounts = ({ isCollapsed, setIsCollapsed }: InventoryCountsProps) 
         from: startDate || null,
         to: endDate || null,
       },
-    }));
+      page: 1,
+      pageSize: 20,
+    });
   }, [debouncedSearchQuery, statusFilter, warehouseFilter, startDate, endDate, setFilters]);
-
-  // Hook zaten transaction_type: 'sayim' filtresini uyguluyor, direkt kullan
-  const countTransactions = transactions || [];
 
   const handleSort = useCallback((field: "transaction_number" | "transaction_date" | "status") => {
     if (field === sortField) {
@@ -135,34 +120,37 @@ const InventoryCounts = ({ isCollapsed, setIsCollapsed }: InventoryCountsProps) 
     toast.info("Yazdırma işlemi yakında eklenecek");
   }, []);
 
-  // Filtrelenmiş ve sıralanmış transaction'lar
-  const filteredTransactions = [...countTransactions].sort((a, b) => {
-    let aValue: any;
-    let bValue: any;
+  // Sıralanmış transaction'lar - useMemo ile optimize edildi
+  const sortedTransactions = useMemo(() => {
+    const countTransactions = transactions || [];
+    return [...countTransactions].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
 
-    switch (sortField) {
-      case "transaction_number":
-        aValue = a.transaction_number || "";
-        bValue = b.transaction_number || "";
-        break;
-      case "transaction_date":
-        aValue = new Date(a.transaction_date).getTime();
-        bValue = new Date(b.transaction_date).getTime();
-        break;
-      case "status":
-        aValue = a.status || "";
-        bValue = b.status || "";
-        break;
-      default:
-        return 0;
-    }
+      switch (sortField) {
+        case "transaction_number":
+          aValue = a.transaction_number || "";
+          bValue = b.transaction_number || "";
+          break;
+        case "transaction_date":
+          aValue = new Date(a.transaction_date).getTime();
+          bValue = new Date(b.transaction_date).getTime();
+          break;
+        case "status":
+          aValue = a.status || "";
+          bValue = b.status || "";
+          break;
+        default:
+          return 0;
+      }
 
-    if (sortDirection === "asc") {
-      return aValue > bValue ? 1 : -1;
-    } else {
-      return aValue < bValue ? 1 : -1;
-    }
-  });
+      if (sortDirection === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [transactions, sortField, sortDirection]);
 
   // İlk yükleme sırasında loading göster
   if (isLoading && !transactions) {
@@ -207,7 +195,7 @@ const InventoryCounts = ({ isCollapsed, setIsCollapsed }: InventoryCountsProps) 
         </div>
       ) : (
         <InventoryCountsContent
-          transactions={filteredTransactions}
+          transactions={sortedTransactions}
           isLoading={isLoading}
           sortField={sortField}
           sortDirection={sortDirection}

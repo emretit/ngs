@@ -129,23 +129,29 @@ serve(async (req) => {
         console.log('📄 PDF download request:', { invoiceId, invoiceType });
 
         // Determine the correct PDF download endpoint based on invoice type
+        // Purchase (gelen) faturalar için: /einvoice/Purchase/{UUID}/pdf
+        // Sale (giden) faturalar için: /einvoice/Sale/{UUID}/pdf
+        const baseUrl = nilveraAuth.test_mode 
+          ? 'https://apitest.nilvera.com' 
+          : 'https://api.nilvera.com';
+        
         let pdfApiUrl;
         if (invoiceType === 'e-fatura') {
-          pdfApiUrl = nilveraAuth.test_mode 
-            ? `https://apitest.nilvera.com/einvoice/Download/${invoiceId}`
-            : `https://api.nilvera.com/einvoice/Download/${invoiceId}`;
+          // Purchase (gelen) faturalar için PDF endpoint
+          pdfApiUrl = `${baseUrl}/einvoice/Purchase/${invoiceId}/pdf`;
         } else if (invoiceType === 'e-arşiv') {
-          pdfApiUrl = nilveraAuth.test_mode 
-            ? `https://apitest.nilvera.com/einvoice/Sale/Download/${invoiceId}`
-            : `https://api.nilvera.com/einvoice/Sale/Download/${invoiceId}`;
+          // Sale (giden) faturalar için PDF endpoint
+          pdfApiUrl = `${baseUrl}/einvoice/Sale/${invoiceId}/pdf`;
         }
+
+        console.log('🌐 PDF API URL:', pdfApiUrl);
 
         if (pdfApiUrl) {
           const pdfResponse = await fetch(pdfApiUrl, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${nilveraAuth.api_key}`,
-              'Accept': 'application/pdf'
+              'Accept': '*/*' // Nilvera API dokümantasyonuna göre
             }
           });
 
@@ -156,11 +162,46 @@ serve(async (req) => {
         }
 
         // Get PDF content as blob
+        const contentType = pdfResponse.headers.get('content-type');
+        console.log('✅ Response Content-Type:', contentType);
+        
         const pdfBlob = await pdfResponse.blob();
-        const pdfArrayBuffer = await pdfBlob.arrayBuffer();
-        const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfArrayBuffer)));
+        console.log('✅ PDF blob received, size:', pdfBlob.size, 'bytes');
+        console.log('✅ PDF blob type:', pdfBlob.type);
+        
+        // Content-Type kontrolü
+        if (contentType && !contentType.includes('pdf') && !contentType.includes('octet-stream')) {
+          console.warn('⚠️ Beklenmeyen Content-Type:', contentType);
+        }
 
-        console.log('✅ PDF downloaded successfully, size:', pdfBlob.size, 'bytes');
+        // PDF'in geçerli olup olmadığını kontrol et
+        if (pdfBlob.size === 0) {
+          throw new Error('PDF dosyası boş');
+        }
+
+        // PDF magic number kontrolü (%PDF)
+        const pdfArrayBuffer = await pdfBlob.arrayBuffer();
+        const pdfHeader = new Uint8Array(pdfArrayBuffer.slice(0, 4));
+        const pdfHeaderString = String.fromCharCode(...pdfHeader);
+        
+        if (pdfHeaderString !== '%PDF') {
+          console.warn('⚠️ PDF header kontrolü başarısız:', pdfHeaderString);
+          // Yine de devam et, bazı PDF'ler farklı header'a sahip olabilir
+        }
+
+        // Base64 encoding - büyük dosyalar için daha güvenli yöntem
+        const uint8Array = new Uint8Array(pdfArrayBuffer);
+        let binaryString = '';
+        const chunkSize = 8192; // 8KB chunks
+        
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+          const chunk = uint8Array.slice(i, i + chunkSize);
+          binaryString += String.fromCharCode(...chunk);
+        }
+        
+        const pdfBase64 = btoa(binaryString);
+
+        console.log('✅ PDF base64 encoded, length:', pdfBase64.length);
 
         return new Response(JSON.stringify({ 
           success: true,

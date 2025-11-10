@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 // Lazy load heavy components
 const ProductSelector = React.lazy(() => import('@/components/proposals/form/ProductSelector'));
 const CompactProductForm = React.lazy(() => import('@/components/einvoice/CompactProductForm'));
@@ -24,6 +25,12 @@ import {
   AlertCircle,
   Save,
   Info,
+  Package,
+  Building2,
+  Calendar,
+  DollarSign,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -122,38 +129,54 @@ const MemoizedTableRow = React.memo(({
   const matchedProduct = getMatchedProduct(item.matched_product_id);
   
   return (
-    <TableRow className="hover:bg-gray-50">
+    <TableRow className="hover:bg-gray-50/50 transition-colors">
       <TableCell className="font-medium text-center">
-        {item.invoice_item.line_number}
+        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600">
+          {item.invoice_item.line_number}
+        </div>
       </TableCell>
       <TableCell>
         <div className="max-w-48">
-          <p className="font-medium text-gray-900 truncate text-sm">
+          <p className="font-medium text-gray-900 truncate text-sm mb-1">
             {item.invoice_item.product_name}
           </p>
-          <p className="text-xs text-gray-500">
-            {item.invoice_item.product_code && `Kod: ${item.invoice_item.product_code} • `}
-            {item.invoice_item.unit_price.toFixed(2)} {invoice.currency} / {item.invoice_item.unit}
-          </p>
+          <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+            {item.invoice_item.product_code && (
+              <span className="px-2 py-0.5 bg-gray-100 rounded">Kod: {item.invoice_item.product_code}</span>
+            )}
+            <span>{item.invoice_item.unit_price.toFixed(2)} {invoice.currency} / {item.invoice_item.unit}</span>
+          </div>
         </div>
       </TableCell>
-      <TableCell className="text-right font-mono text-sm">
-        {item.invoice_item.quantity.toFixed(2)}
+      <TableCell className="text-right">
+        <div className="font-mono text-sm font-semibold text-gray-700">
+          {item.invoice_item.quantity.toFixed(2)}
+        </div>
+        <div className="text-xs text-gray-500 mt-0.5">{item.invoice_item.unit}</div>
       </TableCell>
       <TableCell>
         <div className="space-y-2">
           {matchedProduct ? (
-            <div className="p-2 bg-green-50 border border-green-200 rounded">
-              <p className="font-medium text-green-900 text-sm">
-                {matchedProduct.name}
-              </p>
-              <p className="text-xs text-green-600">
-                SKU: {matchedProduct.sku || '-'} • 
-                {matchedProduct.price.toFixed(2)} {invoice.currency}
-              </p>
+            <div className="p-3 bg-gradient-to-r from-green-50 to-green-100/50 border border-green-200 rounded-lg shadow-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <p className="font-semibold text-green-900 text-sm">
+                      {matchedProduct.name}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs text-green-700 mt-1">
+                    {matchedProduct.sku && (
+                      <span className="px-2 py-0.5 bg-green-200/50 rounded">SKU: {matchedProduct.sku}</span>
+                    )}
+                    <span>{matchedProduct.price.toFixed(2)} {invoice.currency}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
-             <React.Suspense fallback={<div className="text-xs text-gray-500">Yükleniyor...</div>}>
+             <React.Suspense fallback={<div className="text-xs text-gray-500 p-2">Yükleniyor...</div>}>
                <ProductSelector
                  value=""
                  onChange={() => {}}
@@ -166,13 +189,13 @@ const MemoizedTableRow = React.memo(({
           )}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="text-center">
         {item.matched_product_id && (
           <Button
             onClick={() => handleRemoveMatch(index)}
             variant="ghost"
             size="sm"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -242,167 +265,30 @@ export default function EInvoiceProcess() {
   // Load invoice details - MUST be defined before the useEffect that uses it
   const loadInvoiceDetails = useCallback(async () => {
     try {
-      console.log('🔄 Loading invoice details for:', invoiceId);
-      
-      // Şirket bilgisini al
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Kullanıcı bulunamadı");
+      console.log('🔄 Loading invoice details from Nilvera API for:', invoiceId);
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.company_id) {
-        throw new Error("Şirket bilgisi bulunamadı");
-      }
-
-      // Önce veritabanından kontrol et (veriban_incoming_invoices tablosu)
-      const { data: dbInvoice, error: dbError } = await supabase
-        .from('veriban_incoming_invoices')
-        .select('*')
-        .eq('invoice_uuid', invoiceId)
-        .eq('company_id', profile.company_id)
-        .maybeSingle();
-      
-      // Veritabanında fatura bulunduysa
-      if (dbInvoice && !dbError) {
-        console.log('✅ Fatura veritabanından bulundu:', dbInvoice.invoice_number);
-        // Veritabanından bulunan fatura için detayları al
-        const { data: detailsData, error: detailsError } = await supabase.functions.invoke('nilvera-invoice-details', {
-          body: {
-            invoiceId: dbInvoice.invoice_uuid,
-            envelopeUUID: dbInvoice.invoice_uuid
-          }
-        });
-        
-        if (detailsError) throw detailsError;
-        if (!detailsData?.success) {
-          throw new Error(detailsData?.error || 'Fatura detayları alınamadı');
-        }
-        
-        // Veritabanındaki faturayı kullan
-        const invoiceData = {
-          id: dbInvoice.invoice_uuid,
-          invoiceNumber: dbInvoice.invoice_number,
-          supplierName: dbInvoice.customer_title,
-          supplierTaxNumber: dbInvoice.customer_register_number,
-          invoiceDate: dbInvoice.issue_time || new Date().toISOString(),
-          dueDate: null,
-          totalAmount: dbInvoice.payable_amount || 0,
-          taxAmount: dbInvoice.tax_total_amount || 0,
-          currency: dbInvoice.currency_code || 'TRY',
-          envelopeUUID: dbInvoice.invoice_uuid
-        };
-        
-        const items: EInvoiceItem[] = detailsData.invoiceDetails?.items?.map((item: any, index: number) => ({
-          id: `item-${index}`,
-          line_number: index + 1,
-          product_name: item.description || 'Açıklama yok',
-          product_code: item.productCode,
-          quantity: item.quantity || 1,
-          unit: item.unit || 'Adet',
-          unit_price: item.unitPrice || 0,
-          tax_rate: item.taxRate || 18,
-          discount_rate: item.discountRate || 0,
-          line_total: item.totalAmount || 0,
-          tax_amount: item.taxAmount || 0,
-          gtip_code: item.gtipCode,
-          description: item.description
-        })) || [];
-        
-        const supplierDetails = detailsData.invoiceDetails?.supplierInfo || detailsData.invoiceDetails?.companyInfo || {};
-        const invoiceDetails: EInvoiceDetails = {
-          id: invoiceData.id,
-          invoice_number: invoiceData.invoiceNumber,
-          supplier_name: invoiceData.supplierName,
-          supplier_tax_number: invoiceData.supplierTaxNumber,
-          invoice_date: invoiceData.invoiceDate,
-          due_date: invoiceData.dueDate,
-          currency: invoiceData.currency || 'TRY',
-          subtotal: invoiceData.totalAmount - invoiceData.taxAmount,
-          tax_total: invoiceData.taxAmount,
-          total_amount: invoiceData.totalAmount,
-          items,
-          supplier_details: {
-            company_name: supplierDetails.companyName || supplierDetails.name || invoiceData.supplierName,
-            tax_number: supplierDetails.taxNumber || supplierDetails.vkn || invoiceData.supplierTaxNumber,
-            trade_registry_number: supplierDetails.tradeRegistryNumber || supplierDetails.ticaretSicilNo,
-            mersis_number: supplierDetails.mersisNumber || supplierDetails.mersisNo,
-            email: supplierDetails.email || supplierDetails.eMail,
-            phone: supplierDetails.phone || supplierDetails.telefon || supplierDetails.phoneNumber,
-            website: supplierDetails.website || supplierDetails.webSite,
-            fax: supplierDetails.fax || supplierDetails.faks,
-            address: {
-              street: supplierDetails.address?.street || supplierDetails.adres?.sokak || supplierDetails.addressLine,
-              district: supplierDetails.address?.district || supplierDetails.adres?.ilce || supplierDetails.district,
-              city: supplierDetails.address?.city || supplierDetails.adres?.il || supplierDetails.city,
-              postal_code: supplierDetails.address?.postal_code || supplierDetails.adres?.postaKodu || supplierDetails.postalCode,
-              country: supplierDetails.address?.country || supplierDetails.adres?.ulke || supplierDetails.country || 'Türkiye'
-            },
-            bank_info: {
-              bank_name: supplierDetails.bankInfo?.bankName || supplierDetails.banka?.bankaAdi,
-              iban: supplierDetails.bankInfo?.iban || supplierDetails.banka?.iban,
-              account_number: supplierDetails.bankInfo?.accountNumber || supplierDetails.banka?.hesapNo
-            }
-          }
-        };
-        
-        setInvoice(invoiceDetails);
-        setFormData({
-          invoice_date: invoiceDetails.invoice_date.split('T')[0],
-          due_date: invoiceDetails.due_date ? invoiceDetails.due_date.split('T')[0] : '',
-          payment_terms: '30 gün',
-          notes: `E-faturadan aktarılan alış faturası - Orijinal No: ${invoiceDetails.invoice_number}`,
-          project_id: '',
-          expense_category_id: ''
-        });
-        const initialMatching: ProductMatchingItem[] = invoiceDetails.items.map(item => ({
-          invoice_item: item
-        }));
-        setMatchingItems(initialMatching);
-        console.log('✅ Invoice details loaded from database:', invoiceDetails);
-        return;
-      }
-      
-      // Veritabanında bulunamazsa, API'den dinamik tarih aralığı ile ara
-      const now = new Date();
-      const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-      const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-      
-      console.log('🔍 Searching in API with date range:', sixMonthsAgo.toISOString(), 'to', endDate.toISOString());
-      
-      const { data: invoicesData, error: invoicesError } = await supabase.functions.invoke('nilvera-incoming-invoices', {
-        body: { 
-          filters: {
-            startDate: sixMonthsAgo.toISOString(),
-            endDate: endDate.toISOString()
-          }
-        }
-      });
-      if (invoicesError) throw invoicesError;
-      const invoiceData = invoicesData?.invoices?.find((inv: any) => inv.id === invoiceId || inv.invoice_uuid === invoiceId);
-      if (!invoiceData) {
-        toast({
-          title: "Fatura Bulunamadı",
-          description: `Fatura ID: ${invoiceId} ile eşleşen fatura bulunamadı. Lütfen faturanın son 6 ay içinde olduğundan emin olun.`,
-          variant: "destructive",
-        });
-        throw new Error(`Fatura bulunamadı (ID: ${invoiceId}). Son 6 ay içindeki faturalarda arama yapıldı.`);
-      }
-      // Then get detailed invoice items
+      // Direkt olarak fatura detaylarını al - liste aramaya gerek yok çünkü UUID'miz var
       const { data: detailsData, error: detailsError } = await supabase.functions.invoke('nilvera-invoice-details', {
         body: {
-          invoiceId: invoiceData.id,
-          envelopeUUID: invoiceData.envelopeUUID
+          invoiceId: invoiceId,
+          envelopeUUID: invoiceId // UUID aynı zamanda envelopeUUID olabilir
         }
       });
+
       if (detailsError) throw detailsError;
       if (!detailsData?.success) {
         throw new Error(detailsData?.error || 'Fatura detayları alınamadı');
       }
-      const items: EInvoiceItem[] = detailsData.invoiceDetails?.items?.map((item: any, index: number) => ({
+
+      console.log('✅ API Response detailsData:', detailsData);
+
+      // API'den gelen detay verisi
+      const apiInvoiceDetails = detailsData.invoiceDetails;
+
+      console.log('🔍 Full invoice details:', apiInvoiceDetails);
+      console.log('🔍 Available keys in apiInvoiceDetails:', apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : 'null');
+
+      const items: EInvoiceItem[] = apiInvoiceDetails?.items?.map((item: any, index: number) => ({
         id: `item-${index}`,
         line_number: index + 1,
         product_name: item.description || 'Açıklama yok',
@@ -410,32 +296,67 @@ export default function EInvoiceProcess() {
         quantity: item.quantity || 1,
         unit: item.unit || 'Adet',
         unit_price: item.unitPrice || 0,
-        tax_rate: item.taxRate || 18,
+        tax_rate: item.vatRate || item.taxRate || 18,
         discount_rate: item.discountRate || 0,
         line_total: item.totalAmount || 0,
-        tax_amount: item.taxAmount || 0,
+        tax_amount: item.vatAmount || item.taxAmount || 0,
         gtip_code: item.gtipCode,
         description: item.description
       })) || [];
-      // Detaylı tedarikçi bilgilerini çıkar
-      const supplierDetails = detailsData.invoiceDetails?.supplierInfo || detailsData.invoiceDetails?.companyInfo || {};
+
+      // Detaylı tedarikçi bilgilerini çıkar - tüm olası field isimlerini kontrol et
+      const supplierDetails = apiInvoiceDetails?.supplierInfo || apiInvoiceDetails?.companyInfo || apiInvoiceDetails?.SupplierParty || apiInvoiceDetails?.AccountingSupplierParty || {};
       console.log('🔍 Raw supplier details from API:', supplierDetails);
-      console.log('🔍 Full invoice details:', detailsData.invoiceDetails);
+      console.log('🔍 apiInvoiceDetails keys:', apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : 'null');
+      console.log('🔍 SenderTaxNumber:', apiInvoiceDetails?.SenderTaxNumber);
+      console.log('🔍 supplierTaxNumber:', apiInvoiceDetails?.supplierTaxNumber);
+      console.log('🔍 AccountingSupplierParty:', apiInvoiceDetails?.AccountingSupplierParty);
+
+      // Tedarikçi adı için tüm olası alanları kontrol et
+      const supplierName =
+        apiInvoiceDetails?.SenderName ||
+        apiInvoiceDetails?.supplierName ||
+        apiInvoiceDetails?.AccountingSupplierParty?.Party?.PartyName?.Name ||
+        apiInvoiceDetails?.AccountingSupplierParty?.PartyName?.Name ||
+        supplierDetails?.companyName ||
+        supplierDetails?.name ||
+        supplierDetails?.PartyName?.Name ||
+        supplierDetails?.Party?.PartyName?.Name ||
+        'Tedarikçi';
+
+      // Tedarikçi VKN için tüm olası alanları kontrol et
+      const supplierTaxNumber =
+        apiInvoiceDetails?.SenderTaxNumber ||
+        apiInvoiceDetails?.supplierTaxNumber ||
+        apiInvoiceDetails?.SenderIdentifier ||
+        apiInvoiceDetails?.TaxNumber ||
+        apiInvoiceDetails?.AccountingSupplierParty?.Party?.PartyIdentification?.ID ||
+        apiInvoiceDetails?.AccountingSupplierParty?.PartyIdentification?.ID ||
+        apiInvoiceDetails?.AccountingSupplierParty?.Party?.PartyTaxScheme?.TaxScheme?.ID ||
+        supplierDetails?.taxNumber ||
+        supplierDetails?.vkn ||
+        supplierDetails?.VKN ||
+        supplierDetails?.PartyIdentification?.ID ||
+        supplierDetails?.Party?.PartyIdentification?.ID ||
+        '';
+
+      console.log('✅ Extracted supplier info:', { supplierName, supplierTaxNumber });
+
       const invoiceDetails: EInvoiceDetails = {
-        id: invoiceData.id,
-        invoice_number: invoiceData.invoiceNumber,
-        supplier_name: invoiceData.supplierName,
-        supplier_tax_number: invoiceData.supplierTaxNumber,
-        invoice_date: invoiceData.invoiceDate,
-        due_date: invoiceData.dueDate,
-        currency: invoiceData.currency || 'TRY',
-        subtotal: invoiceData.totalAmount - invoiceData.taxAmount,
-        tax_total: invoiceData.taxAmount,
-        total_amount: invoiceData.totalAmount,
+        id: invoiceId,
+        invoice_number: apiInvoiceDetails?.InvoiceNumber || apiInvoiceDetails?.invoiceNumber || apiInvoiceDetails?.ID || invoiceId,
+        supplier_name: supplierName,
+        supplier_tax_number: supplierTaxNumber,
+        invoice_date: apiInvoiceDetails?.IssueDate || apiInvoiceDetails?.invoiceDate || new Date().toISOString(),
+        due_date: apiInvoiceDetails?.dueDate || null,
+        currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TRY',
+        subtotal: parseFloat(apiInvoiceDetails?.TaxExclusiveAmount || apiInvoiceDetails?.subtotal || 0),
+        tax_total: parseFloat(apiInvoiceDetails?.TaxTotalAmount || apiInvoiceDetails?.taxTotal || 0),
+        total_amount: parseFloat(apiInvoiceDetails?.PayableAmount || apiInvoiceDetails?.totalAmount || 0),
         items,
         supplier_details: {
-          company_name: supplierDetails.companyName || supplierDetails.name || invoiceData.supplierName,
-          tax_number: supplierDetails.taxNumber || supplierDetails.vkn || invoiceData.supplierTaxNumber,
+          company_name: supplierName,
+          tax_number: supplierTaxNumber,
           trade_registry_number: supplierDetails.tradeRegistryNumber || supplierDetails.ticaretSicilNo,
           mersis_number: supplierDetails.mersisNumber || supplierDetails.mersisNo,
           email: supplierDetails.email || supplierDetails.eMail,
@@ -489,7 +410,7 @@ export default function EInvoiceProcess() {
           variant: "destructive",
         });
         // Hata durumunda geri dön
-        navigate('/purchasing/invoices');
+        navigate('/purchase/e-invoice');
       });
     }
   }, [invoiceId, loadInvoiceDetails, navigate, toast]);
@@ -840,6 +761,12 @@ export default function EInvoiceProcess() {
     return products.find(p => p.id === productId);
   }, [products]);
   
+  // Eşleşen tedarikçiyi bul
+  const matchedSupplier = useMemo(() => {
+    if (!selectedSupplierId || !suppliers.length) return null;
+    return suppliers.find(s => s.id === selectedSupplierId);
+  }, [selectedSupplierId, suppliers]);
+  
   // Memoize hesaplamaları
   const matchedCount = useMemo(() => 
     matchingItems.filter(item => item.matched_product_id).length,
@@ -857,7 +784,8 @@ export default function EInvoiceProcess() {
   );
   if (isLoading) {
     return (
-    <Card>
+      <div className="space-y-6">
+        <Card>
           <CardContent className="flex items-center justify-center py-12">
             <div className="text-center">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
@@ -865,11 +793,13 @@ export default function EInvoiceProcess() {
             </div>
           </CardContent>
         </Card>
-  );
+      </div>
+    );
   }
   if (!invoice) {
     return (
-    <Card>
+      <div className="space-y-6">
+        <Card>
           <CardContent className="flex items-center justify-center py-12">
             <div className="text-center">
               <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
@@ -881,228 +811,308 @@ export default function EInvoiceProcess() {
             </div>
           </CardContent>
         </Card>
-  );
+      </div>
+    );
   }
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/purchase/e-invoice')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            E-faturalar
-          </Button>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline">{invoice.invoice_number}</Badge>
-            <Badge variant="secondary">{invoice.supplier_name}</Badge>
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
+            {/* Sol taraf - Başlık */}
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate('/purchase/e-invoice')}
+                className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-50/50 hover:text-blue-700 hover:border-blue-200 transition-all duration-200 hover:shadow-sm"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="font-medium">E-faturalar</span>
+              </Button>
+              
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div className="space-y-0.5">
+                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  Fatura İşleme
+                </h1>
+                <p className="text-xs text-muted-foreground/70">
+                  {invoice.invoice_number} • {invoice.supplier_name}
+                </p>
+              </div>
+            </div>
+            
+            {/* Sağ taraf - İstatistikler */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <Badge variant="outline" className="px-3 py-1">
+                <Package className="h-3 w-3 mr-1" />
+                {invoice.items.length} Kalem
+              </Badge>
+              <Badge variant="outline" className="px-3 py-1">
+                <DollarSign className="h-3 w-3 mr-1" />
+                {invoice.total_amount.toFixed(2)} {invoice.currency}
+              </Badge>
+            </div>
           </div>
         </div>
+
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column - Invoice Info */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader className="bg-blue-50 border-b">
-                <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                  Fatura Bilgileri
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b p-3">
+                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  Fatura & Tedarikçi Bilgileri
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
-                {/* Kompakt Fatura Bilgileri */}
-                <div className="space-y-3 mb-4">
+              <CardContent className="p-4 space-y-4">
+                {/* Fatura Bilgileri */}
+                <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Fatura No:</span>
-                    <span className="font-semibold text-sm">{invoice.invoice_number}</span>
+                    <span className="text-gray-500">Fatura No:</span>
+                    <span className="font-semibold text-xs">{invoice.invoice_number}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Tarih:</span>
-                    <span className="text-sm">
-                      {format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale: tr })}
-                    </span>
+                    <span className="text-gray-500">Tarih:</span>
+                    <span className="text-xs">{format(new Date(invoice.invoice_date), 'dd.MM.yyyy', { locale: tr })}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Kalem:</span>
-                    <span className="text-sm font-medium">{invoice.items.length}</span>
+                    <span className="text-gray-500">Kalem:</span>
+                    <span className="font-medium text-xs">{invoice.items.length}</span>
                   </div>
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-sm text-gray-500">Toplam:</span>
-                    <span className="text-lg font-bold text-primary">
+                  <Separator className="my-2" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 text-xs">Ara Toplam:</span>
+                    <span className="font-medium text-xs">{invoice.subtotal.toFixed(2)} {invoice.currency}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 text-xs">KDV:</span>
+                    <span className="font-medium text-xs">{invoice.tax_total.toFixed(2)} {invoice.currency}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1 border-t">
+                    <span className="text-gray-700 font-medium text-xs">Toplam:</span>
+                    <span className="text-base font-bold text-primary">
                       {invoice.total_amount.toFixed(2)} {invoice.currency}
                     </span>
                   </div>
                 </div>
-                {/* Tedarikçi Bilgileri ve Durumu */}
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Tedarikçi</Label>
-                    <div className={`mt-1 p-3 rounded text-sm ${
-                      supplierMatchStatus === 'found' ? 'bg-green-50 border border-green-200' : 
-                      supplierMatchStatus === 'not_found' ? 'bg-orange-50 border border-orange-200' : 
-                      'bg-gray-50 border border-gray-200'
-                    }`}>
-                      {/* Tedarikçi Bilgileri */}
-                      <div className="mb-3">
-                        <div className="font-medium text-gray-900">{invoice.supplier_name}</div>
-                        <div className="text-gray-600 text-xs mt-1">VKN: {invoice.supplier_tax_number}</div>
-                        {invoice.supplier_details?.email && (
-                          <div className="text-gray-500 text-xs mt-1">📧 {invoice.supplier_details.email}</div>
-                        )}
-                        {invoice.supplier_details?.phone && (
-                          <div className="text-gray-500 text-xs mt-1">📞 {invoice.supplier_details.phone}</div>
-                        )}
-                      </div>
-                      {/* Durum ve İşlemler */}
-                      <div className="pt-2 border-t border-gray-200">
-                        {supplierMatchStatus === 'searching' && (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                            <span className="text-blue-700 text-sm">Tedarikçi aranıyor...</span>
-                          </div>
-                        )}
-                        {supplierMatchStatus === 'found' && selectedSupplierId && (
-                          <div className="flex items-center gap-2">
-                            <Check className="h-4 w-4 text-green-600" />
-                            <span className="text-green-700 font-medium text-sm">✅ Sistemimizde kayıtlı</span>
-                          </div>
-                        )}
-                        {supplierMatchStatus === 'not_found' && (
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="h-4 w-4 text-orange-600" />
-                              <span className="text-orange-700 text-sm font-medium">⚠️ Sistemimizde kayıtlı değil</span>
-                            </div>
-                            <Button
-                              onClick={handleCreateNewSupplier}
-                              disabled={isCreatingSupplier}
-                              size="sm"
-                              className="bg-orange-600 hover:bg-orange-700 text-white text-xs"
-                            >
-                              {isCreatingSupplier ? (
-                                <>
-                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                                  Ekleniyor...
-                                </>
-                              ) : (
-                                <>
-                                  <Plus className="h-3 w-3 mr-1" />
-                                  Tedarikçi Ekle
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+
+                <Separator />
+
+                {/* Tedarikçi Bilgileri */}
+                <div className={`p-2.5 rounded-lg text-xs transition-all ${
+                  supplierMatchStatus === 'found' ? 'bg-green-50 border border-green-200' : 
+                  supplierMatchStatus === 'not_found' ? 'bg-orange-50 border border-orange-200' : 
+                  'bg-gray-50 border border-gray-200'
+                }`}>
+                  {/* Faturadan Gelen Tedarikçi Bilgileri */}
+                  <div className="mb-2">
+                    <div className="font-semibold text-gray-900 text-sm mb-0.5">
+                      {invoice?.supplier_name || invoice?.supplier_details?.company_name || 'Tedarikçi Adı Bulunamadı'}
                     </div>
+                    <div className="text-gray-600 text-xs">
+                      VKN: {invoice?.supplier_tax_number || invoice?.supplier_details?.tax_number || 'Belirtilmemiş'}
+                    </div>
+                    {invoice.supplier_details?.email && (
+                      <div className="text-gray-500 text-xs mt-0.5">📧 {invoice.supplier_details.email}</div>
+                    )}
+                    {invoice.supplier_details?.phone && (
+                      <div className="text-gray-500 text-xs mt-0.5">📞 {invoice.supplier_details.phone}</div>
+                    )}
+                    {invoice.supplier_details?.address && (
+                      <div className="text-gray-500 text-xs mt-0.5">
+                        📍 {[
+                          invoice.supplier_details.address.street,
+                          invoice.supplier_details.address.district,
+                          invoice.supplier_details.address.city
+                        ].filter(Boolean).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Separator className="my-2" />
+                  <div>
+                    {supplierMatchStatus === 'searching' && (
+                      <div className="flex items-center gap-1.5">
+                        <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                        <span className="text-blue-700 text-xs">Aranıyor...</span>
+                      </div>
+                    )}
+                    {supplierMatchStatus === 'found' && selectedSupplierId && matchedSupplier && (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3 w-3 text-green-600" />
+                          <span className="text-green-700 font-medium text-xs">Sistemde kayıtlı</span>
+                        </div>
+                        <div className="text-xs text-gray-600 pl-4.5">
+                          Eşleşen: {matchedSupplier.name} (VKN: {matchedSupplier.tax_number})
+                        </div>
+                      </div>
+                    )}
+                    {supplierMatchStatus === 'not_found' && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <AlertCircle className="h-3 w-3 text-orange-600" />
+                          <span className="text-orange-700 text-xs font-medium">Kayıtlı değil</span>
+                        </div>
+                        <Button
+                          onClick={handleCreateNewSupplier}
+                          disabled={isCreatingSupplier}
+                          size="sm"
+                          className="w-full h-7 text-xs bg-orange-600 hover:bg-orange-700 text-white"
+                        >
+                          {isCreatingSupplier ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                              Ekleniyor...
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-3 w-3 mr-1" />
+                              Tedarikçi Ekle
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
-                {/* Fatura Tarihi ve Notlar */}
-                <div className="mt-4 pt-4 border-t space-y-3">
+
+                <Separator />
+
+                {/* Ek Bilgiler */}
+                <div className="space-y-2.5">
                   <div>
-                    <Label htmlFor="invoice_date" className="text-sm font-medium">Fatura Tarihi</Label>
+                    <Label htmlFor="invoice_date" className="text-xs font-medium mb-1 block">Fatura Tarihi</Label>
                     <Input
                       id="invoice_date"
                       type="date"
                       value={formData.invoice_date}
                       onChange={(e) => setFormData(prev => ({ ...prev, invoice_date: e.target.value }))}
-                      className="mt-1"
+                      className="h-8 text-xs"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="notes" className="text-sm font-medium">Notlar</Label>
+                    <Label htmlFor="notes" className="text-xs font-medium mb-1 block">Notlar</Label>
                     <Textarea
                       id="notes"
                       value={formData.notes}
                       onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                       rows={2}
                       placeholder="Fatura ile ilgili notlar..."
-                      className="mt-1 text-sm"
+                      className="text-xs"
                     />
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+
           {/* Right Column - Product Matching */}
           <div className="lg:col-span-3">
-            <Card>
-              <CardHeader className="bg-green-50 border-b">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-green-100/50 border-b">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <Target className="h-5 w-5 text-green-600" />
+                  <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                    <Target className="h-4 w-4 text-green-600" />
                     Ürün Eşleştirme
                   </CardTitle>
+                  <Badge variant="outline" className="px-3 py-1">
+                    {matchedCount} / {matchingItems.length} eşleşti
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
                 {/* Matching Table */}
-                <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="w-12">#</TableHead>
-                        <TableHead className="min-w-48">Fatura Kalemi</TableHead>
-                        <TableHead className="w-20 text-right">Miktar</TableHead>
-                        <TableHead className="min-w-64">Eşleşen Ürün</TableHead>
-                        <TableHead className="w-32 text-center">İşlemler</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {matchingItems.map((item, index) => (
-                        <MemoizedTableRow
-                          key={item.invoice_item.id}
-                          item={item}
-                          index={index}
-                          invoice={invoice}
-                          getMatchedProduct={getMatchedProduct}
-                          handleProductSelect={handleProductSelect}
-                          handleCreateNewProduct={handleCreateNewProduct}
-                          handleRemoveMatch={handleRemoveMatch}
-                        />
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div className="overflow-x-auto">
+                  <div className="max-h-[65vh] overflow-y-auto">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                        <TableRow>
+                          <TableHead className="w-12 font-semibold">#</TableHead>
+                          <TableHead className="min-w-48 font-semibold">Fatura Kalemi</TableHead>
+                          <TableHead className="w-24 text-right font-semibold">Miktar</TableHead>
+                          <TableHead className="min-w-64 font-semibold">Eşleşen Ürün</TableHead>
+                          <TableHead className="w-32 text-center font-semibold">İşlemler</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {matchingItems.map((item, index) => (
+                          <MemoizedTableRow
+                            key={item.invoice_item.id}
+                            item={item}
+                            index={index}
+                            invoice={invoice}
+                            getMatchedProduct={getMatchedProduct}
+                            handleProductSelect={handleProductSelect}
+                            handleCreateNewProduct={handleCreateNewProduct}
+                            handleRemoveMatch={handleRemoveMatch}
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
         {/* Action Buttons */}
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            {allMatched ? (
-              <span className="text-green-600 font-medium flex items-center gap-1">
-                <Check className="h-4 w-4" />
-                Tüm ürünler eşleştirildi
-              </span>
-            ) : (
-              <span>
-                {matchedCount} / {matchingItems.length} ürün eşleştirildi
-                {matchingItems.length - matchedCount > 0 && (
-                  <span className="text-orange-600 ml-2">
-                    ({matchingItems.length - matchedCount} ürün eksik)
-                  </span>
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-gray-50 to-gray-100/50">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="space-y-1">
+                {allMatched ? (
+                  <div className="flex items-center gap-2 text-green-600 font-medium">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span>Tüm ürünler eşleştirildi</span>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">{matchedCount} / {matchingItems.length}</span> ürün eşleştirildi
+                    </div>
+                    {matchingItems.length - matchedCount > 0 && (
+                      <div className="flex items-center gap-1 text-orange-600 text-sm">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{matchingItems.length - matchedCount} ürün eksik</span>
+                      </div>
+                    )}
+                  </div>
                 )}
-              </span>
-            )}
-          </div>
-          <Button
-            onClick={handleCreatePurchaseInvoice}
-            disabled={!canCreateInvoice || isCreating}
-            className="flex items-center gap-2"
-          >
-            {isCreating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            Alış Faturasını Oluştur
-          </Button>
-        </div>
+                {!selectedSupplierId && (
+                  <div className="flex items-center gap-1 text-orange-600 text-sm mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>Tedarikçi seçilmedi</span>
+                  </div>
+                )}
+              </div>
+              <Button
+                onClick={handleCreatePurchaseInvoice}
+                disabled={!canCreateInvoice || isCreating}
+                size="lg"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Oluşturuluyor...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Alış Faturasını Oluştur
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       {/* Compact Product Form Modal */}
       <React.Suspense fallback={<div>Modal yükleniyor...</div>}>

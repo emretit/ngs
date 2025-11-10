@@ -3,6 +3,7 @@ import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Supplier } from "@/types/supplier";
+import { supabase } from "@/integrations/supabase/client";
 import SuppliersTableHeader from "./table/SuppliersTableHeader";
 import SuppliersTableRow from "./table/SuppliersTableRow";
 import SuppliersTableSkeleton from "./table/SuppliersTableSkeleton";
@@ -101,8 +102,13 @@ const SuppliersTable = ({
 
     setIsDeleting(true);
     try {
-      // TODO: Add actual delete API call here
-      // await deleteSupplier(supplierToDelete.id);
+      const { error } = await supabase
+        .from('suppliers')
+        .delete()
+        .eq('id', supplierToDelete.id);
+
+      if (error) throw error;
+
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       
       toast({
@@ -114,7 +120,7 @@ const SuppliersTable = ({
       console.error('Error deleting supplier:', error);
       toast({
         title: "Hata",
-        description: "Tedarikçi silinirken bir hata oluştu.",
+        description: error instanceof Error ? error.message : "Tedarikçi silinirken bir hata oluştu.",
         variant: "destructive",
       });
     } finally {

@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useNilveraPdf } from "@/hooks/useNilveraPdf";
 
 interface EInvoiceContentProps {
   invoices: any[];
@@ -44,6 +45,7 @@ const EInvoiceContent = ({
 }: EInvoiceContentProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
 
   // Calculate summary statistics
   const totalInvoices = invoices.length;
@@ -212,15 +214,22 @@ const EInvoiceContent = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => {
-                            toast({
-                              title: "Önizleme",
-                              description: "Fatura önizlemesi yakında eklenecek"
-                            });
+                          onClick={async () => {
+                            try {
+                              await downloadAndOpenPdf(invoice.id, 'e-fatura');
+                            } catch (error) {
+                              console.error('PDF önizleme hatası:', error);
+                            }
                           }}
+                          disabled={isDownloading}
                           className="h-6 w-6 hover:bg-gray-100"
+                          title="PDF Önizleme"
                         >
-                          <Eye className="h-3 w-3" />
+                          {isDownloading ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Eye className="h-3 w-3" />
+                          )}
                         </Button>
                       </div>
                     </TableCell>

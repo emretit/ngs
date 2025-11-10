@@ -24,6 +24,7 @@ import { tr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
 import { useToast } from '@/hooks/use-toast';
+import { useNilveraPdf } from '@/hooks/useNilveraPdf';
 
 export default function EInvoiceList() {
   // Date range filter states - Default to current month
@@ -45,6 +46,7 @@ export default function EInvoiceList() {
   const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ startDate, endDate });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -340,15 +342,21 @@ export default function EInvoiceList() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            // TODO: Implement preview functionality
-                            toast({
-                              title: "Önizleme",
-                              description: "Fatura önizlemesi yakında eklenecek"
-                            });
+                          onClick={async () => {
+                            try {
+                              await downloadAndOpenPdf(invoice.id, 'e-fatura');
+                            } catch (error) {
+                              console.error('PDF önizleme hatası:', error);
+                            }
                           }}
+                          disabled={isDownloading}
+                          title="PDF Önizleme"
                         >
-                          <Eye className="h-4 w-4" />
+                          {isDownloading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </TableCell>

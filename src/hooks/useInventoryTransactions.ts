@@ -642,11 +642,15 @@ export const useInventoryTransactions = () => {
   const { data: transactions = [], isLoading, refetch } = useQuery({
     queryKey: ["inventory_transactions", filters],
     queryFn: fetchTransactions,
+    staleTime: 30000, // 30 saniye cache
+    gcTime: 5 * 60 * 1000, // 5 dakika garbage collection
   });
 
   const { data: stats } = useQuery({
     queryKey: ["inventory_transaction_stats"],
     queryFn: getStats,
+    staleTime: 60000, // 1 dakika cache
+    gcTime: 5 * 60 * 1000, // 5 dakika garbage collection
   });
 
   const createMutation = useMutation({

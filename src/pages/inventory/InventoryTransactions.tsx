@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, memo } from "react";
+import { useState, useCallback, useEffect, memo, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import InventoryTransactionsHeader from "@/components/inventory/InventoryTransactionsHeader";
 import InventoryTransactionsFilterBar from "@/components/inventory/InventoryTransactionsFilterBar";

@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 // Lazy load heavy components
-const ProductSelector = React.lazy(() => import('@/components/proposals/form/ProductSelector'));
+const EInvoiceProductSelector = React.lazy(() => import('@/components/einvoice/EInvoiceProductSelector'));
 const CompactProductForm = React.lazy(() => import('@/components/einvoice/CompactProductForm'));
+const EInvoiceProductDetailsDialog = React.lazy(() => import('@/components/einvoice/EInvoiceProductDetailsDialog'));
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   ArrowLeft, 
@@ -177,7 +178,7 @@ const MemoizedTableRow = React.memo(({
             </div>
           ) : (
              <React.Suspense fallback={<div className="text-xs text-gray-500 p-2">Yükleniyor...</div>}>
-               <ProductSelector
+               <EInvoiceProductSelector
                  value=""
                  onChange={() => {}}
                  onProductSelect={(product) => handleProductSelect(index, product)}
@@ -217,6 +218,9 @@ export default function EInvoiceProcess() {
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [currentItemIndex, setCurrentItemIndex] = useState<number>(-1);
   const [supplierMatchStatus, setSupplierMatchStatus] = useState<'searching' | 'found' | 'not_found' | null>(null);
+  const [isWarehouseDialogOpen, setIsWarehouseDialogOpen] = useState(false);
+  const [selectedProductForWarehouse, setSelectedProductForWarehouse] = useState<Product | null>(null);
+  const [pendingProductIndex, setPendingProductIndex] = useState<number>(-1);
   // Form fields for purchase invoice
   const [formData, setFormData] = useState({
     invoice_date: '',
@@ -456,8 +460,23 @@ export default function EInvoiceProcess() {
   }, []);
   
   const handleProductSelect = useCallback((itemIndex: number, product: Product) => {
-    handleManualMatch(itemIndex, product.id);
-  }, [handleManualMatch]);
+    // Ürün seçildiğinde detay dialog'unu aç
+    const invoiceItem = matchingItems[itemIndex]?.invoice_item;
+    setSelectedProductForWarehouse(product);
+    setPendingProductIndex(itemIndex);
+    setIsWarehouseDialogOpen(true);
+  }, [matchingItems]);
+
+  const handleProductDetailsConfirm = useCallback((data: { warehouseId: string; quantity?: number; price?: number }) => {
+    if (selectedProductForWarehouse && pendingProductIndex >= 0) {
+      // Ürünü eşleştir
+      handleManualMatch(pendingProductIndex, selectedProductForWarehouse.id);
+      // TODO: Depo bilgisini ve miktar/fiyat bilgilerini kaydetmek için matchingItems'a eklenebilir
+    }
+    setIsWarehouseDialogOpen(false);
+    setSelectedProductForWarehouse(null);
+    setPendingProductIndex(-1);
+  }, [selectedProductForWarehouse, pendingProductIndex, handleManualMatch]);
   
   const handleCreateNewProduct = useCallback((itemIndex: number) => {
     setCurrentItemIndex(itemIndex);
@@ -741,6 +760,10 @@ export default function EInvoiceProcess() {
         .from('purchase_invoice_items')
         .insert(purchaseInvoiceItems);
       if (itemsError) throw itemsError;
+      
+      // İşlenmiş e-fatura ID'leri query'sini invalidate et
+      await queryClient.invalidateQueries({ queryKey: ['processed-einvoice-ids'] });
+      
       toast({
         title: "Başarılı",
         description: `Alış faturası başarıyla oluşturuldu. ${newProductItems.length} yeni ürün eklendi.`,
@@ -1115,6 +1138,20 @@ export default function EInvoiceProcess() {
         </Card>
       </div>
       {/* Compact Product Form Modal */}
+      {/* Ürün Detay Dialog */}
+      <React.Suspense fallback={<div>Dialog yükleniyor...</div>}>
+        {selectedProductForWarehouse && pendingProductIndex >= 0 && (
+          <EInvoiceProductDetailsDialog
+            open={isWarehouseDialogOpen}
+            onOpenChange={setIsWarehouseDialogOpen}
+            selectedProduct={selectedProductForWarehouse}
+            invoiceQuantity={matchingItems[pendingProductIndex]?.invoice_item.quantity}
+            invoicePrice={matchingItems[pendingProductIndex]?.invoice_item.unit_price}
+            onConfirm={handleProductDetailsConfirm}
+          />
+        )}
+      </React.Suspense>
+
       <React.Suspense fallback={<div>Modal yükleniyor...</div>}>
         <CompactProductForm
           isOpen={isProductFormOpen}

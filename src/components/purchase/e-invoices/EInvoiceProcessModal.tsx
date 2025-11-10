@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   Package, 
   Search, 
@@ -62,6 +63,7 @@ export default function EInvoiceProcessModal({
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Load invoice details and products when modal opens
   useEffect(() => {
@@ -277,6 +279,9 @@ export default function EInvoiceProcessModal({
       // Then send ALINDI response
       await sendAlindiResponse();
       
+      // İşlenmiş e-fatura ID'leri query'sini invalidate et
+      await queryClient.invalidateQueries({ queryKey: ['processed-einvoice-ids'] });
+      
       toast({
         title: "İşlem Tamamlandı",
         description: "Fatura işlendi ve 'ALINDI' yanıtı gönderildi"
@@ -339,6 +344,7 @@ export default function EInvoiceProcessModal({
         tax_amount: invoice.taxAmount || 0,
         status: 'pending',
         subtotal: invoice.totalAmount - (invoice.taxAmount || 0),
+        einvoice_id: invoice.id, // Nilvera UUID'sini kaydet
         notes: `E-fatura'dan işlendi - Nilvera ID: ${invoice.id}`
       }]);
 

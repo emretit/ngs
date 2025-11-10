@@ -24,6 +24,7 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
     isLoading,
     filters,
     setFilters,
+    deleteInvoiceMutation,
   } = usePurchaseInvoices();
 
   // Ana faturaları öncelikli olarak göster
@@ -93,9 +94,11 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
           selectedInvoices={selectedInvoices}
           setSelectedInvoices={setSelectedInvoices}
           onDownloadPdf={downloadAndOpenPdf}
+          isDownloading={isDownloading}
           searchQuery={filterKeyword}
           documentTypeFilter={documentTypeFilter}
           statusFilter={statusFilter}
+          onDeleteInvoice={(id) => deleteInvoiceMutation.mutate(id)}
         />
     </div>
   );

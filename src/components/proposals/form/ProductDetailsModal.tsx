@@ -10,6 +10,7 @@ import { Product } from "@/types/product";
 import { formatCurrency } from "@/utils/formatters";
 import { useCurrencyManagement } from "@/components/proposals/form/items/hooks/useCurrencyManagement";
 import CurrencySelector from "@/components/proposals/form/items/product-dialog/components/price-section/CurrencySelector";
+import QuantityDepoSection from "@/components/proposals/form/items/product-dialog/components/QuantityDepoSection";
 
 interface ProductDetailsModalProps {
   open: boolean;
@@ -56,6 +57,8 @@ const ProductDetailsModal = ({
   const [description, setDescription] = useState("");
   const [unit, setUnit] = useState("adet");
   const [isManualPriceEdit, setIsManualPriceEdit] = useState(false);
+  const [selectedDepo, setSelectedDepo] = useState("");
+  const [manualExchangeRate, setManualExchangeRate] = useState<number | null>(null);
 
   // Currency management
   const {
@@ -70,6 +73,9 @@ const ProductDetailsModal = ({
     handleCurrencyChange
   } = useCurrencyManagement(currency, product, isManualPriceEdit);
 
+  // Track previous currency to handle bidirectional conversion
+  const prevCurrencyRef = React.useRef<string>(originalCurrency);
+  
   // Initialize form data when product or existingData changes
   useEffect(() => {
     if (product) {
@@ -81,6 +87,8 @@ const ProductDetailsModal = ({
       setDescription(product.description || "");
       setUnit(product.unit || "adet");
       setIsManualPriceEdit(false);
+      // Reset currency ref to original currency
+      prevCurrencyRef.current = originalCurrency;
     } else if (existingData) {
       // We're editing an existing line item
       setQuantity(existingData.quantity);
@@ -90,17 +98,63 @@ const ProductDetailsModal = ({
       setDescription(existingData.description);
       setUnit(existingData.unit);
       setIsManualPriceEdit(true);
+      // Reset currency ref to original currency
+      prevCurrencyRef.current = existingData.currency || originalCurrency;
     }
-  }, [product, existingData]);
+  }, [product, existingData, originalCurrency]);
+  
+  // Reset manual exchange rate when currency changes
+  useEffect(() => {
+    if (prevCurrencyRef.current !== selectedCurrency) {
+      setManualExchangeRate(null);
+    }
+  }, [selectedCurrency]);
 
   // Handle currency conversion when currency changes
   useEffect(() => {
-    if (selectedCurrency !== originalCurrency && unitPrice > 0 && exchangeRates) {
-      const convertedPrice = convertAmount(unitPrice, originalCurrency, selectedCurrency);
-      setUnitPrice(convertedPrice);
-      console.log(`Price converted from ${unitPrice} ${originalCurrency} to ${convertedPrice.toFixed(2)} ${selectedCurrency}`);
+    // Skip if currency hasn't actually changed
+    if (prevCurrencyRef.current === selectedCurrency) return;
+    
+    // Skip if no price or exchange rates
+    if (unitPrice <= 0 || !exchangeRates) {
+      prevCurrencyRef.current = selectedCurrency;
+      return;
     }
-  }, [selectedCurrency]);
+    
+    // Convert from previous currency to new currency
+    const previousCurrency = prevCurrencyRef.current;
+    const convertedPrice = convertAmount(unitPrice, previousCurrency, selectedCurrency);
+    setUnitPrice(convertedPrice);
+    console.log(`Price converted from ${unitPrice} ${previousCurrency} to ${convertedPrice.toFixed(4)} ${selectedCurrency}`);
+    
+    // Update previous currency reference
+    prevCurrencyRef.current = selectedCurrency;
+  }, [selectedCurrency, exchangeRates, convertAmount]);
+
+  // Get current exchange rate (manual or from rates)
+  const currentExchangeRate = exchangeRates
+    ? (manualExchangeRate !== null ? manualExchangeRate : (exchangeRates[selectedCurrency] || 1))
+    : 1;
+
+  // Convert amount with manual exchange rate support
+  const convertAmountWithManualRate = (amount: number, fromCurrency: string, toCurrency: string) => {
+    if (fromCurrency === toCurrency) return amount;
+    
+    // Use manual rate if available and converting from selectedCurrency
+    if (manualExchangeRate !== null && fromCurrency === selectedCurrency && selectedCurrency !== "TRY") {
+      const amountInTRY = amount * manualExchangeRate;
+      return toCurrency === "TRY" ? amountInTRY : amountInTRY / (exchangeRates?.[toCurrency] || 1);
+    }
+    
+    // Use manual rate if available and converting to selectedCurrency
+    if (manualExchangeRate !== null && toCurrency === selectedCurrency && selectedCurrency !== "TRY") {
+      const amountInTRY = fromCurrency === "TRY" ? amount : amount * (exchangeRates?.[fromCurrency] || 1);
+      return amountInTRY / manualExchangeRate;
+    }
+    
+    // Fallback to normal conversion
+    return convertAmount(amount, fromCurrency, toCurrency);
+  };
 
   const calculateTotals = () => {
     // Ensure all values are valid numbers
@@ -192,7 +246,7 @@ const ProductDetailsModal = ({
 
         {/* Main Form Section - Compact Layout */}
         <div className="space-y-3">
-          {/* Miktar + Birim ve Birim Fiyat */}
+          {/* Miktar + Depo Seçimi */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="quantity" className="text-xs font-medium text-gray-600">
@@ -233,41 +287,81 @@ const ProductDetailsModal = ({
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="unit_price" className="text-xs font-medium text-gray-600">
-                Birim Fiyat
-              </Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  id="unit_price"
-                  type="number"
-                  value={unitPrice || 0}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setUnitPrice(value === "" ? 0 : Number(value));
-                    setIsManualPriceEdit(true);
-                  }}
-                  step="0.01"
-                  placeholder="0.00"
-                  className="flex-1 h-7 text-xs"
-                  disabled={isLoadingRates}
-                />
-                <Select 
-                  value={selectedCurrency} 
-                  onValueChange={handleCurrencyChange}
-                  disabled={isLoadingRates}
-                >
-                  <SelectTrigger className="w-16 h-7 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent position="popper" className="bg-background border z-[100]">
-                    {currencyOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.value}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Depo Seçimi */}
+            <QuantityDepoSection 
+              quantity={quantity}
+              setQuantity={setQuantity}
+              selectedDepo={selectedDepo}
+              setSelectedDepo={setSelectedDepo}
+              availableStock={product?.stock_quantity}
+              stockStatus={product?.stock_quantity 
+                ? product.stock_quantity > (product.stock_threshold || 5) 
+                  ? 'in_stock' 
+                  : 'low_stock'
+                : 'out_of_stock'}
+              productId={product?.id || (existingData as any)?.product_id || (existingData as any)?.id}
+              showQuantity={false}
+            />
+          </div>
+
+          {/* Birim Fiyat */}
+          <div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="unit_price" className="text-xs font-medium text-gray-600">
+                  Birim Fiyat
+                </Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    id="unit_price"
+                    type="number"
+                    value={unitPrice || 0}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setUnitPrice(value === "" ? 0 : Number(value));
+                      setIsManualPriceEdit(true);
+                    }}
+                    step="0.0001"
+                    placeholder="0.0000"
+                    className="flex-1 h-7 text-xs"
+                    disabled={isLoadingRates}
+                  />
+                  <Select 
+                    value={selectedCurrency} 
+                    onValueChange={handleCurrencyChange}
+                    disabled={isLoadingRates}
+                  >
+                    <SelectTrigger className="w-16 h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper" className="bg-background border z-[100]">
+                      {currencyOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.value}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-gray-600">
+                  1 {selectedCurrency} = ₺
+                </Label>
+                <div className="mt-1">
+                  <Input
+                    type="number"
+                    value={currentExchangeRate.toFixed(4)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const rate = value === "" ? null : Number(value);
+                      setManualExchangeRate(rate);
+                    }}
+                    step="0.0001"
+                    className="w-full h-7 text-xs"
+                    placeholder="0.0000"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -340,34 +434,88 @@ const ProductDetailsModal = ({
 
           {/* Hesaplama Özeti */}
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-            <div className="flex justify-between items-center text-sm font-bold mb-2">
-              <span className="text-gray-700">TOPLAM</span>
-              <span className="text-blue-600">
-                {formatCurrency(total, selectedCurrency)}
-              </span>
-            </div>
-            <div className="text-xs text-gray-600 space-y-1">
-              <div className="flex justify-between">
+            {selectedCurrency !== "TRY" && (
+              <div className="text-xs text-muted-foreground mb-2 pb-2 border-b border-gray-300 text-center">
+                1 {selectedCurrency} = {currentExchangeRate.toFixed(4)} ₺
+              </div>
+            )}
+            <div className="text-xs text-gray-600 space-y-1 mb-2">
+              <div className="flex justify-between items-center">
                 <span>Ara Toplam:</span>
-                <span>{formatCurrency(subtotal, selectedCurrency)}</span>
+                <div className="flex items-center">
+                  <span className="w-24 text-center">{formatCurrency(subtotal, selectedCurrency)}</span>
+                  {selectedCurrency !== "TRY" && (
+                    <>
+                      <span className="w-px h-4 bg-gray-300 mx-2"></span>
+                      <span className="w-24 text-center text-muted-foreground text-[10px]">
+                        {formatCurrency(convertAmountWithManualRate(subtotal, selectedCurrency, "TRY"), "TRY")}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span>İndirim:</span>
-                <span className="text-red-600">-{formatCurrency(discountAmount, selectedCurrency)}</span>
+                <div className="flex items-center">
+                  <span className="w-24 text-center text-red-600">-{formatCurrency(discountAmount, selectedCurrency)}</span>
+                  {selectedCurrency !== "TRY" && (
+                    <>
+                      <span className="w-px h-4 bg-gray-300 mx-2"></span>
+                      <span className="w-24 text-center text-muted-foreground text-[10px]">
+                        {formatCurrency(convertAmountWithManualRate(discountAmount, selectedCurrency, "TRY"), "TRY")}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
+                <span>Net Toplam:</span>
+                <div className="flex items-center">
+                  <span className="w-24 text-center">{formatCurrency(netAmount, selectedCurrency)}</span>
+                  {selectedCurrency !== "TRY" && (
+                    <>
+                      <span className="w-px h-4 bg-gray-300 mx-2"></span>
+                      <span className="w-24 text-center text-muted-foreground text-[10px]">
+                        {formatCurrency(convertAmountWithManualRate(netAmount, selectedCurrency, "TRY"), "TRY")}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
                 <span>KDV:</span>
-                <span className="text-green-600">+{formatCurrency(vatAmount, selectedCurrency)}</span>
+                <div className="flex items-center">
+                  <span className="w-24 text-center text-green-600">+{formatCurrency(vatAmount, selectedCurrency)}</span>
+                  {selectedCurrency !== "TRY" && (
+                    <>
+                      <span className="w-px h-4 bg-gray-300 mx-2"></span>
+                      <span className="w-24 text-center text-muted-foreground text-[10px]">
+                        {formatCurrency(convertAmountWithManualRate(vatAmount, selectedCurrency, "TRY"), "TRY")}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center text-sm font-bold pt-2 border-t border-gray-300">
+              <span className="text-gray-700">TOPLAM</span>
+              <div className="flex items-center">
+                <span className="w-24 text-center text-blue-600">
+                  {formatCurrency(total, selectedCurrency)}
+                </span>
+                {selectedCurrency !== "TRY" && (
+                  <>
+                    <span className="w-px h-4 bg-gray-300 mx-2"></span>
+                    <span className="w-24 text-center text-muted-foreground text-[10px] font-normal">
+                      {formatCurrency(convertAmountWithManualRate(total, selectedCurrency, "TRY"), "TRY")}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
           {/* Uyarı Mesajları */}
-          {originalCurrency !== selectedCurrency && (
-            <p className="text-xs text-muted-foreground">
-              Orijinal: {formatCurrency(originalPrice, originalCurrency)}
-            </p>
-          )}
           {isLoadingRates && (
             <p className="text-xs text-muted-foreground">Kurlar yükleniyor...</p>
           )}

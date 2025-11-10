@@ -11,11 +11,12 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit2, Trash2, Download, FileText, MoreHorizontal } from "lucide-react";
+import { Edit2, Trash2, Download, FileText, MoreHorizontal, Eye, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import PurchaseInvoicesTableHeader from "./table/PurchaseInvoicesTableHeader";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface PurchaseInvoicesTableProps {
   invoices: any[];
@@ -26,10 +27,12 @@ interface PurchaseInvoicesTableProps {
   onInvoiceSelectToggle?: (invoice: any) => void;
   selectedInvoices?: any[];
   setSelectedInvoices?: (invoices: any[]) => void;
-  onDownloadPdf?: (invoiceId: string, type: string) => void;
+  onDownloadPdf?: (invoiceId: string, type: 'e-fatura' | 'e-arşiv') => Promise<void>;
+  isDownloading?: boolean;
   searchQuery?: string;
   documentTypeFilter?: string;
   statusFilter?: string;
+  onDeleteInvoice?: (id: string) => void;
 }
 
 const PurchaseInvoicesTable = ({
@@ -42,13 +45,23 @@ const PurchaseInvoicesTable = ({
   selectedInvoices = [],
   setSelectedInvoices,
   onDownloadPdf,
+  isDownloading = false,
   searchQuery,
   documentTypeFilter,
-  statusFilter
+  statusFilter,
+  onDeleteInvoice
 }: PurchaseInvoicesTableProps) => {
   // Sorting state
   const [sortField, setSortField] = useState<string>('tarih');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Her satır için ayrı loading state
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
+  
+  // Silme dialog state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Columns definition
   const columns = [
@@ -109,6 +122,36 @@ const PurchaseInvoicesTable = ({
       default:
         return <Badge variant="outline">{sourceType}</Badge>;
     }
+  };
+
+  const handleDeleteClick = (invoice: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Sadece purchase tipindeki faturaları silebiliriz
+    if (invoice.sourceType !== 'purchase') {
+      return;
+    }
+    setInvoiceToDelete(invoice);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!invoiceToDelete || !onDeleteInvoice) return;
+
+    setIsDeleting(true);
+    try {
+      await onDeleteInvoice(invoiceToDelete.id);
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setInvoiceToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setInvoiceToDelete(null);
   };
 
   // Filtreleme fonksiyonu
@@ -263,6 +306,7 @@ const PurchaseInvoicesTable = ({
   }
 
   return (
+    <>
     <Table>
       <PurchaseInvoicesTableHeader
         columns={columns}
@@ -337,20 +381,84 @@ const PurchaseInvoicesTable = ({
                     <Edit2 className="h-4 w-4" />
                   </Button>
                   
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: onDelete eklenmeli
-                    }}
-                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                    title="Sil"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {invoice.sourceType === 'purchase' && onDeleteInvoice && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleDeleteClick(invoice, e)}
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      title="Sil"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                   
-                  {(invoice.sourceType === 'earchive_received' && onDownloadPdf) && (
+                  {/* PDF Önizleme butonu - E-fatura ve E-arşiv faturaları için */}
+                  {onDownloadPdf && (
+                    <>
+                      {/* İşlenmiş e-faturalar için (purchase tipinde ama einvoice_id var) */}
+                      {invoice.sourceType === 'purchase' && invoice.einvoice_id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const invoiceKey = `purchase-${invoice.einvoice_id}`;
+                            setDownloadingInvoiceId(invoiceKey);
+                            try {
+                              await onDownloadPdf(invoice.einvoice_id, 'e-fatura');
+                            } catch (error) {
+                              console.error('PDF önizleme hatası:', error);
+                            } finally {
+                              setDownloadingInvoiceId(null);
+                            }
+                          }}
+                          disabled={downloadingInvoiceId === `purchase-${invoice.einvoice_id}`}
+                          className="h-8 w-8"
+                          title="PDF Önizleme"
+                        >
+                          {downloadingInvoiceId === `purchase-${invoice.einvoice_id}` ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                      
+                      {/* Gelen e-faturalar için (incoming veya earchive_received tipinde) */}
+                      {(invoice.sourceType === 'incoming' || invoice.sourceType === 'earchive_received') && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const invoiceKey = `${invoice.sourceType}-${invoice.id}`;
+                            setDownloadingInvoiceId(invoiceKey);
+                            try {
+                              const invoiceType = invoice.sourceType === 'incoming' ? 'e-fatura' : 'e-arşiv';
+                              await onDownloadPdf(invoice.id, invoiceType);
+                            } catch (error) {
+                              console.error('PDF önizleme hatası:', error);
+                            } finally {
+                              setDownloadingInvoiceId(null);
+                            }
+                          }}
+                          disabled={downloadingInvoiceId === `${invoice.sourceType}-${invoice.id}`}
+                          className="h-8 w-8"
+                          title="PDF Önizleme"
+                        >
+                          {downloadingInvoiceId === `${invoice.sourceType}-${invoice.id}` ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Eski dropdown menü - artık kullanılmıyor ama geriye dönük uyumluluk için */}
+                  {(invoice.sourceType === 'earchive_received' && onDownloadPdf && false) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button 
@@ -381,6 +489,20 @@ const PurchaseInvoicesTable = ({
         )}
       </TableBody>
     </Table>
+    {/* Confirmation Dialog */}
+    <ConfirmationDialogComponent
+      open={isDeleteDialogOpen}
+      onOpenChange={setIsDeleteDialogOpen}
+      title="Faturayı Sil"
+      description={`"${invoiceToDelete?.displayNumber || invoiceToDelete?.invoice_number || 'Bu fatura'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+      confirmText="Sil"
+      cancelText="İptal"
+      variant="destructive"
+      onConfirm={handleDeleteConfirm}
+      onCancel={handleDeleteCancel}
+      isLoading={isDeleting}
+    />
+    </>
   );
 };
 

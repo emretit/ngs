@@ -135,20 +135,15 @@ export const useNilveraPdf = () => {
         const blobUrl = URL.createObjectURL(blob);
         console.log('✅ Blob URL created:', blobUrl);
 
-        // Yeni sekmede aç
-        const newWindow = window.open(blobUrl, '_blank', 'noopener,noreferrer');
-
-        if (!newWindow) {
-          console.warn('⚠️ Popup blocked, trying alternative method...');
-          // Alternatif: Link ile aç
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
+        // Yeni sekmede aç - sadece link yöntemini kullan (daha güvenilir, popup blocker sorunları olmaz)
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        console.log('✅ PDF opened in new tab via link click');
 
         // URL'yi daha uzun bir süre sonra temizle (PDF viewer loading time için)
         setTimeout(() => {

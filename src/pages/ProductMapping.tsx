@@ -20,6 +20,7 @@ import { tr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
+import ProductMappingDialog from '@/components/products/ProductMappingDialog';
 interface ParsedProduct {
   name: string;
   sku: string | null;
@@ -44,6 +45,7 @@ interface ExistingProduct {
 interface ProductMapping {
   parsedProduct: ParsedProduct;
   selectedProductId: string | null;
+  selectedWarehouseId: string | null;
   action: 'create' | 'update' | 'skip';
 }
 interface Invoice {
@@ -71,6 +73,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
   const [productMappings, setProductMappings] = useState<ProductMapping[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [dialogOpenIndex, setDialogOpenIndex] = useState<number | null>(null);
   // Mevcut ürünleri yükle
   const loadExistingProducts = async () => {
     try {
@@ -194,6 +197,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
           return {
             parsedProduct: product,
             selectedProductId: suggestedProduct?.id || null,
+            selectedWarehouseId: null,
             action: 'create' // Varsayılan olarak yeni ürün oluştur
           } as ProductMapping;
         });
@@ -229,32 +233,31 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
   useEffect(() => {
     loadInvoiceData();
   }, [invoiceId]);
-  // Ürün seçimi
-  const handleProductSelect = (index: number, product: any) => {
+  // Ürün işleme dialog'unu aç
+  const handleOpenDialog = (index: number) => {
+    setDialogOpenIndex(index);
+  };
+
+  // Dialog'dan gelen veriyi kaydet
+  const handleDialogSave = (index: number, data: { productId: string | null; warehouseId: string | null; action: 'create' | 'update' | 'skip' }) => {
     const newMappings = [...productMappings];
     newMappings[index] = {
       ...newMappings[index],
-      selectedProductId: product.id,
-      action: 'update'
+      selectedProductId: data.productId,
+      selectedWarehouseId: data.warehouseId,
+      action: data.action
     };
     setProductMappings(newMappings);
+    setDialogOpenIndex(null);
   };
-  // Yeni ürün oluşturma
-  const handleCreateNewProduct = (index: number) => {
+
+  // Ürün eşleştirmesini kaldır
+  const handleRemoveMatch = (index: number) => {
     const newMappings = [...productMappings];
     newMappings[index] = {
       ...newMappings[index],
       selectedProductId: null,
-      action: 'create'
-    };
-    setProductMappings(newMappings);
-  };
-  // Ürün eşleştirmesini atla
-  const handleSkipProduct = (index: number) => {
-    const newMappings = [...productMappings];
-    newMappings[index] = {
-      ...newMappings[index],
-      selectedProductId: null,
+      selectedWarehouseId: null,
       action: 'skip'
     };
     setProductMappings(newMappings);
@@ -308,29 +311,17 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
             if (error) throw error;
             
             // Eğer stok miktarı varsa ve company_id varsa, warehouse_stock'a ekle
-            if (newProduct && companyId && mapping.parsedProduct.quantity > 0) {
-              // Company'nin Ana Depo'sunu bul
-              const { data: warehouses } = await supabase
-                .from("warehouses")
-                .select("id")
-                .eq("company_id", companyId)
-                .eq("warehouse_type", "main")
-                .eq("is_active", true)
-                .limit(1)
-                .maybeSingle();
-
-              if (warehouses) {
-                await supabase
-                  .from("warehouse_stock")
-                  .insert({
-                    company_id: companyId,
-                    product_id: newProduct.id,
-                    warehouse_id: warehouses.id,
-                    quantity: mapping.parsedProduct.quantity || 0,
-                    reserved_quantity: 0,
-                    last_transaction_date: new Date().toISOString()
-                  });
-              }
+            if (newProduct && companyId && mapping.parsedProduct.quantity > 0 && mapping.selectedWarehouseId) {
+              await supabase
+                .from("warehouse_stock")
+                .insert({
+                  company_id: companyId,
+                  product_id: newProduct.id,
+                  warehouse_id: mapping.selectedWarehouseId,
+                  quantity: mapping.parsedProduct.quantity || 0,
+                  reserved_quantity: 0,
+                  last_transaction_date: new Date().toISOString()
+                });
             }
             
             results.push({ type: 'created', product: newProduct });
@@ -347,6 +338,42 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
               .select()
               .single();
             if (error) throw error;
+
+            // Eğer stok miktarı varsa ve depo seçilmişse, warehouse_stock'a ekle/güncelle
+            if (updatedProduct && companyId && mapping.parsedProduct.quantity > 0 && mapping.selectedWarehouseId) {
+              // Önce mevcut stoku kontrol et
+              const { data: existingStock } = await supabase
+                .from("warehouse_stock")
+                .select("id, quantity")
+                .eq("company_id", companyId)
+                .eq("product_id", updatedProduct.id)
+                .eq("warehouse_id", mapping.selectedWarehouseId)
+                .maybeSingle();
+
+              if (existingStock) {
+                // Mevcut stoku güncelle
+                await supabase
+                  .from("warehouse_stock")
+                  .update({
+                    quantity: (existingStock.quantity || 0) + mapping.parsedProduct.quantity,
+                    last_transaction_date: new Date().toISOString()
+                  })
+                  .eq("id", existingStock.id);
+              } else {
+                // Yeni stok kaydı oluştur
+                await supabase
+                  .from("warehouse_stock")
+                  .insert({
+                    company_id: companyId,
+                    product_id: updatedProduct.id,
+                    warehouse_id: mapping.selectedWarehouseId,
+                    quantity: mapping.parsedProduct.quantity || 0,
+                    reserved_quantity: 0,
+                    last_transaction_date: new Date().toISOString()
+                  });
+              }
+            }
+
             results.push({ type: 'updated', product: updatedProduct });
           }
         } catch (error) {
@@ -555,60 +582,73 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                                 <div className="space-y-2">
                                   {mapping.selectedProductId ? (
                                     <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded">
-                                      <div>
+                                      <div className="flex-1">
                                         <p className="font-medium text-green-900 text-sm">
-                                          {existingProducts.find(p => p.id === mapping.selectedProductId)?.name}
+                                          {existingProducts.find(p => p.id === mapping.selectedProductId)?.name || 'Ürün seçildi'}
                                         </p>
                                         <p className="text-xs text-green-600">
                                           {existingProducts.find(p => p.id === mapping.selectedProductId)?.sku &&
                                             `SKU: ${existingProducts.find(p => p.id === mapping.selectedProductId)?.sku} • `}
                                           {existingProducts.find(p => p.id === mapping.selectedProductId)?.price.toLocaleString('tr-TR')} TL
+                                          {mapping.selectedWarehouseId && (
+                                            <span className="ml-2">• Depo seçildi</span>
+                                          )}
                                         </p>
                                       </div>
-                                      <button
-                                        onClick={() => handleSkipProduct(index)}
-                                        className="text-red-600 hover:text-red-700 text-xs"
-                                      >
-                                        Kaldır
-                                      </button>
+                                      <div className="flex gap-1">
+                                        <button
+                                          onClick={() => handleOpenDialog(index)}
+                                          className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded"
+                                        >
+                                          Düzenle
+                                        </button>
+                                        <button
+                                          onClick={() => handleRemoveMatch(index)}
+                                          className="text-red-600 hover:text-red-700 text-xs px-2 py-1 bg-red-50 rounded"
+                                        >
+                                          Kaldır
+                                        </button>
+                                      </div>
                                     </div>
                                   ) : mapping.action === 'create' ? (
                                     <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded">
                                       <span className="text-blue-600 font-medium text-sm">Yeni Ürün Oluşturulacak</span>
-                                      <button
-                                        onClick={() => handleSkipProduct(index)}
-                                        className="text-red-600 hover:text-red-700 text-xs"
-                                      >
-                                        İptal
-                                      </button>
+                                      <div className="flex gap-1">
+                                        <button
+                                          onClick={() => handleOpenDialog(index)}
+                                          className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded"
+                                        >
+                                          Düzenle
+                                        </button>
+                                        <button
+                                          onClick={() => handleRemoveMatch(index)}
+                                          className="text-red-600 hover:text-red-700 text-xs px-2 py-1 bg-red-50 rounded"
+                                        >
+                                          İptal
+                                        </button>
+                                      </div>
                                     </div>
                                   ) : mapping.action === 'skip' ? (
-                                    <div className="p-2 bg-gray-50 border border-gray-200 rounded">
+                                    <div className="p-2 bg-gray-50 border border-gray-200 rounded flex items-center justify-between">
                                       <span className="text-gray-600 text-sm">Atlandı</span>
+                                      <button
+                                        onClick={() => handleOpenDialog(index)}
+                                        className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded"
+                                      >
+                                        İşle
+                                      </button>
                                     </div>
                                   ) : (
                                     <div className="space-y-1">
-                                      <ProductSelector
-                                        value=""
-                                        onChange={() => {}}
-                                        onProductSelect={(product) => handleProductSelect(index, product)}
-                                        placeholder="Ürün seçin veya ara..."
-                                        className="text-xs h-8"
-                                      />
-                                      <div className="flex gap-1">
-                                        <button
-                                          onClick={() => handleCreateNewProduct(index)}
-                                          className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded"
-                                        >
-                                          Yeni Ürün
-                                        </button>
-                                        <button
-                                          onClick={() => handleSkipProduct(index)}
-                                          className="text-xs text-gray-600 hover:text-gray-700 px-2 py-1 bg-gray-50 rounded"
-                                        >
-                                          Atla
-                                        </button>
-                                      </div>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleOpenDialog(index)}
+                                        className="w-full text-xs"
+                                      >
+                                        Ürün İşle
+                                      </Button>
                                     </div>
                                   )}
                                 </div>
@@ -692,6 +732,19 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
               </Card>
             </div>
           </div>
+        )}
+
+        {/* Ürün İşleme Dialog */}
+        {dialogOpenIndex !== null && productMappings[dialogOpenIndex] && (
+          <ProductMappingDialog
+            isOpen={dialogOpenIndex !== null}
+            onClose={() => setDialogOpenIndex(null)}
+            parsedProduct={productMappings[dialogOpenIndex].parsedProduct}
+            onSave={(data) => handleDialogSave(dialogOpenIndex, data)}
+            existingProductId={productMappings[dialogOpenIndex].selectedProductId}
+            existingWarehouseId={productMappings[dialogOpenIndex].selectedWarehouseId}
+            existingAction={productMappings[dialogOpenIndex].action}
+          />
         )}
       </div>
   );

@@ -17,9 +17,11 @@ interface PurchaseInvoicesContentProps {
   selectedInvoices?: any[];
   setSelectedInvoices?: (invoices: any[]) => void;
   onDownloadPdf?: (invoiceId: string, type: string) => void;
+  isDownloading?: boolean;
   searchQuery?: string;
   documentTypeFilter?: string;
   statusFilter?: string;
+  onDeleteInvoice?: (id: string) => void;
 }
 
 const PurchaseInvoicesContent = ({
@@ -36,9 +38,11 @@ const PurchaseInvoicesContent = ({
   selectedInvoices = [],
   setSelectedInvoices,
   onDownloadPdf,
+  isDownloading = false,
   searchQuery,
   documentTypeFilter,
-  statusFilter
+  statusFilter,
+  onDeleteInvoice
 }: PurchaseInvoicesContentProps) => {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -83,9 +87,11 @@ const PurchaseInvoicesContent = ({
           selectedInvoices={selectedInvoices}
           setSelectedInvoices={setSelectedInvoices}
           onDownloadPdf={onDownloadPdf}
+          isDownloading={isDownloading}
           searchQuery={searchQuery}
           documentTypeFilter={documentTypeFilter}
           statusFilter={statusFilter}
+          onDeleteInvoice={onDeleteInvoice}
         />
 
         {/* Infinite scroll trigger */}

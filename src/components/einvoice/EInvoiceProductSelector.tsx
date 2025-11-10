@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, Warehouse } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 
-interface ProductSelectorProps {
+interface EInvoiceProductSelectorProps {
   value: string;
   onChange: (productName: string, product?: Product) => void;
   onProductSelect?: (product: Product) => void;
@@ -17,12 +17,29 @@ interface ProductSelectorProps {
   className?: string;
 }
 
-const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, placeholder = "Ürün seçin...", className }: ProductSelectorProps) => {
+interface ProductWithWarehouses extends Product {
+  warehouses?: Array<{
+    warehouse_id: string;
+    warehouse_name: string;
+    warehouse_code?: string;
+    quantity: number;
+  }>;
+  total_stock: number;
+}
+
+const EInvoiceProductSelector = ({ 
+  value, 
+  onChange, 
+  onProductSelect, 
+  onNewProduct, 
+  placeholder = "Ürün seçin...", 
+  className 
+}: EInvoiceProductSelectorProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["products-for-einvoice-selector"],
     queryFn: async () => {
       // Önce kullanıcının company_id'sini al
       const { data: { user } } = await supabase.auth.getUser();
@@ -34,7 +51,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
 
       const companyId = profile?.company_id;
 
-      const { data, error } = await supabase
+      const { data: productsData, error } = await supabase
         .from("products")
         .select("*")
         .eq("is_active", true)
@@ -42,34 +59,62 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
       
       if (error) throw error;
 
-      if (!data || data.length === 0) {
+      if (!productsData || productsData.length === 0) {
         return [];
       }
 
-      // Warehouse_stock tablosundan toplam stok miktarlarını çek
-      const productIds = data.map(p => p.id);
-      let stockMap = new Map<string, number>();
+      // Depoları getir
+      const { data: warehousesData } = await supabase
+        .from("warehouses")
+        .select("id, name, code")
+        .eq("company_id", companyId)
+        .eq("is_active", true);
 
-      if (companyId && productIds.length > 0) {
+      // Warehouse_stock tablosundan depo bazında stok bilgilerini çek
+      const productIds = productsData.map(p => p.id);
+      let stockMap = new Map<string, Array<{
+        warehouse_id: string;
+        warehouse_name: string;
+        warehouse_code?: string;
+        quantity: number;
+      }>>();
+      let totalStockMap = new Map<string, number>();
+
+      if (companyId && productIds.length > 0 && warehousesData) {
         const { data: stockData } = await supabase
           .from("warehouse_stock")
-          .select("product_id, quantity")
+          .select("product_id, warehouse_id, quantity")
           .in("product_id", productIds)
           .eq("company_id", companyId);
 
         if (stockData) {
-          stockData.forEach((stock: { product_id: string; quantity: number }) => {
-            const current = stockMap.get(stock.product_id) || 0;
-            stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+          stockData.forEach((stock: { product_id: string; warehouse_id: string; quantity: number }) => {
+            const warehouse = warehousesData.find(w => w.id === stock.warehouse_id);
+            if (warehouse) {
+              const existing = stockMap.get(stock.product_id) || [];
+              existing.push({
+                warehouse_id: stock.warehouse_id,
+                warehouse_name: warehouse.name,
+                warehouse_code: warehouse.code || undefined,
+                quantity: Number(stock.quantity || 0)
+              });
+              stockMap.set(stock.product_id, existing);
+
+              // Toplam stok hesapla
+              const currentTotal = totalStockMap.get(stock.product_id) || 0;
+              totalStockMap.set(stock.product_id, currentTotal + Number(stock.quantity || 0));
+            }
           });
         }
       }
 
-      // Ürünleri stok bilgisiyle birleştir
-      return data.map(product => ({
+      // Ürünleri depo bilgisiyle birleştir
+      return productsData.map(product => ({
         ...product,
-        stock_quantity: stockMap.get(product.id) || 0
-      })) as Product[];
+        stock_quantity: totalStockMap.get(product.id) || 0,
+        warehouses: stockMap.get(product.id) || [],
+        total_stock: totalStockMap.get(product.id) || 0
+      })) as ProductWithWarehouses[];
     },
   });
 
@@ -85,7 +130,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
     );
   });
 
-  const handleSelect = (product: Product) => {
+  const handleSelect = (product: ProductWithWarehouses) => {
     if (onProductSelect) {
       onProductSelect(product);
     } else {
@@ -132,7 +177,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
-          <CommandList className="max-h-[400px]">
+          <CommandList className="max-h-[500px]">
             <CommandEmpty className="py-6 text-center text-sm">
               Aramanızla eşleşen ürün bulunamadı.
             </CommandEmpty>
@@ -157,13 +202,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
                         {product.name}
                       </span>
                       
-                      {product.description && (
-                        <span className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {product.description}
-                        </span>
-                      )}
-                      
-                      {/* Fiyat ve Stok */}
+                      {/* Fiyat */}
                       <div className="flex flex-col gap-0.5 text-xs">
                         <span className="font-semibold text-primary">
                           {new Intl.NumberFormat('tr-TR', { 
@@ -172,10 +211,33 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
                             minimumFractionDigits: 2
                           }).format(product.price)}
                         </span>
-                        <span className="text-muted-foreground">
-                          Stok: {product.stock_quantity} {product.unit}
-                        </span>
                       </div>
+
+                      {/* Depo Bazında Stok - Kompakt */}
+                      {product.warehouses && product.warehouses.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {product.warehouses.slice(0, 2).map((warehouse, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] border border-blue-200"
+                              title={`${warehouse.warehouse_name}: ${warehouse.quantity} ${product.unit}`}
+                            >
+                              <Warehouse className="h-2.5 w-2.5" />
+                              <span className="font-medium truncate max-w-[60px]">{warehouse.warehouse_name}</span>
+                              <span className="font-semibold">:{warehouse.quantity}</span>
+                            </span>
+                          ))}
+                          {product.warehouses.length > 2 && (
+                            <span className="text-[10px] text-muted-foreground px-1">
+                              +{product.warehouses.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground mt-0.5">
+                          Stok yok
+                        </span>
+                      )}
                     </div>
 
                     {/* Sağ Sütun - Kod ve Kategori */}
@@ -196,7 +258,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
               ))}
             </CommandGroup>
             
-            {/* Yeni Ürün Oluştur Butonu - Ayrı CommandGroup */}
+            {/* Yeni Ürün Oluştur Butonu */}
             {onNewProduct && (
               <CommandGroup>
                 <CommandItem
@@ -220,4 +282,5 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
   );
 };
 
-export default ProductSelector;
+export default EInvoiceProductSelector;
+

@@ -135,6 +135,7 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
                 setSelectedDepo={setSelectedDepo}
                 availableStock={availableStock}
                 stockStatus={stockStatus}
+                productId={selectedProduct.id}
               />
               
               <PriceAndDiscountSection 

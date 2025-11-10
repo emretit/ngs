@@ -12,9 +12,12 @@ export const useCurrencyConverter = (exchangeRates: ExchangeRates) => {
       : amount * exchangeRates[fromCurrency];
     
     // Then convert from TRY to target currency
-    return toCurrency === "TRY" 
+    const result = toCurrency === "TRY" 
       ? amountInTRY 
       : amountInTRY / exchangeRates[toCurrency];
+    
+    // Round to 4 decimal places
+    return Math.round(result * 10000) / 10000;
   };
 
   return {

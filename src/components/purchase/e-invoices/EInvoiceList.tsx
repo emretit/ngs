@@ -46,7 +46,10 @@ export default function EInvoiceList() {
   const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ startDate, endDate });
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
+  const { downloadAndOpenPdf } = useNilveraPdf();
+  
+  // Her satır için ayrı loading state
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -329,31 +332,39 @@ export default function EInvoiceList() {
                     <TableCell>
                       <Badge variant="outline">{invoice.currency}</Badge>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
+                    <TableCell className="py-2 px-3 text-center">
+                      <div className="flex justify-center space-x-2">
                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleProcessInvoice(invoice)}
-                          className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleProcessInvoice(invoice);
+                          }}
+                          className="h-8 w-8"
+                          title="İşle"
                         >
-                          <Package className="h-4 w-4 mr-1" />
-                          İşle
+                          <Package className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          onClick={async () => {
+                          size="icon"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setDownloadingInvoiceId(invoice.id);
                             try {
                               await downloadAndOpenPdf(invoice.id, 'e-fatura');
                             } catch (error) {
                               console.error('PDF önizleme hatası:', error);
+                            } finally {
+                              setDownloadingInvoiceId(null);
                             }
                           }}
-                          disabled={isDownloading}
+                          disabled={downloadingInvoiceId === invoice.id}
+                          className="h-8 w-8"
                           title="PDF Önizleme"
                         >
-                          {isDownloading ? (
+                          {downloadingInvoiceId === invoice.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <Eye className="h-4 w-4" />

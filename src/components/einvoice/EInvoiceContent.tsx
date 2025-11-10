@@ -1,5 +1,4 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -14,18 +13,13 @@ import {
   FileText, 
   Calendar,
   Building,
-  DollarSign,
   Loader2,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
   Package,
   Eye
 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { useNilveraPdf } from "@/hooks/useNilveraPdf";
 
 interface EInvoiceContentProps {
@@ -43,13 +37,11 @@ const EInvoiceContent = ({
   searchTerm,
   dateFilter
 }: EInvoiceContentProps) => {
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
-
-  // Calculate summary statistics
-  const totalInvoices = invoices.length;
-  const totalAmount = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
+  const { downloadAndOpenPdf } = useNilveraPdf();
+  
+  // Her satır için ayrı loading state
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
 
   const getInvoiceTypeBadge = (invoiceType: string) => {
     switch (invoiceType) {
@@ -113,152 +105,115 @@ const EInvoiceContent = ({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="flex items-center p-4">
-            <FileText className="h-8 w-8 text-blue-600 mr-3" />
-            <div>
-              <p className="text-sm font-medium text-blue-600">Toplam</p>
-              <p className="text-lg font-bold text-blue-900">{totalInvoices}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center p-4">
-            <DollarSign className="h-8 w-8 text-green-600 mr-3" />
-            <div>
-              <p className="text-sm font-medium text-green-600">Toplam Tutar</p>
-              <p className="text-lg font-bold text-green-900">
-                {totalAmount.toLocaleString('tr-TR')} ₺
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Invoice Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-        <div className="p-6">
-          {invoices.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">E-Fatura Bulunamadı</h3>
-              <p className="text-muted-foreground">
-                Seçilen tarih aralığında e-fatura bulunmuyor veya filtre kriterlerinize uygun fatura yok.
-              </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📄 Fatura No</TableHead>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🏷️ Fatura Tipi</TableHead>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">📋 Fatura Senaryosu</TableHead>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🏢 Tedarikçi</TableHead>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-left">🔢 Vergi No</TableHead>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">📅 Fatura Tarihi</TableHead>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-right">💰 Tutar</TableHead>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">💱 Para Birimi</TableHead>
-                  <TableHead className="font-bold text-foreground/80 text-sm tracking-wide text-center">⚙️ İşlemler</TableHead>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="pb-6">
+        {invoices.length === 0 ? (
+          <div className="text-center py-12">
+            <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">E-Fatura Bulunamadı</h3>
+            <p className="text-muted-foreground">
+              Seçilen tarih aralığında e-fatura bulunmuyor veya filtre kriterlerinize uygun fatura yok.
+            </p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-100 border-b border-slate-200">
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">📄 Fatura No</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🏷️ Fatura Tipi</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">📋 Fatura Senaryosu</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🏢 Tedarikçi</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🔢 Vergi No</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">📅 Fatura Tarihi</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">💰 Tutar</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">💱 Para Birimi</TableHead>
+                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">⚙️ İşlemler</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoices.map((invoice) => (
+                <TableRow 
+                  key={invoice.id} 
+                  className="hover:bg-blue-50 h-8 cursor-pointer"
+                >
+                  <TableCell className="font-medium py-2 px-3 text-xs" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                    <span className="text-blue-600">{invoice.invoiceNumber}</span>
+                  </TableCell>
+                  <TableCell className="py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                    {getInvoiceTypeBadge(invoice.invoiceType)}
+                  </TableCell>
+                  <TableCell className="py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                    {getInvoiceProfileBadge(invoice.invoiceProfile)}
+                  </TableCell>
+                  <TableCell className="py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                    <div className="flex items-center">
+                      <Building className="h-3 w-3 text-muted-foreground mr-2" />
+                      <span className="text-xs">{invoice.supplierName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                    {invoice.supplierTaxNumber}
+                  </TableCell>
+                  <TableCell className="text-center py-2 px-3 text-xs" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                    <div className="flex items-center justify-center">
+                      <Calendar className="h-3 w-3 text-muted-foreground mr-1" />
+                      {format(new Date(invoice.invoiceDate), 'dd MMM yyyy', { locale: tr })}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold py-2 px-3 text-xs" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                    {invoice.totalAmount.toLocaleString('tr-TR', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })}
+                  </TableCell>
+                  <TableCell className="text-center py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                    <Badge variant="outline" className="text-xs">{invoice.currency}</Badge>
+                  </TableCell>
+                  <TableCell className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/e-invoice/process/${invoice.id}`);
+                        }}
+                        className="h-8 w-8"
+                        title="İşle"
+                      >
+                        <Package className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setDownloadingInvoiceId(invoice.id);
+                          try {
+                            await downloadAndOpenPdf(invoice.id, 'e-fatura');
+                          } catch (error) {
+                            console.error('PDF önizleme hatası:', error);
+                          } finally {
+                            setDownloadingInvoiceId(null);
+                          }
+                        }}
+                        disabled={downloadingInvoiceId === invoice.id}
+                        className="h-8 w-8"
+                        title="PDF Önizleme"
+                      >
+                        {downloadingInvoiceId === invoice.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow 
-                    key={invoice.id} 
-                    className="hover:bg-blue-50 h-8 cursor-pointer"
-                    onClick={async (e) => {
-                      // Eğer zaten download ediyorsa, tekrar tıklamayı engelle
-                      if (isDownloading) {
-                        e.preventDefault();
-                        return;
-                      }
-                      
-                      try {
-                        await downloadAndOpenPdf(invoice.id, 'e-fatura');
-                      } catch (error) {
-                        console.error('PDF önizleme hatası:', error);
-                      }
-                    }}
-                  >
-                    <TableCell className="font-medium py-1 px-2 text-xs">
-                      <span className="text-blue-600">{invoice.invoiceNumber}</span>
-                    </TableCell>
-                    <TableCell className="py-1 px-2">
-                      {getInvoiceTypeBadge(invoice.invoiceType)}
-                    </TableCell>
-                    <TableCell className="py-1 px-2">
-                      {getInvoiceProfileBadge(invoice.invoiceProfile)}
-                    </TableCell>
-                    <TableCell className="py-1 px-2">
-                      <div className="flex items-center">
-                        <Building className="h-3 w-3 text-muted-foreground mr-2" />
-                        <span className="text-xs">{invoice.supplierName}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs py-1 px-2">
-                      {invoice.supplierTaxNumber}
-                    </TableCell>
-                    <TableCell className="text-center py-1 px-1 text-xs">
-                      <div className="flex items-center justify-center">
-                        <Calendar className="h-3 w-3 text-muted-foreground mr-1" />
-                        {format(new Date(invoice.invoiceDate), 'dd MMM yyyy', { locale: tr })}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold py-1 px-1 text-xs">
-                      {invoice.totalAmount.toLocaleString('tr-TR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
-                    </TableCell>
-                    <TableCell className="text-center py-1 px-1">
-                      <Badge variant="outline" className="text-xs">{invoice.currency}</Badge>
-                    </TableCell>
-                    <TableCell className="py-1 px-1">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/e-invoice/process/${invoice.id}`);
-                          }}
-                          className="h-6 w-6 bg-orange-50 text-orange-700 hover:bg-orange-100"
-                        >
-                          <Package className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              await downloadAndOpenPdf(invoice.id, 'e-fatura');
-                            } catch (error) {
-                              console.error('PDF önizleme hatası:', error);
-                            }
-                          }}
-                          disabled={isDownloading}
-                          className="h-6 w-6 hover:bg-gray-100"
-                          title="PDF Önizleme"
-                        >
-                          {isDownloading ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Eye className="h-3 w-3" />
-                          )}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </div>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ export const useProductSearchDialog = (
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [customPrice, setCustomPrice] = useState<number | undefined>(undefined);
-  const [selectedDepo, setSelectedDepo] = useState("Ana Depo");
+  const [selectedDepo, setSelectedDepo] = useState("");
   const [discountRate, setDiscountRate] = useState(0);
   
   // Update selectedProduct when initialSelectedProduct changes or when dialog opens
@@ -114,6 +114,7 @@ export const useProductSearchDialog = (
     setQuantity(1);
     setCustomPrice(undefined);
     setDiscountRate(0);
+    setSelectedDepo("");
     setDetailsDialogOpen(false);
   };
 

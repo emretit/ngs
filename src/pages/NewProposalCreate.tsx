@@ -662,7 +662,7 @@ const NewProposalCreate = () => {
           onProductModalSelect={(product, itemIndex) => {
             if (itemIndex !== undefined) {
               // Editing existing item
-              setSelectedProduct(null);
+              setSelectedProduct(product); // product'ı set et, null yapma
               setEditingItemIndex(itemIndex);
               setEditingItemData(product);
               setProductModalOpen(true);

@@ -347,41 +347,42 @@ serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error('❌ PDF download error:', error);
-    console.error('❌ Error stack:', error.stack);
     console.error('❌ Error name:', error.name);
-    console.error('❌ Error message:', error.message);
     
-    // Hata mesajını kısalt - çok uzun olabilir (base64 string olabilir)
-    let errorMessage = error.message || 'PDF indirme hatası';
+    // Check if error message contains PDF data (base64)
+    const isPdfData = error.message && (
+      error.message.startsWith('JVBERi0') || 
+      error.message.length > 1000
+    );
     
-    // Eğer hata mesajı base64 gibi görünüyorsa (PDF başlangıcı), genel bir mesaj kullan
-    if (errorMessage.startsWith('JVBERi0xLjQK') || errorMessage.length > 1000) {
-      console.error('❌ Hata mesajı base64 string içeriyor veya çok uzun, genel mesaj kullanılıyor');
-      errorMessage = 'PDF işleme hatası oluştu. Lütfen tekrar deneyin.';
-    } else if (errorMessage.length > 500) {
-      errorMessage = errorMessage.substring(0, 500) + '... (mesaj çok uzun, kısaltıldı)';
+    let errorMessage = 'PDF indirme hatası';
+    let statusCode = 500;
+    
+    if (isPdfData) {
+      console.error('❌ Error message contains PDF base64 data, using generic message');
+      errorMessage = 'PDF işleme hatası. Lütfen tekrar deneyin.';
+    } else if (error.message) {
+      // Truncate error message if too long
+      errorMessage = error.message.length > 200 
+        ? error.message.substring(0, 200) + '...' 
+        : error.message;
+      
+      // Check for auth errors
+      if (error.message.includes('401') || error.message.includes('403')) {
+        statusCode = 401;
+      }
     }
     
-    const statusCode = error.message?.includes('401') || error.message?.includes('403') ? 401 : 400;
-    
-    // Error response'u da try-catch ile koru
+    // Error response construction
     let errorResponseBody: string;
     try {
       errorResponseBody = JSON.stringify({ 
         success: false,
-        error: errorMessage,
-        details: {
-          name: error.name,
-          message: error.message?.substring(0, 200) || 'Bilinmeyen hata',
-          stack: error.stack?.substring(0, 500) || undefined
-        }
+        error: errorMessage
       });
     } catch (stringifyError: any) {
-      console.error('❌ Error response JSON.stringify hatası:', stringifyError);
-      errorResponseBody = JSON.stringify({ 
-        success: false,
-        error: 'PDF indirme hatası'
-      });
+      console.error('❌ Error response JSON.stringify failed:', stringifyError);
+      errorResponseBody = '{"success":false,"error":"PDF indirme hatası"}';
     }
     
     return new Response(errorResponseBody, {

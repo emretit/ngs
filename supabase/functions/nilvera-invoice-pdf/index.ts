@@ -135,7 +135,7 @@ serve(async (req: Request) => {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${nilveraAuth.api_key}`,
-        'Accept': '*/*' // Nilvera API dokümantasyonuna göre
+        'Accept': 'application/json, application/pdf, */*'
       }
     });
 
@@ -186,105 +186,110 @@ serve(async (req: Request) => {
       throw new Error(errorMessage);
     }
 
-    // Get PDF content as blob
-    const contentType = pdfResponse.headers.get('content-type');
+    // Get PDF content based on Content-Type
+    const contentType = pdfResponse.headers.get('content-type') || '';
     console.log('✅ Response Content-Type:', contentType);
     
-    // Content-Type kontrolü - PDF değilse önce JSON hata mesajını kontrol et
-    if (contentType && contentType.includes('application/json')) {
-      // JSON dönmüş - muhtemelen bir hata mesajı VEYA base64 PDF verisi
-      const jsonContent = await pdfResponse.json();
-      console.log('📦 Nilvera API JSON yanıt döndü:', Object.keys(jsonContent));
-      console.log('📦 JSON içerik tipleri:', Object.keys(jsonContent).map(k => `${k}: ${typeof jsonContent[k]}`));
+    // CASE 1: application/json - Could be a JSON string with base64 PDF or error object
+    if (contentType.includes('application/json')) {
+      console.log('📦 Handling application/json response');
+      const responseText = await pdfResponse.text();
+      console.log('📦 Response text length:', responseText.length);
+      console.log('📦 Response text preview (first 100 chars):', responseText.substring(0, 100));
       
-      // Eğer error field varsa ilk 100 karakterini logla
-      if (jsonContent.error) {
-        console.log('📦 jsonContent.error type:', typeof jsonContent.error);
-        console.log('📦 jsonContent.error length:', typeof jsonContent.error === 'string' ? jsonContent.error.length : 'N/A');
-        console.log('📦 jsonContent.error first 100 chars:', typeof jsonContent.error === 'string' ? jsonContent.error.substring(0, 100) : jsonContent.error);
+      // Try to clean and check if it's a direct base64 string (wrapped in quotes or not)
+      const cleaned = responseText.trim().replace(/^["']|["']$/g, '').replace(/[\r\n\s]/g, '');
+      
+      if (cleaned.startsWith('JVBERi0')) {
+        console.log('✅ JSON response contains direct base64 PDF string!');
+        console.log('✅ Base64 length:', cleaned.length);
+        const size = Math.ceil(cleaned.length * 3 / 4);
+        const responseBody = `{"success":true,"pdfData":"${cleaned}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi (JSON base64)"}`;
+        return new Response(responseBody, { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
-      // Eğer jsonContent.error base64 PDF verisi ise (PDF başlangıcı ile başlıyorsa)
-      // Base64 encoded "%PDF" -> "JVBERi0" ile başlar
-      if (jsonContent.error && typeof jsonContent.error === 'string' && jsonContent.error.startsWith('JVBERi0')) {
-        console.log('✅ JSON içinde base64 PDF verisi bulundu (error field)!');
-        console.log('✅ PDF base64 length:', jsonContent.error.length);
-        
-        // Base64 PDF verisini direkt kullan - büyük string'ler için manuel JSON construction
-        const pdfBase64 = jsonContent.error;
-        const size = Math.ceil(pdfBase64.length * 3 / 4);
-        
-        // Manuel olarak JSON string oluştur - JSON.stringify çok büyük string'lerde fail olabiliyor
-        const responseBody = `{"success":true,"pdfData":"${pdfBase64}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi (JSON response)"}`;
-        console.log('✅ Manuel JSON construction başarılı, response body length:', responseBody.length);
-
-        return new Response(responseBody, {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      // Diğer JSON field'larını da kontrol et - PDF verisi başka bir field'da olabilir
-      for (const [key, value] of Object.entries(jsonContent)) {
-        if (typeof value === 'string' && value.startsWith('JVBERi0') && value.length > 1000) {
-          console.log(`✅ JSON içinde base64 PDF verisi bulundu (${key} field)!`);
-          console.log('✅ PDF base64 length:', value.length);
-          
-          const pdfBase64 = value;
-          const size = Math.ceil(pdfBase64.length * 3 / 4);
-          
-          const responseBody = `{"success":true,"pdfData":"${pdfBase64}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi (JSON response)"}`;
-          console.log('✅ Manuel JSON construction başarılı, response body length:', responseBody.length);
-
-          return new Response(responseBody, {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-      }
-      
-      // Normal JSON hata mesajı
-      console.error('❌ Nilvera API JSON hata yanıtı:', jsonContent);
-      let errorMessage = 'PDF indirilemedi';
-      if (jsonContent.message) {
-        errorMessage = jsonContent.message;
-      } else if (jsonContent.error && typeof jsonContent.error === 'string') {
-        errorMessage = jsonContent.error.substring(0, 200); // Kısalt
-      } else if (jsonContent.errors && Array.isArray(jsonContent.errors) && jsonContent.errors.length > 0) {
-        errorMessage = jsonContent.errors[0].message || jsonContent.errors[0];
-      } else if (typeof jsonContent === 'string') {
-        errorMessage = jsonContent;
-      } else {
-        errorMessage = `Nilvera API hatası: ${JSON.stringify(jsonContent).substring(0, 200)}`;
-      }
-      
-      throw new Error(errorMessage);
-    }
-    
-    const pdfBlob = await pdfResponse.blob();
-    console.log('✅ PDF blob received, size:', pdfBlob.size, 'bytes');
-    console.log('✅ PDF blob type:', pdfBlob.type);
-    
-    // Content-Type kontrolü - PDF veya octet-stream değilse hata
-    if (contentType && !contentType.includes('pdf') && !contentType.includes('octet-stream') && !contentType.includes('application/octet-stream')) {
-      // HTML veya başka bir içerik dönmüş olabilir (error page)
-      const textContent = await pdfBlob.text();
-      console.error('❌ Geçersiz Content-Type:', contentType);
-      console.error('❌ Response içeriği (ilk 500 karakter):', textContent.substring(0, 500));
-      
-      // JSON olup olmadığını kontrol et
+      // Not a direct base64 string, parse as JSON object
       try {
-        const jsonContent = JSON.parse(textContent);
+        const jsonContent = JSON.parse(responseText);
+        console.log('📦 Parsed JSON keys:', Object.keys(jsonContent));
+        
+        // Check all fields for base64 PDF data
+        for (const [key, value] of Object.entries(jsonContent)) {
+          if (typeof value === 'string' && value.startsWith('JVBERi0') && value.length > 1000) {
+            console.log(`✅ Found base64 PDF in field: ${key}`);
+            const pdfBase64 = value.replace(/[\r\n\s]/g, '');
+            const size = Math.ceil(pdfBase64.length * 3 / 4);
+            const responseBody = `{"success":true,"pdfData":"${pdfBase64}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi (JSON field: ${key})"}`;
+            return new Response(responseBody, { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+        }
+        
+        // No PDF data found, treat as error
+        console.error('❌ JSON response without PDF data:', jsonContent);
         let errorMessage = 'PDF indirilemedi';
         if (jsonContent.message) {
           errorMessage = jsonContent.message;
-        } else if (jsonContent.error) {
-          errorMessage = jsonContent.error;
+        } else if (jsonContent.error && typeof jsonContent.error === 'string') {
+          errorMessage = jsonContent.error.substring(0, 200);
+        } else if (jsonContent.errors && Array.isArray(jsonContent.errors)) {
+          errorMessage = jsonContent.errors[0]?.message || String(jsonContent.errors[0]);
+        } else {
+          errorMessage = `Nilvera API hatası: ${JSON.stringify(jsonContent).substring(0, 200)}`;
         }
         throw new Error(errorMessage);
-      } catch {
-        // JSON değilse genel hata mesajı
-        throw new Error(`PDF bekleniyor ama farklı bir içerik döndü. Content-Type: ${contentType}. Lütfen Nilvera API erişiminizi ve invoice UUID'yi kontrol edin.`);
+      } catch (parseError) {
+        console.error('❌ Failed to parse JSON:', parseError);
+        throw new Error(`JSON parse hatası: ${responseText.substring(0, 200)}`);
       }
     }
+    
+    // CASE 2: text/plain or other non-binary types - Could be base64 string
+    if (contentType && !contentType.includes('pdf') && !contentType.includes('octet-stream')) {
+      console.log('📦 Handling text/plain or other text response');
+      const responseText = await pdfResponse.text();
+      console.log('📦 Response text length:', responseText.length);
+      console.log('📦 Response text preview (first 100 chars):', responseText.substring(0, 100));
+      
+      // Clean and check for base64 PDF
+      const cleaned = responseText.trim().replace(/^["']|["']$/g, '').replace(/[\r\n\s]/g, '').replace(/^\uFEFF/, '');
+      
+      if (cleaned.startsWith('JVBERi0')) {
+        console.log('✅ Text response contains base64 PDF!');
+        console.log('✅ Base64 length:', cleaned.length);
+        const size = Math.ceil(cleaned.length * 3 / 4);
+        const responseBody = `{"success":true,"pdfData":"${cleaned}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi (text base64)"}`;
+        return new Response(responseBody, { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      
+      // Try parsing as JSON (might be JSON without proper content-type)
+      try {
+        const jsonContent = JSON.parse(responseText);
+        for (const [key, value] of Object.entries(jsonContent)) {
+          if (typeof value === 'string' && value.startsWith('JVBERi0') && value.length > 1000) {
+            console.log(`✅ Found base64 PDF in JSON field: ${key}`);
+            const pdfBase64 = value.replace(/[\r\n\s]/g, '');
+            const size = Math.ceil(pdfBase64.length * 3 / 4);
+            const responseBody = `{"success":true,"pdfData":"${pdfBase64}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi"}`;
+            return new Response(responseBody, { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+        }
+        // JSON error without PDF
+        const errorMessage = jsonContent.message || jsonContent.error || 'PDF indirilemedi';
+        throw new Error(errorMessage);
+      } catch {
+        // Not JSON, not base64 - invalid response
+        console.error('❌ Invalid response - not PDF, not base64, not valid JSON');
+        console.error('❌ Content-Type:', contentType);
+        console.error('❌ Response preview:', responseText.substring(0, 500));
+        throw new Error(`Geçersiz yanıt tipi. Content-Type: ${contentType}. Beklenen: PDF veya base64 string.`);
+      }
+    }
+    
+    // CASE 3: Binary PDF (application/pdf or octet-stream)
+    console.log('📦 Handling binary PDF response');
+    const pdfBlob = await pdfResponse.blob();
+    console.log('✅ PDF blob received, size:', pdfBlob.size, 'bytes');
+    console.log('✅ PDF blob type:', pdfBlob.type);
 
     // PDF'in geçerli olup olmadığını kontrol et
     if (pdfBlob.size === 0) {

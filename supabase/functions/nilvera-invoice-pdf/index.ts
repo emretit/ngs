@@ -291,19 +291,30 @@ serve(async (req: Request) => {
       throw new Error('PDF dosyası boş. Nilvera API boş yanıt döndü.');
     }
 
-    // PDF magic number kontrolü (%PDF) - ZORUNLU
+    // PDF veya base64 kontrolü
     const pdfArrayBuffer = await pdfBlob.arrayBuffer();
-    const pdfHeader = new Uint8Array(pdfArrayBuffer.slice(0, 4));
-    const pdfHeaderString = String.fromCharCode(...pdfHeader);
-    
-    if (pdfHeaderString !== '%PDF') {
-      // İçeriğin başını kontrol et - belki HTML error page döndü
+    const first4 = new Uint8Array(pdfArrayBuffer.slice(0, 4));
+    const headerStr = String.fromCharCode(...first4);
+
+    // Eğer gövde base64 metni ise ("JVBE" = "JVBERi0" başlangıcı)
+    if (headerStr === 'JVBE') {
+      const base64Text = new TextDecoder().decode(pdfArrayBuffer).replace(/[\r\n\s]/g, '');
+      if (base64Text.startsWith('JVBERi0')) {
+        console.log('✅ Body is base64 PDF string, returning directly. Length:', base64Text.length);
+        const size = Math.ceil(base64Text.length * 3 / 4);
+        const responseBody = `{"success":true,"pdfData":"${base64Text}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi (base64 body)"}`;
+        return new Response(responseBody, { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+      }
+    }
+
+    // PDF magic number kontrolü (%PDF)
+    if (headerStr !== '%PDF') {
       const textPreview = new TextDecoder().decode(pdfArrayBuffer.slice(0, 200));
       console.error('❌ PDF header kontrolü başarısız!');
-      console.error('❌ Beklenen: %PDF');
-      console.error('❌ Gelen:', pdfHeaderString);
+      console.error('❌ Beklenen: %PDF veya base64 (JVBERi0)');
+      console.error('❌ Gelen:', headerStr);
       console.error('❌ İçerik önizlemesi:', textPreview);
-      throw new Error(`Geçersiz PDF dosyası. Dosya başlığı '%PDF' değil: '${pdfHeaderString}'. Nilvera API muhtemelen hata mesajı döndü.`);
+      throw new Error(`Geçersiz PDF içeriği. Başlık '${headerStr}'.`);
     }
 
     // Base64 encoding - Deno'nun built-in base64 encoding'i kullan

@@ -19,6 +19,8 @@ export interface IncomingInvoice {
   isAnswered: boolean;
   pdfUrl?: string;
   xmlData: any;
+  invoiceType?: string;
+  invoiceProfile?: string;
 }
 
 export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?: string }, enabled = true) => {

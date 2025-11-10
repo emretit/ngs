@@ -277,6 +277,7 @@ export default function EInvoiceList() {
                   <TableHead>Tedarikçi</TableHead>
                   <TableHead>Vergi No</TableHead>
                   <TableHead>Fatura Tarihi</TableHead>
+                  <TableHead>Vade Tarihi</TableHead>
                   <TableHead className="text-right">Tutar</TableHead>
                   <TableHead>Para Birimi</TableHead>
                   <TableHead className="text-center">İşlemler</TableHead>
@@ -289,10 +290,10 @@ export default function EInvoiceList() {
                       {invoice.invoiceNumber}
                     </TableCell>
                     <TableCell>
-                       {getInvoiceTypeBadge(invoice.invoiceDate)}
+                       {getInvoiceTypeBadge(invoice.invoiceType || 'BILINMIYOR')}
                      </TableCell>
                      <TableCell>
-                       {getInvoiceProfileBadge("TEMELFATURA")}
+                       {getInvoiceProfileBadge(invoice.invoiceProfile || 'TEMELFATURA')}
                      </TableCell>
                     <TableCell>
                       <div className="flex items-center">

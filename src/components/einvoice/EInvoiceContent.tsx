@@ -170,7 +170,13 @@ const EInvoiceContent = ({
                   <TableRow 
                     key={invoice.id} 
                     className="hover:bg-blue-50 h-8 cursor-pointer"
-                    onClick={async () => {
+                    onClick={async (e) => {
+                      // Eğer zaten download ediyorsa, tekrar tıklamayı engelle
+                      if (isDownloading) {
+                        e.preventDefault();
+                        return;
+                      }
+                      
                       try {
                         await downloadAndOpenPdf(invoice.id, 'e-fatura');
                       } catch (error) {

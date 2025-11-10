@@ -73,27 +73,19 @@ export const useNilveraPdf = () => {
         const blobUrl = URL.createObjectURL(blob);
         console.log('✅ Blob URL created:', blobUrl);
         
-        // Yeni sekmede aç
-        const newWindow = window.open(blobUrl, '_blank');
+        // Otomatik download için link oluştur
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         
-        if (!newWindow) {
-          URL.revokeObjectURL(blobUrl);
-          throw new Error('Pop-up engelleyici nedeniyle yeni sekme açılamadı');
-        }
-
-        // Window kapanınca URL'yi temizle
-        newWindow.addEventListener('beforeunload', () => {
-          URL.revokeObjectURL(blobUrl);
-        });
-        
-        // Güvenlik için 10 dakika sonra da temizle
+        // URL'yi kısa bir süre sonra temizle (tarayıcı açma zamanı için)
         setTimeout(() => {
-          try {
-            URL.revokeObjectURL(blobUrl);
-          } catch (e) {
-            // URL zaten temizlenmiş olabilir
-          }
-        }, 10 * 60 * 1000);
+          URL.revokeObjectURL(blobUrl);
+        }, 1000);
 
         toast.success(`${invoiceType} PDF'i yeni sekmede açıldı`);
         return { success: true, url: blobUrl };

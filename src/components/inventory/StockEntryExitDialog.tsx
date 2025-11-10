@@ -32,6 +32,7 @@ interface StockEntryExitDialogProps {
   onClose: () => void;
   transactionType: 'giris' | 'cikis';
   warehouseId?: string;
+  onSuccess?: () => void;
 }
 
 interface TransactionItem {
@@ -329,6 +330,7 @@ export default function StockEntryExitDialog({
               <div className="space-y-2">
                 <Label>Tarih *</Label>
                 <UnifiedDatePicker
+                  label="Tarih"
                   date={transactionDate}
                   onSelect={(date) => date && setTransactionDate(date)}
                   placeholder="Tarih seçin"
@@ -545,7 +547,7 @@ export default function StockEntryExitDialog({
                         {transactionType === 'cikis' && 'available_stock' in product && (
                           <TableCell className="text-right">
                             <Badge variant="outline" className="mr-2">
-                              {product.available_stock.toLocaleString('tr-TR')} {product.unit || "adet"}
+                              {String(product.available_stock)} {product.unit || "adet"}
                             </Badge>
                           </TableCell>
                         )}

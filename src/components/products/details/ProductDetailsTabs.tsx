@@ -47,6 +47,7 @@ const ProductDetailsTabs = ({ product, onUpdate }: ProductDetailsTabsProps) => {
         
         <CustomTabsContent value="stock" className="mt-6">
           <ProductInventory
+            productId={product.id}
             stockQuantity={product.stock_quantity}
             minStockLevel={product.min_stock_level}
             unit={product.unit}

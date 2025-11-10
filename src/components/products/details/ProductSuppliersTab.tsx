@@ -17,19 +17,22 @@ interface ProductSuppliersTabProps {
 export const ProductSuppliersTab = ({ product }: ProductSuppliersTabProps) => {
   const navigate = useNavigate();
 
+  // suppliers alanı varsa ilk supplier'ı al
+  const supplierId = product.suppliers?.id || null;
+
   const { data: supplier, isLoading: isLoadingSupplier } = useQuery({
-    queryKey: ['product-supplier', product.supplier_id],
+    queryKey: ['product-supplier', supplierId],
     queryFn: async () => {
-      if (!product.supplier_id) return null;
+      if (!supplierId) return null;
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
-        .eq('id', product.supplier_id)
+        .eq('id', supplierId)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
-    enabled: !!product.supplier_id,
+    enabled: !!supplierId,
   });
 
   const { data: purchaseOrders, isLoading: isLoadingOrders } = useQuery({

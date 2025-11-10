@@ -167,7 +167,17 @@ const EInvoiceContent = ({
               </TableHeader>
               <TableBody>
                 {invoices.map((invoice) => (
-                  <TableRow key={invoice.id} className="hover:bg-blue-50 h-8">
+                  <TableRow 
+                    key={invoice.id} 
+                    className="hover:bg-blue-50 h-8 cursor-pointer"
+                    onClick={async () => {
+                      try {
+                        await downloadAndOpenPdf(invoice.id, 'e-fatura');
+                      } catch (error) {
+                        console.error('PDF önizleme hatası:', error);
+                      }
+                    }}
+                  >
                     <TableCell className="font-medium py-1 px-2 text-xs">
                       <span className="text-blue-600">{invoice.invoiceNumber}</span>
                     </TableCell>
@@ -206,7 +216,10 @@ const EInvoiceContent = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/e-invoice/process/${invoice.id}`);
+                          }}
                           className="h-6 w-6 bg-orange-50 text-orange-700 hover:bg-orange-100"
                         >
                           <Package className="h-3 w-3" />
@@ -214,7 +227,8 @@ const EInvoiceContent = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={async () => {
+                          onClick={async (e) => {
+                            e.stopPropagation();
                             try {
                               await downloadAndOpenPdf(invoice.id, 'e-fatura');
                             } catch (error) {

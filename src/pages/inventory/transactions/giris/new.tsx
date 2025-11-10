@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowDownToLine, Plus, X, Search, Package } from "lucide-react";
 import { useInventoryTransactions } from "@/hooks/useInventoryTransactions";
 import { Product } from "@/types/product";

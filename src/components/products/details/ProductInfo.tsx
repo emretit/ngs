@@ -153,42 +153,7 @@ export const ProductInfo = ({ product, onUpdate }: ProductInfoProps) => {
               </div>
             </div>
 
-            {/* Ek Bilgiler */}
-            {product.weight && (
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                  <Package className="w-2.5 h-2.5 text-gray-500" />
-                  <span>Ağırlık</span>
-                </div>
-                <div className="text-xs font-medium text-gray-900 truncate">
-                  {product.weight} kg
-                </div>
-              </div>
-            )}
-
-            {product.dimensions && (
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                  <Package className="w-2.5 h-2.5 text-gray-600" />
-                  <span>Boyutlar</span>
-                </div>
-                <div className="text-xs font-medium text-gray-900 truncate">
-                  {product.dimensions}
-                </div>
-              </div>
-            )}
-
-            {product.warranty_period && (
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                  <FileText className="w-2.5 h-2.5 text-purple-500" />
-                  <span>Garanti Süresi</span>
-                </div>
-                <div className="text-xs font-medium text-gray-900 truncate">
-                  {product.warranty_period} ay
-                </div>
-              </div>
-            )}
+            {/* Ek Bilgiler - removed non-existent fields */}
 
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-xs text-gray-600">

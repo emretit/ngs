@@ -107,10 +107,13 @@ const InventoryTransactionDetails = ({ transaction, isOpen, onClose }: Inventory
     if (!displayTransaction) return;
     
     try {
-      await updateTransaction(displayTransaction.id, {
-        notes: notes || undefined,
-        reference_number: referenceNumber || undefined,
-        status: status,
+      await updateTransaction({
+        id: displayTransaction.id,
+        data: {
+          notes: notes || undefined,
+          reference_number: referenceNumber || undefined,
+          status: status,
+        }
       });
       toast.success("İşlem başarıyla güncellendi");
       queryClient.invalidateQueries({ queryKey: ["inventory_transactions"] });
@@ -201,7 +204,7 @@ const InventoryTransactionDetails = ({ transaction, isOpen, onClose }: Inventory
                       Kaynak Depo
                     </Label>
                     <div className="text-xs text-gray-600">
-                      {displayTransaction.from_warehouse_name || displayTransaction.from_warehouse?.name || '-'}
+                      {displayTransaction.from_warehouse_name || '-'}
                     </div>
                   </div>
                   <div className="space-y-0.5">
@@ -210,7 +213,7 @@ const InventoryTransactionDetails = ({ transaction, isOpen, onClose }: Inventory
                       Hedef Depo
                     </Label>
                     <div className="text-xs text-gray-600">
-                      {displayTransaction.to_warehouse_name || displayTransaction.to_warehouse?.name || '-'}
+                      {displayTransaction.to_warehouse_name || '-'}
                     </div>
                   </div>
                 </div>

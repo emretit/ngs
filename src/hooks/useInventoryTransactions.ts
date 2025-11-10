@@ -49,7 +49,7 @@ export const useInventoryTransactions = () => {
         .eq("product_id", filters.product_id);
 
       if (transactionItems && transactionItems.length > 0) {
-        transactionIds = [...new Set(transactionItems.map(item => item.transaction_id))];
+        transactionIds = [...new Set(transactionItems.map(item => item.transaction_id))] as string[];
       } else {
         // Eğer bu ürün için hiç transaction yoksa boş array döndür
         return [];

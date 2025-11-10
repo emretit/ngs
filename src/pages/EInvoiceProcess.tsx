@@ -410,7 +410,7 @@ export default function EInvoiceProcess() {
           variant: "destructive",
         });
         // Hata durumunda geri dön
-        navigate('/purchase/e-invoice');
+        navigate('/e-invoice');
       });
     }
   }, [invoiceId, loadInvoiceDetails, navigate, toast]);
@@ -745,7 +745,7 @@ export default function EInvoiceProcess() {
         title: "Başarılı",
         description: `Alış faturası başarıyla oluşturuldu. ${newProductItems.length} yeni ürün eklendi.`,
       });
-      navigate('/purchase/e-invoice');
+      navigate('/e-invoice');
     } catch (error: any) {
       console.error('❌ Error creating purchase invoice:', error);
       toast({
@@ -805,7 +805,7 @@ export default function EInvoiceProcess() {
               <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Fatura Yüklenemedi</h3>
               <p className="text-gray-600 mb-4">Fatura detayları yüklenirken hata oluştu</p>
-              <Button onClick={() => navigate('/purchase/e-invoice')} variant="outline">
+              <Button onClick={() => navigate('/e-invoice')} variant="outline">
                 Geri Dön
               </Button>
             </div>
@@ -825,7 +825,7 @@ export default function EInvoiceProcess() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => navigate('/purchase/e-invoice')}
+                onClick={() => navigate('/e-invoice')}
                 className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-50/50 hover:text-blue-700 hover:border-blue-200 transition-all duration-200 hover:shadow-sm"
               >
                 <ArrowLeft className="h-4 w-4" />

@@ -206,7 +206,7 @@ const EInvoiceContent = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => navigate(`/purchase/e-invoice/process/${invoice.id}`)}
+                          onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}
                           className="h-6 w-6 bg-orange-50 text-orange-700 hover:bg-orange-100"
                         >
                           <Package className="h-3 w-3" />

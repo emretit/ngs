@@ -124,7 +124,7 @@ export default function EInvoiceList() {
   };
 
   const handleProcessInvoice = (invoice: any) => {
-    navigate(`/purchase/e-invoice/process/${invoice.id}`);
+    navigate(`/e-invoice/process/${invoice.id}`);
   };
 
   const handleRefresh = () => {

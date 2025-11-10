@@ -245,7 +245,7 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
           {/* E-Fatura Card */}
           <div
             className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200 cursor-pointer"
-            onClick={() => navigate("/purchase/e-invoice")}
+            onClick={() => navigate("/e-invoice")}
           >
             <div className="p-5">
               <div className="flex items-center justify-between mb-2">

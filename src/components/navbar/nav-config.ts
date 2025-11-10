@@ -164,7 +164,7 @@ export const navItems = [
         label: "Alış Faturaları",
       },
       {
-        path: "/purchase/e-invoice",
+        path: "/e-invoice",
         icon: FileText,
         label: "E-Fatura",
       },

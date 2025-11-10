@@ -385,8 +385,25 @@ serve(async (req: Request) => {
     let statusCode = 500;
     
     if (isPdfData) {
-      console.error('❌ Error message contains PDF base64 data, using generic message');
-      errorMessage = 'PDF işleme hatası. Lütfen tekrar deneyin.';
+      console.log('✅ Error message actually contains base64 PDF. Returning success.');
+      try {
+        const cleaned = String(error.message)
+          .trim()
+          .replace(/^["']|["']$/g, '')
+          .replace(/[\r\n\s]/g, '');
+        const size = Math.ceil(cleaned.length * 3 / 4);
+        const responseBody = JSON.stringify({
+          success: true,
+          pdfData: cleaned,
+          mimeType: 'application/pdf',
+          size,
+          message: 'PDF başarıyla indirildi (error->base64)'
+        });
+        return new Response(responseBody, { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      } catch (e) {
+        console.error('❌ Failed to convert base64 from error.message:', e);
+        errorMessage = 'PDF işleme hatası. Lütfen tekrar deneyin.';
+      }
     } else if (error.message) {
       // Truncate error message if too long
       errorMessage = error.message.length > 200 

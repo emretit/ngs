@@ -291,24 +291,39 @@ serve(async (req: Request) => {
       throw new Error('PDF dosyası boş. Nilvera API boş yanıt döndü.');
     }
 
-    // PDF veya base64 kontrolü
+    // PDF veya base64 kontrolü ve güvenli fallback
     const pdfArrayBuffer = await pdfBlob.arrayBuffer();
-    const first4 = new Uint8Array(pdfArrayBuffer.slice(0, 4));
-    const headerStr = String.fromCharCode(...first4);
+    const firstBytes = new Uint8Array(pdfArrayBuffer.slice(0, 8));
+    const headerStr = String.fromCharCode(...firstBytes);
 
-    // Eğer gövde base64 metni ise ("JVBE" = "JVBERi0" başlangıcı)
-    if (headerStr === 'JVBE') {
-      const base64Text = new TextDecoder().decode(pdfArrayBuffer).replace(/[\r\n\s]/g, '');
-      if (base64Text.startsWith('JVBERi0')) {
-        console.log('✅ Body is base64 PDF string, returning directly. Length:', base64Text.length);
-        const size = Math.ceil(base64Text.length * 3 / 4);
-        const responseBody = `{"success":true,"pdfData":"${base64Text}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi (base64 body)"}`;
-        return new Response(responseBody, { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+    // Yardımcı: gövdeyi metin olarak okuyup base64 PDF olup olmadığını kontrol et
+    const tryBase64FromText = () => {
+      try {
+        const text = new TextDecoder().decode(pdfArrayBuffer);
+        const cleaned = text.trim().replace(/^["']|["']$/g, '').replace(/[\r\n\s]/g, '');
+        if (cleaned.startsWith('JVBERi0')) {
+          console.log('✅ Body contains base64 PDF string. Length:', cleaned.length);
+          const size = Math.ceil(cleaned.length * 3 / 4);
+          const responseBody = `{"success":true,"pdfData":"${cleaned}","mimeType":"application/pdf","size":${size},"message":"PDF başarıyla indirildi (base64 body)"}`;
+          return new Response(responseBody, { headers: { ...corsHeaders, 'Content-Type': 'application/json' }});
+        }
+      } catch (e) {
+        console.error('❌ Base64 text parse error:', e);
       }
+      return null;
+    };
+
+    // Eğer base64 ibaresi ile başlıyorsa önce base64 olarak dene
+    if (headerStr.startsWith('JVBE') || headerStr.startsWith('"JVBE') || headerStr.startsWith("'JVBE")) {
+      const base64Resp = tryBase64FromText();
+      if (base64Resp) return base64Resp;
     }
 
-    // PDF magic number kontrolü (%PDF)
-    if (headerStr !== '%PDF') {
+    // PDF magic number kontrolü (%PDF); değilse bir kez daha base64 dene
+    if (!headerStr.startsWith('%PDF')) {
+      const base64Resp = tryBase64FromText();
+      if (base64Resp) return base64Resp;
+
       const textPreview = new TextDecoder().decode(pdfArrayBuffer.slice(0, 200));
       console.error('❌ PDF header kontrolü başarısız!');
       console.error('❌ Beklenen: %PDF veya base64 (JVBERi0)');

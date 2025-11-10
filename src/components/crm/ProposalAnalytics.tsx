@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useProposals } from "@/hooks/useProposals";
+import { formatCurrency } from "@/utils/formatters";
 
 const ProposalAnalytics = () => {
   const { data } = useProposals();
@@ -180,7 +181,7 @@ const ProposalAnalytics = () => {
                 <div className="flex items-center">
                   <div className="mr-4 text-right">
                     <div className="font-semibold">
-                      {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(proposal.total_amount || proposal.total_value || 0)}
+                      {formatCurrency(proposal.total_amount || proposal.total_value || 0)}
                     </div>
                     <div className={`text-xs px-2 py-0.5 rounded-full inline-block ${
                       proposal.status === 'accepted' ? 'bg-green-100 text-green-800' : 

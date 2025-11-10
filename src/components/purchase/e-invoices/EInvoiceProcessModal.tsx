@@ -25,6 +25,7 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/utils/formatters';
 
 interface InvoiceItem {
   id: string;
@@ -340,7 +341,7 @@ export default function EInvoiceProcessModal({
         due_date: invoice.dueDate || invoice.invoiceDate,
         total_amount: invoice.totalAmount,
         paid_amount: invoice.paidAmount || 0,
-        currency: invoice.currency || 'TRY',
+        currency: invoice.currency || 'TL',
         tax_amount: invoice.taxAmount || 0,
         status: 'pending',
         subtotal: invoice.totalAmount - (invoice.taxAmount || 0),
@@ -417,10 +418,7 @@ export default function EInvoiceProcessModal({
                 <div>
                   <p className="text-sm text-muted-foreground">Toplam Tutar</p>
                   <p className="font-medium text-lg">
-                    {invoice?.totalAmount?.toLocaleString('tr-TR', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })} {invoice?.currency || 'TRY'}
+                    {formatCurrency(invoice?.totalAmount || 0, invoice?.currency || 'TL')}
                   </p>
                 </div>
               </div>

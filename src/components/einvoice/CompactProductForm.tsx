@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Package, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { UNIT_OPTIONS, mapUnitToDropdownValue } from "@/utils/unitConstants";
 
 const formSchema = z.object({
   name: z.string().min(1, "Ürün adı gerekli"),
@@ -73,7 +74,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
     defaultValues: {
       name: initialData?.name || "",
       sku: initialData?.code || "",
-      unit: initialData?.unit || "Adet",
+      unit: initialData?.unit ? mapUnitToDropdownValue(initialData.unit) : "adet",
       price: initialData?.price || 0,
       tax_rate: initialData?.tax_rate || 18,
       description: "",
@@ -86,7 +87,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
       form.reset({
         name: initialData.name || "",
         sku: initialData.code || "",
-        unit: initialData.unit || "Adet",
+        unit: initialData.unit ? mapUnitToDropdownValue(initialData.unit) : "adet",
         price: initialData.price || 0,
         tax_rate: initialData.tax_rate || 18,
         description: "",
@@ -116,7 +117,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
           price: data.price,
           tax_rate: data.tax_rate,
           description: data.description,
-          currency: "TRY",
+          currency: "TL",
           category_type: "product",
           product_type: "physical",
           status: "active",
@@ -223,14 +224,11 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Adet">Adet</SelectItem>
-                        <SelectItem value="Kg">Kg</SelectItem>
-                        <SelectItem value="Lt">Lt</SelectItem>
-                        <SelectItem value="M">M</SelectItem>
-                        <SelectItem value="M2">M²</SelectItem>
-                        <SelectItem value="M3">M³</SelectItem>
-                        <SelectItem value="Paket">Paket</SelectItem>
-                        <SelectItem value="Kutu">Kutu</SelectItem>
+                        {UNIT_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -245,7 +243,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fiyat (TRY) *</FormLabel>
+                    <FormLabel>Fiyat (TL) *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

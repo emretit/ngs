@@ -2,6 +2,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Phone, Mail, Edit2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "@/utils/formatters";
 
 interface CustomerTableRowProps {
   customer: {
@@ -78,7 +79,7 @@ const CustomerTableRow = ({ customer }: CustomerTableRowProps) => {
       </TableCell>
       <TableCell className="px-4 py-3">
         <span className={`font-semibold ${customer.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {customer.balance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+          {formatCurrency(customer.balance)}
         </span>
       </TableCell>
       <TableCell className="px-4 py-3 text-center">

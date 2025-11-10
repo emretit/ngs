@@ -9,6 +9,7 @@ import { Supplier } from "@/types/supplier";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatPhoneNumber } from "@/utils/phoneFormatter";
+import { formatCurrency } from "@/utils/formatters";
 
 interface ContactHeaderProps {
   supplier: Supplier;
@@ -241,7 +242,7 @@ export const ContactHeader = ({ supplier, id, onEdit, onUpdate }: ContactHeaderP
           <TrendingUp className="h-3 w-3" />
           <span className="font-medium">Bakiye</span>
           <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-            {supplier.balance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+            {formatCurrency(supplier.balance)}
           </span>
         </div>
       </div>

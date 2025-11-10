@@ -65,10 +65,10 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
       </CardHeader>
       <CardContent className="space-y-2 pt-0 px-3 pb-3">
         {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
-        {formData.currency && formData.currency !== "TRY" && (
+        {formData.currency && formData.currency !== "TL" && (
           <div>
             <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
-              Döviz Kuru (1 {formData.currency} = ? TRY)
+              Döviz Kuru (1 {formData.currency} = ? TL)
             </Label>
             <Input
               id="exchange_rate"
@@ -81,7 +81,7 @@ const OrderDetailsCard: React.FC<OrderDetailsCardProps> = ({
               className="mt-1 h-7 text-xs"
             />
             <p className="text-[10px] text-muted-foreground mt-1">
-              1 {formData.currency} = {formData.exchange_rate || "1"} TRY
+              1 {formData.currency} = {formData.exchange_rate || "1"} TL
             </p>
           </div>
         )}

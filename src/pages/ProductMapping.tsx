@@ -18,9 +18,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency } from '@/utils/formatters';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
-import ProductMappingDialog from '@/components/products/ProductMappingDialog';
+import EInvoiceProductDetailsDialog from '@/components/einvoice/EInvoiceProductDetailsDialog';
 interface ParsedProduct {
   name: string;
   sku: string | null;
@@ -239,7 +240,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
   };
 
   // Dialog'dan gelen veriyi kaydet
-  const handleDialogSave = (index: number, data: { productId: string | null; warehouseId: string | null; action: 'create' | 'update' | 'skip' }) => {
+  const handleDialogSave = (index: number, data: { productId: string | null; warehouseId: string | null; action: 'create' | 'update' | 'skip'; quantity?: number; price?: number; unit?: string }) => {
     const newMappings = [...productMappings];
     newMappings[index] = {
       ...newMappings[index],
@@ -247,6 +248,16 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       selectedWarehouseId: data.warehouseId,
       action: data.action
     };
+    // Miktar ve fiyat güncellenmişse parsedProduct'ı güncelle
+    if (data.quantity !== undefined || data.price !== undefined || data.unit !== undefined) {
+      newMappings[index].parsedProduct = {
+        ...newMappings[index].parsedProduct,
+        quantity: data.quantity ?? newMappings[index].parsedProduct.quantity,
+        unit_price: data.price ?? newMappings[index].parsedProduct.unit_price,
+        unit: data.unit ? (data.unit === 'g' ? 'GRM' : data.unit === 'kg' ? 'KGM' : data.unit.toUpperCase()) : newMappings[index].parsedProduct.unit,
+        line_total: (data.price ?? newMappings[index].parsedProduct.unit_price) * (data.quantity ?? newMappings[index].parsedProduct.quantity)
+      };
+    }
     setProductMappings(newMappings);
     setDialogOpenIndex(null);
   };
@@ -295,7 +306,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                 price: mapping.parsedProduct.unit_price,
                 tax_rate: mapping.parsedProduct.tax_rate || 18,
                 unit: mapping.parsedProduct.unit || 'Adet',
-                currency: invoice.currency || 'TRY',
+                currency: invoice.currency || 'TL',
                 category_type: 'product',
                 product_type: 'physical',
                 status: 'active',
@@ -561,7 +572,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                           <th className="text-left p-3 text-sm font-medium">Kod</th>
                           <th className="text-left p-3 text-sm font-medium">Açıklama</th>
                           <th className="text-center p-3 text-sm font-medium">Miktar</th>
-                          <th className="text-right p-3 text-sm font-medium">Fiyat</th>
+                          <th className="text-right p-3 text-sm font-medium">Birim Fiyat</th>
                           <th className="text-right p-3 text-sm font-medium">Tutar</th>
                           <th className="text-right p-3 text-sm font-medium">İndirim</th>
                           <th className="text-right p-3 text-sm font-medium">Net</th>
@@ -657,11 +668,8 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                             <td className="p-3 text-center text-sm">
                               {mapping.parsedProduct.quantity}
                             </td>
-                            <td className="p-3 text-right text-sm">
-                              {mapping.parsedProduct.unit_price.toLocaleString('tr-TR', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                              })}
+                            <td className="p-3 text-right text-sm font-medium">
+                              {formatCurrency(mapping.parsedProduct.unit_price, invoice?.currency || 'TL')}
                             </td>
                             <td className="p-3 text-right text-sm">
                               {mapping.parsedProduct.line_total.toLocaleString('tr-TR', {
@@ -693,36 +701,27 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                         <div className="flex justify-between">
                           <span>Brüt Toplam:</span>
                           <span className="font-semibold">
-                            {invoice?.totalAmount.toLocaleString('tr-TR', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })} TRY
+                            {formatCurrency(invoice?.totalAmount || 0)}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>İndirim:</span>
-                          <span>0,00 TRY</span>
+                          <span>0,00 TL</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Net Toplam:</span>
                           <span className="font-semibold">
-                            {invoice?.totalAmount.toLocaleString('tr-TR', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })} TRY
+                            {formatCurrency(invoice?.totalAmount || 0)}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>KDV (%0):</span>
-                          <span>0,00 TRY</span>
+                          <span>0,00 TL</span>
                         </div>
                         <div className="flex justify-between border-t pt-2 font-bold">
                           <span>TOPLAM:</span>
                           <span>
-                            {invoice?.totalAmount.toLocaleString('tr-TR', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })} TRY
+                            {formatCurrency(invoice?.totalAmount || 0)}
                           </span>
                         </div>
                       </div>
@@ -736,11 +735,19 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
 
         {/* Ürün İşleme Dialog */}
         {dialogOpenIndex !== null && productMappings[dialogOpenIndex] && (
-          <ProductMappingDialog
-            isOpen={dialogOpenIndex !== null}
-            onClose={() => setDialogOpenIndex(null)}
+          <EInvoiceProductDetailsDialog
+            open={dialogOpenIndex !== null}
+            onOpenChange={(open) => !open && setDialogOpenIndex(null)}
             parsedProduct={productMappings[dialogOpenIndex].parsedProduct}
-            onSave={(data) => handleDialogSave(dialogOpenIndex, data)}
+            onConfirm={(data) => handleDialogSave(dialogOpenIndex, {
+              productId: data.productId || null,
+              warehouseId: data.warehouseId,
+              action: data.action || 'update',
+              quantity: data.quantity,
+              price: data.price,
+              unit: data.unit
+            })}
+            allowProductSelection={true}
             existingProductId={productMappings[dialogOpenIndex].selectedProductId}
             existingWarehouseId={productMappings[dialogOpenIndex].selectedWarehouseId}
             existingAction={productMappings[dialogOpenIndex].action}

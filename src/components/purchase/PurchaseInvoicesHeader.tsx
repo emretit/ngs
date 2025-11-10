@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, ShoppingCart, TrendingUp, Clock, DollarSign } from "lucide-react";
+import { formatCurrency } from "@/utils/formatters";
 
 interface PurchaseInvoicesHeaderProps {
   invoices?: any[];
@@ -63,7 +64,7 @@ const PurchaseInvoicesHeader = ({
             <TrendingUp className="h-3 w-3" />
             <span className="font-medium">Toplam Tutar</span>
             <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-              {totalAmount.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+              {formatCurrency(totalAmount)}
             </span>
           </div>
 
@@ -81,7 +82,7 @@ const PurchaseInvoicesHeader = ({
             <DollarSign className="h-3 w-3" />
             <span className="font-medium">Ödenmemiş Tutar</span>
             <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-              {unpaidAmount.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+              {formatCurrency(unpaidAmount)}
             </span>
           </div>
         </div>

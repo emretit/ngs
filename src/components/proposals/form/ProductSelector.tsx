@@ -168,7 +168,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
                         <span className="font-semibold text-primary">
                           {new Intl.NumberFormat('tr-TR', { 
                             style: 'currency', 
-                            currency: product.currency || 'TRY',
+                            currency: (product.currency || 'TL') === 'TL' ? 'TRY' : (product.currency || 'TRY'),
                             minimumFractionDigits: 2
                           }).format(product.price)}
                         </span>

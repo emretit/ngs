@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Users, TrendingUp, Clock, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Customer } from "@/types/customer";
+import { formatCurrency } from "@/utils/formatters";
 
 interface CustomersHeaderProps {
   customers?: Customer[];
@@ -56,7 +57,7 @@ const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
             <TrendingUp className="h-3 w-3" />
             <span className="font-medium">Toplam Bakiye</span>
             <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-              {totalBalance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+              {formatCurrency(totalBalance)}
             </span>
           </div>
 
@@ -65,7 +66,7 @@ const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
             <Clock className="h-3 w-3" />
             <span className="font-medium">Vadesi Geçen</span>
             <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-              {overdueBalance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+              {formatCurrency(overdueBalance)}
             </span>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, FileText, TrendingUp, DollarSign } from "lucide-react";
+import { formatCurrency } from "@/utils/formatters";
 
 interface EInvoiceHeaderProps {
   totalCount: number;
@@ -51,7 +52,7 @@ const EInvoiceHeader = ({
             <TrendingUp className="h-3 w-3" />
             <span className="font-medium">Toplam Tutar</span>
             <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-              {totalAmount.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+              {formatCurrency(totalAmount)}
             </span>
           </div>
         </div>

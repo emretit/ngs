@@ -37,6 +37,8 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { formatUnit } from '@/utils/unitConstants';
+import { formatCurrency } from '@/utils/formatters';
 interface EInvoiceItem {
   id: string;
   line_number: number;
@@ -117,7 +119,8 @@ const MemoizedTableRow = React.memo(({
   getMatchedProduct, 
   handleProductSelect, 
   handleCreateNewProduct, 
-  handleRemoveMatch 
+  handleRemoveMatch,
+  formatUnit
 }: {
   item: ProductMatchingItem;
   index: number;
@@ -126,6 +129,7 @@ const MemoizedTableRow = React.memo(({
   handleProductSelect: (itemIndex: number, product: Product) => void;
   handleCreateNewProduct: (itemIndex: number) => void;
   handleRemoveMatch: (itemIndex: number) => void;
+  formatUnit: (unit: string) => string;
 }) => {
   const matchedProduct = getMatchedProduct(item.matched_product_id);
   
@@ -138,22 +142,25 @@ const MemoizedTableRow = React.memo(({
       </TableCell>
       <TableCell>
         <div className="max-w-48">
-          <p className="font-medium text-gray-900 truncate text-sm mb-1">
+          <p className="font-medium text-gray-900 truncate text-sm">
             {item.invoice_item.product_name}
           </p>
-          <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-            {item.invoice_item.product_code && (
-              <span className="px-2 py-0.5 bg-gray-100 rounded">Kod: {item.invoice_item.product_code}</span>
-            )}
-            <span>{item.invoice_item.unit_price.toFixed(2)} {invoice.currency} / {item.invoice_item.unit}</span>
-          </div>
         </div>
       </TableCell>
       <TableCell className="text-right">
         <div className="font-mono text-sm font-semibold text-gray-700">
           {item.invoice_item.quantity.toFixed(2)}
         </div>
-        <div className="text-xs text-gray-500 mt-0.5">{item.invoice_item.unit}</div>
+      </TableCell>
+      <TableCell className="text-center">
+        <div className="text-xs font-medium text-gray-600">
+          {formatUnit(item.invoice_item.unit)}
+        </div>
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="text-sm font-semibold text-gray-700">
+          {formatCurrency(item.invoice_item.unit_price, invoice.currency)}
+        </div>
       </TableCell>
       <TableCell>
         <div className="space-y-2">
@@ -171,7 +178,7 @@ const MemoizedTableRow = React.memo(({
                     {matchedProduct.sku && (
                       <span className="px-2 py-0.5 bg-green-200/50 rounded">SKU: {matchedProduct.sku}</span>
                     )}
-                    <span>{matchedProduct.price.toFixed(2)} {invoice.currency}</span>
+                    <span>{formatCurrency(matchedProduct.price, invoice.currency)}</span>
                   </div>
                 </div>
               </div>
@@ -298,7 +305,7 @@ export default function EInvoiceProcess() {
         product_name: item.description || 'Açıklama yok',
         product_code: item.productCode,
         quantity: item.quantity || 1,
-        unit: item.unit || 'Adet',
+        unit: item.unit || 'adet', // nilvera-invoice-details'te zaten UBL-TR kodundan dropdown değerine çevriliyor
         unit_price: item.unitPrice || 0,
         tax_rate: item.vatRate || item.taxRate || 18,
         discount_rate: item.discountRate || 0,
@@ -353,7 +360,7 @@ export default function EInvoiceProcess() {
         supplier_tax_number: supplierTaxNumber,
         invoice_date: apiInvoiceDetails?.IssueDate || apiInvoiceDetails?.invoiceDate || new Date().toISOString(),
         due_date: apiInvoiceDetails?.dueDate || null,
-        currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TRY',
+        currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TL',
         subtotal: parseFloat(apiInvoiceDetails?.TaxExclusiveAmount || apiInvoiceDetails?.subtotal || 0),
         tax_total: parseFloat(apiInvoiceDetails?.TaxTotalAmount || apiInvoiceDetails?.taxTotal || 0),
         total_amount: parseFloat(apiInvoiceDetails?.PayableAmount || apiInvoiceDetails?.totalAmount || 0),
@@ -467,11 +474,11 @@ export default function EInvoiceProcess() {
     setIsWarehouseDialogOpen(true);
   }, [matchingItems]);
 
-  const handleProductDetailsConfirm = useCallback((data: { warehouseId: string; quantity?: number; price?: number }) => {
+  const handleProductDetailsConfirm = useCallback((data: { warehouseId: string; quantity?: number; price?: number; unit?: string; discountRate?: number; taxRate?: number; description?: string }) => {
     if (selectedProductForWarehouse && pendingProductIndex >= 0) {
       // Ürünü eşleştir
       handleManualMatch(pendingProductIndex, selectedProductForWarehouse.id);
-      // TODO: Depo bilgisini ve miktar/fiyat bilgilerini kaydetmek için matchingItems'a eklenebilir
+      // TODO: Depo bilgisini ve miktar/fiyat/birim/indirim/KDV/açıklama bilgilerini kaydetmek için matchingItems'a eklenebilir
     }
     setIsWarehouseDialogOpen(false);
     setSelectedProductForWarehouse(null);
@@ -655,6 +662,22 @@ export default function EInvoiceProcess() {
       } else {
         console.log('✅ Invoice already exists in einvoices table:', einvoiceId);
       }
+      // Aynı fatura numarasıyla kayıtlı fatura var mı kontrol et
+      const { data: existingPurchaseInvoice, error: checkInvoiceError } = await supabase
+        .from('purchase_invoices')
+        .select('id, invoice_number')
+        .eq('invoice_number', invoice.invoice_number)
+        .eq('company_id', userProfile.company_id)
+        .maybeSingle();
+
+      if (checkInvoiceError && checkInvoiceError.code !== 'PGRST116') {
+        throw checkInvoiceError;
+      }
+
+      if (existingPurchaseInvoice) {
+        throw new Error(`Bu fatura numarası (${invoice.invoice_number}) ile daha önce kayıt oluşturulmuş. Lütfen farklı bir fatura seçin veya mevcut faturayı düzenleyin.`);
+      }
+
       // Save matching results to database
       const matchingRecords = matchingItems.map(item => ({
         invoice_id: einvoiceId,
@@ -673,6 +696,7 @@ export default function EInvoiceProcess() {
         notes: item.notes,
         company_id: userProfile.company_id // RLS için company_id ekle
       }));
+      
       const { error: insertError } = await supabase
         .from('e_fatura_stok_eslestirme')
         .insert(matchingRecords);
@@ -709,8 +733,14 @@ export default function EInvoiceProcess() {
           .update({ matched_stock_id: newProduct.id })
           .eq('invoice_id', invoice.id)
           .eq('invoice_line_id', item.invoice_item.id);
+        
+        // Update matchingItems array with new product ID
+        const itemIndex = matchingItems.findIndex(m => m.invoice_item.id === item.invoice_item.id);
+        if (itemIndex !== -1) {
+          matchingItems[itemIndex].matched_product_id = newProduct.id;
+        }
       }
-      // Get only valid items for purchase invoice
+      // Get only valid items for purchase invoice (includes newly created products)
       const validItems = matchingItems.filter(item => 
         item.matched_product_id
       );
@@ -760,13 +790,158 @@ export default function EInvoiceProcess() {
         .from('purchase_invoice_items')
         .insert(purchaseInvoiceItems);
       if (itemsError) throw itemsError;
+
+      // Varsayılan depoyu bul (ana depo veya ilk aktif depo)
+      const { data: warehouses } = await supabase
+        .from('warehouses')
+        .select('id, name, warehouse_type')
+        .eq('company_id', userProfile.company_id)
+        .eq('is_active', true)
+        .order('warehouse_type', { ascending: true }) // 'main' önce gelir
+        .order('name', { ascending: true })
+        .limit(1);
+
+      const defaultWarehouseId = warehouses && warehouses.length > 0 ? warehouses[0].id : null;
+
+      // Stok hareketi ve stok güncellemesi oluştur
+      if (defaultWarehouseId && validItems.length > 0) {
+        // Transaction numarası oluştur
+        const year = new Date().getFullYear();
+        const { data: existingTransactions } = await supabase
+          .from('inventory_transactions')
+          .select('transaction_number')
+          .eq('company_id', userProfile.company_id)
+          .like('transaction_number', `STG-${year}-%`)
+          .order('transaction_number', { ascending: false })
+          .limit(1);
+
+        let nextNum = 1;
+        if (existingTransactions && existingTransactions.length > 0) {
+          const lastNumber = existingTransactions[0].transaction_number;
+          const lastNumStr = lastNumber.replace(`STG-${year}-`, '');
+          const lastNum = parseInt(lastNumStr, 10);
+          if (!isNaN(lastNum)) {
+            nextNum = lastNum + 1;
+          }
+        }
+        const transactionNumber = `STG-${year}-${String(nextNum).padStart(4, '0')}`;
+        
+        // Stok girişi transaction'ı oluştur
+        const { data: stockTransaction, error: transactionError } = await supabase
+          .from('inventory_transactions')
+          .insert({
+            company_id: userProfile.company_id,
+            transaction_number: transactionNumber,
+            transaction_type: 'giris',
+            status: 'approved', // Alış faturasından gelen stok otomatik onaylı
+            warehouse_id: defaultWarehouseId,
+            transaction_date: formData.invoice_date || new Date().toISOString().split('T')[0],
+            reference_number: purchaseInvoice.invoice_number,
+            notes: `Alış faturasından otomatik oluşturuldu - Fatura No: ${purchaseInvoice.invoice_number}`,
+            created_by: user.id,
+            approved_by: user.id,
+            approved_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (transactionError) {
+          console.error('❌ Error creating stock transaction:', transactionError);
+          // Hata olsa bile devam et, sadece logla
+        } else if (stockTransaction) {
+          // Ürün adlarını products tablosundan çek
+          const productIds = validItems
+            .map(item => item.matched_product_id)
+            .filter(Boolean) as string[];
+          
+          let productNamesMap: Record<string, string> = {};
+          if (productIds.length > 0) {
+            const { data: products } = await supabase
+              .from('products')
+              .select('id, name')
+              .in('id', productIds);
+            
+            if (products) {
+              products.forEach((p: any) => {
+                productNamesMap[p.id] = p.name;
+              });
+            }
+          }
+
+          // Transaction items oluştur
+          const transactionItems = validItems.map(item => ({
+            transaction_id: stockTransaction.id,
+            product_id: item.matched_product_id,
+            product_name: item.matched_product_id && productNamesMap[item.matched_product_id] 
+              ? productNamesMap[item.matched_product_id] 
+              : item.invoice_item.product_name, // Eşleştirme yoksa faturadaki adı kullan
+            quantity: item.invoice_item.quantity,
+            unit: item.invoice_item.unit || 'adet',
+            unit_cost: item.invoice_item.unit_price,
+            notes: `Ürün: ${item.invoice_item.product_name}`,
+          }));
+
+          const { error: transactionItemsError } = await supabase
+            .from('inventory_transaction_items')
+            .insert(transactionItems);
+
+          if (transactionItemsError) {
+            console.error('❌ Error creating transaction items:', transactionItemsError);
+          } else {
+            // Stok güncellemesi yap
+            for (const item of validItems) {
+              if (item.matched_product_id) {
+                // Mevcut stok kaydını kontrol et
+                const { data: existingStock } = await supabase
+                  .from('warehouse_stock')
+                  .select('id, quantity')
+                  .eq('product_id', item.matched_product_id)
+                  .eq('warehouse_id', defaultWarehouseId)
+                  .eq('company_id', userProfile.company_id)
+                  .maybeSingle();
+
+                const quantity = Number(item.invoice_item.quantity) || 0;
+
+                if (existingStock) {
+                  // Mevcut stoku güncelle
+                  await supabase
+                    .from('warehouse_stock')
+                    .update({
+                      quantity: (existingStock.quantity || 0) + quantity,
+                      last_transaction_date: new Date().toISOString(),
+                    })
+                    .eq('id', existingStock.id);
+                } else {
+                  // Yeni stok kaydı oluştur
+                  await supabase
+                    .from('warehouse_stock')
+                    .insert({
+                      company_id: userProfile.company_id,
+                      product_id: item.matched_product_id,
+                      warehouse_id: defaultWarehouseId,
+                      quantity: quantity,
+                      reserved_quantity: 0,
+                      last_transaction_date: new Date().toISOString(),
+                    });
+                }
+              }
+            }
+          }
+        }
+      }
       
       // İşlenmiş e-fatura ID'leri query'sini invalidate et
       await queryClient.invalidateQueries({ queryKey: ['processed-einvoice-ids'] });
+      // Stok hareketleri query'sini invalidate et
+      await queryClient.invalidateQueries({ queryKey: ['product-stock-movements'] });
+      await queryClient.invalidateQueries({ queryKey: ['warehouse-stocks'] });
+      // Alış faturaları tablosunu refresh et
+      await queryClient.invalidateQueries({ queryKey: ['purchaseInvoices'] });
+      await queryClient.invalidateQueries({ queryKey: ['purchase-invoices-infinite'] });
       
       toast({
         title: "Başarılı",
-        description: `Alış faturası başarıyla oluşturuldu. ${newProductItems.length} yeni ürün eklendi.`,
+        description: `Alış faturası başarıyla oluşturuldu. ${newProductItems.length} yeni ürün eklendi.${defaultWarehouseId ? ' Stok hareketi oluşturuldu.' : ''}`,
       });
       navigate('/e-invoice');
     } catch (error: any) {
@@ -780,6 +955,7 @@ export default function EInvoiceProcess() {
       setIsCreating(false);
     }
   };
+
   const getMatchedProduct = useCallback((productId?: string) => {
     return products.find(p => p.id === productId);
   }, [products]);
@@ -876,7 +1052,7 @@ export default function EInvoiceProcess() {
               </Badge>
               <Badge variant="outline" className="px-3 py-1">
                 <DollarSign className="h-3 w-3 mr-1" />
-                {invoice.total_amount.toFixed(2)} {invoice.currency}
+                {formatCurrency(invoice.total_amount, invoice.currency)}
               </Badge>
             </div>
           </div>
@@ -886,8 +1062,8 @@ export default function EInvoiceProcess() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column - Invoice Info */}
           <div className="lg:col-span-1">
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b p-3">
+            <Card className="border-2 border-gray-300 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b-2 border-gray-300 p-3">
                 <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                   <FileText className="h-4 w-4 text-blue-600" />
                   Fatura & Tedarikçi Bilgileri
@@ -911,16 +1087,16 @@ export default function EInvoiceProcess() {
                   <Separator className="my-2" />
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-xs">Ara Toplam:</span>
-                    <span className="font-medium text-xs">{invoice.subtotal.toFixed(2)} {invoice.currency}</span>
+                    <span className="font-medium text-xs">{formatCurrency(invoice.subtotal, invoice.currency)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-xs">KDV:</span>
-                    <span className="font-medium text-xs">{invoice.tax_total.toFixed(2)} {invoice.currency}</span>
+                    <span className="font-medium text-xs">{formatCurrency(invoice.tax_total, invoice.currency)}</span>
                   </div>
                   <div className="flex justify-between items-center pt-1 border-t">
                     <span className="text-gray-700 font-medium text-xs">Toplam:</span>
                     <span className="text-base font-bold text-primary">
-                      {invoice.total_amount.toFixed(2)} {invoice.currency}
+                      {formatCurrency(invoice.total_amount, invoice.currency)}
                     </span>
                   </div>
                 </div>
@@ -1038,8 +1214,8 @@ export default function EInvoiceProcess() {
 
           {/* Right Column - Product Matching */}
           <div className="lg:col-span-3">
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-green-100/50 border-b">
+            <Card className="border-2 border-gray-300 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-green-100/50 border-b-2 border-gray-300">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
                     <Target className="h-4 w-4 text-green-600" />
@@ -1060,6 +1236,8 @@ export default function EInvoiceProcess() {
                           <TableHead className="w-12 font-semibold">#</TableHead>
                           <TableHead className="min-w-48 font-semibold">Fatura Kalemi</TableHead>
                           <TableHead className="w-24 text-right font-semibold">Miktar</TableHead>
+                          <TableHead className="w-20 text-center font-semibold">Birim</TableHead>
+                          <TableHead className="w-28 text-right font-semibold">Birim Fiyat</TableHead>
                           <TableHead className="min-w-64 font-semibold">Eşleşen Ürün</TableHead>
                           <TableHead className="w-32 text-center font-semibold">İşlemler</TableHead>
                         </TableRow>
@@ -1075,6 +1253,7 @@ export default function EInvoiceProcess() {
                             handleProductSelect={handleProductSelect}
                             handleCreateNewProduct={handleCreateNewProduct}
                             handleRemoveMatch={handleRemoveMatch}
+                            formatUnit={formatUnit}
                           />
                         ))}
                       </TableBody>
@@ -1086,7 +1265,7 @@ export default function EInvoiceProcess() {
           </div>
         </div>
         {/* Action Buttons */}
-        <Card className="border-0 shadow-sm bg-gradient-to-r from-gray-50 to-gray-100/50">
+        <Card className="border-2 border-gray-300 shadow-sm bg-gradient-to-r from-gray-50 to-gray-100/50">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-1">
@@ -1145,8 +1324,10 @@ export default function EInvoiceProcess() {
             open={isWarehouseDialogOpen}
             onOpenChange={setIsWarehouseDialogOpen}
             selectedProduct={selectedProductForWarehouse}
+            invoiceItem={matchingItems[pendingProductIndex]?.invoice_item}
             invoiceQuantity={matchingItems[pendingProductIndex]?.invoice_item.quantity}
             invoicePrice={matchingItems[pendingProductIndex]?.invoice_item.unit_price}
+            invoiceUnit={matchingItems[pendingProductIndex]?.invoice_item.unit}
             onConfirm={handleProductDetailsConfirm}
           />
         )}
@@ -1163,7 +1344,7 @@ export default function EInvoiceProcess() {
           initialData={
             currentItemIndex >= 0 ? {
               name: matchingItems[currentItemIndex]?.invoice_item.product_name || "",
-              unit: matchingItems[currentItemIndex]?.invoice_item.unit || "Adet",
+              unit: matchingItems[currentItemIndex]?.invoice_item.unit || "adet",
               price: matchingItems[currentItemIndex]?.invoice_item.unit_price || 0,
               tax_rate: matchingItems[currentItemIndex]?.invoice_item.tax_rate || 18,
               code: matchingItems[currentItemIndex]?.invoice_item.product_code || "",

@@ -54,10 +54,12 @@ const OutgoingInvoicesTable: React.FC<OutgoingInvoicesTableProps> = ({
     }
   };
 
-  const formatCurrency = (amount: number, currency: string = 'TRY') => {
+  const formatCurrency = (amount: number, currency: string = 'TL') => {
+    // Intl.NumberFormat için geçerli currency code kullan (TL -> TRY)
+    const currencyCode = currency === 'TL' ? 'TRY' : currency;
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
-      currency: currency,
+      currency: currencyCode,
     }).format(amount);
   };
 

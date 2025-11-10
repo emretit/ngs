@@ -147,6 +147,134 @@ export const usePurchaseInvoices = () => {
   };
 
   const deleteInvoice = async (id: string) => {
+    // Önce fatura bilgilerini al
+    const { data: invoice, error: fetchError } = await supabase
+      .from("purchase_invoices")
+      .select("id, invoice_number, einvoice_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      toast.error("Fatura bilgisi alınamadı");
+      throw fetchError;
+    }
+
+    if (!invoice) {
+      throw new Error("Fatura bulunamadı");
+    }
+
+    // Company ID'yi al
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", user?.id)
+      .single();
+
+    if (!profile?.company_id) {
+      throw new Error("Şirket bilgisi bulunamadı");
+    }
+
+    // 1. Bu faturaya ait stok hareketlerini bul ve stokları geri al
+    const { data: stockTransactions } = await supabase
+      .from("inventory_transactions")
+      .select(`
+        id,
+        warehouse_id,
+        items:inventory_transaction_items (
+          product_id,
+          quantity
+        )
+      `)
+      .eq("reference_number", invoice.invoice_number)
+      .eq("company_id", profile.company_id)
+      .eq("transaction_type", "giris");
+
+    if (stockTransactions && stockTransactions.length > 0) {
+      // Her transaction için stokları geri al
+      for (const transaction of stockTransactions) {
+        if (transaction.items && Array.isArray(transaction.items)) {
+          for (const item of transaction.items) {
+            if (item.product_id && transaction.warehouse_id) {
+              // Mevcut stok kaydını kontrol et
+              const { data: existingStock } = await supabase
+                .from("warehouse_stock")
+                .select("id, quantity")
+                .eq("product_id", item.product_id)
+                .eq("warehouse_id", transaction.warehouse_id)
+                .eq("company_id", profile.company_id)
+                .maybeSingle();
+
+              if (existingStock) {
+                const newQuantity = (existingStock.quantity || 0) - Number(item.quantity || 0);
+                // Negatif stok kontrolü
+                if (newQuantity < 0) {
+                  console.warn(`⚠️ Stok negatif olacak, 0'a ayarlanıyor. Ürün: ${item.product_id}`);
+                  await supabase
+                    .from("warehouse_stock")
+                    .update({
+                      quantity: 0,
+                      last_transaction_date: new Date().toISOString(),
+                    })
+                    .eq("id", existingStock.id);
+                } else {
+                  await supabase
+                    .from("warehouse_stock")
+                    .update({
+                      quantity: newQuantity,
+                      last_transaction_date: new Date().toISOString(),
+                    })
+                    .eq("id", existingStock.id);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Stok hareketlerini sil
+      const transactionIds = stockTransactions.map((t: any) => t.id);
+      if (transactionIds.length > 0) {
+        // Önce transaction items'ları sil
+        await supabase
+          .from("inventory_transaction_items")
+          .delete()
+          .in("transaction_id", transactionIds);
+
+        // Sonra transaction'ları sil
+        await supabase
+          .from("inventory_transactions")
+          .delete()
+          .in("id", transactionIds);
+      }
+    }
+
+    // 2. E-fatura eşleştirme kayıtlarını sil
+    if (invoice.einvoice_id) {
+      // Önce invoice items'ları bul
+      const { data: invoiceItems } = await supabase
+        .from("purchase_invoice_items")
+        .select("id")
+        .eq("purchase_invoice_id", id);
+
+      if (invoiceItems && invoiceItems.length > 0) {
+        // E-fatura eşleştirme kayıtlarını sil
+        await supabase
+          .from("e_fatura_stok_eslestirme")
+          .delete()
+          .eq("invoice_id", invoice.einvoice_id);
+      }
+    }
+
+    // 3. Purchase invoice items CASCADE ile otomatik silinecek, ama manuel de silebiliriz
+    await supabase
+      .from("purchase_invoice_items")
+      .delete()
+      .eq("purchase_invoice_id", id);
+
+    // 4. Son olarak faturayı sil
     const { error } = await supabase
       .from("purchase_invoices")
       .delete()
@@ -157,7 +285,7 @@ export const usePurchaseInvoices = () => {
       throw error;
     }
 
-    toast.success("Fatura başarıyla silindi");
+    toast.success("Fatura ve tüm ilişkili kayıtlar başarıyla silindi");
     return { id };
   };
 
@@ -194,6 +322,10 @@ export const usePurchaseInvoices = () => {
     mutationFn: deleteInvoice,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchaseInvoices'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['product-stock-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouse-stocks'] });
+      queryClient.invalidateQueries({ queryKey: ['warehouse-stocks-proposal'] });
     },
   });
 

@@ -5,15 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount: number, currency: string = 'TRY'): string {
+export function formatCurrency(amount: number, currency: string = 'TL'): string {
+  // Intl.NumberFormat için geçerli currency code kullan (TL -> TRY)
+  const currencyCode = currency === 'TL' ? 'TRY' : currency;
   const formatter = new Intl.NumberFormat('tr-TR', {
     style: 'currency',
-    currency: currency,
+    currency: currencyCode,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
   
-  return formatter.format(amount);
+  const formatted = formatter.format(amount);
+  // TRY yerine TL göster
+  return formatted.replace('TRY', 'TL');
 }
 
 export function formatDate(date: string | Date | null | undefined): string {

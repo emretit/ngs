@@ -10,6 +10,7 @@ import CashflowLoans from "@/pages/CashflowLoans";
 import CashflowBankAccounts from "@/pages/CashflowBankAccounts";
 import CashflowCategoriesWrapper from "@/pages/CashflowCategoriesWrapper";
 import PurchaseInvoices from "@/pages/PurchaseInvoices";
+import PurchaseInvoiceDetail from "@/pages/PurchaseInvoiceDetail";
 import SalesInvoices from "@/pages/SalesInvoices";
 import CreateSalesInvoice from "@/pages/CreateSalesInvoice";
 import SalesInvoiceDetail from "@/pages/SalesInvoiceDetail";
@@ -48,6 +49,7 @@ export const cashflowRoutes: RouteConfig[] = [
 export const financeRoutes: RouteConfig[] = [
   { path: "/financial-overview", component: FinancialOverview, protected: true },
   { path: "/purchase-invoices", component: PurchaseInvoices, protected: true },
+  { path: "/purchase-invoices/:id", component: PurchaseInvoiceDetail, protected: true },
   { path: "/sales-invoices", component: SalesInvoices, protected: true },
   { path: "/sales-invoices/create", component: CreateSalesInvoice, protected: true },
   { path: "/sales-invoices/:id", component: SalesInvoiceDetail, protected: true },

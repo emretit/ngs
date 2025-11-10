@@ -29,7 +29,7 @@ import { useVendors, useToggleVendorStatus, type Vendor } from '@/hooks/useVendo
 import { VendorFormDrawer } from '@/components/purchasing/VendorFormDrawer';
 import { format } from 'date-fns';
 
-const CURRENCIES = ['TRY', 'USD', 'EUR', 'GBP'];
+const CURRENCIES = ['TL', 'USD', 'EUR', 'GBP'];
 
 export default function VendorsPage() {
   const [searchParams, setSearchParams] = useSearchParams();

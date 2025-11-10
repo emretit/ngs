@@ -53,8 +53,8 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
       errors.push('Birim zorunludur');
     }
     
-    if (!row.currency || typeof row.currency !== 'string' || !['TRY', 'USD', 'EUR', 'GBP'].includes(row.currency)) {
-      errors.push('Geçerli bir para birimi giriniz (TRY, USD, EUR, GBP)');
+    if (!row.currency || typeof row.currency !== 'string' || !['TL', 'USD', 'EUR', 'GBP'].includes(row.currency)) {
+      errors.push('Geçerli bir para birimi giriniz (TL, USD, EUR, GBP)');
     }
     
     if (!row.product_type || typeof row.product_type !== 'string' || !['physical', 'service'].includes(row.product_type)) {

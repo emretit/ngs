@@ -28,6 +28,7 @@ import {
 import ThreeWayMatchWidget from "@/components/purchasing/ThreeWayMatchWidget";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/utils/formatters";
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -261,10 +262,10 @@ export default function VendorInvoiceDetail() {
                   <span>Genel Toplam:</span>
                   <span>{invoice.grand_total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} {invoice.currency}</span>
                 </div>
-                {invoice.currency !== 'TRY' && (
+                {invoice.currency !== 'TL' && (
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>TRY Karşılığı:</span>
-                    <span>{(invoice.grand_total * invoice.exchange_rate).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TRY</span>
+                    <span>TL Karşılığı:</span>
+                    <span>{formatCurrency(invoice.grand_total * invoice.exchange_rate)}</span>
                   </div>
                 )}
               </div>

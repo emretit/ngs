@@ -37,7 +37,7 @@ const Cashflow = () => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
-      currency: 'TRY',
+      currency: 'TL',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);

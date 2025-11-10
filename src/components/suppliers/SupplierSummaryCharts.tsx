@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Supplier } from "@/types/supplier";
 import { Factory, CreditCard, AlertCircle } from "lucide-react";
 import DashboardCard from "@/components/DashboardCard";
+import { formatCurrency } from "@/utils/formatters";
 
 interface SupplierSummaryChartsProps {
   suppliers: Supplier[] | undefined;
@@ -39,13 +40,13 @@ const SupplierSummaryCharts = ({ suppliers = [] }: SupplierSummaryChartsProps) =
       
       <DashboardCard
         title="Toplam Bakiye"
-        value={new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(totalBalance)}
+        value={formatCurrency(totalBalance)}
         icon={<CreditCard className="h-6 w-6" />}
       />
       
       <DashboardCard
         title="Vadesi Geçen Bakiye"
-        value={new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(overdueBalance)}
+        value={formatCurrency(overdueBalance)}
         icon={<AlertCircle className="h-6 w-6" />}
       />
     </div>

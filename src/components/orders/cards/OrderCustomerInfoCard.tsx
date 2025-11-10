@@ -101,12 +101,12 @@ const OrderCustomerInfoCard: React.FC<OrderCustomerInfoCardProps> = ({
               {/* Para Birimi */}
               <div>
                 <Label htmlFor="currency" className="text-xs font-medium text-gray-700">Para Birimi</Label>
-                <Select value={formData.currency || "TRY"} onValueChange={(value) => handleFieldChange('currency', value)}>
+                <Select value={formData.currency || "TL"} onValueChange={(value) => handleFieldChange('currency', value)}>
                   <SelectTrigger className="mt-1 h-7 text-xs">
                     <SelectValue placeholder="Para birimi" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="TRY">₺ TRY</SelectItem>
+                    <SelectItem value="TL">₺ TL</SelectItem>
                     <SelectItem value="USD">$ USD</SelectItem>
                     <SelectItem value="EUR">€ EUR</SelectItem>
                     <SelectItem value="GBP">£ GBP</SelectItem>
@@ -181,11 +181,11 @@ const OrderCustomerInfoCard: React.FC<OrderCustomerInfoCardProps> = ({
             </div>
           </div>
 
-          {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
-          {formData.currency && formData.currency !== "TRY" && (
+          {/* Döviz Kuru - Sadece TL dışındaki para birimleri için */}
+          {formData.currency && formData.currency !== "TL" && (
             <div>
               <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
-                Döviz Kuru (1 {formData.currency} = ? TRY)
+                Döviz Kuru (1 {formData.currency} = ? TL)
               </Label>
               <Input
                 id="exchange_rate"
@@ -198,7 +198,7 @@ const OrderCustomerInfoCard: React.FC<OrderCustomerInfoCardProps> = ({
                 className="mt-1 h-7 text-xs"
               />
               <p className="text-[10px] text-muted-foreground mt-1">
-                1 {formData.currency} = {formData.exchange_rate || "1"} TRY
+                1 {formData.currency} = {formData.exchange_rate || "1"} TL
               </p>
             </div>
           )}

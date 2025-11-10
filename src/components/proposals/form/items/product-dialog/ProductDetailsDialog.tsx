@@ -85,7 +85,7 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
       );
       
       // Set original price and currency
-      const productCurrency = selectedProduct.currency || 'TRY';
+      const productCurrency = selectedProduct.currency || 'TL';
       setOriginalCurrency(productCurrency);
       setOriginalPrice(selectedProduct.price || 0);
       

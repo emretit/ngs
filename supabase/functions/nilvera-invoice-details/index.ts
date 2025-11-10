@@ -147,17 +147,57 @@ serve(async (req: Request) => {
         console.log('⚠️ XML fetch error:', xmlError.message);
       }
 
+      // UBL-TR birim kodlarını dropdown değerlerine çevir
+      const mapUBLTRToUnit = (ubltrCode: string): string => {
+        if (!ubltrCode) return 'adet';
+        
+        const codeUpper = ubltrCode.toUpperCase();
+        const codeLower = ubltrCode.toLowerCase();
+        
+        // UBL-TR kodlarını dropdown değerlerine çevir
+        const ubltrToUnitMap: Record<string, string> = {
+          'C62': 'adet', 'MTR': 'm', 'MTK': 'm2', 'MTQ': 'm3',
+          'KGM': 'kg', 'GRM': 'g', 'LTR': 'lt', 'MLT': 'ml',
+          'HUR': 'saat', 'DAY': 'gün', 'MON': 'ay', 'WEE': 'hafta',
+          'PA': 'paket', 'CT': 'kutu'
+        };
+        
+        // Önce direkt kod kontrolü
+        if (ubltrToUnitMap[codeUpper]) return ubltrToUnitMap[codeUpper];
+        
+        // Eğer zaten dropdown değeri formatındaysa direkt döndür
+        const dropdownValues = ['adet', 'kg', 'g', 'm', 'm2', 'm3', 'lt', 'ml', 'paket', 'kutu', 'saat', 'gün', 'hafta', 'ay'];
+        if (dropdownValues.includes(codeLower)) return codeLower;
+        
+        // Okunabilir formatları da destekle
+        const readableMap: Record<string, string> = {
+          'adet': 'adet', 'kilogram': 'kg', 'gram': 'g',
+          'metre': 'm', 'metrekare': 'm2', 'metreküp': 'm3',
+          'litre': 'lt', 'mililitre': 'ml', 'paket': 'paket', 'kutu': 'kutu',
+          'saat': 'saat', 'gün': 'gün', 'hafta': 'hafta', 'ay': 'ay',
+          'Adet': 'adet', 'Kg': 'kg', 'Lt': 'lt', 'M': 'm',
+          'M2': 'm2', 'M3': 'm3', 'Paket': 'paket', 'Kutu': 'kutu'
+        };
+        
+        return readableMap[codeLower] || readableMap[ubltrCode] || 'adet';
+      };
+
       // Parse invoice line items from the response
       let invoiceItems: any[] = [];
 
       // First try to extract from the detail response
       if (nilveraData.Lines && Array.isArray(nilveraData.Lines)) {
-        invoiceItems = nilveraData.Lines.map((line: any, index: number) => ({
+        invoiceItems = nilveraData.Lines.map((line: any, index: number) => {
+          // Birim bilgisini al ve UBL-TR kodundan dropdown değerine çevir
+          const rawUnit = line.Unit || line.UnitCode || line.UnitType || 'C62';
+          const unit = mapUBLTRToUnit(rawUnit);
+          
+          return {
           id: `line-${index}`,
           description: line.Description || line.Name || '',
           productCode: line.ProductCode || line.ItemCode || '',
           quantity: parseFloat(line.Quantity || 0),
-          unit: line.Unit || line.UnitCode || 'Adet',
+            unit: unit, // UBL-TR kodundan çevrilmiş dropdown değeri
           unitPrice: parseFloat(line.UnitPrice || line.Price || 0),
           vatRate: parseFloat(line.VATRate || line.TaxRate || 18),
           vatAmount: parseFloat(line.VATAmount || line.TaxAmount || 0),
@@ -169,7 +209,8 @@ serve(async (req: Request) => {
           category: line.Category || null,
           brand: line.Brand || null,
           specifications: line.Specifications || null
-        }));
+          };
+        });
       }
 
       // If no lines found in detail response, try to parse from XML
@@ -202,13 +243,17 @@ serve(async (req: Request) => {
               const price = line?.['cac:Price'] || {};
               const taxTotal = line?.['cac:TaxTotal']?.['cac:TaxSubtotal'] || {};
               const quantity = line?.['cbc:InvoicedQuantity'] || {};
+              
+              // XML'den gelen birim kodunu UBL-TR kodundan dropdown değerine çevir
+              const rawUnit = quantity?.['@unitCode'] || 'C62';
+              const unit = mapUBLTRToUnit(rawUnit);
 
               return {
                 id: `xml-line-${index}`,
                 description: item?.['cbc:Name'] || item?.['cbc:Description'] || `Ürün ${index + 1}`,
                 productCode: line?.['cbc:ID'] || item?.['cac:SellersItemIdentification']?.['cbc:ID'] || '',
                 quantity: parseFloat(quantity?.['#text'] || quantity || '1'),
-                unit: quantity?.['@unitCode'] || 'Adet',
+                unit: unit, // UBL-TR kodundan çevrilmiş dropdown değeri
                 unitPrice: parseFloat(price?.['cbc:PriceAmount']?.['#text'] || price?.['cbc:PriceAmount'] || '0'),
                 vatRate: parseFloat(taxTotal?.['cac:TaxCategory']?.['cbc:Percent'] || '18'),
                 vatAmount: parseFloat(taxTotal?.['cbc:TaxAmount']?.['#text'] || taxTotal?.['cbc:TaxAmount'] || '0'),

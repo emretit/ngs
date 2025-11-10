@@ -231,7 +231,7 @@ serve(async (req) => {
             InvoiceType: 'SATIS',
             InvoiceSerieOrNumber: invoiceSerieOrNumber,
             IssueDate: new Date(salesInvoice.fatura_tarihi).toISOString(),
-            CurrencyCode: salesInvoice.para_birimi || 'TRY',
+            CurrencyCode: salesInvoice.para_birimi || 'TL',
             ExchangeRate: 1,
                           InvoiceProfile: 'TEMELFATURA' // Will be changed to TICARIFATURA if e-fatura mükellefi
           },
@@ -256,15 +256,48 @@ serve(async (req) => {
             Phone: salesInvoice.customers?.mobile_phone || salesInvoice.customers?.office_phone || '',
             Mail: salesInvoice.customers?.email || ''
           },
-          InvoiceLines: salesInvoice.sales_invoice_items?.map((item: any) => ({
+          InvoiceLines: salesInvoice.sales_invoice_items?.map((item: any) => {
+            // Birim kodunu UBL-TR standart koduna çevir
+            const mapUnitToUBLTR = (unit: string): string => {
+              if (!unit) return 'C62'; // Varsayılan: adet
+              
+              const unitUpper = unit.toUpperCase();
+              const unitLower = unit.toLowerCase();
+              
+              // UBL-TR kodları direkt döndür
+              const ubltrCodes: Record<string, string> = {
+                'C62': 'C62', 'MTR': 'MTR', 'MTK': 'MTK', 'MTQ': 'MTQ',
+                'KGM': 'KGM', 'GRM': 'GRM', 'LTR': 'LTR', 'MLT': 'MLT',
+                'HUR': 'HUR', 'DAY': 'DAY', 'MON': 'MON', 'WEE': 'WEE',
+                'PA': 'PA', 'CT': 'CT'
+              };
+              if (ubltrCodes[unitUpper]) return unitUpper;
+              
+              // Dropdown değerlerini ve okunabilir formatları UBL-TR kodlarına çevir
+              const unitMap: Record<string, string> = {
+                'adet': 'C62', 'kilogram': 'KGM', 'gram': 'GRM',
+                'metre': 'MTR', 'metrekare': 'MTK', 'metreküp': 'MTQ',
+                'litre': 'LTR', 'mililitre': 'MLT', 'paket': 'PA', 'kutu': 'CT',
+                'saat': 'HUR', 'gün': 'DAY', 'hafta': 'WEE', 'ay': 'MON',
+                'kg': 'KGM', 'g': 'GRM', 'm': 'MTR', 'm2': 'MTK', 'm3': 'MTQ',
+                'lt': 'LTR', 'ml': 'MLT',
+                'Adet': 'C62', 'Kg': 'KGM', 'Lt': 'LTR', 'M': 'MTR',
+                'M2': 'MTK', 'M3': 'MTQ', 'Paket': 'PA', 'Kutu': 'CT'
+              };
+              
+              return unitMap[unitLower] || unitMap[unit] || 'C62';
+            };
+            
+            return {
             Name: item.urun_adi,
             Quantity: parseFloat(item.miktar),
-            UnitType: item.birim === 'adet' ? 'C62' : 'C62', // UBL-TR standart birim kodları
+              UnitType: mapUnitToUBLTR(item.birim), // UBL-TR standart birim kodları
             Price: parseFloat(item.birim_fiyat),
             KDVPercent: parseFloat(item.kdv_orani),
             DiscountPercent: parseFloat(item.indirim_orani || 0),
             LineTotal: parseFloat(item.satir_toplami)
-          })) || [],
+            };
+          }) || [],
           Notes: salesInvoice.notlar ? [salesInvoice.notlar] : []
         }
         // CustomerAlias will be set below only for e-fatura mükellefi customers

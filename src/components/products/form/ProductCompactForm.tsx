@@ -35,6 +35,7 @@ import WeightInput from "./supplier/WeightInput";
 import DimensionsInput from "./supplier/DimensionsInput";
 import WarrantyPeriodInput from "./supplier/WarrantyPeriodInput";
 import TagsInput from "./supplier/TagsInput";
+import { UNIT_OPTIONS } from "@/utils/unitConstants";
 
 interface ProductCompactFormProps {
   form: UseFormReturn<ProductFormSchema>;
@@ -240,18 +241,11 @@ const ProductCompactForm = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="adet">Adet</SelectItem>
-                        <SelectItem value="kg">Kilogram</SelectItem>
-                        <SelectItem value="m">Metre</SelectItem>
-                        <SelectItem value="m2">Metrekare</SelectItem>
-                        <SelectItem value="m3">Metreküp</SelectItem>
-                        <SelectItem value="lt">Litre</SelectItem>
-                        <SelectItem value="paket">Paket</SelectItem>
-                        <SelectItem value="kutu">Kutu</SelectItem>
-                        <SelectItem value="saat">Saat</SelectItem>
-                        <SelectItem value="gün">Gün</SelectItem>
-                        <SelectItem value="hafta">Hafta</SelectItem>
-                        <SelectItem value="ay">Ay</SelectItem>
+                        {UNIT_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                         <FormMessage className="text-xs" />
@@ -376,7 +370,7 @@ const ProductCompactForm = ({
               <PricePreviewCard 
                 price={price || 0}
                 taxRate={taxRate || 20}
-                currency={currency || "TRY"}
+                currency={currency || "TL"}
                 priceIncludesVat={priceIncludesVat || false}
               />
             </div>

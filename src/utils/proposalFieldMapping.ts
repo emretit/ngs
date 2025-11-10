@@ -219,8 +219,8 @@ export const STANDARD_FIELD_MAPPING: Record<keyof StandardProposalFields, {
     dataPath: 'total_amount',
     formatter: (value, proposal) => {
       const total = proposal?.total_amount || 0;
-      const currency = proposal?.currency || 'TRY';
-      return `${total.toLocaleString('tr-TR')} ${currency === 'TRY' ? '₺' : currency}`;
+      const currency = proposal?.currency || 'TL';
+      return `${total.toLocaleString('tr-TR')} ${currency === 'TL' ? 'TL' : currency}`;
     }
   },
   totalLabel: {
@@ -231,7 +231,7 @@ export const STANDARD_FIELD_MAPPING: Record<keyof StandardProposalFields, {
   currency: {
     templateKeys: ['currency', 'para_birimi', 'paraBirimi', 'doviz'],
     dataPath: 'currency',
-    formatter: (value) => value || 'TRY'
+    formatter: (value) => value || 'TL'
   },
 
   // 6. ÜRÜN/HİZMET BİLGİLERİ - Basit tablo verisi

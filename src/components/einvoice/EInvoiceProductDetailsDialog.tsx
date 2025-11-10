@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { 
   Select,
   SelectContent,
@@ -16,33 +15,103 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Product } from "@/types/product";
+import { EInvoiceItem } from "@/types/einvoice";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle, Package, Warehouse, CheckCircle2, AlertTriangle } from "lucide-react";
+import { mapUnitToDropdownValue, UNIT_OPTIONS } from "@/utils/unitConstants";
+import ProductSelector from '@/components/proposals/form/ProductSelector';
+import CompactProductForm from '@/components/einvoice/CompactProductForm';
+import { formatCurrency } from '@/utils/formatters';
+import { Label } from "@/components/ui/label";
+import PriceAndDiscountSection from '@/components/proposals/form/items/product-dialog/components/PriceAndDiscountSection';
+import QuantityDepoSection from '@/components/proposals/form/items/product-dialog/components/QuantityDepoSection';
+import TotalPriceSection from '@/components/proposals/form/items/product-dialog/components/TotalPriceSection';
+import NotesSection from '@/components/proposals/form/items/product-dialog/components/NotesSection';
+import ProductInfoSection from '@/components/proposals/form/items/product-dialog/components/ProductInfoSection';
+
+interface ParsedProduct {
+  name: string;
+  sku: string | null;
+  quantity: number;
+  unit_price: number;
+  unit: string;
+  tax_rate: number;
+  line_total: number;
+  tax_amount?: number;
+  discount_amount?: number;
+}
 
 interface EInvoiceProductDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedProduct: Product | null;
+  selectedProduct?: Product | null; // Opsiyonel - ürün seçimi yapılabilir
+  invoiceItem?: EInvoiceItem;
   invoiceQuantity?: number;
   invoicePrice?: number;
-  onConfirm: (data: { warehouseId: string; quantity?: number; price?: number }) => void;
+  invoiceUnit?: string;
+  parsedProduct?: ParsedProduct; // ProductMapping için
+  onConfirm: (data: { productId?: string | null; warehouseId: string; quantity?: number; price?: number; unit?: string; action?: 'create' | 'update' | 'skip'; discountRate?: number; taxRate?: number; description?: string }) => void;
+  allowProductSelection?: boolean; // Ürün seçimi yapılabilir mi?
+  existingProductId?: string | null; // Mevcut ürün ID'si
+  existingWarehouseId?: string | null; // Mevcut depo ID'si
+  existingAction?: 'create' | 'update' | 'skip'; // Mevcut aksiyon
 }
 
 const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> = ({
   open,
   onOpenChange,
-  selectedProduct,
+  selectedProduct: initialSelectedProduct,
+  invoiceItem,
   invoiceQuantity,
   invoicePrice,
-  onConfirm
+  invoiceUnit,
+  parsedProduct,
+  onConfirm,
+  allowProductSelection = false,
+  existingProductId,
+  existingWarehouseId,
+  existingAction
 }) => {
-  const [quantity, setQuantity] = useState(invoiceQuantity || 1);
-  const [price, setPrice] = useState<number | undefined>(invoicePrice);
-  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>("");
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(existingProductId || initialSelectedProduct?.id || null);
+  const [action, setAction] = useState<'create' | 'update' | 'skip'>(existingAction || 'update');
+  const [isNewProductDialogOpen, setIsNewProductDialogOpen] = useState(false);
+  // Seçili ürünü getir (eğer selectedProductId varsa)
+  const { data: selectedProduct } = useQuery({
+    queryKey: ['product', selectedProductId],
+    queryFn: async () => {
+      if (!selectedProductId) return initialSelectedProduct || null;
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, sku, price, unit, currency, tax_rate, stock_threshold')
+        .eq('id', selectedProductId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedProductId && open,
+    initialData: initialSelectedProduct || undefined
+  });
+
+  // Faturadan gelen birim bilgisini öncelikle invoiceItem'dan, sonra prop'lardan, en son parsedProduct'tan al
+  const fetchedInvoiceUnit = invoiceItem?.unit || invoiceUnit || parsedProduct?.unit;
+  const fetchedInvoiceQuantity = invoiceItem?.quantity || invoiceQuantity || parsedProduct?.quantity;
+  const fetchedInvoicePrice = invoiceItem?.unit_price || invoicePrice || parsedProduct?.unit_price;
+
+  // Initial state'te birimi faturadan gelen birimle başlat (dropdown değerine çevirerek)
+  const initialUnit = fetchedInvoiceUnit 
+    ? mapUnitToDropdownValue(fetchedInvoiceUnit)
+    : (selectedProduct?.unit ? mapUnitToDropdownValue(selectedProduct.unit) : 'adet');
+
+  const [quantity, setQuantity] = useState(fetchedInvoiceQuantity || 1);
+  const [price, setPrice] = useState<number | undefined>(fetchedInvoicePrice);
+  const [unit, setUnit] = useState<string>(initialUnit);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>(existingWarehouseId || "");
   const [warehouseStocks, setWarehouseStocks] = useState<Map<string, number>>(new Map());
+  const [discountRate, setDiscountRate] = useState<number>(0);
+  const [taxRate, setTaxRate] = useState<number>(parsedProduct?.tax_rate || selectedProduct?.tax_rate || 20);
+  const [description, setDescription] = useState<string>("");
+  const [calculatedTotal, setCalculatedTotal] = useState<number>(0);
 
   // Depoları getir
   const { data: warehouses = [], isLoading: warehousesLoading } = useQuery({
@@ -108,242 +177,291 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
 
   // Dialog açıldığında varsayılan değerleri ayarla
   useEffect(() => {
-    if (open && selectedProduct) {
-      setQuantity(invoiceQuantity || 1);
-      setPrice(invoicePrice || selectedProduct.price);
+    if (open) {
+      // Mevcut değerleri yükle
+      if (existingProductId) {
+        setSelectedProductId(existingProductId);
+      } else if (initialSelectedProduct) {
+        setSelectedProductId(initialSelectedProduct.id);
+      }
+      if (existingWarehouseId) {
+        setSelectedWarehouseId(existingWarehouseId);
+      }
+      if (existingAction) {
+        setAction(existingAction);
+      }
+
+      // Öncelikle invoiceItem'dan, sonra prop'lardan, en son parsedProduct'tan al
+      const invoiceUnitValue = invoiceItem?.unit || invoiceUnit || parsedProduct?.unit;
+      const invoiceQuantityValue = invoiceItem?.quantity || invoiceQuantity || parsedProduct?.quantity;
+      const invoicePriceValue = invoiceItem?.unit_price || invoicePrice || parsedProduct?.unit_price;
       
-      // Ana depoyu varsayılan olarak seç
-      if (warehouses.length > 0 && !selectedWarehouseId) {
+      const defaultQuantity = invoiceQuantityValue || 1;
+      const defaultPrice = invoicePriceValue || selectedProduct?.price;
+      // Birim bilgisini dropdown değerine çevir (GRM -> g, C62 -> adet gibi)
+      const rawUnit = invoiceUnitValue || selectedProduct?.unit || 'adet';
+      const defaultUnit = mapUnitToDropdownValue(rawUnit);
+      
+      setQuantity(defaultQuantity);
+      setPrice(defaultPrice);
+      setUnit(defaultUnit);
+      setTaxRate(parsedProduct?.tax_rate || selectedProduct?.tax_rate || 20);
+      setDescription(parsedProduct?.name || selectedProduct?.description || "");
+      
+      // Ana depoyu varsayılan olarak seç (sadece mevcut depo yoksa)
+      if (warehouses.length > 0 && !selectedWarehouseId && !existingWarehouseId) {
         const mainWarehouse = warehouses.find((w: any) => w.warehouse_type === 'main') || warehouses[0];
         if (mainWarehouse) {
           setSelectedWarehouseId(mainWarehouse.id);
         }
       }
     }
-  }, [open, selectedProduct, invoiceQuantity, invoicePrice, warehouses, selectedWarehouseId]);
+  }, [open, initialSelectedProduct, invoiceItem, invoiceQuantity, invoicePrice, invoiceUnit, parsedProduct, warehouses, selectedWarehouseId, existingProductId, existingWarehouseId, existingAction, selectedProduct]);
 
   // Dialog kapandığında state'i temizle
   useEffect(() => {
     if (!open) {
-      setSelectedWarehouseId("");
-      setQuantity(1);
-      setPrice(undefined);
+      if (!allowProductSelection) {
+        setSelectedWarehouseId("");
+        setQuantity(1);
+        setPrice(undefined);
+        setUnit('adet');
+      }
+      setIsNewProductDialogOpen(false);
     }
-  }, [open]);
+  }, [open, allowProductSelection]);
+
+  const handleProductSelect = (product: Product) => {
+    setSelectedProductId(product.id);
+    setAction('update');
+  };
+
+  const handleNewProductClick = () => {
+    setIsNewProductDialogOpen(true);
+  };
+
+  const handleNewProductCreated = (product: Product) => {
+    setSelectedProductId(product.id);
+    setAction('create');
+    setIsNewProductDialogOpen(false);
+  };
 
   const handleConfirm = () => {
-    if (selectedWarehouseId && selectedProduct) {
+    if (allowProductSelection) {
+      // ProductMapping modu - productId gerekli
+      if (!selectedWarehouseId) return;
       onConfirm({
+        productId: selectedProductId,
         warehouseId: selectedWarehouseId,
         quantity: quantity,
-        price: price
+        price: price,
+        unit: unit,
+        action: action,
+        discountRate: discountRate,
+        taxRate: taxRate,
+        description: description
       });
-      onOpenChange(false);
+    } else {
+      // EInvoiceProcess modu - selectedProduct zaten var
+      if (selectedWarehouseId && selectedProduct) {
+        onConfirm({
+          warehouseId: selectedWarehouseId,
+          quantity: quantity,
+          price: price,
+          unit: unit,
+          discountRate: discountRate,
+          taxRate: taxRate,
+          description: description
+        });
+      }
     }
+    onOpenChange(false);
   };
+
 
   const getStockForWarehouse = (warehouseId: string) => {
     return warehouseStocks.get(warehouseId) || 0;
   };
 
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) return { status: 'out_of_stock', icon: AlertCircle, color: 'destructive' };
+  const getStockStatus = (stock: number): string => {
+    if (stock === 0) return 'out_of_stock';
     if (stock < (selectedProduct?.stock_threshold || 5)) {
-      return { status: 'low_stock', icon: AlertTriangle, color: 'warning' };
+      return 'low_stock';
     }
-    return { status: 'in_stock', icon: CheckCircle2, color: 'success' };
+    return 'in_stock';
   };
 
-  if (!selectedProduct) return null;
-
-  const totalStock = Array.from(warehouseStocks.values()).reduce((sum, qty) => sum + qty, 0);
-  const stockStatus = getStockStatus(totalStock);
+  const totalStock = selectedProductId ? Array.from(warehouseStocks.values()).reduce((sum, qty) => sum + qty, 0) : 0;
+  const stockStatusString = selectedProductId ? getStockStatus(totalStock) : 'in_stock';
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Ürün Detayları
-          </DialogTitle>
+          <DialogTitle>Ürün Detayları</DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
-          {/* Ürün Bilgileri */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">{selectedProduct.name}</h3>
-              <Badge variant="outline" className={
-                stockStatus.status === 'in_stock' ? 'bg-green-50 text-green-700 border-green-200' :
-                stockStatus.status === 'low_stock' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                'bg-red-50 text-red-700 border-red-200'
-              }>
-                <span className="flex items-center space-x-1">
-                  <stockStatus.icon className="h-3 w-3" />
-                  <span>
-                    {stockStatus.status === 'in_stock' ? 'Stokta Var' :
-                     stockStatus.status === 'low_stock' ? 'Düşük Stok' :
-                     'Stokta Yok'}
-                  </span>
-                </span>
-              </Badge>
+          {/* Ürün Seçimi - Sadece allowProductSelection true ise ve ürün seçilmemişse göster */}
+          {allowProductSelection && !selectedProductId && action !== 'create' && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-600">Ürün Seçin veya Yeni Ürün Oluşturun</label>
+              <ProductSelector
+                value=""
+                onChange={() => {}}
+                onProductSelect={handleProductSelect}
+                onNewProduct={handleNewProductClick}
+                placeholder="Ürün seçin veya ara..."
+              />
             </div>
-            {selectedProduct.description && (
-              <p className="text-sm text-gray-500 mt-1">
-                {selectedProduct.description}
-              </p>
-            )}
-            <div className="flex items-center gap-4 text-sm mt-2">
-              <span>SKU: {selectedProduct.sku || "-"}</span>
-              <span>Toplam Stok: {totalStock} {selectedProduct.unit}</span>
+          )}
+
+          {/* Ürün Bilgileri - ProductInfoSection kullan */}
+          {((selectedProductId && selectedProduct) || (!allowProductSelection && initialSelectedProduct)) && selectedProduct && (
+            <ProductInfoSection 
+              product={selectedProduct} 
+              stockStatus={stockStatusString}
+              availableStock={totalStock}
+              originalCurrency={selectedProduct.currency || 'TL'}
+              originalPrice={selectedProduct.price || 0}
+              formatCurrency={formatCurrency}
+            />
+          )}
+          
+          {/* Ürün Seçimi için değiştir butonu */}
+          {allowProductSelection && selectedProductId && selectedProduct && (
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedProductId(null);
+                  setAction('update');
+                }}
+                className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded"
+              >
+                Ürünü Değiştir
+              </button>
             </div>
-            {stockStatus.status === 'low_stock' && (
-              <div className="text-amber-500 text-xs mt-2 flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                <span>Stok miktarı düşük, satın alma planlanabilir</span>
-              </div>
-            )}
-          </div>
+          )}
 
-          {/* Miktar, Fiyat ve Depo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              {/* Miktar */}
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Miktar *</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                />
-                {invoiceQuantity && (
-                  <p className="text-xs text-gray-500">
-                    Faturadan gelen miktar: {invoiceQuantity} {selectedProduct.unit}
-                  </p>
-                )}
-              </div>
-
-              {/* Fiyat */}
-              <div className="space-y-2">
-                <Label htmlFor="price">Birim Fiyat ({selectedProduct.currency || 'TRY'}) *</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={price || ''}
-                  onChange={(e) => setPrice(parseFloat(e.target.value) || undefined)}
-                />
-                {invoicePrice && (
-                  <p className="text-xs text-gray-500">
-                    Faturadan gelen fiyat: {new Intl.NumberFormat('tr-TR', { 
-                      style: 'currency', 
-                      currency: selectedProduct.currency || 'TRY',
-                      minimumFractionDigits: 2
-                    }).format(invoicePrice)}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Depo Seçimi */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="warehouse" className="flex items-center gap-2">
-                  <Warehouse className="h-4 w-4" />
-                  Depo Seçin *
-                </Label>
-                {warehousesLoading ? (
-                  <div className="flex items-center gap-2 p-3">
-                    <span className="text-sm text-gray-500">Depolar yükleniyor...</span>
-                  </div>
-                ) : (
-                  <Select
-                    value={selectedWarehouseId}
-                    onValueChange={setSelectedWarehouseId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Depo seçin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {warehouses.map((warehouse: any) => {
-                        const stock = getStockForWarehouse(warehouse.id);
-                        const status = getStockStatus(stock);
-                        return (
-                          <SelectItem key={warehouse.id} value={warehouse.id}>
-                            <div className="flex items-center justify-between w-full">
-                              <span>
-                                {warehouse.name}
-                                {warehouse.code && ` (${warehouse.code})`}
-                              </span>
-                              <span className={`ml-2 text-xs ${
-                                status.status === 'in_stock' ? 'text-green-600' :
-                                status.status === 'low_stock' ? 'text-amber-600' :
-                                'text-red-600'
-                              }`}>
-                                Stok: {stock} {selectedProduct.unit}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                )}
-                {warehouses.length === 0 && !warehousesLoading && (
-                  <p className="text-xs text-red-500">Henüz depo tanımlanmamış</p>
-                )}
-              </div>
-
-              {/* Seçili Depo Stok Bilgisi */}
-              {selectedWarehouseId && (
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm font-medium mb-1">
-                    {warehouses.find((w: any) => w.id === selectedWarehouseId)?.name}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    Mevcut Stok: {getStockForWarehouse(selectedWarehouseId)} {selectedProduct.unit}
-                  </p>
-                  {quantity > getStockForWarehouse(selectedWarehouseId) && (
-                    <div className="flex items-center text-xs text-red-500 mt-2">
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      <span>Miktar stok miktarını aşıyor</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Toplam Hesaplama */}
-          {price && quantity && (
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Toplam Tutar:</span>
-                <span className="text-lg font-bold text-blue-700">
-                  {new Intl.NumberFormat('tr-TR', { 
-                    style: 'currency', 
-                    currency: selectedProduct.currency || 'TRY',
-                    minimumFractionDigits: 2
-                  }).format(price * quantity)}
-                </span>
-              </div>
-              <div className="text-xs text-gray-600 mt-1">
-                {quantity} {selectedProduct.unit} × {new Intl.NumberFormat('tr-TR', { 
-                  style: 'currency', 
-                  currency: selectedProduct.currency || 'TRY',
-                  minimumFractionDigits: 2
-                }).format(price)} = {new Intl.NumberFormat('tr-TR', { 
-                  style: 'currency', 
-                  currency: selectedProduct.currency || 'TRY',
-                  minimumFractionDigits: 2
-                }).format(price * quantity)}
+          {/* Yeni Ürün Oluşturulacak */}
+          {allowProductSelection && action === 'create' && !selectedProductId && (
+            <div className="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded">
+              <span className="text-blue-600 font-medium text-sm">Yeni Ürün Oluşturulacak</span>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedProductId(null);
+                    setAction('update');
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded"
+                >
+                  İptal
+                </button>
               </div>
             </div>
           )}
+
+          {/* Miktar, Fiyat ve Depo - Sadece ürün seçildiğinde veya allowProductSelection false ise göster */}
+          {(selectedProductId && selectedProduct) || (!allowProductSelection && initialSelectedProduct) ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              {/* Miktar ve Birim */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Miktar</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="unit">Birim</Label>
+                  <Select value={unit} onValueChange={setUnit}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Birim" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNIT_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Depo */}
+              <QuantityDepoSection 
+                quantity={quantity}
+                setQuantity={setQuantity}
+                selectedDepo={selectedWarehouseId}
+                setSelectedDepo={setSelectedWarehouseId}
+                availableStock={totalStock}
+                stockStatus={stockStatusString}
+                productId={selectedProductId || undefined}
+                showQuantity={false}
+              />
+
+              <PriceAndDiscountSection 
+                customPrice={price}
+                setCustomPrice={setPrice}
+                discountRate={discountRate}
+                setDiscountRate={setDiscountRate}
+                selectedCurrency={selectedProduct?.currency || 'TL'}
+                handleCurrencyChange={() => {}}
+                convertedPrice={price || selectedProduct?.price || 0}
+                originalCurrency={selectedProduct?.currency || 'TL'}
+                formatCurrency={formatCurrency}
+              />
+              
+              <div className="space-y-2">
+                <Label htmlFor="tax-rate" className="font-medium">KDV Oranı (%)</Label>
+                <Select 
+                  value={`${taxRate}`}
+                  onValueChange={(value) => setTaxRate(Number(value))}
+                >
+                  <SelectTrigger id="tax-rate" className="w-full h-7 text-xs">
+                    <SelectValue placeholder="KDV Oranı" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="bg-white z-[100]">
+                    {[20, 18, 10, 0].map((rate) => (
+                      <SelectItem key={rate} value={`${rate}`}>
+                        {rate}%
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+            </div>
+            
+            <div className="space-y-6">
+              <TotalPriceSection 
+                unitPrice={price || selectedProduct?.price || 0}
+                quantity={quantity}
+                discountRate={discountRate}
+                taxRate={taxRate}
+                calculatedTotal={calculatedTotal}
+                setCalculatedTotal={setCalculatedTotal}
+                originalCurrency={selectedProduct?.currency || 'TL'}
+                currentCurrency={selectedProduct?.currency || 'TL'}
+                formatCurrency={formatCurrency}
+              />
+              
+              <NotesSection 
+                notes={description} 
+                setNotes={setDescription} 
+              />
+            </div>
+          </div>
+          ) : null}
         </div>
         
         <DialogFooter>
@@ -356,13 +474,37 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
           
           <Button 
             onClick={handleConfirm}
-            disabled={!selectedWarehouseId || !price || quantity < 1 || warehousesLoading}
+            disabled={
+              !selectedWarehouseId || 
+              !price || 
+              quantity < 1 || 
+              warehousesLoading ||
+              (allowProductSelection && !selectedProductId && action !== 'skip') ||
+              calculatedTotal <= 0
+            }
           >
-            Onayla
+            {allowProductSelection ? 'Ekle' : 'Onayla'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Yeni Ürün Oluşturma Dialog */}
+    {allowProductSelection && parsedProduct && (
+      <CompactProductForm
+        isOpen={isNewProductDialogOpen}
+        onClose={() => setIsNewProductDialogOpen(false)}
+        onProductCreated={handleNewProductCreated}
+        initialData={{
+          name: parsedProduct.name,
+          unit: parsedProduct.unit,
+          price: parsedProduct.unit_price,
+          tax_rate: parsedProduct.tax_rate,
+          code: parsedProduct.sku || undefined
+        }}
+      />
+    )}
+    </>
   );
 };
 

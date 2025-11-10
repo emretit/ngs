@@ -38,10 +38,12 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
     }
   };
 
-  const formatCurrency = (amount: number, currency: string = "TRY") => {
+  const formatCurrency = (amount: number, currency: string = "TL") => {
+    // Intl.NumberFormat için geçerli currency code kullan (TL -> TRY)
+    const currencyCode = currency === 'TL' ? 'TRY' : currency;
     return new Intl.NumberFormat('tr-TR', { 
       style: 'currency', 
-      currency: currency 
+      currency: currencyCode 
     }).format(amount);
   };
 
@@ -113,10 +115,10 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
       <TableCell className="p-4 text-center font-medium">
         {opportunity.value ? (
           <div className="flex flex-col items-center space-y-1">
-            <span>{formatCurrency(opportunity.value, opportunity.currency || 'TRY')}</span>
+            <span>{formatCurrency(opportunity.value, opportunity.currency || 'TL')}</span>
             {opportunity.currency && (
               <span className="text-xs text-muted-foreground">
-                {opportunity.currency === 'TRY' ? '₺' : 
+                {opportunity.currency === 'TL' ? 'TL' : 
                  opportunity.currency === 'USD' ? '$' : 
                  opportunity.currency === 'EUR' ? '€' : 
                  opportunity.currency === 'GBP' ? '£' : 

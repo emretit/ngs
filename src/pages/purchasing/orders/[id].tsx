@@ -28,6 +28,7 @@ import {
 } from "@/hooks/usePurchaseOrders";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/utils/formatters";
 
 const getStatusBadge = (status: string) => {
   const variants = {
@@ -286,16 +287,16 @@ export default function PurchaseOrderDetail() {
             <div className="mt-6 flex justify-end">
               <div className="space-y-2 text-right">
                 <div className="text-lg font-semibold">
-                  Genel Toplam: {grandTotal.toFixed(2)} {po.currency}
+                  Genel Toplam: {formatCurrency(grandTotal, po.currency)}
                 </div>
-                {po.currency !== 'TRY' && (
+                {po.currency !== 'TL' && (
                   <div className="text-sm text-muted-foreground">
-                    TRY Karşılığı (Kur: {po.exchange_rate}): {tryTotal.toFixed(2)} TRY
+                    TL Karşılığı (Kur: {po.exchange_rate}): {formatCurrency(tryTotal)}
                   </div>
                 )}
                 {needsApproval && po.status === 'draft' && (
                   <div className="text-sm text-amber-600">
-                    ⚠️ Onay gerekli (Eşik: {approvalThreshold.toLocaleString()} TRY)
+                    ⚠️ Onay gerekli (Eşik: {formatCurrency(approvalThreshold)})
                   </div>
                 )}
               </div>

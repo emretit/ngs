@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, User } from "lucide-react";
 import { format } from "date-fns";
 import { Opportunity, opportunityStatusColors, opportunityStatusLabels } from "@/types/crm";
+import { formatCurrency } from "@/utils/formatters";
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -47,7 +48,7 @@ const OpportunityCard = ({ opportunity, index, onClick, isSelected = false }: Op
               <div className="flex justify-between items-start">
                 <h3 className="font-medium text-gray-900 line-clamp-2">{shortenText(opportunity.title, 30)}</h3>
                 <Badge className="ml-2 flex-shrink-0" variant="outline">
-                  {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(opportunity.value)}
+                  {formatCurrency(opportunity.value)}
                 </Badge>
               </div>
               

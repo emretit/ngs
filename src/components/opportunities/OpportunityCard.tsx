@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { CalendarIcon, MoreHorizontal, Edit, Trash2, FileText, User, Calendar, Target } from "lucide-react";
 import { format } from "date-fns";
 import { Opportunity } from "@/types/crm";
+import { formatCurrency } from "@/utils/formatters";
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
@@ -62,10 +63,7 @@ const OpportunityCard = ({
                 <h3 className="font-medium text-gray-900 line-clamp-2 text-sm flex-1 mr-2">{shortenText(opportunity.title, 30)}</h3>
                 <div className="flex items-center gap-2">
                   <Badge className="flex-shrink-0 text-xs" variant="outline">
-                    {opportunity.currency && opportunity.currency !== 'TRY' 
-                      ? new Intl.NumberFormat('tr-TR', { style: 'currency', currency: opportunity.currency }).format(opportunity.value)
-                      : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(opportunity.value)
-                    }
+                    {formatCurrency(opportunity.value, opportunity.currency || 'TL')}
                   </Badge>
                   
                   {/* 3 Nokta Menü */}

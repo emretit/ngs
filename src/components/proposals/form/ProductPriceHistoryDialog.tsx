@@ -85,7 +85,7 @@ const ProductPriceHistoryDialog: React.FC<ProductPriceHistoryDialogProps> = ({
                     date: proposal.created_at,
                     unit_price: Number(item.unit_price) || 0,
                     quantity: Number(item.quantity) || 0,
-                    currency: item.currency || "TRY",
+                    currency: item.currency || "TL",
                     total: Number(item.total_price) || (Number(item.unit_price) || 0) * (Number(item.quantity) || 0),
                     customer_name: proposal.customer?.name,
                   });
@@ -148,7 +148,7 @@ const ProductPriceHistoryDialog: React.FC<ProductPriceHistoryDialogProps> = ({
               date: item.purchase_invoices.invoice_date || item.purchase_invoices.created_at,
               unit_price: Number(item.unit_price) || 0,
               quantity: Number(item.quantity) || 0,
-              currency: item.purchase_invoices.currency || "TRY",
+              currency: item.purchase_invoices.currency || "TL",
               total: Number(item.line_total) || 0,
               supplier_name: item.purchase_invoices.supplier_id ? suppliersMap[item.purchase_invoices.supplier_id] : undefined,
             });
@@ -190,7 +190,7 @@ const ProductPriceHistoryDialog: React.FC<ProductPriceHistoryDialogProps> = ({
               date: item.sales_invoices.fatura_tarihi || item.sales_invoices.created_at,
               unit_price: item.birim_fiyat || 0,
               quantity: item.miktar || 0,
-              currency: item.para_birimi || "TRY",
+              currency: item.para_birimi || "TL",
               total: item.satir_toplami || 0,
               customer_name: item.sales_invoices.customer?.name,
             });

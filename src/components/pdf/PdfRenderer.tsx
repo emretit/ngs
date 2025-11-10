@@ -183,14 +183,14 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     },
   });
 
-  const formatCurrency = (amount: number, currency: string = 'TRY') => {
+  const formatCurrency = (amount: number, currency: string = 'TL') => {
     // Manual formatting to avoid symbol rendering issues in PDF
     const formatted = new Intl.NumberFormat('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
     
-    const symbol = currency === 'TRY' ? '₺' : currency;
+    const symbol = currency === 'TL' ? 'TL' : currency;
     return `${formatted} ${symbol}`;
   };
 

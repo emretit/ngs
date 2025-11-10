@@ -89,7 +89,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     notes: "",
     
     // Financial settings
-    currency: "TRY",
+    currency: "TL",
     discount_percentage: 0,
     vat_percentage: 20,
     
@@ -146,7 +146,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         validity_date: proposal.valid_until ? new Date(proposal.valid_until) : undefined,
         prepared_by: proposal.employee_id || "",
         notes: proposal.notes || "",
-        currency: proposal.currency || "TRY",
+        currency: proposal.currency || "TL",
         discount_percentage: 0,
         vat_percentage: 20,
         payment_terms: proposal.payment_terms || "Siparişle birlikte %50 avans, teslimde kalan tutar ödenecektir.",
@@ -181,7 +181,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           unit: "adet",
           unit_price: 0,
           total_price: 0,
-          currency: proposal.currency || "TRY"
+          currency: proposal.currency || "TL"
         }]);
       }
     }
@@ -204,7 +204,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     // First, collect all currencies used in items
     const usedCurrencies = new Set<string>();
     items.forEach(item => {
-      const currency = item.currency || 'TRY';
+      const currency = item.currency || 'TL';
       usedCurrencies.add(currency);
     });
     
@@ -215,7 +215,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     
     // Calculate gross totals
     items.forEach(item => {
-      const currency = item.currency || 'TRY';
+      const currency = item.currency || 'TL';
       totals[currency].gross += item.quantity * item.unit_price;
     });
     
@@ -260,7 +260,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const currencyTotals = Object.entries(calculationsByCurrency);
   const [detectedCurrency] = currencyTotals.length > 0 
     ? currencyTotals.reduce((max, current) => current[1].grand > max[1].grand ? current : max)
-    : ['TRY', { grand: 0 }];
+    : ['TL', { grand: 0 }];
   
   // Use detected currency or fallback to form currency
   const primaryCurrency = detectedCurrency || formData.currency;

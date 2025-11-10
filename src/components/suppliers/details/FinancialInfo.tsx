@@ -1,6 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Supplier } from "@/types/supplier";
+import { formatCurrency } from "@/utils/formatters";
 
 interface FinancialInfoProps {
   supplier: Supplier;
@@ -14,7 +15,7 @@ export const FinancialInfo = ({ supplier }: FinancialInfoProps) => {
         <div className="flex justify-between items-center">
           <span className="text-gray-600">Bakiye</span>
           <span className={`font-semibold ${supplier.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {supplier.balance.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
+            {formatCurrency(supplier.balance)}
           </span>
         </div>
       </div>

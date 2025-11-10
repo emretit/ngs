@@ -126,10 +126,10 @@ export const ProductInvoicesTab = ({ productId }: ProductInvoicesTabProps) => {
                   </TableCell>
                   <TableCell className="text-right">{item.miktar}</TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(item.birim_fiyat, item.para_birimi || 'TRY')}
+                    {formatCurrency(item.birim_fiyat, item.para_birimi || 'TL')}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatCurrency(item.satir_toplami, item.para_birimi || 'TRY')}
+                    {formatCurrency(item.satir_toplami, item.para_birimi || 'TL')}
                   </TableCell>
                   <TableCell>
                     {invoice?.status ? getStatusBadge(invoice.status) : '-'}

@@ -15,7 +15,7 @@ interface PurchaseInvoicesContentProps {
   onInvoiceSelectToggle?: (invoice: any) => void;
   selectedInvoices?: any[];
   setSelectedInvoices?: (invoices: any[]) => void;
-  onDownloadPdf?: (invoiceId: string, type: string) => void;
+  onDownloadPdf?: (invoiceId: string, type: "e-arşiv" | "e-fatura") => Promise<void>;
   isDownloading?: boolean;
   searchQuery?: string;
   documentTypeFilter?: string;

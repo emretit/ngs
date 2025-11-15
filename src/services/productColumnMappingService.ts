@@ -404,7 +404,6 @@ const fallbackMapping = (excelColumns: string[]): MappingResult => {
     'uom': 'unit',
     'birim tipi': 'unit',
     'unit type': 'unit',
-    'adet': 'unit',
     'piece': 'unit',
     'kg': 'unit',
     'kilogram': 'unit',

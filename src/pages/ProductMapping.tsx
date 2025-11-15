@@ -282,20 +282,21 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
     if (!invoice) return;
     setIsSaving(true);
     try {
+      // Kullanıcının company_id'sini al (tüm işlemler için gerekli)
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      const companyId = profile?.company_id;
+
       const processedMappings = productMappings.filter(m => m.action !== 'skip');
       const results = [];
       for (const mapping of processedMappings) {
         try {
           if (mapping.action === 'create') {
-            // Kullanıcının company_id'sini al
-            const { data: { user } } = await supabase.auth.getUser();
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("company_id")
-              .eq("id", user?.id)
-              .single();
-
-            const companyId = profile?.company_id;
 
             // Yeni ürün oluştur (stock_quantity products tablosuna 0 olarak kaydediliyor)
             const { data: newProduct, error } = await supabase

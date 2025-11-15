@@ -90,15 +90,7 @@ interface EInvoiceDetails {
     };
   };
 }
-interface Product {
-  id: string;
-  name: string;
-  sku?: string;
-  price: number;
-  unit: string;
-  tax_rate: number;
-  category_type?: string;
-}
+import { Product } from "@/types/product";
 interface ProductMatchingItem {
   invoice_item: EInvoiceItem;
   matched_product_id?: string;

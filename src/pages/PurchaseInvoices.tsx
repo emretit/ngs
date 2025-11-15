@@ -93,7 +93,9 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
           onInvoiceSelectToggle={handleInvoiceSelect}
           selectedInvoices={selectedInvoices}
           setSelectedInvoices={setSelectedInvoices}
-          onDownloadPdf={downloadAndOpenPdf}
+          onDownloadPdf={async (invoiceId, type) => {
+            await downloadAndOpenPdf(invoiceId, type);
+          }}
           isDownloading={isDownloading}
           searchQuery={filterKeyword}
           documentTypeFilter={documentTypeFilter}

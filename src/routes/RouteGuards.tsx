@@ -12,7 +12,18 @@ export const PublicRoute: React.FC<RouteGuardProps> = ({ children }) => children
 
 // Protected routes require authentication
 export const ProtectedRoute: React.FC<RouteGuardProps> = ({ children, requiredModule }) => {
-  const { user, loading } = useAuth();
+  let user, loading;
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    loading = auth.loading;
+  } catch (error) {
+    // Hot reload sırasında AuthProvider context'i kaybolabilir
+    console.warn('ProtectedRoute: Auth context not available');
+    user = null;
+    loading = true;
+  }
+  
   const navigate = useNavigate();
   const { hasModuleAccess, isLoading: permissionsLoading } = usePermissions();
 

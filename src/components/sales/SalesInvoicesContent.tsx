@@ -1,6 +1,5 @@
-import { useEffect, useRef } from "react";
 import SalesInvoicesTable from "./SalesInvoicesTable";
-import { Loader2 } from "lucide-react";
+import InfiniteScroll from "@/components/ui/infinite-scroll";
 
 interface SalesInvoicesContentProps {
   invoices: any[];
@@ -34,27 +33,6 @@ const SalesInvoicesContent = ({
   searchQuery,
   documentTypeFilter
 }: SalesInvoicesContentProps) => {
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    if (!loadMore || !hasNextPage || isLoadingMore || isLoading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
 
   if (error) {
     return (
@@ -79,20 +57,22 @@ const SalesInvoicesContent = ({
           documentTypeFilter={documentTypeFilter}
         />
 
-        {/* Infinite scroll trigger: sadece otomatik yükleme ve spinner */}
+        {/* Infinite scroll trigger - SalesInvoicesTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}
         {!isLoading && hasNextPage && (
-          <div ref={loadMoreRef} className="flex justify-center py-4">
-            {isLoadingMore && (
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-gray-600">Daha fazla fatura yükleniyor...</span>
-              </div>
-            )}
+          <div className="px-4">
+            <InfiniteScroll
+              hasNextPage={hasNextPage}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMore || (() => {})}
+              className="mt-4"
+            >
+              <div />
+            </InfiniteScroll>
           </div>
         )}
 
         {/* Tüm faturalar yüklendi mesajı */}
-        {!hasNextPage && invoices.length > 0 && (
+        {!hasNextPage && invoices.length > 0 && !isLoading && (
           <div className="text-center py-4 text-sm text-gray-500">
             Tüm faturalar yüklendi
           </div>

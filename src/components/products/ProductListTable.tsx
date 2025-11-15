@@ -24,6 +24,7 @@ interface ProductListTableProps {
   onSortFieldChange: (field: "name" | "price" | "stock_quantity" | "category") => void;
   onProductClick?: (product: Product) => void;
   onProductSelect?: (product: Product) => void;
+  onSelectAll?: (checked: boolean) => void;
   selectedProducts?: Product[];
 }
 
@@ -38,6 +39,7 @@ const ProductListTable = ({
   sortDirection,
   onSortFieldChange,
   onProductSelect,
+  onSelectAll,
   selectedProducts = []
 }: ProductListTableProps) => {
   const navigate = useNavigate();
@@ -109,16 +111,22 @@ const ProductListTable = ({
   }, [selectedProducts, onProductSelect]);
 
   const handleSelectAll = useCallback((checked: boolean) => {
-    if (checked) {
-      products?.forEach(p => {
-        if (!selectedProducts.some(sp => sp.id === p.id)) {
-          onProductSelect?.(p);
-        }
-      });
+    if (onSelectAll) {
+      // Tüm ürünleri seçmek için parent'tan gelen fonksiyonu kullan
+      onSelectAll(checked);
     } else {
-      products?.forEach(p => onProductSelect?.(p));
+      // Fallback: Sadece görünen ürünleri seç
+      if (checked) {
+        products?.forEach(p => {
+          if (!selectedProducts.some(sp => sp.id === p.id)) {
+            onProductSelect?.(p);
+          }
+        });
+      } else {
+        products?.forEach(p => onProductSelect?.(p));
+      }
     }
-  }, [products, selectedProducts, onProductSelect]);
+  }, [products, selectedProducts, onProductSelect, onSelectAll]);
 
   if (isLoading && (!products || products.length === 0)) {
     return <ProductsTableSkeleton />;
@@ -134,7 +142,7 @@ const ProductListTable = ({
           onSort={onSortFieldChange}
           hasSelection={true}
           onSelectAll={handleSelectAll}
-          isAllSelected={selectedProducts.length > 0 && selectedProducts.length === (products?.length || 0)}
+          isAllSelected={totalCount > 0 && selectedProducts.length === totalCount}
           totalProducts={totalCount}
         />
         <TableBody>
@@ -151,7 +159,8 @@ const ProductListTable = ({
               </TableCell>
             </TableRow>
           ) : (
-            products?.map((product) => {
+            // Duplicate'leri filtrele
+            Array.from(new Map(products?.map(p => [p.id, p]) || []).values()).map((product) => {
               const isSelected = selectedProducts.some(p => p.id === product.id);
               return (
                 <ProductsTableRow

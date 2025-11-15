@@ -67,6 +67,15 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
       const { data, error, count } = await query;
 
       if (error) {
+        // PGRST103: Range Not Satisfiable - offset istenenden fazla satır var
+        // Bu durumda boş sonuç döndür, hata fırlatma
+        if (error.code === 'PGRST103' || error.message?.includes('Range Not Satisfiable')) {
+          return {
+            data: [] as Product[],
+            totalCount: count || 0,
+            hasNextPage: false
+          };
+        }
         console.error("Error fetching products:", error);
         throw error;
       }
@@ -133,6 +142,15 @@ export const useProductsInfiniteScroll = (filters: UseProductsFilters = {}) => {
     const { data: allData, error, count } = await query;
 
     if (error) {
+      // PGRST103: Range Not Satisfiable - offset istenenden fazla satır var
+      // Bu durumda boş sonuç döndür, hata fırlatma
+      if (error.code === 'PGRST103' || error.message?.includes('Range Not Satisfiable')) {
+        return {
+          data: [] as Product[],
+          totalCount: 0,
+          hasNextPage: false
+        };
+      }
       console.error("Error fetching products:", error);
       throw error;
     }

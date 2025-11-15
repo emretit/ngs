@@ -1,5 +1,4 @@
-import React, { useEffect, useRef } from "react";
-import { Loader2 } from "lucide-react";
+import React from "react";
 import { Warehouse } from "@/types/warehouse";
 import WarehousesTable from "./WarehousesTable";
 import WarehousesGrid from "./WarehousesGrid";
@@ -43,28 +42,6 @@ const WarehousesContent = ({
   typeFilter,
   statusFilter
 }: WarehousesContentProps) => {
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    if (!loadMore || !hasNextPage || isLoadingMore || isLoading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
-
   if (error) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -104,20 +81,8 @@ const WarehousesContent = ({
           />
         )}
         
-        {/* Infinite scroll trigger */}
-        {!isLoading && hasNextPage && (
-          <div ref={loadMoreRef} className="flex justify-center py-4">
-            {isLoadingMore && (
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-gray-600">Daha fazla depo yükleniyor...</span>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Tüm depolar yüklendi mesajı */}
-        {!hasNextPage && warehouses.length > 0 && (
+        {/* Tüm depolar yüklendi mesajı - sadece table view için değil, grid view için de */}
+        {!hasNextPage && warehouses.length > 0 && !isLoading && (
           <div className="text-center py-4 text-sm text-gray-500">
             Tüm depolar yüklendi
           </div>

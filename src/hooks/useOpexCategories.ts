@@ -47,7 +47,6 @@ export const useOpexCategories = () => {
           )
         `)
         .eq('type', 'expense')
-        .or(`company_id.is.null,company_id.eq.${ngsCompanyId}`)
         .order('name');
 
       if (categoriesError) throw categoriesError;

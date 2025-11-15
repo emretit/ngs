@@ -69,14 +69,26 @@ async function fetchCompanyId() {
 
   // Yeni request başlat
   companyIdPromise = (async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Kullanıcı bulunamadı");
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        throw new Error("Kullanıcı bilgisi alınamadı: " + userError.message);
+      }
+      
+      if (!user || !user.id) {
+        throw new Error("Kullanıcı bulunamadı");
+      }
 
-    const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('company_id')
       .eq('id', user.id)
-      .single();
+        .maybeSingle();
+
+      if (profileError) {
+        throw new Error("Profil bilgisi alınamadı: " + profileError.message);
+      }
 
     if (!profile?.company_id) {
       throw new Error("Şirket bilgisi bulunamadı");
@@ -84,6 +96,11 @@ async function fetchCompanyId() {
 
     companyIdCache = profile.company_id;
     return profile.company_id;
+    } catch (error) {
+      // Promise'i temizle ki tekrar deneyebilsin
+      companyIdPromise = null;
+      throw error;
+    }
   })();
 
   return companyIdPromise;
@@ -105,6 +122,7 @@ export function useBankAccounts() {
       if (error) throw error;
       return (data as unknown as BankAccount[]) || [];
     },
+    enabled: true, // Auth kontrolü fetchCompanyId içinde yapılıyor
     staleTime: 1000 * 60 * 5, // 5 dakika cache
     gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
     retry: 2,
@@ -128,6 +146,7 @@ export function useCreditCards() {
       if (error) throw error;
       return (data as unknown as CreditCard[]) || [];
     },
+    enabled: true, // Auth kontrolü fetchCompanyId içinde yapılıyor
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     retry: 2,
@@ -150,6 +169,7 @@ export function useCashAccounts() {
       if (error) throw error;
       return (data as unknown as CashAccount[]) || [];
     },
+    enabled: true, // Auth kontrolü fetchCompanyId içinde yapılıyor
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     retry: 2,
@@ -173,6 +193,7 @@ export function usePartnerAccounts() {
       if (error) throw error;
       return (data as unknown as PartnerAccount[]) || [];
     },
+    enabled: true, // Auth kontrolü fetchCompanyId içinde yapılıyor
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
     retry: 2,
@@ -231,6 +252,7 @@ export function useAllAccounts() {
         partnerAccounts: (partnerResult.data as unknown as PartnerAccount[]) || [],
       };
     },
+    enabled: true, // Auth kontrolü fetchCompanyId içinde yapılıyor
     staleTime: 1000 * 60 * 5, // 5 dakika cache
     gcTime: 1000 * 60 * 30, // 30 dakika garbage collection
     retry: 2,

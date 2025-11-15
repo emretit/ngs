@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
+import { formatCurrency } from "@/utils/formatters";
 
 interface EInvoiceProductSelectorProps {
   value: string;
@@ -38,24 +39,44 @@ const EInvoiceProductSelector = ({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["products-for-einvoice-selector"],
+  const { data: userProfile } = useQuery({
+    queryKey: ["user_profile"],
     queryFn: async () => {
-      // Önce kullanıcının company_id'sini al
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase
+      if (!user) return null;
+      
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("company_id")
-        .eq("id", user?.id)
+        .eq("id", user.id)
         .single();
 
-      const companyId = profile?.company_id;
+      if (error) throw error;
+      return profile;
+    },
+  });
 
-      const { data: productsData, error } = await supabase
+  const companyId = userProfile?.company_id;
+
+  const { data: products, isLoading } = useQuery({
+    queryKey: ["products-for-einvoice-selector", companyId],
+    queryFn: async () => {
+      if (!companyId) {
+        return [];
+      }
+
+      let query = supabase
         .from("products")
         .select("*")
         .eq("is_active", true)
         .order("name");
+
+      // Apply company filter
+      if (companyId) {
+        query = query.eq("company_id", companyId);
+      }
+
+      const { data: productsData, error } = await query;
       
       if (error) throw error;
 
@@ -116,6 +137,7 @@ const EInvoiceProductSelector = ({
         total_stock: totalStockMap.get(product.id) || 0
       })) as ProductWithWarehouses[];
     },
+    enabled: !!companyId,
   });
 
   // Filter products based on search query
@@ -205,11 +227,7 @@ const EInvoiceProductSelector = ({
                       {/* Fiyat */}
                       <div className="flex flex-col gap-0.5 text-xs">
                         <span className="font-semibold text-primary">
-                          {new Intl.NumberFormat('tr-TR', { 
-                            style: 'currency', 
-                            currency: (product.currency || 'TL') === 'TL' ? 'TRY' : (product.currency || 'TRY'),
-                            minimumFractionDigits: 2
-                          }).format(product.price)}
+                          {formatCurrency(product.price, product.currency === 'TRY' ? 'TL' : (product.currency || 'TL'))}
                         </span>
                       </div>
 

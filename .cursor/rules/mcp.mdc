@@ -1,0 +1,33 @@
+# Proje Kuralları ve Tercihler
+
+## Genel Kurallar
+- Her zaman Türkçe yanıt ver
+- Adım adım ilerle, kullanıcının istediği her şeyi sırayla yap
+- Proje Supabase ile MCP server üzerinden bağlı, environment variable'lar MCP tool ile otomatik alınabilir
+
+## Supabase ve Veritabanı
+- Proje Supabase MCP server ile bağlı
+- Environment variable'lar (Supabase credentials) MCP tool ile otomatik alınabilir, manuel .env dosyalarına gerek yok
+- Supabase Auth kullanılıyor, custom employee_auth tablosu yok
+- Yeni tablo eklemeden önce kullanıcıya sor
+- Supabase CLI'yi npx ile çalıştır (npx supabase)
+- Supabase edge function'ları local dosyalarda değil, Supabase'de saklanıyor
+
+## Kod ve Geliştirme
+- Commit veya push yapma, kullanıcı açıkça istemedikçe
+- Kod değişikliklerini manuel git komutları ile push etmeyi tercih ediyor
+- Local'de hot reload ile çalıştır, her değişiklik için remote'a push etme
+- Inline editing yerine dedicated edit page kullan
+
+## UI/UX Tercihleri
+- Tarih formatı: 'DD MMM' (örn: '10 Eyl')
+- Template editor toolbar'ı sadeleştirilmiş: sadece 'Kaydet' ve 'Çık' butonları, minimal UI
+
+## Özellikler
+- Döviz kurları günde bir kez otomatik güncellenmeli
+- 
+- Nilvera E-Fatura API entegrasyonu mevcut
+
+---
+alwaysApply: true
+---

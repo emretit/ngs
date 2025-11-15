@@ -15,10 +15,10 @@ const CashflowCategories = memo(() => {
   const [selectedStatus, setSelectedStatus] = useState("all");
 
   return (
-    <div>
-      {/* Sticky Header - İstatistik kartları ile */}
-      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12">
+    <div className="w-full space-y-2">
+      {/* Header - İstatistik kartları ile */}
+      <div className="bg-white rounded-md border border-gray-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3">
           {/* Sol taraf - Başlık */}
           <div className="flex items-center gap-3">
             <Button 
@@ -36,7 +36,7 @@ const CashflowCategories = memo(() => {
             </div>
             <div className="space-y-0.5">
               <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                Gelir-Masraf Kategorileri
+                Gelir-Gider Kategorileri
               </h1>
               <p className="text-xs text-muted-foreground/70">
                 Nakit akış kategorilerini yönetin ve düzenleyin
@@ -67,7 +67,7 @@ const CashflowCategories = memo(() => {
             {/* Gider Kategorileri */}
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-red-100 text-red-800 border-red-200">
               <TrendingDown className="h-3 w-3" />
-              <span className="font-medium">Masraf</span>
+              <span className="font-medium">Gider</span>
               <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
                 7
               </span>
@@ -116,7 +116,7 @@ const CashflowCategories = memo(() => {
           <SelectContent>
             <SelectItem value="all">Tüm Kategoriler</SelectItem>
             <SelectItem value="income">💰 Gelir</SelectItem>
-            <SelectItem value="expense">💸 Masraf</SelectItem>
+            <SelectItem value="expense">💸 Gider</SelectItem>
           </SelectContent>
         </Select>
 
@@ -135,7 +135,11 @@ const CashflowCategories = memo(() => {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <CategoryManagement />
+        <CategoryManagement 
+          searchQuery={searchQuery}
+          selectedType={selectedType}
+          selectedStatus={selectedStatus}
+        />
       </div>
     </div>
   );

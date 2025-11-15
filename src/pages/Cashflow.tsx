@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAllAccounts } from "@/hooks/useAccountsData";
 import { useCashflowCategories } from "@/hooks/useCashflowCategories";
-import { DollarSign, Building, Wallet, CreditCard, Users, Receipt, ListTodo, Calculator, ArrowRight, Calendar } from "lucide-react";
+import { DollarSign, Building, Wallet, CreditCard, Receipt, Calculator, ArrowRight, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -37,7 +37,7 @@ const Cashflow = () => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
-      currency: 'TL',
+      currency: 'TRY',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -77,33 +77,30 @@ const Cashflow = () => {
       description: "Banka, kasa, kredi kartı ve ortak hesaplarınız",
       icon: Building,
       path: "/cashflow/bank-accounts",
-      color: "from-emerald-500 to-emerald-600",
-      bgColor: "from-emerald-50 to-emerald-100",
+      iconColor: "bg-gray-100 text-gray-700",
       stats: [
         { label: "Toplam Hesap", value: totalAccounts },
         { label: "Toplam Bakiye", value: formatCurrency(totalBalance) }
       ]
     },
     {
-      title: "Masraflar",
+      title: "Gelirler ve Giderler",
       description: "Gelir ve gider işlemlerinizi yönetin",
       icon: Receipt,
       path: "/cashflow/expenses",
-      color: "from-red-500 to-red-600",
-      bgColor: "from-red-50 to-red-100",
+      iconColor: "bg-gray-100 text-gray-700",
       stats: [
         { label: "Kategoriler", value: `${incomeCategories + expenseCategories} adet` }
       ]
     },
     {
-      title: "OPEX Girişi",
-      description: "Operasyonel giderlerinizi kaydedin",
+      title: "Bütçe Yönetimi",
+      description: "Operasyonel ve sermaye giderlerinizi yönetin",
       icon: Calculator,
-      path: "/cashflow/opex-entry",
-      color: "from-blue-500 to-blue-600",
-      bgColor: "from-blue-50 to-blue-100",
+      path: "/cashflow/budget-management",
+      iconColor: "bg-gray-100 text-gray-700",
       stats: [
-        { label: "Durum", value: "Hazır" }
+        { label: "Durum", value: "Aktif" }
       ]
     },
     {
@@ -111,8 +108,7 @@ const Cashflow = () => {
       description: "Çek ve senet işlemlerinizi takip edin",
       icon: Wallet,
       path: "/cashflow/checks-notes",
-      color: "from-purple-500 to-purple-600",
-      bgColor: "from-purple-50 to-purple-100",
+      iconColor: "bg-gray-100 text-gray-700",
       stats: [
         { label: "Durum", value: "Aktif" }
       ]
@@ -122,22 +118,9 @@ const Cashflow = () => {
       description: "Kredi ve borçlarınızı yönetin",
       icon: CreditCard,
       path: "/cashflow/loans",
-      color: "from-orange-500 to-orange-600",
-      bgColor: "from-orange-50 to-orange-100",
+      iconColor: "bg-gray-100 text-gray-700",
       stats: [
         { label: "Durum", value: "Aktif" }
-      ]
-    },
-    {
-      title: "Kategoriler",
-      description: "Gelir ve gider kategorilerinizi düzenleyin",
-      icon: ListTodo,
-      path: "/cashflow/categories",
-      color: "from-indigo-500 to-indigo-600",
-      bgColor: "from-indigo-50 to-indigo-100",
-      stats: [
-        { label: "Gelir", value: `${incomeCategories} adet` },
-        { label: "Gider", value: `${expenseCategories} adet` }
       ]
     }
   ];
@@ -204,13 +187,13 @@ const Cashflow = () => {
           return (
             <Card
               key={index}
-              className={`cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 bg-gradient-to-br ${module.bgColor}`}
+              className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-200 bg-white"
               onClick={() => navigate(module.path)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <div className={`p-3 bg-gradient-to-r ${module.color} rounded-xl shadow-lg`}>
-                    <Icon className="h-6 w-6 text-white" />
+                  <div className={`p-3 ${module.iconColor} rounded-lg`}>
+                    <Icon className="h-6 w-6" />
                   </div>
                   <ArrowRight className="h-5 w-5 text-gray-400" />
                 </div>
@@ -234,42 +217,42 @@ const Cashflow = () => {
 
       {/* Quick Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <Card className="bg-white border border-gray-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-800 flex items-center justify-between">
+            <CardTitle className="text-sm font-medium text-gray-800 flex items-center justify-between">
               <span>Toplam Hesaplar</span>
-              <span className="text-xs font-normal text-green-600 bg-green-100 px-2 py-1 rounded">{dateLabel}</span>
+              <span className="text-xs font-normal text-gray-600 bg-gray-100 px-2 py-1 rounded">{dateLabel}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-700">{totalAccounts}</div>
-            <div className="text-xs text-green-600 mt-1">Aktif hesap sayısı</div>
+            <div className="text-3xl font-bold text-gray-900">{totalAccounts}</div>
+            <div className="text-xs text-gray-600 mt-1">Aktif hesap sayısı</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <Card className="bg-white border border-gray-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800 flex items-center justify-between">
+            <CardTitle className="text-sm font-medium text-gray-800 flex items-center justify-between">
               <span>Toplam Bakiye</span>
-              <span className="text-xs font-normal text-blue-600 bg-blue-100 px-2 py-1 rounded">{dateLabel}</span>
+              <span className="text-xs font-normal text-gray-600 bg-gray-100 px-2 py-1 rounded">{dateLabel}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-700">{formatCurrency(totalBalance)}</div>
-            <div className="text-xs text-blue-600 mt-1">Tüm hesaplardaki toplam</div>
+            <div className="text-3xl font-bold text-gray-900">{formatCurrency(totalBalance)}</div>
+            <div className="text-xs text-gray-600 mt-1">Tüm hesaplardaki toplam</div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200">
+        <Card className="bg-white border border-gray-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-purple-800 flex items-center justify-between">
+            <CardTitle className="text-sm font-medium text-gray-800 flex items-center justify-between">
               <span>Kategoriler</span>
-              <span className="text-xs font-normal text-purple-600 bg-purple-100 px-2 py-1 rounded">{dateLabel}</span>
+              <span className="text-xs font-normal text-gray-600 bg-gray-100 px-2 py-1 rounded">{dateLabel}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-700">{incomeCategories + expenseCategories}</div>
-            <div className="text-xs text-purple-600 mt-1">{incomeCategories} gelir, {expenseCategories} gider</div>
+            <div className="text-3xl font-bold text-gray-900">{incomeCategories + expenseCategories}</div>
+            <div className="text-xs text-gray-600 mt-1">{incomeCategories} gelir, {expenseCategories} gider</div>
           </CardContent>
         </Card>
       </div>

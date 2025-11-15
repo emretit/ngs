@@ -62,6 +62,14 @@ export const useCurrentUser = () => {
       }
 
       try {
+        // user.id kontrolü zaten yukarıda yapıldı ama tekrar kontrol edelim
+        if (!user.id) {
+          setUserData(null);
+          setError('Kullanıcı ID bulunamadı');
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from('profiles')
           .select('id, full_name, email, company_id, employee_id')

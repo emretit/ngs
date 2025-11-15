@@ -1,6 +1,5 @@
 
 import Cashflow from "@/pages/Cashflow";
-import CashflowOpexEntry from "@/pages/CashflowOpexEntry";
 import CashflowExpenses from "@/pages/CashflowExpenses";
 import CashflowLoansAndChecks from "@/pages/CashflowLoansAndChecks";
 import CashflowChecksAndNotes from "@/pages/CashflowChecksAndNotes";
@@ -8,7 +7,7 @@ import CashflowChecks from "@/pages/CashflowChecks";
 import CashflowNotes from "@/pages/CashflowNotes";
 import CashflowLoans from "@/pages/CashflowLoans";
 import CashflowBankAccounts from "@/pages/CashflowBankAccounts";
-import CashflowCategoriesWrapper from "@/pages/CashflowCategoriesWrapper";
+import CashflowCategories from "@/pages/CashflowCategories";
 import PurchaseInvoices from "@/pages/PurchaseInvoices";
 import PurchaseInvoiceDetail from "@/pages/PurchaseInvoiceDetail";
 import SalesInvoices from "@/pages/SalesInvoices";
@@ -21,12 +20,13 @@ import BankAccountDetail from "@/pages/BankAccountDetail";
 import PartnerAccountDetail from "@/pages/PartnerAccountDetail";
 import EInvoiceProcess from "@/pages/EInvoiceProcess";
 import EInvoices from "@/pages/EInvoices";
+import BudgetManagement from "@/pages/BudgetManagement";
 import { RouteConfig } from "./types";
 
 // Define cashflow routes
 export const cashflowRoutes: RouteConfig[] = [
   { path: "/cashflow", component: Cashflow, protected: true },
-  { path: "/cashflow/opex-entry", component: CashflowOpexEntry, protected: true },
+  { path: "/cashflow/budget-management", component: BudgetManagement, protected: true },
   { path: "/cashflow/expenses", component: CashflowExpenses, protected: true },
   // Yeni ayrı route'lar
   { path: "/cashflow/checks", component: CashflowChecks, protected: true },
@@ -37,7 +37,7 @@ export const cashflowRoutes: RouteConfig[] = [
   // Backward compatibility (optional): keep the old combined route
   { path: "/cashflow/loans-and-checks", component: CashflowLoansAndChecks, protected: true },
   { path: "/cashflow/bank-accounts", component: CashflowBankAccounts, protected: true },
-  { path: "/cashflow/categories", component: CashflowCategoriesWrapper, protected: true },
+  { path: "/cashflow/categories", component: CashflowCategories, protected: true },
   // Account detail routes
   { path: "/cashflow/cash-accounts/:id", component: CashAccountDetail, protected: true },
   { path: "/cashflow/credit-cards/:id", component: CreditCardDetail, protected: true },

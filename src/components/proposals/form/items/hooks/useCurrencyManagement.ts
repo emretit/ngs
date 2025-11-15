@@ -18,7 +18,9 @@ export const useCurrencyManagement = (defaultCurrency?: string, product?: Produc
   } = useCurrencyState(defaultCurrency);
 
   // Get original currency and price from product
-  const originalCurrency = product?.currency || defaultCurrency || "TRY";
+  // Veritabanından gelen TRY değerlerini TL olarak normalize et
+  const dbCurrency = product?.currency || defaultCurrency || "TL";
+  const originalCurrency = dbCurrency === "TRY" ? "TL" : (dbCurrency || "TL");
   const originalPrice = product?.price || 0;
 
   // Memoize the return object to prevent unnecessary re-renders

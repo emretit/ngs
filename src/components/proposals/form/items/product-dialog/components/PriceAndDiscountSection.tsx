@@ -2,10 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { getCurrencyOptions, fetchTCMBExchangeRates } from "../../utils/currencyUtils";
 import { toast } from "sonner";
-
-// Import refactored components
-import PriceInput from "./price-section/PriceInput";
-import TaxRateSelector from "./price-section/TaxRateSelector";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PriceAndDiscountSectionProps {
   customPrice: number | undefined;
@@ -93,29 +92,39 @@ const PriceAndDiscountSection: React.FC<PriceAndDiscountSectionProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-1">
-          <PriceInput
-            id="unit-price"
-            label={`Birim Fiyat (${originalCurrency})`}
-            value={localPrice}
-            onChange={handlePriceChange}
-          />
-        </div>
-
-        <div className="col-span-1">
-          <PriceInput
-            id="discount-rate"
-            label="İndirim Oranı (%)"
-            value={localDiscountRate}
-            onChange={handleDiscountChange}
-            placeholder="İndirim Oranı"
-          />
-        </div>
+    <div>
+      <Label htmlFor="unit_price" className="text-xs font-medium text-gray-600">
+        Birim Fiyat
+      </Label>
+      <div className="flex gap-1.5 mt-0.5">
+        <Input
+          id="unit_price"
+          type="number"
+          value={localPrice || 0}
+          onChange={(e) => {
+            const value = e.target.value;
+            handlePriceChange(value === "" ? 0 : Number(value));
+          }}
+          step="0.0001"
+          placeholder="0.0000"
+          className="flex-1 h-7 text-xs"
+        />
+        <Select 
+          value={selectedCurrency} 
+          onValueChange={handleCurrencyChange}
+        >
+          <SelectTrigger className="w-16 h-7 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent position="popper" className="bg-background border z-[100]">
+            {currencyOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.value}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      
-      {/* PriceSummary component removed from here to avoid duplication */}
     </div>
   );
 };

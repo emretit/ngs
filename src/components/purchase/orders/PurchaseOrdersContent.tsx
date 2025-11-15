@@ -1,7 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import PurchaseOrdersTable from "./PurchaseOrdersTable";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import InfiniteScroll from "@/components/ui/infinite-scroll";
 import { PurchaseOrder } from "@/hooks/usePurchaseOrders";
 
 interface PurchaseOrdersContentProps {
@@ -25,27 +24,6 @@ const PurchaseOrdersContent = ({
   error,
   onOrderSelect,
 }: PurchaseOrdersContentProps) => {
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    if (!loadMore || !hasNextPage || isLoadingMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore]);
 
   if (error) {
     return (
@@ -95,28 +73,22 @@ const PurchaseOrdersContent = ({
           onOrderSelect={onOrderSelect}
         />
 
-        {/* Infinite scroll trigger */}
-        {hasNextPage && (
-          <div ref={loadMoreRef} className="flex justify-center py-6 border-t mt-6">
-            {isLoadingMore ? (
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="text-sm text-muted-foreground">Daha fazla sipariş yükleniyor...</span>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                onClick={loadMore}
-                className="text-sm"
-              >
-                Daha Fazla Yükle
-              </Button>
-            )}
+        {/* Infinite scroll trigger - PurchaseOrdersTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}
+        {hasNextPage && !isLoading && (
+          <div className="py-6 border-t mt-6">
+            <InfiniteScroll
+              hasNextPage={hasNextPage}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMore || (() => {})}
+              className="mt-4"
+            >
+              <div />
+            </InfiniteScroll>
           </div>
         )}
 
         {/* Tüm siparişler yüklendi mesajı */}
-        {!hasNextPage && orders.length > 0 && totalCount && orders.length >= totalCount && (
+        {!hasNextPage && orders.length > 0 && totalCount && orders.length >= totalCount && !isLoading && (
           <div className="text-center py-6 border-t mt-6">
             <p className="text-sm text-muted-foreground">
               Tüm siparişler yüklendi

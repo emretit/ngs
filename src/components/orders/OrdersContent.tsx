@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import OrdersTable from "./OrdersTable";
 import OrdersKanbanBoard from "./kanban/OrdersKanbanBoard";
@@ -6,6 +6,7 @@ import { ViewType } from "./header/OrdersViewToggle";
 import { useOrders } from "@/hooks/useOrders";
 import { Order, OrderStatus } from "@/types/orders";
 import { Loader2 } from "lucide-react";
+import InfiniteScroll from "@/components/ui/infinite-scroll";
 
 interface OrdersContentProps {
   orders: Order[];
@@ -37,30 +38,9 @@ const OrdersContent = ({
   activeView
 }: OrdersContentProps) => {
   const navigate = useNavigate();
-  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // For kanban view, use the original hook
   const { orders: kanbanOrders, isLoading: kanbanLoading, error: kanbanError, updateStatusMutation, refetch: refetchKanban } = useOrders();
-
-  // Intersection Observer for infinite scroll (only for table view)
-  useEffect(() => {
-    if (activeView !== "table" || !loadMore || !hasNextPage || isLoadingMore || isLoading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore, isLoading, activeView]);
 
   const handleSelectOrder = (order: Order) => {
     if (onSelectOrder) {
@@ -150,20 +130,22 @@ const OrdersContent = ({
               </div>
             </div>
             
-            {/* Infinite scroll trigger */}
+            {/* Infinite scroll trigger - OrdersTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}
             {hasNextPage && !isLoading && (
-              <div ref={loadMoreRef} className="flex justify-center py-4">
-                {isLoadingMore && (
-                  <div className="flex items-center space-x-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-gray-600">Daha fazla sipariş yükleniyor...</span>
-                  </div>
-                )}
+              <div className="px-4">
+                <InfiniteScroll
+                  hasNextPage={hasNextPage}
+                  isLoadingMore={isLoadingMore}
+                  onLoadMore={loadMore || (() => {})}
+                  className="mt-4"
+                >
+                  <div />
+                </InfiniteScroll>
               </div>
             )}
             
             {/* Tüm siparişler yüklendi mesajı */}
-            {!hasNextPage && orders.length > 0 && (
+            {!hasNextPage && orders.length > 0 && !isLoading && (
               <div className="text-center py-4 text-sm text-gray-500">
                 Tüm siparişler yüklendi ({totalCount || orders.length} sipariş)
               </div>

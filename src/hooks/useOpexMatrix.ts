@@ -4,7 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 export interface OpexMatrixItem {
   id: string;
-  user_id: string;
+  company_id: string | null;
   year: number;
   month: number;
   category: string;
@@ -70,11 +70,25 @@ export const useOpexMatrix = () => {
     description?: string
   ) => {
     try {
-      // Temporarily bypass authentication
+      // Get current user's company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
+      }
+
+      // Get user's company_id from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      const companyId = profile?.company_id || '5a9c24d2-876e-4eb6-aea5-19328bc38a3a'; // NGS İLETİŞİM fallback
+
       const { data, error } = await supabase
         .from('opex_matrix')
         .upsert({
-          user_id: 'temp-user', // Temporary user ID
+          company_id: companyId,
           year,
           month,
           category,

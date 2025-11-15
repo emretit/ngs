@@ -101,6 +101,8 @@ export const useProductForm = () => {
           }
 
           // Sadece veritabanında mevcut olan kolonları kullan
+          // Veritabanından gelen TRY değerlerini TL olarak normalize et
+          const displayCurrency = data.currency === "TRY" ? "TL" : (data.currency || "TL");
           form.reset({
             name: data.name || "",
             description: data.description || "",
@@ -114,7 +116,7 @@ export const useProductForm = () => {
             tax_rate: data.tax_rate || 20,
             unit: data.unit || "piece",
             is_active: data.is_active ?? true,
-            currency: data.currency || "TL",
+            currency: displayCurrency,
             category_type: data.category_type || "product",
             product_type: data.product_type || "physical",
             status: data.status || "active",

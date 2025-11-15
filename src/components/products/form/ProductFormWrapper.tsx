@@ -33,7 +33,12 @@ const ProductFormWrapper = ({ onFormReady }: ProductFormWrapperProps) => {
 
   const handleSubmit = useCallback(async (values: any, addAnother = false): Promise<{ resetForm: boolean }> => {
     // Ensure currency is properly set before submission
+    // TL -> TRY dönüşümü (veritabanı için)
     if (!values.currency || values.currency.trim() === "") {
+      values.currency = "TL";
+    }
+    // Görüntülemede TL kullanıyoruz, veritabanına TRY olarak kaydediyoruz
+    if (values.currency === "TL") {
       values.currency = "TRY";
     }
     

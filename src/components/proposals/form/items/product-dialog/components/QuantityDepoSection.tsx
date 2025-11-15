@@ -138,19 +138,19 @@ const QuantityDepoSection: React.FC<QuantityDepoSectionProps> = ({
           </div>
           
           <div>
-            <Label htmlFor="depo" className="text-xs font-medium text-gray-600">
+            <Label htmlFor="depo" className="text-sm font-medium">
               Depo
             </Label>
             <div className="mt-1">
               {warehousesLoading ? (
                 <Select disabled>
-                  <SelectTrigger className="h-7 text-xs">
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Yükleniyor..." />
                   </SelectTrigger>
                 </Select>
               ) : (
                 <Select value={selectedDepo} onValueChange={setSelectedDepo}>
-                  <SelectTrigger className="h-7 text-xs">
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Depo seçin" />
                   </SelectTrigger>
                   <SelectContent className="min-w-[300px]">
@@ -160,10 +160,10 @@ const QuantityDepoSection: React.FC<QuantityDepoSectionProps> = ({
                       return (
                         <SelectItem key={warehouse.id} value={warehouse.id} className="pr-3">
                           <div className="flex items-center justify-between w-full gap-2 min-w-0">
-                            <span className="flex-1 truncate text-[8px]">
+                            <span className="flex-1 truncate text-sm">
                               {warehouseText}
                             </span>
-                            <span className="text-[8px] font-semibold text-blue-600 whitespace-nowrap flex-shrink-0 ml-2">
+                            <span className="text-sm font-semibold text-blue-600 whitespace-nowrap flex-shrink-0 ml-2">
                               {stock} adet
                             </span>
                           </div>
@@ -178,19 +178,19 @@ const QuantityDepoSection: React.FC<QuantityDepoSectionProps> = ({
         </div>
       ) : (
         <div>
-          <Label htmlFor="depo" className="text-xs font-medium text-gray-600">
+          <Label htmlFor="depo" className="text-sm font-medium">
             Depo
           </Label>
           <div className="mt-1">
             {warehousesLoading ? (
               <Select disabled>
-                <SelectTrigger className="h-7 text-xs">
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Yükleniyor..." />
                 </SelectTrigger>
               </Select>
             ) : (
               <Select value={selectedDepo} onValueChange={setSelectedDepo}>
-                <SelectTrigger className="h-7 text-xs">
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Depo seçin" />
                 </SelectTrigger>
               <SelectContent className="min-w-[300px]">
@@ -203,7 +203,7 @@ const QuantityDepoSection: React.FC<QuantityDepoSectionProps> = ({
                         <span className="flex-1 truncate text-sm">
                           {warehouseText}
                         </span>
-                        <span className="text-xs font-semibold text-blue-600 whitespace-nowrap flex-shrink-0 ml-2">
+                        <span className="text-sm font-semibold text-blue-600 whitespace-nowrap flex-shrink-0 ml-2">
                           {stock} adet
                         </span>
                       </div>

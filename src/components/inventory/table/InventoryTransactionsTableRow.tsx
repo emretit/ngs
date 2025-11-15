@@ -103,6 +103,26 @@ const InventoryTransactionsTableRow = ({
         </div>
       </TableCell>
 
+      {/* Ürün Adı */}
+      <TableCell className="py-2 px-3 text-xs text-gray-600">
+        {transaction.items && transaction.items.length > 0 ? (
+          <div className="flex flex-col gap-1">
+            {transaction.items.slice(0, 2).map((item, index) => (
+              <span key={index} className="text-xs">
+                {item.product_name || item.product?.name || '-'}
+              </span>
+            ))}
+            {transaction.items.length > 2 && (
+              <span className="text-xs text-gray-400">
+                +{transaction.items.length - 2} daha
+              </span>
+            )}
+          </div>
+        ) : (
+          '-'
+        )}
+      </TableCell>
+
       {/* İşlem Tipi */}
       <TableCell className="py-2 px-3">
         <div className="flex items-center gap-2">

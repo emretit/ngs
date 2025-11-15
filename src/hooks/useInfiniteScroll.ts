@@ -70,6 +70,12 @@ export function useInfiniteScroll<T>(
   const loadMore = useCallback(async () => {
     if (!hasNextPage || isLoadingMore) return;
 
+    // Eğer totalCount varsa ve mevcut sayfa toplam sayfayı aşıyorsa, daha fazla veri yok
+    if (totalCount !== undefined && currentPage * pageSize >= totalCount) {
+      setHasNextPage(false);
+      return;
+    }
+
     setIsLoadingMore(true);
     const nextPage = currentPage + 1;
 
@@ -88,7 +94,12 @@ export function useInfiniteScroll<T>(
         // Cache'den veri varsa kullan
         const result = cachedData as { data: T[]; totalCount?: number; hasNextPage?: boolean };
         if (result?.data) {
-          setAllData(prev => [...prev, ...result.data]);
+          // Duplicate'leri önlemek için yeni verileri filtrele
+          setAllData(prev => {
+            const existingIds = new Set(prev.map((item: any) => item.id));
+            const newItems = result.data.filter((item: any) => !existingIds.has(item.id));
+            return [...prev, ...newItems];
+          });
           setCurrentPage(nextPage);
           setHasNextPage(result.hasNextPage ?? result.data.length === pageSize);
           if (result.totalCount) {
@@ -105,7 +116,12 @@ export function useInfiniteScroll<T>(
         });
 
         if (result?.data) {
-          setAllData(prev => [...prev, ...result.data]);
+          // Duplicate'leri önlemek için yeni verileri filtrele
+          setAllData(prev => {
+            const existingIds = new Set(prev.map((item: any) => item.id));
+            const newItems = result.data.filter((item: any) => !existingIds.has(item.id));
+            return [...prev, ...newItems];
+          });
           setCurrentPage(nextPage);
           setHasNextPage(result.hasNextPage ?? result.data.length === pageSize);
           if (result.totalCount) {
@@ -113,19 +129,26 @@ export function useInfiniteScroll<T>(
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
+      // PGRST103: Range Not Satisfiable - daha fazla veri yok, normal durum
+      if (err?.code === 'PGRST103' || err?.message?.includes('Range Not Satisfiable')) {
+        setHasNextPage(false);
+        return;
+      }
       console.error('Error loading more data:', err);
       // Hata durumunda kullanıcıya daha anlamlı mesaj göster
       if (err instanceof Error && err.message.includes("company_id")) {
         console.warn("Kullanıcı şirket bilgileri yüklenemedi, veriler gösterilemiyor");
       }
+      // Diğer hatalarda da hasNextPage'i false yap
+      setHasNextPage(false);
     } finally {
       setIsLoadingMore(false);
       abortControllerRef.current = null;
     }
-  }, [currentPage, hasNextPage, isLoadingMore, queryFn, pageSize, memoizedQueryKey, queryClient, staleTime, gcTime]);
+  }, [currentPage, hasNextPage, isLoadingMore, queryFn, pageSize, memoizedQueryKey, queryClient, staleTime, gcTime, totalCount]);
 
-  // Yenileme fonksiyonu - sadece ilk sayfayı yenile
+  // Yenileme fonksiyonu - tüm sayfaları yenile
   const refresh = useCallback(() => {
     // Cancel any ongoing request
     if (abortControllerRef.current) {
@@ -133,9 +156,10 @@ export function useInfiniteScroll<T>(
       abortControllerRef.current = null;
     }
 
-    // Sadece ilk sayfayı invalidate et, diğer sayfalar cache'de kalsın
+    // Tüm sayfaları invalidate et (silme işleminden sonra cache temizlenmeli)
     queryClient.invalidateQueries({ 
-      queryKey: [...memoizedQueryKey, 'page', 1, 'size', pageSize] 
+      queryKey: memoizedQueryKey,
+      exact: false // Tüm alt query'leri de invalidate et
     });
     
     // State'i sıfırla
@@ -144,7 +168,7 @@ export function useInfiniteScroll<T>(
     setHasNextPage(true);
     setIsLoadingMore(false);
     setTotalCount(undefined);
-  }, [queryClient, memoizedQueryKey, pageSize]);
+  }, [queryClient, memoizedQueryKey]);
 
   // Cleanup effect for unmounting
   useEffect(() => {

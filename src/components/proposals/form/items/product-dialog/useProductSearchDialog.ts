@@ -28,24 +28,44 @@ export const useProductSearchDialog = (
   }, [open, initialSelectedProduct]);
 
   // Fetch products from Supabase
+  const { data: userProfile } = useQuery({
+    queryKey: ["user_profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return profile;
+    },
+  });
+
+  const companyId = userProfile?.company_id;
+
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", companyId],
     queryFn: async () => {
       try {
-        // Önce kullanıcının company_id'sini al
-        const { data: { user } } = await supabase.auth.getUser();
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("company_id")
-          .eq("id", user?.id)
-          .single();
+        if (!companyId) {
+          return [];
+        }
 
-        const companyId = profile?.company_id;
-
-        const { data, error } = await supabase
+        let query = supabase
           .from("products")
           .select("*, product_categories(*)")
           .order("name");
+
+        // Apply company filter
+        if (companyId) {
+          query = query.eq("company_id", companyId);
+        }
+
+        const { data, error } = await query;
         
         if (error) throw error;
         
@@ -56,29 +76,46 @@ export const useProductSearchDialog = (
         // Ürün ID'lerini al
         const productIds = data.map(p => p.id);
 
-        // Warehouse_stock tablosundan toplam stok miktarlarını çek
-        let stockQuery = supabase
-          .from("warehouse_stock")
-          .select("product_id, quantity")
-          .in("product_id", productIds);
-
-        if (companyId) {
-          stockQuery = stockQuery.eq("company_id", companyId);
-        }
-
-        const { data: stockData, error: stockError } = await stockQuery;
-
-        if (stockError) {
-          console.error("Error fetching warehouse stock:", stockError);
-        }
-
-        // Stok verilerini product_id'ye göre grupla ve topla
+        // Warehouse_stock tablosundan toplam stok miktarlarını batch'ler halinde çek
+        // URL çok uzun olmasın diye her batch'te maksimum 100 ürün ID'si kullan
+        const batchSize = 100;
         const stockMap = new Map<string, number>();
-        if (stockData) {
-          stockData.forEach((stock: { product_id: string; quantity: number }) => {
-            const current = stockMap.get(stock.product_id) || 0;
-            stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
-          });
+        const totalBatches = Math.ceil(productIds.length / batchSize);
+
+        for (let i = 0; i < totalBatches; i++) {
+          const start = i * batchSize;
+          const end = Math.min(start + batchSize, productIds.length);
+          const batchIds = productIds.slice(start, end);
+
+          try {
+            let stockQuery = supabase
+              .from("warehouse_stock")
+              .select("product_id, quantity")
+              .in("product_id", batchIds);
+
+            if (companyId) {
+              stockQuery = stockQuery.eq("company_id", companyId);
+            }
+
+            const { data: batchStockData, error: batchStockError } = await stockQuery;
+
+            if (batchStockError) {
+              console.error(`Error fetching warehouse stock batch ${i + 1}/${totalBatches}:`, batchStockError);
+              // Batch hatası olsa bile devam et
+              continue;
+            }
+
+            // Stok verilerini product_id'ye göre grupla ve topla
+            if (batchStockData) {
+              batchStockData.forEach((stock: { product_id: string; quantity: number }) => {
+                const current = stockMap.get(stock.product_id) || 0;
+                stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+              });
+            }
+          } catch (error) {
+            console.error(`Error in warehouse stock batch ${i + 1}/${totalBatches}:`, error);
+            // Hata olsa bile devam et
+          }
         }
 
         // Add a suppliers property to each product (null for now) and update stock_quantity
@@ -92,6 +129,7 @@ export const useProductSearchDialog = (
         return [];
       }
     },
+    enabled: !!companyId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

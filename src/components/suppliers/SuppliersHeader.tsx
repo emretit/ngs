@@ -7,19 +7,25 @@ import { formatCurrency } from "@/utils/formatters";
 
 interface SuppliersHeaderProps {
   suppliers?: Supplier[];
+  totalCount?: number;
+  statistics?: {
+    totalCount: number;
+    totalBalance: number;
+    overdueBalance: number;
+  };
 }
 
-const SuppliersHeader = ({ suppliers = [] }: SuppliersHeaderProps) => {
+const SuppliersHeader = ({ 
+  suppliers = [],
+  totalCount: propTotalCount,
+  statistics
+}: SuppliersHeaderProps) => {
   const navigate = useNavigate();
 
-  // Toplam tedarikçi sayısını hesapla
-  const totalCount = suppliers.length;
-
-  // Toplam bakiye hesapla
-  const totalBalance = suppliers.reduce((sum, supplier) => sum + supplier.balance, 0);
-  
-  // Vadesi geçen bakiyeler hesapla (negatif bakiyeler)
-  const overdueBalance = suppliers.reduce((sum, supplier) => {
+  // Statistics varsa onu kullan, yoksa suppliers'tan hesapla (fallback)
+  const totalCount = statistics?.totalCount ?? propTotalCount ?? suppliers.length;
+  const totalBalance = statistics?.totalBalance ?? suppliers.reduce((sum, supplier) => sum + supplier.balance, 0);
+  const overdueBalance = statistics?.overdueBalance ?? suppliers.reduce((sum, supplier) => {
     return supplier.balance < 0 ? sum + Math.abs(supplier.balance) : sum;
   }, 0);
 

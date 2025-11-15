@@ -9,6 +9,7 @@ export interface CashflowCategory {
   company_id: string | null;
   created_at: string;
   updated_at: string;
+  is_default?: boolean;
 }
 
 export interface CreateCategoryData {
@@ -27,13 +28,23 @@ export const useCashflowCategories = () => {
       setLoading(true);
       setError(null);
       
-      // Use NGS İLETİŞİM company ID directly
-      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
+      // Kullanıcının şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Kullanıcı bulunamadı');
       
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profile?.company_id) throw new Error('Şirket bilgisi bulunamadı');
+      
+      // Kullanıcının şirketinin kategorilerini çek (varsayılan kategoriler de dahil)
       const { data, error } = await supabase
         .from('cashflow_categories')
         .select('*')
-        .or(`company_id.is.null,company_id.eq.${ngsCompanyId}`)
+        .eq('company_id', profile.company_id)
         .order('name');
 
       if (error) throw error;
@@ -53,12 +64,21 @@ export const useCashflowCategories = () => {
 
   const createCategory = async (data: CreateCategoryData) => {
     try {
-      // Use NGS İLETİŞİM company ID directly
-      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
+      // Kullanıcının şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Kullanıcı bulunamadı');
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profile?.company_id) throw new Error('Şirket bilgisi bulunamadı');
 
       const insertData = {
         ...data,
-        company_id: ngsCompanyId,
+        company_id: profile.company_id,
       };
 
       const { data: newCategory, error } = await supabase
@@ -116,6 +136,38 @@ export const useCashflowCategories = () => {
 
   const deleteCategory = async (id: string) => {
     try {
+      // Önce kategoriyi bul ve varsayılan olup olmadığını kontrol et
+      const category = categories.find(c => c.id === id);
+      
+      if (category?.is_default) {
+        const errorMessage = "Bu varsayılan kategori silinemez. Sistem tarafından otomatik oluşturulan kategoriler korunmalıdır.";
+        toast({
+          variant: "destructive",
+          title: "Hata",
+          description: errorMessage,
+        });
+        throw new Error(errorMessage);
+      }
+
+      // Önce bu kategoriyi kullanan işlemleri kontrol et (sadece expenses tablosu)
+      const { data: expensesData, error: expensesError } = await supabase
+        .from('expenses')
+        .select('id')
+        .eq('category_id', id)
+        .limit(1);
+
+      if (expensesError) throw expensesError;
+
+      if (expensesData && expensesData.length > 0) {
+        const errorMessage = "Bu kategori kullanılıyor ve silinemez. Lütfen önce bu kategoriyi kullanan işlemleri başka bir kategoriye taşıyın.";
+        toast({
+          variant: "destructive",
+          title: "Hata",
+          description: errorMessage,
+        });
+        throw new Error(errorMessage);
+      }
+
       const { error } = await supabase
         .from('cashflow_categories')
         .delete()
@@ -132,7 +184,7 @@ export const useCashflowCategories = () => {
       toast({
         variant: "destructive",
         title: "Hata",
-        description: "Kategori silinirken hata oluştu: " + err.message,
+        description: err.message || "Kategori silinirken hata oluştu: " + err.message,
       });
       throw err;
     }

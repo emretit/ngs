@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Plus, History } from "lucide-react";
 import { Product } from "@/types/product";
-import { formatCurrency } from "@/utils/formatters";
+import { formatCurrency, areCurrenciesEqual, normalizeCurrency } from "@/utils/formatters";
 import { useCurrencyManagement } from "@/components/proposals/form/items/hooks/useCurrencyManagement";
 import CurrencySelector from "@/components/proposals/form/items/product-dialog/components/price-section/CurrencySelector";
 import QuantityDepoSection from "@/components/proposals/form/items/product-dialog/components/QuantityDepoSection";
@@ -144,13 +144,14 @@ const ProductDetailsModal = ({
     if (fromCurrency === toCurrency) return amount;
     
     // Use manual rate if available and converting from selectedCurrency
-    if (manualExchangeRate !== null && fromCurrency === selectedCurrency && selectedCurrency !== "TL") {
+    const normalizedSelected = normalizeCurrency(selectedCurrency);
+    if (manualExchangeRate !== null && fromCurrency === selectedCurrency && normalizedSelected !== "TL") {
       const amountInTL = amount * manualExchangeRate;
       return toCurrency === "TL" ? amountInTL : amountInTL / (exchangeRates?.[toCurrency] || 1);
     }
     
     // Use manual rate if available and converting to selectedCurrency
-    if (manualExchangeRate !== null && toCurrency === selectedCurrency && selectedCurrency !== "TL") {
+    if (manualExchangeRate !== null && toCurrency === selectedCurrency && normalizedSelected !== "TL") {
       const amountInTL = fromCurrency === "TL" ? amount : amount * (exchangeRates?.[fromCurrency] || 1);
       return amountInTL / manualExchangeRate;
     }
@@ -204,7 +205,8 @@ const ProductDetailsModal = ({
   };
 
   const showStockWarning = product && quantity > product.stock_quantity;
-  const showCurrencyWarning = product && product.currency !== selectedCurrency;
+  // TRY ve TL'yi aynı kabul et - areCurrenciesEqual kullan
+  const showCurrencyWarning = product && !areCurrenciesEqual(product.currency, selectedCurrency);
 
   // Don't render if neither product nor existingData is provided
   if (!product && !existingData) return null;
@@ -458,7 +460,7 @@ const ProductDetailsModal = ({
                 </Button>
               )}
             </div>
-            {selectedCurrency !== "TL" && (
+            {normalizeCurrency(selectedCurrency) !== "TL" && (
               <div className="text-xs text-muted-foreground mb-1.5 pb-1.5 border-b border-gray-300 text-center">
                 1 {selectedCurrency} = {currentExchangeRate.toFixed(4)} ₺
               </div>
@@ -468,7 +470,7 @@ const ProductDetailsModal = ({
                 <span>Ara Toplam:</span>
                 <div className="flex items-center">
                   <span className="w-24 text-center">{formatCurrency(subtotal, selectedCurrency)}</span>
-                  {selectedCurrency !== "TL" && (
+                  {normalizeCurrency(selectedCurrency) !== "TL" && (
                     <>
                       <span className="w-px h-4 bg-gray-300 mx-2"></span>
                       <span className="w-24 text-center text-muted-foreground text-[10px]">
@@ -482,7 +484,7 @@ const ProductDetailsModal = ({
                 <span>İndirim:</span>
                 <div className="flex items-center">
                   <span className="w-24 text-center text-red-600">-{formatCurrency(discountAmount, selectedCurrency)}</span>
-                  {selectedCurrency !== "TL" && (
+                  {normalizeCurrency(selectedCurrency) !== "TL" && (
                     <>
                       <span className="w-px h-4 bg-gray-300 mx-2"></span>
                       <span className="w-24 text-center text-muted-foreground text-[10px]">
@@ -496,7 +498,7 @@ const ProductDetailsModal = ({
                 <span>Net Toplam:</span>
                 <div className="flex items-center">
                   <span className="w-24 text-center">{formatCurrency(netAmount, selectedCurrency)}</span>
-                  {selectedCurrency !== "TL" && (
+                  {normalizeCurrency(selectedCurrency) !== "TL" && (
                     <>
                       <span className="w-px h-4 bg-gray-300 mx-2"></span>
                       <span className="w-24 text-center text-muted-foreground text-[10px]">
@@ -510,7 +512,7 @@ const ProductDetailsModal = ({
                 <span>KDV:</span>
                 <div className="flex items-center">
                   <span className="w-24 text-center text-green-600">+{formatCurrency(vatAmount, selectedCurrency)}</span>
-                  {selectedCurrency !== "TL" && (
+                  {normalizeCurrency(selectedCurrency) !== "TL" && (
                     <>
                       <span className="w-px h-4 bg-gray-300 mx-2"></span>
                       <span className="w-24 text-center text-muted-foreground text-[10px]">
@@ -527,7 +529,7 @@ const ProductDetailsModal = ({
                 <span className="w-24 text-center text-blue-600">
                   {formatCurrency(total, selectedCurrency)}
                 </span>
-                {selectedCurrency !== "TL" && (
+                {normalizeCurrency(selectedCurrency) !== "TL" && (
                   <>
                     <span className="w-px h-4 bg-gray-300 mx-2"></span>
                     <span className="w-24 text-center text-muted-foreground text-[10px] font-normal">

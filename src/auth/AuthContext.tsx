@@ -31,33 +31,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Listen for auth changes FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email)
+    let mounted = true;
 
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Update activity on sign in
-        updateActivity()
-
-        // Update last_login in profiles table (deferred)
-        setTimeout(() => {
-          supabase
-            .from('profiles')
-            .update({ last_login: new Date().toISOString() })
-            .eq('id', session.user.id)
-            .then(({ error }) => {
-              if (error) console.warn('Failed to update last login:', error)
-            })
-        }, 0)
+    // Önce initial session'ı al
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mounted) return;
+      
+      if (error) {
+        console.error('Error getting session:', error);
+        setLoading(false);
+        return;
       }
-    })
 
-    // THEN get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -70,6 +55,48 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return
         }
         updateActivity()
+
+        // Update last_login in profiles table (deferred)
+        setTimeout(() => {
+          if (session?.user?.id) {
+            supabase
+              .from('profiles')
+              .update({ last_login: new Date().toISOString() })
+              .eq('id', session.user.id)
+              .then(({ error }) => {
+                if (error) console.warn('Failed to update last login:', error)
+              })
+          }
+        }, 0)
+      }
+    })
+
+    // Sonra auth state değişikliklerini dinle
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      
+      console.log('Auth state changed:', event, session?.user?.email)
+
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Update activity on sign in
+        updateActivity()
+
+        // Update last_login in profiles table (deferred)
+        setTimeout(() => {
+          if (session?.user?.id) {
+          supabase
+            .from('profiles')
+            .update({ last_login: new Date().toISOString() })
+            .eq('id', session.user.id)
+            .then(({ error }) => {
+              if (error) console.warn('Failed to update last login:', error)
+            })
+          }
+        }, 0)
       }
     })
 
@@ -82,6 +109,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, 5 * 60 * 1000) // 5 minutes
 
     return () => {
+      mounted = false;
       subscription.unsubscribe()
       clearInterval(checkInterval)
     }
@@ -221,7 +249,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    // Hot reload sırasında context kaybolabilir, bu durumda fallback değer döndür
+    console.warn('useAuth called outside AuthProvider, returning fallback values')
+    return {
+      user: null,
+      session: null,
+      loading: true,
+      userId: null,
+      token: null,
+      signIn: async () => ({ user: null, error: new Error('AuthProvider not available') }),
+      signInWithPassword: async () => ({ error: new Error('AuthProvider not available') }),
+      signUp: async () => ({ user: null, error: new Error('AuthProvider not available') }),
+      signOut: async () => {},
+      resetPassword: async () => ({ error: new Error('AuthProvider not available') }),
+      getCustomUserId: () => null,
+      getClient: () => supabase,
+    }
   }
   return context
 }

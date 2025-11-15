@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, ChevronDown, Download, Users, Calculator, Save } from "lucide-react";
+import { ChevronRight, ChevronDown, Download, Users, Calculator } from "lucide-react";
 import { useOpexMatrix } from "@/hooks/useOpexMatrix";
 import { useOpexCategories, OpexCategory } from "@/hooks/useOpexCategories";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,12 +37,9 @@ const OpexMatrix = () => {
   const [personnelData, setPersonnelData] = useState<EmployeeSalaryData[]>([]);
   const [matrixData, setMatrixData] = useState<Record<string, Record<number, number>>>({});
   const [loading, setLoading] = useState(false);
-  const { data: opexData, upsertOpexMatrix, loading: opexLoading } = useOpexMatrix();
+  const { data: opexData, loading: opexLoading } = useOpexMatrix();
   const { categories: opexCategories, loading: categoriesLoading } = useOpexCategories();
   const { toast } = useToast();
-
-  // Auto-save timeout
-  const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Fetch personnel data for auto-population
   const fetchPersonnelData = useCallback(async () => {
@@ -61,8 +56,8 @@ const OpexMatrix = () => {
           meal_allowance,
           transport_allowance,
           manual_employer_sgk_cost,
-          unemployment_employer_amount,
-          accident_insurance_amount
+          unemployment_employer_rate,
+          accident_insurance_rate
         `)
         .eq('status', 'aktif')
         .order('department');
@@ -72,6 +67,10 @@ const OpexMatrix = () => {
       // Group by department and calculate totals
       const departmentTotals = data?.reduce((acc, employee) => {
         const department = employee.department;
+        
+        // Calculate unemployment and accident insurance amounts from rates and gross salary
+        const unemploymentAmount = (employee.gross_salary || 0) * ((employee.unemployment_employer_rate || 0) / 100);
+        const accidentInsuranceAmount = (employee.gross_salary || 0) * ((employee.accident_insurance_rate || 0) / 100);
 
         if (!acc[department]) {
           acc[department] = { 
@@ -93,8 +92,8 @@ const OpexMatrix = () => {
         acc[department].meal_allowance += employee.meal_allowance || 0;
         acc[department].transport_allowance += employee.transport_allowance || 0;
         acc[department].manual_employer_sgk_cost += employee.manual_employer_sgk_cost || 0;
-        acc[department].unemployment_employer_amount += employee.unemployment_employer_amount || 0;
-        acc[department].accident_insurance_amount += employee.accident_insurance_amount || 0;
+        acc[department].unemployment_employer_amount += unemploymentAmount;
+        acc[department].accident_insurance_amount += accidentInsuranceAmount;
 
         return acc;
       }, {} as Record<string, { 
@@ -135,14 +134,14 @@ const OpexMatrix = () => {
     }
   }, [toast]);
 
-  // Fetch expense data from cashflow_transactions
+  // Fetch expense data from expenses table
   const fetchExpenseData = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('cashflow_transactions')
+        .from('expenses')
         .select(`
           *,
-          cashflow_categories!inner(name)
+          cashflow_categories!category_id(name)
         `)
         .eq('type', 'expense')
         .gte('date', `${selectedYear}-01-01`)
@@ -159,30 +158,9 @@ const OpexMatrix = () => {
         const month = date.getMonth() + 1;
         const amount = expense.amount;
         
-        // Map cashflow category names to OPEX categories
-        let opexCategory = '';
-        let opexSubcategory = expense.description || 'Diğer';
-        
-        switch (categoryName) {
-          case 'Operasyonel Giderler':
-            opexCategory = 'Operasyonel Giderler';
-            break;
-          case 'Ofis Giderleri':
-            opexCategory = 'Ofis Giderleri';
-            break;
-          case 'Pazarlama & Satış':
-            opexCategory = 'Pazarlama & Satış';
-            break;
-          case 'Finansman Giderleri':
-            opexCategory = 'Finansman Giderleri';
-            break;
-          case 'Genel Giderler':
-            opexCategory = 'Genel Giderler';
-            break;
-          default:
-            opexCategory = 'Genel Giderler';
-            opexSubcategory = 'Diğer';
-        }
+        // Use category name directly from cashflow_categories
+        const opexCategory = categoryName || 'Genel Giderler';
+        const opexSubcategory = expense.subcategory || expense.description || 'Diğer';
         
         const key = `${opexCategory}|${opexSubcategory}`;
         
@@ -252,35 +230,6 @@ const OpexMatrix = () => {
     setExpandedSubcategories(newExpanded);
   };
 
-  // Auto-save cell value with debounce
-  const handleCellChange = (category: string, subcategory: string | null, month: number, value: string) => {
-    const amount = parseFloat(value) || 0;
-    const key = `${category}|${subcategory || ''}`;
-    
-    setMatrixData(prev => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        [month]: amount
-      }
-    }));
-
-    // Clear existing timeout
-    if (saveTimeout) {
-      clearTimeout(saveTimeout);
-    }
-
-    // Set new timeout for auto-save
-    const newTimeout = setTimeout(async () => {
-      try {
-        await upsertOpexMatrix(selectedYear, month, category, subcategory, amount);
-      } catch (error) {
-        console.error('Auto-save error:', error);
-      }
-    }, 1000);
-
-    setSaveTimeout(newTimeout);
-  };
 
   // Get cell value
   const getCellValue = (category: string, subcategory: string | null, month: number): number => {
@@ -362,12 +311,23 @@ const OpexMatrix = () => {
     const csvData = [
       ['Kategori', 'Alt Kategori', ...MONTHS, 'Toplam'],
       ...opexCategories.flatMap(category => 
-        category.subcategories.map(subcategory => [
-          category.name,
-          subcategory.name,
-          ...MONTHS.map((_, index) => getCellValue(category.name, subcategory.name, index + 1)),
-          getRowTotal(category.name, subcategory.name)
-        ])
+        category.subcategories.map(subcategory => {
+          const subcategoryName = typeof subcategory === 'string' ? subcategory : subcategory.name;
+          const monthValues = MONTHS.map((_, index) => {
+            const month = index + 1;
+            const value = getCellValue(category.name, subcategoryName, month);
+            const autoValue = category.isAutoPopulated ? getAutoPopulatedValue(subcategoryName, month) : 0;
+            return value + autoValue;
+          });
+          const rowTotal = monthValues.reduce((sum, val) => sum + val, 0);
+          
+          return [
+            category.name,
+            subcategoryName,
+            ...monthValues,
+            rowTotal
+          ];
+        })
       ),
       ['TOPLAM', '', ...MONTHS.map((_, index) => getColumnTotal(index + 1)), getGrandTotal()]
     ];
@@ -384,44 +344,6 @@ const OpexMatrix = () => {
     document.body.removeChild(link);
   };
 
-  // Save all data functionality
-  const saveAllData = async () => {
-    try {
-      setLoading(true);
-      
-      // Save all non-zero values in the matrix
-      const savePromises = [];
-      
-      for (const category of opexCategories) {
-        for (const subcategory of category.subcategories) {
-          for (let month = 1; month <= 12; month++) {
-            const value = getCellValue(category.name, subcategory.name, month);
-            if (value > 0) {
-              savePromises.push(
-                upsertOpexMatrix(selectedYear, month, category.name, subcategory.name, value)
-              );
-            }
-          }
-        }
-      }
-      
-      await Promise.all(savePromises);
-      
-      toast({
-        title: "Başarılı",
-        description: "Tüm veriler kaydedildi.",
-      });
-    } catch (error) {
-      console.error('Error saving data:', error);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Veriler kaydedilirken bir hata oluştu.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading || opexLoading || categoriesLoading) {
     return (
@@ -432,187 +354,314 @@ const OpexMatrix = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
-              OPEX Matrix
-            </span>
-            <div className="flex items-center gap-4">
-              <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
-                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={exportToExcel} variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Excel'e Aktar
-              </Button>
-              <Button onClick={saveAllData} disabled={loading}>
-                <Save className="mr-2 h-4 w-4" />
-                Kaydet
-              </Button>
+    <>
+      <div className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/60 pb-3 px-4 pt-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md text-white">
+              <Calculator className="h-4 w-4" />
             </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+            <div>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                OPEX Matrix
+              </h2>
+              <p className="text-xs text-slate-600 mt-0.5">
+                Operasyonel giderlerinizi aylık bazda takip edin
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+              <SelectTrigger className="w-32 h-9 bg-white border-slate-200 shadow-sm hover:border-slate-300 transition-colors text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={exportToExcel} variant="outline" className="h-9 border-slate-200 hover:bg-slate-50 shadow-sm text-sm px-3">
+              <Download className="mr-1.5 h-3.5 w-3.5" />
+              Excel'e Aktar
+            </Button>
+          </div>
+        </div>
+      </div>
+      <div className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="sticky left-0 bg-background z-10 min-w-[200px]">Kategori</TableHead>
-                  <TableHead className="sticky left-[200px] bg-background z-10 min-w-[150px]">Alt Kategori</TableHead>
+              <TableHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 border-b-2 border-slate-200">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="sticky left-0 bg-gradient-to-r from-slate-50 to-slate-100/50 z-20 w-[150px] font-semibold text-sm text-slate-900 border-r border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] py-2 px-2">
+                    Kategori
+                  </TableHead>
+                  <TableHead className="sticky left-[150px] bg-gradient-to-r from-slate-50 to-slate-100/50 z-20 w-[130px] font-semibold text-sm text-slate-900 border-r border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] py-2 px-2">
+                    Alt Kategori
+                  </TableHead>
                   {MONTHS.map((month, index) => (
-                    <TableHead key={index} className="text-center min-w-[120px]">{month}</TableHead>
+                    <TableHead 
+                      key={index} 
+                      className="text-center w-[90px] font-medium text-xs text-slate-700 py-2 px-1.5 border-r border-slate-200/50 last:border-r-0"
+                    >
+                      {month}
+                    </TableHead>
                   ))}
-                  <TableHead className="text-center min-w-[120px] font-bold">Toplam</TableHead>
+                  <TableHead className="text-center w-[100px] font-semibold text-sm text-slate-900 bg-slate-100/50 py-2 px-2">
+                    Toplam
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {opexCategories.map((category) => (
-                  <>
-                    <TableRow key={category.name} className="bg-muted/50">
-                      <TableCell 
-                        className="sticky left-0 bg-muted/50 z-10 font-medium cursor-pointer"
-                        onClick={() => toggleCategory(category.name)}
-                      >
-                        <div className="flex items-center gap-2">
-                          {expandedCategories.has(category.name) ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
+                {(() => {
+                  let rowIndex = 0;
+                  return opexCategories.map((category) => {
+                    const categoryRowIndex = rowIndex++;
+                    const isCategoryEven = categoryRowIndex % 2 === 0;
+                    
+                    return (
+                      <>
+                        <TableRow 
+                          key={category.name} 
+                          className={cn(
+                            "hover:from-slate-100 hover:to-slate-50 transition-all duration-200 border-b border-slate-200/60",
+                            isCategoryEven 
+                              ? "bg-gradient-to-r from-slate-50 to-slate-100/70" 
+                              : "bg-white"
                           )}
-                          {category.name}
-                          {category.isAutoPopulated && (
-                            <Badge variant="secondary" className="ml-2">
-                              <Users className="h-3 w-3 mr-1" />
-                              Auto
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="sticky left-[200px] bg-muted/50 z-10 font-medium">
-                        Kategori Toplamı
-                      </TableCell>
-                      {MONTHS.map((_, monthIndex) => {
-                        const month = monthIndex + 1;
-                        const total = getCategoryTotal(category.name, month);
-                        return (
-                          <TableCell key={monthIndex} className="text-center bg-muted/50 font-medium">
-                            {formatCurrency(total)}
+                        >
+                          <TableCell 
+                            className="sticky left-0 z-10 font-medium text-sm cursor-pointer group transition-all duration-200 border-r border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] py-2 px-2 w-[150px]"
+                            style={{ 
+                              background: isCategoryEven 
+                                ? 'linear-gradient(to right, rgb(248 250 252), rgb(241 245 249 / 0.7))'
+                                : 'white'
+                            }}
+                            onClick={() => toggleCategory(category.name)}
+                          >
+                            <div className="flex items-center gap-2 group-hover:gap-2.5 transition-all">
+                              <div className="text-slate-600 group-hover:text-blue-600 transition-colors">
+                                {expandedCategories.has(category.name) ? (
+                                  <ChevronDown className="h-3.5 w-3.5" />
+                                ) : (
+                                  <ChevronRight className="h-3.5 w-3.5" />
+                                )}
+                              </div>
+                              <span className="text-slate-900 group-hover:text-blue-700 transition-colors">
+                                {category.name}
+                              </span>
+                              {category.isAutoPopulated && (
+                                <Badge variant="secondary" className="ml-1.5 bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 text-xs px-1.5 py-0.5">
+                                  <Users className="h-2.5 w-2.5 mr-0.5" />
+                                  Auto
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
-                        );
-                      })}
-                      <TableCell className="text-center bg-muted/50 font-bold">
-                        {formatCurrency(getCategoryRowTotal(category.name))}
-                      </TableCell>
-                    </TableRow>
-                    {expandedCategories.has(category.name) && category.subcategories.map((subcategory) => (
-                       <React.Fragment key={`${category.name}-${subcategory}`}>
-                         <TableRow className="animate-fade-in">
-                           <TableCell className="sticky left-0 bg-background z-10"></TableCell>
-                           <TableCell className="sticky left-[200px] bg-background z-10">
-                             <div className="flex items-center gap-2">
-                               <button
-                                 onClick={() => toggleSubcategory(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name)}
-                                 className="p-0.5 rounded hover:bg-muted/50 transition-colors"
-                               >
-                                  {expandedSubcategories.has(`${category.name}|${typeof subcategory === 'string' ? subcategory : subcategory.name}`) ? (
-                                    <ChevronDown className="h-3 w-3" />
-                                  ) : (
-                                    <ChevronRight className="h-3 w-3" />
+                          <TableCell 
+                            className="sticky left-[150px] z-10 font-medium text-sm text-slate-700 border-r border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] py-2 px-2 w-[130px]"
+                            style={{ 
+                              background: isCategoryEven 
+                                ? 'linear-gradient(to right, rgb(248 250 252), rgb(241 245 249 / 0.7))'
+                                : 'white'
+                            }}
+                          >
+                            Kategori Toplamı
+                          </TableCell>
+                          {MONTHS.map((_, monthIndex) => {
+                            const month = monthIndex + 1;
+                            const total = getCategoryTotal(category.name, month);
+                            return (
+                              <TableCell 
+                                key={monthIndex} 
+                                className={cn(
+                                  "text-center font-medium text-xs text-slate-800 py-1.5 px-1 border-r border-slate-200/50 last:border-r-0 w-[90px]",
+                                  isCategoryEven ? "bg-slate-50/50" : "bg-white"
+                                )}
+                              >
+                                <span className="inline-block px-1.5 py-0.5 rounded bg-white/80 border border-slate-200/60">
+                                  {formatCurrency(total)}
+                                </span>
+                              </TableCell>
+                            );
+                          })}
+                          <TableCell className={cn(
+                            "text-center font-semibold text-sm text-slate-900 py-2 px-2",
+                            isCategoryEven ? "bg-slate-100/50" : "bg-slate-50/30"
+                          )}>
+                            <span className="inline-block px-2 py-1 rounded-md bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200/60">
+                              {formatCurrency(getCategoryRowTotal(category.name))}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                        {expandedCategories.has(category.name) && category.subcategories.map((subcategory, subIndex) => {
+                          const subcategoryRowIndex = rowIndex++;
+                          const isSubcategoryEven = subcategoryRowIndex % 2 === 0;
+                          const hasDetails = expandedSubcategories.has(`${category.name}|${typeof subcategory === 'string' ? subcategory : subcategory.name}`);
+                          
+                          return (
+                            <React.Fragment key={`${category.name}-${typeof subcategory === 'string' ? subcategory : subcategory.id}`}>
+                              <TableRow 
+                                className={cn(
+                                  "animate-fade-in hover:bg-slate-50/80 transition-colors duration-150 border-b border-slate-100",
+                                  isSubcategoryEven ? "bg-slate-50/60" : "bg-white"
+                                )}
+                              >
+                                <TableCell 
+                                  className={cn(
+                                    "sticky left-0 z-10 border-r border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] py-1.5 px-2 w-[150px]",
+                                    isSubcategoryEven ? "bg-slate-50/60" : "bg-white"
                                   )}
-                                </button>
-                                <span>{typeof subcategory === 'string' ? subcategory : subcategory.name}</span>
-                               {category.isAutoPopulated && (
-                                 <Badge variant="outline">Auto</Badge>
-                               )}
-                             </div>
-                           </TableCell>
-                           {MONTHS.map((_, monthIndex) => {
-                             const month = monthIndex + 1;
-                              const value = getCellValue(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name, month);
-                              const autoValue = category.isAutoPopulated ? getAutoPopulatedValue(typeof subcategory === 'string' ? subcategory : subcategory.name, month) : 0;
-                             
-                             return (
-                               <TableCell key={monthIndex} className="text-center p-2">
-                                 {category.isAutoPopulated ? (
-                                   <div className="text-sm font-medium text-muted-foreground">
-                                     {formatCurrency(autoValue)}
-                                   </div>
-                                 ) : (
-                                   <Input
-                                     type="number"
-                                     value={value || ''}
-                                     onChange={(e) => handleCellChange(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name, month, e.target.value)}
-                                     className="w-full text-center border-0 bg-transparent focus:bg-background"
-                                     placeholder="0"
-                                   />
-                                 )}
-                               </TableCell>
-                             );
-                           })}
-                           <TableCell className="text-center font-medium">
-                             {formatCurrency(getRowTotal(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name))}
-                           </TableCell>
-                         </TableRow>
-                         
-                         {/* Subcategory Details Row */}
-                         {expandedSubcategories.has(`${category.name}|${typeof subcategory === 'string' ? subcategory : subcategory.name}`) && (
-                           <TableRow className="animate-accordion-down bg-muted/20">
-                             <TableCell className="sticky left-0 bg-muted/20 z-10"></TableCell>
-                             <TableCell className="sticky left-[200px] bg-muted/20 z-10">
-                               <div className="text-xs text-muted-foreground pl-6">
-                                 Detaylar
-                               </div>
-                             </TableCell>
-                             {MONTHS.map((_, monthIndex) => {
-                               const month = monthIndex + 1;
-                               const value = getCellValue(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name, month);
-                               
-                               return (
-                                 <TableCell key={monthIndex} className="text-center p-2 bg-muted/20">
-                                   <div className="text-xs space-y-1">
-                                     <div className="font-medium">
-                                       {formatCurrency(value)}
-                                     </div>
-                                     <div className="text-muted-foreground">
-                                       {value > 0 ? `${month}/${selectedYear}` : 'Boş'}
-                                     </div>
-                                   </div>
-                                 </TableCell>
-                               );
-                             })}
-                             <TableCell className="text-center bg-muted/20">
-                               <div className="text-xs text-muted-foreground">
-                                 Yıllık Toplam
-                               </div>
-                             </TableCell>
-                           </TableRow>
-                         )}
-                       </React.Fragment>
-                    ))}
-                  </>
-                ))}
+                                >
+                                  <div className="pl-4 text-slate-400 text-xs">└</div>
+                                </TableCell>
+                                <TableCell 
+                                  className={cn(
+                                    "sticky left-[150px] z-10 border-r border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] py-1.5 px-2 w-[130px]",
+                                    isSubcategoryEven ? "bg-slate-50/60" : "bg-white"
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => toggleSubcategory(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name)}
+                                      className="p-0.5 rounded-md hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
+                                    >
+                                      {hasDetails ? (
+                                        <ChevronDown className="h-3 w-3" />
+                                      ) : (
+                                        <ChevronRight className="h-3 w-3" />
+                                      )}
+                                    </button>
+                                    <span className="text-slate-700 font-medium text-sm">
+                                      {typeof subcategory === 'string' ? subcategory : subcategory.name}
+                                    </span>
+                                    {category.isAutoPopulated && (
+                                      <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] px-1 py-0">
+                                        Auto
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                {MONTHS.map((_, monthIndex) => {
+                                  const month = monthIndex + 1;
+                                  const value = getCellValue(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name, month);
+                                  const autoValue = category.isAutoPopulated ? getAutoPopulatedValue(typeof subcategory === 'string' ? subcategory : subcategory.name, month) : 0;
+                                  
+                                  return (
+                                    <TableCell 
+                                      key={monthIndex} 
+                                      className={cn(
+                                        "text-center py-1.5 px-1 border-r border-slate-200/50 last:border-r-0 w-[90px]",
+                                        isSubcategoryEven ? "bg-slate-50/60" : "bg-white"
+                                      )}
+                                    >
+                                      {category.isAutoPopulated ? (
+                                        <div className="text-xs font-medium text-slate-600 px-1.5 py-1 rounded bg-blue-50/50 border border-blue-100/60 inline-block">
+                                          {formatCurrency(autoValue)}
+                                        </div>
+                                      ) : (
+                                        <div className="text-xs font-medium text-slate-700 px-1.5 py-1 rounded bg-white/80 border border-slate-200/60 inline-block">
+                                          {formatCurrency(value)}
+                                        </div>
+                                      )}
+                                    </TableCell>
+                                  );
+                                })}
+                                <TableCell className={cn(
+                                  "text-center font-medium text-sm text-slate-800 py-1.5 px-2",
+                                  isSubcategoryEven ? "bg-slate-50/60" : "bg-white"
+                                )}>
+                                  <span className="inline-block px-1.5 py-0.5 rounded bg-white/80 border border-slate-200/60">
+                                    {formatCurrency(getRowTotal(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name))}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                              
+                              {/* Subcategory Details Row */}
+                              {hasDetails && (() => {
+                                const detailsRowIndex = rowIndex++;
+                                const isDetailsEven = detailsRowIndex % 2 === 0;
+                                
+                                return (
+                                  <TableRow className={cn(
+                                    "animate-accordion-down border-b border-slate-100",
+                                    isDetailsEven ? "bg-slate-50/40" : "bg-slate-100/30"
+                                  )}>
+                                    <TableCell 
+                                      className={cn(
+                                        "sticky left-0 z-10 border-r border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] py-1 px-2 w-[150px]",
+                                        isDetailsEven ? "bg-slate-50/40" : "bg-slate-100/30"
+                                      )}
+                                    ></TableCell>
+                                    <TableCell 
+                                      className={cn(
+                                        "sticky left-[150px] z-10 border-r border-slate-200 shadow-[2px_0_4px_rgba(0,0,0,0.05)] py-1 px-2 w-[130px]",
+                                        isDetailsEven ? "bg-slate-50/40" : "bg-slate-100/30"
+                                      )}
+                                    >
+                                      <div className="text-[10px] text-slate-500 pl-4 font-medium">
+                                        Detaylar
+                                      </div>
+                                    </TableCell>
+                                    {MONTHS.map((_, monthIndex) => {
+                                      const month = monthIndex + 1;
+                                      const value = getCellValue(category.name, typeof subcategory === 'string' ? subcategory : subcategory.name, month);
+                                      
+                                      return (
+                                        <TableCell 
+                                          key={monthIndex} 
+                                          className={cn(
+                                            "text-center py-1 px-1 border-r border-slate-200/50 last:border-r-0 w-[90px]",
+                                            isDetailsEven ? "bg-slate-50/40" : "bg-slate-100/30"
+                                          )}
+                                        >
+                                          <div className="text-[10px] space-y-0.5">
+                                            <div className="font-medium text-slate-700">
+                                              {formatCurrency(value)}
+                                            </div>
+                                            <div className="text-slate-500 text-[9px]">
+                                              {value > 0 ? `${month}/${selectedYear}` : 'Boş'}
+                                            </div>
+                                          </div>
+                                        </TableCell>
+                                      );
+                                    })}
+                                    <TableCell className={cn(
+                                      "text-center py-1 px-2",
+                                      isDetailsEven ? "bg-slate-50/40" : "bg-slate-100/30"
+                                    )}>
+                                      <div className="text-[10px] text-slate-500 font-medium">
+                                        Yıllık Toplam
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })()}
+                            </React.Fragment>
+                          );
+                        })}
+                      </>
+                    );
+                  });
+                })()}
                 
                  {/* Total Row - Always visible */}
-                <TableRow className="bg-primary/10 font-bold border-t-2 border-primary">
-                  <TableCell className="sticky left-0 bg-primary/10 z-10">TOPLAM</TableCell>
-                  <TableCell className="sticky left-[200px] bg-primary/10 z-10"></TableCell>
+                <TableRow className="bg-gradient-to-r from-blue-600 to-blue-700 font-bold border-t-2 border-blue-800 shadow-lg">
+                  <TableCell className="sticky left-0 bg-gradient-to-r from-blue-600 to-blue-700 z-10 text-white border-r border-blue-500 shadow-[2px_0_4px_rgba(0,0,0,0.1)] py-2 px-2 text-sm w-[150px]">
+                    TOPLAM
+                  </TableCell>
+                  <TableCell className="sticky left-[150px] bg-gradient-to-r from-blue-600 to-blue-700 z-10 text-white border-r border-blue-500 shadow-[2px_0_4px_rgba(0,0,0,0.1)] py-2 w-[130px]"></TableCell>
                   {MONTHS.map((_, monthIndex) => (
-                    <TableCell key={monthIndex} className="text-center bg-primary/10">
-                      {formatCurrency(getColumnTotal(monthIndex + 1))}
+                    <TableCell key={monthIndex} className="text-center text-white py-2 px-1 border-r border-blue-500/50 last:border-r-0 w-[90px]">
+                      <span className="inline-block px-1.5 py-0.5 rounded-md bg-white/20 backdrop-blur-sm border border-white/30 text-xs font-semibold">
+                        {formatCurrency(getColumnTotal(monthIndex + 1))}
+                      </span>
                     </TableCell>
                   ))}
-                  <TableCell className="text-center bg-primary/10">
-                    {formatCurrency(getGrandTotal())}
+                  <TableCell className="text-center text-white py-2 px-1.5 bg-blue-800/50 w-[100px]">
+                    <span className="inline-block px-2 py-1 rounded-lg bg-white/25 backdrop-blur-sm border-2 border-white/40 font-extrabold text-xs">
+                      {formatCurrency(getGrandTotal())}
+                    </span>
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -620,14 +669,13 @@ const OpexMatrix = () => {
           </div>
           
           {(loading || opexLoading) && (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-              <p className="text-sm text-muted-foreground mt-2">Yükleniyor...</p>
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-3 border-blue-600 border-t-transparent mx-auto"></div>
+              <p className="text-sm text-slate-600 mt-3 font-medium">Yükleniyor...</p>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
+      </div>
+    </>
   );
 };
 

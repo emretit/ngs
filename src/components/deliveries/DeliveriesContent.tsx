@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import DeliveriesTable from "./DeliveriesTable";
 import { Delivery } from "@/types/deliveries";
+import InfiniteScroll from "@/components/ui/infinite-scroll";
 
 interface DeliveriesContentProps {
   deliveries: Delivery[];
@@ -25,18 +26,6 @@ const DeliveriesContent = ({
   hasNextPage = false,
   loadMore
 }: DeliveriesContentProps) => {
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!loadMore || !hasNextPage || isLoadingMore || isLoading) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        loadMore();
-      }
-    }, { threshold: 0.1 });
-    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
   if (error) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -56,15 +45,21 @@ const DeliveriesContent = ({
           statusFilter={statusFilter}
         />
 
+        {/* Infinite scroll trigger - DeliveriesTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}
         {!isLoading && hasNextPage && (
-          <div ref={loadMoreRef} className="flex justify-center py-4">
-            {isLoadingMore && (
-              <div className="text-sm text-gray-600">Daha fazla teslimat yükleniyor...</div>
-            )}
+          <div className="px-4">
+            <InfiniteScroll
+              hasNextPage={hasNextPage}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMore || (() => {})}
+              className="mt-4"
+            >
+              <div />
+            </InfiniteScroll>
           </div>
         )}
 
-        {!hasNextPage && deliveries.length > 0 && (
+        {!hasNextPage && deliveries.length > 0 && !isLoading && (
           <div className="text-center py-4 text-sm text-gray-500">
             Tüm teslimatlar yüklendi
           </div>

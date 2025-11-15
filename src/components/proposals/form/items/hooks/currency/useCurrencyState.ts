@@ -4,7 +4,9 @@ import { getCurrencyOptions } from "../../utils/currencyUtils";
 import { toast } from "sonner";
 
 export const useCurrencyState = (defaultCurrency?: string) => {
-  const [selectedCurrency, setSelectedCurrency] = useState<string>(defaultCurrency || "TRY");
+  // Veritabanından gelen TRY değerlerini TL olarak normalize et
+  const normalizedDefault = defaultCurrency === "TRY" ? "TL" : (defaultCurrency || "TL");
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(normalizedDefault);
   const currencyOptions = getCurrencyOptions();
 
   const handleCurrencyChange = useCallback((newCurrency: string) => {

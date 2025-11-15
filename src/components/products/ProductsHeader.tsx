@@ -9,22 +9,33 @@ interface ProductsHeaderProps {
   products?: Product[];
   activeView: "grid" | "table";
   setActiveView: (view: "grid" | "table") => void;
+  totalCount?: number;
+  statistics?: {
+    totalCount: number;
+    inStockCount: number;
+    lowStockCount: number;
+    outOfStockCount: number;
+    activeCount: number;
+    inactiveCount: number;
+  };
 }
 
-const ProductsHeader = ({ products = [], activeView, setActiveView }: ProductsHeaderProps) => {
+const ProductsHeader = ({ 
+  products = [], 
+  activeView, 
+  setActiveView,
+  totalCount: propTotalCount,
+  statistics
+}: ProductsHeaderProps) => {
   const navigate = useNavigate();
 
-  // Toplam ürün sayısını hesapla
-  const totalCount = products.length;
-
-  // Stok durumlarına göre sayıları hesapla
-  const inStockCount = products.filter(p => p.stock_quantity > 5).length;
-  const lowStockCount = products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 5).length;
-  const outOfStockCount = products.filter(p => p.stock_quantity === 0).length;
-  
-  // Aktif/Pasif sayıları
-  const activeCount = products.filter(p => p.is_active).length;
-  const inactiveCount = products.filter(p => !p.is_active).length;
+  // Statistics varsa onu kullan, yoksa products'tan hesapla (fallback)
+  const totalCount = statistics?.totalCount ?? propTotalCount ?? products.length;
+  const inStockCount = statistics?.inStockCount ?? products.filter(p => p.stock_quantity > 5).length;
+  const lowStockCount = statistics?.lowStockCount ?? products.filter(p => p.stock_quantity > 0 && p.stock_quantity <= 5).length;
+  const outOfStockCount = statistics?.outOfStockCount ?? products.filter(p => p.stock_quantity === 0).length;
+  const activeCount = statistics?.activeCount ?? products.filter(p => p.is_active).length;
+  const inactiveCount = statistics?.inactiveCount ?? products.filter(p => !p.is_active).length;
 
   return (
     <>

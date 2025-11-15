@@ -42,52 +42,41 @@ const TotalPriceSection: React.FC<TotalPriceSectionProps> = ({
   const baseTotal = unitPrice * quantity;
   const discountAmount = baseTotal * (discountRate / 100);
   const subtotal = baseTotal - discountAmount;
+  const netAmount = subtotal;
   const taxAmount = subtotal * (taxRate / 100);
 
   return (
-    <Card className="bg-muted/40">
-      <CardContent className="p-4">
-        <div className="flex justify-between mb-2">
-          <span className="text-sm font-medium">Toplam Tutarı</span>
+    <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-gray-700">Hesaplama Özeti</span>
+      </div>
+      <div className="text-xs text-gray-600 space-y-0.5 mb-1.5">
+        <div className="flex justify-between items-center">
+          <span>Ara Toplam:</span>
+          <span className="w-24 text-center">{formatCurrency(subtotal, originalCurrency)}</span>
         </div>
-        
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm">Birim Fiyat:</span>
-            <span>{formatCurrency(unitPrice, originalCurrency)}</span>
+        {discountRate > 0 && (
+          <div className="flex justify-between items-center">
+            <span>İndirim:</span>
+            <span className="w-24 text-center text-red-600">-{formatCurrency(discountAmount, originalCurrency)}</span>
           </div>
-          
-          <div className="flex justify-between">
-            <span className="text-sm">Adet:</span>
-            <span>{quantity}</span>
+        )}
+        <div className="flex justify-between items-center">
+          <span>Net Toplam:</span>
+          <span className="w-24 text-center">{formatCurrency(netAmount, originalCurrency)}</span>
           </div>
-          
-          {discountRate > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <span className="text-sm">İndirim ({discountRate}%):</span>
-              <span>-{formatCurrency(discountAmount, originalCurrency)}</span>
+        <div className="flex justify-between items-center">
+          <span>KDV:</span>
+          <span className="w-24 text-center text-green-600">+{formatCurrency(taxAmount, originalCurrency)}</span>
             </div>
-          )}
-          
-          <div className="flex justify-between">
-            <span className="text-sm">Ara Toplam:</span>
-            <span>{formatCurrency(subtotal, originalCurrency)}</span>
           </div>
-          
-          <div className="flex justify-between text-muted-foreground">
-            <span className="text-sm">KDV ({taxRate}%):</span>
-            <span>{formatCurrency(taxAmount, originalCurrency)}</span>
-          </div>
-          
-          <div className="pt-2 border-t flex justify-between">
-            <span className="font-medium">Toplam:</span>
-            <span className="text-lg font-bold">
+      <div className="flex justify-between items-center text-sm font-bold pt-1.5 border-t border-gray-300">
+        <span className="text-gray-700">TOPLAM</span>
+        <span className="w-24 text-center text-blue-600">
               {formatCurrency(calculatedTotal, originalCurrency)}
             </span>
           </div>
         </div>
-      </CardContent>
-    </Card>
   );
 };
 

@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { 
-  Dialog, 
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { 
   Select,
@@ -15,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Product } from "@/types/product";
 import { EInvoiceItem } from "@/types/einvoice";
 import { useQuery } from "@tanstack/react-query";
@@ -293,16 +287,44 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
 
   const totalStock = selectedProductId ? Array.from(warehouseStocks.values()).reduce((sum, qty) => sum + qty, 0) : 0;
   const stockStatusString = selectedProductId ? getStockStatus(totalStock) : 'in_stock';
+  
+  // Stok uyarısı kontrolü
+  const selectedWarehouseStock = selectedWarehouseId ? getStockForWarehouse(selectedWarehouseId) : totalStock;
+  const showStockWarning = selectedProduct && quantity > selectedWarehouseStock;
+
+  // Dialog başlığı
+  const dialogTitle = selectedProduct ? (
+    <div className="flex items-center justify-between w-full gap-3">
+      <span className="truncate">{selectedProduct.name}</span>
+      {selectedProduct.sku && (
+        <span className="text-sm font-normal text-gray-500 whitespace-nowrap flex-shrink-0">
+          {selectedProduct.sku}
+        </span>
+      )}
+    </div>
+  ) : "Ürün Detayları";
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Ürün Detayları</DialogTitle>
-        </DialogHeader>
+    <UnifiedDialog
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      title={dialogTitle}
+      maxWidth="lg"
+      headerColor="blue"
+      className="max-h-[90vh] overflow-y-auto"
+    >
+      <div className="space-y-2">
+          {/* Uyarılar */}
+          {showStockWarning && (
+            <Alert variant="destructive" className="py-1">
+              <AlertDescription className="text-xs">
+                <strong>Stok Uyarısı!</strong> Seçilen miktar ({quantity}) mevcut stoktan ({selectedWarehouseStock}) fazla.
+              </AlertDescription>
+            </Alert>
+          )}
         
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-4 py-4">
           {/* Ürün Seçimi - Sadece allowProductSelection true ise ve ürün seçilmemişse göster */}
           {allowProductSelection && !selectedProductId && action !== 'create' && (
             <div className="space-y-2">
@@ -315,18 +337,6 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
                 placeholder="Ürün seçin veya ara..."
               />
             </div>
-          )}
-
-          {/* Ürün Bilgileri - ProductInfoSection kullan */}
-          {((selectedProductId && selectedProduct) || (!allowProductSelection && initialSelectedProduct)) && selectedProduct && (
-            <ProductInfoSection 
-              product={selectedProduct} 
-              stockStatus={stockStatusString}
-              availableStock={totalStock}
-              originalCurrency={selectedProduct.currency || 'TL'}
-              originalPrice={selectedProduct.price || 0}
-              formatCurrency={formatCurrency}
-            />
           )}
           
           {/* Ürün Seçimi için değiştir butonu */}
@@ -366,24 +376,26 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
 
           {/* Miktar, Fiyat ve Depo - Sadece ürün seçildiğinde veya allowProductSelection false ise göster */}
           {(selectedProductId && selectedProduct) || (!allowProductSelection && initialSelectedProduct) ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-6">
-              {/* Miktar ve Birim */}
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="quantity">Miktar</Label>
+            {/* Miktar + Depo Seçimi */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="quantity" className="text-xs font-medium text-gray-600">
+                  Miktar
+                </Label>
+                <div className="flex gap-1.5 mt-0.5">
                   <Input
                     id="quantity"
                     type="number"
-                    min="1"
+                    min="0"
+                    step="0.01"
                     value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                    onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+                    className="flex-1 h-7 text-xs"
+                    placeholder="Miktar"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unit">Birim</Label>
                   <Select value={unit} onValueChange={setUnit}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-20 h-7 text-xs">
                       <SelectValue placeholder="Birim" />
                     </SelectTrigger>
                     <SelectContent>
@@ -408,7 +420,9 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
                 productId={selectedProductId || undefined}
                 showQuantity={false}
               />
+            </div>
 
+            {/* Birim Fiyat */}
               <PriceAndDiscountSection 
                 customPrice={price}
                 setCustomPrice={setPrice}
@@ -421,28 +435,66 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
                 formatCurrency={formatCurrency}
               />
               
-              <div className="space-y-2">
-                <Label htmlFor="tax-rate" className="font-medium">KDV Oranı (%)</Label>
+            {/* İndirim ve KDV */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="discount" className="text-xs font-medium text-gray-600">
+                  İndirim
+                </Label>
+                <div className="flex mt-0.5">
+                  <Input
+                    id="discount"
+                    type="number"
+                    value={discountRate || 0}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setDiscountRate(value === "" ? 0 : Number(value) || 0);
+                    }}
+                    step="0.01"
+                    max="100"
+                    placeholder="0"
+                    className="rounded-r-none h-7 text-xs"
+                  />
+                  <Select value="percentage" onValueChange={() => {}}>
+                    <SelectTrigger className="w-16 h-7 text-xs rounded-none border-l-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percentage">%</SelectItem>
+                      <SelectItem value="amount">₺</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="tax-rate" className="text-xs font-medium text-gray-600">
+                  KDV Oranı
+                </Label>
                 <Select 
                   value={`${taxRate}`}
                   onValueChange={(value) => setTaxRate(Number(value))}
                 >
-                  <SelectTrigger id="tax-rate" className="w-full h-7 text-xs">
+                  <SelectTrigger id="tax-rate" className="mt-0.5 h-7 text-xs">
                     <SelectValue placeholder="KDV Oranı" />
                   </SelectTrigger>
-                  <SelectContent position="popper" className="bg-white z-[100]">
-                    {[20, 18, 10, 0].map((rate) => (
-                      <SelectItem key={rate} value={`${rate}`}>
-                        {rate}%
-                      </SelectItem>
-                    ))}
+                  <SelectContent>
+                    <SelectItem value="20">KDV %20</SelectItem>
+                    <SelectItem value="10">KDV %10</SelectItem>
+                    <SelectItem value="1">KDV %1</SelectItem>
+                    <SelectItem value="0">KDV %0</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
             </div>
             
-            <div className="space-y-6">
+            {/* Açıklama */}
+            <NotesSection 
+              notes={description} 
+              setNotes={setDescription} 
+            />
+
+            {/* Hesaplama Özeti */}
               <TotalPriceSection 
                 unitPrice={price || selectedProduct?.price || 0}
                 quantity={quantity}
@@ -454,25 +506,14 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
                 currentCurrency={selectedProduct?.currency || 'TL'}
                 formatCurrency={formatCurrency}
               />
-              
-              <NotesSection 
-                notes={description} 
-                setNotes={setDescription} 
-              />
-            </div>
           </div>
           ) : null}
         </div>
+        </div>
         
-        <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)}
-          >
-            İptal
-          </Button>
-          
-          <Button 
+      <UnifiedDialogFooter>
+        <UnifiedDialogCancelButton onClick={() => onOpenChange(false)} />
+        <UnifiedDialogActionButton
             onClick={handleConfirm}
             disabled={
               !selectedWarehouseId || 
@@ -484,10 +525,9 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
             }
           >
             {allowProductSelection ? 'Ekle' : 'Onayla'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </UnifiedDialogActionButton>
+      </UnifiedDialogFooter>
+    </UnifiedDialog>
 
     {/* Yeni Ürün Oluşturma Dialog */}
     {allowProductSelection && parsedProduct && (

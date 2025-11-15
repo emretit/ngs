@@ -133,8 +133,70 @@ const Warehouses = () => {
     navigate('/inventory/warehouses/new');
   }, [navigate]);
 
-  // Calculate stats
-  const stats = {
+  // Tüm depolar için istatistikleri çek (filtre olmadan, sadece company_id'ye göre)
+  const { data: warehouseStatistics } = useQuery({
+    queryKey: ["warehouse_statistics"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      const companyId = profile?.company_id;
+      if (!companyId) {
+        return {
+          total: 0,
+          active: 0,
+          inactive: 0,
+          by_type: {
+            main: 0,
+            sub: 0,
+            virtual: 0,
+            transit: 0,
+          }
+        };
+      }
+
+      // Tüm depoları çek (filtre olmadan)
+      const { data: allWarehouses, error: warehousesError } = await supabase
+        .from("warehouses")
+        .select("is_active, warehouse_type")
+        .eq("company_id", companyId);
+
+      if (warehousesError) throw warehousesError;
+      if (!allWarehouses || allWarehouses.length === 0) {
+        return {
+          total: 0,
+          active: 0,
+          inactive: 0,
+          by_type: {
+            main: 0,
+            sub: 0,
+            virtual: 0,
+            transit: 0,
+          }
+        };
+      }
+
+      return {
+        total: allWarehouses.length,
+        active: allWarehouses.filter(w => w.is_active).length,
+        inactive: allWarehouses.filter(w => !w.is_active).length,
+        by_type: {
+          main: allWarehouses.filter(w => w.warehouse_type === 'main').length,
+          sub: allWarehouses.filter(w => w.warehouse_type === 'sub').length,
+          virtual: allWarehouses.filter(w => w.warehouse_type === 'virtual').length,
+          transit: allWarehouses.filter(w => w.warehouse_type === 'transit').length,
+        }
+      };
+    },
+    staleTime: 5 * 60 * 1000, // 5 dakika
+  });
+
+  // Calculate stats - statistics varsa onu kullan, yoksa filtrelenmiş verilerden hesapla (fallback)
+  const stats = warehouseStatistics || {
     total: warehouses?.data?.length || 0,
     active: warehouses?.data?.filter(w => w.is_active).length || 0,
     inactive: warehouses?.data?.filter(w => !w.is_active).length || 0,

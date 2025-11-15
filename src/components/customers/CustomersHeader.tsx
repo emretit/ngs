@@ -7,19 +7,25 @@ import { formatCurrency } from "@/utils/formatters";
 
 interface CustomersHeaderProps {
   customers?: Customer[];
+  totalCount?: number;
+  statistics?: {
+    totalCount: number;
+    totalBalance: number;
+    overdueBalance: number;
+  };
 }
 
-const CustomersHeader = ({ customers = [] }: CustomersHeaderProps) => {
+const CustomersHeader = ({ 
+  customers = [],
+  totalCount: propTotalCount,
+  statistics
+}: CustomersHeaderProps) => {
   const navigate = useNavigate();
 
-  // Toplam müşteri sayısını hesapla
-  const totalCount = customers.length;
-
-  // Toplam bakiye hesapla
-  const totalBalance = customers.reduce((sum, customer) => sum + customer.balance, 0);
-  
-  // Vadesi geçen bakiyeler hesapla (negatif bakiyeler)
-  const overdueBalance = customers.reduce((sum, customer) => {
+  // Statistics varsa onu kullan, yoksa customers'tan hesapla (fallback)
+  const totalCount = statistics?.totalCount ?? propTotalCount ?? customers.length;
+  const totalBalance = statistics?.totalBalance ?? customers.reduce((sum, customer) => sum + customer.balance, 0);
+  const overdueBalance = statistics?.overdueBalance ?? customers.reduce((sum, customer) => {
     return customer.balance < 0 ? sum + Math.abs(customer.balance) : sum;
   }, 0);
 

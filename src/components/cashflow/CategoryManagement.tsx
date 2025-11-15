@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Edit, Trash2, TrendingUp, TrendingDown, Tag, MoreHorizontal, Search, Filter, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { useCashflowCategories, CreateCategoryData } from "@/hooks/useCashflowCategories";
 import { useCashflowSubcategories } from "@/hooks/useCashflowSubcategories";
+import { useToast } from "@/components/ui/use-toast";
 
 interface CategoryFormData {
   name: string;
@@ -22,9 +23,15 @@ interface CategoryItemProps {
   category: any;
   onEdit: (category: any) => void;
   onDelete: (category: any) => void;
+  subcategories: any[];
+  loading?: boolean;
+  createSubcategory: (categoryId: string, name: string) => Promise<any>;
+  updateSubcategory: (id: string, name: string) => Promise<any>;
+  deleteSubcategory: (id: string) => Promise<void>;
+  refetchSubcategories: () => Promise<void>;
 }
 
-const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
+const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading: subcategoriesLoading, createSubcategory, updateSubcategory, deleteSubcategory, refetchSubcategories }: CategoryItemProps) => {
   const [isAddSubcategoryOpen, setIsAddSubcategoryOpen] = useState(false);
   const [isEditSubcategoryOpen, setIsEditSubcategoryOpen] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<any>(null);
@@ -33,7 +40,11 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
   const [isDeletingSubcategory, setIsDeletingSubcategory] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const { subcategories, loading: subcategoriesLoading, createSubcategory, updateSubcategory, deleteSubcategory } = useCashflowSubcategories(category.id);
+  // Bu kategoriye ait alt kategorileri filtrele
+  const categorySubcategories = useMemo(() => 
+    subcategories.filter(sub => sub.category_id === category.id),
+    [subcategories, category.id]
+  );
 
   const {
     register: registerSubcategory,
@@ -48,6 +59,7 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
   const onSubmitCreateSubcategory = async (data: { name: string }) => {
     try {
       await createSubcategory(category.id, data.name);
+      await refetchSubcategories();
       setIsAddSubcategoryOpen(false);
       resetSubcategory({ name: '' });
     } catch (error) {
@@ -60,6 +72,7 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
 
     try {
       await updateSubcategory(editingSubcategory.id, data.name);
+      await refetchSubcategories();
       setIsEditSubcategoryOpen(false);
       setEditingSubcategory(null);
       resetSubcategory({ name: '' });
@@ -85,6 +98,7 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
     setIsDeletingSubcategory(true);
     try {
       await deleteSubcategory(subcategoryToDelete.id);
+      await refetchSubcategories();
     } catch (error) {
       console.error('Failed to delete subcategory:', error);
     } finally {
@@ -102,7 +116,7 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
   return (
     <div className="bg-white rounded-lg hover:shadow-sm transition-all duration-200">
       {/* Ana Kategori Kartı */}
-      <div className="p-2">
+      <div className="p-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className={`w-2 h-2 ${colorScheme.dot} rounded-full flex-shrink-0`}></div>
@@ -110,24 +124,24 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={subcategories.length > 0 ? () => setIsExpanded(!isExpanded) : undefined}
-                disabled={subcategories.length === 0}
+                onClick={categorySubcategories.length > 0 ? () => setIsExpanded(!isExpanded) : undefined}
+                disabled={categorySubcategories.length === 0}
                 className={`w-full justify-between p-2 h-8 text-xs font-medium transition-all duration-200 text-gray-900 hover:text-gray-900 ${
                   isIncome
                     ? 'hover:bg-emerald-50 border-0 hover:shadow-sm'
                     : 'hover:bg-rose-50 border-0 hover:shadow-sm'
-                } ${isExpanded ? 'shadow-sm' : ''} ${subcategories.length === 0 ? 'cursor-default' : 'cursor-pointer'}`}
+                } ${isExpanded ? 'shadow-sm' : ''} ${categorySubcategories.length === 0 ? 'cursor-default' : 'cursor-pointer'}`}
               >
                 <span className="truncate font-semibold">{category.name}</span>
                 <div className="flex items-center gap-1">
                   <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    subcategories.length > 0 
+                    categorySubcategories.length > 0 
                       ? `${isIncome ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'} font-semibold`
                       : `${isIncome ? 'bg-gray-100 text-gray-500' : 'bg-gray-100 text-gray-500'}`
                       }`}>
-                        {subcategories.length}
+                        {categorySubcategories.length}
                       </span>
-                  {subcategories.length > 0 && (
+                  {categorySubcategories.length > 0 && (
                     isExpanded ? (
                         <ChevronDown className="h-3 w-3 flex-shrink-0 transition-transform" />
                       ) : (
@@ -200,32 +214,34 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
                 >
                   <Edit className="h-3 w-3 text-gray-500" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(category)}
-                  className="h-5 w-5 p-0 hover:bg-red-100"
-                  title="Sil"
-                >
-                  <Trash2 className="h-3 w-3 text-red-500" />
-                </Button>
+                {!category.is_default && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(category)}
+                    className="h-5 w-5 p-0 hover:bg-red-100"
+                    title="Sil"
+                  >
+                    <Trash2 className="h-3 w-3 text-red-500" />
+                  </Button>
+                )}
               </>
             )}
           </div>
         </div>
 
         {/* Alt Kategoriler - Şık Dropdown Panel */}
-        {subcategories.length > 0 && isExpanded && (
-          <div className="mt-3 pt-3 border-t border-gray-100/80">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Alt Kategoriler</h4>
-                <span className="text-xs text-gray-400">{subcategories.length} adet</span>
+        {categorySubcategories.length > 0 && isExpanded && (
+          <div className="mt-2 pt-2 border-t border-gray-100/80">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="text-[10px] font-normal text-gray-400 uppercase tracking-wide">Alt Kategoriler</h4>
+                <span className="text-[10px] text-gray-400">{categorySubcategories.length} adet</span>
               </div>
-              {subcategories.map((subcategory, index) => (
+              {categorySubcategories.map((subcategory, index) => (
                 <div
                   key={subcategory.id}
-                  className={`group flex items-center justify-between py-2 px-3 rounded-md text-sm hover:bg-gradient-to-r transition-all duration-200 border border-transparent hover:border-gray-200/60 ${
+                  className={`group flex items-center justify-between py-1 px-2 rounded-md text-sm hover:bg-gradient-to-r transition-all duration-200 border border-transparent hover:border-gray-200/60 min-h-[32px] ${
                     isIncome
                       ? 'bg-emerald-50/50 hover:from-emerald-50 hover:to-emerald-100/50'
                       : 'bg-rose-50/50 hover:from-rose-50 hover:to-rose-100/50'
@@ -238,25 +254,30 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
                     }`}></div>
                     <span className="text-gray-900 truncate font-medium leading-none">{subcategory.name}</span>
                   </div>
-                  <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditSubcategory(subcategory)}
-                      className="h-6 w-6 p-0 hover:bg-white/80 hover:shadow-sm transition-all"
-                      title="Düzenle"
-                    >
-                      <Edit className="h-3 w-3 text-gray-500 hover:text-gray-700" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteSubcategoryClick(subcategory)}
-                      className="h-6 w-6 p-0 hover:bg-red-50 hover:shadow-sm transition-all"
-                      title="Sil"
-                    >
-                      <Trash2 className="h-3 w-3 text-red-400 hover:text-red-600" />
-                    </Button>
+                  {/* Sabit alt kategorilerde düzenleme ve silme butonları gösterilmez, ama aynı genişliği ve yüksekliği korumak için boş div */}
+                  <div className="flex gap-1 flex-shrink-0 w-[52px] min-w-[52px] h-6 items-center justify-end">
+                    {!subcategory.is_default && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditSubcategory(subcategory)}
+                          className="h-6 w-6 p-0 hover:bg-white/80 hover:shadow-sm transition-all"
+                          title="Düzenle"
+                        >
+                          <Edit className="h-3 w-3 text-gray-500 hover:text-gray-700" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSubcategoryClick(subcategory)}
+                          className="h-6 w-6 p-0 hover:bg-red-50 hover:shadow-sm transition-all"
+                          title="Sil"
+                        >
+                          <Trash2 className="h-3 w-3 text-red-400 hover:text-red-600" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -323,20 +344,30 @@ const CategoryItem = ({ category, onEdit, onDelete }: CategoryItemProps) => {
       />
     </div>
   );
-};
+});
 
-const CategoryManagement = () => {
+CategoryItem.displayName = 'CategoryItem';
+
+interface CategoryManagementProps {
+  searchQuery?: string;
+  selectedType?: 'all' | 'income' | 'expense';
+  selectedStatus?: string;
+}
+
+const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedType = 'all', selectedStatus }: CategoryManagementProps) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all');
+  const searchTerm = searchQuery;
+  const selectedType = propSelectedType;
 
   const { categories, loading, createCategory, updateCategory, deleteCategory, getCategoriesByType, refetch } = useCashflowCategories();
-  const { createSubcategory } = useCashflowSubcategories();
+  // Tüm alt kategorileri tek seferde yükle (categoryId olmadan)
+  const { subcategories: allSubcategories, loading: subcategoriesLoading, createSubcategory, updateSubcategory, deleteSubcategory, refetch: refetchSubcategories } = useCashflowSubcategories();
+  const { toast } = useToast();
 
   const {
     register,
@@ -356,10 +387,11 @@ const CategoryManagement = () => {
   const watchedType = watch('type');
   const watchedIsSubcategory = watch('isSubcategory');
 
-  const onSubmitCreate = async (data: CategoryFormData) => {
+  const onSubmitCreate = useCallback(async (data: CategoryFormData) => {
     try {
       if (data.isSubcategory && data.parentCategoryId) {
         await createSubcategory(data.parentCategoryId, data.name);
+        await refetchSubcategories();
         await refetch();
       } else {
         await createCategory({ name: data.name, type: data.type });
@@ -370,9 +402,9 @@ const CategoryManagement = () => {
     } catch (error) {
       console.error('Failed to create category:', error);
     }
-  };
+  }, [createSubcategory, createCategory, refetch, refetchSubcategories, reset]);
 
-  const onSubmitEdit = async (data: CategoryFormData) => {
+  const onSubmitEdit = useCallback(async (data: CategoryFormData) => {
     if (!editingCategory) return;
 
     try {
@@ -383,40 +415,63 @@ const CategoryManagement = () => {
     } catch (error) {
       console.error('Failed to update category:', error);
     }
-  };
+  }, [editingCategory, updateCategory, reset]);
 
-  const handleEdit = (category: any) => {
+  const handleEdit = useCallback((category: any) => {
     setEditingCategory(category);
     setValue('name', category.name);
     setValue('type', category.type);
     setIsEditOpen(true);
-  };
+  }, [setValue]);
 
-  const handleDeleteClick = (category: any) => {
+  const handleDeleteClick = useCallback((category: any) => {
     setCategoryToDelete(category);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!categoryToDelete) return;
 
     setIsDeleting(true);
     try {
       await deleteCategory(categoryToDelete.id);
-    } catch (error) {
+    } catch (error: any) {
+      // Hata mesajı zaten useCashflowCategories hook'unda toast olarak gösteriliyor
+      // Burada sadece console'a yazıyoruz
       console.error('Failed to delete category:', error);
+      
+      // Eğer hata mesajı varsa ve toast gösterilmemişse burada göster
+      if (error?.message) {
+        toast({
+          variant: "destructive",
+          title: "Hata",
+          description: error.message,
+          duration: 2000,
+        });
+      }
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       setCategoryToDelete(null);
     }
-  };
+  }, [categoryToDelete, deleteCategory, toast]);
 
-  const expenseCategories = getCategoriesByType('expense');
-  const incomeCategories = getCategoriesByType('income');
+  // Memoized category calculations
+  const expenseCategories = useMemo(() => getCategoriesByType('expense'), [categories, getCategoriesByType]);
+  const incomeCategories = useMemo(() => getCategoriesByType('income'), [categories, getCategoriesByType]);
 
-  // Filtreleme
-  const filteredCategories = () => {
+  // Kategorileri sırala: Önce varsayılanlar (alfabetik), sonra kullanıcı ekledikleri (alfabetik)
+  const sortCategories = useCallback((categories: any[]) => {
+    const defaultCats = categories.filter(cat => cat.is_default === true).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+    const userCats = categories.filter(cat => !cat.is_default || cat.is_default === false).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+    return [...defaultCats, ...userCats];
+  }, []);
+
+  const sortedIncomeCategories = useMemo(() => sortCategories(incomeCategories), [incomeCategories, sortCategories]);
+  const sortedExpenseCategories = useMemo(() => sortCategories(expenseCategories), [expenseCategories, sortCategories]);
+
+  // Memoized filtered categories
+  const filteredCategories = useMemo(() => {
     let filtered = categories;
 
     if (selectedType !== 'all') {
@@ -430,7 +485,7 @@ const CategoryManagement = () => {
     }
 
     return filtered;
-  };
+  }, [categories, selectedType, searchTerm, getCategoriesByType]);
 
   if (loading) {
     return (
@@ -452,7 +507,7 @@ const CategoryManagement = () => {
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-gray-900">Gelir Kategorileri</h2>
+                  <h2 className="text-sm font-bold text-gray-900">Gelirler</h2>
                   <p className="text-xs text-gray-500">Gelir türleri ve kategorileri</p>
                 </div>
               </div>
@@ -476,13 +531,13 @@ const CategoryManagement = () => {
           <div className="grid grid-cols-3 gap-2 mb-4">
             <div className="text-center p-2 bg-emerald-50 rounded-lg border border-emerald-100">
               <div className="text-sm font-bold text-emerald-700">
-                {incomeCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length}
+                {sortedIncomeCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length}
               </div>
               <div className="text-xs text-emerald-600">Toplam</div>
             </div>
             <div className="text-center p-2 bg-green-50 rounded-lg border border-green-100">
               <div className="text-sm font-bold text-green-700">
-                {incomeCategories.filter(cat => cat.company_id).length}
+                {sortedIncomeCategories.filter(cat => cat.company_id).length}
               </div>
               <div className="text-xs text-green-600">Aktif</div>
             </div>
@@ -495,8 +550,8 @@ const CategoryManagement = () => {
           </div>
 
           {/* Categories List */}
-          <div className="space-y-2">
-            {incomeCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length === 0 ? (
+          <div className="space-y-1">
+            {sortedIncomeCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length === 0 ? (
               <div className="text-center py-4 text-muted-foreground">
                 <TrendingUp className="h-6 w-6 mx-auto mb-2 text-gray-300" />
                 <p className="text-xs font-medium text-gray-700 mb-1">Henüz gelir kategorisi yok</p>
@@ -514,7 +569,7 @@ const CategoryManagement = () => {
                 </Button>
               </div>
             ) : (
-              incomeCategories
+              sortedIncomeCategories
                 .filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true)
                 .map((category) => (
                   <CategoryItem
@@ -522,6 +577,12 @@ const CategoryManagement = () => {
                     category={category}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
+                    subcategories={allSubcategories}
+                    loading={subcategoriesLoading}
+                    createSubcategory={createSubcategory}
+                    updateSubcategory={updateSubcategory}
+                    deleteSubcategory={deleteSubcategory}
+                    refetchSubcategories={refetchSubcategories}
                   />
                 ))
             )}
@@ -539,8 +600,8 @@ const CategoryManagement = () => {
                   <TrendingDown className="h-4 w-4" />
                 </div>
         <div>
-                  <h2 className="text-sm font-bold text-gray-900">Masraf Kategorileri</h2>
-                  <p className="text-xs text-gray-500">Masraf türleri ve kategorileri</p>
+                  <h2 className="text-sm font-bold text-gray-900">Giderler</h2>
+                  <p className="text-xs text-gray-500">Gider türleri ve kategorileri</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -563,13 +624,13 @@ const CategoryManagement = () => {
           <div className="grid grid-cols-3 gap-2 mb-4">
             <div className="text-center p-2 bg-rose-50 rounded-lg border border-rose-100">
               <div className="text-sm font-bold text-rose-700">
-                {expenseCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length}
+                {sortedExpenseCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length}
               </div>
               <div className="text-xs text-rose-600">Toplam</div>
             </div>
             <div className="text-center p-2 bg-red-50 rounded-lg border border-red-100">
               <div className="text-sm font-bold text-red-700">
-                {expenseCategories.filter(cat => cat.company_id).length}
+                {sortedExpenseCategories.filter(cat => cat.company_id).length}
               </div>
               <div className="text-xs text-red-600">Aktif</div>
             </div>
@@ -582,12 +643,12 @@ const CategoryManagement = () => {
           </div>
 
           {/* Categories List */}
-          <div className="space-y-2">
-            {expenseCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length === 0 ? (
+          <div className="space-y-1">
+            {sortedExpenseCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length === 0 ? (
               <div className="text-center py-4 text-muted-foreground">
                 <TrendingDown className="h-6 w-6 mx-auto mb-2 text-gray-300" />
-                <p className="text-xs font-medium text-gray-700 mb-1">Henüz masraf kategorisi yok</p>
-                <p className="text-xs text-gray-500 mb-2">İlk masraf kategorinizi ekleyin</p>
+                <p className="text-xs font-medium text-gray-700 mb-1">Henüz gider kategorisi yok</p>
+                <p className="text-xs text-gray-500 mb-2">İlk gider kategorinizi ekleyin</p>
                 <Button 
                   size="sm" 
                   className="bg-rose-600 hover:bg-rose-700 text-white text-xs px-2 py-1"
@@ -601,7 +662,7 @@ const CategoryManagement = () => {
                 </Button>
               </div>
             ) : (
-              expenseCategories
+              sortedExpenseCategories
                 .filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true)
                 .map((category) => (
                   <CategoryItem
@@ -609,6 +670,12 @@ const CategoryManagement = () => {
                     category={category}
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
+                    subcategories={allSubcategories}
+                    loading={subcategoriesLoading}
+                    createSubcategory={createSubcategory}
+                    updateSubcategory={updateSubcategory}
+                    deleteSubcategory={deleteSubcategory}
+                    refetchSubcategories={refetchSubcategories}
                   />
                 ))
             )}
@@ -644,7 +711,7 @@ const CategoryManagement = () => {
                   disabled={watchedIsSubcategory}
                   className="w-full h-11 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="expense">🔴 Masraf</option>
+                  <option value="expense">🔴 Gider</option>
                   <option value="income">🟢 Gelir</option>
                 </select>
               </div>
@@ -771,6 +838,8 @@ const CategoryManagement = () => {
       />
     </>
   );
-};
+});
+
+CategoryManagement.displayName = 'CategoryManagement';
 
 export default CategoryManagement;

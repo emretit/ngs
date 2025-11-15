@@ -19,25 +19,25 @@ const WarehousesHeader = ({
   setActiveView,
   onCreateWarehouse
 }: WarehousesHeaderProps) => {
-  // Toplam depo sayısı
-  const totalCount = warehouses.length;
-
-  // İstatistikler
+  // İstatistikler - stats varsa onu kullan, yoksa warehouses'tan hesapla (fallback)
   const statsData = stats || {
-    total: 0,
-    active: 0,
-    inactive: 0,
+    total: warehouses.length,
+    active: warehouses.filter(w => w.is_active).length,
+    inactive: warehouses.filter(w => !w.is_active).length,
     by_type: {
-      main: 0,
-      sub: 0,
-      virtual: 0,
-      transit: 0,
+      main: warehouses.filter(w => w.warehouse_type === 'main').length,
+      sub: warehouses.filter(w => w.warehouse_type === 'sub').length,
+      virtual: warehouses.filter(w => w.warehouse_type === 'virtual').length,
+      transit: warehouses.filter(w => w.warehouse_type === 'transit').length,
     }
   };
 
+  // Toplam depo sayısı - stats'ten al
+  const totalCount = statsData.total;
+
   // Aktif/Pasif sayıları
-  const activeCount = statsData.active || warehouses.filter(w => w.is_active).length;
-  const inactiveCount = statsData.inactive || warehouses.filter(w => !w.is_active).length;
+  const activeCount = statsData.active;
+  const inactiveCount = statsData.inactive;
 
   return (
     <>

@@ -1,5 +1,27 @@
 
 /**
+ * Normalizes currency code: TRY and TL are treated as the same (returns TL for display)
+ * @param currency The currency code to normalize
+ * @returns Normalized currency code (TL for TRY/TL, otherwise unchanged)
+ */
+export const normalizeCurrency = (currency: string | null | undefined): string => {
+  if (!currency) return 'TL';
+  return currency === 'TRY' ? 'TL' : currency;
+};
+
+/**
+ * Compares two currencies, treating TRY and TL as the same
+ * @param currency1 First currency code
+ * @param currency2 Second currency code
+ * @returns true if currencies are the same (including TRY === TL)
+ */
+export const areCurrenciesEqual = (currency1: string | null | undefined, currency2: string | null | undefined): boolean => {
+  const normalized1 = normalizeCurrency(currency1);
+  const normalized2 = normalizeCurrency(currency2);
+  return normalized1 === normalized2;
+};
+
+/**
  * Capitalizes the first letter of a string
  * @param string The string to capitalize
  * @returns The capitalized string

@@ -1,9 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Proposal } from "@/types/proposal";
 import ProposalTable from "./ProposalTable";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import InfiniteScroll from "@/components/ui/infinite-scroll";
 
 interface ProposalsContentProps {
   proposals: Proposal[];
@@ -35,27 +34,6 @@ const ProposalsContent = ({
   employeeFilter
 }: ProposalsContentProps) => {
   const { toast } = useToast();
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    if (!loadMore || !hasNextPage || isLoadingMore || isLoading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
 
   if (error) {
     return (
@@ -82,20 +60,22 @@ const ProposalsContent = ({
           </div>
         </div>
         
-        {/* Infinite scroll trigger */}
+        {/* Infinite scroll trigger - ProposalTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}
         {hasNextPage && !isLoading && (
-          <div ref={loadMoreRef} className="flex justify-center py-4">
-            {isLoadingMore && (
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-gray-600">Daha fazla teklif yükleniyor...</span>
-              </div>
-            )}
+          <div className="px-4">
+            <InfiniteScroll
+              hasNextPage={hasNextPage}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMore || (() => {})}
+              className="mt-4"
+            >
+              <div />
+            </InfiniteScroll>
           </div>
         )}
         
         {/* Tüm teklifler yüklendi mesajı */}
-        {!hasNextPage && proposals.length > 0 && (
+        {!hasNextPage && proposals.length > 0 && !isLoading && (
           <div className="text-center py-4 text-sm text-gray-500">
             Tüm teklifler yüklendi ({totalCount || proposals.length} teklif)
           </div>

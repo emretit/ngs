@@ -315,76 +315,77 @@ export default function EInvoiceProcess() {
         description: item.description
       })) || [];
 
-      // Detaylı tedarikçi bilgilerini çıkar - tüm olası field isimlerini kontrol et
-      const supplierDetails = apiInvoiceDetails?.supplierInfo || apiInvoiceDetails?.companyInfo || apiInvoiceDetails?.SupplierParty || apiInvoiceDetails?.AccountingSupplierParty || {};
-      console.log('🔍 Raw supplier details from API:', supplierDetails);
+      // Detaylı tedarikçi bilgilerini çıkar - önce supplierInfo'dan, sonra fallback'ler
+      const supplierInfo = apiInvoiceDetails?.supplierInfo || {};
+      const accountingSupplierParty = apiInvoiceDetails?.AccountingSupplierParty || {};
+      
+      console.log('🔍 Raw supplierInfo from API:', supplierInfo);
+      console.log('🔍 AccountingSupplierParty from API:', accountingSupplierParty);
       console.log('🔍 apiInvoiceDetails keys:', apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : 'null');
-      console.log('🔍 SenderTaxNumber:', apiInvoiceDetails?.SenderTaxNumber);
-      console.log('🔍 supplierTaxNumber:', apiInvoiceDetails?.supplierTaxNumber);
-      console.log('🔍 AccountingSupplierParty:', apiInvoiceDetails?.AccountingSupplierParty);
 
-      // Tedarikçi adı için tüm olası alanları kontrol et
+      // Tedarikçi adı için önce supplierInfo'dan, sonra fallback'ler
       const supplierName =
+        supplierInfo?.companyName ||
         apiInvoiceDetails?.SenderName ||
         apiInvoiceDetails?.supplierName ||
-        apiInvoiceDetails?.AccountingSupplierParty?.Party?.PartyName?.Name ||
-        apiInvoiceDetails?.AccountingSupplierParty?.PartyName?.Name ||
-        supplierDetails?.companyName ||
-        supplierDetails?.name ||
-        supplierDetails?.PartyName?.Name ||
-        supplierDetails?.Party?.PartyName?.Name ||
+        accountingSupplierParty?.Party?.PartyName?.Name ||
+        accountingSupplierParty?.PartyName?.Name ||
         'Tedarikçi';
 
-      // Tedarikçi VKN için tüm olası alanları kontrol et
+      // Tedarikçi VKN için önce supplierInfo'dan, sonra fallback'ler
       const supplierTaxNumber =
+        supplierInfo?.taxNumber ||
         apiInvoiceDetails?.SenderTaxNumber ||
         apiInvoiceDetails?.supplierTaxNumber ||
         apiInvoiceDetails?.SenderIdentifier ||
         apiInvoiceDetails?.TaxNumber ||
-        apiInvoiceDetails?.AccountingSupplierParty?.Party?.PartyIdentification?.ID ||
-        apiInvoiceDetails?.AccountingSupplierParty?.PartyIdentification?.ID ||
-        apiInvoiceDetails?.AccountingSupplierParty?.Party?.PartyTaxScheme?.TaxScheme?.ID ||
-        supplierDetails?.taxNumber ||
-        supplierDetails?.vkn ||
-        supplierDetails?.VKN ||
-        supplierDetails?.PartyIdentification?.ID ||
-        supplierDetails?.Party?.PartyIdentification?.ID ||
+        accountingSupplierParty?.Party?.PartyIdentification?.ID ||
+        accountingSupplierParty?.PartyIdentification?.ID ||
+        accountingSupplierParty?.Party?.PartyTaxScheme?.TaxScheme?.ID ||
         '';
 
       console.log('✅ Extracted supplier info:', { supplierName, supplierTaxNumber });
+
+      // Fatura tutar bilgilerini doğru alanlardan çek
+      // Edge function'da hesaplanmış değerler kullanılıyor
+      const subtotal = parseFloat(apiInvoiceDetails?.TaxExclusiveAmount || apiInvoiceDetails?.taxExclusiveAmount || '0');
+      const taxTotal = parseFloat(apiInvoiceDetails?.TaxTotalAmount || apiInvoiceDetails?.taxTotalAmount || '0');
+      const totalAmount = parseFloat(apiInvoiceDetails?.PayableAmount || apiInvoiceDetails?.payableAmount || apiInvoiceDetails?.TotalAmount || apiInvoiceDetails?.totalAmount || '0');
+      
+      console.log('💰 Invoice amounts:', { subtotal, taxTotal, totalAmount });
 
       const invoiceDetails: EInvoiceDetails = {
         id: invoiceId,
         invoice_number: apiInvoiceDetails?.InvoiceNumber || apiInvoiceDetails?.invoiceNumber || apiInvoiceDetails?.ID || invoiceId,
         supplier_name: supplierName,
         supplier_tax_number: supplierTaxNumber,
-        invoice_date: apiInvoiceDetails?.IssueDate || apiInvoiceDetails?.invoiceDate || new Date().toISOString(),
-        due_date: apiInvoiceDetails?.dueDate || null,
+        invoice_date: apiInvoiceDetails?.IssueDate || apiInvoiceDetails?.issueDate || apiInvoiceDetails?.InvoiceDate || new Date().toISOString(),
+        due_date: apiInvoiceDetails?.dueDate || apiInvoiceDetails?.DueDate || null,
         currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TL',
-        subtotal: parseFloat(apiInvoiceDetails?.TaxExclusiveAmount || apiInvoiceDetails?.subtotal || 0),
-        tax_total: parseFloat(apiInvoiceDetails?.TaxTotalAmount || apiInvoiceDetails?.taxTotal || 0),
-        total_amount: parseFloat(apiInvoiceDetails?.PayableAmount || apiInvoiceDetails?.totalAmount || 0),
+        subtotal: subtotal,
+        tax_total: taxTotal,
+        total_amount: totalAmount,
         items,
         supplier_details: {
           company_name: supplierName,
           tax_number: supplierTaxNumber,
-          trade_registry_number: supplierDetails.tradeRegistryNumber || supplierDetails.ticaretSicilNo,
-          mersis_number: supplierDetails.mersisNumber || supplierDetails.mersisNo,
-          email: supplierDetails.email || supplierDetails.eMail,
-          phone: supplierDetails.phone || supplierDetails.telefon || supplierDetails.phoneNumber,
-          website: supplierDetails.website || supplierDetails.webSite,
-          fax: supplierDetails.fax || supplierDetails.faks,
+          trade_registry_number: supplierInfo?.tradeRegistryNumber || null,
+          mersis_number: supplierInfo?.mersisNumber || null,
+          email: supplierInfo?.email || null,
+          phone: supplierInfo?.phone || null,
+          website: supplierInfo?.website || null,
+          fax: supplierInfo?.fax || null,
           address: {
-            street: supplierDetails.address?.street || supplierDetails.adres?.sokak || supplierDetails.addressLine,
-            district: supplierDetails.address?.district || supplierDetails.adres?.ilce || supplierDetails.district,
-            city: supplierDetails.address?.city || supplierDetails.adres?.il || supplierDetails.city,
-            postal_code: supplierDetails.address?.postal_code || supplierDetails.adres?.postaKodu || supplierDetails.postalCode,
-            country: supplierDetails.address?.country || supplierDetails.adres?.ulke || supplierDetails.country || 'Türkiye'
+            street: supplierInfo?.address?.street || null,
+            district: supplierInfo?.address?.district || null,
+            city: supplierInfo?.address?.city || null,
+            postal_code: supplierInfo?.address?.postalCode || supplierInfo?.address?.postal_code || null,
+            country: supplierInfo?.address?.country || 'Türkiye'
           },
           bank_info: {
-            bank_name: supplierDetails.bankInfo?.bankName || supplierDetails.banka?.bankaAdi,
-            iban: supplierDetails.bankInfo?.iban || supplierDetails.banka?.iban,
-            account_number: supplierDetails.bankInfo?.accountNumber || supplierDetails.banka?.hesapNo
+            bank_name: supplierInfo?.bankInfo?.bankName || null,
+            iban: supplierInfo?.bankInfo?.iban || null,
+            account_number: supplierInfo?.bankInfo?.accountNumber || null
           }
         }
       };

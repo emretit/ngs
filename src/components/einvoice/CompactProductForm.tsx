@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,14 +69,67 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
     enabled: isOpen,
   });
 
+  // Generate product code from product name
+  const generateProductCode = (productName: string): string => {
+    if (!productName || productName.trim() === "") {
+      return "";
+    }
+
+    // Turkish character mapping
+    const turkishToEnglish: Record<string, string> = {
+      'ç': 'c', 'Ç': 'C',
+      'ğ': 'g', 'Ğ': 'G',
+      'ı': 'i', 'İ': 'I',
+      'ö': 'o', 'Ö': 'O',
+      'ş': 's', 'Ş': 'S',
+      'ü': 'u', 'Ü': 'U'
+    };
+
+    // Convert Turkish characters to English
+    let normalized = productName
+      .split('')
+      .map(char => turkishToEnglish[char] || char)
+      .join('');
+
+    // Get first letters of each word (max 3-4 words)
+    const words = normalized
+      .toUpperCase()
+      .split(/\s+/)
+      .filter(word => word.length > 0)
+      .slice(0, 4);
+
+    // Take first 2-3 letters of each word, or first letter if word is short
+    let codePrefix = words
+      .map(word => word.length > 2 ? word.substring(0, 2) : word.substring(0, 1))
+      .join('')
+      .substring(0, 6); // Max 6 characters
+
+    // Generate random 4-digit number
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+
+    return `${codePrefix}-${randomNum}`;
+  };
+
+  // Helper function to check if code should be auto-generated
+  const shouldGenerateCode = (code: string | number | undefined, productName: string): boolean => {
+    // Convert to string first
+    const codeStr = code ? String(code).trim() : "";
+    if (!codeStr || codeStr === "" || codeStr === "1") {
+      return true;
+    }
+    return false;
+  };
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
-      sku: initialData?.code || "",
+      sku: shouldGenerateCode(initialData?.code, initialData?.name || "") 
+        ? generateProductCode(initialData?.name || "") 
+        : (initialData?.code || ""),
       unit: initialData?.unit ? mapUnitToDropdownValue(initialData.unit) : "adet",
       price: initialData?.price || 0,
-      tax_rate: initialData?.tax_rate || 18,
+      tax_rate: initialData?.tax_rate || 20,
       description: "",
     },
   });
@@ -84,16 +137,43 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
   // Reset form when modal opens with new data
   React.useEffect(() => {
     if (isOpen && initialData) {
+      const productName = initialData.name || "";
+      const shouldGen = shouldGenerateCode(initialData.code, productName);
       form.reset({
-        name: initialData.name || "",
-        sku: initialData.code || "",
+        name: productName,
+        sku: shouldGen ? generateProductCode(productName) : (initialData.code || ""),
         unit: initialData.unit ? mapUnitToDropdownValue(initialData.unit) : "adet",
         price: initialData.price || 0,
-        tax_rate: initialData.tax_rate || 18,
+        tax_rate: initialData.tax_rate || 20,
+        description: "",
+      });
+    } else if (isOpen && !initialData) {
+      // Reset form when opening without initial data
+      form.reset({
+        name: "",
+        sku: "",
+        unit: "adet",
+        price: 0,
+        tax_rate: 20,
         description: "",
       });
     }
   }, [isOpen, initialData, form]);
+
+  // Auto-generate product code when product name changes
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "name" && value.name) {
+        const currentSku = form.getValues("sku");
+        // Auto-generate if SKU is empty, "1", or matches auto-generated pattern
+        if (!currentSku || currentSku === "1" || currentSku.match(/^[A-Z]+-\d{4}$/)) {
+          const generatedCode = generateProductCode(value.name);
+          form.setValue("sku", generatedCode, { shouldValidate: false });
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const onSubmit = async (data: FormData) => {
     if (!userProfile?.company_id) {
@@ -117,7 +197,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
           price: data.price,
           tax_rate: data.tax_rate,
           description: data.description,
-          currency: "TL",
+          currency: "TRY", // Constraint sadece USD, EUR veya TRY kabul ediyor
           category_type: "product",
           product_type: "physical",
           status: "active",
@@ -171,6 +251,9 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
             Hızlı Ürün Oluştur
           </DialogTitle>
         </DialogHeader>
+        <DialogDescription className="sr-only">
+          Hızlı ürün oluşturma formu. Temel bilgilerle ürün oluşturabilirsiniz.
+        </DialogDescription>
 
         <Alert className="mb-4">
           <Info className="h-4 w-4" />
@@ -272,10 +355,8 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="0">%0</SelectItem>
                         <SelectItem value="1">%1</SelectItem>
-                        <SelectItem value="8">%8</SelectItem>
-                        <SelectItem value="18">%18</SelectItem>
+                        <SelectItem value="10">%10</SelectItem>
                         <SelectItem value="20">%20</SelectItem>
                       </SelectContent>
                     </Select>

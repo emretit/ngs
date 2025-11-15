@@ -95,13 +95,13 @@ const InventoryTransactionsTable = ({
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                 Yükleniyor...
               </TableCell>
             </TableRow>
           ) : transactions?.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                 İşlem bulunamadı
               </TableCell>
             </TableRow>

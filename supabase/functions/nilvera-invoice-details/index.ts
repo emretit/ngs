@@ -296,14 +296,283 @@ serve(async (req: Request) => {
       console.log('📊 Parsed invoice items:', invoiceItems.length);
       console.log('📄 First item sample:', invoiceItems[0]);
 
+      // Parse supplier information from XML or API response
+      let supplierInfo: any = {};
+      let accountingSupplierParty: any = null;
+
+      // Try to extract supplier info from XML
+      if (xmlContent) {
+        try {
+          const parser = new XMLParser({
+            ignoreAttributes: false,
+            attributeNamePrefix: '@',
+            textNodeName: '#text'
+          });
+
+          const xmlObj = parser.parse(xmlContent);
+          const invoice = xmlObj?.Invoice || xmlObj?.['cac:Invoice'] || xmlObj;
+          
+          // Extract AccountingSupplierParty from XML
+          accountingSupplierParty = invoice?.['cac:AccountingSupplierParty'] || invoice?.['AccountingSupplierParty'];
+          
+          if (accountingSupplierParty) {
+            const party = accountingSupplierParty?.['cac:Party'] || accountingSupplierParty?.['Party'] || accountingSupplierParty;
+            const partyName = party?.['cac:PartyName'] || party?.['PartyName'] || {};
+            const partyIdentification = party?.['cac:PartyIdentification'] || party?.['PartyIdentification'] || {};
+            const postalAddress = party?.['cac:PostalAddress'] || party?.['PostalAddress'] || {};
+            const contact = party?.['cac:Contact'] || party?.['Contact'] || {};
+            const partyTaxScheme = party?.['cac:PartyTaxScheme'] || party?.['PartyTaxScheme'] || {};
+            
+            // Debug: Log the structure
+            console.log('🔍 AccountingSupplierParty structure:', JSON.stringify(accountingSupplierParty, null, 2).substring(0, 2000));
+            console.log('🔍 Party structure:', JSON.stringify(party, null, 2).substring(0, 2000));
+            console.log('🔍 PartyTaxScheme:', JSON.stringify(partyTaxScheme, null, 2).substring(0, 1000));
+            console.log('🔍 PartyIdentification:', JSON.stringify(partyIdentification, null, 2).substring(0, 1000));
+            console.log('🔍 Nilvera API SenderTaxNumber:', nilveraData.SenderTaxNumber);
+            console.log('🔍 Nilvera API all keys:', Object.keys(nilveraData));
+            
+            // Extract VKN from PartyTaxScheme - this is where VKN is usually stored in UBL-TR
+            let taxNumber = nilveraData.SenderTaxNumber || nilveraData.SupplierTaxNumber || nilveraData.TaxNumber || '';
+            
+            // Try to get VKN from PartyTaxScheme/CompanyID
+            if (partyTaxScheme && Object.keys(partyTaxScheme).length > 0) {
+              // PartyTaxScheme can be an array or single object
+              const taxSchemeArray = Array.isArray(partyTaxScheme) ? partyTaxScheme : [partyTaxScheme];
+              
+              for (const taxSchemeItem of taxSchemeArray) {
+                const taxScheme = taxSchemeItem?.['cac:TaxScheme'] || taxSchemeItem?.['TaxScheme'] || {};
+                const companyId = taxSchemeItem?.['cac:CompanyID'] || taxSchemeItem?.['CompanyID'] || taxSchemeItem?.['cbc:CompanyID'] || {};
+                
+                console.log('🔍 TaxScheme item:', JSON.stringify(taxSchemeItem, null, 2).substring(0, 500));
+                console.log('🔍 CompanyID:', JSON.stringify(companyId, null, 2).substring(0, 500));
+                
+                // VKN can be in CompanyID field (can be object with #text or direct value)
+                let companyIdValue = '';
+                if (typeof companyId === 'string') {
+                  companyIdValue = companyId;
+                } else if (companyId?.['#text']) {
+                  companyIdValue = companyId['#text'];
+                } else if (companyId?.['cbc:CompanyID']?.['#text']) {
+                  companyIdValue = companyId['cbc:CompanyID']['#text'];
+                } else if (companyId) {
+                  companyIdValue = String(companyId);
+                }
+                
+                if (companyIdValue && typeof companyIdValue === 'string' && companyIdValue.length >= 10 && /^\d+$/.test(companyIdValue)) {
+                  taxNumber = companyIdValue;
+                  console.log('✅ VKN found in CompanyID:', taxNumber);
+                  break;
+                }
+                
+                // Or in TaxScheme ID
+                let taxSchemeId = '';
+                if (typeof taxScheme === 'string') {
+                  taxSchemeId = taxScheme;
+                } else {
+                  taxSchemeId = taxScheme?.['cbc:ID']?.['#text'] || taxScheme?.['cbc:ID'] || taxScheme?.['ID']?.['#text'] || taxScheme?.['ID'] || '';
+                }
+                
+                if (taxSchemeId && typeof taxSchemeId === 'string' && taxSchemeId.length >= 10 && /^\d+$/.test(taxSchemeId)) {
+                  taxNumber = taxSchemeId;
+                  console.log('✅ VKN found in TaxScheme ID:', taxNumber);
+                  break;
+                }
+              }
+            }
+            
+            // Fallback to PartyIdentification if VKN not found
+            if (!taxNumber || taxNumber.length < 10) {
+              const partyIdArray = Array.isArray(partyIdentification) ? partyIdentification : (partyIdentification ? [partyIdentification] : []);
+              
+              console.log('🔍 Checking PartyIdentification array, length:', partyIdArray.length);
+              
+              for (const id of partyIdArray) {
+                if (!id) continue;
+                
+                console.log('🔍 PartyIdentification item:', JSON.stringify(id, null, 2).substring(0, 500));
+                
+                let idValue = '';
+                if (typeof id === 'string') {
+                  idValue = id;
+                } else {
+                  idValue = id?.['cbc:ID']?.['#text'] || id?.['cbc:ID'] || id?.['ID']?.['#text'] || id?.['ID'] || '';
+                }
+                
+                // Check schemeID attribute (can be @schemeID or schemeID)
+                const schemeId = id?.['@schemeID'] || id?.['schemeID'] || id?.['@schemeID'] || '';
+                
+                console.log('🔍 ID value:', idValue, 'schemeID:', schemeId);
+                
+                // VKN usually has schemeID="VKN" or is a 10-11 digit number
+                if (schemeId === 'VKN' || schemeId === 'vkn' || (typeof idValue === 'string' && idValue.length >= 10 && /^\d+$/.test(idValue))) {
+                  taxNumber = String(idValue);
+                  console.log('✅ VKN found in PartyIdentification:', taxNumber);
+                  break;
+                }
+              }
+            }
+            
+            // Final fallback: Check if taxNumber is still empty, try to find any 10+ digit number in the party structure
+            if (!taxNumber || taxNumber.length < 10) {
+              const partyString = JSON.stringify(party);
+              const vknMatch = partyString.match(/\b\d{10,11}\b/);
+              if (vknMatch) {
+                taxNumber = vknMatch[0];
+                console.log('✅ VKN found via regex in party structure:', taxNumber);
+              }
+            }
+            
+            supplierInfo = {
+              companyName: partyName?.['cbc:Name']?.['#text'] || partyName?.['cbc:Name'] || partyName?.['Name'] || nilveraData.SenderName,
+              taxNumber: taxNumber || nilveraData.SenderTaxNumber || '',
+              tradeRegistryNumber: null, // Will be extracted separately if needed
+              email: contact?.['cbc:ElectronicMail']?.['#text'] || contact?.['cbc:ElectronicMail'] || contact?.['ElectronicMail'] || null,
+              phone: contact?.['cbc:Telephone']?.['#text'] || contact?.['cbc:Telephone'] || contact?.['Telephone'] || null,
+              fax: contact?.['cbc:Telefax']?.['#text'] || contact?.['cbc:Telefax'] || contact?.['Telefax'] || null,
+              website: contact?.['cbc:WebsiteURI']?.['#text'] || contact?.['cbc:WebsiteURI'] || contact?.['WebsiteURI'] || null,
+              address: {
+                street: postalAddress?.['cbc:StreetName']?.['#text'] || postalAddress?.['cbc:StreetName'] || postalAddress?.['StreetName'] || null,
+                district: postalAddress?.['cbc:CitySubdivisionName']?.['#text'] || postalAddress?.['cbc:CitySubdivisionName'] || postalAddress?.['CitySubdivisionName'] || null,
+                city: postalAddress?.['cbc:CityName']?.['#text'] || postalAddress?.['cbc:CityName'] || postalAddress?.['CityName'] || null,
+                postalCode: postalAddress?.['cbc:PostalZone']?.['#text'] || postalAddress?.['cbc:PostalZone'] || postalAddress?.['PostalZone'] || null,
+                country: postalAddress?.['cac:Country']?.['cbc:Name']?.['#text'] || postalAddress?.['cac:Country']?.['cbc:Name'] || postalAddress?.['Country']?.['Name'] || 'Türkiye'
+              },
+              taxScheme: {
+                taxSchemeId: partyTaxScheme?.['cac:TaxScheme']?.['cbc:ID']?.['#text'] || partyTaxScheme?.['cac:TaxScheme']?.['cbc:ID'] || null,
+                taxSchemeName: partyTaxScheme?.['cac:TaxScheme']?.['cbc:Name']?.['#text'] || partyTaxScheme?.['cac:TaxScheme']?.['cbc:Name'] || null
+              }
+            };
+            
+            console.log('✅ Supplier info extracted from XML:', supplierInfo);
+            console.log('🔍 VKN extraction details:', {
+              fromPartyTaxScheme: partyTaxScheme ? 'found' : 'not found',
+              fromPartyIdentification: partyIdentification ? 'found' : 'not found',
+              finalTaxNumber: taxNumber
+            });
+          }
+        } catch (xmlParseError: any) {
+          console.log('⚠️ Error parsing supplier info from XML:', xmlParseError.message);
+        }
+      }
+
+      // Fallback to API response if XML parsing failed
+      if (!supplierInfo.companyName) {
+        supplierInfo = {
+          companyName: nilveraData.SenderName || nilveraData.SupplierName || nilveraData.CompanyName || null,
+          taxNumber: nilveraData.SenderTaxNumber || nilveraData.SupplierTaxNumber || nilveraData.TaxNumber || nilveraData.SenderIdentifier || null,
+          email: nilveraData.SupplierEmail || nilveraData.Email || null,
+          phone: nilveraData.SupplierPhone || nilveraData.Phone || null,
+          address: {
+            city: nilveraData.SupplierCity || nilveraData.City || null,
+            country: 'Türkiye'
+          }
+        };
+        console.log('📋 Supplier info from API fallback:', supplierInfo);
+      }
+      
+      // Ensure we have at least basic supplier info from API response
+      if (!supplierInfo.companyName && nilveraData.SenderName) {
+        supplierInfo.companyName = nilveraData.SenderName;
+      }
+      if (!supplierInfo.taxNumber && nilveraData.SenderTaxNumber) {
+        supplierInfo.taxNumber = nilveraData.SenderTaxNumber;
+      }
+
+      // Extract financial amounts - check multiple possible field names
+      // Nilvera API can return: InvoiceAmount (total with tax), TaxAmount (tax only), TaxExclusiveAmount, TaxTotalAmount, PayableAmount
+      const invoiceAmount = parseFloat(nilveraData.InvoiceAmount || nilveraData.invoiceAmount || '0');
+      const taxAmount = parseFloat(nilveraData.TaxAmount || nilveraData.taxAmount || '0');
+      const taxExclusiveAmount = parseFloat(nilveraData.TaxExclusiveAmount || nilveraData.taxExclusiveAmount || '0');
+      const taxTotalAmount = parseFloat(nilveraData.TaxTotalAmount || nilveraData.taxTotalAmount || '0');
+      const payableAmount = parseFloat(nilveraData.PayableAmount || nilveraData.payableAmount || nilveraData.TotalAmount || nilveraData.totalAmount || '0');
+      
+      // Calculate subtotal if not provided
+      // If InvoiceAmount and TaxAmount are provided, calculate: InvoiceAmount - TaxAmount
+      let apiSubtotal = taxExclusiveAmount;
+      if (apiSubtotal === 0 && invoiceAmount > 0 && taxAmount > 0) {
+        apiSubtotal = invoiceAmount - taxAmount;
+      }
+      
+      // Use TaxAmount if TaxTotalAmount is not provided
+      const apiTaxTotal = taxTotalAmount > 0 ? taxTotalAmount : taxAmount;
+      
+      // Use InvoiceAmount if PayableAmount is not provided
+      const apiTotal = payableAmount > 0 ? payableAmount : invoiceAmount;
+      
+      // Calculate totals from line items if available
+      let calculatedSubtotal = 0;
+      let calculatedTaxTotal = 0;
+      let calculatedTotal = 0;
+      
+      if (invoiceItems.length > 0) {
+        calculatedSubtotal = invoiceItems.reduce((sum, item) => {
+          const lineTotal = parseFloat(item.totalAmount || 0);
+          const lineTax = parseFloat(item.vatAmount || 0);
+          return sum + (lineTotal - lineTax);
+        }, 0);
+        
+        calculatedTaxTotal = invoiceItems.reduce((sum, item) => {
+          return sum + parseFloat(item.vatAmount || 0);
+        }, 0);
+        
+        calculatedTotal = invoiceItems.reduce((sum, item) => {
+          return sum + parseFloat(item.totalAmount || 0);
+        }, 0);
+      }
+
+      // Use calculated values if API values are 0 or missing, otherwise use API values
+      const finalSubtotal = apiSubtotal > 0 ? apiSubtotal : calculatedSubtotal;
+      const finalTaxTotal = apiTaxTotal > 0 ? apiTaxTotal : calculatedTaxTotal;
+      const finalTotal = apiTotal > 0 ? apiTotal : calculatedTotal;
+
+      console.log('💰 Financial amounts:', {
+        invoiceAmount,
+        taxAmount,
+        taxExclusiveAmount,
+        taxTotalAmount,
+        payableAmount,
+        apiSubtotal,
+        apiTaxTotal,
+        apiTotal,
+        calculatedSubtotal,
+        calculatedTaxTotal,
+        calculatedTotal,
+        finalSubtotal,
+        finalTaxTotal,
+        finalTotal
+      });
+
+      // Build invoice details object with correct field names
+      const invoiceDetailsResponse = {
+        id: invoiceId,
+        InvoiceNumber: nilveraData.InvoiceNumber || nilveraData.invoiceNumber || nilveraData.ID,
+        IssueDate: nilveraData.IssueDate || nilveraData.issueDate || nilveraData.InvoiceDate,
+        CurrencyCode: nilveraData.CurrencyCode || nilveraData.currency || 'TRY',
+        // Financial amounts - use calculated/parsed values
+        TaxExclusiveAmount: finalSubtotal,
+        TaxTotalAmount: finalTaxTotal,
+        PayableAmount: finalTotal,
+        // Supplier information - use parsed supplierInfo
+        SenderName: supplierInfo.companyName || nilveraData.SenderName,
+        SenderTaxNumber: supplierInfo.taxNumber || nilveraData.SenderTaxNumber,
+        // Additional fields from original response (spread after to allow overrides)
+        ...nilveraData,
+        // Override with parsed/calculated values (these come after spread to ensure they take precedence)
+        TaxExclusiveAmount: finalSubtotal,
+        TaxTotalAmount: finalTaxTotal,
+        PayableAmount: finalTotal,
+        SenderName: supplierInfo.companyName || nilveraData.SenderName,
+        SenderTaxNumber: supplierInfo.taxNumber || nilveraData.SenderTaxNumber,
+        // Supplier info object
+        supplierInfo: supplierInfo,
+        AccountingSupplierParty: accountingSupplierParty,
+        items: invoiceItems,
+        xmlContent: xmlContent
+      };
+
       return new Response(JSON.stringify({
         success: true,
-        invoiceDetails: {
-          id: invoiceId,
-          ...nilveraData,
-          items: invoiceItems,
-          xmlContent: xmlContent
-        }
+        invoiceDetails: invoiceDetailsResponse
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

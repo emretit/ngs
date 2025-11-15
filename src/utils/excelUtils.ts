@@ -186,43 +186,43 @@ export const exportCustomerTemplateToExcel = (fileName = 'musteri_sablonu.xlsx')
 // Export product template to Excel
 export const exportProductTemplateToExcel = (fileName = 'urun_sablonu.xlsx') => {
   try {
-    // Create a sample data array with the required columns
+    // Create a sample data array with Turkish column names
     const templateData = [
       {
-        name: 'Örnek Ürün 1',
-        description: 'Ürün açıklaması (isteğe bağlı)',
-        sku: 'PRD-001',
-        barcode: '1234567890123',
-        price: 100.50,
-        discount_price: 85.00,
-        stock_quantity: 50,
-        min_stock_level: 10,
-        stock_threshold: 15,
-        tax_rate: 18,
-        unit: 'piece',
-        currency: 'TRY',
-        category_type: 'product',
-        product_type: 'physical',
-        status: 'active',
-        is_active: true
+        'Ad': 'Örnek Ürün 1',
+        'Açıklama': 'Ürün açıklaması (isteğe bağlı)',
+        'Stok Kodu': 'PRD-001',
+        'Barkod': '1234567890123',
+        'Fiyat': 100.50,
+        'İndirim Oranı': 15,
+        'Stok Miktarı': 50,
+        'Minimum Stok': 10,
+        'Stok Eşiği': 15,
+        'Vergi Oranı': 18,
+        'Birim': 'piece',
+        'Para Birimi': 'TRY',
+        'Kategori Tipi': 'product',
+        'Ürün Tipi': 'physical',
+        'Durum': 'active',
+        'Aktif': true
       },
       {
-        name: 'Örnek Hizmet 1',
-        description: 'Hizmet açıklaması',
-        sku: 'SRV-001',
-        barcode: '',
-        price: 250.00,
-        discount_price: '',
-        stock_quantity: 0,
-        min_stock_level: 0,
-        stock_threshold: 0,
-        tax_rate: 18,
-        unit: 'hour',
-        currency: 'TRY',
-        category_type: 'service',
-        product_type: 'service',
-        status: 'active',
-        is_active: true
+        'Ad': 'Örnek Hizmet 1',
+        'Açıklama': 'Hizmet açıklaması',
+        'Stok Kodu': 'SRV-001',
+        'Barkod': '',
+        'Fiyat': 250.00,
+        'İndirim Oranı': '',
+        'Stok Miktarı': 0,
+        'Minimum Stok': 0,
+        'Stok Eşiği': 0,
+        'Vergi Oranı': 18,
+        'Birim': 'hour',
+        'Para Birimi': 'TRY',
+        'Kategori Tipi': 'service',
+        'Ürün Tipi': 'service',
+        'Durum': 'active',
+        'Aktif': true
       }
     ];
     
@@ -235,22 +235,22 @@ export const exportProductTemplateToExcel = (fileName = 'urun_sablonu.xlsx') => 
     
     // Add instructions sheet
     const instructionsData = [
-      { Alan: 'name', Açıklama: 'Ürün adı (zorunlu)', 'Örnek Değer': 'Laptop Dell Inspiron' },
-      { Alan: 'description', Açıklama: 'Ürün açıklaması (isteğe bağlı)', 'Örnek Değer': 'Yüksek performanslı dizüstü bilgisayar' },
-      { Alan: 'sku', Açıklama: 'Stok kodu (isteğe bağlı)', 'Örnek Değer': 'LAP-DELL-001' },
-      { Alan: 'barcode', Açıklama: 'Barkod (isteğe bağlı)', 'Örnek Değer': '1234567890123' },
-      { Alan: 'price', Açıklama: 'Satış fiyatı (zorunlu)', 'Örnek Değer': '15000.50' },
-      { Alan: 'discount_price', Açıklama: 'İndirimli fiyat (isteğe bağlı)', 'Örnek Değer': '13500.00' },
-      { Alan: 'stock_quantity', Açıklama: 'Stok miktarı (zorunlu)', 'Örnek Değer': '25' },
-      { Alan: 'min_stock_level', Açıklama: 'Minimum stok seviyesi (zorunlu)', 'Örnek Değer': '5' },
-      { Alan: 'stock_threshold', Açıklama: 'Stok eşiği (isteğe bağlı)', 'Örnek Değer': '10' },
-      { Alan: 'tax_rate', Açıklama: 'Vergi oranı % (zorunlu)', 'Örnek Değer': '18' },
-      { Alan: 'unit', Açıklama: 'Birim (zorunlu)', 'Örnek Değer': 'piece, kg, m, hour' },
-      { Alan: 'currency', Açıklama: 'Para birimi (zorunlu)', 'Örnek Değer': 'TRY, USD, EUR' },
-      { Alan: 'category_type', Açıklama: 'Kategori tipi (zorunlu)', 'Örnek Değer': 'product, service, subscription' },
-      { Alan: 'product_type', Açıklama: 'Ürün tipi (zorunlu)', 'Örnek Değer': 'physical, service' },
-      { Alan: 'status', Açıklama: 'Durum (zorunlu)', 'Örnek Değer': 'active, inactive' },
-      { Alan: 'is_active', Açıklama: 'Aktif mi? (zorunlu)', 'Örnek Değer': 'true, false' }
+      { 'Kolon İsmi (TR/EN)': 'Ad / name / isim', Açıklama: 'Ürün adı (zorunlu)', 'Örnek Değer': 'Laptop Dell Inspiron' },
+      { 'Kolon İsmi (TR/EN)': 'Açıklama / description', Açıklama: 'Ürün açıklaması (isteğe bağlı)', 'Örnek Değer': 'Yüksek performanslı dizüstü bilgisayar' },
+      { 'Kolon İsmi (TR/EN)': 'Stok Kodu / sku', Açıklama: 'Stok kodu (isteğe bağlı)', 'Örnek Değer': 'LAP-DELL-001' },
+      { 'Kolon İsmi (TR/EN)': 'Barkod / barcode', Açıklama: 'Barkod (isteğe bağlı)', 'Örnek Değer': '1234567890123' },
+      { 'Kolon İsmi (TR/EN)': 'Fiyat / price / satış fiyatı', Açıklama: 'Satış fiyatı (zorunlu)', 'Örnek Değer': '15000.50' },
+      { 'Kolon İsmi (TR/EN)': 'İndirim Oranı / discount_rate / indirim', Açıklama: 'İndirim oranı % (isteğe bağlı)', 'Örnek Değer': '15' },
+      { 'Kolon İsmi (TR/EN)': 'Stok Miktarı / stock_quantity / stok', Açıklama: 'Stok miktarı (isteğe bağlı)', 'Örnek Değer': '25' },
+      { 'Kolon İsmi (TR/EN)': 'Minimum Stok / min_stock_level / min stok', Açıklama: 'Minimum stok seviyesi (isteğe bağlı)', 'Örnek Değer': '5' },
+      { 'Kolon İsmi (TR/EN)': 'Stok Eşiği / stock_threshold', Açıklama: 'Stok eşiği (isteğe bağlı)', 'Örnek Değer': '10' },
+      { 'Kolon İsmi (TR/EN)': 'Vergi Oranı / tax_rate / kdv / kdv oranı', Açıklama: 'Vergi oranı % (zorunlu)', 'Örnek Değer': '20' },
+      { 'Kolon İsmi (TR/EN)': 'Birim / unit', Açıklama: 'Birim (zorunlu)', 'Örnek Değer': 'piece, kg, m, hour' },
+      { 'Kolon İsmi (TR/EN)': 'Para Birimi / currency', Açıklama: 'Para birimi (zorunlu)', 'Örnek Değer': 'TRY, USD, EUR, GBP' },
+      { 'Kolon İsmi (TR/EN)': 'Kategori Tipi / category_type / kategori', Açıklama: 'Kategori tipi (isteğe bağlı)', 'Örnek Değer': 'product, service' },
+      { 'Kolon İsmi (TR/EN)': 'Ürün Tipi / product_type / tip', Açıklama: 'Ürün tipi (zorunlu)', 'Örnek Değer': 'physical, service' },
+      { 'Kolon İsmi (TR/EN)': 'Durum / status', Açıklama: 'Durum (isteğe bağlı)', 'Örnek Değer': 'active, inactive' },
+      { 'Kolon İsmi (TR/EN)': 'Aktif / is_active / aktif mi', Açıklama: 'Aktif mi? (isteğe bağlı)', 'Örnek Değer': 'true, false' }
     ];
     
     const instructionsSheet = XLSX.utils.json_to_sheet(instructionsData);
@@ -270,8 +270,8 @@ export const exportProductTemplateToExcel = (fileName = 'urun_sablonu.xlsx') => 
   }
 };
 
-// Import products from Excel
-export const importProductsFromExcel = async (file: File): Promise<any[]> => {
+// Read Excel column headers only
+export const readExcelColumns = async (file: File): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -284,9 +284,114 @@ export const importProductsFromExcel = async (file: File): Promise<any[]> => {
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         
-        // Convert to JSON
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        resolve(jsonData);
+        // Convert to JSON with header row only
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        if (jsonData.length < 1) {
+          resolve([]);
+          return;
+        }
+        
+        const headers = jsonData[0] as string[];
+        resolve(headers.filter(h => h !== undefined && h !== null && h.toString().trim() !== ''));
+      } catch (error) {
+        console.error('Error reading Excel columns:', error);
+        reject(error);
+      }
+    };
+    
+    reader.onerror = (error) => {
+      reject(error);
+    };
+    
+    reader.readAsArrayBuffer(file);
+  });
+};
+
+// Import products from Excel
+export const importProductsFromExcel = async (file: File, columnMapping?: { [excelColumn: string]: string }): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        // Get first sheet
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Convert to JSON with header row
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        if (jsonData.length < 2) {
+          resolve([]);
+          return;
+        }
+        
+        const headers = jsonData[0] as string[];
+        const rows = jsonData.slice(1) as any[][];
+        
+        // Use provided column mapping or fallback to default mapping
+        const defaultHeaderMap: { [key: string]: string } = {
+          'ad': 'name',
+          'isim': 'name',
+          'ürün adı': 'name',
+          'açıklama': 'description',
+          'stok kodu': 'sku',
+          'sku': 'sku',
+          'barkod': 'barcode',
+          'fiyat': 'price',
+          'satış fiyatı': 'price',
+          'indirim oranı': 'discount_rate',
+          'indirim': 'discount_rate',
+          'stok miktarı': 'stock_quantity',
+          'stok': 'stock_quantity',
+          'minimum stok': 'min_stock_level',
+          'min stok': 'min_stock_level',
+          'stok eşiği': 'stock_threshold',
+          'vergi oranı': 'tax_rate',
+          'kdv': 'tax_rate',
+          'kdv oranı': 'tax_rate',
+          'birim': 'unit',
+          'para birimi': 'currency',
+          'kategori tipi': 'category_type',
+          'kategori': 'category_type',
+          'ürün tipi': 'product_type',
+          'tip': 'product_type',
+          'durum': 'status',
+          'aktif': 'is_active',
+          'aktif mi': 'is_active'
+        };
+        
+        // Normalize headers using provided mapping or default
+        const normalizedHeaders = headers.map(header => {
+          const headerStr = header?.toString().trim() || '';
+          
+          // Önce custom mapping'i kontrol et
+          if (columnMapping && columnMapping[headerStr]) {
+            return columnMapping[headerStr];
+          }
+          
+          // Sonra default mapping'i kontrol et
+          const normalized = headerStr.toLowerCase();
+          return defaultHeaderMap[normalized] || normalized;
+        });
+        
+        // Map rows to objects with normalized headers
+        const mappedData = rows.map(row => {
+          const obj: any = {};
+          normalizedHeaders.forEach((header, index) => {
+            // Skip 'none' mappings and undefined/null values
+            if (header && header !== 'none' && row[index] !== undefined && row[index] !== null) {
+              obj[header] = row[index];
+            }
+          });
+          return obj;
+        });
+        
+        resolve(mappedData);
       } catch (error) {
         console.error('Error importing Excel file:', error);
         reject(error);

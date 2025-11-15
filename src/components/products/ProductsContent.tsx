@@ -1,5 +1,4 @@
-import React, { useEffect, useRef } from "react";
-import { Loader2 } from "lucide-react";
+import React from "react";
 import { Product } from "@/types/product";
 import ProductListTable from "./ProductListTable";
 import ProductGrid from "./ProductGrid";
@@ -18,6 +17,7 @@ interface ProductsContentProps {
   onSortFieldChange: (field: "name" | "price" | "stock_quantity" | "category") => void;
   onProductClick: (product: Product) => void;
   onProductSelect: (product: Product) => void;
+  onSelectAll?: (checked: boolean) => void;
   selectedProducts?: Product[];
   searchQuery?: string;
   categoryFilter?: string;
@@ -38,33 +38,12 @@ const ProductsContent = ({
   onSortFieldChange,
   onProductClick,
   onProductSelect,
+  onSelectAll,
   selectedProducts = [],
   searchQuery,
   categoryFilter,
   stockFilter
 }: ProductsContentProps) => {
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    if (!loadMore || !hasNextPage || isLoadingMore || isLoading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
-
   if (error) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -100,24 +79,13 @@ const ProductsContent = ({
             onSortFieldChange={onSortFieldChange}
             onProductClick={onProductClick}
             onProductSelect={onProductSelect}
+            onSelectAll={onSelectAll}
             selectedProducts={selectedProducts}
           />
         )}
         
-        {/* Infinite scroll trigger */}
-        {!isLoading && hasNextPage && (
-          <div ref={loadMoreRef} className="flex justify-center py-4">
-            {isLoadingMore && (
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-gray-600">Daha fazla ürün yükleniyor...</span>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Tüm ürünler yüklendi mesajı */}
-        {!hasNextPage && products.length > 0 && (
+        {/* Tüm ürünler yüklendi mesajı - sadece table view için değil, grid view için de */}
+        {!hasNextPage && products.length > 0 && !isLoading && (
           <div className="text-center py-4 text-sm text-gray-500">
             Tüm ürünler yüklendi
           </div>

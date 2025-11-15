@@ -2,6 +2,28 @@
 import { ExchangeRates, CurrencyOption } from "../types/currencyTypes";
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Normalizes currency code: TRY and TL are treated as the same (returns TL for display)
+ * @param currency The currency code to normalize
+ * @returns Normalized currency code (TL for TRY/TL, otherwise unchanged)
+ */
+export const normalizeCurrency = (currency: string | null | undefined): string => {
+  if (!currency) return 'TL';
+  return currency === 'TRY' ? 'TL' : currency;
+};
+
+/**
+ * Compares two currencies, treating TRY and TL as the same
+ * @param currency1 First currency code
+ * @param currency2 Second currency code
+ * @returns true if currencies are the same (including TRY === TL)
+ */
+export const areCurrenciesEqual = (currency1: string | null | undefined, currency2: string | null | undefined): boolean => {
+  const normalized1 = normalizeCurrency(currency1);
+  const normalized2 = normalizeCurrency(currency2);
+  return normalized1 === normalized2;
+};
+
 // Format a currency value for display
 export const formatCurrencyValue = (amount: number, currency: string = "TL"): string => {
   // Ensure currency is not empty to avoid Intl.NumberFormat errors
@@ -40,17 +62,21 @@ export const convertCurrency = (
   toCurrency: string,
   rates: ExchangeRates
 ): number => {
+  // Normalize TRY to TL for comparison
+  const normalizedFrom = normalizeCurrency(fromCurrency);
+  const normalizedTo = normalizeCurrency(toCurrency);
+  
   // If currencies are the same, no conversion needed
-  if (fromCurrency === toCurrency) return amount;
+  if (normalizedFrom === normalizedTo) return amount;
   
   // Handle TL as the base currency 
-  if (fromCurrency === "TL") {
-    return amount / (rates[toCurrency] || 1);
+  if (normalizedFrom === "TL") {
+    return amount / (rates[normalizedTo] || 1);
   }
   
   // Convert from source currency to TL first, then to target currency
-  const amountInTL = amount * (rates[fromCurrency] || 1);
-  return toCurrency === "TL" ? amountInTL : amountInTL / (rates[toCurrency] || 1);
+  const amountInTL = amount * (rates[normalizedFrom] || 1);
+  return normalizedTo === "TL" ? amountInTL : amountInTL / (rates[normalizedTo] || 1);
 };
 
 // Format a price with a specified number of decimal places

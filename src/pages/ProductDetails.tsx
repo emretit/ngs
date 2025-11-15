@@ -19,12 +19,21 @@ const ProductDetails = () => {
       if (!id) return null;
       
       // Önce kullanıcının company_id'sini al
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user?.id) {
+        throw new Error("Kullanıcı bilgisi alınamadı");
+      }
+
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("company_id")
-        .eq("id", user?.id)
-        .single();
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.warn("Profil bilgisi alınamadı:", profileError);
+      }
 
       const companyId = profile?.company_id;
 

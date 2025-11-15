@@ -20,14 +20,16 @@ const PriceInput: React.FC<PriceInputProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="font-medium">{label}</Label>
+      <Label htmlFor={id} className="text-sm font-medium">{label}</Label>
       <Input
         id={id}
         type="number"
+        step="0.01"
+        min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full"
+        className="w-full h-9"
       />
     </div>
   );

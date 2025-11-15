@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
+import React, { useState } from "react";
 import { InventoryTransaction } from "@/types/inventory";
 import InventoryTransactionsTable from "./InventoryTransactionsTable";
 import InventoryTransactionDetailPanel from "./InventoryTransactionDetailPanel";
@@ -55,27 +54,6 @@ const InventoryTransactionsContent = ({
 }: InventoryTransactionsContentProps) => {
   const [selectedTransaction, setSelectedTransaction] = useState<InventoryTransaction | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    if (!loadMore || !hasNextPage || isLoadingMore || isLoading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMore, hasNextPage, isLoadingMore, isLoading]);
 
   const handleSelectTransaction = (transaction: InventoryTransaction) => {
     setSelectedTransaction(transaction);
@@ -121,23 +99,11 @@ const InventoryTransactionsContent = ({
           onPrint={onPrint}
         />
         
-        {/* Infinite scroll trigger */}
-        {!isLoading && hasNextPage && (
-          <div ref={loadMoreRef} className="flex justify-center py-4">
-            {isLoadingMore && (
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-gray-600">Daha fazla işlem yükleniyor...</span>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* Tüm işlemler yüklendi mesajı */}
-        {!hasNextPage && transactions.length > 0 && (
+        {/* Tüm işlemler yüklendi mesajı - InventoryTransactionsTable InfiniteScroll kullanıyor, bu yüzden burada sadece mesaj gösteriyoruz */}
+        {!hasNextPage && transactions.length > 0 && !isLoading && (
           <div className="text-center py-4 text-sm text-gray-500">
             Tüm işlemler yüklendi
-        </div>
+          </div>
         )}
         
         {/* Detail Panel */}

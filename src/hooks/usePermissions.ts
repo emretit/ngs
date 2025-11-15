@@ -35,7 +35,8 @@ export const usePermissions = () => {
       }
 
       if (!data) {
-        console.warn('No role assigned to user:', user.id);
+        // Kullanıcıya rol atanmamış - bu normal olabilir, varsayılan olarak tüm modüllere erişim veriliyor
+        // console.warn('No role assigned to user:', user.id);
         return null;
       }
 

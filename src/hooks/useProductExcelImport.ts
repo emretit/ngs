@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { importProductsFromExcel } from '@/utils/excelUtils';
+import { importProductsFromExcel, readExcelColumns } from '@/utils/excelUtils';
+import { mapExcelColumnsWithAI, ColumnMapping } from '@/services/productColumnMappingService';
 
 interface ImportStats {
   success: number;
@@ -22,11 +23,72 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
     invalidRows: 0,
     total: 0
   });
+  
+  // AI Mapping states
+  const [isMappingColumns, setIsMappingColumns] = useState(false);
+  const [columnMappings, setColumnMappings] = useState<ColumnMapping[]>([]);
+  const [unmappedColumns, setUnmappedColumns] = useState<string[]>([]);
+  const [mappingConfidence, setMappingConfidence] = useState<number>(0);
+  const [showMappingDialog, setShowMappingDialog] = useState(false);
+  const [excelColumns, setExcelColumns] = useState<string[]>([]);
+  const [customMapping, setCustomMapping] = useState<{ [excelColumn: string]: string }>({});
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      
+      // Excel kolonlarını oku ve AI ile mapping yap
+      try {
+        setIsMappingColumns(true);
+        const columns = await readExcelColumns(file);
+        setExcelColumns(columns);
+        
+        if (columns.length === 0) {
+          toast.error('Excel dosyasında kolon bulunamadı');
+          setIsMappingColumns(false);
+          return;
+        }
+        
+        // AI ile mapping yap
+        const mappingResult = await mapExcelColumnsWithAI(columns);
+        
+        setColumnMappings(mappingResult.mappings);
+        setUnmappedColumns(mappingResult.unmappedColumns);
+        setMappingConfidence(mappingResult.confidence);
+        
+        // Mapping dialog'unu göster
+        setShowMappingDialog(true);
+        
+      } catch (error: any) {
+        console.error('Error mapping columns:', error);
+        toast.error('Kolon eşleştirme yapılırken bir hata oluştu');
+      } finally {
+        setIsMappingColumns(false);
+      }
     }
+  };
+  
+  const handleMappingConfirm = () => {
+    // Custom mapping'i oluştur
+    const mapping: { [excelColumn: string]: string } = {};
+    columnMappings.forEach(m => {
+      mapping[m.excelColumn] = m.systemField;
+    });
+    
+    // Kullanıcının manuel değişikliklerini de ekle
+    Object.assign(mapping, customMapping);
+    
+    setCustomMapping(mapping);
+    setShowMappingDialog(false);
+  };
+  
+  const handleMappingCancel = () => {
+    setSelectedFile(null);
+    setShowMappingDialog(false);
+    setColumnMappings([]);
+    setUnmappedColumns([]);
+    setCustomMapping({});
   };
 
   const validateProductData = (row: any) => {
@@ -37,27 +99,36 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
       errors.push('Ürün adı zorunludur');
     }
     
-    if (row.price === undefined || row.price === null || isNaN(Number(row.price)) || Number(row.price) < 0) {
-      errors.push('Geçerli bir satış fiyatı giriniz');
+    // price zorunlu ama default değeri var (0), sadece geçersizse hata ver
+    if (row.price !== undefined && row.price !== null && row.price !== '' && (isNaN(Number(row.price)) || Number(row.price) < 0)) {
+      errors.push('Geçerli bir satış fiyatı giriniz (pozitif sayı)');
+    }
+    // Eğer price yoksa veya 0 ise, default olarak 0 kullanılacak (kullanıcı sonra düzenleyebilir)
+    
+    // stock_quantity artık zorunlu değil, isteğe bağlı
+    // Sadece varsa ve geçerli değilse hata ver
+    if (row.stock_quantity !== undefined && row.stock_quantity !== null && row.stock_quantity !== '' && (isNaN(Number(row.stock_quantity)) || Number(row.stock_quantity) < 0)) {
+      errors.push('Geçerli bir stok miktarı giriniz (pozitif sayı veya boş)');
     }
     
-    if (row.stock_quantity === undefined || row.stock_quantity === null || isNaN(Number(row.stock_quantity)) || Number(row.stock_quantity) < 0) {
-      errors.push('Geçerli bir stok miktarı giriniz');
-    }
-    
-    if (row.tax_rate === undefined || row.tax_rate === null || isNaN(Number(row.tax_rate)) || Number(row.tax_rate) < 0 || Number(row.tax_rate) > 100) {
+    // tax_rate zorunlu ama default değeri var, sadece geçersizse hata ver
+    if (row.tax_rate !== undefined && row.tax_rate !== null && row.tax_rate !== '' && (isNaN(Number(row.tax_rate)) || Number(row.tax_rate) < 0 || Number(row.tax_rate) > 100)) {
       errors.push('Geçerli bir vergi oranı giriniz (0-100 arası)');
     }
+    // Eğer tax_rate yoksa default değer kullanılacak
     
-    if (!row.unit || typeof row.unit !== 'string' || row.unit.trim() === '') {
-      errors.push('Birim zorunludur');
+    // unit zorunlu ama default değeri var
+    if (row.unit && (typeof row.unit !== 'string' || row.unit.trim() === '')) {
+      errors.push('Geçerli bir birim giriniz (piece, kg, m, hour, vb.)');
     }
     
-    if (!row.currency || typeof row.currency !== 'string' || !['TL', 'USD', 'EUR', 'GBP'].includes(row.currency)) {
-      errors.push('Geçerli bir para birimi giriniz (TL, USD, EUR, GBP)');
+    // currency zorunlu ama default değeri var
+    if (row.currency && (typeof row.currency !== 'string' || !['TL', 'TRY', 'USD', 'EUR', 'GBP'].includes(row.currency.toUpperCase()))) {
+      errors.push('Geçerli bir para birimi giriniz (TRY, USD, EUR, GBP)');
     }
     
-    if (!row.product_type || typeof row.product_type !== 'string' || !['physical', 'service'].includes(row.product_type)) {
+    // product_type zorunlu ama default değeri var
+    if (row.product_type && (typeof row.product_type !== 'string' || !['physical', 'service'].includes(row.product_type))) {
       errors.push('Geçerli bir ürün tipi giriniz (physical, service)');
     }
     
@@ -95,8 +166,8 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
     });
     
     try {
-      // Import and parse Excel file
-      const importedData = await importProductsFromExcel(selectedFile);
+      // Import and parse Excel file with custom mapping
+      const importedData = await importProductsFromExcel(selectedFile, customMapping);
       
       if (!importedData || importedData.length === 0) {
         toast.error('Excel dosyası boş veya geçersiz');
@@ -114,7 +185,25 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
       let invalidCount = 0;
       
       for (let i = 0; i < importedData.length; i++) {
-        const row = importedData[i];
+        let row = importedData[i];
+        
+        // Önce eksik zorunlu alanları default değerlerle doldur
+        // Böylece Excel'de olmayan kolonlar için hata vermeyiz
+        if (row.price === undefined || row.price === null || row.price === '') {
+          row.price = 0; // Default fiyat (kullanıcı sonra düzenleyebilir)
+        }
+        if (row.tax_rate === undefined || row.tax_rate === null || row.tax_rate === '') {
+          row.tax_rate = 20; // Default vergi oranı
+        }
+        if (!row.unit || row.unit === '') {
+          row.unit = 'piece'; // Default birim
+        }
+        if (!row.currency || row.currency === '') {
+          row.currency = 'TRY'; // Default para birimi
+        }
+        if (!row.product_type || row.product_type === '') {
+          row.product_type = 'physical'; // Default ürün tipi
+        }
         
         // Validate data
         const validationErrors = validateProductData(row);
@@ -173,26 +262,26 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
             .single();
 
           const companyId = profile?.company_id;
-          const stockQuantity = Number(row.stock_quantity);
+          const stockQuantity = row.stock_quantity !== undefined && row.stock_quantity !== null && row.stock_quantity !== '' ? Number(row.stock_quantity) : 0;
 
           // Prepare product data for insertion
           const productData = {
-            name: row.name.trim(),
+            name: row.name ? row.name.toString().trim() : '',
             description: row.description ? row.description.toString().trim() : "",
             sku: row.sku ? row.sku.toString().trim() : "",
             barcode: row.barcode ? row.barcode.toString().trim() : "",
             price: Number(row.price),
-            discount_price: row.discount_price && row.discount_price !== '' ? Number(row.discount_price) : null,
+            discount_rate: (row.discount_rate !== undefined && row.discount_rate !== null && row.discount_rate !== '') ? Number(row.discount_rate) : 0,
             stock_quantity: 0, // Products tablosunda stok artık kullanılmıyor
-            min_stock_level: row.min_stock_level ? Number(row.min_stock_level) : 0,
-            stock_threshold: row.stock_threshold && row.stock_threshold !== '' ? Number(row.stock_threshold) : 0,
-            tax_rate: Number(row.tax_rate),
-            unit: row.unit.toString().trim(),
-            currency: row.currency.toString().trim(),
+            min_stock_level: (row.min_stock_level !== undefined && row.min_stock_level !== null && row.min_stock_level !== '') ? Number(row.min_stock_level) : 0,
+            stock_threshold: (row.stock_threshold !== undefined && row.stock_threshold !== null && row.stock_threshold !== '') ? Number(row.stock_threshold) : 0,
+            tax_rate: (row.tax_rate !== undefined && row.tax_rate !== null && row.tax_rate !== '') ? Number(row.tax_rate) : 20,
+            unit: row.unit ? row.unit.toString().trim() : 'piece',
+            currency: row.currency ? row.currency.toString().trim().toUpperCase() : 'TRY',
             category_type: row.category_type ? row.category_type.toString().trim() : "product",
-            product_type: row.product_type.toString().trim(),
+            product_type: row.product_type ? row.product_type.toString().trim() : "physical",
             status: row.status ? row.status.toString().trim() : "active",
-            is_active: Boolean(row.is_active),
+            is_active: row.is_active !== undefined && row.is_active !== null && row.is_active !== '' ? Boolean(row.is_active) : true,
             image_url: null,
             category_id: null,
             supplier_id: null,
@@ -295,6 +384,17 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
     progress,
     stats,
     handleFileChange,
-    handleImport
+    handleImport,
+    // AI Mapping
+    isMappingColumns,
+    columnMappings,
+    unmappedColumns,
+    mappingConfidence,
+    showMappingDialog,
+    excelColumns,
+    customMapping,
+    setCustomMapping,
+    handleMappingConfirm,
+    handleMappingCancel
   };
 }; 

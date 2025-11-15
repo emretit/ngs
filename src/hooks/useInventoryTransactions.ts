@@ -63,7 +63,10 @@ export const useInventoryTransactions = () => {
         warehouse:warehouses!inventory_transactions_warehouse_id_fkey(id, name, code),
         from_warehouse:warehouses!inventory_transactions_from_warehouse_id_fkey(id, name, code),
         to_warehouse:warehouses!inventory_transactions_to_warehouse_id_fkey(id, name, code),
-        items:inventory_transaction_items(*)
+        items:inventory_transaction_items(
+          *,
+          product:products!inventory_transaction_items_product_id_fkey(id, name, sku)
+        )
       `)
       .eq("company_id", profile.company_id);
 
@@ -155,7 +158,10 @@ export const useInventoryTransactions = () => {
         warehouse:warehouses!inventory_transactions_warehouse_id_fkey(id, name, code),
         from_warehouse:warehouses!inventory_transactions_from_warehouse_id_fkey(id, name, code),
         to_warehouse:warehouses!inventory_transactions_to_warehouse_id_fkey(id, name, code),
-        items:inventory_transaction_items(*)
+        items:inventory_transaction_items(
+          *,
+          product:products!inventory_transaction_items_product_id_fkey(id, name, sku)
+        )
       `)
       .eq("id", id)
       .eq("company_id", profile.company_id)

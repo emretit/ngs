@@ -13,14 +13,17 @@ const NotesSection: React.FC<NotesSectionProps> = ({
   setNotes
 }) => {
   return (
-    <div className="space-y-2">
-      <Label htmlFor="notes">Ek Notlar</Label>
+    <div>
+      <Label htmlFor="notes" className="text-xs font-medium text-gray-600">
+        Açıklama
+      </Label>
       <Textarea
         id="notes"
-        placeholder="Ürün için ek açıklamalar..."
+        placeholder="Açıklama"
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        rows={3}
+        rows={2}
+        className="mt-0.5 resize-none text-xs"
       />
     </div>
   );

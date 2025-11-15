@@ -8,9 +8,10 @@ import ImportDialog from "./excel/ImportDialog";
 interface CustomersBulkActionsProps {
   selectedCustomers: Customer[];
   onClearSelection: () => void;
+  onBulkAction?: (action: string) => void;
 }
 
-const CustomersBulkActions = ({ selectedCustomers, onClearSelection }: CustomersBulkActionsProps) => {
+const CustomersBulkActions = ({ selectedCustomers, onClearSelection, onBulkAction }: CustomersBulkActionsProps) => {
   const hasSelection = selectedCustomers.length > 0;
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
@@ -73,6 +74,7 @@ const CustomersBulkActions = ({ selectedCustomers, onClearSelection }: Customers
             size="sm"
             className="text-red-700 border-red-300 hover:bg-red-100"
             disabled={!hasSelection}
+            onClick={() => onBulkAction?.('delete')}
           >
             <Trash2 className="h-4 w-4 mr-1" />
             Sil

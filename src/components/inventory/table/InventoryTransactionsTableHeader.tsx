@@ -55,6 +55,12 @@ const InventoryTransactionsTableHeader = ({
             {getSortIcon("transaction_number")}
           </div>
         </TableHead>
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+          <div className="flex items-center gap-1">
+            <span className="text-lg mr-2">📦</span>
+            <span>Ürün Adı</span>
+          </div>
+        </TableHead>
         <TableHead
           className={cn(
             "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
@@ -63,7 +69,7 @@ const InventoryTransactionsTableHeader = ({
           onClick={() => onSort("transaction_type")}
         >
           <div className="flex items-center gap-1">
-            <span className="text-lg mr-2">📦</span>
+            <span className="text-lg mr-2">🔄</span>
             <span>İşlem Tipi</span>
             {getSortIcon("transaction_type")}
           </div>

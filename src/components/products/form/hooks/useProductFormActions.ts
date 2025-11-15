@@ -18,8 +18,11 @@ export const useProductFormActions = (
     setIsSubmitting(true);
     try {
         // Prepare data by ensuring null values for empty strings in UUID fields
+        // TL -> TRY dönüşümü (veritabanı için)
+        const dbCurrency = values.currency === "TL" ? "TRY" : values.currency;
         const preparedData = {
           ...values,
+          currency: dbCurrency, // Veritabanına TRY olarak kaydet
           category_id: values.category_id && values.category_id.trim() !== "" && values.category_id !== "none" ? values.category_id : null,
           supplier_id: values.supplier_id && values.supplier_id.trim() !== "" && values.supplier_id !== "none" ? values.supplier_id : null,
           // Make sure stock_threshold is explicitly included

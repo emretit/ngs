@@ -22,13 +22,22 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       setLoading(true);
       setError(null);
       
-      // Use NGS İLETİŞİM company ID directly
-      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
+      // Kullanıcının şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Kullanıcı bulunamadı');
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profile?.company_id) throw new Error('Şirket bilgisi bulunamadı');
       
       let query = supabase
         .from('cashflow_subcategories')
         .select('*')
-        .or(`company_id.is.null,company_id.eq.${ngsCompanyId}`)
+        .eq('company_id', profile.company_id)
         .order('name');
 
       if (catId) {
@@ -54,12 +63,21 @@ export const useCashflowSubcategories = (categoryId?: string) => {
 
   const createSubcategory = async (categoryId: string, name: string) => {
     try {
-      // Use NGS İLETİŞİM company ID directly
-      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
+      // Kullanıcının şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Kullanıcı bulunamadı');
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profile?.company_id) throw new Error('Şirket bilgisi bulunamadı');
       
       const { data: newSubcategory, error } = await supabase
         .from('cashflow_subcategories')
-        .insert([{ category_id: categoryId, name, company_id: ngsCompanyId }])
+        .insert([{ category_id: categoryId, name, company_id: profile.company_id }])
         .select()
         .single();
 

@@ -186,12 +186,12 @@ export const navItems = [
       {
         path: "/cashflow/expenses",
         icon: Receipt,
-        label: "Masraflar",
+        label: "Gelirler ve Giderler",
       },
       {
-        path: "/cashflow/opex-entry",
+        path: "/cashflow/budget-management",
         icon: FileText,
-        label: "OPEX Girişi",
+        label: "Bütçe Yönetimi",
       },
       {
         path: "/cashflow/checks-notes",
@@ -202,11 +202,6 @@ export const navItems = [
         path: "/cashflow/loans",
         icon: Calculator,
         label: "Krediler",
-      },
-      {
-        path: "/cashflow/categories",
-        icon: ListTodo,
-        label: "Kategoriler",
       },
     ],
   },

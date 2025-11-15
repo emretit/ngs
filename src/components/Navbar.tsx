@@ -81,6 +81,17 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
     localStorage.removeItem("expandedMenus");
   }, []);
 
+  // Auto-expand cashflow menu if on categories page
+  useEffect(() => {
+    if (location.pathname === '/cashflow/categories') {
+      setExpandedMenus(prev => {
+        const newExpanded = new Set(prev);
+        newExpanded.add('/cashflow');
+        return newExpanded;
+      });
+    }
+  }, [location.pathname]);
+
   // Save expanded menus to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("expandedMenus", JSON.stringify(Array.from(expandedMenus)));
@@ -120,7 +131,9 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
       const isOnParentPage = location.pathname === item.path;
       const isOnRelatedChildPage = item.items?.some((subItem: any) => 
         location.pathname === subItem.path || 
-        (subItem.path !== '/' && location.pathname.startsWith(subItem.path + '/'))
+        (subItem.path !== '/' && location.pathname.startsWith(subItem.path + '/')) ||
+        // Special case: categories page is a child of expenses
+        (subItem.path === '/cashflow/expenses' && location.pathname === '/cashflow/categories')
       );
       const isAlreadyExpanded = expandedMenus.has(item.path);
       
@@ -168,6 +181,8 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
     if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/partner-accounts/')) return true;
     // Special case: proposal pages should match proposals nav item
     if (subItem.path === '/proposals' && location.pathname.startsWith('/proposal/')) return true;
+    // Special case: categories page should match expenses nav item (Gelirler ve Giderler)
+    if (subItem.path === '/cashflow/expenses' && location.pathname === '/cashflow/categories') return true;
     return false;
   }, [location.pathname]);
 

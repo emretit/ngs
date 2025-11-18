@@ -43,12 +43,31 @@ export const useCompanies = () => {
   const { data: company, isLoading } = useQuery({
     queryKey: ['companies'],
     queryFn: async () => {
+      // Get current user's company_id
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Error fetching user:', userError);
+        return null;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError || !profile?.company_id) {
+        console.error('Error fetching profile or company_id:', profileError);
+        return null;
+      }
+
+      // Fetch company data using the user's company_id
       const { data, error } = await supabase
         .from('companies')
         .select('*')
+        .eq('id', profile.company_id)
         .eq('is_active', true)
-        .order('updated_at', { ascending: false })
-        .limit(1)
         .maybeSingle();
 
       if (error) {

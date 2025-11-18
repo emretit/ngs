@@ -157,6 +157,13 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     notesSection: {
       marginTop: 'auto',
     },
+    sectionTitle: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      marginBottom: 10,
+      marginTop: 10,
+      color: '#374151',
+    },
     notesText: {
       fontSize: 9,
       color: '#6B7280',
@@ -561,21 +568,6 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           )}
         </View>
 
-        {/* Custom Header Fields */}
-        {(schema.notes as any).customFields?.filter((field: any) => field.position === 'header').map((field: any) => (
-          <View key={field.id} style={[styles.customField, { textAlign: field.style?.align || 'left' }]}>
-            <Text style={[
-              styles.customFieldText,
-              {
-                fontSize: field.style?.fontSize || 12,
-                fontWeight: field.style?.bold ? 'bold' : 'normal',
-                color: field.style?.color || '#000000',
-              }
-            ]}>
-              {safeText(field.text)}
-            </Text>
-          </View>
-        ))}
 
         {/* Customer and Quote Information Container */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 }}>
@@ -626,31 +618,24 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           </View>
         </View>
 
-        {/* Custom Before-Table Fields */}
-        {(schema.notes as any).customFields?.filter((field: any) => field.position === 'before-table').map((field: any) => (
-          <View key={field.id} style={[styles.customField, { textAlign: field.style?.align || 'left' }]}>
-            <Text style={[
-              styles.customFieldText,
-              {
-                fontSize: field.style?.fontSize || 12,
-                fontWeight: field.style?.bold ? 'bold' : 'normal',
-                color: field.style?.color || '#000000',
-              }
-            ]}>
-              {safeText(field.text)}
-            </Text>
-          </View>
-        ))}
 
         {/* Items Table */}
         <View style={styles.table}>
           {/* Table Header */}
           <View style={styles.tableHeader}>
+            {/* Sıra Numarası Header */}
+            {schema.lineTable.showRowNumber && (
+              <View key="row-number" style={[styles.tableCell, { flex: 0.5 }]}>
+                <Text style={[styles.tableCellHeader, { textAlign: 'center' }]}>
+                  {safeText('#')}
+                </Text>
+              </View>
+            )}
             {schema.lineTable.columns
               .filter(col => col.show)
               .map(col => (
                                   <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : 1 }]}>
-                    <Text style={[styles.tableCellHeader, { textAlign: col.key === 'total' ? 'right' : 'center' }]}>
+                    <Text style={[styles.tableCellHeader, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : 'center' }]}>
                       {safeText(col.label)}
                     </Text>
                   </View>
@@ -661,11 +646,19 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           {/* Table Rows */}
           {data.items.map((item, index) => (
             <View key={index} style={styles.tableRow}>
+              {/* Sıra Numarası */}
+              {schema.lineTable.showRowNumber && (
+                <View key="row-number" style={[styles.tableCell, { flex: 0.5 }]}>
+                  <Text style={[styles.tableCell, { textAlign: 'center' }]}>
+                    {safeText(String(index + 1))}
+                  </Text>
+                </View>
+              )}
               {schema.lineTable.columns
                 .filter(col => col.show)
                 .map(col => (
                   <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : 1 }]}>
-                    <Text style={[styles.tableCell, { textAlign: col.key === 'description' ? 'left' : col.key === 'total' ? 'right' : 'center' }]}>
+                    <Text style={[styles.tableCell, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : 'center' }]}>
                       {col.key === 'description' && safeText(item.description)}
                       {col.key === 'quantity' && safeText(`${item.quantity} ${item.unit || ''}`)}
                       {col.key === 'unit_price' && safeText(formatCurrency(item.unit_price, data.currency))}
@@ -718,41 +711,43 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           )}
         </View>
 
-        {/* Custom After-Table Fields */}
-        {(schema.notes as any).customFields?.filter((field: any) => field.position === 'after-table').map((field: any) => (
-          <View key={field.id} style={[styles.customField, { textAlign: field.style?.align || 'left' }]}>
-            <Text style={[
-              styles.customFieldText,
-              {
-                fontSize: field.style?.fontSize || 12,
-                fontWeight: field.style?.bold ? 'bold' : 'normal',
-                color: field.style?.color || '#000000',
-              }
-            ]}>
-              {safeText(field.text)}
-            </Text>
-          </View>
-        ))}
 
         {/* Notes */}
         <View style={styles.notesSection}>
-          {schema.notes.intro && (
-            <Text style={[styles.notesText, { fontSize: schema.notes.introFontSize || 12 }]}>
-              {safeText(schema.notes.intro)}
-            </Text>
-          )}
           {data.notes && (
             <Text style={styles.notesText}>{safeText(data.notes)}</Text>
           )}
-          {data.payment_terms && (
-            <Text style={styles.notesText}>{safeText(`Ödeme Şartları: ${data.payment_terms}`)}</Text>
-          )}
-          {data.delivery_terms && (
-            <Text style={styles.notesText}>{safeText(`Teslimat Şartları: ${data.delivery_terms}`)}</Text>
-          )}
-          {data.warranty_terms && (
-            <Text style={styles.notesText}>{safeText(`Garanti Şartları: ${data.warranty_terms}`)}</Text>
-          )}
+          
+          {/* Şartlar ve Koşullar - Template ayarlarına göre göster */}
+          {(schema.notes.termsSettings?.showPaymentTerms && data.payment_terms) ||
+           (schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms) ||
+           (schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms) ||
+           (schema.notes.termsSettings?.showPriceTerms && data.price_terms) ||
+           (schema.notes.termsSettings?.showOtherTerms && data.other_terms) ? (
+            <>
+              <Text style={[
+                styles.sectionTitle,
+                { textAlign: schema.notes.termsSettings?.titleAlign || 'left' }
+              ]}>
+                Şartlar ve Koşullar
+              </Text>
+              {schema.notes.termsSettings?.showPaymentTerms && data.payment_terms && (
+                <Text style={styles.notesText}>{safeText(`Ödeme Şartları: ${data.payment_terms}`)}</Text>
+              )}
+              {schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms && (
+                <Text style={styles.notesText}>{safeText(`Teslimat Şartları: ${data.delivery_terms}`)}</Text>
+              )}
+              {schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && (
+                <Text style={styles.notesText}>{safeText(`Garanti Şartları: ${data.warranty_terms}`)}</Text>
+              )}
+              {schema.notes.termsSettings?.showPriceTerms && data.price_terms && (
+                <Text style={styles.notesText}>{safeText(`Fiyat Şartları: ${data.price_terms}`)}</Text>
+              )}
+              {schema.notes.termsSettings?.showOtherTerms && data.other_terms && (
+                <Text style={styles.notesText}>{safeText(`Diğer Şartlar: ${data.other_terms}`)}</Text>
+              )}
+            </>
+          ) : null}
         </View>
 
         {/* Footer */}
@@ -764,21 +759,6 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           </View>
         )}
 
-        {/* Custom Footer Fields */}
-        {(schema.notes as any).customFields?.filter((field: any) => field.position === 'footer').map((field: any) => (
-          <View key={field.id} style={[styles.footer, { textAlign: field.style?.align || 'left' }]}>
-            <Text style={[
-              styles.notesText,
-              {
-                fontSize: field.style?.fontSize || 12,
-                fontWeight: field.style?.bold ? 'bold' : 'normal',
-                color: field.style?.color || '#000000',
-              }
-            ]}>
-              {safeText(field.text)}
-            </Text>
-          </View>
-        ))}
       </Page>
     </Document>
   );

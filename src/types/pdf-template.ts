@@ -37,6 +37,7 @@ export interface ColumnSettings {
 
 export interface LineTableSettings {
   columns: ColumnSettings[];
+  showRowNumber?: boolean; // Sıra numarası göster/gizle
 }
 
 export interface TotalsSettings {
@@ -60,11 +61,17 @@ export interface CustomTextField {
 }
 
 export interface NotesSettings {
-  intro?: string;
-  introFontSize: number;
   footer?: string;
   footerFontSize: number;
-  customFields?: CustomTextField[];
+  // Şartlar ve Koşullar göster/gizle ayarları
+  termsSettings?: {
+    showPaymentTerms: boolean;
+    showDeliveryTerms: boolean;
+    showWarrantyTerms: boolean;
+    showPriceTerms: boolean;
+    showOtherTerms: boolean;
+    titleAlign?: 'left' | 'center' | 'right'; // Başlık hizalama
+  };
 }
 
 export interface TemplateSchema {
@@ -86,6 +93,7 @@ export interface PdfTemplate {
   created_at: string;
   updated_at: string;
   created_by?: string;
+  company_id?: string | null;
 }
 
 export interface QuoteData extends Record<string, unknown> {

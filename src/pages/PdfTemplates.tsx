@@ -1,44 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { 
-  Plus, 
-  Edit, 
-  Copy, 
-  Trash2, 
-  MoreVertical, 
-  FileText, 
-  Calendar,
-  Star,
-  StarOff
-} from 'lucide-react';
 import { PdfTemplate } from '@/types/pdf-template';
 import { PdfExportService } from '@/services/pdf/pdfExportService';
-import { formatDistanceToNow } from 'date-fns';
-import { tr } from 'date-fns/locale';
 import { ConfirmationDialogComponent } from '@/components/ui/confirmation-dialog';
-const PdfTemplates: React.FC = () => {
+import { QuickPreviewModal } from '@/components/pdf-templates/QuickPreviewModal';
+import { PdfTemplatesFilterBar } from '@/components/pdf-templates/PdfTemplatesFilterBar';
+import PdfTemplatesHeader from '@/components/pdf-templates/PdfTemplatesHeader';
+import PdfTemplatesContent from '@/components/pdf-templates/PdfTemplatesContent';
+
+type ViewMode = 'grid' | 'list';
+type SortOption = 'name' | 'updated' | 'created';
+
+interface PdfTemplatesProps {
+  showHeader?: boolean;
+}
+
+const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreatingDefaults, setIsCreatingDefaults] = useState(false);
   const navigate = useNavigate();
-  
+
+  // View options
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('updated');
+
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [templateToDelete, setTemplateToDelete] = useState<PdfTemplate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Preview modal states
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [templateToPreview, setTemplateToPreview] = useState<PdfTemplate | null>(null);
   useEffect(() => {
     loadTemplates();
   }, []);
+
+  // Filter and sort templates with useMemo for performance
+  const filteredTemplates = useMemo(() => {
+    let filtered = [...templates];
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(template =>
+        template.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply type filter
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(template => template.type === typeFilter);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name, 'tr');
+        case 'updated':
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        case 'created':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [templates, searchQuery, typeFilter, sortBy]);
+
   const loadTemplates = async () => {
     setIsLoading(true);
     try {
@@ -113,148 +147,111 @@ const PdfTemplates: React.FC = () => {
     setIsDeleteDialogOpen(false);
     setTemplateToDelete(null);
   };
-  if (isLoading) {
-    return (
-      <div className="bg-background">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Şablonlar yükleniyor...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
+  const handleCreateDefaultTemplates = async () => {
+    setIsCreatingDefaults(true);
+    try {
+      await PdfExportService.ensureDefaultTemplates();
+      toast.success('Varsayılan şablonlar başarıyla oluşturuldu');
+      loadTemplates();
+    } catch (error) {
+      console.error('Error creating default templates:', error);
+      toast.error('Varsayılan şablonlar oluşturulurken hata oluştu');
+    } finally {
+      setIsCreatingDefaults(false);
+    }
+  };
+
+  const handlePreviewTemplate = (template: PdfTemplate) => {
+    setTemplateToPreview(template);
+    setIsPreviewModalOpen(true);
+  };
+
+  // Helper function to get template type badge color
+  const getTypeBadgeColor = (type: string) => {
+    switch (type) {
+      case 'quote':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
+      case 'invoice':
+        return 'bg-green-100 text-green-800 hover:bg-green-100';
+      case 'proposal':
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-100';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
+    }
+  };
+
+  // Helper function to get template type label
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'quote':
+        return 'Teklif';
+      case 'invoice':
+        return 'Fatura';
+      case 'proposal':
+        return 'Öneri';
+      default:
+        return type;
+    }
+  };
+
+  // Calculate statistics - MUST be before any early returns
+  const statistics = useMemo(() => {
+    return {
+      totalCount: templates.length,
+      quoteCount: templates.filter(t => t.type === 'quote').length,
+      invoiceCount: templates.filter(t => t.type === 'invoice').length,
+      proposalCount: templates.filter(t => t.type === 'proposal').length,
+      defaultCount: templates.filter(t => t.is_default).length,
+    };
+  }, [templates]);
+
   return (
-    <div className="bg-background">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">PDF Şablonları</h1>
-            <p className="text-muted-foreground mt-1">
-              Teklif, fatura ve diğer belgeler için PDF şablonlarını yönetin
-            </p>
-          </div>
-          <Button onClick={handleCreateTemplate} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Yeni Şablon
-          </Button>
-        </div>
-        {/* Templates List */}
-        {templates.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                Henüz şablon bulunmuyor
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                İlk PDF şablonunuzu oluşturarak belgelerinizi özelleştirmeye başlayın.
-              </p>
-              <Button onClick={handleCreateTemplate} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                İlk Şablonunuzu Oluşturun
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Şablon Listesi</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Toplam {templates.length} şablon bulunuyor
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {templates.map((template) => (
-                  <div
-                    key={template.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium">{template.name}</h4>
-                          {template.is_default && (
-                            <Badge className="text-xs bg-yellow-100 text-yellow-800">
-                              <Star className="h-3 w-3 mr-1" />
-                              Varsayılan
-                            </Badge>
-                          )}
-                          <Badge variant="secondary" className="text-xs">
-                            {template.type === 'quote' ? 'Teklif' : 
-                             template.type === 'invoice' ? 'Fatura' : 'Diğer'}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>Sürüm: v{template.version}</span>
-                          <span>
-                            Son güncelleme: {formatDistanceToNow(new Date(template.updated_at), {
-                              addSuffix: true,
-                              locale: tr,
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditTemplate(template.id)}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Düzenle
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleDuplicateTemplate(template)}>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Kopyala
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {!template.is_default ? (
-                            <DropdownMenuItem onClick={() => handleSetAsDefault(template.id)}>
-                              <Star className="h-4 w-4 mr-2" />
-                              Varsayılan Yap
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem disabled>
-                              <StarOff className="h-4 w-4 mr-2" />
-                              Zaten Varsayılan
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteTemplateClick(template)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Sil
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+    <div className="space-y-2">
+      {/* Header */}
+      {showHeader && (
+        <PdfTemplatesHeader
+          templates={templates}
+          activeView={viewMode}
+          setActiveView={setViewMode}
+          totalCount={templates.length}
+          statistics={statistics}
+          onCreateTemplate={handleCreateTemplate}
+          onCreateDefaults={handleCreateDefaultTemplates}
+          isCreatingDefaults={isCreatingDefaults}
+        />
+      )}
+
+      {/* Filters */}
+      <PdfTemplatesFilterBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+      />
+
+      {/* Content */}
+      <PdfTemplatesContent
+        templates={templates}
+        filteredTemplates={filteredTemplates}
+        viewMode={viewMode}
+        isLoading={isLoading}
+        onPreview={handlePreviewTemplate}
+        onEdit={handleEditTemplate}
+        onDuplicate={handleDuplicateTemplate}
+        onDelete={handleDeleteTemplateClick}
+        onSetAsDefault={handleSetAsDefault}
+        onCreateTemplate={handleCreateTemplate}
+        onCreateDefaults={handleCreateDefaultTemplates}
+        isCreatingDefaults={isCreatingDefaults}
+        getTypeBadgeColor={getTypeBadgeColor}
+        getTypeLabel={getTypeLabel}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        setTypeFilter={setTypeFilter}
+      />
 
       {/* Confirmation Dialog */}
       <ConfirmationDialogComponent
@@ -268,6 +265,16 @@ const PdfTemplates: React.FC = () => {
         onConfirm={handleDeleteTemplateConfirm}
         onCancel={handleDeleteTemplateCancel}
         isLoading={isDeleting}
+      />
+
+      {/* Quick Preview Modal */}
+      <QuickPreviewModal
+        template={templateToPreview}
+        open={isPreviewModalOpen}
+        onOpenChange={setIsPreviewModalOpen}
+        onEdit={handleEditTemplate}
+        onDuplicate={handleDuplicateTemplate}
+        onDelete={handleDeleteTemplateClick}
       />
     </div>
   );

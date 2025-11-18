@@ -152,9 +152,9 @@ export const RoleManagementPanel = ({ users }: RoleManagementPanelProps) => {
                 {/* Permissions Preview */}
                 {role.permissions && role.permissions.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1">
-                    {role.permissions.slice(0, 3).map((permission, idx) => (
+                    {role.permissions.slice(0, 3).map((permission) => (
                       <Badge
-                        key={idx}
+                        key={`${role.id}-${permission}`}
                         variant="outline"
                         className="text-[10px] px-2 py-0.5 border-purple-200 text-purple-700"
                       >
@@ -163,6 +163,7 @@ export const RoleManagementPanel = ({ users }: RoleManagementPanelProps) => {
                     ))}
                     {role.permissions.length > 3 && (
                       <Badge
+                        key={`${role.id}-more`}
                         variant="outline"
                         className="text-[10px] px-2 py-0.5 border-purple-200 text-purple-700 font-semibold"
                       >

@@ -6,6 +6,214 @@ import { validatePdfData } from '@/utils/pdfHelpers';
 
 export class PdfExportService {
   /**
+   * Get current user's company_id
+   */
+  private static async getCurrentCompanyId(): Promise<string | null> {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        return null;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError || !profile?.company_id) {
+        return null;
+      }
+
+      return profile.company_id;
+    } catch (error) {
+      console.error('Error fetching company_id:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Create default templates for a company
+   */
+  static async createDefaultTemplates(companyId: string) {
+    const defaultTemplates = [
+      {
+        name: 'Varsayılan Teklif Şablonu',
+        type: 'quote' as const,
+        locale: 'tr' as const,
+        is_default: true,
+        version: 1,
+        schema_json: {
+          page: {
+            size: 'A4' as const,
+            padding: { top: 40, left: 40, right: 40, bottom: 40 },
+            fontSize: 12,
+          },
+          header: {
+            title: 'TEKLİF',
+            titleFontSize: 18,
+            showLogo: true,
+            logoUrl: '',
+            logoPosition: 'left' as const,
+            logoSize: 80,
+            showValidity: true,
+            showCompanyInfo: true,
+            companyName: '',
+            companyAddress: '',
+            companyPhone: '',
+            companyEmail: '',
+            companyWebsite: '',
+            companyTaxNumber: '',
+            companyInfoFontSize: 10,
+          },
+          lineTable: {
+            columns: [
+              { key: 'description', show: true, align: 'left' as const, label: 'Açıklama' },
+              { key: 'quantity', show: true, align: 'center' as const, label: 'Miktar' },
+              { key: 'unit_price', show: true, align: 'right' as const, label: 'Birim Fiyat' },
+              { key: 'total', show: true, align: 'right' as const, label: 'Toplam' },
+            ],
+          },
+          totals: {
+            showGross: true,
+            showDiscount: true,
+            showTax: true,
+            showNet: true,
+          },
+          notes: {
+            intro: 'Bu teklif 30 gün geçerlidir.',
+            introFontSize: 10,
+            footer: 'İyi çalışmalar dileriz.',
+            footerFontSize: 10,
+            customFields: [],
+          },
+        },
+      },
+      {
+        name: 'Varsayılan Fatura Şablonu',
+        type: 'invoice' as const,
+        locale: 'tr' as const,
+        is_default: true,
+        version: 1,
+        schema_json: {
+          page: {
+            size: 'A4' as const,
+            padding: { top: 40, left: 40, right: 40, bottom: 40 },
+            fontSize: 12,
+          },
+          header: {
+            title: 'FATURA',
+            titleFontSize: 18,
+            showLogo: true,
+            logoUrl: '',
+            logoPosition: 'left' as const,
+            logoSize: 80,
+            showValidity: false,
+            showCompanyInfo: true,
+            companyName: '',
+            companyAddress: '',
+            companyPhone: '',
+            companyEmail: '',
+            companyWebsite: '',
+            companyTaxNumber: '',
+            companyInfoFontSize: 10,
+          },
+          lineTable: {
+            columns: [
+              { key: 'description', show: true, align: 'left' as const, label: 'Açıklama' },
+              { key: 'quantity', show: true, align: 'center' as const, label: 'Miktar' },
+              { key: 'unit_price', show: true, align: 'right' as const, label: 'Birim Fiyat' },
+              { key: 'total', show: true, align: 'right' as const, label: 'Toplam' },
+            ],
+          },
+          totals: {
+            showGross: true,
+            showDiscount: true,
+            showTax: true,
+            showNet: true,
+          },
+          notes: {
+            intro: '',
+            introFontSize: 10,
+            footer: 'Ödeme için teşekkür ederiz.',
+            footerFontSize: 10,
+            customFields: [],
+          },
+        },
+      },
+    ];
+
+    const results = [];
+    for (const template of defaultTemplates) {
+      // Check if template already exists for this company
+      const { data: existing } = await supabase
+        .from('pdf_templates')
+        .select('id')
+        .eq('company_id', companyId)
+        .eq('type', template.type)
+        .eq('name', template.name)
+        .maybeSingle();
+
+      if (!existing) {
+        const { data, error } = await supabase
+          .from('pdf_templates')
+          .insert({
+            ...template,
+            company_id: companyId,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error(`Error creating default ${template.type} template:`, error);
+        } else {
+          results.push(data);
+        }
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Ensure default templates exist for current company
+   */
+  static async ensureDefaultTemplates() {
+    const companyId = await this.getCurrentCompanyId();
+    if (!companyId) {
+      throw new Error('Şirket bilgisi bulunamadı');
+    }
+
+    // Check if templates exist
+    const { data: existingTemplates } = await supabase
+      .from('pdf_templates')
+      .select('type')
+      .eq('company_id', companyId);
+
+    const existingTypes = new Set(existingTemplates?.map(t => t.type) || []);
+
+    // Create missing templates - create all if none exist, or only missing ones
+    if (existingTypes.size === 0) {
+      // No templates exist, create all defaults
+      await this.createDefaultTemplates(companyId);
+    } else {
+      // Some templates exist, create only missing ones
+      const { data: allTemplates } = await supabase
+        .from('pdf_templates')
+        .select('type, name')
+        .eq('company_id', companyId);
+
+      const hasQuote = allTemplates?.some(t => t.type === 'quote' && t.name === 'Varsayılan Teklif Şablonu');
+      const hasInvoice = allTemplates?.some(t => t.type === 'invoice' && t.name === 'Varsayılan Fatura Şablonu');
+
+      if (!hasQuote || !hasInvoice) {
+        await this.createDefaultTemplates(companyId);
+      }
+    }
+  }
+
+  /**
    * Transform Proposal to QuoteData format for PDF generation
    */
   static async transformProposalForPdf(proposal: any): Promise<QuoteData> {
@@ -136,16 +344,46 @@ export class PdfExportService {
    * Get all PDF templates
    */
   static async getTemplates(type: 'quote' | 'invoice' | 'proposal' = 'quote') {
-    const { data, error } = await supabase
+    const companyId = await this.getCurrentCompanyId();
+    
+    let query = supabase
       .from('pdf_templates')
       .select('*')
-      .eq('type', type)
+      .eq('type', type);
+
+    if (companyId) {
+      query = query.eq('company_id', companyId);
+    } else {
+      // Fallback: only show templates without company_id (legacy)
+      query = query.is('company_id', null);
+    }
+
+    const { data, error } = await query
       .order('is_default', { ascending: false })
       .order('name');
 
     if (error) {
       console.error('Error fetching templates:', error);
       throw new Error('Şablonlar yüklenirken hata oluştu: ' + error.message);
+    }
+
+    // If no templates found and we have a company_id, create default templates
+    if (data.length === 0 && companyId) {
+      await this.createDefaultTemplates(companyId);
+      // Retry fetching
+      const { data: newData, error: retryError } = await supabase
+        .from('pdf_templates')
+        .select('*')
+        .eq('type', type)
+        .eq('company_id', companyId)
+        .order('is_default', { ascending: false })
+        .order('name');
+      
+      if (retryError) {
+        throw new Error('Şablonlar yüklenirken hata oluştu: ' + retryError.message);
+      }
+      
+      return (newData || []) as PdfTemplate[];
     }
 
     return data as PdfTemplate[];
@@ -155,14 +393,38 @@ export class PdfExportService {
    * Get default template for a type
    */
   static async getDefaultTemplate(type: 'quote' | 'invoice' | 'proposal' = 'quote') {
-    const { data, error } = await supabase
+    const companyId = await this.getCurrentCompanyId();
+    
+    let query = supabase
       .from('pdf_templates')
       .select('*')
       .eq('type', type)
-      .eq('is_default', true)
-      .single();
+      .eq('is_default', true);
+
+    if (companyId) {
+      query = query.eq('company_id', companyId);
+    } else {
+      query = query.is('company_id', null);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) {
+      // If no default template found, try to get any template of this type
+      if (companyId) {
+        const { data: anyTemplate } = await supabase
+          .from('pdf_templates')
+          .select('*')
+          .eq('type', type)
+          .eq('company_id', companyId)
+          .limit(1)
+          .maybeSingle();
+        
+        if (anyTemplate) {
+          return anyTemplate as PdfTemplate;
+        }
+      }
+      
       console.error('Error fetching default template:', error);
       throw new Error('Varsayılan şablon bulunamadı: ' + error.message);
     }
@@ -192,6 +454,8 @@ export class PdfExportService {
    * Save or update a template
    */
   static async saveTemplate(template: Omit<PdfTemplate, 'id' | 'created_at' | 'updated_at'>, templateId?: string) {
+    const companyId = await this.getCurrentCompanyId();
+    
     let data, error;
     
     if (templateId) {
@@ -203,10 +467,15 @@ export class PdfExportService {
         .select()
         .single());
     } else {
-      // Create new template
+      // Create new template - ensure company_id is set
+      const templateWithCompany = {
+        ...template,
+        company_id: companyId || template.company_id || null,
+      };
+      
       ({ data, error } = await supabase
         .from('pdf_templates')
-        .insert(template)
+        .insert(templateWithCompany)
         .select()
         .single());
     }
@@ -223,11 +492,21 @@ export class PdfExportService {
    * Set a template as default (unsets others)
    */
   static async setAsDefault(templateId: string, type: 'quote' | 'invoice' | 'proposal') {
-    // First, unset all defaults for this type
-    await supabase
+    const companyId = await this.getCurrentCompanyId();
+    
+    // First, unset all defaults for this type and company
+    let unsetQuery = supabase
       .from('pdf_templates')
       .update({ is_default: false })
       .eq('type', type);
+    
+    if (companyId) {
+      unsetQuery = unsetQuery.eq('company_id', companyId);
+    } else {
+      unsetQuery = unsetQuery.is('company_id', null);
+    }
+    
+    await unsetQuery;
 
     // Then set the selected template as default
     const { data, error } = await supabase
@@ -462,13 +741,13 @@ export class PdfExportService {
     // Default company settings if not provided
     const defaultCompany = {
       name: companySettings?.company_name || 'Şirket Adı',
-      address: companySettings?.address || '',
-      phone: companySettings?.phone || '',
-      email: companySettings?.email || '',
-      tax_number: companySettings?.tax_number || '',
-      tax_office: companySettings?.tax_office || '',
-      logo_url: companySettings?.logo || null,
-      website: companySettings?.website || ''
+      address: companySettings?.company_address || '',
+      phone: companySettings?.company_phone || '',
+      email: companySettings?.company_email || '',
+      tax_number: companySettings?.company_tax_number || '',
+      tax_office: companySettings?.company_tax_office || '',
+      logo_url: companySettings?.company_logo_url || null,
+      website: companySettings?.company_website || ''
     };
 
     // Transform customer data with null safety
@@ -567,20 +846,60 @@ export class PdfExportService {
   }
 
   /**
-   * Get company settings for PDF header
+   * Get company settings for PDF header from companies table
    */
   static async getCompanySettings() {
-    const { data, error } = await supabase
-      .from('company_settings')
-      .select('*')
-      .limit(1)
-      .single();
+    try {
+      const companyId = await this.getCurrentCompanyId();
+      
+      if (!companyId) {
+        console.warn('No company_id found for current user');
+        return {};
+      }
 
-    if (error && error.code !== 'PGRST116') { // Not found error is ok
-      console.error('Error fetching company settings:', error);
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching company settings:', error);
+        return {};
+      }
+
+      if (!data) {
+        console.warn('No active company found');
+        return {};
+      }
+
+      // Map companies table fields to expected format
+      return {
+        company_name: data.name || '',
+        company_address: data.address || '',
+        company_phone: data.phone || '',
+        company_email: data.email || '',
+        company_website: data.website || '',
+        company_tax_number: data.tax_number || '',
+        company_tax_office: data.tax_office || '',
+        company_logo_url: data.logo_url || '',
+        company_city: data.city || '',
+        company_district: data.district || '',
+        company_country: data.country || '',
+        company_postal_code: data.postal_code || '',
+        company_trade_registry_number: data.trade_registry_number || '',
+        company_mersis_number: data.mersis_number || '',
+        company_bank_name: data.bank_name || '',
+        company_iban: data.iban || '',
+        company_account_number: data.account_number || '',
+        default_currency: data.default_currency || 'TRY',
+        default_prepared_by: '', // Can be set from user profile if needed
+      };
+    } catch (error) {
+      console.error('Error in getCompanySettings:', error);
+      return {};
     }
-
-    return data || {};
   }
 
 }

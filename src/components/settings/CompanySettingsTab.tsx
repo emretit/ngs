@@ -8,10 +8,12 @@ import { useCompanies, Company } from "@/hooks/useCompanies";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { CompanyInfoCard } from "./CompanyInfoCard";
 
 export const CompanySettingsTab = () => {
   const { company } = useCompanies();
+  const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<Partial<Company>>({});
   const [isDirty, setIsDirty] = useState(false);
@@ -32,17 +34,97 @@ export const CompanySettingsTab = () => {
     
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      // Define allowed updatable fields based on Supabase companies table schema
+      // Only include fields that actually exist in the database
+      const allowedFields = [
+        'name',
+        'address',
+        'phone',
+        'email',
+        'tax_number',
+        'tax_office',
+        'logo_url',
+        'default_currency',
+        'email_settings',
+        'domain',
+        'website',
+        'is_active',
+        // Address details
+        'city',
+        'district',
+        'country',
+        'postal_code',
+        // Business information
+        'trade_registry_number',
+        'mersis_number',
+        'einvoice_alias_name',
+        'sector',
+        'establishment_date',
+        // Bank information
+        'bank_name',
+        'iban',
+        'account_number',
+      ];
+      
+      // Build update object with only allowed fields
+      const updateData: any = {};
+      
+      allowedFields.forEach(field => {
+        if (field in formData) {
+          const value = formData[field as keyof Company];
+          // Only include if value is not undefined
+          if (value !== undefined) {
+            updateData[field] = value;
+          }
+        }
+      });
+      
+      // Ensure email_settings is properly formatted as JSON object
+      if (updateData.email_settings && typeof updateData.email_settings === 'object') {
+        updateData.email_settings = updateData.email_settings;
+      }
+      
+      // Remove empty string values that might cause issues (keep null values)
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === '') {
+          updateData[key] = null;
+        }
+      });
+      
+      const { error, data } = await supabase
         .from('companies')
-        .update(formData)
-        .eq('id', company.id);
+        .update(updateData)
+        .eq('id', company.id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error details:', error);
+        throw error;
+      }
+      
+      // Update local formData with the returned data immediately
+      if (data) {
+        setFormData(data as Company);
+      }
+      
+      // Invalidate and refetch companies query to update the cache
+      // This will trigger useCompanies hook to refetch and update the UI
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
+      
+      // Also update the cache directly with the returned data for immediate UI update
+      if (data) {
+        queryClient.setQueryData(['companies'], data);
+      }
       
       setIsDirty(false);
-      toast.success('Ayarlar başarıyla kaydedildi');
-    } catch (error) {
-      toast.error('Ayarlar kaydedilirken hata oluştu');
+      toast.success('Ayarlar başarıyla kaydedildi', {
+        duration: 1000, // 1 saniye
+      });
+    } catch (error: any) {
+      console.error('Error saving company settings:', error);
+      const errorMessage = error?.message || error?.details || 'Ayarlar kaydedilirken hata oluştu';
+      toast.error(`Hata: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }

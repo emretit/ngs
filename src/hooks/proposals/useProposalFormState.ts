@@ -29,6 +29,7 @@ export const useProposalFormState = (
     status: "draft" as ProposalStatus,
     customer_id: "",
     employee_id: "",
+    prepared_by: "",
     items: [],
     currency: "TRY" // Default currency
   });
@@ -61,6 +62,7 @@ export const useProposalFormState = (
         status: initialProposal.status,
         customer_id: initialProposal.customer_id || "",
         employee_id: initialProposal.employee_id || "",
+        prepared_by: (initialProposal as any).prepared_by || "",
         items: initialProposal.items || [],
         currency: initialProposal.currency || "TRY" // Use existing proposal currency
       });

@@ -761,6 +761,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
 
           {/* Financial Summary */}
           <FinancialSummaryCard
+            selectedCurrency={formData.currency}
             calculationsByCurrency={calculationsByCurrency}
             globalDiscountType={globalDiscountType}
             globalDiscountValue={globalDiscountValue}

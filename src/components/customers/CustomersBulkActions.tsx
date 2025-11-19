@@ -2,21 +2,28 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Trash2, Download, Mail, FileSpreadsheet, Upload } from "lucide-react";
 import { Customer } from "@/types/customer";
-import { exportCustomerTemplateToExcel } from "@/utils/customerExcelUtils";
+import { exportCustomerTemplateToExcel, exportCustomersToExcel } from "@/utils/excelUtils";
 import ImportDialog from "./excel/ImportDialog";
 
 interface CustomersBulkActionsProps {
   selectedCustomers: Customer[];
   onClearSelection: () => void;
   onBulkAction?: (action: string) => void;
+  onImportSuccess?: () => void;
 }
 
-const CustomersBulkActions = ({ selectedCustomers, onClearSelection, onBulkAction }: CustomersBulkActionsProps) => {
+const CustomersBulkActions = ({ selectedCustomers, onClearSelection, onBulkAction, onImportSuccess }: CustomersBulkActionsProps) => {
   const hasSelection = selectedCustomers.length > 0;
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   const handleDownloadTemplate = () => {
     exportCustomerTemplateToExcel();
+  };
+
+  const handleExportExcel = () => {
+    if (selectedCustomers.length > 0) {
+      exportCustomersToExcel(selectedCustomers);
+    }
   };
 
   return (
@@ -54,6 +61,7 @@ const CustomersBulkActions = ({ selectedCustomers, onClearSelection, onBulkActio
             size="sm"
             className="text-blue-700 border-blue-300 hover:bg-blue-100"
             disabled={!hasSelection}
+            onClick={handleExportExcel}
           >
             <Download className="h-4 w-4 mr-1" />
             Excel İndir
@@ -96,7 +104,8 @@ const CustomersBulkActions = ({ selectedCustomers, onClearSelection, onBulkActio
       
       <ImportDialog 
         isOpen={isImportDialogOpen} 
-        setIsOpen={setIsImportDialogOpen} 
+        setIsOpen={setIsImportDialogOpen}
+        onImportSuccess={onImportSuccess}
       />
     </>
   );

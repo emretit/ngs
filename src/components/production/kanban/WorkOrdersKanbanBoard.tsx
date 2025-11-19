@@ -12,6 +12,7 @@ interface WorkOrdersKanbanBoardProps {
 }
 
 const columns = [
+  { id: "draft", title: "📝 Taslak", color: "bg-gray-500" },
   { id: "planned", title: "📅 Planlandı", color: "bg-blue-600" },
   { id: "in_progress", title: "⚙️ Üretimde", color: "bg-orange-600" },
   { id: "completed", title: "✔️ Tamamlandı", color: "bg-green-600" },
@@ -28,6 +29,7 @@ const WorkOrdersKanbanBoard = ({
   // İş emirlerini durumlarına göre grupla
   const workOrdersByStatus = useMemo(() => {
     const grouped: Record<string, WorkOrder[]> = {
+      draft: [],
       planned: [],
       in_progress: [],
       completed: [],
@@ -36,6 +38,10 @@ const WorkOrdersKanbanBoard = ({
 
     workOrders.forEach(wo => {
       if (grouped[wo.status]) {
+        grouped[wo.status].push(wo);
+      } else {
+        // Bilinmeyen bir durum varsa draft'a at veya yeni key oluştur
+        if (!grouped[wo.status]) grouped[wo.status] = [];
         grouped[wo.status].push(wo);
       }
     });
@@ -74,24 +80,32 @@ const WorkOrdersKanbanBoard = ({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex overflow-x-auto gap-4 pb-4">
+      <div className="flex overflow-x-auto gap-4 pb-4 h-full items-start">
         {columns.map((column) => (
-          <div key={column.id} className="flex-none min-w-[300px]">
-            <div className="flex items-center gap-2 mb-3">
-              <div className={`h-3 w-3 rounded-full ${column.color}`}></div>
-              <h2 className="font-semibold text-gray-900">
-                {column.title} ({workOrdersByStatus[column.id]?.length || 0})
-              </h2>
+          <div key={column.id} className="flex-none w-[300px] flex flex-col h-full max-h-[calc(100vh-250px)]">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <div className="flex items-center gap-2">
+                <div className={`h-2.5 w-2.5 rounded-full ${column.color}`}></div>
+                <h2 className="font-semibold text-gray-900 text-sm">
+                  {column.title}
+                </h2>
+              </div>
+              <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full border border-gray-200">
+                {workOrdersByStatus[column.id]?.length || 0}
+              </span>
             </div>
-            <WorkOrderColumn
-              id={column.id}
-              title={column.title}
-              workOrders={workOrdersByStatus[column.id] || []}
-              color={column.color}
-              onWorkOrderClick={onWorkOrderClick}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
+            
+            <div className="flex-1 overflow-y-auto pr-2 -mr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+              <WorkOrderColumn
+                id={column.id}
+                title={column.title}
+                workOrders={workOrdersByStatus[column.id] || []}
+                color={column.color}
+                onWorkOrderClick={onWorkOrderClick}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -100,4 +114,3 @@ const WorkOrdersKanbanBoard = ({
 };
 
 export default WorkOrdersKanbanBoard;
-

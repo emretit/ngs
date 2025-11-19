@@ -29,8 +29,32 @@ export const exportCustomersToExcel = (customers: Customer[], fileName = 'custom
   }
 };
 
+// Export suppliers to Excel
+export const exportSuppliersToExcel = (suppliers: any[], fileName = 'tedarikciler.xlsx') => {
+  try {
+    // Convert data to worksheet
+    const worksheet = XLSX.utils.json_to_sheet(suppliers);
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Suppliers');
+    
+    // Generate Excel file
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    
+    // Save file
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(data, fileName);
+    
+    return true;
+  } catch (error) {
+    console.error('Error exporting suppliers to Excel:', error);
+    return false;
+  }
+};
+
 // Import customers from Excel
-export const importCustomersFromExcel = async (file: File): Promise<any[]> => {
+export const importCustomersFromExcel = async (file: File, columnMapping?: { [excelColumn: string]: string }): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -43,9 +67,103 @@ export const importCustomersFromExcel = async (file: File): Promise<any[]> => {
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         
-        // Convert to JSON
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        resolve(jsonData);
+        // Convert to JSON with header row
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        if (jsonData.length < 2) {
+          resolve([]);
+          return;
+        }
+        
+        const headers = jsonData[0] as string[];
+        const rows = jsonData.slice(1) as any[][];
+        
+        // Use provided column mapping or fallback to default mapping
+        const defaultHeaderMap: { [key: string]: string } = {
+          'ad': 'name',
+          'isim': 'name',
+          'ünvan': 'name',
+          'unvan': 'name',
+          'firma': 'name',
+          'müşteri': 'name',
+          'name': 'name',
+          'title': 'name',
+          'email': 'email',
+          'e-posta': 'email',
+          'mail': 'email',
+          'telefon': 'mobile_phone',
+          'cep': 'mobile_phone',
+          'gsm': 'mobile_phone',
+          'mobile': 'mobile_phone',
+          'cep telefonu': 'mobile_phone',
+          'mobile_phone': 'mobile_phone',
+          'iş': 'office_phone',
+          'tel': 'office_phone',
+          'sabit': 'office_phone',
+          'office': 'office_phone',
+          'iş telefonu': 'office_phone',
+          'office_phone': 'office_phone',
+          'vergi no': 'tax_number',
+          'vkn': 'tax_number',
+          'tc': 'tax_number',
+          'tckn': 'tax_number',
+          'tax id': 'tax_number',
+          'tax_number': 'tax_number',
+          'vergi dairesi': 'tax_office',
+          'vd': 'tax_office',
+          'tax office': 'tax_office',
+          'tax_office': 'tax_office',
+          'adres': 'address',
+          'address': 'address',
+          'şehir': 'city',
+          'il': 'city',
+          'city': 'city',
+          'ilçe': 'district',
+          'district': 'district',
+          'ülke': 'country',
+          'country': 'country',
+          'posta kodu': 'postal_code',
+          'postal_code': 'postal_code',
+          'tip': 'type',
+          'tür': 'type',
+          'type': 'type',
+          'durum': 'status',
+          'status': 'status',
+          'şirket': 'company',
+          'sirket': 'company',
+          'firma adı': 'company',
+          'firma adi': 'company',
+          'company': 'company',
+          'firm': 'company'
+        };
+        
+        // Normalize headers using provided mapping or default
+        const normalizedHeaders = headers.map(header => {
+          const headerStr = header?.toString().trim() || '';
+          
+          // Önce custom mapping'i kontrol et
+          if (columnMapping && columnMapping[headerStr]) {
+            return columnMapping[headerStr];
+          }
+          
+          // Sonra default mapping'i kontrol et
+          const normalized = headerStr.toLowerCase();
+          return defaultHeaderMap[normalized] || normalized;
+        });
+        
+        // Map rows to objects with normalized headers
+        const mappedData = rows.map(row => {
+          const obj: any = {};
+          normalizedHeaders.forEach((header, index) => {
+            // Skip 'none' mappings and undefined/null values
+            if (header && header !== 'none' && row[index] !== undefined && row[index] !== null) {
+              obj[header] = row[index];
+            }
+          });
+          return obj;
+        });
+        
+        resolve(mappedData);
       } catch (error) {
         console.error('Error importing Excel file:', error);
         reject(error);
@@ -115,29 +233,23 @@ export const exportCustomerTemplateToExcel = (fileName = 'musteri_sablonu.xlsx')
     const templateData = [
       {
         name: 'Örnek Müşteri 1',
-        type: 'customer',
-        status: 'active',
+        type: 'bireysel',
+        status: 'aktif',
         email: 'ornek@musteri.com',
         mobile_phone: '0532 123 45 67',
         office_phone: '0212 123 45 67',
-        company: 'Örnek Şirket A.Ş.',
-        representative: 'Ahmet Yılmaz',
-        balance: 0.00,
         address: 'Örnek Mahallesi, Örnek Sokak No:1, İstanbul',
         tax_number: '1234567890',
         tax_office: 'Kadıköy'
       },
       {
-        name: 'Örnek Tedarikçi 1',
-        type: 'supplier',
-        status: 'active',
-        email: 'ornek@tedarikci.com',
+        name: 'Örnek Şirket A.Ş.',
+        type: 'kurumsal',
+        status: 'aktif',
+        email: 'info@sirket.com',
         mobile_phone: '0533 987 65 43',
         office_phone: '0216 987 65 43',
-        company: 'Örnek Tedarikçi Ltd. Şti.',
-        representative: 'Mehmet Demir',
-        balance: 0.00,
-        address: 'Tedarikçi Mahallesi, Tedarikçi Sokak No:5, Ankara',
+        address: 'Organize Sanayi Bölgesi, 1. Cadde No:5, Ankara',
         tax_number: '9876543210',
         tax_office: 'Çankaya'
       }
@@ -152,18 +264,15 @@ export const exportCustomerTemplateToExcel = (fileName = 'musteri_sablonu.xlsx')
     
     // Add instructions sheet
     const instructionsData = [
-      { Alan: 'name', Açıklama: 'Müşteri/Tedarikçi adı (zorunlu)', 'Örnek Değer': 'ABC Şirketi' },
-      { Alan: 'type', Açıklama: 'Tip (zorunlu)', 'Örnek Değer': 'customer, supplier' },
-      { Alan: 'status', Açıklama: 'Durum (zorunlu)', 'Örnek Değer': 'active, inactive' },
-      { Alan: 'email', Açıklama: 'E-posta adresi (isteğe bağlı)', 'Örnek Değer': 'info@abc.com' },
-      { Alan: 'mobile_phone', Açıklama: 'Cep telefonu (isteğe bağlı)', 'Örnek Değer': '0532 123 45 67' },
-      { Alan: 'office_phone', Açıklama: 'Ofis telefonu (isteğe bağlı)', 'Örnek Değer': '0212 123 45 67' },
-      { Alan: 'company', Açıklama: 'Şirket adı (isteğe bağlı)', 'Örnek Değer': 'ABC Şirketi A.Ş.' },
-      { Alan: 'representative', Açıklama: 'Temsilci adı (isteğe bağlı)', 'Örnek Değer': 'Ali Veli' },
-      { Alan: 'balance', Açıklama: 'Bakiye (isteğe bağlı)', 'Örnek Değer': '0.00' },
-      { Alan: 'address', Açıklama: 'Adres (isteğe bağlı)', 'Örnek Değer': 'Mahalle, Sokak No:1, Şehir' },
-      { Alan: 'tax_number', Açıklama: 'Vergi numarası (isteğe bağlı)', 'Örnek Değer': '1234567890' },
-      { Alan: 'tax_office', Açıklama: 'Vergi dairesi (isteğe bağlı)', 'Örnek Değer': 'Kadıköy' }
+      { Alan: 'name', Açıklama: 'Müşteri adı/Ünvanı (zorunlu)', 'Örnek Değer': 'Ahmet Yılmaz' },
+      { Alan: 'type', Açıklama: 'Tip (bireysel, kurumsal)', 'Örnek Değer': 'bireysel' },
+      { Alan: 'status', Açıklama: 'Durum (aktif, pasif)', 'Örnek Değer': 'aktif' },
+      { Alan: 'email', Açıklama: 'E-posta adresi', 'Örnek Değer': 'info@abc.com' },
+      { Alan: 'mobile_phone', Açıklama: 'Cep telefonu', 'Örnek Değer': '0532 123 45 67' },
+      { Alan: 'office_phone', Açıklama: 'Ofis telefonu', 'Örnek Değer': '0212 123 45 67' },
+      { Alan: 'address', Açıklama: 'Adres', 'Örnek Değer': 'Mahalle, Sokak No:1, Şehir' },
+      { Alan: 'tax_number', Açıklama: 'Vergi/TC No', 'Örnek Değer': '1234567890' },
+      { Alan: 'tax_office', Açıklama: 'Vergi dairesi', 'Örnek Değer': 'Kadıköy' }
     ];
     
     const instructionsSheet = XLSX.utils.json_to_sheet(instructionsData);
@@ -179,6 +288,81 @@ export const exportCustomerTemplateToExcel = (fileName = 'musteri_sablonu.xlsx')
     return true;
   } catch (error) {
     console.error('Error exporting customer template to Excel:', error);
+    return false;
+  }
+};
+
+// Export supplier template to Excel
+export const exportSupplierTemplateToExcel = (fileName = 'tedarikci_sablonu.xlsx') => {
+  try {
+    // Create a sample data array with the required columns
+    const templateData = [
+      {
+        name: 'Örnek Tedarikçi 1',
+        type: 'kurumsal',
+        status: 'aktif',
+        email: 'satis@tedarikci1.com',
+        mobile_phone: '0532 111 22 33',
+        office_phone: '0212 111 22 33',
+        address: 'Sanayi Sitesi A Blok No:1',
+        tax_number: '1111111111',
+        tax_office: 'Şişli',
+        website: 'www.tedarikci1.com',
+        bank_name: 'Ziraat Bankası',
+        iban: 'TR12 3456 7890 1234 5678 90'
+      },
+      {
+        name: 'Örnek Tedarikçi 2',
+        type: 'bireysel',
+        status: 'aktif',
+        email: 'info@tedarikci2.com',
+        mobile_phone: '0533 222 33 44',
+        office_phone: '0216 222 33 44',
+        address: 'Teknopark B Blok No:5',
+        tax_number: '22222222222',
+        tax_office: 'Ümraniye',
+        website: '',
+        bank_name: 'Garanti BBVA',
+        iban: 'TR98 7654 3210 9876 5432 10'
+      }
+    ];
+    
+    // Convert data to worksheet
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tedarikçi Şablonu');
+    
+    // Add instructions sheet
+    const instructionsData = [
+      { Alan: 'name', Açıklama: 'Tedarikçi adı/Ünvanı (zorunlu)', 'Örnek Değer': 'ABC Tedarik' },
+      { Alan: 'type', Açıklama: 'Tip (bireysel, kurumsal)', 'Örnek Değer': 'kurumsal' },
+      { Alan: 'status', Açıklama: 'Durum (aktif, pasif)', 'Örnek Değer': 'aktif' },
+      { Alan: 'email', Açıklama: 'E-posta adresi', 'Örnek Değer': 'info@abc.com' },
+      { Alan: 'mobile_phone', Açıklama: 'Cep telefonu', 'Örnek Değer': '0532 123 45 67' },
+      { Alan: 'office_phone', Açıklama: 'Ofis telefonu', 'Örnek Değer': '0212 123 45 67' },
+      { Alan: 'address', Açıklama: 'Adres', 'Örnek Değer': 'Mahalle, Sokak No:1, Şehir' },
+      { Alan: 'tax_number', Açıklama: 'Vergi/TC No', 'Örnek Değer': '1234567890' },
+      { Alan: 'tax_office', Açıklama: 'Vergi dairesi', 'Örnek Değer': 'Kadıköy' },
+      { Alan: 'website', Açıklama: 'Web sitesi', 'Örnek Değer': 'www.abc.com' },
+      { Alan: 'bank_name', Açıklama: 'Banka Adı', 'Örnek Değer': 'Garanti' },
+      { Alan: 'iban', Açıklama: 'IBAN', 'Örnek Değer': 'TR00...' }
+    ];
+    
+    const instructionsSheet = XLSX.utils.json_to_sheet(instructionsData);
+    XLSX.utils.book_append_sheet(workbook, instructionsSheet, 'Kullanım Kılavuzu');
+    
+    // Generate Excel file
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    
+    // Save file
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(data, fileName);
+    
+    return true;
+  } catch (error) {
+    console.error('Error exporting supplier template to Excel:', error);
     return false;
   }
 };

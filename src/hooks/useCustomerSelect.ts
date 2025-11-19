@@ -32,14 +32,15 @@ const createSearchableText = (customer: any): string => {
 };
 
 export const useCustomerSelect = () => {
-  const { data: customers, ...customerQuery } = useQuery({
+  const { data: customersData, ...customerQuery } = useQuery({
     queryKey: ["customers-select"],
     queryFn: async () => {
       console.log("Fetching customers for select component");
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from("customers")
-        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
-        .order("name");
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative", { count: 'exact' })
+        .order("name")
+        .limit(10000); // Yüksek limit - tüm müşterileri çekmek için
 
       if (error) {
         console.error("Error fetching customers:", error);
@@ -53,26 +54,35 @@ export const useCustomerSelect = () => {
         searchableText: createSearchableText(customer)
       }));
       
-      return customersWithSearch as (Customer & { searchableText: string })[];
+      return {
+        customers: customersWithSearch as (Customer & { searchableText: string })[],
+        totalCount: count || 0
+      };
     },
   });
 
-  const { data: suppliers, ...supplierQuery } = useQuery({
+  const { data: suppliersData, ...supplierQuery } = useQuery({
     queryKey: ["suppliers-select"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from("suppliers")
-        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
-        .order("name");
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative", { count: 'exact' })
+        .order("name")
+        .limit(10000); // Yüksek limit - tüm tedarikçileri çekmek için
 
       if (error) throw error;
-      return data as Supplier[];
+      return {
+        suppliers: data as Supplier[],
+        totalCount: count || 0
+      };
     },
   });
 
   return {
-    customers,
-    suppliers,
+    customers: customersData?.customers,
+    customersTotalCount: customersData?.totalCount || 0,
+    suppliers: suppliersData?.suppliers,
+    suppliersTotalCount: suppliersData?.totalCount || 0,
     isLoading: customerQuery.isLoading || supplierQuery.isLoading,
     error: customerQuery.error || supplierQuery.error,
   };

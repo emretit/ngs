@@ -56,6 +56,7 @@ const ProductDetailsModal = ({
   const [unitPrice, setUnitPrice] = useState(0);
   const [vatRate, setVatRate] = useState(20);
   const [discountRate, setDiscountRate] = useState(0);
+  const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [description, setDescription] = useState("");
   const [unit, setUnit] = useState("adet");
   const [isManualPriceEdit, setIsManualPriceEdit] = useState(false);
@@ -168,7 +169,16 @@ const ProductDetailsModal = ({
     const vat = Number(vatRate) || 20;
 
     const subtotal = qty * price;
-    const discountAmount = (subtotal * discount) / 100;
+    
+    // Calculate discount based on type
+    let discountAmount = 0;
+    if (discountType === 'percentage') {
+      discountAmount = (subtotal * discount) / 100;
+    } else {
+      // amount: direct discount amount
+      discountAmount = discount;
+    }
+    
     const netAmount = subtotal - discountAmount;
     const vatAmount = (netAmount * vat) / 100;
     const total = netAmount + vatAmount;
@@ -227,12 +237,12 @@ const ProductDetailsModal = ({
       isOpen={open}
       onClose={() => onOpenChange(false)}
       title={dialogTitle}
-      maxWidth="lg"
+      maxWidth="2xl"
       headerColor="blue"
       className="max-h-[90vh] overflow-y-auto"
     >
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {/* Warnings Section */}
         {(product && showStockWarning) || (product && showCurrencyWarning) ? (
           <div className="space-y-1">
@@ -256,14 +266,14 @@ const ProductDetailsModal = ({
         ) : null}
 
         {/* Main Form Section - Compact Layout */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           {/* Miktar + Depo Seçimi */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="quantity" className="text-xs font-medium text-gray-600">
+              <Label htmlFor="quantity" className="text-sm font-medium text-gray-600">
                 Miktar
               </Label>
-              <div className="flex gap-1.5 mt-0.5">
+              <div className="flex gap-1.5 mt-1">
                 <Input
                   id="quantity"
                   type="number"
@@ -273,11 +283,11 @@ const ProductDetailsModal = ({
                     setQuantity(value === "" ? 1 : Number(value) || 1);
                   }}
                   min="1"
-                  className="flex-1 h-7 text-xs"
+                  className="flex-1"
                   placeholder="Miktar"
                 />
                 <Select value={unit} onValueChange={setUnit}>
-                  <SelectTrigger className="w-20 h-7 text-xs">
+                  <SelectTrigger className="w-28">
                     <SelectValue placeholder="Birim" />
                   </SelectTrigger>
                   <SelectContent>
@@ -317,12 +327,12 @@ const ProductDetailsModal = ({
 
           {/* Birim Fiyat */}
           <div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="unit_price" className="text-xs font-medium text-gray-600">
+                <Label htmlFor="unit_price" className="text-sm font-medium text-gray-600">
                   Birim Fiyat
                 </Label>
-                <div className="flex gap-1.5 mt-0.5">
+                <div className="flex gap-1.5 mt-1">
                   <Input
                     id="unit_price"
                     type="number"
@@ -334,7 +344,7 @@ const ProductDetailsModal = ({
                     }}
                     step="0.0001"
                     placeholder="0.0000"
-                    className="flex-1 h-7 text-xs"
+                    className="flex-1"
                     disabled={isLoadingRates}
                   />
                   <Select 
@@ -342,13 +352,13 @@ const ProductDetailsModal = ({
                     onValueChange={handleCurrencyChange}
                     disabled={isLoadingRates}
                   >
-                    <SelectTrigger className="w-16 h-7 text-xs">
+                    <SelectTrigger className="w-24">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent position="popper" className="bg-background border z-[100]">
                       {currencyOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.value}
+                          {option.value === "TRY" ? "TL" : option.value}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -356,10 +366,10 @@ const ProductDetailsModal = ({
                 </div>
               </div>
               <div>
-                <Label className="text-xs font-medium text-gray-600">
+                <Label className="text-sm font-medium text-gray-600">
                   1 {selectedCurrency} = ₺
                 </Label>
-                <div className="mt-0.5">
+                <div className="mt-1">
                   <Input
                     type="number"
                     value={currentExchangeRate.toFixed(4)}
@@ -369,7 +379,7 @@ const ProductDetailsModal = ({
                       setManualExchangeRate(rate);
                     }}
                     step="0.0001"
-                    className="w-full h-7 text-xs"
+                    className="w-full"
                     placeholder="0.0000"
                   />
                 </div>
@@ -378,12 +388,12 @@ const ProductDetailsModal = ({
           </div>
 
           {/* İndirim ve KDV */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="discount" className="text-xs font-medium text-gray-600">
+              <Label htmlFor="discount" className="text-sm font-medium text-gray-600">
                 İndirim
               </Label>
-              <div className="flex mt-0.5">
+              <div className="flex gap-1.5 mt-1">
                 <Input
                   id="discount"
                   type="number"
@@ -395,26 +405,26 @@ const ProductDetailsModal = ({
                   step="0.01"
                   max="100"
                   placeholder="0"
-                  className="rounded-r-none h-7 text-xs"
+                  className="flex-1"
                 />
-                <Select value="percentage" onValueChange={() => {}}>
-                  <SelectTrigger className="w-16 h-7 text-xs rounded-none border-l-0">
+                <Select value={discountType} onValueChange={(value) => setDiscountType(value as 'percentage' | 'amount')}>
+                  <SelectTrigger className="w-24">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="percentage">%</SelectItem>
-                    <SelectItem value="amount">₺</SelectItem>
+                    <SelectItem value="amount">{selectedCurrency === "TRY" ? "TL" : selectedCurrency}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="vat_rate" className="text-xs font-medium text-gray-600">
+              <Label htmlFor="vat_rate" className="text-sm font-medium text-gray-600">
                 KDV Oranı
               </Label>
               <Select value={(vatRate || 20).toString()} onValueChange={(value) => setVatRate(Number(value))}>
-                <SelectTrigger className="mt-0.5 h-7 text-xs">
+                <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -430,7 +440,7 @@ const ProductDetailsModal = ({
 
           {/* Açıklama */}
           <div>
-            <Label htmlFor="description" className="text-xs font-medium text-gray-600">
+            <Label htmlFor="description" className="text-sm font-medium text-gray-600">
               Açıklama
             </Label>
             <Textarea
@@ -439,12 +449,12 @@ const ProductDetailsModal = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Açıklama"
               rows={2}
-              className="mt-0.5 resize-none text-xs"
+              className="mt-1 resize-none"
             />
           </div>
 
           {/* Hesaplama Özeti */}
-          <div className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+          <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-gray-700">Hesaplama Özeti</span>
               {product?.id && (

@@ -1,6 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { User, Building2, Plus, Phone, Mail, Search } from "lucide-react";
@@ -29,14 +31,58 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [localPartnerType, setLocalPartnerType] = useState<"customer" | "supplier">(partnerType);
+  const [displayCount, setDisplayCount] = useState(20); // İlk 20 müşteri göster
   
   const customerId = watch("customer_id");
   const supplierId = watch("supplier_id");
   
-  const { customers, suppliers, isLoading } = useCustomerSelect();
+  // Load all customers/suppliers for initial display (limited)
+  const { customers: allCustomers, suppliers: allSuppliers, customersTotalCount, suppliersTotalCount, isLoading: isLoadingAll } = useCustomerSelect();
   
-  const selectedCustomer = customers?.find(c => c.id === customerId);
-  const selectedSupplier = suppliers?.find(s => s.id === supplierId);
+  // Search in database when search query is provided
+  const { data: searchedCustomers, isLoading: isSearchingCustomers } = useQuery({
+    queryKey: ["customers-search", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery.trim()) return null;
+      
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
+        .or(`name.ilike.%${searchQuery}%,company.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .limit(50);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!searchQuery.trim() && isOpen,
+  });
+
+  const { data: searchedSuppliers, isLoading: isSearchingSuppliers } = useQuery({
+    queryKey: ["suppliers-search", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery.trim()) return null;
+      
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
+        .or(`name.ilike.%${searchQuery}%,company.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .limit(50);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!searchQuery.trim() && isOpen,
+  });
+
+  // Use searched results if available, otherwise use all customers
+  const customers = searchQuery.trim() ? searchedCustomers : allCustomers;
+  const suppliers = searchQuery.trim() ? searchedSuppliers : allSuppliers;
+  const isLoading = searchQuery.trim() 
+    ? (isSearchingCustomers || isSearchingSuppliers)
+    : isLoadingAll;
+  
+  const selectedCustomer = allCustomers?.find(c => c.id === customerId);
+  const selectedSupplier = allSuppliers?.find(s => s.id === supplierId);
   
   const handleSelectPartner = (id: string, type: "customer" | "supplier") => {
     if (type === "customer") {
@@ -52,36 +98,62 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
   const handleCreateNew = (type: "customer" | "supplier") => {
     navigate(type === "customer" ? "/contacts/new" : "/suppliers/new");
   };
+
+  const handleLoadMore = () => {
+    setDisplayCount(prev => prev + 20);
+  };
+
+  // Reset display count when search query changes or popover opens
+  useEffect(() => {
+    if (isOpen && !searchQuery.trim()) {
+      setDisplayCount(20);
+    }
+  }, [isOpen, searchQuery]);
   
   const getDisplayName = () => {
     if (selectedCustomer) {
-      return selectedCustomer.name;
+      return selectedCustomer.company || selectedCustomer.name || "Müşteri seçin...";
     }
     if (selectedSupplier) {
-      return selectedSupplier.name;
+      return selectedSupplier.company || selectedSupplier.name || "Tedarikçi seçin...";
     }
     return placeholder ?? (partnerType === "customer" ? "Müşteri seçin..." : "Tedarikçi seçin...");
   };
 
   const selectedPartner = partnerType === "customer" ? selectedCustomer : selectedSupplier;
 
-  const filteredCustomers = customers?.filter(customer => 
-    customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (customer.company && customer.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (customer.email && customer.email.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // When searching, use database results directly
+  // When not searching, show limited initial list (based on displayCount)
+  const filteredCustomers = searchQuery.trim() 
+    ? customers 
+    : customers?.slice(0, displayCount);
 
-  const filteredSuppliers = suppliers?.filter(supplier => 
-    supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (supplier.company && supplier.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (supplier.email && supplier.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredSuppliers = searchQuery.trim()
+    ? suppliers
+    : suppliers?.slice(0, displayCount);
+
+  // Check if there are more customers/suppliers to load
+  // Use totalCount if available, otherwise fall back to array length
+  const hasMoreCustomers = !searchQuery.trim() && allCustomers && (
+    customersTotalCount > displayCount || allCustomers.length > displayCount
   );
+  const hasMoreSuppliers = !searchQuery.trim() && allSuppliers && (
+    suppliersTotalCount > displayCount || allSuppliers.length > displayCount
+  );
+  
+  // Calculate remaining count - use totalCount if available
+  const remainingCustomers = customersTotalCount > 0 
+    ? Math.max(0, customersTotalCount - displayCount)
+    : (allCustomers ? Math.max(0, allCustomers.length - displayCount) : 0);
+  const remainingSuppliers = suppliersTotalCount > 0
+    ? Math.max(0, suppliersTotalCount - displayCount)
+    : (allSuppliers ? Math.max(0, allSuppliers.length - displayCount) : 0);
 
   return (
     <div className="space-y-3">
       <div>
         {!hideLabel && (
-          <Label className="text-xs font-medium text-gray-700">
+          <Label className="text-sm font-medium text-gray-700">
             {label ?? (partnerType === "customer" ? "Müşteri" : "Tedarikçi")}
             {required && <span className="text-red-500 ml-1">*</span>}
           </Label>
@@ -92,7 +164,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
               variant="outline"
               role="combobox"
               aria-expanded={isOpen}
-              className="w-full h-7 text-xs justify-between mt-1"
+              className="w-full justify-between mt-1"
             >
               <div className="flex items-center">
                 {partnerType === "customer" ? (
@@ -106,77 +178,91 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[400px] max-w-[90vw] p-0" align="start">
-            <div className="p-4 border-b">
+            <div className="p-2 border-b">
               <Input
                 placeholder="Arama..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
+                className="w-full h-9"
               />
             </div>
             
             <CustomTabs defaultValue={partnerType} onValueChange={(value) => setLocalPartnerType(value as "customer" | "supplier")}>
-              <div className="px-4 pt-3 pb-1">
-                <CustomTabsList className="w-full">
-                  <CustomTabsTrigger value="customer" className="flex-1">
-                    <User className="h-4 w-4 mr-2" />
+              <div className="px-2 pt-2 pb-1">
+                <CustomTabsList className="w-full h-9">
+                  <CustomTabsTrigger value="customer" className="flex-1 text-xs py-1.5">
+                    <User className="h-3 w-3 mr-1.5" />
                     Müşteriler
                   </CustomTabsTrigger>
-                  <CustomTabsTrigger value="supplier" className="flex-1">
-                    <Building2 className="h-4 w-4 mr-2" />
+                  <CustomTabsTrigger value="supplier" className="flex-1 text-xs py-1.5">
+                    <Building2 className="h-3 w-3 mr-1.5" />
                     Tedarikçiler
                   </CustomTabsTrigger>
                 </CustomTabsList>
               </div>
               
-              <CustomTabsContent value="customer" className="p-0 focus-visible:outline-none focus-visible:ring-0">
-                <ScrollArea className="h-[300px]">
+              <CustomTabsContent value="customer" className="p-0 mt-0 focus-visible:outline-none focus-visible:ring-0">
+                <ScrollArea className="h-[250px]">
                   {isLoading ? (
                     <div className="p-4 text-center text-muted-foreground">Yükleniyor...</div>
-                  ) : filteredCustomers?.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">Müşteri bulunamadı</div>
+                  ) : !filteredCustomers || filteredCustomers.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground">
+                      {searchQuery.trim() ? `"${searchQuery}" ile eşleşen müşteri bulunamadı` : "Müşteri bulunamadı"}
+                    </div>
                   ) : (
-                    <div className="grid gap-1 p-2">
+                    <div className="grid gap-0.5 p-1.5">
                       {filteredCustomers?.map((customer) => (
                         <div
                           key={customer.id}
-                          className={`flex items-start p-2 cursor-pointer rounded-md hover:bg-muted/50 ${
+                          className={`flex items-start p-1.5 cursor-pointer rounded-md hover:bg-muted/50 ${
                             customer.id === customerId ? "bg-muted" : ""
                           }`}
                           onClick={() => handleSelectPartner(customer.id, "customer")}
                         >
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3 mt-1">
-                            {customer.name.charAt(0).toUpperCase()}
+                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-2 mt-0.5 text-xs">
+                            {(customer.company || customer.name || 'M').charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex justify-between">
-                              <p className="font-medium truncate">{customer.name}</p>
+                            <div className="flex justify-between items-center">
+                              <p className="font-medium truncate text-sm">{customer.company || customer.name || 'İsimsiz Müşteri'}</p>
                               {customer.status && (
-                                <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                <span className={`text-[10px] px-1 py-0.5 rounded ${
                                   customer.status === "aktif" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
                                 }`}>
                                   {customer.status === "aktif" ? "Aktif" : "Pasif"}
                                 </span>
                               )}
                             </div>
-                            {customer.company && (
-                              <p className="text-sm text-muted-foreground truncate">{customer.company}</p>
+                            {customer.company && customer.name && customer.company !== customer.name && (
+                              <p className="text-xs text-muted-foreground truncate">{customer.name}</p>
                             )}
                             {customer.email && (
-                              <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                <Mail className="h-3 w-3 mr-1" />
+                              <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
+                                <Mail className="h-2.5 w-2.5 mr-1" />
                                 <span className="truncate">{customer.email}</span>
                               </div>
                             )}
                             {customer.mobile_phone && (
-                              <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                <Phone className="h-3 w-3 mr-1" />
+                              <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
+                                <Phone className="h-2.5 w-2.5 mr-1" />
                                 <span>{customer.mobile_phone}</span>
                               </div>
                             )}
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                  {hasMoreCustomers && (
+                    <div className="p-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={handleLoadMore}
+                      >
+                        Daha Fazla Yükle ({remainingCustomers} kaldı)
+                      </Button>
                     </div>
                   )}
                   <div className="p-2 border-t">
@@ -193,30 +279,32 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                 </ScrollArea>
               </CustomTabsContent>
               
-              <CustomTabsContent value="supplier" className="p-0 focus-visible:outline-none focus-visible:ring-0">
-                <ScrollArea className="h-[300px]">
+              <CustomTabsContent value="supplier" className="p-0 mt-0 focus-visible:outline-none focus-visible:ring-0">
+                <ScrollArea className="h-[250px]">
                   {isLoading ? (
                     <div className="p-4 text-center text-muted-foreground">Yükleniyor...</div>
-                  ) : filteredSuppliers?.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">Tedarikçi bulunamadı</div>
+                  ) : !filteredSuppliers || filteredSuppliers.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground">
+                      {searchQuery.trim() ? `"${searchQuery}" ile eşleşen tedarikçi bulunamadı` : "Tedarikçi bulunamadı"}
+                    </div>
                   ) : (
-                    <div className="grid gap-1 p-2">
+                    <div className="grid gap-0.5 p-1.5">
                       {filteredSuppliers?.map((supplier) => (
                         <div
                           key={supplier.id}
-                          className={`flex items-start p-2 cursor-pointer rounded-md hover:bg-muted/50 ${
+                          className={`flex items-start p-1.5 cursor-pointer rounded-md hover:bg-muted/50 ${
                             supplier.id === supplierId ? "bg-muted" : ""
                           }`}
                           onClick={() => handleSelectPartner(supplier.id, "supplier")}
                         >
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3 mt-1">
-                            <Building2 className="h-4 w-4" />
+                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-2 mt-0.5">
+                            <Building2 className="h-3 w-3" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex justify-between">
-                              <p className="font-medium truncate">{supplier.name}</p>
+                            <div className="flex justify-between items-center">
+                              <p className="font-medium truncate text-sm">{supplier.name}</p>
                               {supplier.status && (
-                                <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                <span className={`text-[10px] px-1 py-0.5 rounded ${
                                   supplier.status === "aktif" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
                                 }`}>
                                   {supplier.status === "aktif" ? "Aktif" : "Pasif"}
@@ -224,23 +312,35 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                               )}
                             </div>
                             {supplier.company && (
-                              <p className="text-sm text-muted-foreground truncate">{supplier.company}</p>
+                              <p className="text-xs text-muted-foreground truncate">{supplier.company}</p>
                             )}
                             {supplier.email && (
-                              <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                <Mail className="h-3 w-3 mr-1" />
+                              <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
+                                <Mail className="h-2.5 w-2.5 mr-1" />
                                 <span className="truncate">{supplier.email}</span>
                               </div>
                             )}
                             {supplier.mobile_phone && (
-                              <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                <Phone className="h-3 w-3 mr-1" />
+                              <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
+                                <Phone className="h-2.5 w-2.5 mr-1" />
                                 <span>{supplier.mobile_phone}</span>
                               </div>
                             )}
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                  {hasMoreSuppliers && (
+                    <div className="p-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={handleLoadMore}
+                      >
+                        Daha Fazla Yükle ({remainingSuppliers} kaldı)
+                      </Button>
                     </div>
                   )}
                   <div className="p-2 border-t">

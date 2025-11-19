@@ -124,7 +124,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              "w-full h-8 text-sm justify-between",
+              "w-full justify-between",
               triggerClassName,
               !value && "text-muted-foreground",
               error && "border-red-500"

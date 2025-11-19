@@ -30,7 +30,7 @@ interface ProductServiceCardProps {
   onItemChange: (index: number, field: keyof LineItem, value: any) => void;
   onProductModalSelect: (product: any, itemIndex?: number) => void;
   showMoveButtons?: boolean;
-  inputHeight?: "h-7" | "h-8";
+  inputHeight?: "h-10" | "h-8";
 }
 
 const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
@@ -42,7 +42,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
   onItemChange,
   onProductModalSelect,
   showMoveButtons = false,
-  inputHeight = "h-7"
+  inputHeight = "h-10"
 }) => {
   return (
     <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
@@ -64,28 +64,28 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
         {/* Kolon Başlıkları */}
         <div className="grid grid-cols-12 gap-2 mb-3 px-1">
           <div className="col-span-5">
-            <Label className="text-xs font-medium text-gray-600">Ürün/Hizmet</Label>
+            <Label className="text-sm font-medium text-gray-600">Ürün/Hizmet</Label>
           </div>
           <div className="col-span-1">
-            <Label className="text-xs font-medium text-gray-600">Miktar</Label>
+            <Label className="text-sm font-medium text-gray-600">Miktar</Label>
           </div>
           <div className="col-span-1">
-            <Label className="text-xs font-medium text-gray-600">Birim</Label>
+            <Label className="text-sm font-medium text-gray-600">Birim</Label>
           </div>
           <div className="col-span-1">
-            <Label className="text-xs font-medium text-gray-600">Birim Fiyat</Label>
+            <Label className="text-sm font-medium text-gray-600">Birim Fiyat</Label>
           </div>
           <div className="col-span-1">
-            <Label className="text-xs font-medium text-gray-600">KDV %</Label>
+            <Label className="text-sm font-medium text-gray-600">KDV %</Label>
           </div>
           <div className="col-span-1">
-            <Label className="text-xs font-medium text-gray-600">İndirim</Label>
+            <Label className="text-sm font-medium text-gray-600">İndirim</Label>
           </div>
           <div className="col-span-1">
-            <Label className="text-xs font-medium text-gray-600">Toplam</Label>
+            <Label className="text-sm font-medium text-gray-600">Toplam</Label>
           </div>
           <div className="col-span-1">
-            <Label className="text-xs font-medium text-gray-600">İşlemler</Label>
+            <Label className="text-sm font-medium text-gray-600">İşlemler</Label>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                     value={item.quantity}
                     onChange={(e) => onItemChange(index, 'quantity', Number(e.target.value))}
                     min="1"
-                    className={`${inputHeight} text-xs`}
+                    className={inputHeight}
                   />
                 </div>
                 

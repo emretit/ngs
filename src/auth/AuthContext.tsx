@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { clearAuthTokens } from "@/lib/supabase-utils"
 import { User, Session } from '@supabase/supabase-js'
 import { isSessionExpired, updateActivity, clearActivity } from '@/lib/session-activity'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface AuthContextType {
   user: User | null
@@ -29,6 +30,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
+
+  // signOut fonksiyonunu önce tanımla (useEffect içinde kullanılacak)
+  const signOut = useCallback(async () => {
+    try {
+      await supabase.auth.signOut({ scope: 'global' })
+    } catch (error) {
+      console.warn('SignOut warning:', error)
+    } finally {
+      // Always clear local auth state, tokens, and activity
+      setSession(null)
+      setUser(null)
+      try { clearAuthTokens() } catch {}
+      clearActivity()
+      
+      // Tüm query cache'lerini temizle (farklı firma verilerinin görünmemesi için)
+      queryClient.clear()
+      console.log('Query cache cleared on signout')
+    }
+  }, [queryClient])
 
   useEffect(() => {
     let mounted = true;
@@ -77,6 +98,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       console.log('Auth state changed:', event, session?.user?.email)
 
+      // SIGNED_OUT event'inde cache'i temizle
+      if (event === 'SIGNED_OUT') {
+        queryClient.clear()
+        console.log('Query cache cleared on SIGNED_OUT event')
+        clearActivity()
+      }
+
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -113,7 +141,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe()
       clearInterval(checkInterval)
     }
-  }, [])
+  }, [queryClient, signOut])
 
   // Global activity listeners to refresh inactivity timestamp on user interaction
   useEffect(() => {
@@ -184,20 +212,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.error('SignUp error:', error)
       return { user: null, error: error as any }
-    }
-  }
-
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut({ scope: 'global' })
-    } catch (error) {
-      console.warn('SignOut warning:', error)
-    } finally {
-      // Always clear local auth state, tokens, and activity
-      setSession(null)
-      setUser(null)
-      try { clearAuthTokens() } catch {}
-      clearActivity()
     }
   }
 

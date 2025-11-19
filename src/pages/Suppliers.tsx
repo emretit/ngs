@@ -31,7 +31,8 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
     hasNextPage,
     loadMore,
     totalCount,
-    error
+    error,
+    refresh: refreshSuppliers
   } = useSuppliersInfiniteScroll({
     search: searchQuery,
     status: selectedStatus,
@@ -58,19 +59,37 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         };
       }
 
-      // Tüm tedarikçileri çek (filtre olmadan)
-      const { data: allSuppliers, error: suppliersError } = await supabase
+      // Toplam tedarikçi sayısını count ile al (limit sorunu olmasın diye)
+      const { count: totalCount, error: countError } = await supabase
         .from("suppliers")
-        .select("balance")
+        .select("*", { count: 'exact', head: true })
         .eq("company_id", companyId);
 
-      if (suppliersError) throw suppliersError;
-      if (!allSuppliers || allSuppliers.length === 0) {
-        return {
-          totalCount: 0,
-          totalBalance: 0,
-          overdueBalance: 0
-        };
+      if (countError) throw countError;
+
+      // Bakiyeleri hesaplamak için tüm tedarikçileri çek (limit uygulanmadan)
+      // Supabase'in varsayılan limiti 1000, bu yüzden pagination ile tüm verileri çekmeliyiz
+      let allSuppliers: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data: suppliersPage, error: suppliersError } = await supabase
+          .from("suppliers")
+          .select("balance")
+          .eq("company_id", companyId)
+          .range(from, from + pageSize - 1);
+
+        if (suppliersError) throw suppliersError;
+        
+        if (suppliersPage && suppliersPage.length > 0) {
+          allSuppliers = [...allSuppliers, ...suppliersPage];
+          from += pageSize;
+          hasMore = suppliersPage.length === pageSize;
+        } else {
+          hasMore = false;
+        }
       }
 
       // Toplam bakiye ve vadesi geçen bakiyeleri hesapla
@@ -80,7 +99,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
       }, 0);
 
       return {
-        totalCount: allSuppliers.length,
+        totalCount: totalCount || 0,
         totalBalance,
         overdueBalance
       };
@@ -108,7 +127,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   const handleBulkAction = useCallback(async (action: string) => {
     if (action === 'delete') {
       if (selectedSuppliers.length === 0) {
-        toast.error('Lütfen silmek için en az bir tedarikçi seçin', { duration: 1000 });
+        toast.error('Lütfen silmek için en az bir tedarikçi seçin', { duration: 2000 });
         return;
       }
       setIsDeleteDialogOpen(true);
@@ -116,58 +135,89 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   }, [selectedSuppliers]);
 
   const handleBulkDeleteConfirm = useCallback(async () => {
-    if (selectedSuppliers.length === 0) return;
+    if (selectedSuppliers.length === 0) {
+      console.log('No suppliers selected');
+      return;
+    }
 
+    console.log('Starting bulk delete for suppliers:', selectedSuppliers.map(s => s.id));
     setIsDeleting(true);
     try {
       const supplierIds = selectedSuppliers.map(s => s.id);
+      console.log('Supplier IDs to delete:', supplierIds);
       
       // Önce hangi tedarikçilerin referansları olduğunu kontrol et
-      const { data: purchaseInvoices } = await supabase
+      const { data: purchaseInvoices, error: invoicesError } = await supabase
         .from('purchase_invoices')
         .select('supplier_id')
         .in('supplier_id', supplierIds)
         .limit(1);
       
-      const { data: purchaseOrders } = await supabase
+      if (invoicesError) {
+        console.error('Error checking purchase_invoices:', invoicesError);
+      }
+      
+      const { data: purchaseOrders, error: ordersError } = await supabase
         .from('purchase_orders')
         .select('supplier_id')
         .in('supplier_id', supplierIds)
         .limit(1);
       
-      const { data: products } = await supabase
+      if (ordersError) {
+        console.error('Error checking purchase_orders:', ordersError);
+      }
+      
+      const { data: products, error: productsError } = await supabase
         .from('products')
         .select('supplier_id')
         .in('supplier_id', supplierIds)
         .limit(1);
 
+      if (productsError) {
+        console.error('Error checking products:', productsError);
+      }
+
       if (purchaseInvoices && purchaseInvoices.length > 0) {
-        toast.error('Bu tedarikçiler alış faturalarında kullanıldığı için silinemez', { duration: 1000 });
+        console.log('Suppliers have purchase invoices, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
+        toast.error('Bu tedarikçiler alış faturalarında kullanıldığı için silinemez', { duration: 2000 });
         return;
       }
 
       if (purchaseOrders && purchaseOrders.length > 0) {
-        toast.error('Bu tedarikçiler satın alma siparişlerinde kullanıldığı için silinemez', { duration: 1000 });
+        console.log('Suppliers have purchase orders, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
+        toast.error('Bu tedarikçiler satın alma siparişlerinde kullanıldığı için silinemez', { duration: 2000 });
         return;
       }
 
       if (products && products.length > 0) {
-        toast.error('Bu tedarikçiler ürünlerde kullanıldığı için silinemez', { duration: 1000 });
+        console.log('Suppliers have products, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
+        toast.error('Bu tedarikçiler ürünlerde kullanıldığı için silinemez', { duration: 2000 });
         return;
       }
 
+      console.log('Attempting to delete suppliers from Supabase...');
       const { error } = await supabase
         .from('suppliers')
         .delete()
         .in('id', supplierIds);
 
+      console.log('Delete response - error:', error);
+
       if (error) {
+        console.error('Delete error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          status: (error as any)?.status
+        });
+        
         const httpStatus = (error as any)?.status;
         const isConflictError = 
           httpStatus === 409 || 
@@ -175,30 +225,38 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
           error.code === 'PGRST204' ||
           error.message?.includes('foreign key') ||
           error.message?.includes('violates foreign key constraint') ||
-          error.message?.includes('still referenced');
+          error.message?.includes('still referenced') ||
+          error.message?.includes('permission denied') ||
+          error.message?.includes('new row violates row-level security');
 
-        if (isConflictError) {
-          toast.error('Bu tedarikçiler başka kayıtlarda kullanıldığı için silinemez (fatura, sipariş, ürün vb.)', { duration: 1000 });
-        } else {
-          throw error;
-        }
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
+        if (isConflictError) {
+          toast.error('Bu tedarikçiler başka kayıtlarda kullanıldığı için silinemez (fatura, sipariş, ürün vb.)', { duration: 2000 });
+        } else {
+          toast.error(`Silme hatası: ${error.message || 'Bilinmeyen hata'}`, { duration: 2000 });
+        }
+        if (!isConflictError) {
+          throw error;
+        }
         return;
       }
 
-      toast.success(`${selectedSuppliers.length} tedarikçi başarıyla silindi`, { duration: 1000 });
+      console.log('Suppliers deleted successfully');
+      toast.success(`${selectedSuppliers.length} tedarikçi başarıyla silindi`, { duration: 2000 });
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['supplier_statistics'] });
       setSelectedSuppliers([]);
+      // Tabloyu yenile
+      refreshSuppliers();
     } catch (error: any) {
       console.error('Error deleting suppliers:', error);
-      toast.error(`Tedarikçiler silinirken bir hata oluştu: ${error?.message || 'Bilinmeyen hata'}`, { duration: 1000 });
+      toast.error(`Tedarikçiler silinirken bir hata oluştu: ${error?.message || 'Bilinmeyen hata'}`, { duration: 2000 });
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
     }
-  }, [selectedSuppliers, queryClient]);
+  }, [selectedSuppliers, queryClient, refreshSuppliers]);
 
   const handleBulkDeleteCancel = useCallback(() => {
     setIsDeleteDialogOpen(false);
@@ -225,6 +283,10 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
           selectedSuppliers={selectedSuppliers}
           onClearSelection={handleClearSelection}
           onBulkAction={handleBulkAction}
+          onImportSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+            queryClient.invalidateQueries({ queryKey: ['supplier_statistics'] });
+          }}
         />
         {isLoading ? (
           <div className="flex items-center justify-center h-[400px]">

@@ -61,7 +61,8 @@ export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) =>
       pageSize: 20,
       enabled: true,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnMount: false, // Cache'den veri varsa hiç fetch yapma
+      staleTime: 5 * 60 * 1000, // 5 minutes - bu süre içinde veri fresh sayılır
       gcTime: 10 * 60 * 1000, // 10 minutes
     }
   );

@@ -5,7 +5,8 @@ export interface ProposalFormData {
   title: string;
   subject?: string; // Teklif konusu
   customer_id?: string;
-  employee_id?: string;
+  employee_id?: string; // Müşteri temsilcisi
+  prepared_by?: string; // Hazırlayan
   opportunity_id?: string;
   items?: ProposalItem[];
   valid_until?: string;

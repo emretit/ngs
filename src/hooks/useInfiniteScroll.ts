@@ -5,6 +5,7 @@ export interface InfiniteScrollOptions {
   pageSize?: number;
   enabled?: boolean;
   refetchOnWindowFocus?: boolean;
+  refetchOnMount?: boolean;
   staleTime?: number;
   gcTime?: number;
 }
@@ -29,6 +30,7 @@ export function useInfiniteScroll<T>(
     pageSize = 20,
     enabled = true,
     refetchOnWindowFocus = false,
+    refetchOnMount = false, // Cache'den veri varsa mount'ta refetch yapma
     staleTime = 5 * 60 * 1000, // 5 minutes
     gcTime = 10 * 60 * 1000, // 10 minutes
   } = options;
@@ -50,14 +52,25 @@ export function useInfiniteScroll<T>(
     queryFn: () => queryFn(1, pageSize),
     enabled,
     refetchOnWindowFocus,
+    refetchOnMount, // Cache'den veri varsa mount'ta refetch yapma
     staleTime,
     gcTime,
+    placeholderData: (previousData) => previousData, // Önceki veriyi göster (smooth transition)
   });
 
   // İlk sayfa verisi geldiğinde state'i güncelle
   useEffect(() => {
     if (firstPageData?.data) {
-      setAllData(firstPageData.data);
+      // Sadece veri gerçekten değiştiyse state'i güncelle
+      setAllData(prev => {
+        // Aynı veri varsa güncelleme yapma
+        if (prev.length === firstPageData.data.length && 
+            prev.length > 0 && 
+            prev[0]?.id === firstPageData.data[0]?.id) {
+          return prev;
+        }
+        return firstPageData.data;
+      });
       setCurrentPage(1);
       setHasNextPage(firstPageData.hasNextPage ?? firstPageData.data.length === pageSize);
       if (firstPageData.totalCount !== undefined) {
@@ -179,8 +192,13 @@ export function useInfiniteScroll<T>(
     };
   }, []);
 
+  // Cache'den veri varsa onu kullan, yoksa allData'yı kullan
+  // allData boşsa ve firstPageData varsa onu kullan (cache'den gelen veri)
+  // allData doluysa onu kullan (loadMore ile yüklenen veriler dahil)
+  const displayData = allData.length > 0 ? allData : (firstPageData?.data || []);
+
   return {
-    data: allData,
+    data: displayData,
     isLoading,
     isLoadingMore,
     hasNextPage,

@@ -690,6 +690,7 @@ const NewOrderCreate = () => {
             onGlobalDiscountValueChange={setGlobalDiscountValue}
             showVatControl={false}
             inputHeight="h-7"
+            selectedCurrency={formData.currency}
           />
         </div>
 

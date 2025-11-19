@@ -391,6 +391,7 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
     unmappedColumns,
     mappingConfidence,
     showMappingDialog,
+    setShowMappingDialog,
     excelColumns,
     customMapping,
     setCustomMapping,

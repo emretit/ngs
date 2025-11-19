@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { parseExcelFile } from '@/utils/customerExcelUtils';
 import { toast } from 'sonner';
+import { importCustomersFromExcel, readExcelColumns } from '@/utils/excelUtils';
+import { mapCustomerColumnsWithAI, ColumnMapping } from '@/services/customerColumnMappingService';
 
 interface ImportStats {
   success: number;
@@ -13,8 +13,9 @@ interface ImportStats {
 }
 
 export const useCustomerExcelImport = (onSuccess?: () => void) => {
-  const [isImporting, setIsImporting] = useState(false);
-  const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(false);
+  const isCancelledRef = useRef<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [stats, setStats] = useState<ImportStats>({
     success: 0,
@@ -23,9 +24,126 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
     invalidRows: 0,
     total: 0
   });
+  
+  // AI Mapping states
+  const [isMappingColumns, setIsMappingColumns] = useState(false);
+  const [columnMappings, setColumnMappings] = useState<ColumnMapping[]>([]);
+  const [unmappedColumns, setUnmappedColumns] = useState<string[]>([]);
+  const [mappingConfidence, setMappingConfidence] = useState<number>(0);
+  const [showMappingDialog, setShowMappingDialog] = useState(false);
+  const [excelColumns, setExcelColumns] = useState<string[]>([]);
+  const [customMapping, setCustomMapping] = useState<{ [excelColumn: string]: string }>({});
 
-  const importFromExcel = async (file: File) => {
-    setIsImporting(true);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      
+      // Excel kolonlarını oku ve AI ile mapping yap
+      try {
+        setIsMappingColumns(true);
+        const columns = await readExcelColumns(file);
+        setExcelColumns(columns);
+        
+        if (columns.length === 0) {
+          toast.error('Excel dosyasında kolon bulunamadı');
+          setIsMappingColumns(false);
+          return;
+        }
+        
+        // AI ile mapping yap
+        const mappingResult = await mapCustomerColumnsWithAI(columns);
+        
+        setColumnMappings(mappingResult.mappings);
+        setUnmappedColumns(mappingResult.unmappedColumns);
+        setMappingConfidence(mappingResult.confidence);
+        
+        // Mapping dialog'unu göster
+        setShowMappingDialog(true);
+        
+      } catch (error: any) {
+        console.error('Error mapping columns:', error);
+        toast.error('Kolon eşleştirme yapılırken bir hata oluştu');
+      } finally {
+        setIsMappingColumns(false);
+      }
+    }
+  };
+  
+  const handleMappingConfirm = () => {
+    // Custom mapping'i oluştur
+    const mapping: { [excelColumn: string]: string } = {};
+    columnMappings.forEach(m => {
+      mapping[m.excelColumn] = m.systemField;
+    });
+    
+    // Kullanıcının manuel değişikliklerini de ekle
+    Object.assign(mapping, customMapping);
+    
+    setCustomMapping(mapping);
+    setShowMappingDialog(false);
+  };
+  
+  const handleMappingCancel = () => {
+    setSelectedFile(null);
+    setShowMappingDialog(false);
+    setColumnMappings([]);
+    setUnmappedColumns([]);
+    setCustomMapping({});
+  };
+
+  const validateCustomerData = (row: any) => {
+    const errors: string[] = [];
+    
+    // Required fields
+    if (!row.name || typeof row.name !== 'string' || row.name.trim() === '') {
+      errors.push('Müşteri adı zorunludur');
+    }
+    
+    // Email validation (optional but format check)
+    if (row.email && row.email.trim() !== '') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(row.email)) {
+        errors.push('Geçerli bir e-posta adresi giriniz');
+      }
+    }
+    
+    // Type validation (default: kurumsal)
+    if (row.type && row.type.trim() !== '') {
+      const type = row.type.toLowerCase();
+      if (type !== 'bireysel' && type !== 'kurumsal') {
+        errors.push('Müşteri tipi sadece "bireysel" veya "kurumsal" olabilir');
+      }
+    }
+    
+    // Status validation (default: aktif)
+    if (row.status && row.status.trim() !== '') {
+      const status = row.status.toLowerCase();
+      if (!['aktif', 'pasif', 'potansiyel'].includes(status)) {
+        errors.push('Durum "aktif", "pasif" veya "potansiyel" olabilir');
+      }
+    }
+    
+    return errors;
+  };
+
+  const handleCancel = () => {
+    try {
+      isCancelledRef.current = true;
+      setIsLoading(false);
+      toast.info('İçe aktarma iptal edildi');
+    } catch (error) {
+      console.error('Error cancelling import:', error);
+      setIsLoading(false);
+      toast.info('İçe aktarma iptal edildi');
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) return;
+    
+    setIsLoading(true);
+    isCancelledRef.current = false;
     setProgress(0);
     setStats({
       success: 0,
@@ -36,132 +154,164 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
     });
     
     try {
-      const customers = await parseExcelFile(file);
-      
-      if (customers.length === 0) {
-        toast.error('Excel dosyasında geçerli müşteri verisi bulunamadı');
-        setIsImporting(false);
+      // Import and parse Excel file with custom mapping
+      const importedData = await importCustomersFromExcel(selectedFile, customMapping);
+
+      if (!importedData || importedData.length === 0) {
+        toast.error('Excel dosyası boş veya geçersiz');
+        setIsLoading(false);
         return;
       }
-
-      // Set total for progress calculation
-      setStats(prev => ({ ...prev, total: customers.length }));
       
-      // Process each customer record
+      // Veri artık zaten normalize edilmiş olarak geliyor
+      const normalizedData = importedData;
+      
+      setStats(prev => ({ ...prev, total: normalizedData.length }));
+      
+      // Get user company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      const companyId = profile?.company_id;
+      
       let successCount = 0;
       let failedCount = 0;
       let duplicateCount = 0;
       let invalidCount = 0;
       
-      for (let i = 0; i < customers.length; i++) {
-        const customer = customers[i];
+      for (let i = 0; i < normalizedData.length; i++) {
+        // İptal kontrolü - her iterasyonda kontrol et
+        if (isCancelledRef.current) {
+          toast.info('İçe aktarma iptal edildi');
+          setIsLoading(false);
+          return;
+        }
         
-        // Check for required fields
-        if (!customer.name) {
+        let row = normalizedData[i];
+        
+        // Defaults
+        if (!row.type) row.type = 'kurumsal';
+        if (!row.status) row.status = 'aktif';
+        
+        // Validate
+        const validationErrors = validateCustomerData(row);
+        if (validationErrors.length > 0) {
           invalidCount++;
-          setStats({
-            success: successCount,
-            failed: failedCount,
-            duplicates: duplicateCount,
-            invalidRows: invalidCount,
-            total: customers.length
-          });
-          
-          // Update progress
-          setProgress(Math.floor(((i + 1) / customers.length) * 100));
+          setStats(prev => ({ ...prev, invalidRows: invalidCount }));
+          setProgress(Math.floor(((i + 1) / normalizedData.length) * 100));
           continue;
         }
         
-        // Check if customer already exists by email or name
-        const { data: existingCustomer, error: checkError } = await supabase
-          .from('customers')
-          .select('id, name, email')
-          .or(`name.eq.${customer.name}${customer.email ? `,email.eq.${customer.email}` : ''}`)
-          .maybeSingle();
-        
-        if (checkError) {
-          console.error('Error checking existing customer:', checkError);
-          failedCount++;
-        } else if (existingCustomer) {
-          duplicateCount++;
-        } else {
-          // Insert new customer
-          const { error: insertError } = await supabase
-            .from('customers')
-            .insert({
-              name: customer.name,
-              email: customer.email || null,
-              mobile_phone: customer.mobile_phone || null,
-              office_phone: customer.office_phone || null,
-              company: customer.company || null,
-              type: customer.type || 'bireysel',
-              status: customer.status || 'potansiyel',
-              representative: customer.representative || null,
-              balance: customer.balance || 0,
-              address: customer.address || null,
-              tax_number: customer.tax_number || null,
-              tax_office: customer.tax_office || null,
-              city: customer.city || null,
-              district: customer.district || null
-            });
-            
-          if (insertError) {
-            console.error('Error inserting customer:', insertError);
-            failedCount++;
-          } else {
-            successCount++;
-          }
+        // Check duplicates (by name) - basit kontrol
+        const { data: existing } = await supabase
+           .from('customers')
+           .select('id')
+           .eq('company_id', companyId)
+           .eq('name', row.name.trim())
+           .maybeSingle();
+           
+        if (existing) {
+           duplicateCount++;
+           setStats(prev => ({ ...prev, duplicates: duplicateCount }));
+           setProgress(Math.floor(((i + 1) / normalizedData.length) * 100));
+           continue;
         }
         
-        // Update stats
+        const customerType = row.type?.toLowerCase() || 'bireysel';
+        
+        // Kurumsal müşteriler için company alanı zorunlu
+        // Eğer company yoksa, name değerini company olarak kullan
+        const companyValue = row.company || (customerType === 'kurumsal' ? row.name.trim() : null);
+        
+        const customerData = {
+           company_id: companyId,
+           name: row.name.trim(),
+           company: companyValue,
+           email: row.email,
+           mobile_phone: row.mobile_phone,
+           office_phone: row.office_phone,
+           type: customerType,
+           status: row.status?.toLowerCase() || 'aktif',
+           tax_number: row.tax_number,
+           tax_office: row.tax_office,
+           address: row.address,
+           city: row.city,
+           district: row.district,
+           country: row.country,
+           postal_code: row.postal_code,
+           balance: 0,
+           is_einvoice_mukellef: false
+        };
+
+        const { error: insertError } = await supabase
+           .from('customers')
+           .insert(customerData);
+           
+        if (insertError) {
+           console.error('Error inserting customer:', insertError);
+           failedCount++;
+        } else {
+           successCount++;
+        }
+        
         setStats({
           success: successCount,
           failed: failedCount,
           duplicates: duplicateCount,
           invalidRows: invalidCount,
-          total: customers.length
+          total: normalizedData.length
         });
         
-        // Update progress
-        setProgress(Math.floor(((i + 1) / customers.length) * 100));
+        setProgress(Math.floor(((i + 1) / normalizedData.length) * 100));
       }
       
-      // Final update
-      setProgress(100);
-      
-      // Refresh the customers list
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-      
-      // Show success message
-      if (successCount > 0) {
-        toast.success(`${successCount} müşteri başarıyla içe aktarıldı`);
-        if (onSuccess) onSuccess();
-      }
-      
-      if (duplicateCount > 0) {
-        toast.info(`${duplicateCount} müşteri zaten sistemde mevcut`);
-      }
-      
-      if (invalidCount > 0) {
-        toast.warning(`${invalidCount} satır geçersiz veri nedeniyle içe aktarılamadı`);
-      }
-      
-      if (failedCount > 0) {
-        toast.error(`${failedCount} müşteri içe aktarılırken hata oluştu`);
+      // İptal edilmediyse progress'i 100'e tamamla
+      if (!isCancelledRef.current) {
+        setProgress(100);
+        
+        if (successCount > 0) {
+          toast.success(`${successCount} müşteri başarıyla içe aktarıldı`);
+          if (onSuccess) onSuccess();
+        }
+        
+        if (duplicateCount > 0) toast.info(`${duplicateCount} müşteri zaten mevcut`);
+        if (invalidCount > 0) toast.warning(`${invalidCount} satır geçersiz`);
+        if (failedCount > 0) toast.error(`${failedCount} müşteri eklenirken hata oluştu`);
       }
       
     } catch (error) {
-      console.error('Excel import error:', error);
-      toast.error('Excel dosyası işlenirken hata oluştu');
+      console.error('Import error:', error);
+      toast.error('İçe aktarma sırasında bir hata oluştu');
     } finally {
-      setIsImporting(false);
+      setIsLoading(false);
+      if (!isCancelledRef.current) {
+        setTimeout(() => setSelectedFile(null), 1000);
+      }
     }
   };
 
   return {
-    importFromExcel,
-    isImporting,
+    isLoading,
+    selectedFile,
     progress,
-    stats
+    stats,
+    handleFileChange,
+    handleImport,
+    handleCancel,
+    isMappingColumns,
+    columnMappings,
+    unmappedColumns,
+    mappingConfidence,
+    showMappingDialog,
+    setShowMappingDialog,
+    excelColumns,
+    customMapping,
+    setCustomMapping,
+    handleMappingConfirm,
+    handleMappingCancel
   };
 };

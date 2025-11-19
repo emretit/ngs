@@ -1,111 +1,101 @@
 // Production (Üretim) için TypeScript type tanımları
 
 export type WorkOrderStatus = 
+  | 'draft'        // Taslak
   | 'planned'      // Planlandı
   | 'in_progress'  // Üretimde
   | 'completed'    // Tamamlandı
-  | 'cancelled';    // İptal Edildi
+  | 'cancelled';   // İptal Edildi
+
+export type WorkOrderPriority = 'low' | 'medium' | 'high';
 
 export interface BOMItem {
   id: string;
   bom_id: string;
-  product_id: string;
-  product_name: string;
+  item_name: string;
   quantity: number;
   unit: string;
-  is_active: boolean;
   created_at: string;
-  updated_at: string;
-  
-  // İlişkili veriler
-  product?: {
-    id: string;
-    name: string;
-    sku?: string;
-    unit?: string;
-  };
 }
 
 export interface BOM {
   id: string;
   company_id: string;
   name: string;
-  main_product_id: string;
-  main_product_name: string;
-  version?: string;
-  is_active: boolean;
-  notes?: string;
-  created_by?: string;
+  description?: string;
+  product_id?: string;
+  product_name?: string;
   created_at: string;
   updated_at: string;
   
   // İlişkili veriler
-  main_product?: {
-    id: string;
-    name: string;
-    sku?: string;
-  };
   items?: BOMItem[];
+}
+
+export interface WorkOrderOperation {
+  id: string;
+  work_order_id: string;
+  name: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  order_index: number;
+  assigned_to?: string;
+  notes?: string;
+  created_at: string;
 }
 
 export interface WorkOrder {
   id: string;
   company_id: string;
-  work_order_number: string;
+  order_number: number;
+  title: string;
+  description?: string;
+  
   bom_id?: string;
-  bom_name?: string;
-  product_id: string;
-  product_name: string;
+  bom_name?: string; // Join ile gelebilir veya frontend'de eşleştirilebilir
+  
   quantity: number;
-  unit: string;
   status: WorkOrderStatus;
+  priority: WorkOrderPriority;
+  
   planned_start_date?: string;
   planned_end_date?: string;
   actual_start_date?: string;
   actual_end_date?: string;
-  notes?: string;
-  created_by?: string;
+  
+  assigned_to?: string; // User ID
+  
   created_at: string;
   updated_at: string;
   
   // İlişkili veriler
-  product?: {
-    id: string;
-    name: string;
-    sku?: string;
-  };
-  bom?: {
-    id: string;
-    name: string;
-    version?: string;
-  };
-  employee?: {
-    id: string;
-    first_name: string;
-    last_name: string;
+  bom?: BOM;
+  operations?: WorkOrderOperation[];
+  assignee?: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
   };
 }
 
 export interface CreateWorkOrderData {
+  title: string;
+  description?: string;
   bom_id?: string;
-  product_id: string;
-  product_name: string;
   quantity: number;
-  unit: string;
+  status?: WorkOrderStatus;
+  priority?: WorkOrderPriority;
   planned_start_date?: string;
   planned_end_date?: string;
-  notes?: string;
+  assigned_to?: string;
 }
 
 export interface CreateBOMData {
   name: string;
-  main_product_id: string;
-  main_product_name: string;
-  version?: string;
-  notes?: string;
+  description?: string;
+  product_id?: string;
+  product_name?: string;
   items: {
-    product_id: string;
-    product_name: string;
+    item_name: string;
     quantity: number;
     unit: string;
   }[];
@@ -128,4 +118,3 @@ export interface ProductionStats {
   bom_count: number;
   planned_this_week: number;
 }
-

@@ -53,16 +53,22 @@ const CustomerInfoCard: React.FC<CustomerInfoCardProps> = ({
               error={errors.contact_name || ""}
               required
             />
-            <div>
+            {/* Müşteri Temsilcisi */}
+            <EmployeeSelector
+              value={formData.employee_id || ""}
+              onChange={(value) => handleFieldChange('employee_id', value)}
+              label="Müşteri Temsilcisi"
+              placeholder="Müşteri temsilcisi seçin..."
+              error={errors.employee_id || ""}
+            />
+            {/* Hazırlayan */}
               <EmployeeSelector
                 value={formData.prepared_by || ""}
-                onChange={(value) => {
-                  handleFieldChange('prepared_by', value);
-                  handleFieldChange('employee_id', value);
-                }}
+              onChange={(value) => handleFieldChange('prepared_by', value)}
+              label="Hazırlayan"
+              placeholder="Hazırlayan seçin..."
                 error={errors.prepared_by || ""}
               />
-            </div>
           </div>
         </FormProvider>
       </CardContent>

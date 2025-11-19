@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, ArrowRightLeft, RefreshCcw } from "lucide-react";
 import { ProposalStatus, proposalStatusLabels, proposalStatusColors } from "@/types/proposal";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 
 interface ProposalDetailsCardProps {
   formData: {
@@ -28,6 +29,33 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
   handleFieldChange,
   errors = {}
 }) => {
+  // Exchange rates management
+  const { exchangeRates, isLoading: isLoadingRates, refreshExchangeRates } = useExchangeRates();
+
+  // Get exchange rate for selected currency
+  const getCurrentExchangeRate = (): number | null => {
+    if (!formData.currency || formData.currency === "TRY") {
+      return null;
+    }
+
+    const rate = exchangeRates.find(r => r.currency_code === formData.currency);
+    return rate?.forex_selling || null;
+  };
+
+  // Auto-update exchange rate when currency changes
+  useEffect(() => {
+    if (formData.currency && formData.currency !== "TRY") {
+      const currentRate = getCurrentExchangeRate();
+      if (currentRate && (!formData.exchange_rate || formData.exchange_rate === 1)) {
+        handleFieldChange('exchange_rate', currentRate);
+      }
+    } else if (formData.currency === "TRY") {
+      handleFieldChange('exchange_rate', undefined);
+    }
+  }, [formData.currency, exchangeRates]);
+
+  const currentRate = getCurrentExchangeRate();
+
   return (
     <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
       <CardHeader className="pb-2 pt-2.5">
@@ -41,7 +69,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
       <CardContent className="space-y-3 pt-0 px-4 pb-4">
         {/* Teklif Konusu */}
         <div>
-          <Label htmlFor="subject" className="text-xs font-medium text-gray-700">
+          <Label htmlFor="subject" className="text-sm font-medium text-gray-700">
             Teklif Konusu <span className="text-red-500">*</span>
           </Label>
           <Input
@@ -49,7 +77,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
             value={formData.subject || ""}
             onChange={(e) => handleFieldChange('subject', e.target.value)}
             placeholder="Teklif konusunu girin"
-            className="mt-1 h-7 text-xs"
+            className="mt-1 h-10 text-sm"
           />
         </div>
 
@@ -57,23 +85,21 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="offer_date" className="text-xs font-medium text-gray-700">Teklif Tarihi</Label>
+              <Label htmlFor="offer_date" className="text-sm font-medium text-gray-700">Teklif Tarihi</Label>
               <DatePicker
                 date={formData.offer_date}
                 onSelect={(date) => handleFieldChange('offer_date', date)}
                 placeholder="Teklif tarihi seçin"
-                className="h-7 text-xs"
               />
             </div>
             <div>
-              <Label htmlFor="validity_date" className="text-xs font-medium text-gray-700">
+              <Label htmlFor="validity_date" className="text-sm font-medium text-gray-700">
                 Geçerlilik Tarihi <span className="text-red-500">*</span>
               </Label>
               <DatePicker
                 date={formData.validity_date}
                 onSelect={(date) => handleFieldChange('validity_date', date)}
                 placeholder="Geçerlilik tarihi seçin"
-                className="h-7 text-xs"
               />
             </div>
           </div>
@@ -82,18 +108,18 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
         {/* Teklif No, Durum ve Para Birimi */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <Label htmlFor="offer_number" className="text-xs font-medium text-gray-700">Teklif No</Label>
+            <Label htmlFor="offer_number" className="text-sm font-medium text-gray-700">Teklif No</Label>
             <Input
               id="offer_number"
               value={formData.offer_number}
               onChange={(e) => handleFieldChange('offer_number', e.target.value)}
-              className="mt-1 h-7 text-xs"
+              className="mt-1 h-10 text-sm"
             />
           </div>
           <div>
-            <Label htmlFor="status" className="text-xs font-medium text-gray-700">Teklif Durumu</Label>
+            <Label htmlFor="status" className="text-sm font-medium text-gray-700">Teklif Durumu</Label>
             <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
-              <SelectTrigger className="mt-1 h-7 text-xs">
+              <SelectTrigger className="mt-1 h-10 text-sm">
                 <SelectValue placeholder="Durum seçin" />
               </SelectTrigger>
               <SelectContent>
@@ -109,52 +135,86 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
             </Select>
           </div>
           <div>
-            <Label htmlFor="currency" className="text-xs font-medium text-gray-700">Para Birimi</Label>
+            <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
             <Select value={formData.currency || "TRY"} onValueChange={(value) => handleFieldChange('currency', value)}>
-              <SelectTrigger className="mt-1 h-7 text-xs">
+              <SelectTrigger className="mt-1 h-10">
                 <SelectValue placeholder="Para birimi" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="TRY">₺ TRY</SelectItem>
+                <SelectItem value="TRY">₺ TL</SelectItem>
                 <SelectItem value="USD">$ USD</SelectItem>
                 <SelectItem value="EUR">€ EUR</SelectItem>
                 <SelectItem value="GBP">£ GBP</SelectItem>
               </SelectContent>
             </Select>
+            {isLoadingRates && formData.currency !== "TRY" && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                <RefreshCcw className="h-3 w-3 animate-spin" />
+                <span>Kurlar yükleniyor...</span>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
         {formData.currency && formData.currency !== "TRY" && (
-          <div>
-            <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
-              Döviz Kuru (1 {formData.currency} = ? TRY)
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="exchange_rate" className="text-sm font-medium text-gray-700">
+                Döviz Kuru
             </Label>
+              {currentRate && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <ArrowRightLeft className="h-3 w-3" />
+                  <span>Güncel: {currentRate.toFixed(4)} TL</span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1 relative">
             <Input
               id="exchange_rate"
               type="number"
-              step="0.01"
+                  step="0.0001"
               min="0"
               value={formData.exchange_rate || ""}
               onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
-              placeholder="Örn: 32.50"
-              className="mt-1 h-7 text-xs"
+                  placeholder={currentRate ? currentRate.toFixed(4) : "Örn: 32.50"}
+                  className="h-10 text-sm pr-20"
             />
-            <p className="text-[10px] text-muted-foreground mt-1">
-              1 {formData.currency} = {formData.exchange_rate || "1"} TRY
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                  1 {formData.currency === "TRY" ? "TL" : formData.currency} = ? TL
+                </div>
+              </div>
+              {currentRate && (
+                <button
+                  type="button"
+                  onClick={() => handleFieldChange('exchange_rate', currentRate)}
+                  className="px-3 py-2 text-xs border rounded-md hover:bg-muted whitespace-nowrap flex items-center gap-1"
+                  title="Güncel kuru uygula"
+                >
+                  <ArrowRightLeft className="h-3 w-3" />
+                  <span>Uygula</span>
+                </button>
+              )}
+            </div>
+            {formData.exchange_rate && currentRate && Math.abs(formData.exchange_rate - currentRate) > 0.01 && (
+              <p className="text-xs text-orange-600">
+                Güncel kurdan {formData.exchange_rate > currentRate ? '+' : ''}{((formData.exchange_rate - currentRate) / currentRate * 100).toFixed(2)}% farklı
             </p>
+            )}
           </div>
         )}
 
         {/* Notlar Alanı */}
         <div>
-          <Label htmlFor="notes" className="text-xs font-medium text-gray-700">Notlar</Label>
+          <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Notlar</Label>
           <Textarea
             id="notes"
             value={formData.notes}
             onChange={(e) => handleFieldChange('notes', e.target.value)}
             placeholder="Teklif hakkında notlarınızı yazın..."
-            className="mt-1 h-7 text-xs resize-none"
+            className="mt-1 resize-none h-10 text-sm"
           />
         </div>
       </CardContent>

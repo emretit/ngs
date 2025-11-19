@@ -113,7 +113,7 @@ interface ConfirmationDialogProps {
   confirmText?: string
   cancelText?: string
   variant?: "default" | "destructive"
-  onConfirm: () => void
+  onConfirm: () => void | Promise<void>
   onCancel?: () => void
   isLoading?: boolean
 }
@@ -134,9 +134,9 @@ const ConfirmationDialogComponent = React.forwardRef<
   isLoading = false,
   ...props
 }, ref) => {
-  const handleConfirm = () => {
-    onConfirm()
-    onOpenChange(false)
+  const handleConfirm = async () => {
+    await onConfirm()
+    // Dialog'u onConfirm içinde kapatılıyor, burada kapatmaya gerek yok
   }
 
   const handleCancel = () => {

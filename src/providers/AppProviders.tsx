@@ -2,6 +2,7 @@
 import React from "react";
 import { QueryClientProvider } from "./QueryClientProvider";
 import { ToastProvider } from "@/components/toast/ToastProvider";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import { ActivityTracker } from "@/components/ActivityTracker";
@@ -28,6 +29,7 @@ export const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children
         <TooltipProvider>
           {children}
           <ToastProvider />
+          <Toaster />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

@@ -27,6 +27,7 @@ const Production = ({ isCollapsed, setIsCollapsed }: ProductionProps) => {
     stats,
     filters, 
     setFilters,
+    updateWorkOrder
   } = useProduction();
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,7 +50,10 @@ const Production = ({ isCollapsed, setIsCollapsed }: ProductionProps) => {
   }, [location.pathname, searchParams]);
 
   const handleWorkOrderClick = (workOrder: WorkOrder) => {
-    navigate(`/production/work-orders/${workOrder.id}`);
+    // navigate(`/production/work-orders/${workOrder.id}`);
+    // Şimdilik form açalım, detay sayfası sonra
+    setSelectedWorkOrderId(workOrder.id);
+    setShowWorkOrderForm(true);
   };
 
   const handleEditWorkOrder = (workOrder: WorkOrder) => {
@@ -59,12 +63,33 @@ const Production = ({ isCollapsed, setIsCollapsed }: ProductionProps) => {
 
   const handleDeleteWorkOrder = async (workOrderId: string) => {
     // TODO: Implement delete functionality
-    toast.success("İş emri silindi");
+    toast.success("İş emri silme işlemi henüz aktif değil");
   };
 
-  const handleStatusChange = async (workOrderId: string, status: any) => {
-    // TODO: Implement status change functionality
-    toast.success("Durum güncellendi");
+  const handleStatusChange = async (workOrderId: string, status: WorkOrderStatus) => {
+    try {
+      // Statü değişirken tarihleri de güncelle
+      const updateData: Partial<WorkOrder> = { status };
+      
+      // Eğer 'in_progress' olduysa ve actual_start_date yoksa bugünü set et
+      if (status === 'in_progress') {
+        const current = workOrders.find(w => w.id === workOrderId);
+        if (!current?.actual_start_date) {
+          updateData.actual_start_date = new Date().toISOString();
+        }
+      }
+      
+      // Eğer 'completed' olduysa ve actual_end_date yoksa bugünü set et
+      if (status === 'completed') {
+        updateData.actual_end_date = new Date().toISOString();
+      }
+
+      await updateWorkOrder({ id: workOrderId, data: updateData });
+      
+    } catch (error) {
+      console.error("Status update failed", error);
+      toast.error("Durum güncellenemedi");
+    }
   };
 
   const handleBOMClick = (bom: BOM) => {

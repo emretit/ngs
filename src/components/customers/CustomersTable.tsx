@@ -203,105 +203,6 @@ const CustomersTable = ({
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  if (isLoading) {
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {onCustomerSelectToggle && (
-              <TableHead className="w-[40px] font-bold text-foreground/80 text-sm tracking-wide text-center">
-                <Checkbox
-                  checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
-                  onCheckedChange={(checked) => {
-                    if (setSelectedCustomers) {
-                      if (checked) {
-                        setSelectedCustomers(filteredCustomers);
-                      } else {
-                        setSelectedCustomers([]);
-                      }
-                    }
-                  }}
-                />
-              </TableHead>
-            )}
-            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-              <div className="flex items-center">
-                <span className="text-lg mr-2">🏢</span>
-                <span>Şirket</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-              <div className="flex items-center">
-                <span className="text-lg mr-2">👤</span>
-                <span>Yetkili Kişi</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[15%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-              <div className="flex items-center">
-                <span className="text-lg mr-2">📞</span>
-                <span>İletişim</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-              <div className="flex items-center justify-center">
-                <span className="text-lg mr-2">🏷️</span>
-                <span>Tip</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[8%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-              <div className="flex items-center justify-center">
-                <span className="text-lg mr-2">📊</span>
-                <span>Durum</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-left">
-              <div className="flex items-center">
-                <span className="text-lg mr-2">🤝</span>
-                <span>Temsilci</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-              <div className="flex items-center justify-center">
-                <span className="text-lg mr-2">💰</span>
-                <span>Bakiye</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[10%] font-bold text-foreground/80 text-sm tracking-wide text-center">
-              <div className="flex items-center justify-center">
-                <span className="text-lg mr-2">📅</span>
-                <span>Oluşturma Tarihi</span>
-              </div>
-            </TableHead>
-            <TableHead className="w-[12%] font-bold text-foreground/80 text-sm tracking-wide text-right">
-              <div className="flex items-center justify-end">
-                <span className="text-lg mr-2">⚙️</span>
-                <span>İşlemler</span>
-              </div>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: 5 }).map((_, index) => (
-            <TableRow key={index} className="h-8">
-              {onCustomerSelectToggle && (
-                <TableCell className="py-2 px-3"><div className="h-4 w-4 bg-gray-200 rounded animate-pulse" /></TableCell>
-              )}
-              <TableCell className="py-2 px-3"><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-3"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-              <TableCell className="py-2 px-2"><div className="h-6 w-6 bg-gray-200 rounded animate-pulse" /></TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    );
-  }
-
   return (
     <div className="-mx-4">
       <div className="px-4">
@@ -324,13 +225,13 @@ const CustomersTable = ({
           isAllSelected={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
         />
         <TableBody>
-          {filteredCustomers.length === 0 ? (
+          {!isLoading && filteredCustomers.length === 0 ? (
             <TableRow>
               <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                 Bu kriterlere uygun müşteri bulunamadı
               </TableCell>
             </TableRow>
-          ) : (
+          ) : filteredCustomers.length > 0 ? (
             filteredCustomers.map((customer, index) => (
               <CustomersTableRow
                 key={customer.id}
@@ -344,7 +245,7 @@ const CustomersTable = ({
                 isSelected={selectedCustomers.some(c => c.id === customer.id)}
               />
             ))
-          )}
+          ) : null}
         </TableBody>
         </Table>
       </div>

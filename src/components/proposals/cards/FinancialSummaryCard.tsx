@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Calculator, TrendingUp, Percent, DollarSign, Receipt } from "lucide-react";
+import { Calculator, TrendingUp, Percent, DollarSign, Receipt, Coins } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 
 interface FinancialTotals {
@@ -23,7 +23,8 @@ interface FinancialSummaryCardProps {
   vatPercentage?: number;
   onVatPercentageChange?: (value: number) => void;
   showVatControl?: boolean;
-  inputHeight?: "h-6" | "h-7";
+  inputHeight?: "h-10" | "h-8";
+  selectedCurrency?: string;
 }
 
 const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
@@ -35,19 +36,47 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
   vatPercentage = 20,
   onVatPercentageChange,
   showVatControl = false,
-  inputHeight = "h-7"
+  inputHeight = "h-10",
+  selectedCurrency = "TRY"
 }) => {
   const currencies = Object.keys(calculationsByCurrency);
   const isMultiCurrency = currencies.length > 1;
+
+  // Get currency icon based on selected currency
+  const getCurrencyIcon = (currency: string, size: "large" | "small" = "large"): React.ReactNode => {
+    const normalizedCurrency = currency === "TRY" ? "TL" : currency;
+    const sizeClass = size === "large" ? "text-lg" : "text-sm";
+    switch (normalizedCurrency) {
+      case "TL":
+        return <span className={`text-emerald-600 font-bold ${sizeClass}`}>₺</span>;
+      case "USD":
+        return <span className={`text-emerald-600 font-bold ${sizeClass}`}>$</span>;
+      case "EUR":
+        return <span className={`text-emerald-600 font-bold ${sizeClass}`}>€</span>;
+      case "GBP":
+        return <span className={`text-emerald-600 font-bold ${sizeClass}`}>£</span>;
+      default:
+        return <DollarSign className={`${size === "large" ? "h-4 w-4" : "h-3 w-3"} text-emerald-600`} />;
+    }
+  };
+
+  // Get primary currency (first one or selected)
+  const primaryCurrency = selectedCurrency || currencies[0] || "TRY";
+  const displayCurrency = primaryCurrency === "TRY" ? "TL" : primaryCurrency;
 
   return (
     <Card className="lg:col-span-1 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
       <CardHeader className="pb-2 pt-2.5">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-50/50 border border-emerald-200/50">
-            <Calculator className="h-4 w-4 text-emerald-600" />
+          <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-50/50 border border-emerald-200/50 flex items-center justify-center">
+            {getCurrencyIcon(primaryCurrency)}
           </div>
-          Finansal Özet
+          <span>Finansal Özet</span>
+          {!isMultiCurrency && (
+            <span className="text-xs text-muted-foreground font-normal">
+              ({displayCurrency})
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 pt-0 px-4 pb-4">
@@ -60,8 +89,10 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                 {/* Currency Header */}
                 {isMultiCurrency && (
                   <div className="text-right text-sm font-medium text-primary flex items-center justify-end gap-1">
-                    <DollarSign className="h-3 w-3" />
-                    {currency} Toplamları
+                    <div className="flex items-center">
+                      {getCurrencyIcon(currency, "small")}
+                    </div>
+                    <span>{currency === "TRY" ? "TL" : currency} Toplamları</span>
                   </div>
                 )}
 
@@ -92,7 +123,7 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                           min="0"
                           max="100"
                           step="0.1"
-                          className={`flex-1 ${inputHeight} text-xs`}
+                          className={`flex-1 ${inputHeight}`}
                         />
                         <div className="px-2 py-1 bg-orange-100 text-orange-700 text-xs flex items-center rounded font-medium">
                           %
@@ -112,7 +143,7 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                         value={globalDiscountType} 
                         onValueChange={onGlobalDiscountTypeChange}
                       >
-                        <SelectTrigger className={`w-16 ${inputHeight} text-xs`}>
+                        <SelectTrigger className={`w-16 ${inputHeight}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -138,7 +169,7 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                         placeholder="0"
                         min="0"
                         step={globalDiscountType === 'percentage' ? '0.1' : '0.01'}
-                        className={`flex-1 ${inputHeight} text-xs`}
+                        className={`flex-1 ${inputHeight}`}
                       />
                     </div>
                   </div>

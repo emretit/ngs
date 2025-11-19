@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useProductExcelImport } from '@/hooks/useProductExcelImport';
-import { AlertCircle, CheckCircle, Info, AlertTriangle, Sparkles } from 'lucide-react';
+import { AlertCircle, CheckCircle, Info, AlertTriangle, Sparkles, Edit } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -36,6 +36,7 @@ const ProductImportDialog = ({ isOpen, setIsOpen, onImportSuccess }: ProductImpo
     unmappedColumns,
     mappingConfidence,
     showMappingDialog,
+    setShowMappingDialog,
     excelColumns,
     customMapping,
     setCustomMapping,
@@ -68,7 +69,10 @@ const ProductImportDialog = ({ isOpen, setIsOpen, onImportSuccess }: ProductImpo
   
   const updateMapping = (excelColumn: string, systemField: string) => {
     const newMapping = { ...customMapping };
-    if (systemField && systemField !== 'none') {
+    if (systemField === 'none') {
+      // "Eşleştirme Yapma" seçildiğinde, AI mapping'i override etmek için özel bir değer kaydet
+      newMapping[excelColumn] = 'none';
+    } else if (systemField) {
       newMapping[excelColumn] = systemField;
     } else {
       delete newMapping[excelColumn];
@@ -77,11 +81,11 @@ const ProductImportDialog = ({ isOpen, setIsOpen, onImportSuccess }: ProductImpo
   };
   
   const getMappingForColumn = (excelColumn: string): string => {
-    // Önce custom mapping'i kontrol et
-    if (customMapping[excelColumn]) {
+    // Önce customMapping'e bak (kullanıcı manuel olarak değiştirdiyse veya "none" seçtiyse)
+    if (customMapping[excelColumn] !== undefined) {
       return customMapping[excelColumn];
     }
-    // Sonra AI mapping'i kontrol et
+    // Custom mapping yoksa AI mapping'i kullan
     const aiMapping = columnMappings.find(m => m.excelColumn === excelColumn);
     return aiMapping?.systemField || 'none';
   };
@@ -161,6 +165,33 @@ const ProductImportDialog = ({ isOpen, setIsOpen, onImportSuccess }: ProductImpo
             <div className="flex items-center space-x-2 text-blue-600">
               <Sparkles className="h-4 w-4 animate-pulse" />
               <span className="text-sm">AI kolon eşleştirmesi yapılıyor...</span>
+            </div>
+          )}
+          
+          {/* Düzenle Butonu - Mapping onaylandıktan sonra görünür */}
+          {!showMappingDialog && !isMappingColumns && selectedFile && (Object.keys(customMapping).length > 0 || columnMappings.length > 0) && (
+            <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Kolon eşleştirmesi tamamlandı</p>
+                  <p className="text-xs text-gray-500">
+                    {Object.keys(customMapping).length > 0 
+                      ? `${Object.keys(customMapping).length} kolon eşleştirildi`
+                      : `${columnMappings.length} kolon otomatik eşleştirildi`}
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowMappingDialog(true)}
+                className="flex items-center space-x-2"
+              >
+                <Edit className="h-4 w-4" />
+                <span>Düzenle</span>
+              </Button>
             </div>
           )}
           

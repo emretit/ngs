@@ -291,7 +291,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     
     return (
     <div className="space-y-2">
-      <Label className="text-xs font-medium text-gray-700">{title}</Label>
+      <Label className="text-sm font-medium text-gray-700">{title}</Label>
       
       {/* Dropdown for predefined terms */}
       <Select 
@@ -305,7 +305,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           }
         }}
       >
-        <SelectTrigger className={`w-full ${showOnlyLabel ? 'h-7' : 'h-14'} text-xs bg-background border-border hover:border-primary transition-colors`}>
+        <SelectTrigger className={`w-full ${showOnlyLabel ? '' : 'h-14'} bg-background border-border hover:border-primary transition-colors`}>
           {showOnlyLabel && selectedTerm ? (
             <span>{selectedTerm.label}</span>
           ) : (
@@ -386,7 +386,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
         {/* Other Terms Input */}
         {!showOnlyPayment && (
           <div className="space-y-2">
-            <Label htmlFor="other_terms" className="text-xs font-medium text-gray-700">Diğer Şartlar</Label>
+            <Label htmlFor="other_terms" className="text-sm font-medium text-gray-700">Diğer Şartlar</Label>
             <Textarea
               id="other_terms"
               name="other_terms"
@@ -399,7 +399,6 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
                 onInputChange(e);
               }}
               placeholder="Ekstra şartlar ve notlar buraya yazılabilir"
-              className="h-7 text-xs"
             />
           </div>
         )}
@@ -414,25 +413,23 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="termLabel" className="text-xs font-medium text-gray-700">Şart Başlığı *</Label>
+              <Label htmlFor="termLabel" className="text-sm font-medium text-gray-700">Şart Başlığı *</Label>
               <Input
                 id="termLabel"
                 placeholder="Şart başlığı giriniz"
                 value={newTermLabel}
                 onChange={(e) => setNewTermLabel(e.target.value)}
-                className="h-7 text-xs"
                 autoFocus
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="termText" className="text-xs font-medium text-gray-700">Şart Açıklaması *</Label>
+              <Label htmlFor="termText" className="text-sm font-medium text-gray-700">Şart Açıklaması *</Label>
               <Textarea
                 id="termText"
                 placeholder="Şart açıklamasını yazınız"
                 value={newTermText}
                 onChange={(e) => setNewTermText(e.target.value)}
-                className="h-7 text-xs"
                 rows={4}
               />
             </div>

@@ -1,6 +1,8 @@
 import { RouteConfig } from "./types";
 import InventoryDashboard from "@/pages/inventory/InventoryDashboard.tsx";
 import Production from "@/pages/inventory/Production.tsx";
+import ProductionBOMNew from "@/pages/inventory/ProductionBOMNew.tsx";
+import ProductionBOMDetail from "@/pages/inventory/ProductionBOMDetail.tsx";
 import Warehouses from "@/pages/inventory/Warehouses.tsx";
 import WarehouseDetails from "@/pages/inventory/WarehouseDetails.tsx";
 import WarehouseNew from "@/pages/inventory/WarehouseNew.tsx";
@@ -29,4 +31,6 @@ export const inventoryRoutes: RouteConfig[] = [
   { path: "/inventory/transactions/sayim/new", component: NewInventoryCount, protected: true },
   { path: "/production", component: Production, protected: true },
   { path: "/production/work-orders/new", component: Production, protected: true },
+  { path: "/production/bom/new", component: ProductionBOMNew, protected: true },
+  { path: "/production/bom/:id", component: ProductionBOMDetail, protected: true },
 ];

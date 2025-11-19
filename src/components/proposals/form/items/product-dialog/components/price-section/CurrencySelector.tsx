@@ -38,7 +38,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
         <SelectContent position="popper" className="bg-white z-[100] min-w-[8rem]">
           {currencyOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.symbol} {option.value}
+              {option.symbol} {option.value === "TRY" ? "TL" : option.value}
             </SelectItem>
           ))}
         </SelectContent>

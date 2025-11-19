@@ -672,7 +672,7 @@ const NewProposalCreate = () => {
             }
           }}
           showMoveButtons={true}
-          inputHeight="h-7"
+          inputHeight="h-10"
         />
 
         {/* Terms and Financial Summary - Side by Side */}
@@ -696,6 +696,7 @@ const NewProposalCreate = () => {
             onGlobalDiscountValueChange={setGlobalDiscountValue}
             showVatControl={false}
             inputHeight="h-7"
+            selectedCurrency={formData.currency}
           />
         </div>
 

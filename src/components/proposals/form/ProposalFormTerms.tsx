@@ -22,6 +22,12 @@ interface ProposalTermsProps {
   onInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   showOnlyPayment?: boolean; // Sadece ödeme şartları dropdown'unu göster
   showOnlyLabel?: boolean; // Sadece label göster, açıklamayı gösterme (SelectTrigger'da)
+  selectedPaymentTerms?: string[];
+  selectedDeliveryTerms?: string[];
+  selectedWarrantyTerms?: string[];
+  selectedPricingTerms?: string[];
+  selectedOtherTerms?: string[];
+  onSelectedTermsChange?: (category: string, termIds: string[]) => void;
 }
 
 interface Term {
@@ -64,7 +70,13 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   otherTerms,
   onInputChange,
   showOnlyPayment = false,
-  showOnlyLabel = false
+  showOnlyLabel = false,
+  selectedPaymentTerms = [],
+  selectedDeliveryTerms = [],
+  selectedWarrantyTerms = [],
+  selectedPricingTerms = [],
+  selectedOtherTerms = [],
+  onSelectedTermsChange
 }) => {
   // State to hold all available terms (predefined + custom from DB)
   const [availableTerms, setAvailableTerms] = useState<{[key: string]: Term[]}>({
@@ -173,6 +185,28 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     } as React.ChangeEvent<HTMLTextAreaElement>;
 
     onInputChange(syntheticEvent);
+
+    // Seçili şart ID'sini kaydet
+    if (onSelectedTermsChange) {
+      const categoryMap: Record<string, string> = {
+        'payment': 'selected_payment_terms',
+        'delivery': 'selected_delivery_terms',
+        'warranty': 'selected_warranty_terms',
+        'price': 'selected_pricing_terms'
+      };
+      const selectedCategory = categoryMap[category];
+      if (selectedCategory) {
+        // UUID formatında mı kontrol et (veritabanından gelen custom term ise)
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(termId);
+        if (isUuid) {
+          // UUID ise direkt kaydet
+          onSelectedTermsChange(selectedCategory, [termId]);
+        } else {
+          // Predefined term ise boş array gönder (sadece custom term'ler kaydedilecek)
+          onSelectedTermsChange(selectedCategory, []);
+        }
+      }
+    }
   };
 
   const handleAddCustomTerm = async () => {

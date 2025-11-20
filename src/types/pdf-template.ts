@@ -7,6 +7,8 @@ export interface PageSettings {
     left: number;
   };
   fontSize: number;
+  fontFamily?: "Roboto" | "Helvetica" | "Times-Roman" | "Courier";
+  backgroundColor?: string; // Hex color code (e.g., "#FFFFFF", "#F9FAFB", "#F3F4F6")
 }
 
 export interface HeaderSettings {
@@ -33,6 +35,7 @@ export interface ColumnSettings {
   key: string;
   label: string;
   show: boolean;
+  align?: 'left' | 'center' | 'right';
 }
 
 export interface LineTableSettings {

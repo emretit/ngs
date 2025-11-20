@@ -99,6 +99,7 @@ export interface Proposal extends Record<string, unknown> {
   employee_name?: string;
   opportunity_id?: string;
   opportunity_title?: string;
+  offer_date?: string; // Teklif tarihi
   valid_until?: string;
   payment_terms?: string;
   payment_method?: string;

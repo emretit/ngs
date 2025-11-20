@@ -10,6 +10,12 @@ interface TermsConditionsCardProps {
   priceTerms: string;
   otherTerms: string;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  selectedPaymentTerms?: string[];
+  selectedDeliveryTerms?: string[];
+  selectedWarrantyTerms?: string[];
+  selectedPricingTerms?: string[];
+  selectedOtherTerms?: string[];
+  onSelectedTermsChange?: (category: string, termIds: string[]) => void;
 }
 
 const TermsConditionsCard: React.FC<TermsConditionsCardProps> = ({
@@ -18,7 +24,13 @@ const TermsConditionsCard: React.FC<TermsConditionsCardProps> = ({
   warrantyTerms,
   priceTerms,
   otherTerms,
-  onInputChange
+  onInputChange,
+  selectedPaymentTerms = [],
+  selectedDeliveryTerms = [],
+  selectedWarrantyTerms = [],
+  selectedPricingTerms = [],
+  selectedOtherTerms = [],
+  onSelectedTermsChange
 }) => {
   return (
     <Card className="lg:col-span-2 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
@@ -38,6 +50,12 @@ const TermsConditionsCard: React.FC<TermsConditionsCardProps> = ({
           priceTerms={priceTerms}
           otherTerms={otherTerms}
           onInputChange={onInputChange}
+          selectedPaymentTerms={selectedPaymentTerms}
+          selectedDeliveryTerms={selectedDeliveryTerms}
+          selectedWarrantyTerms={selectedWarrantyTerms}
+          selectedPricingTerms={selectedPricingTerms}
+          selectedOtherTerms={selectedOtherTerms}
+          onSelectedTermsChange={onSelectedTermsChange}
         />
       </CardContent>
     </Card>

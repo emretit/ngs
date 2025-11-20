@@ -1,23 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserCircle, ChevronDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { UserCircle } from "lucide-react";
 
 interface ContactPersonInputProps {
   value: string;
@@ -30,12 +23,13 @@ interface ContactPersonInputProps {
 interface Customer {
   id: string;
   name: string;
-  representative?: string;
+  second_contact_name?: string | null;
+  representative?: string | null;
   employees?: {
     id: string;
     first_name: string;
     last_name: string;
-  };
+  } | null;
 }
 
 const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
@@ -45,12 +39,9 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
   error,
   required
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Fetch customer's representative info when customer is selected
+  // Fetch customer's contact persons when customer is selected
   const { data: customerData } = useQuery({
-    queryKey: ["customer-representative", customerId],
+    queryKey: ["customer-contacts", customerId],
     queryFn: async () => {
       if (!customerId) return null;
       
@@ -59,6 +50,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
         .select(`
           id,
           name,
+          second_contact_name,
           representative,
           employees:representative(
             id,
@@ -75,84 +67,94 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
     enabled: !!customerId,
   });
 
-  // Auto-fill contact person when customer representative is available
-  useEffect(() => {
-    if (customerData?.employees && !value) {
-      const fullName = `${customerData.employees.first_name} ${customerData.employees.last_name}`;
-      onChange(fullName);
+  // Build contact persons list from customer data
+  // name alanı: Müşteri tablosunda şirket için yetkili kişi bilgisini içerir
+  const contactPersons = useMemo(() => {
+    const contacts: string[] = [];
+    
+    if (!customerData) return contacts;
+    
+    // Birinci yetkili kişi (name alanı - müşteri tablosunda yetkili kişi kolonu)
+    if (customerData.name) {
+      contacts.push(customerData.name);
     }
-  }, [customerData, value, onChange]);
+    
+    // İkinci yetkili kişi
+    if (customerData.second_contact_name) {
+      contacts.push(customerData.second_contact_name);
+    }
+    
+    // Temsilci çalışan (representative employee)
+    if (customerData.employees) {
+      const fullName = `${customerData.employees.first_name} ${customerData.employees.last_name}`;
+      if (!contacts.includes(fullName)) {
+        contacts.push(fullName);
+      }
+    }
+    
+    return contacts;
+  }, [customerData]);
 
-  const suggestions = customerData?.employees ? [
-    `${customerData.employees.first_name} ${customerData.employees.last_name}`
-  ] : [];
+  // Auto-fill contact person when customer data is available and no value is set
+  useEffect(() => {
+    if (contactPersons.length > 0 && !value && customerData) {
+      // Birinci yetkili kişiyi varsayılan olarak seç (name alanı)
+      onChange(customerData.name);
+    }
+  }, [contactPersons, value, customerData, onChange]);
 
-  const filteredSuggestions = suggestions.filter(suggestion =>
-    suggestion.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleSelect = (suggestion: string) => {
-    onChange(suggestion);
-    setIsOpen(false);
-  };
+  // If no customer selected or no contacts available, allow manual input
+  const hasContacts = contactPersons.length > 0;
+  const isCustomInput = value && !contactPersons.includes(value);
 
   return (
     <div className="space-y-1">
       <Label className="text-sm font-medium text-gray-700">
         İletişim Kişisi {required && <span className="text-red-500">*</span>}
       </Label>
-      <div className="relative">
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
-          <div className="flex">
-            <Input
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              placeholder="İletişim kişisi adını girin"
-              className={`flex-1 ${suggestions.length > 0 ? 'rounded-r-none' : ''} ${
-                error ? "border-red-500" : ""
-              }`}
-            />
-            {suggestions.length > 0 && (
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="rounded-l-none border-l-0 px-3"
-                  type="button"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-            )}
-          </div>
-          
-          {suggestions.length > 0 && (
-            <PopoverContent className="w-80 p-0" align="end">
-              <Command>
-                <CommandInput
-                  placeholder="Ara..."
-                  value={searchQuery}
-                  onValueChange={setSearchQuery}
-                />
-                <CommandList>
-                  <CommandEmpty>Sonuç bulunamadı.</CommandEmpty>
-                  <CommandGroup heading="Müşteri Yetkilileri">
-                    {filteredSuggestions.map((suggestion, index) => (
-                      <CommandItem
-                        key={index}
-                        onSelect={() => handleSelect(suggestion)}
-                        className="flex items-center gap-2"
-                      >
-                        <UserCircle className="h-4 w-4 opacity-50" />
-                        <span>{suggestion}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          )}
-        </Popover>
-      </div>
+      {hasContacts && !isCustomInput ? (
+        <Select
+          value={value}
+          onValueChange={(selectedValue) => {
+            if (selectedValue === "__custom__") {
+              onChange("");
+            } else {
+              onChange(selectedValue);
+            }
+          }}
+        >
+          <SelectTrigger className={error ? "border-red-500" : ""}>
+            <div className="flex items-center gap-2">
+              <UserCircle className="h-4 w-4 opacity-50" />
+              <SelectValue placeholder="İletişim kişisi seçin..." />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {contactPersons.map((contact, index) => (
+              <SelectItem key={index} value={contact}>
+                <div className="flex items-center gap-2">
+                  <UserCircle className="h-4 w-4 opacity-50" />
+                  <span>{contact}</span>
+                </div>
+              </SelectItem>
+            ))}
+            <SelectItem value="__custom__">
+              <div className="flex items-center gap-2">
+                <UserCircle className="h-4 w-4 opacity-50" />
+                <span>Özel (Manuel Giriş)</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      ) : (
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={hasContacts ? "İletişim kişisi adını girin" : "Önce müşteri seçin"}
+          className={error ? "border-red-500" : ""}
+          disabled={!customerId}
+        />
+      )}
       {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
     </div>
   );

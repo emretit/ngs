@@ -14,7 +14,6 @@ interface PdfTemplatesContentProps {
   onEdit: (templateId: string) => void;
   onDuplicate: (template: PdfTemplate) => void;
   onDelete: (template: PdfTemplate) => void;
-  onSetAsDefault: (templateId: string) => void;
   onCreateTemplate: () => void;
   onCreateDefaults: () => void;
   isCreatingDefaults: boolean;
@@ -34,7 +33,6 @@ const PdfTemplatesContent = ({
   onEdit,
   onDuplicate,
   onDelete,
-  onSetAsDefault,
   onCreateTemplate,
   onCreateDefaults,
   isCreatingDefaults,
@@ -46,7 +44,7 @@ const PdfTemplatesContent = ({
 }: PdfTemplatesContentProps) => {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[400px]">
+      <div className="h-full flex items-center justify-center bg-white rounded-xl border border-gray-200 shadow-sm">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-muted-foreground">Şablonlar yükleniyor...</p>
@@ -56,8 +54,8 @@ const PdfTemplatesContent = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="pb-6">
+    <div className="h-full flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
         {templates.length === 0 ? (
           /* Empty State */
           <Card className="border-dashed border-2 m-6">
@@ -71,7 +69,7 @@ const PdfTemplatesContent = ({
                 </h3>
                 <p className="text-muted-foreground mb-8 leading-relaxed">
                   İlk PDF şablonunuzu oluşturarak belgelerinizi özelleştirmeye başlayın.
-                  Varsayılan şablonlarla hızlıca başlayabilir veya sıfırdan kendiniz tasarlayabilirsiniz.
+                  Hazır şablonlarla hızlıca başlayabilir veya sıfırdan kendiniz tasarlayabilirsiniz.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button
@@ -82,7 +80,7 @@ const PdfTemplatesContent = ({
                     className="gap-2"
                   >
                     <Sparkles className="h-5 w-5" />
-                    {isCreatingDefaults ? 'Oluşturuluyor...' : 'Varsayılan Şablonları Yükle'}
+                    {isCreatingDefaults ? 'Oluşturuluyor...' : 'Hazır Şablonları Yükle'}
                   </Button>
                   <Button onClick={onCreateTemplate} size="lg" className="gap-2">
                     <Plus className="h-5 w-5" />
@@ -124,7 +122,6 @@ const PdfTemplatesContent = ({
               onEdit={onEdit}
               onDuplicate={onDuplicate}
               onDelete={onDelete}
-              onSetAsDefault={onSetAsDefault}
               getTypeBadgeColor={getTypeBadgeColor}
               getTypeLabel={getTypeLabel}
             />

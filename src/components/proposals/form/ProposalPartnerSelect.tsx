@@ -74,6 +74,37 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
     enabled: !!searchQuery.trim() && isOpen,
   });
 
+  // Fetch selected customer/supplier directly from database if ID exists but not found in lists
+  const { data: selectedCustomerData } = useQuery({
+    queryKey: ["selected-customer", customerId],
+    queryFn: async () => {
+      if (!customerId) return null;
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
+        .eq("id", customerId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!customerId && !allCustomers?.find(c => c.id === customerId) && !searchedCustomers?.find(c => c.id === customerId),
+  });
+
+  const { data: selectedSupplierData } = useQuery({
+    queryKey: ["selected-supplier", supplierId],
+    queryFn: async () => {
+      if (!supplierId) return null;
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
+        .eq("id", supplierId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!supplierId && !allSuppliers?.find(s => s.id === supplierId) && !searchedSuppliers?.find(s => s.id === supplierId),
+  });
+
   // Use searched results if available, otherwise use all customers
   const customers = searchQuery.trim() ? searchedCustomers : allCustomers;
   const suppliers = searchQuery.trim() ? searchedSuppliers : allSuppliers;
@@ -81,8 +112,13 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
     ? (isSearchingCustomers || isSearchingSuppliers)
     : isLoadingAll;
   
-  const selectedCustomer = allCustomers?.find(c => c.id === customerId);
-  const selectedSupplier = allSuppliers?.find(s => s.id === supplierId);
+  // Find selected customer/supplier from all sources
+  const selectedCustomer = allCustomers?.find(c => c.id === customerId) 
+    || searchedCustomers?.find(c => c.id === customerId)
+    || selectedCustomerData;
+  const selectedSupplier = allSuppliers?.find(s => s.id === supplierId)
+    || searchedSuppliers?.find(s => s.id === supplierId)
+    || selectedSupplierData;
   
   const handleSelectPartner = (id: string, type: "customer" | "supplier") => {
     if (type === "customer") {
@@ -92,6 +128,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
       setValue("supplier_id", id);
       setValue("customer_id", "");
     }
+    setSearchQuery(""); // Arama sorgusunu temizle
     setIsOpen(false);
   };
   
@@ -158,7 +195,15 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
             {required && <span className="text-red-500 ml-1">*</span>}
           </Label>
         )}
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <Popover 
+          open={isOpen} 
+          onOpenChange={(open) => {
+            setIsOpen(open);
+            if (!open) {
+              setSearchQuery(""); // Popover kapandığında arama sorgusunu temizle
+            }
+          }}
+        >
           <PopoverTrigger asChild>
             <Button
               variant="outline"

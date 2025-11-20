@@ -20,7 +20,7 @@ Font.register({
 });
 
 // Safe text rendering function for Turkish characters
-const safeText = (text: string): string => {
+const safeText = (text: string | undefined | null): string => {
   if (!text) return '';
   // Ensure text is properly encoded
   return text.toString().normalize('NFC');
@@ -35,13 +35,13 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
   const styles = StyleSheet.create({
     page: {
       flexDirection: 'column',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: schema.page.backgroundColor || '#FFFFFF',
       paddingTop: schema.page.padding.top,
       paddingRight: schema.page.padding.right,
       paddingBottom: schema.page.padding.bottom,
       paddingLeft: schema.page.padding.left,
       fontSize: schema.page.fontSize,
-      fontFamily: 'Roboto',
+      fontFamily: schema.page.fontFamily || 'Roboto',
     },
     header: {
       flexDirection: 'row',
@@ -227,7 +227,8 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     };
 
     const value = fieldMap[fieldKey];
-    if (!value) return null;
+    // Check for empty strings as well
+    if (!value || value.trim() === '') return null;
 
     return (
       <Text key={fieldKey} style={[styles.customerInfo, { marginBottom: 3, textAlign: 'left' }]}>
@@ -246,7 +247,8 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     };
 
     const field = fieldMap[fieldKey];
-    if (!field || !field.value) return null;
+    // Check for empty strings as well
+    if (!field || !field.value || field.value.trim() === '') return null;
 
     return (
       <View key={fieldKey} style={{ flexDirection: 'row', marginBottom: 5, alignItems: 'center', justifyContent: 'space-between', width: 160 }}>
@@ -299,7 +301,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                 {/* Company Info */}
                 {schema.header.showCompanyInfo && (
                   <View style={{ flex: 1, marginLeft: 0, paddingLeft: 0 }}>
-                    {schema.header.companyName && (
+                    {schema.header.companyName && schema.header.companyName.trim() && (
                       <Text style={{
                         fontSize: schema.header.companyInfoFontSize || 12,
                         fontWeight: 'bold',
@@ -311,7 +313,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         {safeText(schema.header.companyName)}
                       </Text>
                     )}
-                    {schema.header.companyAddress && (
+                    {schema.header.companyAddress && schema.header.companyAddress.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563',
@@ -322,7 +324,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         {safeText(schema.header.companyAddress)}
                       </Text>
                     )}
-                    {schema.header.companyPhone && (
+                    {schema.header.companyPhone && schema.header.companyPhone.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563',
@@ -333,7 +335,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         Tel: {safeText(schema.header.companyPhone)}
                       </Text>
                     )}
-                    {schema.header.companyEmail && (
+                    {schema.header.companyEmail && schema.header.companyEmail.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563',
@@ -344,7 +346,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         E-posta: {safeText(schema.header.companyEmail)}
                       </Text>
                     )}
-                    {schema.header.companyWebsite && (
+                    {schema.header.companyWebsite && schema.header.companyWebsite.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563',
@@ -355,7 +357,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         Web: {safeText(schema.header.companyWebsite)}
                       </Text>
                     )}
-                    {schema.header.companyTaxNumber && (
+                    {schema.header.companyTaxNumber && schema.header.companyTaxNumber.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563'
@@ -396,7 +398,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               {/* Company Info */}
               {schema.header.showCompanyInfo && (
                 <View style={{ alignItems: 'center', marginBottom: 15 }}>
-                  {schema.header.companyName && (
+                  {schema.header.companyName && schema.header.companyName.trim() && (
                     <Text style={{
                       fontSize: schema.header.companyInfoFontSize || 12,
                       fontWeight: 'bold',
@@ -407,7 +409,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                       {safeText(schema.header.companyName)}
                     </Text>
                   )}
-                  {schema.header.companyAddress && (
+                  {schema.header.companyAddress && schema.header.companyAddress.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                       color: '#4B5563',
@@ -417,7 +419,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                       {safeText(schema.header.companyAddress)}
                     </Text>
                   )}
-                  {schema.header.companyPhone && (
+                  {schema.header.companyPhone && schema.header.companyPhone.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                       color: '#4B5563',
@@ -427,7 +429,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                       Tel: {safeText(schema.header.companyPhone)}
                     </Text>
                   )}
-                  {schema.header.companyEmail && (
+                  {schema.header.companyEmail && schema.header.companyEmail.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                       color: '#4B5563',
@@ -437,7 +439,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                       E-posta: {safeText(schema.header.companyEmail)}
                     </Text>
                   )}
-                  {schema.header.companyWebsite && (
+                  {schema.header.companyWebsite && schema.header.companyWebsite.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                       color: '#4B5563',
@@ -447,7 +449,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                       Web: {safeText(schema.header.companyWebsite)}
                     </Text>
                   )}
-                  {schema.header.companyTaxNumber && (
+                  {schema.header.companyTaxNumber && schema.header.companyTaxNumber.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                       color: '#4B5563',
@@ -479,7 +481,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                 {/* Company Info */}
                 {schema.header.showCompanyInfo && (
                   <View style={{ flex: 1, alignItems: 'flex-end', marginRight: 3 }}>
-                    {schema.header.companyName && (
+                    {schema.header.companyName && schema.header.companyName.trim() && (
                       <Text style={{
                         fontSize: schema.header.companyInfoFontSize || 12,
                         fontWeight: 'bold',
@@ -490,7 +492,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         {safeText(schema.header.companyName)}
                       </Text>
                     )}
-                    {schema.header.companyAddress && (
+                    {schema.header.companyAddress && schema.header.companyAddress.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563',
@@ -502,7 +504,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         {safeText(schema.header.companyAddress)}
                       </Text>
                     )}
-                    {schema.header.companyPhone && (
+                    {schema.header.companyPhone && schema.header.companyPhone.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563',
@@ -514,7 +516,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         Tel: {safeText(schema.header.companyPhone)}
                       </Text>
                     )}
-                    {schema.header.companyEmail && (
+                    {schema.header.companyEmail && schema.header.companyEmail.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563',
@@ -526,7 +528,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         E-posta: {safeText(schema.header.companyEmail)}
                       </Text>
                     )}
-                    {schema.header.companyWebsite && (
+                    {schema.header.companyWebsite && schema.header.companyWebsite.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563',
@@ -538,7 +540,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         Web: {safeText(schema.header.companyWebsite)}
                       </Text>
                     )}
-                    {schema.header.companyTaxNumber && (
+                    {schema.header.companyTaxNumber && schema.header.companyTaxNumber.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: '#4B5563',
@@ -575,7 +577,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           {data.customer && (
             <View style={[styles.customerSection, { flex: 2, marginRight: 20, marginBottom: 0, alignItems: 'flex-start' }]}>
               {/* Firma İsmi */}
-              {data.customer?.company && (
+              {data.customer?.company && data.customer.company.trim() !== '' && (
                 <Text style={[styles.customerTitle, { textAlign: 'left', marginBottom: 10, fontSize: 16, fontWeight: 'bold' }]}>
                   {safeText(String(data.customer.company).toUpperCase())}
                 </Text>
@@ -588,7 +590,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                 </Text>
                 
                 {/* Müşteri Yetkilisi */}
-                {data.customer?.name && (
+                {data.customer?.name && data.customer.name.trim() !== '' && (
                   <Text style={[styles.customerInfo, { marginBottom: 12, fontSize: 12, fontWeight: 'bold' }]}>
                     {safeText(`${String(data.customer.name)},`)}
                   </Text>
@@ -714,16 +716,16 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
 
         {/* Notes */}
         <View style={styles.notesSection}>
-          {data.notes && (
+          {data.notes && data.notes.trim() !== '' && (
             <Text style={styles.notesText}>{safeText(data.notes)}</Text>
           )}
           
           {/* Şartlar ve Koşullar - Template ayarlarına göre göster */}
-          {(schema.notes.termsSettings?.showPaymentTerms && data.payment_terms) ||
-           (schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms) ||
-           (schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms) ||
-           (schema.notes.termsSettings?.showPriceTerms && data.price_terms) ||
-           (schema.notes.termsSettings?.showOtherTerms && data.other_terms) ? (
+          {(schema.notes.termsSettings?.showPaymentTerms && data.payment_terms && data.payment_terms.trim() !== '') ||
+           (schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms && data.delivery_terms.trim() !== '') ||
+           (schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && data.warranty_terms.trim() !== '') ||
+           (schema.notes.termsSettings?.showPriceTerms && data.price_terms && data.price_terms.trim() !== '') ||
+           (schema.notes.termsSettings?.showOtherTerms && data.other_terms && data.other_terms.trim() !== '') ? (
             <>
               <Text style={[
                 styles.sectionTitle,
@@ -731,19 +733,19 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               ]}>
                 Şartlar ve Koşullar
               </Text>
-              {schema.notes.termsSettings?.showPaymentTerms && data.payment_terms && (
+              {schema.notes.termsSettings?.showPaymentTerms && data.payment_terms && data.payment_terms.trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Ödeme Şartları: ${data.payment_terms}`)}</Text>
               )}
-              {schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms && (
+              {schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms && data.delivery_terms.trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Teslimat Şartları: ${data.delivery_terms}`)}</Text>
               )}
-              {schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && (
+              {schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && data.warranty_terms.trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Garanti Şartları: ${data.warranty_terms}`)}</Text>
               )}
-              {schema.notes.termsSettings?.showPriceTerms && data.price_terms && (
+              {schema.notes.termsSettings?.showPriceTerms && data.price_terms && data.price_terms.trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Fiyat Şartları: ${data.price_terms}`)}</Text>
               )}
-              {schema.notes.termsSettings?.showOtherTerms && data.other_terms && (
+              {schema.notes.termsSettings?.showOtherTerms && data.other_terms && data.other_terms.trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Diğer Şartlar: ${data.other_terms}`)}</Text>
               )}
             </>
@@ -751,7 +753,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
         </View>
 
         {/* Footer */}
-        {schema.notes.footer && (
+        {schema.notes.footer && schema.notes.footer.trim() !== '' && (
           <View style={styles.footer}>
             <Text style={{ fontSize: schema.notes.footerFontSize || 12 }}>
               {safeText(schema.notes.footer)}

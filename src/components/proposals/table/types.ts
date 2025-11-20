@@ -4,7 +4,7 @@ export type ProposalSortField =
   | 'status'
   | 'total_amount'
   | 'employee_name'
-  | 'created_at'
+  | 'offer_date'
   | 'valid_until';
 
 export type ProposalSortDirection = 'asc' | 'desc';

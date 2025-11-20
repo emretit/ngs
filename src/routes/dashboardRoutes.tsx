@@ -6,6 +6,7 @@ import InvestmentManagement from "@/pages/InvestmentManagement";
 import FinancingManagement from "@/pages/FinancingManagement";
 import OtherActivitiesManagement from "@/pages/OtherActivitiesManagement";
 import Reports from "@/pages/Reports";
+import GeneralCalendar from "@/pages/GeneralCalendar";
 import { RouteConfig } from "./types";
 
 export const dashboardRoutes: RouteConfig[] = [
@@ -42,6 +43,11 @@ export const dashboardRoutes: RouteConfig[] = [
   {
     path: "/reports",
     component: Reports,
+    protected: true
+  },
+  {
+    path: "/calendar",
+    component: GeneralCalendar,
     protected: true
   }
 ];

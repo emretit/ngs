@@ -3,27 +3,14 @@ import { useForm, FormProvider } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { CalendarDays, Plus, Trash, Calculator, Check, Edit, FileText, ArrowUp, ArrowDown, Eye, Download, Mail, MoreHorizontal, Save, FileDown, Send, ShoppingCart, ArrowRight } from "lucide-react";
+import { Plus, Trash, FileText, Eye, MoreHorizontal, Save, FileDown, Send, ShoppingCart } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
-import { formatCurrency } from "@/utils/formatters";
-import { proposalStatusLabels, proposalStatusColors, ProposalStatus } from "@/types/proposal";
-import { Badge } from "@/components/ui/badge";
+import { ProposalStatus } from "@/types/proposal";
 import { useProposalCreation } from "@/hooks/proposals/useProposalCreation";
 import { ProposalItem } from "@/types/proposal";
-import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import ProposalFormTerms from "@/components/proposals/form/ProposalFormTerms";
-import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
-import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
-import ProductSelector from "@/components/proposals/form/ProductSelector";
 import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import ProposalPreviewModal from "@/components/proposals/form/ProposalPreviewModal";
@@ -33,6 +20,7 @@ import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard"
 import TermsConditionsCard from "@/components/proposals/cards/TermsConditionsCard";
 import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 // Constants
 const DEFAULT_VAT_PERCENTAGE = 20;
@@ -46,7 +34,6 @@ interface LineItem extends ProposalItem {
 }
 
 interface CustomerData {
-  customer_company: string;
   contact_name: string;
   customer_id: string;
 }
@@ -76,25 +63,29 @@ interface TermsData {
   other_terms: string;
 }
 
+interface SelectedTermsData {
+  selected_payment_terms: string[];
+  selected_delivery_terms: string[];
+  selected_warranty_terms: string[];
+  selected_pricing_terms: string[];
+  selected_other_terms: string[];
+}
+
 interface NewProposalCreateProps {
   // Props removed as they were not being used
 }
 
 const NewProposalCreate = () => {
-  const form = useForm({ defaultValues: { customer_id: "", supplier_id: "" } });
+  const form = useForm({ 
+    defaultValues: { 
+      customer_id: "", 
+      supplier_id: "" 
+    },
+    mode: "onChange" // Form değişikliklerini anında yakala
+  });
   const watchCustomerId = form.watch("customer_id");
   const { customers } = useCustomerSelect();
-
-  useEffect(() => {
-    if (watchCustomerId) {
-      const selected = customers?.find(c => c.id === watchCustomerId);
-      if (selected) {
-        handleFieldChange('customer_id', watchCustomerId);
-        handleFieldChange('customer_company', selected.company || selected.name || "");
-        handleFieldChange('contact_name', selected.name || "");
-      }
-    }
-  }, [watchCustomerId, customers]);
+  const { userData } = useCurrentUser();
   const navigate = useNavigate();
   const { createProposal } = useProposalCreation();
   const [saving, setSaving] = useState(false);
@@ -112,7 +103,6 @@ const NewProposalCreate = () => {
 
   // Form state - Split into logical sections for better performance
   const [customerData, setCustomerData] = useState<CustomerData>({
-    customer_company: "",
     contact_name: "",
     customer_id: "",
   });
@@ -141,6 +131,80 @@ const NewProposalCreate = () => {
     price_terms: "",
     other_terms: "",
   });
+
+  // Seçili şart ID'leri için state
+  const [selectedTermsData, setSelectedTermsData] = useState<SelectedTermsData>({
+    selected_payment_terms: [],
+    selected_delivery_terms: [],
+    selected_warranty_terms: [],
+    selected_pricing_terms: [],
+    selected_other_terms: [],
+  });
+
+  // handleFieldChange - State'lerden sonra tanımlanmalı
+  const handleFieldChange = useCallback((field: string, value: any) => {
+    // Update the appropriate state based on field
+    if (['contact_name', 'customer_id'].includes(field)) {
+      setCustomerData(prev => ({ ...prev, [field]: value }));
+    } else if (['subject', 'offer_date', 'offer_number', 'validity_date', 'prepared_by', 'employee_id', 'notes', 'status'].includes(field)) {
+      setProposalData(prev => ({ ...prev, [field]: value }));
+    } else if (['currency', 'exchange_rate', 'vat_percentage'].includes(field)) {
+      setFinancialData(prev => ({ ...prev, [field]: value }));
+    } else if (['payment_terms', 'delivery_terms', 'warranty_terms', 'price_terms', 'other_terms'].includes(field)) {
+      setTermsData(prev => ({ ...prev, [field]: value }));
+    }
+  }, []);
+
+  // Form değerlerini senkronize et - watchCustomerId değiştiğinde customerData'yı güncelle
+  useEffect(() => {
+    if (watchCustomerId && watchCustomerId.trim() && watchCustomerId !== customerData.customer_id) {
+      handleFieldChange('customer_id', watchCustomerId);
+    }
+  }, [watchCustomerId, customerData.customer_id, handleFieldChange]);
+
+  // Müşteri verilerini yükle
+  useEffect(() => {
+    const loadCustomerData = async () => {
+      // watchCustomerId boş string olabilir, kontrol et
+      if (watchCustomerId && watchCustomerId.trim()) {
+        // Önce customers listesinde ara
+        let selected = customers?.find(c => c.id === watchCustomerId);
+        
+        // Eğer listede bulunamazsa, veritabanından çek
+        if (!selected) {
+          try {
+            const { data, error } = await supabase
+              .from("customers")
+              .select("id, name, company, email, mobile_phone, office_phone, address, representative")
+              .eq("id", watchCustomerId)
+              .single();
+            
+            if (!error && data) {
+              selected = data;
+            }
+          } catch (error) {
+            console.error("Error fetching customer:", error);
+          }
+        }
+        
+        if (selected) {
+          handleFieldChange('customer_id', watchCustomerId);
+          
+          // İletişim kişisi adı - name varsa kullan
+          if (selected.name) {
+            handleFieldChange('contact_name', selected.name);
+          }
+        }
+      } else {
+        // Müşteri seçimi kaldırıldıysa, ilgili alanları temizle
+        // watchCustomerId boş olduğunda contact_name'i temizle
+        handleFieldChange('contact_name', "");
+      }
+    };
+    
+    loadCustomerData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchCustomerId, customers, handleFieldChange]);
 
   // Combined form data for backward compatibility
   const formData = useMemo(() => ({
@@ -242,28 +306,7 @@ const NewProposalCreate = () => {
     grand_total: primaryTotals.grand
   };
 
-  // Update item calculations
-  useEffect(() => {
-    setItems(prevItems => 
-      prevItems.map(item => ({
-        ...item,
-        total_price: item.quantity * item.unit_price
-      }))
-    );
-  }, []);
-
-  const handleFieldChange = useCallback((field: string, value: any) => {
-    // Update the appropriate state based on field
-    if (['customer_company', 'contact_name', 'customer_id'].includes(field)) {
-      setCustomerData(prev => ({ ...prev, [field]: value }));
-    } else if (['subject', 'offer_date', 'offer_number', 'validity_date', 'prepared_by', 'employee_id', 'notes', 'status'].includes(field)) {
-      setProposalData(prev => ({ ...prev, [field]: value }));
-    } else if (['currency', 'exchange_rate', 'vat_percentage'].includes(field)) {
-      setFinancialData(prev => ({ ...prev, [field]: value }));
-    } else if (['payment_terms', 'delivery_terms', 'warranty_terms', 'price_terms', 'other_terms'].includes(field)) {
-      setTermsData(prev => ({ ...prev, [field]: value }));
-    }
-  }, []);
+  // Item calculations are handled in handleItemChange
 
   const handleItemChange = useCallback((index: number, field: keyof LineItem, value: any) => {
     setItems(prevItems => {
@@ -394,13 +437,31 @@ const NewProposalCreate = () => {
   const validateForm = () => {
     const errors: string[] = [];
     
-    // Müşteri bilgileri validasyonu
-    if (!formData.customer_company.trim()) {
-      errors.push("Müşteri firma adı gereklidir");
+    // Müşteri bilgileri validasyonu - hem formData hem de React Hook Form state'ini kontrol et
+    // Önce watchCustomerId'yi kontrol et (React Hook Form'dan gelir, daha güncel)
+    const customerIdFromForm = watchCustomerId && typeof watchCustomerId === 'string' ? watchCustomerId.trim() : '';
+    const customerIdFromData = formData.customer_id && typeof formData.customer_id === 'string' ? formData.customer_id.trim() : '';
+    const customerId = customerIdFromForm || customerIdFromData;
+    
+    if (!customerId) {
+      errors.push("Müşteri bilgisi seçilmelidir");
+      return errors; // Erken çıkış, diğer validasyonlara gerek yok
     }
     
-    if (!formData.contact_name.trim()) {
-      errors.push("İletişim kişisi adı gereklidir");
+      // Eğer customer_id React Hook Form'da var ama formData'da yoksa, senkronize et
+    // Not: Bu state güncellemesi asenkron olabilir ama validasyon için watchCustomerId yeterli
+      if (watchCustomerId && !formData.customer_id) {
+        handleFieldChange('customer_id', watchCustomerId);
+      }
+      
+      // İletişim kişisi kontrolü - eğer customer_id varsa ama contact_name yoksa, müşteriden al
+    const finalCustomerId = watchCustomerId || formData.customer_id;
+      if (finalCustomerId && !formData.contact_name?.trim()) {
+        const selected = customers?.find(c => c.id === finalCustomerId);
+        if (selected && selected.name) {
+          // Müşteri bilgilerini doldur
+          handleFieldChange('contact_name', selected.name);
+      }
     }
     
     // Tarih validasyonu
@@ -470,14 +531,64 @@ const NewProposalCreate = () => {
         grand: 0
       };
 
+      // Müşteri bilgilerini tekrar kontrol et
+      // Önce React Hook Form'dan customer_id'yi al (daha güncel), yoksa formData'dan
+      const finalCustomerIdFromForm = watchCustomerId && typeof watchCustomerId === 'string' ? watchCustomerId.trim() : '';
+      const finalCustomerIdFromData = formData.customer_id && typeof formData.customer_id === 'string' ? formData.customer_id.trim() : '';
+      const finalCustomerId = finalCustomerIdFromForm || finalCustomerIdFromData;
+      
+      if (!finalCustomerId) {
+        toast.error("Müşteri bilgisi seçilmelidir");
+        setSaving(false);
+        return;
+      }
+      
+      // Eğer formData'da customer_id yoksa, senkronize et
+      if (!formData.customer_id && finalCustomerId) {
+        handleFieldChange('customer_id', finalCustomerId);
+      }
+      
+      // Müşteri bilgisinden şirket adını al (customer_company alanı yok, direkt müşteriden al)
+      let customerCompanyName = "Müşteri";
+      if (finalCustomerId) {
+        const selected = customers?.find(c => c.id === finalCustomerId);
+        if (selected) {
+          customerCompanyName = selected.company || selected.name || "Müşteri";
+        } else {
+          // Veritabanından çek
+          try {
+            const { data } = await supabase
+              .from("customers")
+              .select("company, name")
+              .eq("id", finalCustomerId)
+              .single();
+            if (data) {
+              customerCompanyName = data.company || data.name || "Müşteri";
+            }
+          } catch (error) {
+            console.error("Error fetching customer for title:", error);
+            customerCompanyName = "Müşteri";
+          }
+        }
+      }
+      
       // Prepare data for backend
+      // customer_id boş olamaz, eğer boşsa hata ver
+      if (!finalCustomerId) {
+        toast.error("Müşteri bilgisi seçilmelidir");
+        setSaving(false);
+        return;
+      }
+
       const proposalData = {
-        title: `${formData.customer_company} - Teklif`,
+        title: `${customerCompanyName} - Teklif`,
         subject: formData.subject, // Teklif konusu
         description: formData.notes,
         number: formData.offer_number,
-        customer_id: formData.customer_id || null,
+        customer_id: finalCustomerId, // Boş olamaz, yukarıda kontrol edildi
         employee_id: formData.prepared_by || null,
+        company_id: userData?.company_id || null, // Kullanıcının company_id'si
+        offer_date: formData.offer_date?.toISOString().split('T')[0] || null, // Teklif tarihi
         valid_until: formData.validity_date?.toISOString().split('T')[0] || "",
         terms: `${formData.payment_terms}\n\n${formData.delivery_terms}\n\nGaranti: ${formData.warranty_terms}`,
         payment_terms: formData.payment_terms,
@@ -485,6 +596,12 @@ const NewProposalCreate = () => {
         warranty_terms: formData.warranty_terms,
         price_terms: formData.price_terms,
         other_terms: formData.other_terms,
+        // Seçili şart ID'leri
+        selected_payment_terms: selectedTermsData.selected_payment_terms,
+        selected_delivery_terms: selectedTermsData.selected_delivery_terms,
+        selected_warranty_terms: selectedTermsData.selected_warranty_terms,
+        selected_pricing_terms: selectedTermsData.selected_pricing_terms,
+        selected_other_terms: selectedTermsData.selected_other_terms,
         notes: formData.notes,
         status: status,
         total_amount: primaryTotals.grand,
@@ -517,8 +634,11 @@ const NewProposalCreate = () => {
   // Smart save function - determines save type based on form completion
   const handleSmartSave = () => {
     // Check if form is complete enough to be sent as proposal
+    // watchCustomerId'yi de kontrol et (React Hook Form'dan gelir, daha güncel)
+    // Boş string kontrolü de yap (watchCustomerId boş string olabilir)
+    const customerId = (watchCustomerId && watchCustomerId.trim()) || (formData.customer_id && formData.customer_id.trim());
     const isFormComplete = 
-      formData.customer_id && 
+      customerId && 
       formData.contact_name && 
       formData.subject && 
       formData.validity_date &&
@@ -558,9 +678,9 @@ const NewProposalCreate = () => {
 
 
   return (
-    <div>
+    <div className="space-y-2">
       {/* Enhanced Sticky Header with Progress */}
-      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-6">
+      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
         <div className="flex items-center justify-between p-3 pl-12">
           <div className="flex items-center gap-3">
             {/* Simple Back Button */}
@@ -632,7 +752,7 @@ const NewProposalCreate = () => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - Her kart bağımsız Card komponenti */}
       <div className="space-y-4">
         {/* Top Row - Customer & Proposal Details Combined */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -641,6 +761,7 @@ const NewProposalCreate = () => {
             formData={formData}
             handleFieldChange={handleFieldChange}
             errors={{}}
+            form={form} // Ana form'u prop olarak geçir
           />
 
           {/* Offer Details */}
@@ -685,6 +806,17 @@ const NewProposalCreate = () => {
             priceTerms={formData.price_terms}
             otherTerms={formData.other_terms}
             onInputChange={(e) => handleFieldChange(e.target.name, e.target.value)}
+            selectedPaymentTerms={selectedTermsData.selected_payment_terms}
+            selectedDeliveryTerms={selectedTermsData.selected_delivery_terms}
+            selectedWarrantyTerms={selectedTermsData.selected_warranty_terms}
+            selectedPricingTerms={selectedTermsData.selected_pricing_terms}
+            selectedOtherTerms={selectedTermsData.selected_other_terms}
+            onSelectedTermsChange={(category, termIds) => {
+              setSelectedTermsData(prev => ({
+                ...prev,
+                [category]: termIds
+              }));
+            }}
           />
 
           {/* Financial Summary */}
@@ -695,7 +827,7 @@ const NewProposalCreate = () => {
             onGlobalDiscountTypeChange={setGlobalDiscountType}
             onGlobalDiscountValueChange={setGlobalDiscountValue}
             showVatControl={false}
-            inputHeight="h-7"
+            inputHeight="h-8"
             selectedCurrency={formData.currency}
           />
         </div>

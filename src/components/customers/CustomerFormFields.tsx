@@ -85,6 +85,8 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
   // Get current selected term ID
   const getCurrentPaymentTermId = () => {
     const currentTerms = formData.payment_terms || '';
+    if (!currentTerms) return '';
+    
     const matchingTerm = availablePaymentTerms.find(term => 
       currentTerms.trim() === term.text.trim()
     );

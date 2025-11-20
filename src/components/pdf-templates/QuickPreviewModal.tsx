@@ -13,7 +13,6 @@ import {
   Copy,
   Trash2,
   X,
-  Star,
   Calendar,
   FileText
 } from 'lucide-react';
@@ -126,12 +125,6 @@ export const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
                 <DialogTitle className="text-2xl font-bold">
                   {template.name}
                 </DialogTitle>
-                {template.is_default && (
-                  <Badge className="bg-amber-500 text-white hover:bg-amber-500 gap-1">
-                    <Star className="h-3 w-3 fill-current" />
-                    Varsayılan
-                  </Badge>
-                )}
                 <Badge className={getTypeBadgeColor(template.type)}>
                   {getTypeLabel(template.type)}
                 </Badge>

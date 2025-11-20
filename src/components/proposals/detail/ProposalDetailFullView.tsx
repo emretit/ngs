@@ -149,18 +149,8 @@ const ProposalDetailFullView = ({
                         ) : (
                           <div className="font-medium">{proposal.customer.name}</div>
                         )}
-                        {isEditMode ? (
-                          <Input 
-                            name="customer_company"
-                            defaultValue={proposal.customer.company || ''} 
-                            className="text-sm"
-                            placeholder="Şirket Adı"
-                            disabled={true}
-                          />
-                        ) : (
-                          proposal.customer.company && (
+                        {!isEditMode && proposal.customer.company && (
                             <div className="text-sm text-muted-foreground">{proposal.customer.company}</div>
-                          )
                         )}
                         {isEditMode ? (
                           <Input 

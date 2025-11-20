@@ -1,5 +1,4 @@
 import React from "react";
-import { useToast } from "@/components/ui/use-toast";
 import { Customer } from "@/types/customer";
 import CustomersTable from "./CustomersTable";
 import InfiniteScroll from "@/components/ui/infinite-scroll";
@@ -16,9 +15,6 @@ interface CustomersContentProps {
   onCustomerSelectToggle?: (customer: Customer) => void;
   selectedCustomers?: Customer[];
   setSelectedCustomers?: (customers: Customer[]) => void;
-  searchQuery?: string;
-  statusFilter?: string;
-  typeFilter?: string;
 }
 
 const CustomersContent = ({
@@ -32,12 +28,8 @@ const CustomersContent = ({
   onCustomerSelect,
   onCustomerSelectToggle,
   selectedCustomers = [],
-  setSelectedCustomers,
-  searchQuery,
-  statusFilter,
-  typeFilter
+  setSelectedCustomers
 }: CustomersContentProps) => {
-  const { toast } = useToast();
 
   if (error) {
     return (
@@ -59,9 +51,6 @@ const CustomersContent = ({
             onCustomerSelectToggle={onCustomerSelectToggle}
             selectedCustomers={selectedCustomers}
             setSelectedCustomers={setSelectedCustomers}
-            searchQuery={searchQuery}
-            statusFilter={statusFilter}
-            typeFilter={typeFilter}
           />
           
           {/* Infinite scroll trigger - CustomersTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}

@@ -96,7 +96,6 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
       const newTemplate = {
         ...template,
         name: `${template.name} - Kopya`,
-        is_default: false,
         version: 1,
       };
       delete (newTemplate as any).id;
@@ -108,16 +107,6 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
     } catch (error) {
       console.error('Error duplicating template:', error);
       toast.error('Şablon kopyalanırken hata oluştu');
-    }
-  };
-  const handleSetAsDefault = async (templateId: string) => {
-    try {
-      await PdfExportService.setAsDefault(templateId, 'quote');
-      toast.success('Varsayılan şablon güncellendi');
-      loadTemplates();
-    } catch (error) {
-      console.error('Error setting default template:', error);
-      toast.error('Varsayılan şablon ayarlanırken hata oluştu');
     }
   };
   const handleDeleteTemplateClick = (template: PdfTemplate) => {
@@ -152,11 +141,11 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
     setIsCreatingDefaults(true);
     try {
       await PdfExportService.ensureDefaultTemplates();
-      toast.success('Varsayılan şablonlar başarıyla oluşturuldu');
+      toast.success('Hazır şablonlar başarıyla oluşturuldu');
       loadTemplates();
     } catch (error) {
       console.error('Error creating default templates:', error);
-      toast.error('Varsayılan şablonlar oluşturulurken hata oluştu');
+      toast.error('Hazır şablonlar oluşturulurken hata oluştu');
     } finally {
       setIsCreatingDefaults(false);
     }
@@ -202,14 +191,14 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
       quoteCount: templates.filter(t => t.type === 'quote').length,
       invoiceCount: templates.filter(t => t.type === 'invoice').length,
       proposalCount: templates.filter(t => t.type === 'proposal').length,
-      defaultCount: templates.filter(t => t.is_default).length,
     };
   }, [templates]);
 
   return (
-    <div className="space-y-2">
-      {/* Header */}
+    <div className="h-full flex flex-col">
+      {/* Header - Fixed */}
       {showHeader && (
+        <div className="flex-shrink-0 mb-4">
         <PdfTemplatesHeader
           templates={templates}
           activeView={viewMode}
@@ -220,9 +209,11 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
           onCreateDefaults={handleCreateDefaultTemplates}
           isCreatingDefaults={isCreatingDefaults}
         />
+        </div>
       )}
 
-      {/* Filters */}
+      {/* Filters - Fixed */}
+      <div className="flex-shrink-0 mb-4">
       <PdfTemplatesFilterBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -231,8 +222,10 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         sortBy={sortBy}
         setSortBy={setSortBy}
       />
+      </div>
 
-      {/* Content */}
+      {/* Content - Scrollable */}
+      <div className="flex-1 min-h-0 overflow-hidden">
       <PdfTemplatesContent
         templates={templates}
         filteredTemplates={filteredTemplates}
@@ -242,7 +235,6 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         onEdit={handleEditTemplate}
         onDuplicate={handleDuplicateTemplate}
         onDelete={handleDeleteTemplateClick}
-        onSetAsDefault={handleSetAsDefault}
         onCreateTemplate={handleCreateTemplate}
         onCreateDefaults={handleCreateDefaultTemplates}
         isCreatingDefaults={isCreatingDefaults}
@@ -252,6 +244,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         setSearchQuery={setSearchQuery}
         setTypeFilter={setTypeFilter}
       />
+      </div>
 
       {/* Confirmation Dialog */}
       <ConfirmationDialogComponent

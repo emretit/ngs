@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,6 +31,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
 }) => {
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<PdfTemplate | null>(null);
   const [previewData, setPreviewData] = useState<QuoteData | null>(null);
@@ -38,6 +39,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
   const [isNewTemplate, setIsNewTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const companyInfoLoadedRef = useRef(false);
 
   const form = useForm<TemplateSchema>({
     resolver: zodResolver(z.object({
@@ -50,6 +52,8 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           left: z.number().min(10).max(100),
         }),
         fontSize: z.number().min(8).max(20),
+        fontFamily: z.enum(['Roboto', 'Helvetica', 'Times-Roman', 'Courier']).optional(),
+        backgroundColor: z.string().optional(),
       }),
       header: z.object({
         title: z.string().min(1),
@@ -60,11 +64,11 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         logoSize: z.number().min(20).max(200),
         showValidity: z.boolean(),
         showCompanyInfo: z.boolean(),
-        companyName: z.string(),
-        companyAddress: z.string(),
-        companyPhone: z.string(),
-        companyEmail: z.string(),
-        companyWebsite: z.string(),
+        companyName: z.string().optional(),
+        companyAddress: z.string().optional(),
+        companyPhone: z.string().optional(),
+        companyEmail: z.string().optional(),
+        companyWebsite: z.string().optional(),
         companyTaxNumber: z.string().optional(),
         companyInfoFontSize: z.number().min(8).max(32),
       }),
@@ -102,6 +106,8 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         size: 'A4',
         padding: { top: 40, right: 40, bottom: 40, left: 40 },
         fontSize: 12,
+        fontFamily: 'Roboto',
+        backgroundColor: '#FFFFFF',
       },
       header: {
         title: 'TEKLİF',
@@ -112,22 +118,22 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         logoSize: 80,
         showValidity: true,
         showCompanyInfo: true,
-        companyName: 'NGS TEKNOLOJİ',
-        companyAddress: 'İstanbul, Türkiye',
-        companyPhone: '+90 212 555 0123',
-        companyEmail: 'info@ngsteknoloji.com',
-        companyWebsite: 'www.ngsteknoloji.com',
+        companyName: '',
+        companyAddress: '',
+        companyPhone: '',
+        companyEmail: '',
+        companyWebsite: '',
         companyTaxNumber: '',
         companyInfoFontSize: 10,
       },
 
       lineTable: {
         columns: [
-          { key: 'description', show: true, label: 'Açıklama' },
-          { key: 'quantity', show: true, label: 'Miktar' },
-          { key: 'unit_price', show: true, label: 'Birim Fiyat' },
-          { key: 'discount', show: true, label: 'İndirim' },
-          { key: 'total', show: true, label: 'Toplam' },
+          { key: 'description', show: true, label: 'Açıklama', align: 'left' },
+          { key: 'quantity', show: true, label: 'Miktar', align: 'center' },
+          { key: 'unit_price', show: true, label: 'Birim Fiyat', align: 'right' },
+          { key: 'discount', show: true, label: 'İndirim', align: 'right' },
+          { key: 'total', show: true, label: 'Toplam', align: 'right' },
         ],
         showRowNumber: true,
       },
@@ -159,29 +165,89 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
 
   // Load company info from companies table - optimized to only load when needed
   const loadCompanyInfo = async (showToast = false) => {
+    // Prevent duplicate calls
+    if (companyInfoLoadedRef.current && showToast) {
+      return;
+    }
+    
     try {
+      console.log('Loading company info...'); // Debug
       const companySettings = await PdfExportService.getCompanySettings();
       
+      console.log('Company settings loaded:', companySettings); // Debug
+      
       if (companySettings && Object.keys(companySettings).length > 0) {
-        // Always update company info fields
-        form.setValue('header.companyName', companySettings.company_name || '');
-        form.setValue('header.companyAddress', companySettings.company_address || '');
-        form.setValue('header.companyPhone', companySettings.company_phone || '');
-        form.setValue('header.companyEmail', companySettings.company_email || '');
-        form.setValue('header.companyWebsite', companySettings.company_website || '');
-        form.setValue('header.companyTaxNumber', companySettings.company_tax_number || '');
+        // Get current form values to preserve other fields
+        const currentValues = form.getValues();
+        const settings = companySettings as any; // Type assertion for company settings
+        
+        console.log('Current form values before update:', currentValues.header); // Debug
+        console.log('Company settings to apply:', {
+          company_name: settings.company_name,
+          company_address: settings.company_address,
+          company_phone: settings.company_phone,
+          company_email: settings.company_email,
+          company_website: settings.company_website,
+          company_tax_number: settings.company_tax_number,
+        }); // Debug
+        
+        // Use setValue for each field with proper options
+        form.setValue('header.companyName', settings.company_name || '', { 
+          shouldValidate: false,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+        form.setValue('header.companyAddress', settings.company_address || '', { 
+          shouldValidate: false,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+        form.setValue('header.companyPhone', settings.company_phone || '', { 
+          shouldValidate: false,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+        form.setValue('header.companyEmail', settings.company_email || '', { 
+          shouldValidate: false,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+        form.setValue('header.companyWebsite', settings.company_website || '', { 
+          shouldValidate: false,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+        form.setValue('header.companyTaxNumber', settings.company_tax_number || '', { 
+          shouldValidate: false,
+          shouldDirty: true,
+          shouldTouch: true
+        });
         
         // Set logo URL if available
-        if (companySettings.company_logo_url) {
-          form.setValue('header.logoUrl', companySettings.company_logo_url);
+        if (settings.company_logo_url) {
+          form.setValue('header.logoUrl', settings.company_logo_url, { 
+            shouldValidate: false,
+            shouldDirty: true,
+            shouldTouch: true
+          });
         }
         
-        if (showToast) {
-          toast.success('Şirket bilgileri yüklendi');
+        // Trigger form update
+        form.trigger('header');
+        
+        // Wait a bit for form to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        console.log('Form values after setValue:', form.getValues('header')); // Debug
+        
+        if (showToast && !companyInfoLoadedRef.current) {
+          companyInfoLoadedRef.current = true;
+          toast.success('Şirket bilgileri sistem ayarlarından yüklendi');
         }
       } else {
+        console.warn('No company settings found'); // Debug
         if (showToast) {
-          toast.warning('Şirket bilgileri bulunamadı');
+          toast.warning('Şirket bilgileri bulunamadı. Lütfen Sistem Ayarları sayfasından şirket bilgilerinizi kaydedin.');
         }
       }
     } catch (error) {
@@ -193,17 +259,35 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   };
 
   useEffect(() => {
-    if (templateId === 'new') {
+    console.log('useEffect triggered, templateId:', templateId, 'pathname:', location.pathname); // Debug
+    // Check if we're on the new template page
+    const isNewTemplatePage = location.pathname === '/pdf-templates/new' || templateId === 'new';
+    
+    if (isNewTemplatePage) {
+      console.log('New template page detected, initializing...'); // Debug
       setIsNewTemplate(true);
       setSelectedTemplate(null);
       setTemplateName('Yeni Şablon');
-      // Form'u varsayılan değerlerle doldur
-      form.reset();
-      // Load company info for new template after a short delay to ensure form is reset (silent load)
-      setTimeout(() => {
-        loadCompanyInfo(false);
-      }, 100);
-    } else if (templateId && templates.length > 0) {
+      // Reset the ref when navigating to new template page
+      companyInfoLoadedRef.current = false;
+      // Load company info for new template after form is ready
+      const initializeNewTemplate = async () => {
+        console.log('initializeNewTemplate called, waiting 200ms...'); // Debug
+        // Wait a bit to ensure form is mounted
+        await new Promise(resolve => setTimeout(resolve, 200));
+        console.log('Calling loadCompanyInfo...'); // Debug
+        await loadCompanyInfo(true);
+        console.log('loadCompanyInfo completed'); // Debug
+      };
+      initializeNewTemplate();
+    } else if (templateId) {
+      // If templates are still loading, wait for them to finish
+      if (isLoadingTemplates) {
+        return; // Wait for templates to load
+      }
+      
+      // If templates are loaded but empty, check if template exists
+      if (templates.length > 0) {
       const template = templates.find(t => t.id === templateId);
       if (template) {
         setSelectedTemplate(template);
@@ -213,6 +297,11 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         // Ensure all required fields exist with defaults (including migration for proposalBlock)
         const schemaWithDefaults = {
           ...template.schema_json,
+            page: {
+              ...template.schema_json.page,
+              fontFamily: template.schema_json.page.fontFamily || 'Roboto',
+              backgroundColor: template.schema_json.page.backgroundColor || '#FFFFFF',
+            },
           header: {
             ...template.schema_json.header,
             logoPosition: template.schema_json.header.logoPosition || 'left',
@@ -228,35 +317,41 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             companyInfoFontSize: template.schema_json.header.companyInfoFontSize || 10,
           },
           
-          // Migration: Add discount column if it doesn't exist
+            // Migration: Add discount column if it doesn't exist and ensure align field exists
           lineTable: {
             ...template.schema_json.lineTable,
             showRowNumber: template.schema_json.lineTable?.showRowNumber ?? true,
             columns: (() => {
               const existingColumns = template.schema_json.lineTable?.columns || [];
               const hasDiscountColumn = existingColumns.some(col => col.key === 'discount');
+                
+                // Ensure all columns have align field
+                let newColumns = existingColumns.map(col => ({
+                  ...col,
+                  align: col.align || (col.key === 'quantity' ? 'center' : col.key === 'total' || col.key === 'unit_price' || col.key === 'discount' ? 'right' : 'left')
+                }));
               
               if (!hasDiscountColumn) {
                 // Insert discount column before total column
-                const newColumns = [...existingColumns];
                 const totalIndex = newColumns.findIndex(col => col.key === 'total');
                 if (totalIndex !== -1) {
                   newColumns.splice(totalIndex, 0, {
                     key: 'discount',
                     show: true,
-                    label: 'İndirim'
+                      label: 'İndirim',
+                      align: 'right'
                   });
                 } else {
                   // If no total column, add at the end
                   newColumns.push({
                     key: 'discount',
                     show: true,
-                    label: 'İndirim'
+                      label: 'İndirim',
+                      align: 'right'
                   });
                 }
-                return newColumns;
               }
-              return existingColumns;
+                return newColumns;
             })()
           },
 
@@ -276,11 +371,17 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         
         form.reset(schemaWithDefaults);
       } else {
-        toast.error('Şablon bulunamadı');
-        navigate('/settings');
+          // Template not found after templates are loaded
+          toast.error('Şablon bulunamadı. Şablon silinmiş olabilir veya erişim yetkiniz olmayabilir.');
+          navigate('/settings/pdf-templates');
       }
+      } else {
+        // Templates loaded but empty - template might not exist or user has no access
+        toast.error('Şablon bulunamadı. Şablon silinmiş olabilir veya erişim yetkiniz olmayabilir.');
+        navigate('/settings/pdf-templates');
     }
-  }, [templateId, templates, form, navigate]);
+    }
+  }, [templateId, templates, form, navigate, location.pathname, isLoadingTemplates]);
 
   const loadTemplates = async () => {
     setIsLoadingTemplates(true);
@@ -298,11 +399,13 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   const loadSampleData = async () => {
     try {
       const companySettings = await PdfExportService.getCompanySettings();
+      const settings = companySettings as any; // Type assertion for company settings
       const sampleData: QuoteData = {
         number: 'TEK-2024-001',
         title: 'Örnek Teklif',
         date: new Date().toISOString(),
         valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        prepared_by: settings.default_prepared_by || 'Satış Ekibi',
         customer: {
           name: 'Örnek Müşteri',
           company: 'Örnek Şirket A.Ş.',
@@ -349,11 +452,13 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   };
 
   const handleSave = async (data: TemplateSchema) => {
+    console.log('handleSave called with data:', data); // Debug
     setIsLoading(true);
     try {
       // Get current form values to ensure logo URL is included
       const currentFormData = form.getValues();
       const currentLogoUrl = currentFormData.header?.logoUrl;
+      console.log('Current form data:', currentFormData); // Debug
       
       // Merge current form data with submitted data to ensure logo URL is preserved
       const mergedData = {
@@ -373,7 +478,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           schema_json: mergedData,
           version: 1,
           is_default: false,
-          created_by: null, // Will be set by Supabase
+          created_by: null, // Will be set by Supabase trigger or can be set manually
         };
         
         const savedTemplate = await PdfExportService.saveTemplate(newTemplate);
@@ -433,96 +538,159 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   const watchedValues = form.watch();
 
   return (
-    <div className="h-screen flex flex-col">
+    <>
       {/* Header */}
-      <div className="border-b bg-background p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <div className="border-b bg-background px-4 py-1.5 sticky top-0 z-10">
+        <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/settings')}
-              className="flex items-center gap-2"
+            onClick={() => navigate('/settings/pdf-templates')}
+            className="flex items-center gap-2 h-7"
             >
               <ArrowLeft className="h-4 w-4" />
               Geri
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">
+            <h1 className="text-lg font-bold leading-tight">
                 {isNewTemplate ? 'Yeni PDF Şablonu' : 'PDF Şablon Editörü'}
               </h1>
-              <p className="text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
                 {isNewTemplate ? 'Yeni bir PDF şablonu oluşturun' : `${selectedTemplate?.name || 'Şablon'} düzenleniyor`}
               </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Panel - Şablon Ayarları ve Genel Ayarlar */}
+      <div className="border-b bg-background px-4 py-3">
+        <div className="grid grid-cols-3 gap-4">
+          {/* Şablon Ayarları */}
+          <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-lg p-3 border border-blue-200/50 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-base">⚙️</span>
+              <div>
+                <h3 className="text-sm font-bold text-gray-800">Şablon Ayarları</h3>
+                <p className="text-xs text-gray-600">PDF şablonunuzu özelleştirin</p>
+              </div>
             </div>
+          </div>
+          
+          {/* Genel Ayarlar */}
+          <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-lg p-3 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-base">🎨</span>
+              <h3 className="text-sm font-bold text-gray-800">Genel Ayarlar</h3>
+            </div>
+            
+            {/* Font Family */}
+            <div className="space-y-1.5 mb-2">
+              <Label className="text-xs font-medium text-gray-700">Font Tipi</Label>
+              <Select
+                value={form.watch('page.fontFamily') || 'Roboto'}
+                onValueChange={(value) => form.setValue('page.fontFamily', value as 'Roboto' | 'Helvetica' | 'Times-Roman' | 'Courier')}
+              >
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue placeholder="Font seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Roboto">Roboto</SelectItem>
+                  <SelectItem value="Helvetica">Helvetica</SelectItem>
+                  <SelectItem value="Times-Roman">Times Roman</SelectItem>
+                  <SelectItem value="Courier">Courier</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Background Color */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-gray-700">Arka Plan Rengi</Label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { name: 'Beyaz', value: '#FFFFFF', preview: 'bg-white' },
+                  { name: 'Açık Gri', value: '#F9FAFB', preview: 'bg-gray-50' },
+                  { name: 'Gri', value: '#F3F4F6', preview: 'bg-gray-100' },
+                  { name: 'Açık Mavi', value: '#EFF6FF', preview: 'bg-blue-50' },
+                  { name: 'Açık Yeşil', value: '#F0FDF4', preview: 'bg-green-50' },
+                  { name: 'Açık Sarı', value: '#FEFCE8', preview: 'bg-yellow-50' },
+                  { name: 'Açık Pembe', value: '#FDF2F8', preview: 'bg-pink-50' },
+                  { name: 'Açık Mor', value: '#FAF5FF', preview: 'bg-purple-50' },
+                ].map((bg) => (
+                  <button
+                    key={bg.value}
+                    type="button"
+                    onClick={() => form.setValue('page.backgroundColor', bg.value)}
+                    className={`${bg.preview} border-2 rounded-md p-1.5 h-10 flex flex-col items-center justify-center gap-0.5 hover:ring-2 hover:ring-blue-400 transition-all ${
+                      form.watch('page.backgroundColor') === bg.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'
+                    }`}
+                    title={bg.name}
+                  >
+                    <div className={`w-full h-3 rounded ${bg.preview} border border-gray-300`}></div>
+                    <span className="text-[8px] text-gray-600 font-medium">{bg.name}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-1">
+                <Label className="text-xs text-gray-500">Özel Renk:</Label>
+                <Input
+                  type="color"
+                  value={form.watch('page.backgroundColor') || '#FFFFFF'}
+                  onChange={(e) => form.setValue('page.backgroundColor', e.target.value)}
+                  className="h-7 w-full mt-1"
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Şablon Adı */}
+          <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-lg p-3 border border-emerald-200/50 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-base">✏️</span>
+              <Label htmlFor="template-name" className="text-sm font-semibold text-gray-800">Şablon Adı</Label>
+            </div>
+            <Input
+              id="template-name"
+              type="text"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="Şablon adını girin"
+              className="h-8 text-sm border-emerald-300 focus:border-emerald-500 focus:ring-emerald-500/20"
+            />
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        <ResizablePanelGroup direction="horizontal" className="h-full">
+      <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)]">
           {/* Settings Panel */}
-          <ResizablePanel defaultSize={35} minSize={30}>
-            <div className="h-full overflow-y-auto bg-gradient-to-b from-background via-background/98 to-muted/20 border-r border-border/20">
-              <div className="p-3 space-y-3">
-                <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-lg p-3 border border-blue-200/50 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-sm">
-                      <span className="text-lg">⚙️</span>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-gray-800">Şablon Ayarları</h3>
-                      <p className="text-xs text-gray-600">PDF şablonunuzu özelleştirin</p>
-                    </div>
-                  </div>
-                </div>
-              <form onSubmit={form.handleSubmit(handleSave)} className="space-y-3">
-                {/* Template Name */}
-                <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-lg p-3 border border-emerald-200/50 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 rounded-md shadow-sm">
-                      <span className="text-sm">✏️</span>
-                    </div>
-                    <Label htmlFor="template-name" className="text-sm font-semibold text-gray-800">Şablon Adı</Label>
-                  </div>
-                  <Input
-                    id="template-name"
-                    type="text"
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                    placeholder="Şablon adını girin"
-                    className="h-8 text-sm border-emerald-300 focus:border-emerald-500 focus:ring-emerald-500/20"
-                  />
-                </div>
+          <ResizablePanel defaultSize={28} minSize={22} className="min-w-0 flex flex-col">
+            <div className="h-full flex flex-col bg-gradient-to-b from-background via-background/98 to-muted/20 border-r border-border/20 min-h-0 overflow-hidden">
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-2 min-h-0">
+                <form onSubmit={form.handleSubmit(handleSave, (errors) => {
+                  console.error('Form validation errors:', errors); // Debug
+                  toast.error('Lütfen form alanlarını kontrol edin');
+                })} className="space-y-2">
 
                 {/* Header Settings */}
                 <Accordion type="single" collapsible defaultValue="header">
                   <AccordionItem value="header" className="border border-gray-200 rounded-lg">
-                    <AccordionTrigger className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 px-3 py-2 rounded-t-lg border-b border-gray-200 font-semibold text-sm text-gray-800">
+                    <AccordionTrigger className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 flex items-center justify-center bg-blue-100 rounded-md">
-                          <span className="text-xs font-bold text-blue-700">📄</span>
-                        </div>
+                        <span className="text-xs">📄</span>
                         <span>Başlık Ayarları</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="space-y-2 pt-2 px-3 pb-3">
+                    <AccordionContent className="space-y-2 pt-1.5 px-2 pb-2">
                       {/* Title and Logo Settings - Side by Side */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
                         {/* Title Settings */}
                         <div className="space-y-1.5">
-                          {/* Title Section Header */}
                           <div className="flex items-center gap-1.5">
-                            <div className="w-4 h-4 flex items-center justify-center bg-blue-100 rounded">
-                              <span className="text-xs font-bold text-blue-700">T</span>
-                            </div>
+                            <span className="text-xs">T</span>
                             <Label className="text-xs font-semibold text-gray-800">Başlık</Label>
                           </div>
-
-                          {/* Title Controls */}
                           <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-1.5">
-                            {/* Title Text Input */}
                             <div>
                               <Label className="text-xs text-gray-600 mb-0.5 block">Başlık Metni</Label>
                               <Input 
@@ -531,10 +699,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                 placeholder="Başlık metnini girin"
                               />
                             </div>
-
-                            {/* Font Size - Simplified */}
-                            <div className="pt-1 border-t border-gray-200">
-                              <div className="flex items-center gap-2">
+                            <div className="pt-1 border-t border-gray-200 flex items-center gap-2">
                                 <Label className="text-xs text-gray-600 min-w-fit">Font</Label>
                                 <Input
                                   type="number"
@@ -544,13 +709,11 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                   placeholder="16"
                                   className="h-7 w-14 text-center text-xs"
                                 />
-                              </div>
                             </div>
                           </div>
                         </div>
                         
                         {/* Logo Settings */}
-                        <div className="space-y-1.5">
                           <LogoUploadField
                             logoUrl={watchedValues.header?.logoUrl}
                             onLogoChange={(url) => form.setValue('header.logoUrl', url || undefined)}
@@ -561,17 +724,13 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                             showLogo={watchedValues.header?.showLogo}
                             onShowLogoChange={(value) => form.setValue('header.showLogo', value)}
                           />
-                        </div>
                       </div>
                       
                       {/* Company Info Settings */}
                       <div className="space-y-2">
-                        {/* Company Section Header */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 flex items-center justify-center bg-gray-100 rounded-md">
-                              <span className="text-xs font-bold text-gray-700">🏢</span>
-                            </div>
+                            <span className="text-xs">🏢</span>
                             <Label className="text-xs font-semibold text-gray-800">Şirket Bilgileri</Label>
                           </div>
                           <div className="flex items-center gap-1.5">
@@ -585,16 +744,13 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                           </div>
                         </div>
 
-                        {/* Company Controls - Only show when enabled */}
                         {watchedValues.header?.showCompanyInfo && (
                           <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-1.5">
-                            {/* Info Message - More compact */}
                             <div className="p-1 bg-blue-50/80 border border-blue-200/50 rounded text-xs text-blue-700 flex items-center gap-1">
-                              <span className="text-xs">💡</span>
+                              <span>💡</span>
                               <span>Sistem Ayarları'ndan otomatik yüklenir</span>
                             </div>
                             
-                            {/* Company Name & Font Size */}
                             <div className="grid grid-cols-2 gap-2 pt-1">
                               <div>
                                 <Label className="text-xs text-gray-600 mb-0.5 block">Şirket Adı</Label>
@@ -617,7 +773,6 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               </div>
                             </div>
                             
-                            {/* Company Address */}
                             <div>
                               <Label className="text-xs text-gray-600 mb-0.5 block">Adres</Label>
                               <Input 
@@ -627,7 +782,6 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               />
                             </div>
                             
-                            {/* Contact Info */}
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <Label className="text-xs text-gray-600 mb-0.5 block">Telefon</Label>
@@ -647,7 +801,6 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               </div>
                             </div>
                             
-                            {/* Website & Tax Number */}
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <Label className="text-xs text-gray-600 mb-0.5 block">Website</Label>
@@ -676,11 +829,9 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                 {/* Customer and Proposal Block Settings */}
                 <Accordion type="single" collapsible defaultValue="customer">
                   <AccordionItem value="customer" className="border border-gray-200 rounded-lg">
-                    <AccordionTrigger className="bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 px-3 py-2 rounded-t-lg border-b border-gray-200 font-semibold text-sm text-gray-800">
+                    <AccordionTrigger className="bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 flex items-center justify-center bg-green-100 rounded-md">
-                          <span className="text-xs font-bold text-green-700">👥</span>
-                        </div>
+                        <span className="text-xs">👥</span>
                         <span>Müşteri ve Teklif Bilgileri</span>
                       </div>
                     </AccordionTrigger>
@@ -699,22 +850,17 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                 {/* Line Table Settings */}
                 <Accordion type="single" collapsible defaultValue="table">
                   <AccordionItem value="table" className="border border-gray-200 rounded-lg">
-                    <AccordionTrigger className="bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 px-3 py-2 rounded-t-lg border-b border-gray-200 font-semibold text-sm text-gray-800">
+                    <AccordionTrigger className="bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 flex items-center justify-center bg-purple-100 rounded-md">
-                          <span className="text-xs font-bold text-purple-700">📊</span>
-                        </div>
+                        <span className="text-xs">📊</span>
                         <span>Tablo Ayarları</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-3 pb-3 pt-2 space-y-2">
-                      {/* Sıra Numarası Toggle */}
                       <div className="border rounded-md p-2 bg-indigo-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <div className="w-5 h-5 flex items-center justify-center bg-indigo-100 rounded-full">
-                              <span className="text-xs font-bold text-indigo-700">#</span>
-                            </div>
+                            <span className="text-xs">#</span>
                             <Label className="text-xs font-medium text-gray-700">Sıra Numarası</Label>
                           </div>
                           <Switch
@@ -726,20 +872,14 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                         </div>
                       </div>
 
-                      {/* Kolonlar */}
                       <div className="grid grid-cols-2 gap-2">
                         {watchedValues.lineTable?.columns?.map((column, index) => (
                           <div key={column.key} className="border rounded-md p-2 bg-gray-50">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5">
-                                <div className="w-5 h-5 flex items-center justify-center bg-purple-100 rounded-full">
-                                  <span className="text-xs font-bold text-purple-700">
-                                    {index + 1}
-                                  </span>
-                                </div>
+                                <span className="text-xs">{index + 1}</span>
                                 <Label className="text-xs font-medium text-gray-700">{column.label}</Label>
                               </div>
-                              
                               <Switch
                                 id={`show-${column.key}`}
                                 checked={column.show}
@@ -761,23 +901,18 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                 {/* Totals Settings */}
                 <Accordion type="single" collapsible defaultValue="totals">
                   <AccordionItem value="totals" className="border border-gray-200 rounded-lg">
-                    <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 px-3 py-2 rounded-t-lg border-b border-gray-200 font-semibold text-sm text-gray-800">
+                    <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 flex items-center justify-center bg-orange-100 rounded-md">
-                          <span className="text-xs font-bold text-orange-700">💰</span>
-                        </div>
+                        <span className="text-xs">💰</span>
                         <span>Toplam Ayarları</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-3 pb-3 pt-2">
                       <div className="grid grid-cols-2 gap-2">
-                        {/* Ara Toplam */}
                         <div className="border rounded-md p-2 bg-orange-50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
-                              <div className="w-5 h-5 flex items-center justify-center bg-orange-100 rounded-full">
-                                <span className="text-xs font-bold text-orange-700">1</span>
-                              </div>
+                              <span className="text-xs">1</span>
                               <Label className="text-xs font-medium text-gray-700">Ara Toplam</Label>
                             </div>
                             <Switch
@@ -789,13 +924,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                           </div>
                         </div>
 
-                        {/* İndirim */}
                         <div className="border rounded-md p-2 bg-red-50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
-                              <div className="w-5 h-5 flex items-center justify-center bg-red-100 rounded-full">
-                                <span className="text-xs font-bold text-red-700">2</span>
-                              </div>
+                              <span className="text-xs">2</span>
                               <Label className="text-xs font-medium text-gray-700">İndirim</Label>
                             </div>
                             <Switch
@@ -807,13 +939,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                           </div>
                         </div>
 
-                        {/* KDV */}
                         <div className="border rounded-md p-2 bg-blue-50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
-                              <div className="w-5 h-5 flex items-center justify-center bg-blue-100 rounded-full">
-                                <span className="text-xs font-bold text-blue-700">3</span>
-                              </div>
+                              <span className="text-xs">3</span>
                               <Label className="text-xs font-medium text-gray-700">KDV</Label>
                             </div>
                             <Switch
@@ -825,13 +954,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                           </div>
                         </div>
 
-                        {/* Genel Toplam */}
                         <div className="border rounded-md p-2 bg-green-50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
-                              <div className="w-5 h-5 flex items-center justify-center bg-green-100 rounded-full">
-                                <span className="text-xs font-bold text-green-700">4</span>
-                              </div>
+                              <span className="text-xs">4</span>
                               <Label className="text-xs font-medium text-gray-700">Genel Toplam</Label>
                             </div>
                             <Switch
@@ -852,14 +978,11 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                   <AccordionItem value="notes" className="border border-gray-200 rounded-lg">
                     <AccordionTrigger className="bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 px-3 py-2 rounded-t-lg border-b border-gray-200 font-semibold text-sm text-gray-800">
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 flex items-center justify-center bg-pink-100 rounded-md">
-                          <span className="text-xs font-bold text-pink-700">📝</span>
-                        </div>
+                        <span className="text-xs">📝</span>
                         <span>Not Ayarları</span>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-3 pb-3 pt-2 space-y-2">
-                      {/* Şartlar ve Koşullar Ayarları */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between mb-2">
                           <Label className="text-xs font-semibold text-gray-800">Şartlar ve Koşullar</Label>
@@ -882,13 +1005,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                         </div>
                         <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-2">
                           <div className="grid grid-cols-2 gap-2">
-                            {/* Ödeme Şartları */}
                             <div className="border rounded-md p-2 bg-blue-50">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
-                                  <div className="w-5 h-5 flex items-center justify-center bg-blue-100 rounded-full">
-                                    <span className="text-xs font-bold text-blue-700">1</span>
-                                  </div>
+                                  <span className="text-xs">1</span>
                                   <Label className="text-xs font-medium text-gray-700">Ödeme Şartları</Label>
                                 </div>
                                 <Switch
@@ -900,13 +1020,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               </div>
                             </div>
 
-                            {/* Teslimat Şartları */}
                             <div className="border rounded-md p-2 bg-green-50">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
-                                  <div className="w-5 h-5 flex items-center justify-center bg-green-100 rounded-full">
-                                    <span className="text-xs font-bold text-green-700">2</span>
-                                  </div>
+                                  <span className="text-xs">2</span>
                                   <Label className="text-xs font-medium text-gray-700">Teslimat Şartları</Label>
                                 </div>
                                 <Switch
@@ -918,13 +1035,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               </div>
                             </div>
 
-                            {/* Garanti Şartları */}
                             <div className="border rounded-md p-2 bg-purple-50">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
-                                  <div className="w-5 h-5 flex items-center justify-center bg-purple-100 rounded-full">
-                                    <span className="text-xs font-bold text-purple-700">3</span>
-                                  </div>
+                                  <span className="text-xs">3</span>
                                   <Label className="text-xs font-medium text-gray-700">Garanti Şartları</Label>
                                 </div>
                                 <Switch
@@ -936,13 +1050,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               </div>
                             </div>
 
-                            {/* Fiyat Şartları */}
                             <div className="border rounded-md p-2 bg-orange-50">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
-                                  <div className="w-5 h-5 flex items-center justify-center bg-orange-100 rounded-full">
-                                    <span className="text-xs font-bold text-orange-700">4</span>
-                                  </div>
+                                  <span className="text-xs">4</span>
                                   <Label className="text-xs font-medium text-gray-700">Fiyat Şartları</Label>
                                 </div>
                                 <Switch
@@ -955,13 +1066,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                             </div>
                           </div>
 
-                          {/* Diğer Şartlar */}
                           <div className="border rounded-md p-2 bg-gray-50">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5">
-                                <div className="w-5 h-5 flex items-center justify-center bg-gray-100 rounded-full">
-                                  <span className="text-xs font-bold text-gray-700">5</span>
-                                </div>
+                                <span className="text-xs">5</span>
                                 <Label className="text-xs font-medium text-gray-700">Diğer Şartlar</Label>
                               </div>
                               <Switch
@@ -1004,7 +1112,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate('/settings')}
+                    onClick={() => navigate('/settings/pdf-templates')}
                     disabled={isLoading}
                     size="sm"
                     className="h-8 text-xs"
@@ -1021,34 +1129,29 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           <ResizableHandle withHandle />
 
           {/* PDF Preview */}
-          <ResizablePanel defaultSize={65} minSize={50}>
-            <div className="h-full p-4">
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="h-5 w-5" />
+          <ResizablePanel defaultSize={72} minSize={60} className="min-w-0">
+            <div className="h-full flex flex-col">
+              <div className="pb-2 px-4 pt-2 border-b sticky top-0 bg-background z-10">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Eye className="h-4 w-4" />
                     PDF Önizleme
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="h-full p-0">
+                </div>
+              </div>
+              <div className="flex-1 w-full">
                   {previewData && watchedValues ? (
-                    <div className="h-full">
-                      <PDFViewer className="w-full h-full">
+                  <PDFViewer className="w-full h-full border-0">
                         <PdfRenderer data={previewData} schema={watchedValues} />
                       </PDFViewer>
-                    </div>
                   ) : (
                     <div className="h-full flex items-center justify-center text-muted-foreground">
                       PDF önizlemesi yükleniyor...
                     </div>
                   )}
-                </CardContent>
-              </Card>
+              </div>
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
-    </div>
+    </>
   );
 };
 

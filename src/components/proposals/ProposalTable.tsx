@@ -37,7 +37,7 @@ const ProposalTable = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
-  const [sortField, setSortField] = useState<ProposalSortField>("created_at");
+  const [sortField, setSortField] = useState<ProposalSortField>("offer_date");
   const [sortDirection, setSortDirection] = useState<ProposalSortDirection>("desc");
   
   // Confirmation dialog states

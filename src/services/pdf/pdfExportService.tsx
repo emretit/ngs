@@ -39,10 +39,10 @@ export class PdfExportService {
   static async createDefaultTemplates(companyId: string) {
     const defaultTemplates = [
       {
-        name: 'Varsayılan Teklif Şablonu',
+        name: 'Hazır Teklif Şablonu',
         type: 'quote' as const,
         locale: 'tr' as const,
-        is_default: true,
+        is_default: false,
         version: 1,
         schema_json: {
           page: {
@@ -91,10 +91,10 @@ export class PdfExportService {
         },
       },
       {
-        name: 'Varsayılan Fatura Şablonu',
+        name: 'Hazır Fatura Şablonu',
         type: 'invoice' as const,
         locale: 'tr' as const,
-        is_default: true,
+        is_default: false,
         version: 1,
         schema_json: {
           page: {
@@ -204,8 +204,8 @@ export class PdfExportService {
         .select('type, name')
         .eq('company_id', companyId);
 
-      const hasQuote = allTemplates?.some(t => t.type === 'quote' && t.name === 'Varsayılan Teklif Şablonu');
-      const hasInvoice = allTemplates?.some(t => t.type === 'invoice' && t.name === 'Varsayılan Fatura Şablonu');
+      const hasQuote = allTemplates?.some(t => t.type === 'quote' && t.name === 'Hazır Teklif Şablonu');
+      const hasInvoice = allTemplates?.some(t => t.type === 'invoice' && t.name === 'Hazır Fatura Şablonu');
 
       if (!hasQuote || !hasInvoice) {
         await this.createDefaultTemplates(companyId);
@@ -359,7 +359,6 @@ export class PdfExportService {
     }
 
     const { data, error } = await query
-      .order('is_default', { ascending: false })
       .order('name');
 
     if (error) {
@@ -376,7 +375,6 @@ export class PdfExportService {
         .select('*')
         .eq('type', type)
         .eq('company_id', companyId)
-        .order('is_default', { ascending: false })
         .order('name');
       
       if (retryError) {
@@ -390,7 +388,7 @@ export class PdfExportService {
   }
 
   /**
-   * Get default template for a type
+   * Get first available template for a type
    */
   static async getDefaultTemplate(type: 'quote' | 'invoice' | 'proposal' = 'quote') {
     const companyId = await this.getCurrentCompanyId();
@@ -399,7 +397,7 @@ export class PdfExportService {
       .from('pdf_templates')
       .select('*')
       .eq('type', type)
-      .eq('is_default', true);
+      .limit(1);
 
     if (companyId) {
       query = query.eq('company_id', companyId);
@@ -407,26 +405,11 @@ export class PdfExportService {
       query = query.is('company_id', null);
     }
 
-    const { data, error } = await query.single();
+    const { data, error } = await query.maybeSingle();
 
-    if (error) {
-      // If no default template found, try to get any template of this type
-      if (companyId) {
-        const { data: anyTemplate } = await supabase
-          .from('pdf_templates')
-          .select('*')
-          .eq('type', type)
-          .eq('company_id', companyId)
-          .limit(1)
-          .maybeSingle();
-        
-        if (anyTemplate) {
-          return anyTemplate as PdfTemplate;
-        }
-      }
-      
-      console.error('Error fetching default template:', error);
-      throw new Error('Varsayılan şablon bulunamadı: ' + error.message);
+    if (error || !data) {
+      console.error('Error fetching template:', error);
+      throw new Error('Şablon bulunamadı. Lütfen önce bir şablon oluşturun.');
     }
 
     return data as PdfTemplate;
@@ -488,41 +471,6 @@ export class PdfExportService {
     return data as PdfTemplate;
   }
 
-  /**
-   * Set a template as default (unsets others)
-   */
-  static async setAsDefault(templateId: string, type: 'quote' | 'invoice' | 'proposal') {
-    const companyId = await this.getCurrentCompanyId();
-    
-    // First, unset all defaults for this type and company
-    let unsetQuery = supabase
-      .from('pdf_templates')
-      .update({ is_default: false })
-      .eq('type', type);
-    
-    if (companyId) {
-      unsetQuery = unsetQuery.eq('company_id', companyId);
-    } else {
-      unsetQuery = unsetQuery.is('company_id', null);
-    }
-    
-    await unsetQuery;
-
-    // Then set the selected template as default
-    const { data, error } = await supabase
-      .from('pdf_templates')
-      .update({ is_default: true })
-      .eq('id', templateId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error setting default template:', error);
-      throw new Error('Varsayılan şablon ayarlanırken hata oluştu: ' + error.message);
-    }
-
-    return data as PdfTemplate;
-  }
 
   /**
    * Delete a template
@@ -562,7 +510,7 @@ export class PdfExportService {
       }
 
       if (!activeTemplate) {
-        throw new Error('Varsayılan şablon bulunamadı. Lütfen önce bir şablon oluşturun.');
+        throw new Error('Şablon bulunamadı. Lütfen önce bir şablon oluşturun.');
       }
 
       // Create React element for PDF
@@ -850,7 +798,9 @@ export class PdfExportService {
    */
   static async getCompanySettings() {
     try {
+      console.log('getCompanySettings: Starting...'); // Debug
       const companyId = await this.getCurrentCompanyId();
+      console.log('getCompanySettings: companyId =', companyId); // Debug
       
       if (!companyId) {
         console.warn('No company_id found for current user');
@@ -864,18 +814,20 @@ export class PdfExportService {
         .eq('is_active', true)
         .maybeSingle();
 
+      console.log('getCompanySettings: Supabase query result:', { data, error }); // Debug
+
       if (error) {
         console.error('Error fetching company settings:', error);
         return {};
       }
 
       if (!data) {
-        console.warn('No active company found');
+        console.warn('No active company found for companyId:', companyId);
         return {};
       }
 
       // Map companies table fields to expected format
-      return {
+      const mappedData = {
         company_name: data.name || '',
         company_address: data.address || '',
         company_phone: data.phone || '',
@@ -896,6 +848,9 @@ export class PdfExportService {
         default_currency: data.default_currency || 'TRY',
         default_prepared_by: '', // Can be set from user profile if needed
       };
+      
+      console.log('getCompanySettings: Mapped data:', mappedData); // Debug
+      return mappedData;
     } catch (error) {
       console.error('Error in getCompanySettings:', error);
       return {};

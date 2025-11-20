@@ -188,6 +188,43 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Calendar Quick Access */}
+            <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-gray-300 cursor-pointer"
+                  onClick={() => navigate("/calendar")}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                      <Calendar className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-foreground">
+                        Genel Takvim
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground">Tüm etkinlikler</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/calendar");
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Aç
+                    <ChevronRight className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Aktiviteler, siparişler ve teslimatlarınızı takvim görünümünde görüntüleyin
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

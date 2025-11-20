@@ -21,9 +21,6 @@ interface CustomersTableProps {
   onCustomerSelectToggle?: (customer: Customer) => void;
   selectedCustomers?: Customer[];
   setSelectedCustomers?: (customers: Customer[]) => void;
-  searchQuery?: string;
-  statusFilter?: string;
-  typeFilter?: string;
 }
 
 const CustomersTable = ({ 
@@ -34,10 +31,7 @@ const CustomersTable = ({
   onCustomerSelect, 
   onCustomerSelectToggle,
   selectedCustomers = [],
-  setSelectedCustomers,
-  searchQuery,
-  statusFilter,
-  typeFilter
+  setSelectedCustomers
 }: CustomersTableProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -188,20 +182,11 @@ const CustomersTable = ({
       : valueB.localeCompare(valueA);
   });
 
-  // Filter customers based on search query, status, and type
-  const filteredCustomers = sortedCustomers.filter(customer => {
-    const matchesSearch = !searchQuery || 
-      customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.mobile_phone?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.office_phone?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = !statusFilter || statusFilter === 'all' || customer.status === statusFilter;
-    const matchesType = !typeFilter || typeFilter === 'all' || customer.type === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
-  });
+  // NOT: Frontend'de filtreleme YAPMAYIN! Backend zaten filtreliyor (useCustomersInfiniteScroll).
+  // Bu sayede "Tümünü Seç" sadece ekranda görünen müşterileri seçer, karışıklık olmaz.
+  // Eğer frontend filtreleme yaparsak, infinite scroll ile 100 müşteri yüklü olsa bile,
+  // filtre sonucu sadece 5 müşteri görünebilir ve "Tümünü Seç" 100 müşteriyi seçer!
+  const filteredCustomers = sortedCustomers;
 
   return (
     <div className="-mx-4">
@@ -216,13 +201,19 @@ const CustomersTable = ({
           onSelectAll={(checked) => {
             if (setSelectedCustomers) {
               if (checked) {
-                setSelectedCustomers(filteredCustomers);
+                // Tüm yüklü müşterileri seç
+                setSelectedCustomers([...filteredCustomers]);
               } else {
                 setSelectedCustomers([]);
               }
             }
           }}
-          isAllSelected={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
+          isAllSelected={
+            filteredCustomers.length > 0 && 
+            filteredCustomers.every(customer => 
+              selectedCustomers.some(selected => selected.id === customer.id)
+            )
+          }
         />
         <TableBody>
           {!isLoading && filteredCustomers.length === 0 ? (

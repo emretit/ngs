@@ -16,8 +16,6 @@ import {
   MoreVertical,
   FileText,
   Calendar,
-  Star,
-  StarOff,
   Eye,
 } from 'lucide-react';
 import { PdfTemplate } from '@/types/pdf-template';
@@ -33,7 +31,6 @@ interface PdfTemplatesListProps {
   onEdit: (templateId: string) => void;
   onDuplicate: (template: PdfTemplate) => void;
   onDelete: (template: PdfTemplate) => void;
-  onSetAsDefault: (templateId: string) => void;
   getTypeBadgeColor: (type: string) => string;
   getTypeLabel: (type: string) => string;
 }
@@ -45,7 +42,6 @@ const PdfTemplatesList = memo(({
   onEdit,
   onDuplicate,
   onDelete,
-  onSetAsDefault,
   getTypeBadgeColor,
   getTypeLabel,
 }: PdfTemplatesListProps) => {
@@ -103,15 +99,6 @@ const PdfTemplatesList = memo(({
                     Kopyala
                   </Button>
                 </div>
-                {/* Default Badge */}
-                {template.is_default && (
-                  <div className="absolute top-3 right-3">
-                    <Badge className="bg-amber-500 text-white hover:bg-amber-500 gap-1">
-                      <Star className="h-3 w-3 fill-current" />
-                      Varsayılan
-                    </Badge>
-                  </div>
-                )}
               </div>
 
               {/* Template Info */}
@@ -153,21 +140,6 @@ const PdfTemplatesList = memo(({
                         <Copy className="h-4 w-4 mr-2" />
                         Kopyala
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {!template.is_default ? (
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
-                          onSetAsDefault(template.id);
-                        }}>
-                          <Star className="h-4 w-4 mr-2" />
-                          Varsayılan Yap
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem disabled>
-                          <StarOff className="h-4 w-4 mr-2" />
-                          Zaten Varsayılan
-                        </DropdownMenuItem>
-                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={(e) => {
@@ -227,11 +199,6 @@ const PdfTemplatesList = memo(({
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow duration-300">
                 <FileText className="h-7 w-7 text-green-600" />
               </div>
-              {template.is_default && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                  <Star className="h-2.5 w-2.5 text-white fill-white" />
-                </div>
-              )}
             </div>
 
             {/* Info Section */}
@@ -242,12 +209,6 @@ const PdfTemplatesList = memo(({
                     <h4 className="font-semibold text-base text-gray-900 truncate group-hover:text-primary transition-colors">
                       {template.name}
                     </h4>
-                    {template.is_default && (
-                      <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 text-xs font-medium px-2 py-0.5 gap-1 shadow-sm">
-                        <Star className="h-3 w-3 fill-current" />
-                        Varsayılan
-                      </Badge>
-                    )}
                     <Badge className={`text-xs font-medium px-2.5 py-0.5 ${getTypeBadgeColor(template.type)} shadow-sm`}>
                       {getTypeLabel(template.type)}
                     </Badge>
@@ -310,21 +271,6 @@ const PdfTemplatesList = memo(({
                     <Copy className="h-4 w-4 mr-2" />
                     Kopyala
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  {!template.is_default ? (
-                    <DropdownMenuItem 
-                      onClick={() => onSetAsDefault(template.id)}
-                      className="cursor-pointer"
-                    >
-                      <Star className="h-4 w-4 mr-2" />
-                      Varsayılan Yap
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem disabled>
-                      <StarOff className="h-4 w-4 mr-2" />
-                      Zaten Varsayılan
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => onDelete(template)}

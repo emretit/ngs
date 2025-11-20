@@ -1,18 +1,17 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CustomerFormData } from "@/types/customer";
+import { SupplierFormData } from "@/types/supplier";
 
-export const useCustomerForm = (einvoiceMukellefData?: any) => {
+export const useSupplierForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState<CustomerFormData>({
+  const [formData, setFormData] = useState<SupplierFormData>({
     name: "",
     email: "",
     mobile_phone: "",
@@ -27,43 +26,54 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
     tax_office: "",
     city: "",
     district: "",
-    einvoice_alias_name: "",
-    website: "",
     country: "",
     postal_code: "",
     fax: "",
-    bank_name: "",
-    iban: "",
-    account_number: "",
-    trade_registry_number: "",
-    mersis_number: "",
-    establishment_date: "",
-    sector: "",
-    customer_segment: "",
-    customer_source: "",
-    notes: "",
-    first_contact_position: "",
+    website: "",
+    is_active: true,
+    payee_financial_account_id: "",
+    payment_means_channel_code: "",
+    payment_means_code: "",
+    aliases: [],
+    einvoice_alias_name: "",
+    // İkinci yetkili kişi bilgileri
     second_contact_name: "",
     second_contact_email: "",
     second_contact_phone: "",
     second_contact_position: "",
+    // İkinci adres bilgileri
     second_address: "",
     second_city: "",
     second_district: "",
     second_country: "",
     second_postal_code: "",
+    // Finansal bilgiler
+    bank_name: "",
+    iban: "",
+    account_number: "",
     payment_terms: "",
+    // Şirket detay bilgileri
+    trade_registry_number: "",
+    mersis_number: "",
+    establishment_date: "",
+    sector: "",
+    supplier_segment: "",
+    supplier_source: "",
+    // Notlar
+    notes: "",
+    // İlk yetkili kişi pozisyonu
+    first_contact_position: "",
   });
 
-  const { data: customer, isLoading: isLoadingCustomer, error: customerError } = useQuery({
-    queryKey: ['customer', id],
+  const { data: supplier, isLoading: isLoadingSupplier, error: supplierError } = useQuery({
+    queryKey: ['supplier', id],
     queryFn: async () => {
       if (!id) {
-        console.log('No ID provided, skipping customer fetch');
+        console.log('No ID provided, skipping supplier fetch');
         return null;
       }
       
-      console.log('🔍 Fetching customer data for ID:', id);
+      console.log('🔍 Fetching supplier data for ID:', id);
       
       // Önce company_id'yi al
       const { data: { user } } = await supabase.auth.getUser();
@@ -80,23 +90,23 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
       }
       
       const { data, error } = await supabase
-        .from('customers')
+        .from('suppliers')
         .select('*')
         .eq('id', id)
         .eq('company_id', companyId)
         .maybeSingle();
       
       if (error) {
-        console.error('❌ Error fetching customer:', error);
+        console.error('❌ Error fetching supplier:', error);
         throw error;
       }
 
       if (!data) {
-        console.error('❌ No customer found with ID:', id);
-        throw new Error('Müşteri bulunamadı');
+        console.error('❌ No supplier found with ID:', id);
+        throw new Error('Tedarikçi bulunamadı');
       }
 
-      console.log('✅ Retrieved customer data:', data);
+      console.log('✅ Retrieved supplier data:', data);
       return data;
     },
     enabled: !!id,
@@ -104,18 +114,18 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
   });
 
   useEffect(() => {
-    if (customer) {
-      console.log('📝 Setting form data with customer:', customer);
-      console.log('📋 Customer name:', customer.name);
-      console.log('📋 Customer company:', customer.company);
+    if (supplier) {
+      console.log('📝 Setting form data with supplier:', supplier);
+      console.log('📋 Supplier name:', supplier.name);
+      console.log('📋 Supplier company:', supplier.company);
       
       // City ve district için string'den ID'ye çevirme fonksiyonu
       const resolveCityId = async (cityName: string | null): Promise<string> => {
         if (!cityName) return "";
         try {
           // Önce city_id varsa onu kullan
-          if ((customer as any).city_id) {
-            return (customer as any).city_id.toString();
+          if ((supplier as any).city_id) {
+            return (supplier as any).city_id.toString();
           }
           // Yoksa city name'den ID bul (turkey_cities tablosunu kullan)
           const { data } = await supabase
@@ -134,8 +144,8 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         if (!districtName || !cityId) return "";
         try {
           // Önce district_id varsa onu kullan
-          if ((customer as any).district_id) {
-            return (customer as any).district_id.toString();
+          if ((supplier as any).district_id) {
+            return (supplier as any).district_id.toString();
           }
           // Yoksa district name ve city_id'den ID bul (turkey_districts tablosunu kullan)
           const { data } = await supabase
@@ -155,83 +165,93 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
       const loadFormData = async () => {
         // Önce city_id varsa onu kullan, yoksa string'den ID bul
         let cityId = "";
-        if ((customer as any).city_id) {
-          cityId = (customer as any).city_id.toString();
+        if ((supplier as any).city_id) {
+          cityId = (supplier as any).city_id.toString();
           console.log('✅ Using city_id from database:', cityId);
-        } else if (customer.city) {
-          cityId = await resolveCityId(customer.city);
-          console.log('✅ Resolved city ID from string:', customer.city, '→', cityId);
+        } else if (supplier.city) {
+          cityId = await resolveCityId(supplier.city);
+          console.log('✅ Resolved city ID from string:', supplier.city, '→', cityId);
         }
         
         // Önce district_id varsa onu kullan, yoksa string'den ID bul
         let districtId = "";
-        if ((customer as any).district_id) {
-          districtId = (customer as any).district_id.toString();
+        if ((supplier as any).district_id) {
+          districtId = (supplier as any).district_id.toString();
           console.log('✅ Using district_id from database:', districtId);
-        } else if (customer.district && cityId) {
-          districtId = await resolveDistrictId(customer.district, cityId);
-          console.log('✅ Resolved district ID from string:', customer.district, '→', districtId);
+        } else if (supplier.district && cityId) {
+          districtId = await resolveDistrictId(supplier.district, cityId);
+          console.log('✅ Resolved district ID from string:', supplier.district, '→', districtId);
         }
         
         // İkinci adres için aynı mantık
         let secondCityId = "";
-        if ((customer as any).second_city_id) {
-          secondCityId = (customer as any).second_city_id.toString();
-        } else if (customer.second_city) {
-          secondCityId = await resolveCityId(customer.second_city);
+        if ((supplier as any).second_city_id) {
+          secondCityId = (supplier as any).second_city_id.toString();
+        } else if (supplier.second_city) {
+          secondCityId = await resolveCityId(supplier.second_city);
         }
         
         let secondDistrictId = "";
-        if ((customer as any).second_district_id) {
-          secondDistrictId = (customer as any).second_district_id.toString();
-        } else if (customer.second_district && secondCityId) {
-          secondDistrictId = await resolveDistrictId(customer.second_district, secondCityId);
+        if ((supplier as any).second_district_id) {
+          secondDistrictId = (supplier as any).second_district_id.toString();
+        } else if (supplier.second_district && secondCityId) {
+          secondDistrictId = await resolveDistrictId(supplier.second_district, secondCityId);
         }
-        
-        // Tüm alanları null-safe şekilde map et
-        const newFormData: CustomerFormData = {
-          name: customer.name ?? "",
-          email: customer.email ?? "",
-          mobile_phone: customer.mobile_phone ?? "",
-          office_phone: customer.office_phone ?? "",
-          company: customer.company ?? "",
-          type: customer.type ?? "bireysel",
-          status: customer.status ?? "potansiyel",
-          representative: customer.representative ?? "",
-          balance: customer.balance ?? 0,
-          address: customer.address ?? "",
-          tax_number: customer.tax_number ?? "",
-          tax_office: customer.tax_office ?? "",
-          city: cityId || customer.city || customer.einvoice_city || "",
-          district: districtId || customer.district || customer.einvoice_district || "",
-          einvoice_alias_name: customer.einvoice_alias_name ?? "",
-          website: customer.website ?? "",
-          country: customer.country ?? "",
-          postal_code: customer.postal_code ?? "",
-          fax: customer.fax ?? "",
-          bank_name: customer.bank_name ?? "",
-          iban: customer.iban ?? "",
-          account_number: customer.account_number ?? "",
-          trade_registry_number: customer.trade_registry_number ?? "",
-          mersis_number: customer.mersis_number ?? "",
-          establishment_date: customer.establishment_date ?? "",
-          sector: customer.sector ?? "",
-          customer_segment: customer.customer_segment ?? "",
-          customer_source: customer.customer_source ?? "",
-          notes: customer.notes ?? "",
-          first_contact_position: customer.first_contact_position ?? "",
-          second_contact_name: customer.second_contact_name ?? "",
-          second_contact_email: customer.second_contact_email ?? "",
-          second_contact_phone: customer.second_contact_phone ?? "",
-          second_contact_position: customer.second_contact_position ?? "",
-          second_address: customer.second_address ?? "",
-          second_city: secondCityId || customer.second_city || "",
-          second_district: secondDistrictId || customer.second_district || "",
-          second_country: customer.second_country ?? "",
-          second_postal_code: customer.second_postal_code ?? "",
-          payment_terms: customer.payment_terms ?? "",
+
+        const newFormData: SupplierFormData = {
+          name: supplier.name ?? "",
+          email: supplier.email ?? "",
+          mobile_phone: supplier.mobile_phone ?? "",
+          office_phone: supplier.office_phone ?? "",
+          company: supplier.company ?? "",
+          type: supplier.type ?? "bireysel",
+          status: supplier.status ?? "potansiyel",
+          representative: supplier.representative ?? "",
+          balance: supplier.balance ?? 0,
+          address: supplier.address ?? "",
+          tax_number: supplier.tax_number ?? "",
+          tax_office: supplier.tax_office ?? "",
+          city: cityId || supplier.city || "",
+          district: districtId || supplier.district || "",
+          country: supplier.country ?? "",
+          postal_code: supplier.postal_code ?? "",
+          fax: supplier.fax ?? "",
+          website: supplier.website ?? "",
+          is_active: supplier.is_active ?? true,
+          payee_financial_account_id: supplier.payee_financial_account_id ?? "",
+          payment_means_channel_code: supplier.payment_means_channel_code ?? "",
+          payment_means_code: supplier.payment_means_code ?? "",
+          aliases: supplier.aliases ?? [],
+          einvoice_alias_name: supplier.einvoice_alias_name ?? "",
+          // İkinci yetkili kişi bilgileri
+          second_contact_name: supplier.second_contact_name ?? "",
+          second_contact_email: supplier.second_contact_email ?? "",
+          second_contact_phone: supplier.second_contact_phone ?? "",
+          second_contact_position: supplier.second_contact_position ?? "",
+          // İkinci adres bilgileri
+          second_address: supplier.second_address ?? "",
+          second_city: secondCityId || supplier.second_city || "",
+          second_district: secondDistrictId || supplier.second_district || "",
+          second_country: supplier.second_country ?? "",
+          second_postal_code: supplier.second_postal_code ?? "",
+          // Finansal bilgiler
+          bank_name: supplier.bank_name ?? "",
+          iban: supplier.iban ?? "",
+          account_number: supplier.account_number ?? "",
+          payment_terms: supplier.payment_terms ?? "",
+          // Şirket detay bilgileri
+          trade_registry_number: supplier.trade_registry_number ?? "",
+          mersis_number: supplier.mersis_number ?? "",
+          establishment_date: supplier.establishment_date ?? "",
+          sector: supplier.sector ?? "",
+          supplier_segment: supplier.supplier_segment ?? "",
+          supplier_source: supplier.supplier_source ?? "",
+          // Notlar
+          notes: supplier.notes ?? "",
+          // İlk yetkili kişi pozisyonu
+          first_contact_position: supplier.first_contact_position ?? "",
         };
-        
+
         console.log('📝 New form data created:', newFormData);
         setFormData(newFormData);
         console.log('✅ Form data set successfully');
@@ -239,23 +259,23 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
 
       loadFormData();
     } else {
-      console.log('⚠️ No customer data available to set');
+      console.log('⚠️ No supplier data available to set');
     }
-  }, [customer]);
+  }, [supplier]);
 
   useEffect(() => {
-    if (customerError) {
+    if (supplierError) {
       toast({
         title: "Hata",
-        description: "Müşteri bilgileri yüklenemedi. Lütfen tekrar deneyin.",
+        description: "Tedarikçi bilgileri yüklenemedi. Lütfen tekrar deneyin.",
         variant: "destructive",
       });
-      navigate('/contacts');
+      navigate('/suppliers');
     }
-  }, [customerError, navigate, toast]);
+  }, [supplierError, navigate, toast]);
 
   const mutation = useMutation({
-    mutationFn: async (data: CustomerFormData) => {
+    mutationFn: async (data: SupplierFormData) => {
       // City ve district ID'lerini integer'a çevir
       const cityId = data.city ? parseInt(data.city) : null;
       const districtId = data.district ? parseInt(data.district) : null;
@@ -302,21 +322,18 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         postal_code: data.postal_code || null,
         fax: data.fax || null,
         website: data.website || null,
-        bank_name: data.bank_name || null,
-        iban: data.iban || null,
-        account_number: data.account_number || null,
-        trade_registry_number: data.trade_registry_number || null,
-        mersis_number: data.mersis_number || null,
-        establishment_date: data.establishment_date || null,
-        sector: data.sector || null,
-        customer_segment: data.customer_segment || null,
-        customer_source: data.customer_source || null,
-        notes: data.notes || null,
-        first_contact_position: data.first_contact_position || null,
+        is_active: data.is_active,
+        payee_financial_account_id: data.payee_financial_account_id || null,
+        payment_means_channel_code: data.payment_means_channel_code || null,
+        payment_means_code: data.payment_means_code || null,
+        aliases: data.aliases.length > 0 ? data.aliases : null,
+        einvoice_alias_name: data.einvoice_alias_name || null,
+        // İkinci yetkili kişi bilgileri
         second_contact_name: data.second_contact_name || null,
         second_contact_email: data.second_contact_email || null,
         second_contact_phone: data.second_contact_phone || null,
         second_contact_position: data.second_contact_position || null,
+        // İkinci adres bilgileri
         second_address: data.second_address || null,
         second_city: secondCityName,
         second_city_id: secondCityId,
@@ -324,20 +341,23 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         second_district_id: secondDistrictId,
         second_country: data.second_country || null,
         second_postal_code: data.second_postal_code || null,
+        // Finansal bilgiler
+        bank_name: data.bank_name || null,
+        iban: data.iban || null,
+        account_number: data.account_number || null,
         payment_terms: data.payment_terms || null,
-        // E-fatura mükellefi bilgileri
-        is_einvoice_mukellef: einvoiceMukellefData?.isEinvoiceMukellef || false,
-        einvoice_alias_name: einvoiceMukellefData?.data?.aliasName || null,
-        einvoice_company_name: einvoiceMukellefData?.data?.companyName || null,
-        einvoice_tax_office: einvoiceMukellefData?.data?.taxOffice || null,
-        einvoice_address: einvoiceMukellefData?.data?.address || null,
-        einvoice_city: einvoiceMukellefData?.data?.city || null,
-        einvoice_district: einvoiceMukellefData?.data?.district || null,
-        einvoice_mersis_no: einvoiceMukellefData?.data?.mersisNo || null,
-        einvoice_sicil_no: einvoiceMukellefData?.data?.sicilNo || null,
-        einvoice_checked_at: einvoiceMukellefData?.isEinvoiceMukellef ? new Date().toISOString() : null,
+        // Şirket detay bilgileri
+        trade_registry_number: data.trade_registry_number || null,
+        mersis_number: data.mersis_number || null,
+        establishment_date: data.establishment_date || null,
+        sector: data.sector || null,
+        supplier_segment: data.supplier_segment || null,
+        supplier_source: data.supplier_source || null,
+        // Notlar
+        notes: data.notes || null,
+        // İlk yetkili kişi pozisyonu
+        first_contact_position: data.first_contact_position || null,
       };
-
       // Get current user's company_id
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profileData } = await supabase
@@ -350,71 +370,59 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
 
       if (id) {
         // Update
-        console.log('Updating data:', sanitizedData);
+        console.log('Updating supplier data:', sanitizedData);
         const { error: updateError } = await supabase
-          .from('customers')
+          .from('suppliers')
           .update(sanitizedData)
           .eq('id', id);
-        
         if (updateError) {
-          console.error('Update error:', updateError);
+          console.error('Güncelleme hatası:', updateError);
           throw updateError;
         }
-
         const { data: updatedData, error: fetchError } = await supabase
-          .from('customers')
+          .from('suppliers')
           .select('*')
           .eq('id', id)
           .maybeSingle();
-        
         if (fetchError) {
-          console.error('Fetch error:', fetchError);
+          console.error('Veri getirme hatası:', fetchError);
           throw fetchError;
         }
-
         if (!updatedData) {
-          console.error('Updated data not found');
-          throw new Error('Updated customer not found');
+          console.error('Güncellenmiş veri bulunamadı');
+          throw new Error('Güncellenmiş tedarikçi bulunamadı');
         }
-
-        console.log('Updated data:', updatedData);
         return updatedData;
       } else {
-        // Add new customer - add company_id to sanitized data
+        // Add new supplier - add company_id to sanitized data
         const dataWithCompanyId = { ...sanitizedData, company_id };
+        console.log('Inserting supplier data:', dataWithCompanyId);
         const { data: newData, error } = await supabase
-          .from('customers')
+          .from('suppliers')
           .insert([dataWithCompanyId])
           .select()
           .maybeSingle();
-        
         if (error) {
-          console.error('Add error:', error);
+          console.error('Ekleme hatası:', error);
           throw error;
         }
-
         if (!newData) {
-          console.error('New data not found');
-          throw new Error('Customer could not be added');
+          console.error('Yeni eklenen veri bulunamadı');
+          throw new Error('Tedarikçi eklenemedi');
         }
-
-        console.log('New data:', newData);
         return newData;
       }
     },
     onSuccess: (data) => {
-      console.log('Operation successful, returned data:', data);
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       if (id) {
-        queryClient.invalidateQueries({ queryKey: ['customer', id] });
+        queryClient.invalidateQueries({ queryKey: ['supplier', id] });
       }
-
       toast({
-        title: id ? "Müşteri güncellendi" : "Müşteri eklendi",
-        description: id ? "Müşteri bilgileri başarıyla güncellendi." : "Yeni müşteri başarıyla eklendi.",
+        title: id ? "Tedarikçi güncellendi" : "Tedarikçi eklendi",
+        description: id ? "Tedarikçi bilgileri başarıyla güncellendi." : "Yeni tedarikçi başarıyla eklendi.",
       });
-
-      navigate('/contacts');
+      navigate('/suppliers');
     },
     onError: (error) => {
       console.error('Mutation error:', error);
@@ -428,7 +436,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting form:', formData);
+    console.log('Form gönderiliyor:', formData);
     try {
       await mutation.mutateAsync(formData);
     } catch (error) {
@@ -440,10 +448,11 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
     id,
     formData,
     setFormData,
-    isLoadingCustomer,
-    customerError,
+    isLoadingSupplier,
+    supplierError,
     mutation,
     handleSubmit,
     navigate
   };
 };
+

@@ -14,7 +14,7 @@ interface City {
 interface District {
   id: number;
   name: string;
-  city_name: string;
+  city_id: number;
 }
 
 interface AddressFieldsProps {
@@ -60,10 +60,10 @@ export const AddressFields = ({
           setCities(data || []);
       } catch (error) {
         console.error('Error loading cities:', error);
-        // Fallback: try direct table query
+        // Fallback: try direct table query (turkey_cities tablosunu kullan)
         try {
           const { data: fallbackData, error: fallbackError } = await supabase
-            .from('cities')
+            .from('turkey_cities')
             .select('id, name, code')
             .order('name');
           if (fallbackError) throw fallbackError;
@@ -93,20 +93,32 @@ export const AddressFields = ({
             throw error;
           }
           setDistricts(data || []);
-          // Reset district selection when city changes
-          onDistrictChange('');
+          // Only reset district if it doesn't belong to the new city
+          // Don't reset if we're in edit mode and district is already set
+          if (district) {
+            const districtBelongsToCity = data?.some(d => d.id.toString() === district);
+            if (!districtBelongsToCity) {
+              onDistrictChange('');
+            }
+          }
         } catch (error) {
           console.error('Error loading districts:', error);
-          // Fallback: try direct table query
+          // Fallback: try direct table query (turkey_districts tablosunu kullan)
           try {
             const { data: fallbackData, error: fallbackError } = await supabase
-              .from('districts')
-              .select('id, name, city_name')
+              .from('turkey_districts')
+              .select('id, name, city_id')
               .eq('city_id', parseInt(city))
               .order('name');
             if (fallbackError) throw fallbackError;
             setDistricts(fallbackData || []);
-            onDistrictChange('');
+            // Only reset if district doesn't belong to new city
+            if (district) {
+              const districtBelongsToCity = fallbackData?.some(d => d.id.toString() === district);
+              if (!districtBelongsToCity) {
+                onDistrictChange('');
+              }
+            }
           } catch (fallbackError) {
             console.error('Fallback also failed:', fallbackError);
           }
@@ -119,7 +131,7 @@ export const AddressFields = ({
     } else {
       setDistricts([]);
     }
-  }, [city]); // onDistrictChange'i dependency'den çıkardık
+  }, [city, district]); // district'i dependency'ye ekledik çünkü district değiştiğinde kontrol etmeliyiz
 
   return (
     <div className="space-y-3">

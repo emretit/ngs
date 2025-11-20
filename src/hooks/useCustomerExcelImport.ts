@@ -73,13 +73,23 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
   const handleMappingConfirm = () => {
     // Custom mapping'i oluştur
     const mapping: { [excelColumn: string]: string } = {};
+    
+    // Önce AI mapping'lerden gelen değerleri ekle
     columnMappings.forEach(m => {
-      mapping[m.excelColumn] = m.systemField;
+      // 'none' değerlerini atla
+      if (m.systemField !== 'none') {
+        mapping[m.excelColumn] = m.systemField;
+      }
     });
     
-    // Kullanıcının manuel değişikliklerini de ekle
-    Object.assign(mapping, customMapping);
+    // Kullanıcının manuel değişikliklerini de ekle (override eder)
+    Object.keys(customMapping).forEach(key => {
+      if (customMapping[key] !== 'none') {
+        mapping[key] = customMapping[key];
+      }
+    });
     
+    console.log('📋 Final mapping:', mapping);
     setCustomMapping(mapping);
     setShowMappingDialog(false);
   };
@@ -155,7 +165,10 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
     
     try {
       // Import and parse Excel file with custom mapping
+      console.log('📋 Using custom mapping:', customMapping);
       const importedData = await importCustomersFromExcel(selectedFile, customMapping);
+      
+      console.log('📋 Imported data sample (first row):', importedData[0]);
 
       if (!importedData || importedData.length === 0) {
         toast.error('Excel dosyası boş veya geçersiz');
@@ -227,25 +240,90 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
         // Eğer company yoksa, name değerini company olarak kullan
         const companyValue = row.company || (customerType === 'kurumsal' ? row.name.trim() : null);
         
-        const customerData = {
+        // Debug: Ham veriyi kontrol et
+        console.log('🔍 Processing row:', {
+          name: row.name,
+          tax_number: row.tax_number,
+          tax_office: row.tax_office,
+          city: row.city,
+          district: row.district,
+          tax_number_type: typeof row.tax_number,
+          tax_office_type: typeof row.tax_office
+        });
+        
+        // City ve district string'lerini ID'ye çevir
+        let cityId: number | null = null;
+        let districtId: number | null = null;
+        
+        if (row.city) {
+          try {
+            const cityName = row.city.toString().trim();
+            const { data: cityData } = await supabase
+              .from('turkey_cities')
+              .select('id')
+              .ilike('name', cityName)
+              .maybeSingle();
+            
+            if (cityData) {
+              cityId = cityData.id;
+              console.log('✅ City found:', cityName, '→ ID:', cityId);
+            } else {
+              console.log('⚠️ City not found:', cityName);
+            }
+          } catch (error) {
+            console.error('Error resolving city ID:', error);
+          }
+        }
+        
+        if (row.district && cityId) {
+          try {
+            const districtName = row.district.toString().trim();
+            const { data: districtData } = await supabase
+              .from('turkey_districts')
+              .select('id')
+              .ilike('name', districtName)
+              .eq('city_id', cityId)
+              .maybeSingle();
+            
+            if (districtData) {
+              districtId = districtData.id;
+              console.log('✅ District found:', districtName, '→ ID:', districtId);
+            } else {
+              console.log('⚠️ District not found:', districtName, 'for city ID:', cityId);
+            }
+          } catch (error) {
+            console.error('Error resolving district ID:', error);
+          }
+        }
+        
+        const customerData: any = {
            company_id: companyId,
            name: row.name.trim(),
            company: companyValue,
-           email: row.email,
-           mobile_phone: row.mobile_phone,
-           office_phone: row.office_phone,
+           email: row.email?.toString().trim() || null,
+           mobile_phone: row.mobile_phone?.toString().trim() || null,
+           office_phone: row.office_phone?.toString().trim() || null,
            type: customerType,
            status: row.status?.toLowerCase() || 'aktif',
-           tax_number: row.tax_number,
-           tax_office: row.tax_office,
-           address: row.address,
-           city: row.city,
-           district: row.district,
-           country: row.country,
-           postal_code: row.postal_code,
+           tax_number: row.tax_number?.toString().trim() || null,
+           tax_office: row.tax_office?.toString().trim() || null,
+           address: row.address?.toString().trim() || null,
+           city: row.city?.toString().trim() || null,
+           district: row.district?.toString().trim() || null,
+           city_id: cityId,
+           district_id: districtId,
+           country: row.country?.toString().trim() || null,
+           postal_code: row.postal_code?.toString().trim() || null,
            balance: 0,
            is_einvoice_mukellef: false
         };
+        
+        // Debug: Supabase'e gönderilecek veriyi kontrol et
+        console.log('💾 Customer data to insert:', {
+          name: customerData.name,
+          tax_number: customerData.tax_number,
+          tax_office: customerData.tax_office
+        });
 
         const { error: insertError } = await supabase
            .from('customers')

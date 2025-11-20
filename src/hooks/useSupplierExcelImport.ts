@@ -206,24 +206,71 @@ export const useSupplierExcelImport = (onSuccess?: () => void) => {
            continue;
         }
         
-        const supplierData = {
+        // City ve district string'lerini ID'ye çevir
+        let cityId: number | null = null;
+        let districtId: number | null = null;
+        
+        if (row.city) {
+          try {
+            const cityName = row.city.toString().trim();
+            const { data: cityData } = await supabase
+              .from('turkey_cities')
+              .select('id')
+              .ilike('name', cityName)
+              .maybeSingle();
+            
+            if (cityData) {
+              cityId = cityData.id;
+              console.log('✅ City found:', cityName, '→ ID:', cityId);
+            } else {
+              console.log('⚠️ City not found:', cityName);
+            }
+          } catch (error) {
+            console.error('Error resolving city ID:', error);
+          }
+        }
+        
+        if (row.district && cityId) {
+          try {
+            const districtName = row.district.toString().trim();
+            const { data: districtData } = await supabase
+              .from('turkey_districts')
+              .select('id')
+              .ilike('name', districtName)
+              .eq('city_id', cityId)
+              .maybeSingle();
+            
+            if (districtData) {
+              districtId = districtData.id;
+              console.log('✅ District found:', districtName, '→ ID:', districtId);
+            } else {
+              console.log('⚠️ District not found:', districtName, 'for city ID:', cityId);
+            }
+          } catch (error) {
+            console.error('Error resolving district ID:', error);
+          }
+        }
+        
+        const supplierData: any = {
            company_id: companyId,
            name: row.name.trim(),
-           email: row.email,
-           mobile_phone: row.mobile_phone,
-           office_phone: row.office_phone,
+           email: row.email?.toString().trim() || null,
+           mobile_phone: row.mobile_phone?.toString().trim() || null,
+           office_phone: row.office_phone?.toString().trim() || null,
            type: row.type.toLowerCase(),
            status: row.status.toLowerCase(),
-           tax_number: row.tax_number,
-           tax_office: row.tax_office,
-           address: row.address,
-           city: row.city,
-           district: row.district,
-           country: row.country,
-           postal_code: row.postal_code,
-           website: row.website,
-           bank_name: row.bank_name,
-           iban: row.iban,
+           tax_number: row.tax_number?.toString().trim() || null,
+           tax_office: row.tax_office?.toString().trim() || null,
+           address: row.address?.toString().trim() || null,
+           city: row.city?.toString().trim() || null,
+           city_id: cityId, // Added city_id
+           district: row.district?.toString().trim() || null,
+           district_id: districtId, // Added district_id
+           country: row.country?.toString().trim() || null,
+           postal_code: row.postal_code?.toString().trim() || null,
+           website: row.website?.toString().trim() || null,
+           bank_name: row.bank_name?.toString().trim() || null,
+           iban: row.iban?.toString().trim() || null,
            balance: 0,
            is_active: true,
            is_einvoice_mukellef: false

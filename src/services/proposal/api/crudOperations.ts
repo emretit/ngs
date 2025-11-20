@@ -84,21 +84,27 @@ export async function createProposal(proposal: Partial<Proposal>) {
       customer_id?: string;
       employee_id?: string;
       opportunity_id?: string;
+      company_id?: string;
       number: string;
       status: string;
+      offer_date?: string;
       valid_until?: string;
       payment_terms?: string;
       delivery_terms?: string;
       warranty_terms?: string;
       price_terms?: string;
       other_terms?: string;
+      selected_payment_terms?: string[];
+      selected_delivery_terms?: string[];
+      selected_warranty_terms?: string[];
+      selected_pricing_terms?: string[];
+      selected_other_terms?: string[];
       notes?: string;
       terms?: string;
       currency: string;
       total_amount: number;
       attachments?: Json;
       items?: Json;
-      project_id: string;
       created_at: string;
       updated_at: string;
     } = {
@@ -107,19 +113,25 @@ export async function createProposal(proposal: Partial<Proposal>) {
       customer_id: proposal.customer_id,
       employee_id: proposal.employee_id,
       opportunity_id: proposal.opportunity_id,
+      company_id: (proposal as any).company_id || null,
       number: proposalNumber,
       status: proposal.status || 'draft',
+      offer_date: (proposal as any).offer_date || null,
       valid_until: proposal.valid_until,
       payment_terms: proposal.payment_terms,
       delivery_terms: proposal.delivery_terms,
       warranty_terms: proposal.warranty_terms,
       price_terms: proposal.price_terms,
       other_terms: proposal.other_terms,
+      selected_payment_terms: (proposal as any).selected_payment_terms || [],
+      selected_delivery_terms: (proposal as any).selected_delivery_terms || [],
+      selected_warranty_terms: (proposal as any).selected_warranty_terms || [],
+      selected_pricing_terms: (proposal as any).selected_pricing_terms || [],
+      selected_other_terms: (proposal as any).selected_other_terms || [],
       notes: proposal.notes,
       terms: proposal.terms,
       currency: proposal.currency || 'TRY',
       total_amount: proposal.total_amount || 0,
-      project_id: '00000000-0000-0000-0000-000000000001',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

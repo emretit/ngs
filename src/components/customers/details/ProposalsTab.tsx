@@ -63,7 +63,7 @@ export const ProposalsTab = ({ customer }: ProposalsTabProps) => {
           employee:employee_id (*)
         `)
         .eq('customer_id', customer.id)
-        .order('created_at', { ascending: false });
+        .order('offer_date', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       
@@ -80,6 +80,7 @@ export const ProposalsTab = ({ customer }: ProposalsTabProps) => {
         total_amount: item.total_amount || 0,
         created_at: item.created_at,
         updated_at: item.updated_at,
+        offer_date: item.offer_date,
         valid_until: item.valid_until,
         items: Array.isArray(item.items) ? item.items : [],
         attachments: Array.isArray(item.attachments) ? item.attachments : [],

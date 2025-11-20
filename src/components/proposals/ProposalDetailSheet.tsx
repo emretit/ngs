@@ -61,9 +61,12 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
   if (!proposal) return null;
 
   const formatMoney = (amount: number) => {
+    // TL'yi TRY'ye çevir (ISO 4217 standardı)
+    const currency = proposal.currency === "TL" ? "TRY" : (proposal.currency || "TRY");
+    
     return new Intl.NumberFormat("tr-TR", {
       style: "currency",
-      currency: proposal.currency || "TRY",
+      currency: currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(amount);
@@ -141,7 +144,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
                     className="cursor-pointer"
                   >
                     <FileText className="mr-2 h-4 w-4" />
-                    {template.name} {template.is_default && '(Varsayılan)'}
+                    {template.name}
                   </DropdownMenuItem>
                 ))}
                 {templates.length === 0 && (

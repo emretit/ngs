@@ -34,15 +34,15 @@ const CompanyBasicInfo = ({ formData, setFormData }: CompanyBasicInfoProps) => {
   // Nilvera'dan gelen mükellef bilgilerini form data'ya ekle
   useEffect(() => {
     if (mukellefInfo) {
-      setFormData({
-        ...formData,
+      setFormData((prevFormData) => ({
+        ...prevFormData,
         // Nilvera mükellef bilgilerini form data'ya ekle
-        company: formData.company || mukellefInfo.companyName || formData.company,
-        tax_office: formData.tax_office || mukellefInfo.taxOffice || formData.tax_office,
-        address: formData.address || mukellefInfo.address || formData.address,
-      });
+        company: prevFormData.company || mukellefInfo.companyName || prevFormData.company,
+        tax_office: prevFormData.tax_office || mukellefInfo.taxOffice || prevFormData.tax_office,
+        address: prevFormData.address || mukellefInfo.address || prevFormData.address,
+      }));
     }
-  }, [mukellefInfo]);
+  }, [mukellefInfo, setFormData]);
 
   // VKN bilgilerini müşteri olarak kaydet
   const handleSaveAsCustomer = async () => {

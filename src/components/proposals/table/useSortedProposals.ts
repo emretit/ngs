@@ -35,9 +35,9 @@ export const useSortedProposals = (
           valueA = `${a.employee?.first_name || ''} ${a.employee?.last_name || ''}`;
           valueB = `${b.employee?.first_name || ''} ${b.employee?.last_name || ''}`;
           break;
-        case 'created_at':
-          valueA = a.created_at ? new Date(a.created_at).getTime() : 0;
-          valueB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        case 'offer_date':
+          valueA = a.offer_date ? new Date(a.offer_date).getTime() : 0;
+          valueB = b.offer_date ? new Date(b.offer_date).getTime() : 0;
           break;
         case 'valid_until':
           valueA = a.valid_until ? new Date(a.valid_until).getTime() : 0;

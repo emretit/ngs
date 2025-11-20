@@ -51,6 +51,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { proposal, loading, saving, handleBack, handleSave } = useProposalEdit();
+  const { customers } = useCustomerSelect();
   
   // Form object for FormProvider
   const form = useForm({
@@ -77,7 +78,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   // Form state matching the proposal edit format
   const [formData, setFormData] = useState({
     // Customer Section
-    customer_company: "",
     contact_name: "",
     contact_title: "",
     offer_date: undefined as Date | undefined,
@@ -138,7 +138,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   useEffect(() => {
     if (proposal) {
       setFormData({
-        customer_company: String(proposal.customer_company || ""),
         contact_name: String(proposal.contact_name || ""),
         contact_title: "",
         offer_date: proposal.created_at ? new Date(proposal.created_at) : undefined,
@@ -382,11 +381,6 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     console.log("🔍 Items:", items);
     
     // Validation
-    if (!formData.customer_company.trim()) {
-      console.log("❌ Validation failed: customer_company is empty");
-      toast.error("Müşteri firma adı gereklidir");
-      return;
-    }
     if (!formData.contact_name.trim()) {
       console.log("❌ Validation failed: contact_name is empty");
       toast.error("İletişim kişisi adı gereklidir");
@@ -407,9 +401,18 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
 
     setIsSaving(true);
     try {
+      // Müşteri bilgisinden şirket adını al (customer_company alanı yok, direkt müşteriden al)
+      let customerCompanyName = "Müşteri";
+      if (formData.customer_id) {
+        const selected = customers?.find(c => c.id === formData.customer_id);
+        if (selected) {
+          customerCompanyName = selected.company || selected.name || "Müşteri";
+        }
+      }
+      
       // Prepare data for backend compatible with database schema
       const proposalData = {
-        title: `${formData.customer_company} - Teklif`,
+        title: `${customerCompanyName} - Teklif`,
         description: formData.notes,
         number: formData.offer_number,
         customer_id: formData.customer_id || null,

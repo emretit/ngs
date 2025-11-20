@@ -36,9 +36,9 @@ const ProposalTableHeader: React.FC<ProposalTableHeaderProps> = ({
         {field === 'number' && <span className="text-lg mr-2">📄</span>}
         {field === 'customer_name' && <span className="text-lg mr-2">🏢</span>}
         {field === 'status' && <span className="text-lg mr-2">📊</span>}
-        {field === 'total_amount' && <span className="text-lg mr-2">💰</span>}
+        {field === 'total_amount' && <span className="text-lg mr-2">💵</span>}
         {field === 'employee_name' && <span className="text-lg mr-2">👤</span>}
-        {field === 'created_at' && <span className="text-lg mr-2">📅</span>}
+        {field === 'offer_date' && <span className="text-lg mr-2">📅</span>}
         {field === 'valid_until' && <span className="text-lg mr-2">⏰</span>}
         <span>{label}</span>
         {getSortIcon(field)}
@@ -54,7 +54,7 @@ const ProposalTableHeader: React.FC<ProposalTableHeaderProps> = ({
         {renderSortableHeader("Durum", "status", "text-center")}
         {renderSortableHeader("Satış Temsilcisi", "employee_name")}
         {renderSortableHeader("Toplam Tutar", "total_amount", "text-center")}
-        {renderSortableHeader("Oluşturma Tarihi", "created_at", "text-center")}
+        {renderSortableHeader("Teklif Tarihi", "offer_date", "text-center")}
         {renderSortableHeader("Geçerlilik", "valid_until", "text-center")}
         <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
           <div className="flex items-center justify-center gap-1">

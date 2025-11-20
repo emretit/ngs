@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -18,8 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, Building2, CheckCircle2, Users, Loader2 } from "lucide-react";
+import { Mail, Building2, CheckCircle2, Users, Loader2, Phone, Clock, Calendar, AlertCircle, UserCheck, Link2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AvatarImage } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
+import { tr } from "date-fns/locale";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { EmployeeUserMatchDialog } from "./EmployeeUserMatchDialog";
 
 interface UserWithEmployee {
   id: string;
@@ -27,6 +33,9 @@ interface UserWithEmployee {
   full_name: string | null;
   status: string | null;
   created_at: string;
+  last_login: string | null;
+  phone: string | null;
+  avatar_url: string | null;
   employee_id: string | null;
   employees: {
     id: string;
@@ -48,7 +57,8 @@ interface UserListTableProps {
 }
 
 export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTableProps) => {
-  const { toast } = useToast();
+  const [matchDialogOpen, setMatchDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserWithEmployee | null>(null);
 
   // Default roles if no custom roles exist
   const defaultRoles = [
@@ -102,18 +112,11 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({
-        title: "Başarılı",
-        description: "Kullanıcı rolü güncellendi",
-      });
+      toast.success("Kullanıcı rolü güncellendi");
       onUserUpdated();
     },
     onError: () => {
-      toast({
-        title: "Hata",
-        description: "Rol güncellenirken hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Rol güncellenirken hata oluştu");
     },
   });
 
@@ -152,9 +155,11 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
         <TableHeader>
           <TableRow>
             <TableHead>Kullanıcı</TableHead>
+            <TableHead>İletişim</TableHead>
             <TableHead>Çalışan Kaydı</TableHead>
             <TableHead>Rol</TableHead>
             <TableHead>Durum</TableHead>
+            <TableHead className="text-center">İşlemler</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -166,25 +171,66 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
               .join('')
               .toUpperCase() || user.email[0].toUpperCase();
 
+            const handleOpenMatchDialog = () => {
+              setSelectedUser(user);
+              setMatchDialogOpen(true);
+            };
+
             return (
-              <TableRow key={user.id} className="hover:bg-muted/50">
+              <TableRow key={user.id} className="hover:bg-muted/50 group">
                 {/* User Info */}
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.avatar_url || undefined} />
+                      <AvatarFallback className="text-xs bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 font-semibold">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <div className="font-medium text-sm">
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm truncate">
                         {user.full_name || 'İsimsiz Kullanıcı'}
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        {user.email}
+                        <Mail className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{user.email}</span>
                       </div>
+                      {user.last_login && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                          <Clock className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">
+                            {formatDistanceToNow(new Date(user.last_login), { 
+                              addSuffix: true, 
+                              locale: tr 
+                            })}
+                          </span>
+                        </div>
+                      )}
                     </div>
+                  </div>
+                </TableCell>
+
+                {/* Contact Info */}
+                <TableCell>
+                  <div className="space-y-1">
+                    {user.phone && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        <span>{user.phone}</span>
+                      </div>
+                    )}
+                    {user.created_at && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          {new Date(user.created_at).toLocaleDateString('tr-TR', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </TableCell>
 
@@ -193,18 +239,23 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
                   {user.employees ? (
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5 text-sm">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                        <span className="font-medium">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                        <span className="font-medium truncate">
                           {user.employees.first_name} {user.employees.last_name}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Building2 className="h-3 w-3" />
-                        {user.employees.department} • {user.employees.position}
+                        <Building2 className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">
+                          {user.employees.department} • {user.employees.position}
+                        </span>
                       </div>
                     </div>
                   ) : (
-                    <span className="text-sm text-amber-600">Çalışan kaydı yok</span>
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                      <span className="text-sm text-amber-600 font-medium">Eşleşmemiş</span>
+                    </div>
                   )}
                 </TableCell>
 
@@ -249,11 +300,44 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
                     {user.status === 'active' ? 'Aktif' : 'Pasif'}
                   </Badge>
                 </TableCell>
+
+                {/* Actions */}
+                <TableCell>
+                  <div className="flex items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleOpenMatchDialog}
+                      className="h-8 text-xs"
+                    >
+                      <Link2 className="h-3 w-3 mr-1.5" />
+                      {user.employees ? 'Değiştir' : 'Eşleştir'}
+                    </Button>
+                  </div>
+                </TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
+
+      {/* Match Dialog */}
+      {selectedUser && (
+        <EmployeeUserMatchDialog
+          open={matchDialogOpen}
+          onOpenChange={setMatchDialogOpen}
+          user={{
+            id: selectedUser.id,
+            email: selectedUser.email,
+            full_name: selectedUser.full_name,
+            employee_id: selectedUser.employee_id,
+          }}
+          onSuccess={() => {
+            onUserUpdated();
+            setSelectedUser(null);
+          }}
+        />
+      )}
     </div>
   );
 };

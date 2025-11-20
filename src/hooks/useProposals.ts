@@ -46,7 +46,7 @@ export const useProposals = (filters?: ProposalFilters) => {
           employee:employee_id (*)
         `)
         .eq('company_id', userData.company_id) // Kullanıcının company_id'sini kullan
-        .order('created_at', { ascending: false });
+        .order('offer_date', { ascending: false, nullsFirst: false });
       
       // Apply status filter if specified
       if (filters?.status && filters.status !== 'all') {
@@ -131,11 +131,11 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters, pageSize: 
     }
     
     if (filters?.dateRange?.from) {
-      query = query.gte('created_at', filters.dateRange.from);
+      query = query.gte('offer_date', filters.dateRange.from);
     }
     
     if (filters?.dateRange?.to) {
-      query = query.lte('created_at', filters.dateRange.to);
+      query = query.lte('offer_date', filters.dateRange.to);
     }
 
     // Apply pagination
@@ -143,7 +143,7 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters, pageSize: 
     const to = from + pageSize - 1;
 
     const { data, error, count } = await query
-      .order('created_at', { ascending: false })
+      .order('offer_date', { ascending: false, nullsFirst: false })
       .range(from, to);
 
     if (error) {

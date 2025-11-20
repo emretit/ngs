@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { ErrorDisplay } from "@/components/auth/ErrorDisplay";
 import { ArrowRight, Mail, Lock, Eye, EyeOff, Home } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
@@ -12,7 +12,6 @@ import { safeSignOut } from "@/lib/supabase-utils";
 const SignIn = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { toast } = useToast();
   const { signInWithPassword, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,14 +31,14 @@ const SignIn = () => {
     if (errorCode) {
       const msg = getAuthErrorMessage(errorCode, errorDescription);
       if (msg) {
-        toast({ variant: "destructive", title: "Doğrulama Hatası", description: msg, duration: 1000 });
+        toast.error(msg, { duration: 1000 });
       }
     }
     if (accessToken && type === "signup") {
       setBlockAutoRedirect(true);
       setTimeout(async () => {
         await safeSignOut();
-        toast({ title: "E-posta doğrulandı", description: "Lütfen e-posta ve şifrenizle giriş yapın.", duration: 1000 });
+        toast.success("E-posta doğrulandı. Lütfen e-posta ve şifrenizle giriş yapın.", { duration: 1000 });
       }, 0);
     }
   }, []);
@@ -66,11 +65,7 @@ const SignIn = () => {
         throw signInError;
       }
       // Başarılı giriş
-      toast({
-        title: "Başarılı",
-        description: "Giriş yapıldı. Dashboard'a yönlendiriliyorsunuz...",
-        duration: 1000
-      });
+      toast.success("Giriş yapıldı. Dashboard'a yönlendiriliyorsunuz...", { duration: 1000 });
       // Dashboard'a yönlendir
       setTimeout(() => {
         navigate("/dashboard");
@@ -88,12 +83,7 @@ const SignIn = () => {
         errorMessage = error.message;
       }
       setError(errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Giriş Hatası",
-        description: errorMessage,
-        duration: 1000
-      });
+      toast.error(errorMessage, { duration: 1000 });
     } finally {
       setLoading(false);
     }

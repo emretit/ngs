@@ -178,7 +178,7 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
       <TableCell className="text-center p-4 text-sm font-medium">
         {formatProposalAmount(getGrandTotal(), proposal.currency || 'TRY')}
       </TableCell>
-      <TableCell className="text-center p-4 text-sm">{formatDate(proposal.created_at)}</TableCell>
+      <TableCell className="text-center p-4 text-sm">{formatDate(proposal.offer_date)}</TableCell>
       <TableCell className="text-center p-4 text-sm">{formatDate(proposal.valid_until)}</TableCell>
       <TableCell className="p-4 text-center">
         <div className="flex justify-center space-x-2">

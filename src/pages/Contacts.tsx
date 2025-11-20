@@ -37,6 +37,9 @@ const Contacts = () => {
   // Tüm müşteriler için istatistikleri çek (filtre olmadan)
   const { data: customerStatistics } = useQuery({
     queryKey: ["customer_statistics"],
+    staleTime: 0, // Her zaman fresh data çek (cache'leme)
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profile } = await supabase
@@ -130,15 +133,22 @@ const Contacts = () => {
 
   const handleBulkDeleteConfirm = useCallback(async () => {
     if (selectedCustomers.length === 0) {
-      console.log('No customers selected');
+      console.log('❌ No customers selected');
       return;
     }
 
-    console.log('Starting bulk delete for customers:', selectedCustomers.map(c => c.id));
+    console.log('🗑️  Starting bulk delete...');
+    console.log('📊 Total selected customers:', selectedCustomers.length);
+    console.log('📋 Selected customer IDs:', selectedCustomers.map(c => c.id));
+    console.log('🔍 First 3 customers:', selectedCustomers.slice(0, 3).map(c => ({ id: c.id, name: c.name, company: c.company })));
+    console.log('🔍 Last 3 customers:', selectedCustomers.slice(-3).map(c => ({ id: c.id, name: c.name, company: c.company })));
+    
     setIsDeleting(true);
     try {
       const customerIds = selectedCustomers.map(c => c.id);
-      console.log('Customer IDs to delete:', customerIds);
+      console.log('🆔 Customer IDs array length:', customerIds.length);
+      console.log('🆔 First 5 IDs:', customerIds.slice(0, 5));
+      console.log('🆔 Last 5 IDs:', customerIds.slice(-5));
       
       // Önce hangi müşterilerin referansları olduğunu kontrol et
       const { data: orders, error: ordersError } = await supabase
@@ -195,13 +205,16 @@ const Contacts = () => {
         return;
       }
 
-      console.log('Attempting to delete customers from Supabase...');
-      const { error } = await supabase
+      console.log('🔄 Attempting to delete customers from Supabase...');
+      console.log('🔄 Sending', customerIds.length, 'IDs to Supabase');
+      
+      const { error, count } = await supabase
         .from('customers')
         .delete()
         .in('id', customerIds);
 
-      console.log('Delete response - error:', error);
+      console.log('✅ Delete response - error:', error);
+      console.log('✅ Delete response - count:', count);
 
       if (error) {
         console.error('Delete error details:', {
@@ -237,10 +250,18 @@ const Contacts = () => {
       }
 
       console.log('Customers deleted successfully');
-      toast.success(`${selectedCustomers.length} müşteri başarıyla silindi`, { duration: 2000 });
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-      queryClient.invalidateQueries({ queryKey: ['customer_statistics'] });
+      const deletedCount = selectedCustomers.length;
+      
+      // Toast mesajını göster
+      toast.success(`${deletedCount} müşteri başarıyla silindi`, { duration: 3000 });
+      
+      // ÖNCE seçimi temizle
       setSelectedCustomers([]);
+      
+      // Query'leri invalidate et ve refetch yap (fresh data çek)
+      await queryClient.invalidateQueries({ queryKey: ['customers'] });
+      await queryClient.refetchQueries({ queryKey: ['customer_statistics'] });
+      
       // Tabloyu yenile
       refreshCustomers();
     } catch (error: any) {
@@ -306,9 +327,6 @@ const Contacts = () => {
             onCustomerSelectToggle={handleCustomerSelect}
             selectedCustomers={selectedCustomers}
             setSelectedCustomers={setSelectedCustomers}
-            searchQuery={searchQuery}
-            statusFilter={selectedStatus}
-            typeFilter={selectedType}
           />
         )}
 

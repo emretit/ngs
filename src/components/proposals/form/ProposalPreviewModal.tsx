@@ -129,10 +129,6 @@ const ProposalPreviewModal: React.FC<ProposalPreviewModalProps> = ({
               </CardHeader>
               <CardContent className="space-y-2">
                 <div>
-                  <span className="text-sm font-medium text-gray-600">Şirket:</span>
-                  <p className="text-sm">{formData.customer_company || "-"}</p>
-                </div>
-                <div>
                   <span className="text-sm font-medium text-gray-600">İletişim Kişisi:</span>
                   <p className="text-sm">{formData.contact_name || "-"}</p>
                 </div>

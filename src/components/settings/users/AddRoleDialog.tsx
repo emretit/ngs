@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,6 @@ interface AddRoleDialogProps {
 }
 
 export const AddRoleDialog = ({ open, onOpenChange }: AddRoleDialogProps) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [roleName, setRoleName] = useState("");
   const [roleDescription, setRoleDescription] = useState("");
@@ -57,19 +56,12 @@ export const AddRoleDialog = ({ open, onOpenChange }: AddRoleDialogProps) => {
       return data;
     },
     onSuccess: () => {
-      toast({
-        title: "Başarılı",
-        description: "Rol başarıyla oluşturuldu",
-      });
+      toast.success("Rol başarıyla oluşturuldu");
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       handleClose();
     },
     onError: (error: any) => {
-      toast({
-        title: "Hata",
-        description: error.message || "Rol oluşturulurken hata oluştu",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Rol oluşturulurken hata oluştu");
     },
   });
 
@@ -82,11 +74,7 @@ export const AddRoleDialog = ({ open, onOpenChange }: AddRoleDialogProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!roleName.trim()) {
-      toast({
-        title: "Uyarı",
-        description: "Rol adı gereklidir",
-        variant: "destructive",
-      });
+      toast.warning("Rol adı gereklidir");
       return;
     }
     createRoleMutation.mutate();

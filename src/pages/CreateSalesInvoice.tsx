@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { ArrowLeft, Plus, Trash2, Save, FileText } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useEInvoice } from "@/hooks/useEInvoice";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +35,6 @@ interface CreateSalesInvoiceProps {
 const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { toast } = useToast();
   const { customers: customerOptions, isLoading: isLoadingCustomers } = useCustomerSelect();
   const { sendInvoice, isSending } = useEInvoice();
   const orderId = searchParams.get("orderId");
@@ -122,11 +121,7 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
       }
     } catch (error) {
       console.error("Error loading order:", error);
-      toast({
-        title: "Hata",
-        description: "Sipariş verileri yüklenirken hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Sipariş verileri yüklenirken hata oluştu");
     } finally {
       setLoading(false);
     }
@@ -192,31 +187,19 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     
     if (!formData.customer_id) {
       console.log("Müşteri seçilmedi");
-      toast({
-        title: "Hata",
-        description: "Lütfen müşteri seçiniz",
-        variant: "destructive",
-      });
+      toast.error("Lütfen müşteri seçiniz");
       return;
     }
 
     if (items.length === 0) {
       console.log("Fatura kalemi yok");
-      toast({
-        title: "Hata",
-        description: "En az bir fatura kalemi ekleyiniz",
-        variant: "destructive",
-      });
+      toast.error("En az bir fatura kalemi ekleyiniz");
       return;
     }
 
     if (items.every(item => !item.urun_adi.trim())) {
       console.log("Fatura kalemlerinde ürün adı yok");
-      toast({
-        title: "Hata",
-        description: "Tüm fatura kalemlerinde ürün/hizmet adı giriniz",
-        variant: "destructive",
-      });
+      toast.error("Tüm fatura kalemlerinde ürün/hizmet adı giriniz");
       return;
     }
 
@@ -224,11 +207,7 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     const emptyItems = items.filter(item => !item.urun_adi.trim() || item.miktar <= 0 || item.birim_fiyat <= 0);
     if (emptyItems.length > 0) {
       console.log("Eksik bilgili kalemler var:", emptyItems);
-      toast({
-        title: "Hata",
-        description: "Tüm kalemlerde ürün adı, miktar ve birim fiyat giriniz",
-        variant: "destructive",
-      });
+      toast.error("Tüm kalemlerde ürün adı, miktar ve birim fiyat giriniz");
       return;
     }
 
@@ -328,10 +307,7 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
       setSavedInvoiceId(invoice.id);
       console.log("Saved invoice ID:", invoice.id);
 
-      toast({
-        title: "Başarılı",
-        description: "Fatura başarıyla oluşturuldu. E-fatura göndermek için aşağıdaki butonları kullanabilirsiniz.",
-      });
+      toast.success("Fatura başarıyla oluşturuldu. E-fatura göndermek için aşağıdaki butonları kullanabilirsiniz.");
 
       console.log("Fatura başarıyla oluşturuldu");
       // Don't navigate immediately to allow e-invoice operations
@@ -343,11 +319,7 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
         stack: error instanceof Error ? error.stack : undefined,
         error
       });
-      toast({
-        title: "Hata",
-        description: `Fatura oluşturulurken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`,
-        variant: "destructive",
-      });
+      toast.error(`Fatura oluşturulurken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
     } finally {
       setLoading(false);
       console.log("Loading state false yapıldı");
@@ -359,21 +331,13 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
   // E-fatura işlevleri
   const handleSendEInvoice = () => {
     if (!savedInvoiceId) {
-      toast({
-        title: "Hata",
-        description: "Önce faturayı kaydedin",
-        variant: "destructive",
-      });
+      toast.error("Önce faturayı kaydedin");
       return;
     }
 
     // Check if already sending
     if (isSending) {
-      toast({
-        title: "Bilgi",
-        description: "E-fatura zaten gönderiliyor, lütfen bekleyin",
-        variant: "default",
-      });
+      toast.info("E-fatura zaten gönderiliyor, lütfen bekleyin");
       return;
     }
 

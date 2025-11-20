@@ -59,6 +59,9 @@ export const getProposalFileIcon = (file: File | { name: string, type: string })
 export const formatProposalAmount = (amount: number, currency: string = 'TRY') => {
   if (!amount && amount !== 0) return `${getCurrencySymbol(currency)}0`;
   
+  // TL'yi TRY'ye çevir (ISO 4217 standardı)
+  const normalizedCurrency = currency === 'TL' ? 'TRY' : (currency || 'TRY');
+  
   // Para birimi sembolünü ve formatını doğrudan kullan
   const symbols: Record<string, string> = {
     'TRY': '₺',
@@ -67,7 +70,7 @@ export const formatProposalAmount = (amount: number, currency: string = 'TRY') =
     'GBP': '£'
   };
   
-  const symbol = symbols[currency] || currency;
+  const symbol = symbols[normalizedCurrency] || normalizedCurrency;
   
   // Sayıyı formatla (binlik ayracı ile)
   const formattedNumber = new Intl.NumberFormat('tr-TR', {
@@ -80,13 +83,16 @@ export const formatProposalAmount = (amount: number, currency: string = 'TRY') =
 };
 
 const getCurrencySymbol = (currency: string) => {
+  // TL'yi TRY'ye çevir (ISO 4217 standardı)
+  const normalizedCurrency = currency === 'TL' ? 'TRY' : (currency || 'TRY');
+  
   const symbols: Record<string, string> = {
     'TRY': '₺',
     'USD': '$',
     'EUR': '€',
     'GBP': '£'
   };
-  return symbols[currency] || currency;
+  return symbols[normalizedCurrency] || normalizedCurrency;
 };
 
 /**

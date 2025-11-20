@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, UseFormReturn, useForm } from "react-hook-form";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
@@ -15,15 +15,17 @@ interface CustomerInfoCardProps {
   };
   handleFieldChange: (field: string, value: any) => void;
   errors?: Record<string, string>;
+  form?: UseFormReturn<any>; // Ana form'u prop olarak al
 }
 
 const CustomerInfoCard: React.FC<CustomerInfoCardProps> = ({
   formData,
   handleFieldChange,
-  errors = {}
+  errors = {},
+  form // Ana form'u prop olarak al
 }) => {
-  // Form object for FormProvider
-  const form = useForm({
+  // Eğer form prop'u verilmişse onu kullan, yoksa kendi form'unu oluştur (backward compatibility)
+  const localForm = useForm({
     defaultValues: {
       customer_id: formData.customer_id || '',
       contact_name: formData.contact_name || '',
@@ -31,6 +33,8 @@ const CustomerInfoCard: React.FC<CustomerInfoCardProps> = ({
       employee_id: formData.employee_id || '',
     }
   });
+  
+  const formToUse = form || localForm;
 
   return (
     <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
@@ -43,7 +47,7 @@ const CustomerInfoCard: React.FC<CustomerInfoCardProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
-        <FormProvider {...form}>
+        <FormProvider {...formToUse}>
           <div className="grid grid-cols-1 gap-3">
             <ProposalPartnerSelect partnerType="customer" required />
             <ContactPersonInput

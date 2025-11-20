@@ -143,7 +143,9 @@ export const importCustomersFromExcel = async (file: File, columnMapping?: { [ex
           
           // Önce custom mapping'i kontrol et
           if (columnMapping && columnMapping[headerStr]) {
-            return columnMapping[headerStr];
+            const mappedValue = columnMapping[headerStr];
+            // 'none' değerini skip et
+            return mappedValue === 'none' ? null : mappedValue;
           }
           
           // Sonra default mapping'i kontrol et
@@ -155,9 +157,21 @@ export const importCustomersFromExcel = async (file: File, columnMapping?: { [ex
         const mappedData = rows.map(row => {
           const obj: any = {};
           normalizedHeaders.forEach((header, index) => {
-            // Skip 'none' mappings and undefined/null values
+            // Skip null headers, 'none' mappings, and undefined/null values
             if (header && header !== 'none' && row[index] !== undefined && row[index] !== null) {
-              obj[header] = row[index];
+              const value = row[index];
+              // Preserve the value, convert to string if needed for tax_number
+              if (value !== '' && value !== null && value !== undefined) {
+                // For tax_number and other string fields, ensure it's a string
+                if (header === 'tax_number' || header === 'tax_office' || header === 'mobile_phone' || header === 'office_phone') {
+                  obj[header] = String(value).trim();
+                } else {
+                  obj[header] = value;
+                }
+              } else if (value === '') {
+                // Empty string is valid for optional fields
+                obj[header] = '';
+              }
             }
           });
           return obj;

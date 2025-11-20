@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, FileText, CheckCircle, Search, Package, User, Wrench } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ServiceSlipData, ServiceSlipFormData } from "@/types/service-slip";
 import { ServiceSlipService } from "@/services/serviceSlipService";
 import { useQuery } from "@tanstack/react-query";
@@ -29,7 +29,6 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
   onClose,
   existingSlip
 }) => {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<ServiceSlipFormData>({
     problem_description: '',
@@ -136,11 +135,7 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
       setLoading(true);
 
       if (!formData.problem_description.trim() || !formData.work_performed.trim()) {
-        toast({
-          title: "Eksik Bilgi",
-          description: "Problem tanımı ve yapılan işlemler alanları zorunludur.",
-          variant: "destructive",
-        });
+        toast.error("Problem tanımı ve yapılan işlemler alanları zorunludur.");
         return;
       }
 
@@ -157,26 +152,16 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
 
       if (existingSlip) {
         slip = await ServiceSlipService.updateServiceSlip(existingSlip.id, extendedFormData);
-        toast({
-          title: "Başarılı",
-          description: "Servis fişi güncellendi.",
-        });
+        toast.success("Servis fişi güncellendi.");
       } else {
         slip = await ServiceSlipService.createServiceSlip(serviceRequestId, extendedFormData);
-        toast({
-          title: "Başarılı",
-          description: "Servis fişi oluşturuldu.",
-        });
+        toast.success("Servis fişi oluşturuldu.");
       }
 
       onClose();
     } catch (error) {
       console.error('Error saving service slip:', error);
-      toast({
-        title: "Hata",
-        description: error instanceof Error ? error.message : "Servis fişi kaydedilemedi.",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Servis fişi kaydedilemedi.");
     } finally {
       setLoading(false);
     }
@@ -187,29 +172,18 @@ export const ServiceSlipForm: React.FC<ServiceSlipFormProps> = ({
       setLoading(true);
 
       if (!existingSlip) {
-        toast({
-          title: "Hata",
-          description: "Önce servis fişini kaydetmelisiniz.",
-          variant: "destructive",
-        });
+        toast.error("Önce servis fişini kaydetmelisiniz.");
         return;
       }
 
       await ServiceSlipService.completeService(existingSlip.id, formData.technician_signature);
       
-      toast({
-        title: "Servis Tamamlandı",
-        description: "Servis başarıyla tamamlandı.",
-      });
+      toast.success("Servis başarıyla tamamlandı.");
 
       onClose();
     } catch (error) {
       console.error('Error completing service:', error);
-      toast({
-        title: "Hata",
-        description: error instanceof Error ? error.message : "Servis tamamlanamadı.",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Servis tamamlanamadı.");
     } finally {
       setLoading(false);
     }

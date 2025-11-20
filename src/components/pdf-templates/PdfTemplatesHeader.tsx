@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, Sparkles, Star } from "lucide-react";
+import { Plus, FileText, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PdfTemplate } from "@/types/pdf-template";
 import PdfTemplatesViewToggle from "./PdfTemplatesViewToggle";
@@ -15,7 +15,6 @@ interface PdfTemplatesHeaderProps {
     quoteCount: number;
     invoiceCount: number;
     proposalCount: number;
-    defaultCount: number;
   };
   onCreateTemplate: () => void;
   onCreateDefaults: () => void;
@@ -37,7 +36,6 @@ const PdfTemplatesHeader = ({
   const quoteCount = statistics?.quoteCount ?? templates.filter(t => t.type === 'quote').length;
   const invoiceCount = statistics?.invoiceCount ?? templates.filter(t => t.type === 'invoice').length;
   const proposalCount = statistics?.proposalCount ?? templates.filter(t => t.type === 'proposal').length;
-  const defaultCount = statistics?.defaultCount ?? templates.filter(t => t.is_default).length;
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
@@ -94,14 +92,6 @@ const PdfTemplatesHeader = ({
           </span>
         </div>
 
-        {/* Varsayılan */}
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-300">
-          <Star className="h-3 w-3" />
-          <span className="font-medium">Varsayılan</span>
-          <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
-            {defaultCount}
-          </span>
-        </div>
       </div>
       
       {/* Sağ taraf - Butonlar */}
@@ -119,7 +109,7 @@ const PdfTemplatesHeader = ({
         >
           <Sparkles className="h-4 w-4" />
           <span className="hidden sm:inline">
-            {isCreatingDefaults ? 'Oluşturuluyor...' : 'Varsayılan'}
+            {isCreatingDefaults ? 'Oluşturuluyor...' : 'Şablonları Yükle'}
           </span>
         </Button>
         <Button 

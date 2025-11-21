@@ -9,6 +9,7 @@ export interface PageSettings {
   fontSize: number;
   fontFamily?: "Roboto" | "Open Sans" | "Lato" | "Montserrat" | "Inter" | "Poppins" | "Nunito" | "Playfair Display" | "Merriweather" | "Source Sans Pro" | "Helvetica" | "Times-Roman" | "Courier";
   fontWeight?: "normal" | "bold";
+  fontColor?: string; // Hex color code for text color (e.g., "#000000", "#374151")
   backgroundColor?: string; // Hex color code (e.g., "#FFFFFF", "#F9FAFB", "#F3F4F6")
   backgroundImage?: string; // URL to background image or preset name
   backgroundStyle?: "none" | "corner-wave" | "side-gradient" | "bottom-shapes" | "top-circles" | "diagonal-bands" | "corner-triangles" | "side-curves" | "custom";
@@ -21,6 +22,7 @@ export interface HeaderSettings {
   logoUrl?: string;
   logoPosition: "left" | "center" | "right";
   logoSize: number;
+  showTitle?: boolean;
   title: string;
   titleFontSize: number;
   showValidity: boolean;
@@ -82,9 +84,15 @@ export interface NotesSettings {
   };
 }
 
+export interface CustomerSettings {
+  customerTitleFontSize?: number;
+  customerInfoFontSize?: number;
+}
+
 export interface TemplateSchema {
   page: PageSettings;
   header: HeaderSettings;
+  customer?: CustomerSettings;
   lineTable: LineTableSettings;
   totals: TotalsSettings;
   notes: NotesSettings;

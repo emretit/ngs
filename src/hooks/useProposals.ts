@@ -174,7 +174,8 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters, pageSize: 
     {
       pageSize,
       enabled: !!userData?.company_id,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnMount: true, // Invalidate edildiğinde refetch yap
+      staleTime: 0, // Invalidate edildiğinde hemen refetch yap
       gcTime: 10 * 60 * 1000, // 10 minutes
     }
   );

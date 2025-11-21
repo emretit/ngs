@@ -32,6 +32,24 @@ export function parseProposalData(data: any): Proposal | null {
       data.items = [];
     }
     
+    // Parse history
+    if (data.history) {
+      if (typeof data.history === 'string') {
+        try {
+          data.history = JSON.parse(data.history);
+        } catch (e) {
+          console.error('Error parsing history:', e);
+          data.history = [];
+        }
+      }
+      // Ensure history is an array
+      if (!Array.isArray(data.history)) {
+        data.history = [];
+      }
+    } else {
+      data.history = [];
+    }
+    
     return data as Proposal;
   } catch (e) {
     console.error('Error parsing proposal data:', e);

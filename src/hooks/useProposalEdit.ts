@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { mockCrmService } from "@/services/mockCrm";
 import { crmService } from "@/services/crmService";
 import { Proposal } from "@/types/proposal";
@@ -9,6 +10,7 @@ import { Proposal } from "@/types/proposal";
 export const useProposalEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -49,37 +51,47 @@ export const useProposalEdit = () => {
     try {
       setSaving(true);
       
-      // Update the proposal with the form data
+      // Use the formData directly if it's already prepared (from ProposalEdit.tsx)
+      // Otherwise, build updatedProposal from formData fields
       const updatedProposal = {
         ...proposal,
-        title: formData.title,
-        subject: formData.subject, // Teklif konusu
-        description: formData.description,
-        valid_until: formData.valid_until,
-        terms: formData.payment_terms,
-        notes: formData.notes,
-        status: formData.status,
-        currency: formData.currency,
-        exchange_rate: formData.exchange_rate, // Döviz kuru
-        items: formData.items,
-        customer_id: formData.customer_id,
-        employee_id: formData.employee_id,
+        // Use formData values directly if they exist, otherwise use proposal values
+        title: formData.title || proposal.title,
+        subject: formData.subject !== undefined ? formData.subject : (proposal as any).subject,
+        description: formData.description || proposal.description,
+        offer_date: formData.offer_date !== undefined ? formData.offer_date : proposal.offer_date, // Teklif tarihi - valid_until ile aynı şekilde (null değerleri de kabul et)
+        valid_until: formData.valid_until !== undefined ? formData.valid_until : proposal.valid_until,
+        terms: formData.terms || formData.payment_terms || proposal.terms,
+        notes: formData.notes || proposal.notes,
+        status: formData.status || proposal.status,
+        currency: formData.currency || proposal.currency,
+        exchange_rate: formData.exchange_rate !== undefined ? formData.exchange_rate : (proposal as any).exchange_rate,
+        items: formData.items || proposal.items,
+        customer_id: formData.customer_id || proposal.customer_id,
+        employee_id: formData.employee_id || proposal.employee_id,
         // Financial totals for PDF generation
-        subtotal: formData.subtotal || proposal.subtotal,
-        total_discount: formData.total_discount || proposal.total_discount,
-        total_tax: formData.total_tax || proposal.total_tax,
-        total_amount: formData.total_amount || proposal.total_amount,
+        subtotal: formData.subtotal !== undefined ? formData.subtotal : proposal.subtotal,
+        total_discount: formData.total_discount !== undefined ? formData.total_discount : proposal.total_discount,
+        total_tax: formData.total_tax !== undefined ? formData.total_tax : proposal.total_tax,
+        total_amount: formData.total_amount !== undefined ? formData.total_amount : proposal.total_amount,
         // Şartlar ve koşullar kaydet
-        payment_terms: formData.payment_terms,
-        delivery_terms: formData.delivery_terms,
-        warranty_terms: formData.warranty_terms,
-        price_terms: formData.price_terms,
-        other_terms: formData.other_terms,
+        payment_terms: formData.payment_terms || proposal.payment_terms,
+        delivery_terms: formData.delivery_terms || proposal.delivery_terms,
+        warranty_terms: formData.warranty_terms || proposal.warranty_terms,
+        price_terms: formData.price_terms || proposal.price_terms,
+        other_terms: formData.other_terms || proposal.other_terms,
         updated_at: new Date().toISOString()
       };
       
       // Call the update API
       await crmService.updateProposal(id, updatedProposal);
+      
+      // Invalidate all proposal queries to refresh the table
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposal', id] });
+      // Hemen refetch yap - tablo otomatik yenilensin
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
       
       toast.success("Teklif başarıyla güncellendi");
       // Stay on the same page, just update the proposal data

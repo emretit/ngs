@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +12,11 @@ import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock,
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
+import { formatDateToLocalString } from "@/utils/dateUtils";
 import { useProposalEdit } from "@/hooks/useProposalEdit";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { FormProvider, useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { ProposalItem } from "@/types/proposal";
 
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -50,18 +52,57 @@ interface ProposalEditProps {
 const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { proposal, loading, saving, handleBack, handleSave } = useProposalEdit();
   const { customers } = useCustomerSelect();
   
   // Form object for FormProvider
   const form = useForm({
     defaultValues: {
-      customer_id: proposal?.customer_id || '',
-      contact_name: proposal?.contact_name || '',
-      prepared_by: proposal?.prepared_by || '',
-      employee_id: proposal?.employee_id || '',
+      customer_id: '',
+      contact_name: '',
+      prepared_by: '',
+      employee_id: '',
     }
   });
+
+  // Watch form context values and sync with formData (only when user changes, not on initial load)
+  const watchCustomerId = form.watch("customer_id");
+  const watchContactName = form.watch("contact_name");
+  const watchPreparedBy = form.watch("prepared_by");
+  const watchEmployeeId = form.watch("employee_id");
+
+  // Track if proposal has been loaded to prevent initial sync loops
+  const [proposalLoaded, setProposalLoaded] = useState(false);
+
+  // Sync form context changes to formData (only after proposal is loaded)
+  useEffect(() => {
+    if (proposalLoaded && watchCustomerId !== undefined && watchCustomerId !== formData.customer_id) {
+      setFormData(prev => ({ ...prev, customer_id: watchCustomerId }));
+      setHasChanges(true);
+    }
+  }, [watchCustomerId, proposalLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (proposalLoaded && watchContactName !== undefined && watchContactName !== formData.contact_name) {
+      setFormData(prev => ({ ...prev, contact_name: watchContactName }));
+      setHasChanges(true);
+    }
+  }, [watchContactName, proposalLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (proposalLoaded && watchPreparedBy !== undefined && watchPreparedBy !== formData.prepared_by) {
+      setFormData(prev => ({ ...prev, prepared_by: watchPreparedBy }));
+      setHasChanges(true);
+    }
+  }, [watchPreparedBy, proposalLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (proposalLoaded && watchEmployeeId !== undefined && watchEmployeeId !== formData.employee_id) {
+      setFormData(prev => ({ ...prev, employee_id: watchEmployeeId }));
+      setHasChanges(true);
+    }
+  }, [watchEmployeeId, proposalLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
@@ -87,9 +128,11 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     validity_date: undefined as Date | undefined,
     prepared_by: "",
     notes: "",
+    subject: "", // Teklif konusu
     
     // Financial settings
     currency: "TL",
+    exchange_rate: undefined as number | undefined, // Döviz kuru
     discount_percentage: 0,
     vat_percentage: 20,
     
@@ -137,15 +180,23 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   // Initialize form data when proposal loads
   useEffect(() => {
     if (proposal) {
+      const initialCustomerId = proposal.customer_id || "";
+      const initialContactName = String(proposal.contact_name || "");
+      const initialPreparedBy = proposal.employee_id || "";
+      const initialEmployeeId = proposal.employee_id || "";
+
+      // Update formData first
       setFormData({
-        contact_name: String(proposal.contact_name || ""),
+        contact_name: initialContactName,
         contact_title: "",
-        offer_date: proposal.created_at ? new Date(proposal.created_at) : undefined,
+        offer_date: proposal.offer_date ? new Date(proposal.offer_date) : undefined,
         offer_number: proposal.number || "",
         validity_date: proposal.valid_until ? new Date(proposal.valid_until) : undefined,
-        prepared_by: proposal.employee_id || "",
+        prepared_by: initialPreparedBy,
         notes: proposal.notes || "",
+        subject: (proposal as any).subject || "", // Teklif konusu
         currency: proposal.currency || "TL",
+        exchange_rate: (proposal as any).exchange_rate || undefined, // Döviz kuru
         discount_percentage: 0,
         vat_percentage: 20,
         payment_terms: proposal.payment_terms || "Siparişle birlikte %50 avans, teslimde kalan tutar ödenecektir.",
@@ -154,11 +205,20 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         price_terms: proposal.price_terms || "",
         other_terms: proposal.other_terms || "",
         title: proposal.title || "",
-        customer_id: proposal.customer_id || "",
-        employee_id: proposal.employee_id || "",
+        customer_id: initialCustomerId,
+        employee_id: initialEmployeeId,
         description: proposal.description || "",
         status: proposal.status as ProposalStatus
       });
+
+      // Update form context immediately so ProposalPartnerSelect can display the customer
+      form.reset({
+        customer_id: initialCustomerId,
+        contact_name: initialContactName,
+        prepared_by: initialPreparedBy,
+        employee_id: initialEmployeeId,
+      });
+      setProposalLoaded(true);
 
       // Initialize items from proposal
       if (proposal.items && proposal.items.length > 0) {
@@ -187,14 +247,24 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   }, [proposal]);
 
   // Track changes
-  const handleFieldChange = (field: string, value: any) => {
+  const handleFieldChange = useCallback((field: string, value: any) => {
     console.log('🔍 ProposalEdit - handleFieldChange:', { field, value });
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+    // Also update form context for fields that are in the form
+    if (field === 'customer_id') {
+      form.setValue('customer_id', value);
+    } else if (field === 'contact_name') {
+      form.setValue('contact_name', value);
+    } else if (field === 'prepared_by') {
+      form.setValue('prepared_by', value);
+    } else if (field === 'employee_id') {
+      form.setValue('employee_id', value);
+    }
     setHasChanges(true);
-  };
+  }, [form]);
 
   // Calculate totals by currency (modern approach like NewProposalCreate)
   const calculateTotalsByCurrency = () => {
@@ -413,11 +483,13 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       // Prepare data for backend compatible with database schema
       const proposalData = {
         title: `${customerCompanyName} - Teklif`,
+        subject: formData.subject, // Teklif konusu
         description: formData.notes,
         number: formData.offer_number,
         customer_id: formData.customer_id || null,
         employee_id: formData.employee_id || null,
-        valid_until: formData.validity_date?.toISOString().split('T')[0] || "",
+        offer_date: formData.offer_date ? formatDateToLocalString(formData.offer_date) : null, // Teklif tarihi (yerel timezone)
+        valid_until: formData.validity_date ? formatDateToLocalString(formData.validity_date) : "",
         terms: `${formData.payment_terms}\n\n${formData.delivery_terms}\n\nGaranti: ${formData.warranty_terms}`,
         payment_terms: formData.payment_terms,
         delivery_terms: formData.delivery_terms,
@@ -432,6 +504,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         total_tax: primaryTotals.vat,
         total_amount: primaryTotals.grand,
         currency: primaryCurrency,
+        exchange_rate: formData.exchange_rate, // Döviz kuru
         items: items.map(item => ({
           ...item,
           total_price: item.quantity * item.unit_price
@@ -441,8 +514,17 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       console.log("🔍 Prepared proposal data:", proposalData);
 
       await handleSave(proposalData);
+      
+      // Invalidate all proposal queries to refresh the table (useProposalEdit'te de yapılıyor ama ekstra güvenlik için)
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: ['proposal', id] });
+      }
+      // Hemen refetch yap - tablo otomatik yenilensin
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      
       setHasChanges(false);
-      toast.success("Teklif başarıyla güncellendi");
     } catch (error) {
       console.error("💥 Error saving proposal:", error);
       toast.error("Teklif güncellenirken bir hata oluştu");
@@ -718,6 +800,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
             formData={formData}
             handleFieldChange={handleFieldChange}
             errors={{}}
+            form={form}
           />
 
           {/* Offer Details */}

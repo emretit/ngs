@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 import { useProposalCalculations } from "@/hooks/proposals/useProposalCalculations";
 import { formatProposalAmount } from "@/services/workflow/proposalWorkflow";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
 
 // import { ProposalPdfExporter } from "../ProposalPdfExporter";
@@ -44,7 +44,6 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
 }) => {
   const navigate = useNavigate();
   const { calculateTotals } = useProposalCalculations();
-  const { toast } = useToast();
 
   // Loading state için skeleton göster
   if (isLoading || !proposal) {
@@ -52,6 +51,7 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
       <TableRow className="h-8">
         <TableCell className="py-2 px-3"><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
         <TableCell className="py-2 px-3"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-4 w-40 bg-gray-200 rounded animate-pulse" /></TableCell>
         <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
         <TableCell className="py-2 px-2"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
         <TableCell className="py-2 px-2"><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
@@ -112,17 +112,10 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
       // PDF'i yeni sekmede aç
       await PdfExportService.openPdfInNewTab(proposalData, { templateId });
       
-      toast({
-        title: "Başarılı",
-        description: "PDF yeni sekmede açıldı",
-      });
+      toast.success("PDF yeni sekmede açıldı");
     } catch (error) {
       console.error('PDF generation error:', error);
-      toast({
-        title: "Hata",
-        description: "PDF oluşturulurken hata oluştu: " + (error as Error).message,
-        variant: "destructive"
-      });
+      toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
     }
   };
 
@@ -150,6 +143,9 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
         ) : (
           <span className="text-muted-foreground text-sm">{proposal.customer_name || "Müşteri yok"}</span>
         )}
+      </TableCell>
+      <TableCell className="p-4 text-sm" title={(proposal as any).subject || ""}>
+        {shortenText((proposal as any).subject || "-", 30)}
       </TableCell>
       <TableCell className="text-center p-4">
         <ProposalStatusCell 

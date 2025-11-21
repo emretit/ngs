@@ -51,6 +51,12 @@ const ProposalTableHeader: React.FC<ProposalTableHeaderProps> = ({
       <TableRow className="bg-slate-100 border-b border-slate-200">
         {renderSortableHeader("Teklif No", "number")}
         {renderSortableHeader("Müşteri Bilgileri", "customer_name")}
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+          <div className="flex items-center gap-1">
+            <span className="text-lg mr-2">📝</span>
+            <span>Konu</span>
+          </div>
+        </TableHead>
         {renderSortableHeader("Durum", "status", "text-center")}
         {renderSortableHeader("Satış Temsilcisi", "employee_name")}
         {renderSortableHeader("Toplam Tutar", "total_amount", "text-center")}

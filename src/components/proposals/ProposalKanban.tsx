@@ -35,10 +35,12 @@ export const ProposalKanban = ({ proposals, onProposalSelect, onStatusChange }: 
     mutationFn: async ({ id, status }: { id: string; status: ProposalStatus }) => {
       await changeProposalStatus(id, status);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Hem normal proposals hem de infinite scroll query'lerini invalidate et
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      // Hemen refetch yap - tablo otomatik yenilensin
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
       // Sayfayı yenile
       onStatusChange?.();
       toast.success('Teklif durumu güncellendi');

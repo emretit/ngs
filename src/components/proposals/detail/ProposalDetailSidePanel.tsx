@@ -92,8 +92,11 @@ const ProposalDetailSidePanel = ({ proposal, isOpen, onClose }: ProposalDetailSi
       if (error) throw error;
       return updatedProposal;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["proposals"] });
+      queryClient.invalidateQueries({ queryKey: ["proposals-infinite"] });
+      // Hemen refetch yap - tablo otomatik yenilensin
+      await queryClient.refetchQueries({ queryKey: ["proposals-infinite"] });
       toast.success("Teklif başarıyla güncellendi");
     },
     onError: (error) => {

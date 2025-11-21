@@ -54,6 +54,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         fontSize: z.number().min(8).max(20),
         fontFamily: z.enum(['Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Inter', 'Poppins', 'Nunito', 'Playfair Display', 'Merriweather', 'Source Sans Pro', 'Helvetica', 'Times-Roman', 'Courier']).optional(),
         fontWeight: z.enum(['normal', 'bold']).optional(),
+        fontColor: z.string().optional(),
         backgroundColor: z.string().optional(),
         backgroundImage: z.string().optional(),
         backgroundStyle: z.enum(['none', 'corner-wave', 'side-gradient', 'bottom-shapes', 'top-circles', 'diagonal-bands', 'corner-triangles', 'side-curves', 'custom']).optional(),
@@ -61,6 +62,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         backgroundOpacity: z.number().min(0).max(100).optional(),
       }),
       header: z.object({
+        showTitle: z.boolean().optional(),
         title: z.string().min(1),
         titleFontSize: z.number().min(8).max(32),
         showLogo: z.boolean(),
@@ -78,6 +80,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         companyInfoFontSize: z.number().min(8).max(32),
       }),
 
+      customer: z.object({
+        customerTitleFontSize: z.number().min(8).max(32).optional(),
+        customerInfoFontSize: z.number().min(8).max(32).optional(),
+      }).optional(),
       lineTable: z.object({
         columns: z.array(z.object({
           key: z.string(),
@@ -113,6 +119,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         fontSize: 12,
         fontFamily: 'Roboto',
         fontWeight: 'normal',
+        fontColor: '#000000',
         backgroundColor: '#FFFFFF',
         backgroundImage: '',
         backgroundStyle: 'none',
@@ -120,6 +127,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         backgroundOpacity: 5,
       },
       header: {
+        showTitle: true,
         title: 'TEKLİF',
         titleFontSize: 16,
         showLogo: true,
@@ -137,6 +145,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         companyInfoFontSize: 10,
       },
 
+      customer: {
+        customerTitleFontSize: 14,
+        customerInfoFontSize: 10,
+      },
       lineTable: {
         columns: [
           { key: 'description', show: true, label: 'Açıklama', align: 'left' },
@@ -311,6 +323,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
               ...template.schema_json.page,
               fontFamily: template.schema_json.page.fontFamily || 'Roboto',
               fontWeight: template.schema_json.page.fontWeight || 'normal',
+              fontColor: template.schema_json.page.fontColor || '#000000',
               backgroundColor: template.schema_json.page.backgroundColor || '#FFFFFF',
               backgroundImage: template.schema_json.page.backgroundImage || '',
               backgroundStyle: template.schema_json.page.backgroundStyle || 'none',
@@ -321,6 +334,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             ...template.schema_json.header,
             logoPosition: template.schema_json.header.logoPosition || 'left',
             logoSize: template.schema_json.header.logoSize || 80,
+            showTitle: template.schema_json.header.showTitle ?? true,
             titleFontSize: template.schema_json.header.titleFontSize || 16,
             showCompanyInfo: template.schema_json.header.showCompanyInfo ?? true,
             companyName: template.schema_json.header.companyName || 'NGS TEKNOLOJİ',
@@ -333,6 +347,11 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           },
           
             // Migration: Add discount column if it doesn't exist and ensure align field exists
+          customer: {
+            ...template.schema_json.customer,
+            customerTitleFontSize: template.schema_json.customer?.customerTitleFontSize || 14,
+            customerInfoFontSize: template.schema_json.customer?.customerInfoFontSize || 10,
+          },
           lineTable: {
             ...template.schema_json.lineTable,
             showRowNumber: template.schema_json.lineTable?.showRowNumber ?? true,
@@ -561,7 +580,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/settings/pdf-templates')}
+              onClick={() => navigate('/pdf-templates')}
               className="flex items-center gap-2 h-7"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -576,6 +595,16 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
               </p>
             </div>
           </div>
+          <Button 
+            type="submit" 
+            form="pdf-template-form"
+            disabled={isLoading} 
+            size="sm" 
+            className="h-8 text-xs"
+          >
+            <Save className="mr-1.5 h-3.5 w-3.5" />
+            {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
+          </Button>
         </div>
       </div>
 
@@ -663,6 +692,39 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                           <SelectItem value="bold">Kalın</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    {/* Font Color */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Font Rengi:</Label>
+                      <div className="flex items-center gap-1">
+                        {[
+                          { name: 'Siyah', value: '#000000' },
+                          { name: 'Koyu Gri', value: '#374151' },
+                          { name: 'Gri', value: '#6B7280' },
+                          { name: 'Mavi', value: '#3B82F6' },
+                          { name: 'Kırmızı', value: '#EF4444' },
+                          { name: 'Yeşil', value: '#10B981' },
+                        ].map((color) => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            onClick={() => form.setValue('page.fontColor', color.value)}
+                            className={`h-6 w-6 rounded-full border hover:ring-2 hover:ring-blue-400 transition-all ${
+                              form.watch('page.fontColor') === color.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.value }}
+                            title={color.name}
+                          />
+                        ))}
+                      </div>
+                      <Input
+                        type="color"
+                        value={form.watch('page.fontColor') || '#000000'}
+                        onChange={(e) => form.setValue('page.fontColor', e.target.value)}
+                        className="h-7 w-12"
+                        title="Özel Renk"
+                      />
                     </div>
 
                     {/* Background Color */}
@@ -787,10 +849,14 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             <div className="h-full flex flex-col bg-gradient-to-b from-background via-background/98 to-muted/20 border-r border-border/20 min-h-0 overflow-hidden">
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-2 min-h-0">
-                <form onSubmit={form.handleSubmit(handleSave, (errors) => {
-                  console.error('Form validation errors:', errors); // Debug
-                  toast.error('Lütfen form alanlarını kontrol edin');
-                })} className="space-y-2">
+                <form 
+                  id="pdf-template-form"
+                  onSubmit={form.handleSubmit(handleSave, (errors) => {
+                    console.error('Form validation errors:', errors); // Debug
+                    toast.error('Lütfen form alanlarını kontrol edin');
+                  })} 
+                  className="space-y-2"
+                >
 
                 {/* Header Settings */}
                 <Accordion type="single" collapsible defaultValue="header">
@@ -806,10 +872,22 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
                         {/* Title Settings */}
                         <div className="space-y-1.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs">T</span>
-                            <Label className="text-xs font-semibold text-gray-800">Başlık</Label>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">T</span>
+                              <Label className="text-xs font-semibold text-gray-800">Başlık</Label>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Switch
+                                id="show-title"
+                                checked={watchedValues.header?.showTitle ?? true}
+                                onCheckedChange={(checked) => form.setValue('header.showTitle', checked)}
+                                className="scale-[0.65]"
+                              />
+                              <Label htmlFor="show-title" className="text-xs text-gray-600">Göster</Label>
+                            </div>
                           </div>
+                          {(watchedValues.header?.showTitle ?? true) && (
                           <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-1.5">
                             <div>
                               <Label className="text-xs text-gray-600 mb-0.5 block">Başlık Metni</Label>
@@ -831,6 +909,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                 />
                             </div>
                           </div>
+                          )}
                         </div>
                         
                         {/* Logo Settings */}
@@ -955,12 +1034,38 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                         <span>Müşteri ve Teklif Bilgileri</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-3 pb-3 pt-2">
+                    <AccordionContent className="px-3 pb-3 pt-2 space-y-2">
                       <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded-md">
                         <div className="font-medium text-blue-800 mb-1">Müşteri ve Teklif Bilgileri</div>
                         <div className="space-y-0.5 text-blue-700 text-xs">
                           <div>• Müşteri bilgileri otomatik gösterilir</div>
                           <div>• Teklif bilgileri otomatik gösterilir</div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs text-gray-600 whitespace-nowrap">Başlık Font:</Label>
+                          <Input
+                            type="number"
+                            {...form.register('customer.customerTitleFontSize', { valueAsNumber: true })}
+                            min="8"
+                            max="32"
+                            placeholder="14"
+                            className="h-7 w-16 text-center text-xs"
+                          />
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs text-gray-600 whitespace-nowrap">Bilgi Font:</Label>
+                          <Input
+                            type="number"
+                            {...form.register('customer.customerInfoFontSize', { valueAsNumber: true })}
+                            min="8"
+                            max="32"
+                            placeholder="10"
+                            className="h-7 w-16 text-center text-xs"
+                          />
                         </div>
                       </div>
                     </AccordionContent>
@@ -976,28 +1081,30 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                         <span>Tablo Ayarları</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-3 pb-3 pt-2 space-y-2">
-                      <div className="border rounded-md p-2 bg-indigo-50">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs">#</span>
-                            <Label className="text-xs font-medium text-gray-700">Sıra Numarası</Label>
+                    <AccordionContent className="px-2 pb-2 pt-1.5">
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {/* Sıra Numarası */}
+                        <div className="border rounded-md p-1.5 bg-indigo-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">1</span>
+                              <Label className="text-xs font-medium text-gray-700">Sıra No.</Label>
+                            </div>
+                            <Switch
+                              id="show-row-number"
+                              checked={watchedValues.lineTable?.showRowNumber ?? true}
+                              onCheckedChange={(checked) => form.setValue('lineTable.showRowNumber', checked)}
+                              className="scale-[0.65]"
+                            />
                           </div>
-                          <Switch
-                            id="show-row-number"
-                            checked={watchedValues.lineTable?.showRowNumber ?? true}
-                            onCheckedChange={(checked) => form.setValue('lineTable.showRowNumber', checked)}
-                            className="scale-75"
-                          />
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-2">
+                        {/* Kolonlar */}
                         {watchedValues.lineTable?.columns?.map((column, index) => (
-                          <div key={column.key} className="border rounded-md p-2 bg-gray-50">
+                          <div key={column.key} className="border rounded-md p-1.5 bg-gray-50">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5">
-                                <span className="text-xs">{index + 1}</span>
+                                <span className="text-xs">{index + 2}</span>
                                 <Label className="text-xs font-medium text-gray-700">{column.label}</Label>
                               </div>
                               <Switch
@@ -1008,7 +1115,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                   newColumns[index].show = checked;
                                   form.setValue('lineTable.columns', newColumns);
                                 }}
-                                className="scale-75"
+                                className="scale-[0.65]"
                               />
                             </div>
                           </div>
@@ -1027,9 +1134,9 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                         <span>Toplam Ayarları</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-3 pb-3 pt-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="border rounded-md p-2 bg-orange-50">
+                    <AccordionContent className="px-2 pb-2 pt-1.5">
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div className="border rounded-md p-1.5 bg-orange-50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs">1</span>
@@ -1039,12 +1146,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               id="show-gross"
                               checked={watchedValues.totals?.showGross}
                               onCheckedChange={(checked) => form.setValue('totals.showGross', checked)}
-                              className="scale-75"
+                              className="scale-[0.65]"
                             />
                           </div>
                         </div>
 
-                        <div className="border rounded-md p-2 bg-red-50">
+                        <div className="border rounded-md p-1.5 bg-red-50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs">2</span>
@@ -1054,12 +1161,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               id="show-discount"
                               checked={watchedValues.totals?.showDiscount}
                               onCheckedChange={(checked) => form.setValue('totals.showDiscount', checked)}
-                              className="scale-75"
+                              className="scale-[0.65]"
                             />
                           </div>
                         </div>
 
-                        <div className="border rounded-md p-2 bg-blue-50">
+                        <div className="border rounded-md p-1.5 bg-blue-50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs">3</span>
@@ -1069,12 +1176,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               id="show-tax"
                               checked={watchedValues.totals?.showTax}
                               onCheckedChange={(checked) => form.setValue('totals.showTax', checked)}
-                              className="scale-75"
+                              className="scale-[0.65]"
                             />
                           </div>
                         </div>
 
-                        <div className="border rounded-md p-2 bg-green-50">
+                        <div className="border rounded-md p-1.5 bg-green-50">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs">4</span>
@@ -1084,7 +1191,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               id="show-net"
                               checked={watchedValues.totals?.showNet}
                               onCheckedChange={(checked) => form.setValue('totals.showNet', checked)}
-                              className="scale-75"
+                              className="scale-[0.65]"
                             />
                           </div>
                         </div>
@@ -1102,9 +1209,9 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                         <span>Not Ayarları</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="px-3 pb-3 pt-2 space-y-2">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between mb-2">
+                    <AccordionContent className="px-2 pb-2 pt-1.5 space-y-1.5">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between mb-1.5">
                           <Label className="text-xs font-semibold text-gray-800">Şartlar ve Koşullar</Label>
                           <div className="flex items-center gap-2">
                             <Label className="text-xs text-gray-600">Başlık Hizalama:</Label>
@@ -1112,7 +1219,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               value={watchedValues.notes?.termsSettings?.titleAlign || 'left'}
                               onValueChange={(value) => form.setValue('notes.termsSettings.titleAlign', value as 'left' | 'center' | 'right')}
                             >
-                              <SelectTrigger className="h-7 w-24 text-xs">
+                              <SelectTrigger className="h-6 w-24 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1123,9 +1230,9 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                             </Select>
                           </div>
                         </div>
-                        <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-2">
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="border rounded-md p-2 bg-blue-50">
+                        <div className="bg-gray-50/80 border border-gray-200 rounded-md p-1.5 space-y-1.5">
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <div className="border rounded-md p-1.5 bg-blue-50">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs">1</span>
@@ -1135,12 +1242,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                   id="show-payment-terms"
                                   checked={watchedValues.notes?.termsSettings?.showPaymentTerms ?? true}
                                   onCheckedChange={(checked) => form.setValue('notes.termsSettings.showPaymentTerms', checked)}
-                                  className="scale-75"
+                                  className="scale-[0.65]"
                                 />
                               </div>
                             </div>
 
-                            <div className="border rounded-md p-2 bg-green-50">
+                            <div className="border rounded-md p-1.5 bg-green-50">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs">2</span>
@@ -1150,12 +1257,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                   id="show-delivery-terms"
                                   checked={watchedValues.notes?.termsSettings?.showDeliveryTerms ?? true}
                                   onCheckedChange={(checked) => form.setValue('notes.termsSettings.showDeliveryTerms', checked)}
-                                  className="scale-75"
+                                  className="scale-[0.65]"
                                 />
                               </div>
                             </div>
 
-                            <div className="border rounded-md p-2 bg-purple-50">
+                            <div className="border rounded-md p-1.5 bg-purple-50">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs">3</span>
@@ -1165,12 +1272,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                   id="show-warranty-terms"
                                   checked={watchedValues.notes?.termsSettings?.showWarrantyTerms ?? true}
                                   onCheckedChange={(checked) => form.setValue('notes.termsSettings.showWarrantyTerms', checked)}
-                                  className="scale-75"
+                                  className="scale-[0.65]"
                                 />
                               </div>
                             </div>
 
-                            <div className="border rounded-md p-2 bg-orange-50">
+                            <div className="border rounded-md p-1.5 bg-orange-50">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs">4</span>
@@ -1180,13 +1287,13 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                   id="show-price-terms"
                                   checked={watchedValues.notes?.termsSettings?.showPriceTerms ?? false}
                                   onCheckedChange={(checked) => form.setValue('notes.termsSettings.showPriceTerms', checked)}
-                                  className="scale-75"
+                                  className="scale-[0.65]"
                                 />
                               </div>
                             </div>
                           </div>
 
-                          <div className="border rounded-md p-2 bg-gray-50">
+                          <div className="border rounded-md p-1.5 bg-gray-50">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-xs">5</span>
@@ -1196,14 +1303,14 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                 id="show-other-terms"
                                 checked={watchedValues.notes?.termsSettings?.showOtherTerms ?? false}
                                 onCheckedChange={(checked) => form.setValue('notes.termsSettings.showOtherTerms', checked)}
-                                className="scale-75"
+                                className="scale-[0.65]"
                               />
                             </div>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="space-y-1.5 pt-2 border-t border-gray-200">
+                      <div className="space-y-1 pt-1.5 border-t border-gray-200">
                         <Label className="text-xs">Alt Bilgi</Label>
                         <Textarea {...form.register('notes.footer')} rows={2} className="text-xs" />
                         <div className="flex items-center gap-2">
@@ -1214,7 +1321,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                             min="8"
                             max="32"
                             placeholder="12"
-                            className="h-7 w-14 text-center text-xs"
+                            className="h-6 w-14 text-center text-xs"
                           />
                         </div>
                       </div>
@@ -1222,25 +1329,6 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                   </AccordionItem>
                 </Accordion>
 
-                {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t">
-                  <Button type="submit" disabled={isLoading} size="sm" className="h-8 text-xs">
-                    <Save className="mr-1.5 h-3.5 w-3.5" />
-                    {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
-                  </Button>
-                  
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => navigate('/settings/pdf-templates')}
-                    disabled={isLoading}
-                    size="sm"
-                    className="h-8 text-xs"
-                  >
-                    <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-                    Çık
-                  </Button>
-                </div>
                 </form>
               </div>
             </div>

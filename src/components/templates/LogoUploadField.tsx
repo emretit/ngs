@@ -103,56 +103,53 @@ export const LogoUploadField: React.FC<LogoUploadFieldProps> = ({
   };
 
   return (
-    <div className="space-y-3">
-      {/* Logo Section Header */}
+    <div className="space-y-1.5">
+      {/* Logo Section Header - Başlık gibi */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 flex items-center justify-center bg-blue-100 rounded">
-            <Image className="h-3 w-3 text-blue-700" />
-          </div>
-          <Label className="text-sm font-semibold text-gray-800">Logo</Label>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs">L</span>
+          <Label className="text-xs font-semibold text-gray-800">Logo</Label>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Switch
             id="show-logo"
             checked={showLogo}
             onCheckedChange={onShowLogoChange}
-            className="scale-75"
+            className="scale-[0.65]"
           />
           <Label htmlFor="show-logo" className="text-xs text-gray-600">Göster</Label>
         </div>
       </div>
-
-      {/* Logo Controls - Only show when enabled */}
-      {showLogo && (
-        <div className="bg-gray-50/80 border border-gray-200 rounded-lg p-3 space-y-3">
-          {/* Upload Section */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+      
+      {/* Logo Controls */}
+      <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-1.5">
+        {/* Upload Section */}
+        {showLogo && (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant={previewUrl ? "secondary" : "default"}
+              size="sm"
+              onClick={() => document.getElementById('logo-upload')?.click()}
+              disabled={isUploading}
+              className="h-7 px-3 text-xs"
+              title={isUploading ? 'Yükleniyor...' : previewUrl ? 'Değiştir' : 'Logo Seç'}
+            >
+              <Upload className="h-3 w-3 mr-1.5" />
+              Logo
+            </Button>
+            
+            {previewUrl && (
               <Button
                 type="button"
-                variant={previewUrl ? "secondary" : "default"}
+                variant="outline"
                 size="sm"
-                onClick={() => document.getElementById('logo-upload')?.click()}
-                disabled={isUploading}
-                className="h-8 px-3 text-sm"
+                onClick={handleRemoveLogo}
+                className="h-7 px-2 text-gray-500 hover:text-red-600"
               >
-                <Upload className="h-3 w-3 mr-1" />
-                {isUploading ? 'Yükleniyor...' : previewUrl ? 'Değiştir' : 'Logo Seç'}
+                <X className="h-3 w-3" />
               </Button>
-              
-              {previewUrl && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRemoveLogo}
-                  className="h-8 px-2 text-gray-500 hover:text-red-600"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
+            )}
 
             {previewUrl && (
               <div className="flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
@@ -161,36 +158,44 @@ export const LogoUploadField: React.FC<LogoUploadFieldProps> = ({
               </div>
             )}
           </div>
+        )}
 
-          {/* Position & Size Controls - Simplified */}
-          <div className="pt-2 border-t border-gray-200">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600">Pozisyon</span>
-              <Select value={logoPosition} onValueChange={onPositionChange}>
-                <SelectTrigger className="h-8 w-20 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Sol</SelectItem>
-                  <SelectItem value="center">Orta</SelectItem>
-                  <SelectItem value="right">Sağ</SelectItem>
-                </SelectContent>
-              </Select>
+        {/* Position & Size Controls - Only show when enabled */}
+        {showLogo && (
+          <>
+
+            {/* Position & Size Controls */}
+            <div className="pt-1 border-t border-gray-200 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-gray-600 min-w-fit">Pozisyon</Label>
+                <Select value={logoPosition} onValueChange={onPositionChange}>
+                  <SelectTrigger className="h-7 w-20 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left">Sol</SelectItem>
+                    <SelectItem value="center">Orta</SelectItem>
+                    <SelectItem value="right">Sağ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               
-              <span className="text-xs text-gray-600">Boyut</span>
-              <Input
-                type="number"
-                value={logoSize}
-                onChange={(e) => onSizeChange?.(Number(e.target.value))}
-                className="h-8 w-16 text-center text-xs"
-                min="20"
-                max="200"
-                placeholder="80"
-              />
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-gray-600 min-w-fit">Boyut</Label>
+                <Input
+                  type="number"
+                  value={logoSize}
+                  onChange={(e) => onSizeChange?.(Number(e.target.value))}
+                  className="h-7 w-16 text-center text-xs"
+                  min="20"
+                  max="200"
+                  placeholder="80"
+                />
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
       
       <input
         id="logo-upload"

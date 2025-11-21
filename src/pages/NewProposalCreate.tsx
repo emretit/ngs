@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -8,6 +9,7 @@ import { Plus, Trash, FileText, Eye, MoreHorizontal, Save, FileDown, Send, Shopp
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { ProposalStatus } from "@/types/proposal";
+import { formatDateToLocalString } from "@/utils/dateUtils";
 import { useProposalCreation } from "@/hooks/proposals/useProposalCreation";
 import { ProposalItem } from "@/types/proposal";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,6 +78,7 @@ interface NewProposalCreateProps {
 }
 
 const NewProposalCreate = () => {
+  const queryClient = useQueryClient();
   const form = useForm({ 
     defaultValues: { 
       customer_id: "", 
@@ -588,8 +591,8 @@ const NewProposalCreate = () => {
         customer_id: finalCustomerId, // Boş olamaz, yukarıda kontrol edildi
         employee_id: formData.prepared_by || null,
         company_id: userData?.company_id || null, // Kullanıcının company_id'si
-        offer_date: formData.offer_date?.toISOString().split('T')[0] || null, // Teklif tarihi
-        valid_until: formData.validity_date?.toISOString().split('T')[0] || "",
+        offer_date: formData.offer_date ? formatDateToLocalString(formData.offer_date) : null, // Teklif tarihi (yerel timezone)
+        valid_until: formData.validity_date ? formatDateToLocalString(formData.validity_date) : "",
         terms: `${formData.payment_terms}\n\n${formData.delivery_terms}\n\nGaranti: ${formData.warranty_terms}`,
         payment_terms: formData.payment_terms,
         delivery_terms: formData.delivery_terms,
@@ -617,6 +620,12 @@ const NewProposalCreate = () => {
 
       const result = await createProposal(proposalData);
       if (result) {
+        // Invalidate all proposal queries to refresh the table
+        queryClient.invalidateQueries({ queryKey: ['proposals'] });
+        queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+        // Hemen refetch yap - tablo otomatik yenilensin
+        await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+        
         toast.success(status === 'draft' ? "Teklif taslak olarak kaydedildi" : "Teklif başarıyla oluşturuldu");
         navigate("/proposals");
       }

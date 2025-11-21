@@ -78,8 +78,12 @@ export const STANDARD_FIELD_MAPPING: Record<keyof StandardProposalFields, {
   },
   proposalDate: {
     templateKeys: ['proposalDate', 'proposal_date', 'teklifTarih', 'date', 'tarih'],
-    dataPath: 'created_at',
-    formatter: (value) => value ? new Date(value).toLocaleDateString('tr-TR') : new Date().toLocaleDateString('tr-TR')
+    dataPath: 'offer_date',
+    formatter: (value, proposal) => {
+      // Önce offer_date'i kontrol et, yoksa created_at'i kullan (fallback)
+      const dateValue = value || (proposal?.created_at);
+      return dateValue ? new Date(dateValue).toLocaleDateString('tr-TR') : new Date().toLocaleDateString('tr-TR');
+    }
   },
   proposalValidUntil: {
     templateKeys: ['proposalValidUntil', 'valid_until', 'gecerlilik', 'validUntil', 'gecerli'],

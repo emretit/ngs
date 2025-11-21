@@ -5,151 +5,153 @@ import { tr } from 'date-fns/locale';
 import { QuoteData, TemplateSchema } from '@/types/pdf-template';
 
 // Register fonts for Turkish character support
-// Roboto
+// Using reliable CDN sources with TTF format for @react-pdf/renderer
+
+// Roboto - Turkish character support
 Font.register({
   family: 'Roboto',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf',
+      src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc4.ttf',
+      src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf',
       fontWeight: 'bold',
     }
   ]
 });
 
-// Open Sans
+// Open Sans - Using jsDelivr CDN
 Font.register({
   family: 'Open Sans',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/opensans/v34/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVZyOOSr4dVJWUgsjZ0B4gaVc.ttf',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/apache/opensans/OpenSans-Regular.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/opensans/v34/memQYaGs126MiZpBA-UFUIcVXSCEkx2cmqvXlWq8tWZ0Pw86hd0Rk8ZkWVAewA.ttf',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/apache/opensans/OpenSans-Bold.ttf',
       fontWeight: 'bold',
     }
   ]
 });
 
-// Lato
+// Lato - Using jsDelivr CDN
 Font.register({
   family: 'Lato',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/lato/v23/S6uyw4BMUTPHjx4wXg.ttf',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/lato/Lato-Regular.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/lato/v23/S6u9w4BMUTPHh6UVSwiPHA.ttf',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/lato/Lato-Bold.ttf',
       fontWeight: 'bold',
     }
   ]
 });
 
-// Montserrat
+// Montserrat - Using jsDelivr CDN
 Font.register({
   family: 'Montserrat',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw5aXpsog.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/montserrat/Montserrat-Regular.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCuM73w5aXpsog.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/montserrat/Montserrat-Bold.ttf',
       fontWeight: 'bold',
     }
   ]
 });
 
-// Inter
+// Inter - Using jsDelivr CDN
 Font.register({
   family: 'Inter',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/rsms/inter@v4.0.1/fonts/Inter-Regular.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-Ek-_EeA.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/rsms/inter@v4.0.1/fonts/Inter-Bold.ttf',
       fontWeight: 'bold',
     }
   ]
 });
 
-// Poppins
+// Poppins - Using jsDelivr CDN
 Font.register({
   family: 'Poppins',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrJJfecg.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/poppins/Poppins-Regular.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/poppins/v20/pxiByp8kv8JHgFVrLCz7Z1xlFQ.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/poppins/Poppins-Bold.ttf',
       fontWeight: 'bold',
     }
   ]
 });
 
-// Nunito
+// Nunito - Using jsDelivr CDN
 Font.register({
   family: 'Nunito',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/nunito/v25/XRXI3I6Li01BKofAnsSUYevN.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nunito/Nunito-Regular.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/nunito/v25/XRXQ3I6Li01BKofAjsOUYevN.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nunito/Nunito-Bold.ttf',
       fontWeight: 'bold',
     }
   ]
 });
 
-// Playfair Display (Serif)
+// Playfair Display (Serif) - Using jsDelivr CDN
 Font.register({
   family: 'Playfair Display',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/playfairdisplay/v30/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgA.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/playfairdisplay/PlayfairDisplay-Regular.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/playfairdisplay/v30/nuFnD-vYSZviVYUb_rj3ij__anPXDTnogq7hV0jZ3Y.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/playfairdisplay/PlayfairDisplay-Bold.ttf',
       fontWeight: 'bold',
     }
   ]
 });
 
-// Merriweather (Serif)
+// Merriweather (Serif) - Using jsDelivr CDN
 Font.register({
   family: 'Merriweather',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/merriweather/v30/u-440qyriQwlOrhSvowK_l5-fCZMdeX3rg.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/merriweather/Merriweather-Regular.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/merriweather/v30/u-4b0qyriQwlOrhSvowK_l5-fCZMdeX3rg.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/merriweather/Merriweather-Bold.ttf',
       fontWeight: 'bold',
     }
   ]
 });
 
-// Source Sans Pro
+// Source Sans Pro - Using jsDelivr CDN
 Font.register({
   family: 'Source Sans Pro',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7lujVj9w.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sourcesanspro/SourceSansPro-Regular.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwmRduz8A.woff2',
+      src: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/sourcesanspro/SourceSansPro-Bold.ttf',
       fontWeight: 'bold',
     }
   ]
@@ -158,10 +160,13 @@ Font.register({
 // Helvetica, Times-Roman, Courier are built-in fonts in PDF, no need to register
 
 // Safe text rendering function for Turkish characters
+// Returns empty string for null/undefined, but ensures it's always used inside <Text> component
 const safeText = (text: string | undefined | null): string => {
   if (!text) return '';
   // Ensure text is properly encoded
-  return text.toString().normalize('NFC');
+  const normalized = text.toString().normalize('NFC');
+  // Return empty string if normalized result is empty
+  return normalized.trim() === '' ? '' : normalized;
 };
 
 interface PdfRendererProps {
@@ -174,6 +179,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     page: {
       flexDirection: 'column',
       backgroundColor: schema.page.backgroundColor || '#FFFFFF',
+      color: schema.page.fontColor || '#000000',
       paddingTop: schema.page.padding.top,
       paddingRight: schema.page.padding.right,
       paddingBottom: schema.page.padding.bottom,
@@ -200,26 +206,26 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     title: {
       fontSize: schema.header.titleFontSize || 24,
       fontWeight: 'bold',
-      color: '#1F2937',
+      color: schema.page.fontColor || '#1F2937',
     },
     subtitle: {
       fontSize: 12,
-      color: '#6B7280',
+      color: schema.page.fontColor || '#6B7280',
       marginTop: 5,
     },
     customerSection: {
       marginBottom: 30,
     },
     customerTitle: {
-      fontSize: 14,
+      fontSize: schema.customer?.customerTitleFontSize || 14,
       fontWeight: 'bold',
       marginBottom: 10,
-      color: '#374151',
+      color: schema.page.fontColor || '#374151',
     },
     customerInfo: {
-      fontSize: 10,
+      fontSize: schema.customer?.customerInfoFontSize || 10,
       lineHeight: 1.4,
-      color: '#4B5563',
+      color: schema.page.fontColor || '#4B5563',
     },
     table: {
       marginBottom: 30,
@@ -244,7 +250,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     tableCellHeader: {
       fontSize: 11,
       fontWeight: 'bold',
-      color: '#374151',
+      color: schema.page.fontColor || '#374151',
     },
     tableCellLeft: {
       textAlign: 'left',
@@ -267,12 +273,12 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     },
     totalLabel: {
       fontSize: 10,
-      color: '#6B7280',
+      color: schema.page.fontColor || '#6B7280',
     },
     totalValue: {
       fontSize: 10,
       fontWeight: 'bold',
-      color: '#374151',
+      color: schema.page.fontColor || '#374151',
     },
     totalRowFinal: {
       flexDirection: 'row',
@@ -286,12 +292,12 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     totalLabelFinal: {
       fontSize: 12,
       fontWeight: 'bold',
-      color: '#1F2937',
+      color: schema.page.fontColor || '#1F2937',
     },
     totalValueFinal: {
       fontSize: 12,
       fontWeight: 'bold',
-      color: '#1F2937',
+      color: schema.page.fontColor || '#1F2937',
     },
     notesSection: {
       marginTop: 'auto',
@@ -301,11 +307,11 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       fontWeight: 'bold',
       marginBottom: 10,
       marginTop: 10,
-      color: '#374151',
+      color: schema.page.fontColor || '#374151',
     },
     notesText: {
       fontSize: 9,
-      color: '#6B7280',
+      color: schema.page.fontColor || '#6B7280',
       lineHeight: 1.4,
       marginBottom: 5,
     },
@@ -315,7 +321,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       borderTopWidth: 1,
       borderTopColor: '#E5E7EB',
       fontSize: 8,
-      color: '#9CA3AF',
+      color: schema.page.fontColor || '#9CA3AF',
       textAlign: 'center',
     },
     customField: {
@@ -369,8 +375,15 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     // Check for empty strings as well
     if (!value || value.trim() === '') return null;
 
+    const infoFontSize = schema?.customer?.customerInfoFontSize ?? 10;
     return (
-      <Text key={fieldKey} style={[styles.customerInfo, { marginBottom: 3, textAlign: 'left' }]}>
+      <Text key={fieldKey} style={{
+        fontSize: infoFontSize,
+        lineHeight: 1.4,
+        color: schema.page.fontColor || '#4B5563',
+        marginBottom: 3,
+        textAlign: 'left'
+      }}>
         {safeText(value)}
       </Text>
     );
@@ -378,24 +391,45 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
 
   const renderProposalField = (fieldKey: string) => {
     // Sadece 4 temel teklif bilgisi gösterilecek
+    // offer_date varsa onu kullan, yoksa created_at'i kullan (fallback)
+    const proposalDate = (data.offer_date as string) || (data.created_at as string);
     const fieldMap: Record<string, { label: string; value: string | undefined }> = {
-      number: { label: 'Teklif No', value: data.number },
-      created_at: { label: 'Tarih', value: data.created_at ? formatDate(data.created_at) : undefined },
-      valid_until: { label: 'Geçerlilik', value: data.valid_until ? formatDate(data.valid_until) : undefined },
-      prepared_by: { label: 'Hazırlayan', value: data.prepared_by || 'Belirtilmemiş' },
+      number: { label: 'Teklif No', value: data.number as string },
+      created_at: { label: 'Tarih', value: proposalDate ? formatDate(proposalDate) : undefined },
+      offer_date: { label: 'Tarih', value: proposalDate ? formatDate(proposalDate) : undefined },
+      valid_until: { label: 'Geçerlilik', value: data.valid_until ? formatDate(data.valid_until as string) : undefined },
+      prepared_by: { label: 'Hazırlayan', value: (data.prepared_by as string) || 'Belirtilmemiş' },
     };
 
     const field = fieldMap[fieldKey];
     // Check for empty strings as well
     if (!field || !field.value || field.value.trim() === '') return null;
 
+    const infoFontSize = schema?.customer?.customerInfoFontSize ?? 10;
     return (
       <View key={fieldKey} style={{ flexDirection: 'row', marginBottom: 5, alignItems: 'center', justifyContent: 'space-between', width: 160 }}>
-        <Text style={[styles.customerInfo, { fontWeight: 'bold', width: 60 }]}>
+        <Text style={{
+          fontSize: infoFontSize,
+          lineHeight: 1.4,
+          color: schema.page.fontColor || '#4B5563',
+          fontWeight: 'bold',
+          width: 60
+        }}>
           {safeText(field.label)}
         </Text>
-        <Text style={[styles.customerInfo, { fontWeight: 'bold', marginHorizontal: 4 }]}>:</Text>
-        <Text style={[styles.customerInfo, { flex: 1 }]}>
+        <Text style={{
+          fontSize: infoFontSize,
+          lineHeight: 1.4,
+          color: schema.page.fontColor || '#4B5563',
+          fontWeight: 'bold',
+          marginHorizontal: 4
+        }}>:</Text>
+        <Text style={{
+          fontSize: infoFontSize,
+          lineHeight: 1.4,
+          color: schema.page.fontColor || '#4B5563',
+          flex: 1
+        }}>
           {safeText(field.value)}
         </Text>
       </View>
@@ -589,7 +623,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                       <Text style={{
                         fontSize: schema.header.companyInfoFontSize || 12,
                         fontWeight: 'bold',
-                        color: '#1F2937',
+                        color: schema.page.fontColor || '#1F2937',
                         marginBottom: 3,
                         marginLeft: 0,
                         paddingLeft: 0
@@ -600,7 +634,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyAddress && schema.header.companyAddress.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563',
+                        color: schema.page.fontColor || '#4B5563',
                         marginBottom: 2,
                         marginLeft: 0,
                         paddingLeft: 0
@@ -611,7 +645,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyPhone && schema.header.companyPhone.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563',
+                        color: schema.page.fontColor || '#4B5563',
                         marginBottom: 2,
                         marginLeft: 0,
                         paddingLeft: 0
@@ -622,7 +656,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyEmail && schema.header.companyEmail.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563',
+                        color: schema.page.fontColor || '#4B5563',
                         marginBottom: 2,
                         marginLeft: 0,
                         paddingLeft: 0
@@ -633,7 +667,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyWebsite && schema.header.companyWebsite.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563',
+                        color: schema.page.fontColor || '#4B5563',
                         marginBottom: 2,
                         marginLeft: 0,
                         paddingLeft: 0
@@ -644,7 +678,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyTaxNumber && schema.header.companyTaxNumber.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563'
+                        color: schema.page.fontColor || '#4B5563'
                       }}>
                         Vergi No: {safeText(schema.header.companyTaxNumber)}
                       </Text>
@@ -654,9 +688,11 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               </View>
               
               {/* Right Section - Title */}
-              <View style={{ textAlign: 'right', alignItems: 'flex-end' }}>
-                <Text style={styles.title}>{safeText(schema.header.title)}</Text>
-              </View>
+              {(schema.header.showTitle ?? true) && (
+                <View style={{ textAlign: 'right', alignItems: 'flex-end' }}>
+                  <Text style={styles.title}>{safeText(schema.header.title)}</Text>
+                </View>
+              )}
             </>
           )}
 
@@ -686,7 +722,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     <Text style={{
                       fontSize: schema.header.companyInfoFontSize || 12,
                       fontWeight: 'bold',
-                      color: '#1F2937',
+                      color: schema.page.fontColor || '#1F2937',
                       marginBottom: 3,
                       textAlign: 'center'
                     }}>
@@ -696,7 +732,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   {schema.header.companyAddress && schema.header.companyAddress.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                      color: '#4B5563',
+                      color: schema.page.fontColor || '#4B5563',
                       marginBottom: 2,
                       textAlign: 'center'
                     }}>
@@ -706,7 +742,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   {schema.header.companyPhone && schema.header.companyPhone.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                      color: '#4B5563',
+                      color: schema.page.fontColor || '#4B5563',
                       marginBottom: 2,
                       textAlign: 'center'
                     }}>
@@ -716,7 +752,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   {schema.header.companyEmail && schema.header.companyEmail.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                      color: '#4B5563',
+                      color: schema.page.fontColor || '#4B5563',
                       marginBottom: 2,
                       textAlign: 'center'
                     }}>
@@ -726,7 +762,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   {schema.header.companyWebsite && schema.header.companyWebsite.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                      color: '#4B5563',
+                      color: schema.page.fontColor || '#4B5563',
                       marginBottom: 2,
                       textAlign: 'center'
                     }}>
@@ -736,7 +772,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   {schema.header.companyTaxNumber && schema.header.companyTaxNumber.trim() && (
                     <Text style={{
                       fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                      color: '#4B5563',
+                      color: schema.page.fontColor || '#4B5563',
                       textAlign: 'center'
                     }}>
                       Vergi No: {safeText(schema.header.companyTaxNumber)}
@@ -746,9 +782,11 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               )}
               
                             {/* Title */}
-              <View style={{ alignItems: 'center' }}>
-                <Text style={styles.title}>{safeText(schema.header.title)}</Text>
-              </View>
+              {(schema.header.showTitle ?? true) && (
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={styles.title}>{safeText(schema.header.title)}</Text>
+                </View>
+              )}
             </>
           )}
 
@@ -756,9 +794,11 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           {schema.header.logoPosition === 'right' && (
             <>
                             {/* Left Section - Title */}
-              <View style={{ textAlign: 'left', alignItems: 'flex-start' }}>
-                <Text style={styles.title}>{safeText(schema.header.title)}</Text>
-              </View>
+              {(schema.header.showTitle ?? true) && (
+                <View style={{ textAlign: 'left', alignItems: 'flex-start' }}>
+                  <Text style={styles.title}>{safeText(schema.header.title)}</Text>
+                </View>
+              )}
               
               {/* Right Section - Company Info and Logo */}
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
@@ -769,7 +809,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                       <Text style={{
                         fontSize: schema.header.companyInfoFontSize || 12,
                         fontWeight: 'bold',
-                        color: '#1F2937',
+                        color: schema.page.fontColor || '#1F2937',
                         marginBottom: 3,
                         textAlign: 'right'
                       }}>
@@ -779,7 +819,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyAddress && schema.header.companyAddress.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563',
+                        color: schema.page.fontColor || '#4B5563',
                         marginBottom: 2,
                         marginLeft: 0,
                         paddingLeft: 0,
@@ -791,7 +831,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyPhone && schema.header.companyPhone.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563',
+                        color: schema.page.fontColor || '#4B5563',
                         marginBottom: 2,
                         marginLeft: 0,
                         paddingLeft: 0,
@@ -803,7 +843,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyEmail && schema.header.companyEmail.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563',
+                        color: schema.page.fontColor || '#4B5563',
                         marginBottom: 2,
                         marginLeft: 0,
                         paddingLeft: 0,
@@ -815,7 +855,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyWebsite && schema.header.companyWebsite.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563',
+                        color: schema.page.fontColor || '#4B5563',
                         marginBottom: 2,
                         marginLeft: 0,
                         paddingLeft: 0,
@@ -827,7 +867,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     {schema.header.companyTaxNumber && schema.header.companyTaxNumber.trim() && (
                       <Text style={{
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
-                        color: '#4B5563',
+                        color: schema.page.fontColor || '#4B5563',
                         textAlign: 'right'
                       }}>
                         Vergi No: {safeText(schema.header.companyTaxNumber)}
@@ -861,36 +901,71 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           {data.customer && (
             <View style={[styles.customerSection, { flex: 2, marginRight: 20, marginBottom: 0, alignItems: 'flex-start' }]}>
               {/* Firma İsmi */}
-              {data.customer?.company && data.customer.company.trim() !== '' && (
-                <Text style={[styles.customerTitle, { textAlign: 'left', marginBottom: 10, fontSize: 16, fontWeight: 'bold' }]}>
-                  {safeText(String(data.customer.company).toUpperCase())}
-                </Text>
-              )}
+              {data.customer?.company && data.customer.company.trim() !== '' && (() => {
+                const titleFontSize = schema?.customer?.customerTitleFontSize ?? 14;
+                return (
+                  <Text style={{
+                    fontSize: titleFontSize,
+                    fontWeight: 'bold',
+                    marginBottom: 10,
+                    color: schema.page.fontColor || '#374151',
+                    textAlign: 'left'
+                  }}>
+                    {safeText(String(data.customer.company).toUpperCase())}
+                  </Text>
+                );
+              })()}
               
               <View style={{ alignItems: 'flex-start' }}>
                 {/* Sayın Yetkili */}
-                <Text style={[styles.customerInfo, { marginBottom: 8, fontSize: 11 }]}>
-                  {safeText('Sayın')}
-                </Text>
-                
-                {/* Müşteri Yetkilisi */}
-                {data.customer?.name && data.customer.name.trim() !== '' && (
-                  <Text style={[styles.customerInfo, { marginBottom: 12, fontSize: 12, fontWeight: 'bold' }]}>
-                    {safeText(`${String(data.customer.name)},`)}
-                  </Text>
-                )}
-                
-                {/* Açıklama Metni */}
-                <Text style={[styles.customerInfo, { lineHeight: 1.4, fontSize: 10 }]}>
-                  {safeText('Yapmış olduğumuz görüşmeler sonrasında hazırlamış olduğumuz fiyat teklifimizi değerlendirmenize sunarız.')}
-                </Text>
+                {(() => {
+                  const infoFontSize = schema?.customer?.customerInfoFontSize ?? 10;
+                  return (
+                    <>
+                      <Text style={{
+                        fontSize: infoFontSize,
+                        lineHeight: 1.4,
+                        color: schema.page.fontColor || '#4B5563',
+                        marginBottom: 8
+                      }}>
+                        {safeText('Sayın')}
+                      </Text>
+                      
+                      {/* Müşteri Yetkilisi */}
+                      {data.customer?.name && data.customer.name.trim() !== '' && (
+                        <Text style={{
+                          fontSize: infoFontSize,
+                          lineHeight: 1.4,
+                          color: schema.page.fontColor || '#4B5563',
+                          marginBottom: 12,
+                          fontWeight: 'bold'
+                        }}>
+                          {safeText(`${String(data.customer.name)},`)}
+                        </Text>
+                      )}
+                      
+                      {/* Açıklama Metni */}
+                      <Text style={{
+                        fontSize: infoFontSize,
+                        lineHeight: 1.4,
+                        color: schema.page.fontColor || '#4B5563'
+                      }}>
+                        {safeText('Yapmış olduğumuz görüşmeler sonrasında hazırlamış olduğumuz fiyat teklifimizi değerlendirmenize sunarız.')}
+                      </Text>
+                    </>
+                  );
+                })()}
               </View>
             </View>
           )}
           
           {/* Teklif Bilgileri Container - Her zaman göster */}
           <View style={[styles.customerSection, { flex: 1, marginLeft: 20, marginBottom: 0, alignItems: 'center' }]}>
-            <Text style={[styles.customerTitle, { textAlign: 'center', marginBottom: 10 }]}>
+            <Text style={[styles.customerTitle, { 
+              textAlign: 'center', 
+              marginBottom: 10,
+              fontSize: schema.customer?.customerTitleFontSize || 14
+            }]}>
               {safeText('Teklif Bilgileri')}
             </Text>
             
@@ -942,17 +1017,37 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               )}
               {schema.lineTable.columns
                 .filter(col => col.show)
-                .map(col => (
-                  <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : 1 }]}>
-                    <Text style={[styles.tableCell, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : 'center' }]}>
-                      {col.key === 'description' && safeText(item.description)}
-                      {col.key === 'quantity' && safeText(`${item.quantity} ${item.unit || ''}`)}
-                      {col.key === 'unit_price' && safeText(formatCurrency(item.unit_price, data.currency))}
-                      {col.key === 'discount' && (item.discount_rate && item.discount_rate > 0 ? safeText(`%${item.discount_rate}`) : safeText('-'))}
-                      {col.key === 'total' && safeText(formatCurrency(item.total, data.currency))}
-                    </Text>
-                  </View>
-                ))
+                .map(col => {
+                  let cellContent: string | null = null;
+                  if (col.key === 'description') {
+                    const text = safeText(item.description);
+                    cellContent = text && text.trim() !== '' ? text : null;
+                  } else if (col.key === 'quantity') {
+                    const text = safeText(`${item.quantity}${item.unit ? ` ${item.unit}` : ''}`);
+                    cellContent = text && text.trim() !== '' ? text : null;
+                  } else if (col.key === 'unit_price') {
+                    const text = safeText(formatCurrency(item.unit_price, data.currency));
+                    cellContent = text && text.trim() !== '' ? text : null;
+                  } else if (col.key === 'discount') {
+                    const text = (item.discount_rate && item.discount_rate > 0) ? safeText(`%${item.discount_rate}`) : safeText('-');
+                    cellContent = text && text.trim() !== '' ? text : null;
+                  } else if (col.key === 'total') {
+                    const text = safeText(formatCurrency(item.total, data.currency));
+                    cellContent = text && text.trim() !== '' ? text : null;
+                  }
+                  
+                  if (!cellContent) {
+                    cellContent = ' '; // Boş string yerine boşluk karakteri
+                  }
+                  
+                  return (
+                    <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : 1 }]}>
+                      <Text style={[styles.tableCell, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : 'center' }]}>
+                        {cellContent}
+                      </Text>
+                    </View>
+                  );
+                })
               }
             </View>
           ))}

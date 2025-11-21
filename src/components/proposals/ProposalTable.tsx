@@ -7,7 +7,7 @@ import { ProposalTableRow } from "./table/ProposalTableRow";
 import ProposalTableEmpty from "./table/ProposalTableEmpty";
 import ProposalTableSkeleton from "./table/ProposalTableSkeleton";
 import { useSortedProposals } from "./table/useSortedProposals";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { changeProposalStatus } from "@/services/crmService";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
@@ -34,7 +34,6 @@ const ProposalTable = ({
   statusFilter = "all",
   employeeFilter = "all"
 }: ProposalTableProps) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
   const [sortField, setSortField] = useState<ProposalSortField>("offer_date");
@@ -67,16 +66,10 @@ const ProposalTable = ({
       // PDF'i yeni sekmede aç
       await PdfExportService.openPdfInNewTab(proposalData, { templateId });
       
-      toast({
-        title: "Başarılı",
-        description: "PDF yeni sekmede açıldı",
-      });
+      toast.success("PDF yeni sekmede açıldı");
     } catch (error) {
       console.error('PDF generation error:', error);
-      toast({
-        title: "Hata",
-        description: "PDF oluşturulurken hata oluştu: " + (error as Error).message,
-      });
+      toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
     }
   };
 
@@ -87,21 +80,15 @@ const ProposalTable = ({
       // Hem normal proposals hem de infinite scroll query'lerini invalidate et
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
       queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      // Hemen refetch yap - tablo otomatik yenilensin
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
       // Sayfayı yenile
       onStatusChange?.();
       
-      toast({
-        title: "Durum güncellendi",
-        description: "Teklif durumu başarıyla güncellendi.",
-        className: "bg-green-50 border-green-200",
-      });
+      toast.success("Teklif durumu başarıyla güncellendi.");
     } catch (error) {
       console.error('Error updating proposal status:', error);
-      toast({
-        title: "Hata",
-        description: "Teklif durumu güncellenirken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast.error("Teklif durumu güncellenirken bir hata oluştu.");
     }
   };
 
@@ -115,22 +102,25 @@ const ProposalTable = ({
 
     setIsDeleting(true);
     try {
-      // TODO: Add actual delete API call here
-      // await deleteProposal(proposalToDelete.id);
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      // Import deleteProposal function
+      const { deleteProposal } = await import("@/services/proposal/api/crudOperations");
+      const result = await deleteProposal(proposalToDelete.id);
       
-      toast({
-        title: "Teklif silindi",
-        description: "Teklif başarıyla silindi.",
-        className: "bg-green-50 border-green-200",
-      });
+      if (result.error) {
+        throw result.error;
+      }
+      
+      // Invalidate all proposal queries to refresh the table
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposal', proposalToDelete.id] });
+      // Hemen refetch yap - tablo otomatik yenilensin
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      
+      toast.success("Teklif başarıyla silindi.");
     } catch (error) {
       console.error('Error deleting proposal:', error);
-      toast({
-        title: "Hata",
-        description: "Teklif silinirken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast.error("Teklif silinirken bir hata oluştu.");
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);

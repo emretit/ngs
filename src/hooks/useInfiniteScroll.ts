@@ -31,7 +31,7 @@ export function useInfiniteScroll<T>(
     enabled = true,
     refetchOnWindowFocus = false,
     refetchOnMount = false, // Cache'den veri varsa mount'ta refetch yapma
-    staleTime = 5 * 60 * 1000, // 5 minutes
+    staleTime = 0, // Invalidate edildiğinde hemen refetch yap
     gcTime = 10 * 60 * 1000, // 10 minutes
   } = options;
 
@@ -52,8 +52,8 @@ export function useInfiniteScroll<T>(
     queryFn: () => queryFn(1, pageSize),
     enabled,
     refetchOnWindowFocus,
-    refetchOnMount, // Cache'den veri varsa mount'ta refetch yapma
-    staleTime,
+    refetchOnMount: true, // Invalidate edildiğinde refetch yap
+    staleTime: 0, // Invalidate edildiğinde hemen refetch yap
     gcTime,
     placeholderData: (previousData) => previousData, // Önceki veriyi göster (smooth transition)
   });
@@ -61,16 +61,9 @@ export function useInfiniteScroll<T>(
   // İlk sayfa verisi geldiğinde state'i güncelle
   useEffect(() => {
     if (firstPageData?.data) {
-      // Sadece veri gerçekten değiştiyse state'i güncelle
-      setAllData(prev => {
-        // Aynı veri varsa güncelleme yapma
-        if (prev.length === firstPageData.data.length && 
-            prev.length > 0 && 
-            (prev[0] as any)?.id === (firstPageData.data[0] as any)?.id) {
-          return prev;
-        }
-        return firstPageData.data;
-      });
+      // Her zaman güncelle - invalidate edildiğinde yeni veriyi göster
+      // (Teklif tarihi gibi alanlar değiştiğinde ID aynı kalabilir ama veri değişir)
+      setAllData(firstPageData.data);
       setCurrentPage(1);
       setHasNextPage(firstPageData.hasNextPage ?? firstPageData.data.length === pageSize);
       if (firstPageData.totalCount !== undefined) {

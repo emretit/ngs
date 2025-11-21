@@ -11,7 +11,7 @@ import { useEffect } from "react";
 
 interface CompanyBasicInfoProps {
   formData: CustomerFormData;
-  setFormData: (value: CustomerFormData) => void;
+  setFormData: (value: CustomerFormData | ((prev: CustomerFormData) => CustomerFormData)) => void;
 }
 
 const CompanyBasicInfo = ({ formData, setFormData }: CompanyBasicInfoProps) => {

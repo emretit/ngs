@@ -30,7 +30,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
   errors = {}
 }) => {
   // Exchange rates management
-  const { exchangeRates, isLoading: isLoadingRates, refreshExchangeRates } = useExchangeRates();
+  const { exchangeRates, loading: isLoadingRates, refreshExchangeRates } = useExchangeRates();
 
   // Get exchange rate for selected currency
   const getCurrentExchangeRate = (): number | null => {

@@ -598,6 +598,89 @@ export type Database = {
         }
         Relationships: []
       }
+      bom_items: {
+        Row: {
+          bom_id: string
+          created_at: string
+          id: string
+          item_name: string
+          quantity: number
+          unit: string
+        }
+        Insert: {
+          bom_id: string
+          created_at?: string
+          id?: string
+          item_name: string
+          quantity: number
+          unit: string
+        }
+        Update: {
+          bom_id?: string
+          created_at?: string
+          id?: string
+          item_name?: string
+          quantity?: number
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bom_items_bom_id_fkey"
+            columns: ["bom_id"]
+            isOneToOne: false
+            referencedRelation: "boms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boms: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          product_id: string | null
+          product_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          product_id?: string | null
+          product_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          product_id?: string | null
+          product_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boms_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_warehouse_stocks"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "boms_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_transactions: {
         Row: {
           amount: number
@@ -1067,55 +1150,91 @@ export type Database = {
       }
       companies: {
         Row: {
+          account_number: string | null
           address: string | null
+          bank_name: string | null
+          city: string | null
+          country: string | null
           created_at: string
           default_currency: string | null
+          district: string | null
           domain: string | null
+          einvoice_alias_name: string | null
           email: string | null
           email_settings: Json | null
+          establishment_date: string | null
+          iban: string | null
           id: string
           is_active: boolean
           logo_url: string | null
+          mersis_number: string | null
           name: string
           phone: string | null
+          postal_code: string | null
+          sector: string | null
           tax_number: string | null
           tax_office: string | null
+          trade_registry_number: string | null
           updated_at: string
           updated_by: string | null
           website: string | null
         }
         Insert: {
+          account_number?: string | null
           address?: string | null
+          bank_name?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           default_currency?: string | null
+          district?: string | null
           domain?: string | null
+          einvoice_alias_name?: string | null
           email?: string | null
           email_settings?: Json | null
+          establishment_date?: string | null
+          iban?: string | null
           id?: string
           is_active?: boolean
           logo_url?: string | null
+          mersis_number?: string | null
           name: string
           phone?: string | null
+          postal_code?: string | null
+          sector?: string | null
           tax_number?: string | null
           tax_office?: string | null
+          trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
           website?: string | null
         }
         Update: {
+          account_number?: string | null
           address?: string | null
+          bank_name?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           default_currency?: string | null
+          district?: string | null
           domain?: string | null
+          einvoice_alias_name?: string | null
           email?: string | null
           email_settings?: Json | null
+          establishment_date?: string | null
+          iban?: string | null
           id?: string
           is_active?: boolean
           logo_url?: string | null
+          mersis_number?: string | null
           name?: string
           phone?: string | null
+          postal_code?: string | null
+          sector?: string | null
           tax_number?: string | null
           tax_office?: string | null
+          trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
           website?: string | null
@@ -5027,6 +5146,7 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string | null
+          created_by: string | null
           id: string
           is_default: boolean | null
           locale: string
@@ -5039,6 +5159,7 @@ export type Database = {
         Insert: {
           company_id?: string | null
           created_at?: string | null
+          created_by?: string | null
           id?: string
           is_default?: boolean | null
           locale?: string
@@ -5051,6 +5172,7 @@ export type Database = {
         Update: {
           company_id?: string | null
           created_at?: string | null
+          created_by?: string | null
           id?: string
           is_default?: boolean | null
           locale?: string
@@ -5419,6 +5541,7 @@ export type Database = {
           items: Json | null
           notes: string | null
           number: string
+          offer_date: string | null
           opportunity_id: string | null
           other_terms: string | null
           payment_terms: string | null
@@ -5451,6 +5574,7 @@ export type Database = {
           items?: Json | null
           notes?: string | null
           number: string
+          offer_date?: string | null
           opportunity_id?: string | null
           other_terms?: string | null
           payment_terms?: string | null
@@ -5483,6 +5607,7 @@ export type Database = {
           items?: Json | null
           notes?: string | null
           number?: string
+          offer_date?: string | null
           opportunity_id?: string | null
           other_terms?: string | null
           payment_terms?: string | null
@@ -9237,6 +9362,47 @@ export type Database = {
           },
           {
             foreignKeyName: "wo_time_entries_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_order_operations: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          order_index: number | null
+          status: string
+          work_order_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          order_index?: number | null
+          status?: string
+          work_order_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          order_index?: number | null
+          status?: string
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_operations_work_order_id_fkey"
             columns: ["work_order_id"]
             isOneToOne: false
             referencedRelation: "work_orders"

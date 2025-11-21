@@ -56,7 +56,7 @@ const WorkOrderDetailPanel = ({
             <div>
               <label className="text-sm font-medium text-gray-500">İş Emri No</label>
               <p className="text-sm font-semibold text-gray-900">
-                #{workOrder.work_order_number || 'N/A'}
+                #{workOrder.order_number || 'N/A'}
               </p>
             </div>
             <div>
@@ -74,18 +74,15 @@ const WorkOrderDetailPanel = ({
               <label className="text-sm font-medium text-gray-500">Ürün</label>
             </div>
             <p className="text-sm font-semibold text-gray-900">
-              {workOrder.product_name || workOrder.product?.name || 'Ürün Adı Yok'}
+              {workOrder.bom_name || 'Ürün Adı Yok'}
             </p>
-            {workOrder.product?.sku && (
-              <p className="text-xs text-gray-500 mt-1">SKU: {workOrder.product.sku}</p>
-            )}
           </div>
 
           {/* Miktar */}
           <div className="border-t pt-4">
             <label className="text-sm font-medium text-gray-500">Miktar</label>
             <p className="text-sm font-semibold text-gray-900">
-              {workOrder.quantity} {workOrder.unit}
+              {workOrder.quantity}
             </p>
           </div>
 
@@ -95,9 +92,6 @@ const WorkOrderDetailPanel = ({
               <label className="text-sm font-medium text-gray-500">Ürün Reçetesi</label>
               <p className="text-sm font-semibold text-gray-900">
                 {workOrder.bom_name}
-                {workOrder.bom?.version && (
-                  <span className="text-xs text-gray-500 ml-2">v{workOrder.bom.version}</span>
-                )}
               </p>
             </div>
           )}
@@ -159,11 +153,11 @@ const WorkOrderDetailPanel = ({
           )}
 
           {/* Notlar */}
-          {workOrder.notes && (
+          {workOrder.description && (
             <div className="border-t pt-4">
-              <label className="text-sm font-medium text-gray-500">Notlar</label>
+              <label className="text-sm font-medium text-gray-500">Açıklama</label>
               <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">
-                {workOrder.notes}
+                {workOrder.description}
               </p>
             </div>
           )}

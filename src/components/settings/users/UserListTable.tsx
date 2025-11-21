@@ -152,7 +152,7 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
   return (
     <div className="overflow-x-auto">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-gray-50">
           <TableRow>
             <TableHead>Kullanıcı</TableHead>
             <TableHead>İletişim</TableHead>
@@ -177,7 +177,7 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
             };
 
             return (
-              <TableRow key={user.id} className="hover:bg-muted/50 group">
+              <TableRow key={user.id} className="hover:bg-gray-50 transition-colors group">
                 {/* User Info */}
                 <TableCell>
                   <div className="flex items-center gap-3">

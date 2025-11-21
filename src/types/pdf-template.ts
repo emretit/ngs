@@ -7,8 +7,13 @@ export interface PageSettings {
     left: number;
   };
   fontSize: number;
-  fontFamily?: "Roboto" | "Helvetica" | "Times-Roman" | "Courier";
+  fontFamily?: "Roboto" | "Open Sans" | "Lato" | "Montserrat" | "Inter" | "Poppins" | "Nunito" | "Playfair Display" | "Merriweather" | "Source Sans Pro" | "Helvetica" | "Times-Roman" | "Courier";
+  fontWeight?: "normal" | "bold";
   backgroundColor?: string; // Hex color code (e.g., "#FFFFFF", "#F9FAFB", "#F3F4F6")
+  backgroundImage?: string; // URL to background image or preset name
+  backgroundStyle?: "none" | "corner-wave" | "side-gradient" | "bottom-shapes" | "top-circles" | "diagonal-bands" | "corner-triangles" | "side-curves" | "custom";
+  backgroundStyleColor?: string; // Color for background style elements
+  backgroundOpacity?: number; // 0-100
 }
 
 export interface HeaderSettings {

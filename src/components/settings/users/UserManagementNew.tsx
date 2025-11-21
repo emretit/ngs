@@ -172,165 +172,145 @@ export const UserManagementNew = () => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200/60 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 px-6 py-6">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            {/* Sol taraf - Başlık */}
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl shadow-lg">
-                <Shield className="h-7 w-7 text-white" />
-              </div>
-              <div className="space-y-1">
-                <h1 className="text-2xl font-bold text-white tracking-tight">
-                  Kullanıcı Yönetimi
-                </h1>
-                <p className="text-sm text-blue-100">
-                  Sistem kullanıcılarını yönetin, rol atayın ve izinleri kontrol edin
-                </p>
-              </div>
-            </div>
-
-            {/* Sağ taraf - Yeni Kullanıcı Davet Et butonu */}
-            <div className="flex items-center gap-3">
-              <InviteUserDialog />
-            </div>
+    <div className="space-y-6">
+      {/* Header - Çalışan yönetimi sayfasına benzer stil */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+        {/* Sol taraf - Başlık */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg">
+            <Shield className="h-5 w-5" />
+          </div>
+          <div className="space-y-0.5">
+            <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              Kullanıcı Yönetimi
+            </h1>
+            <p className="text-xs text-muted-foreground/70">
+              Sistem kullanıcılarını yönetin, rol atayın ve izinleri kontrol edin
+            </p>
           </div>
         </div>
 
-        {/* İstatistikler */}
-        <div className="p-5 bg-gradient-to-br from-gray-50 to-white border-t border-gray-100">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {/* Toplam Kullanıcı */}
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 border border-purple-200">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="h-4 w-4 text-purple-600" />
-                <span className="text-xs font-medium text-purple-700">Toplam</span>
-              </div>
-              <p className="text-2xl font-bold text-purple-900">{stats.total}</p>
-            </div>
-
-            {/* Aktif Kullanıcılar */}
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 border border-green-200">
-              <div className="flex items-center gap-2 mb-1">
-                <UserCheck className="h-4 w-4 text-green-600" />
-                <span className="text-xs font-medium text-green-700">Aktif</span>
-              </div>
-              <p className="text-2xl font-bold text-green-900">{stats.active}</p>
-            </div>
-
-            {/* Pasif Kullanıcılar */}
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 border border-gray-200">
-              <div className="flex items-center gap-2 mb-1">
-                <UserX className="h-4 w-4 text-gray-600" />
-                <span className="text-xs font-medium text-gray-700">Pasif</span>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">{stats.inactive}</p>
-            </div>
-
-            {/* Çalışan Eşleşmiş */}
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="h-4 w-4 text-blue-600" />
-                <span className="text-xs font-medium text-blue-700">Çalışan</span>
-              </div>
-              <p className="text-2xl font-bold text-blue-900">{stats.withEmployee}</p>
-            </div>
-
-            {/* Çalışan Eşleşmemiş */}
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-3 border border-amber-200">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <span className="text-xs font-medium text-amber-700">Eşleşmemiş</span>
-              </div>
-              <p className="text-2xl font-bold text-amber-900">{stats.withoutEmployee}</p>
-            </div>
-
-            {/* Son 7 Gün Giriş */}
-            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-3 border border-indigo-200">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-4 w-4 text-indigo-600" />
-                <span className="text-xs font-medium text-indigo-700">Son 7 Gün</span>
-              </div>
-              <p className="text-2xl font-bold text-indigo-900">{stats.recentLogins}</p>
-            </div>
+        {/* Orta - İstatistik Kartları */}
+        <div className="flex flex-wrap gap-1.5 justify-center flex-1 items-center">
+          {/* Toplam kullanıcı sayısı */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-600 shadow-sm">
+            <Users className="h-3 w-3" />
+            <span className="font-bold">Toplam</span>
+            <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">
+              {stats.total}
+            </span>
           </div>
 
-          {/* Auto-Match Button */}
-          <div className="mt-4 flex justify-end">
-            <Button
-              onClick={() => autoMatchMutation.mutate()}
-              disabled={autoMatchMutation.isPending}
-              variant="outline"
-              className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
-            >
-              {autoMatchMutation.isPending ? (
-                <>
-                  <Clock className="h-4 w-4 animate-spin" />
-                  Eşleştiriliyor...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  Email ile Otomatik Eşleştir
-                </>
-              )}
-            </Button>
+          {/* Aktif kullanıcılar */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border bg-green-100 text-green-800 border-green-200 transition-all duration-200 hover:shadow-sm">
+            <UserCheck className="h-3 w-3" />
+            <span className="font-medium">Aktif</span>
+            <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+              {stats.active}
+            </span>
+          </div>
+
+          {/* Pasif kullanıcılar */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border bg-gray-100 text-gray-800 border-gray-200 transition-all duration-200 hover:shadow-sm">
+            <UserX className="h-3 w-3" />
+            <span className="font-medium">Pasif</span>
+            <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+              {stats.inactive}
+            </span>
+          </div>
+
+          {/* Çalışan eşleşmiş */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border bg-blue-100 text-blue-800 border-blue-200 transition-all duration-200 hover:shadow-sm">
+            <Users className="h-3 w-3" />
+            <span className="font-medium">Çalışan</span>
+            <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+              {stats.withEmployee}
+            </span>
+          </div>
+
+          {/* Çalışan eşleşmemiş */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border bg-amber-100 text-amber-800 border-amber-200 transition-all duration-200 hover:shadow-sm">
+            <AlertCircle className="h-3 w-3" />
+            <span className="font-medium">Eşleşmemiş</span>
+            <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+              {stats.withoutEmployee}
+            </span>
+          </div>
+
+          {/* Son 7 Gün Giriş */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border bg-indigo-100 text-indigo-800 border-indigo-200 transition-all duration-200 hover:shadow-sm">
+            <Clock className="h-3 w-3" />
+            <span className="font-medium">Son 7 Gün</span>
+            <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+              {stats.recentLogins}
+            </span>
           </div>
         </div>
+
+        {/* Sağ taraf - Butonlar */}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => autoMatchMutation.mutate()}
+            disabled={autoMatchMutation.isPending}
+            variant="outline"
+            size="sm"
+            className="gap-2 text-xs"
+          >
+            {autoMatchMutation.isPending ? (
+              <>
+                <Clock className="h-3 w-3 animate-spin" />
+                Eşleştiriliyor...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3 w-3" />
+                Otomatik Eşleştir
+              </>
+            )}
+          </Button>
+          <InviteUserDialog />
+        </div>
+      </div>
+
+      {/* Search - Çalışan yönetimi sayfasına benzer stil */}
+      <div className="flex items-center space-x-2">
+        <Search className="h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Kullanıcı ara (isim, email, telefon, departman, pozisyon)..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-sm"
+        />
+        {searchQuery && (
+          <div className="text-xs text-muted-foreground">
+            <span className="font-medium">{filteredUsers.length}</span> kullanıcı bulundu
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left: Users List */}
-        <div className="xl:col-span-2 space-y-4">
-          {/* Search */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200/60 p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Kullanıcı ara (isim, email, telefon, departman, pozisyon)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-            {searchQuery && (
-              <div className="mt-2 text-xs text-muted-foreground">
-                <span className="font-medium">{filteredUsers.length}</span> kullanıcı bulundu
-              </div>
-            )}
-          </div>
-
-          {/* Users Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200/60 overflow-hidden">
-            <div className="p-6 relative overflow-hidden">
-              <div className="relative z-10">
-                <UserListTable
-                  users={filteredUsers}
-                  isLoading={isLoading}
-                  onUserUpdated={() => queryClient.invalidateQueries({ queryKey: ['users-management'] })}
-                />
-              </div>
-            </div>
+        <div className="xl:col-span-2">
+          {/* Users Table - Çalışan yönetimi sayfasına benzer stil */}
+          <div className="rounded-md border bg-white overflow-hidden">
+            <UserListTable
+              users={filteredUsers}
+              isLoading={isLoading}
+              onUserUpdated={() => queryClient.invalidateQueries({ queryKey: ['users-management'] })}
+            />
           </div>
         </div>
 
         {/* Right: Role Management */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200/60 overflow-hidden">
-            <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Shield className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-foreground">Rol Yönetimi</h3>
-                  <p className="text-xs text-muted-foreground">İzinleri düzenleyin</p>
-                </div>
+        <div>
+          <div className="rounded-md border bg-white overflow-hidden">
+            <div className="p-4 border-b bg-gray-50">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-purple-600" />
+                <h3 className="text-sm font-semibold text-foreground">Rol Yönetimi</h3>
               </div>
             </div>
-            <div className="p-5">
+            <div className="p-4">
               <RoleManagementPanel users={users} />
             </div>
           </div>

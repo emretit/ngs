@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { Plus } from "lucide-react";
 
 export const InviteUserDialog = () => {
   const [newUserEmail, setNewUserEmail] = useState("");
@@ -52,7 +53,13 @@ export const InviteUserDialog = () => {
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)}>Yeni Kullanıcı Davet Et</Button>
+      <Button 
+        className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg transition-all duration-300" 
+        onClick={() => setIsOpen(true)}
+      >
+        <Plus className="h-4 w-4" />
+        <span>Yeni Kullanıcı Davet Et</span>
+      </Button>
       
       <UnifiedDialog
         isOpen={isOpen}

@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Search, Plus, Sparkles } from "lucide-react";
+import { FileText, Search, Plus } from "lucide-react";
 import { PdfTemplate } from "@/types/pdf-template";
 import { PdfTemplatesList } from "./PdfTemplatesList";
 
@@ -15,8 +15,6 @@ interface PdfTemplatesContentProps {
   onDuplicate: (template: PdfTemplate) => void;
   onDelete: (template: PdfTemplate) => void;
   onCreateTemplate: () => void;
-  onCreateDefaults: () => void;
-  isCreatingDefaults: boolean;
   getTypeBadgeColor: (type: string) => string;
   getTypeLabel: (type: string) => string;
   searchQuery: string;
@@ -34,8 +32,6 @@ const PdfTemplatesContent = ({
   onDuplicate,
   onDelete,
   onCreateTemplate,
-  onCreateDefaults,
-  isCreatingDefaults,
   getTypeBadgeColor,
   getTypeLabel,
   searchQuery,
@@ -71,17 +67,7 @@ const PdfTemplatesContent = ({
                   İlk PDF şablonunuzu oluşturarak belgelerinizi özelleştirmeye başlayın.
                   Hazır şablonlarla hızlıca başlayabilir veya sıfırdan kendiniz tasarlayabilirsiniz.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button
-                    onClick={onCreateDefaults}
-                    variant="outline"
-                    size="lg"
-                    disabled={isCreatingDefaults}
-                    className="gap-2"
-                  >
-                    <Sparkles className="h-5 w-5" />
-                    {isCreatingDefaults ? 'Oluşturuluyor...' : 'Hazır Şablonları Yükle'}
-                  </Button>
+                <div className="flex justify-center">
                   <Button onClick={onCreateTemplate} size="lg" className="gap-2">
                     <Plus className="h-5 w-5" />
                     Yeni Şablon Oluştur

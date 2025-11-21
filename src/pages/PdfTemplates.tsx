@@ -19,7 +19,6 @@ interface PdfTemplatesProps {
 const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreatingDefaults, setIsCreatingDefaults] = useState(false);
   const navigate = useNavigate();
 
   // View options
@@ -137,19 +136,6 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
     setTemplateToDelete(null);
   };
 
-  const handleCreateDefaultTemplates = async () => {
-    setIsCreatingDefaults(true);
-    try {
-      await PdfExportService.ensureDefaultTemplates();
-      toast.success('Hazır şablonlar başarıyla oluşturuldu');
-      loadTemplates();
-    } catch (error) {
-      console.error('Error creating default templates:', error);
-      toast.error('Hazır şablonlar oluşturulurken hata oluştu');
-    } finally {
-      setIsCreatingDefaults(false);
-    }
-  };
 
   const handlePreviewTemplate = (template: PdfTemplate) => {
     setTemplateToPreview(template);
@@ -206,8 +192,6 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
           totalCount={templates.length}
           statistics={statistics}
           onCreateTemplate={handleCreateTemplate}
-          onCreateDefaults={handleCreateDefaultTemplates}
-          isCreatingDefaults={isCreatingDefaults}
         />
         </div>
       )}
@@ -236,8 +220,6 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         onDuplicate={handleDuplicateTemplate}
         onDelete={handleDeleteTemplateClick}
         onCreateTemplate={handleCreateTemplate}
-        onCreateDefaults={handleCreateDefaultTemplates}
-        isCreatingDefaults={isCreatingDefaults}
         getTypeBadgeColor={getTypeBadgeColor}
         getTypeLabel={getTypeLabel}
         searchQuery={searchQuery}

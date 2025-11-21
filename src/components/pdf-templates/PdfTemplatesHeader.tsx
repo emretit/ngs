@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, Sparkles } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PdfTemplate } from "@/types/pdf-template";
 import PdfTemplatesViewToggle from "./PdfTemplatesViewToggle";
@@ -17,8 +17,6 @@ interface PdfTemplatesHeaderProps {
     proposalCount: number;
   };
   onCreateTemplate: () => void;
-  onCreateDefaults: () => void;
-  isCreatingDefaults?: boolean;
 }
 
 const PdfTemplatesHeader = ({
@@ -28,8 +26,6 @@ const PdfTemplatesHeader = ({
   totalCount: propTotalCount,
   statistics,
   onCreateTemplate,
-  onCreateDefaults,
-  isCreatingDefaults = false,
 }: PdfTemplatesHeaderProps) => {
   // Statistics varsa onu kullan, yoksa templates'ten hesapla (fallback)
   const totalCount = statistics?.totalCount ?? propTotalCount ?? templates.length;
@@ -100,18 +96,6 @@ const PdfTemplatesHeader = ({
           activeView={activeView} 
           setActiveView={setActiveView} 
         />
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isCreatingDefaults}
-          onClick={onCreateDefaults}
-          className="flex items-center gap-2"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="hidden sm:inline">
-            {isCreatingDefaults ? 'Oluşturuluyor...' : 'Şablonları Yükle'}
-          </span>
-        </Button>
         <Button 
           className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
           onClick={onCreateTemplate}

@@ -52,8 +52,13 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           left: z.number().min(10).max(100),
         }),
         fontSize: z.number().min(8).max(20),
-        fontFamily: z.enum(['Roboto', 'Helvetica', 'Times-Roman', 'Courier']).optional(),
+        fontFamily: z.enum(['Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Inter', 'Poppins', 'Nunito', 'Playfair Display', 'Merriweather', 'Source Sans Pro', 'Helvetica', 'Times-Roman', 'Courier']).optional(),
+        fontWeight: z.enum(['normal', 'bold']).optional(),
         backgroundColor: z.string().optional(),
+        backgroundImage: z.string().optional(),
+        backgroundStyle: z.enum(['none', 'corner-wave', 'side-gradient', 'bottom-shapes', 'top-circles', 'diagonal-bands', 'corner-triangles', 'side-curves', 'custom']).optional(),
+        backgroundStyleColor: z.string().optional(),
+        backgroundOpacity: z.number().min(0).max(100).optional(),
       }),
       header: z.object({
         title: z.string().min(1),
@@ -107,7 +112,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         padding: { top: 40, right: 40, bottom: 40, left: 40 },
         fontSize: 12,
         fontFamily: 'Roboto',
+        fontWeight: 'normal',
         backgroundColor: '#FFFFFF',
+        backgroundImage: '',
+        backgroundStyle: 'none',
+        backgroundStyleColor: '#4F46E5',
+        backgroundOpacity: 5,
       },
       header: {
         title: 'TEKLİF',
@@ -300,7 +310,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             page: {
               ...template.schema_json.page,
               fontFamily: template.schema_json.page.fontFamily || 'Roboto',
+              fontWeight: template.schema_json.page.fontWeight || 'normal',
               backgroundColor: template.schema_json.page.backgroundColor || '#FFFFFF',
+              backgroundImage: template.schema_json.page.backgroundImage || '',
+              backgroundStyle: template.schema_json.page.backgroundStyle || 'none',
+              backgroundStyleColor: template.schema_json.page.backgroundStyleColor || '#4F46E5',
+              backgroundOpacity: template.schema_json.page.backgroundOpacity ?? 5,
             },
           header: {
             ...template.schema_json.header,
@@ -540,122 +555,227 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   return (
     <>
       {/* Header */}
-      <div className="border-b bg-background px-4 py-1.5 sticky top-0 z-10">
-        <div className="flex items-center gap-3">
+      <div className="border-b bg-background px-4 py-2 sticky top-0 z-10">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1">
             <Button
               variant="ghost"
               size="sm"
-            onClick={() => navigate('/settings/pdf-templates')}
-            className="flex items-center gap-2 h-7"
+              onClick={() => navigate('/settings/pdf-templates')}
+              className="flex items-center gap-2 h-7"
             >
               <ArrowLeft className="h-4 w-4" />
               Geri
             </Button>
-            <div>
-            <h1 className="text-lg font-bold leading-tight">
+            <div className="flex-1">
+              <h1 className="text-lg font-bold leading-tight">
                 {isNewTemplate ? 'Yeni PDF Şablonu' : 'PDF Şablon Editörü'}
               </h1>
-            <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {isNewTemplate ? 'Yeni bir PDF şablonu oluşturun' : `${selectedTemplate?.name || 'Şablon'} düzenleniyor`}
               </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Top Panel - Şablon Ayarları ve Genel Ayarlar */}
-      <div className="border-b bg-background px-4 py-3">
-        <div className="grid grid-cols-3 gap-4">
-          {/* Şablon Ayarları */}
-          <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-lg p-3 border border-blue-200/50 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-base">⚙️</span>
-              <div>
-                <h3 className="text-sm font-bold text-gray-800">Şablon Ayarları</h3>
-                <p className="text-xs text-gray-600">PDF şablonunuzu özelleştirin</p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Genel Ayarlar */}
-          <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-lg p-3 border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-base">🎨</span>
-              <h3 className="text-sm font-bold text-gray-800">Genel Ayarlar</h3>
-            </div>
-            
-            {/* Font Family */}
-            <div className="space-y-1.5 mb-2">
-              <Label className="text-xs font-medium text-gray-700">Font Tipi</Label>
-              <Select
-                value={form.watch('page.fontFamily') || 'Roboto'}
-                onValueChange={(value) => form.setValue('page.fontFamily', value as 'Roboto' | 'Helvetica' | 'Times-Roman' | 'Courier')}
-              >
-                <SelectTrigger className="h-7 text-xs">
-                  <SelectValue placeholder="Font seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Roboto">Roboto</SelectItem>
-                  <SelectItem value="Helvetica">Helvetica</SelectItem>
-                  <SelectItem value="Times-Roman">Times Roman</SelectItem>
-                  <SelectItem value="Courier">Courier</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      {/* Top Panel - Genel Ayarlar */}
+      <div className="border-b bg-background px-4 py-2">
+        <div className="flex items-center gap-6">
+          {/* Genel Ayarlar - Accordion */}
+          <div className="flex-1">
+            <Accordion type="single" collapsible defaultValue="general" className="w-full">
+              <AccordionItem value="general" className="border-0">
+                <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 px-3 py-1.5 rounded-lg border border-gray-200 font-semibold text-xs text-gray-800 h-auto">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">🎨</span>
+                    <span>Genel Ayarlar</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 px-0 pb-0">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {/* Şablon Adı */}
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="template-name" className="text-xs text-gray-600 whitespace-nowrap">Şablon Adı:</Label>
+                      <Input
+                        id="template-name"
+                        type="text"
+                        value={templateName}
+                        onChange={(e) => setTemplateName(e.target.value)}
+                        placeholder="Şablon adı"
+                        className="h-7 w-40 text-xs"
+                      />
+                    </div>
 
-            {/* Background Color */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-gray-700">Arka Plan Rengi</Label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[
-                  { name: 'Beyaz', value: '#FFFFFF', preview: 'bg-white' },
-                  { name: 'Açık Gri', value: '#F9FAFB', preview: 'bg-gray-50' },
-                  { name: 'Gri', value: '#F3F4F6', preview: 'bg-gray-100' },
-                  { name: 'Açık Mavi', value: '#EFF6FF', preview: 'bg-blue-50' },
-                  { name: 'Açık Yeşil', value: '#F0FDF4', preview: 'bg-green-50' },
-                  { name: 'Açık Sarı', value: '#FEFCE8', preview: 'bg-yellow-50' },
-                  { name: 'Açık Pembe', value: '#FDF2F8', preview: 'bg-pink-50' },
-                  { name: 'Açık Mor', value: '#FAF5FF', preview: 'bg-purple-50' },
-                ].map((bg) => (
-                  <button
-                    key={bg.value}
-                    type="button"
-                    onClick={() => form.setValue('page.backgroundColor', bg.value)}
-                    className={`${bg.preview} border-2 rounded-md p-1.5 h-10 flex flex-col items-center justify-center gap-0.5 hover:ring-2 hover:ring-blue-400 transition-all ${
-                      form.watch('page.backgroundColor') === bg.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'
-                    }`}
-                    title={bg.name}
-                  >
-                    <div className={`w-full h-3 rounded ${bg.preview} border border-gray-300`}></div>
-                    <span className="text-[8px] text-gray-600 font-medium">{bg.name}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="mt-1">
-                <Label className="text-xs text-gray-500">Özel Renk:</Label>
-                <Input
-                  type="color"
-                  value={form.watch('page.backgroundColor') || '#FFFFFF'}
-                  onChange={(e) => form.setValue('page.backgroundColor', e.target.value)}
-                  className="h-7 w-full mt-1"
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Şablon Adı */}
-          <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-lg p-3 border border-emerald-200/50 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-base">✏️</span>
-              <Label htmlFor="template-name" className="text-sm font-semibold text-gray-800">Şablon Adı</Label>
-            </div>
-            <Input
-              id="template-name"
-              type="text"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              placeholder="Şablon adını girin"
-              className="h-8 text-sm border-emerald-300 focus:border-emerald-500 focus:ring-emerald-500/20"
-            />
+                    {/* Font Family */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Font:</Label>
+                      <Select
+                        value={form.watch('page.fontFamily') || 'Roboto'}
+                        onValueChange={(value) => form.setValue('page.fontFamily', value as any)}
+                      >
+                        <SelectTrigger className="h-7 w-40 text-xs">
+                          <SelectValue placeholder="Font seçin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Roboto">Roboto</SelectItem>
+                          <SelectItem value="Open Sans">Open Sans</SelectItem>
+                          <SelectItem value="Lato">Lato</SelectItem>
+                          <SelectItem value="Montserrat">Montserrat</SelectItem>
+                          <SelectItem value="Inter">Inter</SelectItem>
+                          <SelectItem value="Poppins">Poppins</SelectItem>
+                          <SelectItem value="Nunito">Nunito</SelectItem>
+                          <SelectItem value="Playfair Display">Playfair Display</SelectItem>
+                          <SelectItem value="Merriweather">Merriweather</SelectItem>
+                          <SelectItem value="Source Sans Pro">Source Sans Pro</SelectItem>
+                          <SelectItem value="Helvetica">Helvetica</SelectItem>
+                          <SelectItem value="Times-Roman">Times Roman</SelectItem>
+                          <SelectItem value="Courier">Courier</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Font Size */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Font Boyutu:</Label>
+                      <Input
+                        type="number"
+                        {...form.register('page.fontSize', { valueAsNumber: true })}
+                        min="8"
+                        max="20"
+                        placeholder="12"
+                        className="h-7 w-14 text-center text-xs"
+                      />
+                    </div>
+
+                    {/* Font Weight */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Kalınlık:</Label>
+                      <Select
+                        value={form.watch('page.fontWeight') || 'normal'}
+                        onValueChange={(value) => form.setValue('page.fontWeight', value as 'normal' | 'bold')}
+                      >
+                        <SelectTrigger className="h-7 w-24 text-xs">
+                          <SelectValue placeholder="Kalınlık" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="normal">Normal</SelectItem>
+                          <SelectItem value="bold">Kalın</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Background Color */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Arka Plan:</Label>
+                      <div className="flex items-center gap-1">
+                        {[
+                          { name: 'Beyaz', value: '#FFFFFF', preview: 'bg-white' },
+                          { name: 'Açık Gri', value: '#F9FAFB', preview: 'bg-gray-50' },
+                          { name: 'Gri', value: '#F3F4F6', preview: 'bg-gray-100' },
+                          { name: 'Açık Mavi', value: '#EFF6FF', preview: 'bg-blue-50' },
+                          { name: 'Açık Yeşil', value: '#F0FDF4', preview: 'bg-green-50' },
+                          { name: 'Açık Sarı', value: '#FEFCE8', preview: 'bg-yellow-50' },
+                          { name: 'Açık Pembe', value: '#FDF2F8', preview: 'bg-pink-50' },
+                          { name: 'Açık Mor', value: '#FAF5FF', preview: 'bg-purple-50' },
+                        ].map((bg) => (
+                          <button
+                            key={bg.value}
+                            type="button"
+                            onClick={() => form.setValue('page.backgroundColor', bg.value)}
+                            className={`${bg.preview} border rounded p-1 h-6 w-6 hover:ring-2 hover:ring-blue-400 transition-all ${
+                              form.watch('page.backgroundColor') === bg.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'
+                            }`}
+                            title={bg.name}
+                          />
+                        ))}
+                      </div>
+                      <Input
+                        type="color"
+                        value={form.watch('page.backgroundColor') || '#FFFFFF'}
+                        onChange={(e) => form.setValue('page.backgroundColor', e.target.value)}
+                        className="h-7 w-12"
+                        title="Özel Renk"
+                      />
+                    </div>
+
+                    {/* Background Style */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Arka Plan Stili:</Label>
+                      <Select
+                        value={form.watch('page.backgroundStyle') || 'none'}
+                        onValueChange={(value) => form.setValue('page.backgroundStyle', value as any)}
+                      >
+                        <SelectTrigger className="h-7 w-40 text-xs">
+                          <SelectValue placeholder="Stil seçin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Yok</SelectItem>
+                          <SelectItem value="corner-wave">Köşe Dalga</SelectItem>
+                          <SelectItem value="side-gradient">Yan Gradient</SelectItem>
+                          <SelectItem value="bottom-shapes">Alt Şekiller</SelectItem>
+                          <SelectItem value="top-circles">Üst Daireler</SelectItem>
+                          <SelectItem value="diagonal-bands">Çapraz Bantlar</SelectItem>
+                          <SelectItem value="corner-triangles">Köşe Üçgenler</SelectItem>
+                          <SelectItem value="side-curves">Yan Eğriler</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Background Style Color */}
+                    {form.watch('page.backgroundStyle') && form.watch('page.backgroundStyle') !== 'none' && (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-gray-600 whitespace-nowrap">Stil Rengi:</Label>
+                        <div className="flex items-center gap-1">
+                          {[
+                            { name: 'İndigo', value: '#4F46E5' },
+                            { name: 'Mavi', value: '#3B82F6' },
+                            { name: 'Yeşil', value: '#10B981' },
+                            { name: 'Turuncu', value: '#F59E0B' },
+                            { name: 'Kırmızı', value: '#EF4444' },
+                            { name: 'Mor', value: '#8B5CF6' },
+                          ].map((color) => (
+                            <button
+                              key={color.value}
+                              type="button"
+                              onClick={() => form.setValue('page.backgroundStyleColor', color.value)}
+                              className={`border rounded h-6 w-6 hover:ring-2 hover:ring-blue-400 transition-all ${
+                                form.watch('page.backgroundStyleColor') === color.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'
+                              }`}
+                              style={{ backgroundColor: color.value }}
+                              title={color.name}
+                            />
+                          ))}
+                        </div>
+                        <Input
+                          type="color"
+                          value={form.watch('page.backgroundStyleColor') || '#4F46E5'}
+                          onChange={(e) => form.setValue('page.backgroundStyleColor', e.target.value)}
+                          className="h-7 w-12"
+                          title="Özel Renk"
+                        />
+                      </div>
+                    )}
+
+                    {/* Background Opacity */}
+                    {form.watch('page.backgroundStyle') && form.watch('page.backgroundStyle') !== 'none' && (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs text-gray-600 whitespace-nowrap">Şeffaflık:</Label>
+                        <Input
+                          type="number"
+                          {...form.register('page.backgroundOpacity', { valueAsNumber: true })}
+                          min="0"
+                          max="100"
+                          placeholder="5"
+                          className="h-7 w-16 text-center text-xs"
+                        />
+                        <span className="text-xs text-gray-500">%</span>
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </div>
       </div>

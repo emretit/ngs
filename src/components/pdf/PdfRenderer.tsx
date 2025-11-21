@@ -1,23 +1,161 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image, Svg, Circle, Rect, Path, Polygon } from '@react-pdf/renderer';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { QuoteData, TemplateSchema } from '@/types/pdf-template';
 
 // Register fonts for Turkish character support
+// Roboto
 Font.register({
   family: 'Roboto',
   fonts: [
     {
-      src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf',
+      src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf',
+      src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc4.ttf',
       fontWeight: 'bold',
     }
   ]
 });
+
+// Open Sans
+Font.register({
+  family: 'Open Sans',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/opensans/v34/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVZyOOSr4dVJWUgsjZ0B4gaVc.ttf',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/opensans/v34/memQYaGs126MiZpBA-UFUIcVXSCEkx2cmqvXlWq8tWZ0Pw86hd0Rk8ZkWVAewA.ttf',
+      fontWeight: 'bold',
+    }
+  ]
+});
+
+// Lato
+Font.register({
+  family: 'Lato',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/lato/v23/S6uyw4BMUTPHjx4wXg.ttf',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/lato/v23/S6u9w4BMUTPHh6UVSwiPHA.ttf',
+      fontWeight: 'bold',
+    }
+  ]
+});
+
+// Montserrat
+Font.register({
+  family: 'Montserrat',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw5aXpsog.woff2',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCuM73w5aXpsog.woff2',
+      fontWeight: 'bold',
+    }
+  ]
+});
+
+// Inter
+Font.register({
+  family: 'Inter',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-Ek-_EeA.woff2',
+      fontWeight: 'bold',
+    }
+  ]
+});
+
+// Poppins
+Font.register({
+  family: 'Poppins',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/poppins/v20/pxiEyp8kv8JHgFVrJJfecg.woff2',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/poppins/v20/pxiByp8kv8JHgFVrLCz7Z1xlFQ.woff2',
+      fontWeight: 'bold',
+    }
+  ]
+});
+
+// Nunito
+Font.register({
+  family: 'Nunito',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/nunito/v25/XRXI3I6Li01BKofAnsSUYevN.woff2',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/nunito/v25/XRXQ3I6Li01BKofAjsOUYevN.woff2',
+      fontWeight: 'bold',
+    }
+  ]
+});
+
+// Playfair Display (Serif)
+Font.register({
+  family: 'Playfair Display',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/playfairdisplay/v30/nuFiD-vYSZviVYUb_rj3ij__anPXDTzYgA.woff2',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/playfairdisplay/v30/nuFnD-vYSZviVYUb_rj3ij__anPXDTnogq7hV0jZ3Y.woff2',
+      fontWeight: 'bold',
+    }
+  ]
+});
+
+// Merriweather (Serif)
+Font.register({
+  family: 'Merriweather',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/merriweather/v30/u-440qyriQwlOrhSvowK_l5-fCZMdeX3rg.woff2',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/merriweather/v30/u-4b0qyriQwlOrhSvowK_l5-fCZMdeX3rg.woff2',
+      fontWeight: 'bold',
+    }
+  ]
+});
+
+// Source Sans Pro
+Font.register({
+  family: 'Source Sans Pro',
+  fonts: [
+    {
+      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xK3dSBYKcSV-LCoeQqfX1RYOo3qOK7lujVj9w.woff2',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://fonts.gstatic.com/s/sourcesanspro/v21/6xKydSBYKcSV-LCoeQqfX1RYOo3ig4vwmRduz8A.woff2',
+      fontWeight: 'bold',
+    }
+  ]
+});
+
+// Helvetica, Times-Roman, Courier are built-in fonts in PDF, no need to register
 
 // Safe text rendering function for Turkish characters
 const safeText = (text: string | undefined | null): string => {
@@ -42,6 +180,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       paddingLeft: schema.page.padding.left,
       fontSize: schema.page.fontSize,
       fontFamily: schema.page.fontFamily || 'Roboto',
+      fontWeight: schema.page.fontWeight === 'bold' ? 'bold' : 'normal',
     },
     header: {
       flexDirection: 'row',
@@ -263,9 +402,154 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     );
   };
 
+  // Helper function to render background style
+  const renderBackgroundStyle = () => {
+    const style = schema.page.backgroundStyle || 'none';
+    const opacity = (schema.page.backgroundOpacity ?? 5) / 100; // Çok düşük varsayılan opacity (5%)
+    const accentColor = schema.page.backgroundStyleColor || '#4F46E5';
+    
+    if (style === 'none') {
+      return null;
+    }
+    // Tüm arka plan stilleri için çok düşük opacity - yazıların arkasında kalması için
+    const containerStyle = {
+      position: 'absolute' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      opacity: opacity * 0.3, // Çok silik - toplam opacity çok düşük olacak
+      zIndex: 0, // Arka planda kalması için
+      pointerEvents: 'none' as const,
+    };
+
+    switch (style) {
+      case 'corner-wave':
+        // Modern dalga köşe tasarımı
+        return (
+          <View style={containerStyle}>
+            <Svg style={{ width: '100%', height: '100%' }}>
+              {/* Sağ alt köşede büyük dalga */}
+              <Path
+                d="M 450 600 Q 500 550 600 600 L 600 842 L 450 842 Z"
+                fill={accentColor}
+              />
+              <Path
+                d="M 400 650 Q 450 600 550 650 Q 600 680 600 750 L 600 842 L 400 842 Z"
+                fill={accentColor}
+              />
+            </Svg>
+          </View>
+        );
+
+      case 'side-gradient':
+        // Sağ tarafta gradient - çok silik
+        return (
+          <View style={containerStyle}>
+            <Svg style={{ width: '100%', height: '100%' }}>
+              <Rect x="450" y="0" width="150" height="842" fill={accentColor} />
+              <Rect x="400" y="0" width="50" height="842" fill={accentColor} />
+              <Rect x="350" y="0" width="50" height="842" fill={accentColor} />
+            </Svg>
+          </View>
+        );
+
+      case 'bottom-shapes':
+        // Alt kısımda modern şekiller (örneğinizdeki gibi)
+        return (
+          <View style={containerStyle}>
+            <Svg style={{ width: '100%', height: '100%' }}>
+              {/* Büyük üçgen */}
+              <Polygon
+                points="500,700 650,842 350,842"
+                fill={accentColor}
+              />
+              {/* Küçük daire */}
+              <Circle cx="420" cy="750" r="40" fill={accentColor} />
+              {/* Dikdörtgen */}
+              <Rect x="0" y="780" width="300" height="62" fill={accentColor} />
+            </Svg>
+          </View>
+        );
+
+      case 'top-circles':
+        // Üst kısımda daireler
+        return (
+          <View style={containerStyle}>
+            <Svg style={{ width: '100%', height: '100%' }}>
+              <Circle cx="500" cy="60" r="80" fill={accentColor} />
+              <Circle cx="100" cy="80" r="50" fill={accentColor} />
+              <Circle cx="300" cy="40" r="30" fill={accentColor} />
+            </Svg>
+          </View>
+        );
+
+      case 'diagonal-bands':
+        // Çapraz bantlar
+        return (
+          <View style={containerStyle}>
+            <Svg style={{ width: '100%', height: '100%' }}>
+              <Polygon
+                points="550,0 600,0 150,842 100,842"
+                fill={accentColor}
+              />
+              <Polygon
+                points="350,0 400,0 0,842 0,792"
+                fill={accentColor}
+              />
+            </Svg>
+          </View>
+        );
+
+      case 'corner-triangles':
+        // Köşelerde üçgenler
+        return (
+          <View style={containerStyle}>
+            <Svg style={{ width: '100%', height: '100%' }}>
+              {/* Sağ üst */}
+              <Polygon points="600,0 600,150 450,0" fill={accentColor} />
+              {/* Sol alt */}
+              <Polygon points="0,842 0,692 150,842" fill={accentColor} />
+              {/* Sağ alt */}
+              <Polygon points="600,842 600,742 500,842" fill={accentColor} />
+            </Svg>
+          </View>
+        );
+
+      case 'side-curves':
+        // Yanlarda eğriler
+        return (
+          <View style={containerStyle}>
+            <Svg style={{ width: '100%', height: '100%' }}>
+              {/* Sol taraf eğri */}
+              <Path
+                d="M 0 200 Q 100 300 0 400 L 0 200 Z"
+                fill={accentColor}
+              />
+              {/* Sağ taraf eğri */}
+              <Path
+                d="M 600 400 Q 500 500 600 600 L 600 400 Z"
+                fill={accentColor}
+              />
+              {/* Alt eğri */}
+              <Path
+                d="M 200 842 Q 300 750 400 842 L 200 842 Z"
+                fill={accentColor}
+              />
+            </Svg>
+          </View>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <Document>
       <Page size={schema.page.size === "LETTER" ? "LETTER" : schema.page.size} style={styles.page}>
+        {/* Content Wrapper - Önce render edilir (önde olur) */}
+        <View style={{ position: 'relative' }}>
         {/* Header */}
         <View style={[
           styles.header, 
@@ -721,11 +1005,11 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           )}
           
           {/* Şartlar ve Koşullar - Template ayarlarına göre göster */}
-          {(schema.notes.termsSettings?.showPaymentTerms && data.payment_terms && data.payment_terms.trim() !== '') ||
-           (schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms && data.delivery_terms.trim() !== '') ||
-           (schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && data.warranty_terms.trim() !== '') ||
-           (schema.notes.termsSettings?.showPriceTerms && data.price_terms && data.price_terms.trim() !== '') ||
-           (schema.notes.termsSettings?.showOtherTerms && data.other_terms && data.other_terms.trim() !== '') ? (
+          {(schema.notes.termsSettings?.showPaymentTerms && data.payment_terms && String(data.payment_terms).trim() !== '') ||
+           (schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms && String(data.delivery_terms).trim() !== '') ||
+           (schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && String(data.warranty_terms).trim() !== '') ||
+           (schema.notes.termsSettings?.showPriceTerms && data.price_terms && String(data.price_terms).trim() !== '') ||
+           (schema.notes.termsSettings?.showOtherTerms && data.other_terms && String(data.other_terms).trim() !== '') ? (
             <>
               <Text style={[
                 styles.sectionTitle,
@@ -733,19 +1017,19 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               ]}>
                 Şartlar ve Koşullar
               </Text>
-              {schema.notes.termsSettings?.showPaymentTerms && data.payment_terms && data.payment_terms.trim() !== '' && (
+              {schema.notes.termsSettings?.showPaymentTerms && data.payment_terms && String(data.payment_terms).trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Ödeme Şartları: ${data.payment_terms}`)}</Text>
               )}
-              {schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms && data.delivery_terms.trim() !== '' && (
+              {schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms && String(data.delivery_terms).trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Teslimat Şartları: ${data.delivery_terms}`)}</Text>
               )}
-              {schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && data.warranty_terms.trim() !== '' && (
+              {schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && String(data.warranty_terms).trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Garanti Şartları: ${data.warranty_terms}`)}</Text>
               )}
-              {schema.notes.termsSettings?.showPriceTerms && data.price_terms && data.price_terms.trim() !== '' && (
+              {schema.notes.termsSettings?.showPriceTerms && data.price_terms && String(data.price_terms).trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Fiyat Şartları: ${data.price_terms}`)}</Text>
               )}
-              {schema.notes.termsSettings?.showOtherTerms && data.other_terms && data.other_terms.trim() !== '' && (
+              {schema.notes.termsSettings?.showOtherTerms && data.other_terms && String(data.other_terms).trim() !== '' && (
                 <Text style={styles.notesText}>{safeText(`Diğer Şartlar: ${data.other_terms}`)}</Text>
               )}
             </>
@@ -760,6 +1044,10 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
             </Text>
           </View>
         )}
+        </View>
+        
+        {/* Background Style - En son render edilir (arkada kalır) */}
+        {renderBackgroundStyle()}
 
       </Page>
     </Document>

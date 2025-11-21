@@ -66,7 +66,7 @@ export function useInfiniteScroll<T>(
         // Aynı veri varsa güncelleme yapma
         if (prev.length === firstPageData.data.length && 
             prev.length > 0 && 
-            prev[0]?.id === firstPageData.data[0]?.id) {
+            (prev[0] as any)?.id === (firstPageData.data[0] as any)?.id) {
           return prev;
         }
         return firstPageData.data;
@@ -109,8 +109,8 @@ export function useInfiniteScroll<T>(
         if (result?.data) {
           // Duplicate'leri önlemek için yeni verileri filtrele
           setAllData(prev => {
-            const existingIds = new Set(prev.map((item: any) => item.id));
-            const newItems = result.data.filter((item: any) => !existingIds.has(item.id));
+            const existingIds = new Set(prev.map((item: any) => (item as any)?.id));
+            const newItems = result.data.filter((item: any) => !existingIds.has((item as any)?.id));
             return [...prev, ...newItems];
           });
           setCurrentPage(nextPage);
@@ -131,8 +131,8 @@ export function useInfiniteScroll<T>(
         if (result?.data) {
           // Duplicate'leri önlemek için yeni verileri filtrele
           setAllData(prev => {
-            const existingIds = new Set(prev.map((item: any) => item.id));
-            const newItems = result.data.filter((item: any) => !existingIds.has(item.id));
+            const existingIds = new Set(prev.map((item: any) => (item as any)?.id));
+            const newItems = result.data.filter((item: any) => !existingIds.has((item as any)?.id));
             return [...prev, ...newItems];
           });
           setCurrentPage(nextPage);

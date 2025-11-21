@@ -28,7 +28,7 @@ const BOMsGrid = ({
     const query = searchQuery.toLowerCase();
     return (
       bom.name?.toLowerCase().includes(query) ||
-      bom.main_product_name?.toLowerCase().includes(query)
+      bom.product_name?.toLowerCase().includes(query)
     );
   });
 
@@ -83,26 +83,8 @@ const BOMsGrid = ({
                   <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 mb-1">
                     {bom.name}
                   </h3>
-                  {bom.version && (
-                    <span className="text-xs text-gray-500">v{bom.version}</span>
-                  )}
                 </div>
               </div>
-              <Badge 
-                variant={bom.is_active ? "default" : "secondary"}
-                className={`text-xs ${
-                  bom.is_active 
-                    ? "bg-green-100 text-green-700 border-green-200" 
-                    : "bg-gray-100 text-gray-600 border-gray-200"
-                }`}
-              >
-                {bom.is_active ? (
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                ) : (
-                  <XCircle className="h-3 w-3 mr-1" />
-                )}
-                {bom.is_active ? "Aktif" : "Pasif"}
-              </Badge>
             </div>
 
             {/* Ana Ürün */}
@@ -112,11 +94,8 @@ const BOMsGrid = ({
                 <span className="text-xs font-medium text-gray-500">Ana Ürün</span>
               </div>
               <p className="text-sm font-semibold text-gray-900">
-                {bom.main_product_name || bom.main_product?.name || 'Ürün Adı Yok'}
+                {bom.product_name || 'Ürün Adı Yok'}
               </p>
-              {bom.main_product?.sku && (
-                <p className="text-xs text-gray-500 mt-1">SKU: {bom.main_product.sku}</p>
-              )}
             </div>
 
             {/* Alt Ürün Sayısı */}

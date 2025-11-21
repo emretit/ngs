@@ -781,7 +781,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
               handleFieldChange('vat_percentage', value);
             }}
             showVatControl={true}
-            inputHeight="h-6"
+            inputHeight="h-10"
           />
         </div>
 

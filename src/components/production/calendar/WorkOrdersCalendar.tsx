@@ -25,6 +25,7 @@ const localizer = dateFnsLocalizer({
 });
 
 const statusColors: Record<WorkOrderStatus, string> = {
+  draft: '#9ca3af', // gray-400
   planned: '#3b82f6', // blue-500
   in_progress: '#f97316', // orange-500
   completed: '#22c55e', // green-500
@@ -45,8 +46,8 @@ const WorkOrdersCalendar = ({
   const filteredWorkOrders = useMemo(() => {
     return workOrders.filter(wo => {
       const matchesSearch = !searchQuery || 
-        wo.work_order_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        wo.product_name?.toLowerCase().includes(searchQuery.toLowerCase());
+        wo.order_number?.toString().includes(searchQuery.toLowerCase()) ||
+        wo.bom_name?.toLowerCase().includes(searchQuery.toLowerCase());
         
       const matchesStatus = statusFilter === "all" || !statusFilter || wo.status === statusFilter;
       
@@ -71,7 +72,7 @@ const WorkOrdersCalendar = ({
 
         return {
           id: wo.id,
-          title: `${wo.work_order_number || 'N/A'}: ${wo.product_name || wo.product?.name || 'Ürün'}`,
+          title: `${wo.order_number || 'N/A'}: ${wo.bom_name || 'Ürün'}`,
           start: startDate,
           end: endDate,
           resource: {

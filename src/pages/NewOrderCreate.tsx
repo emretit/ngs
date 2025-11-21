@@ -675,7 +675,7 @@ const NewOrderCreate = () => {
             }
           }}
           showMoveButtons={true}
-          inputHeight="h-7"
+          inputHeight="h-10"
         />
 
         {/* Financial Summary - Tek başına sağda */}
@@ -689,7 +689,7 @@ const NewOrderCreate = () => {
             onGlobalDiscountTypeChange={setGlobalDiscountType}
             onGlobalDiscountValueChange={setGlobalDiscountValue}
             showVatControl={false}
-            inputHeight="h-7"
+            inputHeight="h-10"
             selectedCurrency={formData.currency}
           />
         </div>

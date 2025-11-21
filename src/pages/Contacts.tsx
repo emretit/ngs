@@ -101,8 +101,7 @@ const Contacts = () => {
         totalBalance,
         overdueBalance
       };
-    },
-    staleTime: 5 * 60 * 1000, // 5 dakika
+    }
   });
 
   if (error) {

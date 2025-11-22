@@ -42,7 +42,7 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content Container */}
-      <div className="mt-4 bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
+      <div className="mt-4 bg-white rounded-xl border border-gray-200 shadow-sm p-3 sm:p-6 space-y-4 sm:space-y-6">
         {/* KPI Metrics Grid */}
         <MetricsGrid
           financialData={financialData}
@@ -50,9 +50,9 @@ const Dashboard = () => {
         />
 
         {/* Main Two-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - 2/3 width */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
             {/* Recent Activities Timeline */}
             <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
               <RecentActivitiesTimeline />
@@ -102,7 +102,7 @@ const Dashboard = () => {
           </div>
 
           {/* Right Column - 1/3 width */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* CRM Quick Stats */}
             <Card className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-gray-300">
               <CardHeader className="pb-3">

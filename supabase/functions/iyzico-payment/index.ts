@@ -148,7 +148,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Ödeme işlemi sırasında bir hata oluştu'
+        error: (error as Error).message || 'Ödeme işlemi sırasında bir hata oluştu'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

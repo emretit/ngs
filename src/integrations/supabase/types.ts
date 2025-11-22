@@ -5537,6 +5537,7 @@ export type Database = {
           description: string | null
           employee_id: string | null
           exchange_rate: number | null
+          history: Json | null
           id: string
           items: Json | null
           notes: string | null
@@ -5570,6 +5571,7 @@ export type Database = {
           description?: string | null
           employee_id?: string | null
           exchange_rate?: number | null
+          history?: Json | null
           id?: string
           items?: Json | null
           notes?: string | null
@@ -5603,6 +5605,7 @@ export type Database = {
           description?: string | null
           employee_id?: string | null
           exchange_rate?: number | null
+          history?: Json | null
           id?: string
           items?: Json | null
           notes?: string | null

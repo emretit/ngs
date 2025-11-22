@@ -39,7 +39,11 @@ serve(async (req) => {
       email,
       password,
       email_confirm: false,
-      user_metadata: { full_name, company_name }
+      user_metadata: { 
+        full_name, 
+        company_name,
+        bypass_invite_check: true // Allow admin-created users to bypass invite check
+      }
     });
 
     if (createUserError) {

@@ -552,10 +552,7 @@ serve(async (req: Request) => {
         TaxExclusiveAmount: finalSubtotal,
         TaxTotalAmount: finalTaxTotal,
         PayableAmount: finalTotal,
-        // Supplier information - use parsed supplierInfo
-        SenderName: supplierInfo.companyName || nilveraData.SenderName,
-        SenderTaxNumber: supplierInfo.taxNumber || nilveraData.SenderTaxNumber,
-        // Additional fields from original response (spread after to allow overrides)
+        // Additional fields from original response
         ...nilveraData,
         // Override with parsed/calculated values (these come after spread to ensure they take precedence)
         TaxExclusiveAmount: finalSubtotal,

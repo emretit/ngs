@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CustomersHeader from "@/components/customers/CustomersHeader";
 import CustomersFilterBar from "@/components/customers/CustomersFilterBar";
@@ -10,7 +10,7 @@ import { useCustomersInfiniteScroll } from "@/hooks/useCustomersInfiniteScroll";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
-const Contacts = () => {
+const Contacts = memo(() => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -344,5 +344,8 @@ const Contacts = () => {
       />
     </div>
   );
-};
+});
+
+Contacts.displayName = 'Contacts';
+
 export default Contacts;

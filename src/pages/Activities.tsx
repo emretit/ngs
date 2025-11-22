@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import TasksContent from "@/components/activities/TasksContent";
 import TasksPageHeader from "@/components/activities/header/TasksPageHeader";
 import TasksFilterBar from "@/components/activities/filters/TasksFilterBar";
@@ -19,6 +19,7 @@ interface ActivitiesPageProps {
   setIsCollapsed?: (collapsed: boolean) => void;
 }
 const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
@@ -27,6 +28,7 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [activeView, setActiveView] = useState<ViewType>("table");
   const [isNewActivityDialogOpen, setIsNewActivityDialogOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
@@ -78,6 +80,16 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
   const handleAddTask = () => {
     setIsNewActivityDialogOpen(true);
   };
+  // URL'den task ID'sini al ve seçili task'ı ayarla
+  useEffect(() => {
+    const taskIdFromUrl = searchParams.get("id");
+    if (taskIdFromUrl) {
+      setSelectedTaskId(taskIdFromUrl);
+      // URL'den id parametresini temizle (isteğe bağlı)
+      // setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
+
   const handleActivitySuccess = () => {
     // Aktivite başarıyla eklendiğinde yapılacak işlemler
     // React Query cache'ini invalidate et ki yeni veriler gelsin
@@ -140,6 +152,7 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
               selectedStatus={selectedStatus}
               startDate={startDate}
               endDate={endDate}
+              selectedTaskId={selectedTaskId}
             />
           )
         )}

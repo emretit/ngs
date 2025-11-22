@@ -42,8 +42,8 @@ export const TasksTable = ({
   // Sort the filtered tasks
   const sortedTasks = useSortedTasks(filteredTasks, sortField, sortDirection);
   
-  // Task operations (status update, delete)
-  const { updateTaskStatus, deleteTask } = useTaskOperations();
+  // Task operations (status update, important, delete)
+  const { updateTaskStatus, toggleTaskImportant, deleteTask } = useTaskOperations();
   
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -72,6 +72,7 @@ export const TasksTable = ({
               onSelectTask={onSelectTask}
               onStatusChange={updateTaskStatus}
               onDeleteTask={deleteTask}
+              onToggleImportant={toggleTaskImportant}
             />
           ))
         )}

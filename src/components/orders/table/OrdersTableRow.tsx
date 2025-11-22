@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { formatCurrency } from "@/lib/utils";
 
 interface OrdersTableRowProps {
@@ -176,22 +176,35 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleConvertToInvoice}>
-                <Receipt className="h-4 w-4 mr-2" />
-                Faturaya Çevir
+            <DropdownMenuContent align="end" className="w-56">
+              {/* Dönüştürme İşlemleri */}
+              <DropdownMenuLabel>Dönüştür</DropdownMenuLabel>
+              <DropdownMenuItem 
+                onClick={handleConvertToInvoice}
+                className="cursor-pointer"
+              >
+                <Receipt className="h-4 w-4 mr-2 text-purple-500" />
+                <span>Faturaya Çevir</span>
               </DropdownMenuItem>
               
-              <DropdownMenuItem onClick={handleConvertToService}>
-                <Settings className="h-4 w-4 mr-2" />
-                Servise Çevir
+              <DropdownMenuItem 
+                onClick={handleConvertToService}
+                className="cursor-pointer"
+              >
+                <Settings className="h-4 w-4 mr-2 text-blue-500" />
+                <span>Servise Çevir</span>
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />
               
-              <DropdownMenuItem onClick={handlePrint}>
-                <Printer className="h-4 w-4 mr-2" />
-                Yazdır
+              {/* Yazdırma */}
+              <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
+              <DropdownMenuItem 
+                onClick={handlePrint}
+                className="cursor-pointer"
+              >
+                <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                <span>Yazdır</span>
               </DropdownMenuItem>
               
               {onDelete && (
@@ -199,10 +212,10 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={handleDelete}
-                    className="text-red-600 focus:text-red-600"
+                    className="text-red-600 focus:text-red-600 cursor-pointer"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Sil
+                    <span>Sil</span>
                   </DropdownMenuItem>
                 </>
               )}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TasksTable } from "./table";
 import TaskDetailPanel from "./TaskDetailPanel";
 import type { Task, TaskStatus } from "@/types/task";
@@ -18,6 +18,7 @@ interface TasksContentProps {
   selectedStatus: TaskStatus | null;
   startDate?: Date | undefined;
   endDate?: Date | undefined;
+  selectedTaskId?: string | null;
   onSelectTask?: (task: Task) => void;
 }
 
@@ -35,10 +36,25 @@ const TasksContent = ({
   selectedStatus,
   startDate,
   endDate,
+  selectedTaskId,
   onSelectTask 
 }: TasksContentProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // URL'den gelen task ID'sine göre task'ı seç ve paneli aç
+  useEffect(() => {
+    if (selectedTaskId && tasks.length > 0) {
+      const task = tasks.find(t => t.id === selectedTaskId);
+      if (task) {
+        setSelectedTask(task);
+        setIsDetailOpen(true);
+        if (onSelectTask) {
+          onSelectTask(task);
+        }
+      }
+    }
+  }, [selectedTaskId, tasks, onSelectTask]);
 
   const handleSelectTask = (task: Task) => {
     setSelectedTask(task);

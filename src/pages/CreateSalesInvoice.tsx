@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useForm, FormProvider } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
-import { ArrowLeft, Plus, Trash2, Save, FileText } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Info, FileText, MoreHorizontal, Send, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
-import { useEInvoice } from "@/hooks/useEInvoice";
+import { useEInvoice, useEInvoiceStatus } from "@/hooks/useEInvoice";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import BackButton from "@/components/ui/back-button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import InvoiceHeaderCard from "@/components/invoices/cards/InvoiceHeaderCard";
+import InvoiceItemsCard from "@/components/invoices/cards/InvoiceItemsCard";
+import InvoiceFinancialCard from "@/components/invoices/cards/InvoiceFinancialCard";
+import InvoiceEInvoiceCard from "@/components/invoices/cards/InvoiceEInvoiceCard";
 
 interface InvoiceItem {
   id: string;
@@ -38,11 +39,29 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
   const { customers: customerOptions, isLoading: isLoadingCustomers } = useCustomerSelect();
   const { sendInvoice, isSending } = useEInvoice();
   const orderId = searchParams.get("orderId");
+  const proposalId = searchParams.get("proposalId");
+
+  // React Hook Form setup for ProposalPartnerSelect
+  const form = useForm({ 
+    defaultValues: { 
+      customer_id: "", 
+      supplier_id: "" 
+    },
+    mode: "onChange"
+  });
+  const watchCustomerId = form.watch("customer_id");
 
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
   const [orderData, setOrderData] = useState<any>(null);
+  const [proposalData, setProposalData] = useState<any>(null);
   const [savedInvoiceId, setSavedInvoiceId] = useState<string | null>(null);
   const [assignedInvoiceNumber, setAssignedInvoiceNumber] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  
+  // E-fatura durumu takibi
+  const { status: einvoiceStatus, refreshStatus } = useEInvoiceStatus(savedInvoiceId || undefined);
   
   const [formData, setFormData] = useState({
     customer_id: "",
@@ -55,6 +74,29 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     odeme_sekli: "",
     banka_bilgileri: "",
   });
+
+  // Müşteri seçildiğinde bilgilerini yükle (form'dan gelen değeri kullan)
+  useEffect(() => {
+    if (watchCustomerId && watchCustomerId !== formData.customer_id) {
+      handleCustomerChange(watchCustomerId);
+      setFormData(prev => ({ ...prev, customer_id: watchCustomerId }));
+    }
+  }, [watchCustomerId]);
+
+  const handleCustomerChange = async (customerId: string) => {
+    setFormData({ ...formData, customer_id: customerId });
+    
+    // Müşteri bilgilerini çek
+    const { data: customer, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', customerId)
+      .single();
+    
+    if (!error && customer) {
+      setSelectedCustomer(customer);
+    }
+  };
 
   const [items, setItems] = useState<InvoiceItem[]>([
     {
@@ -71,16 +113,18 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     }
   ]);
 
-  // Load order data if orderId is provided
+  // Load order data if orderId is provided, or proposal data if proposalId is provided
   useEffect(() => {
     if (orderId) {
       loadOrderData(orderId);
+    } else if (proposalId) {
+      loadProposalData(proposalId);
     }
-  }, [orderId]);
+  }, [orderId, proposalId]);
 
   const loadOrderData = async (id: string) => {
     try {
-      setLoading(true);
+      setLoadingData(true);
       const { data: order, error } = await supabase
         .from("orders")
         .select(`
@@ -95,12 +139,65 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
 
       if (order) {
         setOrderData(order);
+        
+        // Build aciklama from description, order_number and title
+        const aciklamaParts = [];
+        if (order.order_number) aciklamaParts.push(`Sipariş No: ${order.order_number}`);
+        if (order.title) aciklamaParts.push(order.title);
+        if (order.description) aciklamaParts.push(order.description);
+        const aciklama = aciklamaParts.length > 0 ? aciklamaParts.join(' - ') : '';
+        
+        // Convert order_date (timestamp) to Date object if it exists
+        let faturaTarihi = new Date();
+        if (order.order_date) {
+          try {
+            const date = new Date(order.order_date);
+            if (!isNaN(date.getTime())) {
+              faturaTarihi = date;
+            }
+          } catch (error) {
+            console.warn("Invalid order_date format, using current date:", error);
+          }
+        }
+        
+        // Convert expected_delivery_date to Date object if it exists
+        let vadeTarihi: Date | null = null;
+        if (order.expected_delivery_date) {
+          try {
+            const date = new Date(order.expected_delivery_date);
+            if (!isNaN(date.getTime())) {
+              vadeTarihi = date;
+            }
+          } catch (error) {
+            console.warn("Invalid expected_delivery_date format:", error);
+          }
+        }
+        
         setFormData(prev => ({
           ...prev,
-          customer_id: order.customer_id,
-          aciklama: `Sipariş No: ${order.order_number} - ${order.title}`,
-          para_birimi: order.currency || "TRY",
+          customer_id: order.customer_id || "",
+          fatura_tarihi: faturaTarihi,
+          vade_tarihi: vadeTarihi,
+          aciklama: aciklama,
+          notlar: order.notes || "",
+          para_birimi: order.currency === 'TL' ? 'TRY' : (order.currency || "TRY"),
+          odeme_sekli: order.payment_terms || "",
         }));
+        
+        // Set employee_id
+        if (order.employee_id) {
+          setEmployeeId(order.employee_id);
+        }
+        
+        // Form'a da customer_id'yi set et
+        if (order.customer_id) {
+          form.setValue("customer_id", order.customer_id);
+        }
+        
+        // Load customer data
+        if (order.customer) {
+          setSelectedCustomer(order.customer);
+        }
 
         // Convert order items to invoice items
         if (order.items && order.items.length > 0) {
@@ -123,7 +220,142 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
       console.error("Error loading order:", error);
       toast.error("Sipariş verileri yüklenirken hata oluştu");
     } finally {
-      setLoading(false);
+      setLoadingData(false);
+    }
+  };
+
+  const loadProposalData = async (id: string) => {
+    try {
+      setLoadingData(true);
+      const { data: proposal, error } = await supabase
+        .from("proposals")
+        .select(`
+          *,
+          customer:customers(*)
+        `)
+        .eq("id", id)
+        .single();
+
+      if (error) throw error;
+
+      if (proposal) {
+        setProposalData(proposal);
+        
+        // Build aciklama from description, subject, number and title
+        const aciklamaParts = [];
+        if (proposal.number) aciklamaParts.push(`Teklif No: ${proposal.number}`);
+        if (proposal.title) aciklamaParts.push(proposal.title);
+        if (proposal.subject) aciklamaParts.push(`Konu: ${proposal.subject}`);
+        if (proposal.description) aciklamaParts.push(proposal.description);
+        const aciklama = aciklamaParts.length > 0 ? aciklamaParts.join(' - ') : '';
+        
+        // Convert offer_date to Date object if it exists
+        let faturaTarihi = new Date();
+        if (proposal.offer_date) {
+          try {
+            const date = new Date(proposal.offer_date);
+            if (!isNaN(date.getTime())) {
+              faturaTarihi = date;
+            }
+          } catch (error) {
+            console.warn("Invalid offer_date format, using current date:", error);
+          }
+        }
+        
+        // Convert valid_until to Date object if it exists
+        let vadeTarihi: Date | null = null;
+        if (proposal.valid_until) {
+          try {
+            const date = new Date(proposal.valid_until);
+            if (!isNaN(date.getTime())) {
+              vadeTarihi = date;
+            }
+          } catch (error) {
+            console.warn("Invalid valid_until format:", error);
+          }
+        }
+        
+        setFormData(prev => ({
+          ...prev,
+          customer_id: proposal.customer_id || "",
+          fatura_tarihi: faturaTarihi,
+          vade_tarihi: vadeTarihi,
+          aciklama: aciklama,
+          notlar: proposal.notes || "",
+          para_birimi: proposal.currency === 'TL' ? 'TRY' : (proposal.currency || "TRY"),
+          odeme_sekli: proposal.payment_terms || "",
+        }));
+        
+        // Set employee_id
+        if (proposal.employee_id) {
+          setEmployeeId(proposal.employee_id);
+        }
+        
+        // Form'a da customer_id'yi set et
+        if (proposal.customer_id) {
+          form.setValue("customer_id", proposal.customer_id);
+        }
+
+        // Load customer data
+        if (proposal.customer) {
+          setSelectedCustomer(proposal.customer);
+        }
+
+        // Convert proposal items from JSONB to invoice items
+        // Parse items if it's a string (JSONB from database)
+        let parsedItems: any[] = [];
+        if (proposal.items) {
+          try {
+            if (typeof proposal.items === 'string') {
+              parsedItems = JSON.parse(proposal.items);
+            } else if (Array.isArray(proposal.items)) {
+              parsedItems = proposal.items;
+            }
+          } catch (error) {
+            console.error("Error parsing proposal items:", error);
+            parsedItems = [];
+          }
+        }
+        
+        console.log("Parsed proposal items:", parsedItems);
+        
+        if (parsedItems && Array.isArray(parsedItems) && parsedItems.length > 0) {
+          const invoiceItems = parsedItems.map((item: any, index: number) => {
+            const quantity = parseFloat(item.quantity || item.miktar || 1);
+            const unitPrice = parseFloat(item.unit_price || item.unitPrice || item.birim_fiyat || 0);
+            const discountRate = parseFloat(item.discount_rate || item.discountRate || item.indirim_orani || 0);
+            const taxRate = parseFloat(item.tax_rate || item.taxRate || item.kdv_orani || 18);
+            
+            const subtotal = quantity * unitPrice;
+            const discountAmount = (subtotal * discountRate) / 100;
+            const discountedSubtotal = subtotal - discountAmount;
+            const taxAmount = (discountedSubtotal * taxRate) / 100;
+
+            return {
+              id: (index + 1).toString(),
+              urun_adi: item.name || item.urun_adi || item.product_name || "",
+              aciklama: item.description || item.aciklama || "",
+              miktar: quantity,
+              birim: item.unit || item.birim || "adet",
+              birim_fiyat: unitPrice,
+              kdv_orani: taxRate,
+              indirim_orani: discountRate,
+              satir_toplami: discountedSubtotal,
+              kdv_tutari: taxAmount,
+            };
+          });
+          console.log("Converted invoice items:", invoiceItems);
+          setItems(invoiceItems);
+        } else {
+          console.warn("No items found in proposal or items array is empty");
+          // Keep default empty item if no items found
+        }
+      }
+    } catch (error) {
+      console.error("Error loading proposal:", error);
+      toast.error("Teklif verileri yüklenirken hata oluştu");
+    } finally {
+      setLoadingData(false);
     }
   };
 
@@ -173,11 +405,36 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
   };
 
   const calculateTotals = () => {
+    // Calculate indirim tutarı (toplam indirim miktarı)
+    const indirim_tutari = items.reduce((sum, item) => {
+      const subtotal = item.miktar * item.birim_fiyat;
+      const discountAmount = (subtotal * item.indirim_orani) / 100;
+      return sum + discountAmount;
+    }, 0);
+    
     const ara_toplam = items.reduce((sum, item) => sum + item.satir_toplami, 0);
     const kdv_tutari = items.reduce((sum, item) => sum + item.kdv_tutari, 0);
     const toplam_tutar = ara_toplam + kdv_tutari;
 
-    return { ara_toplam, kdv_tutari, toplam_tutar };
+    return { ara_toplam, kdv_tutari, toplam_tutar, indirim_tutari };
+  };
+
+  // Currency code'u Intl.NumberFormat için geçerli formata çevir
+  const getValidCurrencyCode = (currency: string): string => {
+    // TL -> TRY dönüşümü (Intl.NumberFormat TL'yi desteklemiyor)
+    if (currency === 'TL' || currency === 'tl') {
+      return 'TRY';
+    }
+    return currency;
+  };
+
+  // Para birimini formatla
+  const formatCurrency = (amount: number, currency: string = "TRY") => {
+    const currencyCode = getValidCurrencyCode(currency);
+    return new Intl.NumberFormat('tr-TR', { 
+      style: 'currency', 
+      currency: currencyCode 
+    }).format(amount);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,21 +442,36 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     
     console.log("Form submit başladı", { formData, items });
     
-    if (!formData.customer_id) {
+    // Detaylı validasyonlar
+    const customerId = watchCustomerId || formData.customer_id;
+    if (!customerId) {
       console.log("Müşteri seçilmedi");
-      toast.error("Lütfen müşteri seçiniz");
+      toast.error("❌ Lütfen müşteri seçiniz");
       return;
+    }
+
+    // Müşteri bilgileri kontrolü
+    if (selectedCustomer) {
+      if (!selectedCustomer.tax_number) {
+        toast.error("❌ Seçili müşterinin vergi numarası eksik. Lütfen müşteri bilgilerini tamamlayın.");
+        return;
+      }
+      
+      // E-fatura mükellefi ise alias kontrolü
+      if (selectedCustomer.is_einvoice_mukellef && !selectedCustomer.einvoice_alias_name) {
+        toast.warning("⚠️ Müşteri e-fatura mükellefi ancak alias bilgisi eksik. Fatura gönderilemeyebilir.");
+      }
     }
 
     if (items.length === 0) {
       console.log("Fatura kalemi yok");
-      toast.error("En az bir fatura kalemi ekleyiniz");
+      toast.error("❌ En az bir fatura kalemi ekleyiniz");
       return;
     }
 
     if (items.every(item => !item.urun_adi.trim())) {
       console.log("Fatura kalemlerinde ürün adı yok");
-      toast.error("Tüm fatura kalemlerinde ürün/hizmet adı giriniz");
+      toast.error("❌ Tüm fatura kalemlerinde ürün/hizmet adı giriniz");
       return;
     }
 
@@ -207,7 +479,14 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     const emptyItems = items.filter(item => !item.urun_adi.trim() || item.miktar <= 0 || item.birim_fiyat <= 0);
     if (emptyItems.length > 0) {
       console.log("Eksik bilgili kalemler var:", emptyItems);
-      toast.error("Tüm kalemlerde ürün adı, miktar ve birim fiyat giriniz");
+      toast.error(`❌ ${emptyItems.length} kalemde eksik bilgi var. Tüm kalemlerde ürün adı, miktar ve birim fiyat giriniz`);
+      return;
+    }
+    
+    // Toplam kontrolü
+    const totals = calculateTotals();
+    if (totals.toplam_tutar <= 0) {
+      toast.error("❌ Fatura toplam tutarı sıfırdan büyük olmalıdır");
       return;
     }
 
@@ -237,7 +516,9 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
 
       const invoiceData = {
         order_id: orderId || null,
-        customer_id: formData.customer_id,
+        proposal_id: proposalId || null,
+        customer_id: customerId,
+        employee_id: employeeId || null,
         fatura_no: null, // NULL olarak kaydedilecek, E-fatura gönderilirken otomatik atanacak
         fatura_tarihi: format(formData.fatura_tarihi, "yyyy-MM-dd"),
         vade_tarihi: formData.vade_tarihi ? format(formData.vade_tarihi, "yyyy-MM-dd") : null,
@@ -307,9 +588,20 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
       setSavedInvoiceId(invoice.id);
       console.log("Saved invoice ID:", invoice.id);
 
-      toast.success("Fatura başarıyla oluşturuldu. E-fatura göndermek için aşağıdaki butonları kullanabilirsiniz.");
+      toast.success("✅ Fatura başarıyla oluşturuldu! E-fatura göndermek için aşağıdaki butonları kullanabilirsiniz.", {
+        duration: 5000,
+      });
 
       console.log("Fatura başarıyla oluşturuldu");
+      
+      // Scroll to e-invoice section
+      setTimeout(() => {
+        const einvoiceSection = document.querySelector('#einvoice-section');
+        if (einvoiceSection) {
+          einvoiceSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+      
       // Don't navigate immediately to allow e-invoice operations
       // navigate("/sales-invoices");
     } catch (error) {
@@ -319,7 +611,9 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
         stack: error instanceof Error ? error.stack : undefined,
         error
       });
-      toast.error(`Fatura oluşturulurken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`);
+      toast.error(`❌ Fatura oluşturulurken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`, {
+        duration: 7000,
+      });
     } finally {
       setLoading(false);
       console.log("Loading state false yapıldı");
@@ -329,22 +623,33 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
   const totals = calculateTotals();
 
   // E-fatura işlevleri
-  const handleSendEInvoice = () => {
+  const handleSendEInvoice = async () => {
     if (!savedInvoiceId) {
-      toast.error("Önce faturayı kaydedin");
+      toast.error("❌ Önce faturayı kaydedin");
       return;
     }
 
     // Check if already sending
-    if (isSending) {
-      toast.info("E-fatura zaten gönderiliyor, lütfen bekleyin");
+    if (isSending || einvoiceStatus?.status === 'sending') {
+      toast.info("⏳ E-fatura zaten gönderiliyor, lütfen bekleyin");
       return;
+    }
+
+    // Son bir kez müşteri kontrolü yap
+    if (selectedCustomer?.is_einvoice_mukellef && !selectedCustomer?.einvoice_alias_name) {
+      const confirmSend = window.confirm(
+        "⚠️ Uyarı: Müşteri e-fatura mükellefi ancak alias bilgisi eksik. " +
+        "Fatura gönderilemeyebilir. Yine de göndermek istiyor musunuz?"
+      );
+      if (!confirmSend) return;
     }
 
     sendInvoice(savedInvoiceId);
     
-    // E-fatura gönderildikten sonra fatura numarasını kontrol et
+    // E-fatura gönderildikten sonra durumu yenile
     setTimeout(async () => {
+      await refreshStatus();
+      
       const { data: updatedInvoice } = await supabase
         .from('sales_invoices')
         .select('fatura_no')
@@ -357,339 +662,154 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     }, 3000); // 3 saniye bekle
   };
 
+  // Loading sayfası
+  if (loadingData) {
+    return (
+      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-gray-600">
+              {orderId ? "Sipariş verileri yükleniyor..." : "Teklif verileri yükleniyor..."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
-          <div className="flex items-center gap-4 mb-8">
-            <Button variant="outline" size="sm" onClick={() => navigate("/sales-invoices")}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Geri
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+    <div className="space-y-2">
+      {/* Enhanced Sticky Header */}
+      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
+        <div className="flex items-center justify-between p-3 pl-12">
+          <div className="flex items-center gap-3">
+            {/* Simple Back Button */}
+            <BackButton 
+              onClick={() => navigate("/sales-invoices")}
+              variant="ghost"
+              size="sm"
+            >
+              Faturalar
+            </BackButton>
+            
+            {/* Simple Title Section with Icon */}
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <div className="space-y-0.5">
+                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                 Yeni Satış Faturası
               </h1>
-              <p className="text-gray-600">
-                {orderId ? `Sipariş ${orderData?.order_number} için fatura oluşturun` : "Yeni satış faturası oluşturun"}
-              </p>
+                <p className="text-xs text-muted-foreground/70">
+                  {orderId && orderData ? `Sipariş ${orderData.order_number} için fatura oluşturun` : 
+                   proposalId && proposalData ? `Teklif ${proposalData.number} için fatura oluşturun` :
+                   "Hızlı ve kolay fatura oluşturma"}
+                </p>
+              </div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Header Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Fatura Bilgileri
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="customer">Müşteri *</Label>
-                    <Select
-                      value={formData.customer_id}
-                      onValueChange={(value) => setFormData({ ...formData, customer_id: value })}
+          <div className="flex items-center gap-4">
+            <Button 
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                const form = document.getElementById('invoice-form') as HTMLFormElement;
+                if (form) {
+                  form.requestSubmit();
+                }
+              }}
+              disabled={loading || loadingData}
+              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+            >
+              <Save className="h-4 w-4" />
+              <span>{loading ? "Kaydediliyor..." : "Kaydet"}</span>
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="font-medium">İşlemler</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {savedInvoiceId && einvoiceStatus?.status !== 'sent' && (
+                  <>
+                    <DropdownMenuItem 
+                      onClick={handleSendEInvoice} 
+                      disabled={isSending || einvoiceStatus?.status === 'sending'}
+                      className="gap-2 cursor-pointer"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Müşteri seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {isLoadingCustomers ? (
-                          <SelectItem value="loading" disabled>
-                            Müşteriler yükleniyor...
-                          </SelectItem>
-                        ) : customerOptions?.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name} {customer.company && `- ${customer.company}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <Send className="h-4 w-4" />
+                      <span>E-Fatura Gönder</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem 
+                  onClick={() => toast.info("PDF indirme özelliği yakında eklenecek")} 
+                  className="gap-2 cursor-pointer"
+                >
+                  <FileDown className="h-4 w-4" />
+                  <span>PDF İndir</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
                   </div>
-
-                  <div>
-                    <Label htmlFor="fatura_no">Fatura Numarası</Label>
-                    <Input
-                      id="fatura_no"
-                      value={assignedInvoiceNumber || "Henüz atanmadı"}
-                      placeholder="E-fatura gönderilirken otomatik atanacak"
-                      disabled
-                      className={`bg-gray-50 ${assignedInvoiceNumber ? 'text-green-600 font-medium' : 'text-gray-500'}`}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {assignedInvoiceNumber 
-                        ? `Fatura numarası: ${assignedInvoiceNumber}` 
-                        : "E-fatura gönderilirken Nilvera tarafından otomatik atanacak"
-                      }
-                    </p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="fatura_tarihi">Fatura Tarihi *</Label>
-                    <DatePicker
-                      date={formData.fatura_tarihi}
-                      onSelect={(date) => date && setFormData({ ...formData, fatura_tarihi: date })}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="vade_tarihi">Vade Tarihi</Label>
-                    <DatePicker
-                      date={formData.vade_tarihi}
-                      onSelect={(date) => setFormData({ ...formData, vade_tarihi: date })}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="para_birimi">Para Birimi</Label>
-                    <Select
-                      value={formData.para_birimi}
-                      onValueChange={(value) => setFormData({ ...formData, para_birimi: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="TRY">TRY</SelectItem>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                        <SelectItem value="GBP">GBP</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="odeme_sekli">Ödeme Şekli</Label>
-                    <Input
-                      id="odeme_sekli"
-                      value={formData.odeme_sekli}
-                      onChange={(e) => setFormData({ ...formData, odeme_sekli: e.target.value })}
-                      placeholder="Nakit, Kredi Kartı, Havale..."
-                    />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="aciklama">Açıklama</Label>
-                    <Textarea
-                      id="aciklama"
-                      value={formData.aciklama}
-                      onChange={(e) => setFormData({ ...formData, aciklama: e.target.value })}
-                      placeholder="Fatura açıklaması..."
-                    />
-                  </div>
+      {/* Main Content */}
+      <FormProvider {...form}>
+        <form id="invoice-form" onSubmit={handleSubmit} className="space-y-4">
+          {/* Customer & Invoice Information - Single Card */}
+          <InvoiceHeaderCard
+            selectedCustomer={selectedCustomer}
+            formData={formData}
+            assignedInvoiceNumber={assignedInvoiceNumber}
+            einvoiceStatus={einvoiceStatus}
+            onFieldChange={(field, value) => setFormData({ ...formData, [field]: value })}
+            form={form}
+          />
 
-                  <div>
-                    <Label htmlFor="notlar">Notlar</Label>
-                    <Textarea
-                      id="notlar"
-                      value={formData.notlar}
-                      onChange={(e) => setFormData({ ...formData, notlar: e.target.value })}
-                      placeholder="Ek notlar..."
-                    />
-                  </div>
-                </div>
+          {/* Invoice Items - Full Width */}
+          <InvoiceItemsCard
+            items={items}
+            currency={formData.para_birimi}
+            onAddItem={addItem}
+            onRemoveItem={removeItem}
+            onItemChange={updateItem}
+            formatCurrency={formatCurrency}
+          />
 
-                <div>
-                  <Label htmlFor="banka_bilgileri">Banka Bilgileri</Label>
-                  <Textarea
-                    id="banka_bilgileri"
-                    value={formData.banka_bilgileri}
-                    onChange={(e) => setFormData({ ...formData, banka_bilgileri: e.target.value })}
-                    placeholder="Banka adı, IBAN, hesap bilgileri..."
-                  />
-                </div>
-              </CardContent>
-            </Card>
+          {/* Financial Summary */}
+          <InvoiceFinancialCard
+            totals={totals}
+            currency={formData.para_birimi}
+            formatCurrency={formatCurrency}
+          />
 
-            {/* Invoice Items */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Fatura Kalemleri</CardTitle>
-                  <Button type="button" onClick={addItem} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Kalem Ekle
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2">Ürün/Hizmet</th>
-                        <th className="text-left p-2">Açıklama</th>
-                        <th className="text-left p-2">Miktar</th>
-                        <th className="text-left p-2">Birim</th>
-                        <th className="text-left p-2">Birim Fiyat</th>
-                        <th className="text-left p-2">İndirim %</th>
-                        <th className="text-left p-2">KDV %</th>
-                        <th className="text-left p-2">Tutar</th>
-                        <th className="text-left p-2">İşlem</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((item, index) => (
-                        <tr key={item.id} className="border-b">
-                          <td className="p-2">
-                            <Input
-                              value={item.urun_adi}
-                              onChange={(e) => updateItem(index, "urun_adi", e.target.value)}
-                              placeholder="Ürün/Hizmet adı"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              value={item.aciklama}
-                              onChange={(e) => updateItem(index, "aciklama", e.target.value)}
-                              placeholder="Açıklama"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              type="number"
-                              step="0.001"
-                              value={item.miktar}
-                              onChange={(e) => updateItem(index, "miktar", parseFloat(e.target.value) || 0)}
-                              className="w-20"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              value={item.birim}
-                              onChange={(e) => updateItem(index, "birim", e.target.value)}
-                              className="w-16"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.birim_fiyat}
-                              onChange={(e) => updateItem(index, "birim_fiyat", parseFloat(e.target.value) || 0)}
-                              className="w-24"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.indirim_orani}
-                              onChange={(e) => updateItem(index, "indirim_orani", parseFloat(e.target.value) || 0)}
-                              className="w-20"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={item.kdv_orani}
-                              onChange={(e) => updateItem(index, "kdv_orani", parseFloat(e.target.value) || 0)}
-                              className="w-20"
-                            />
-                          </td>
-                          <td className="p-2 text-right">
-                            {new Intl.NumberFormat('tr-TR', {
-                              style: 'currency',
-                              currency: formData.para_birimi
-                            }).format(item.satir_toplami + item.kdv_tutari)}
-                          </td>
-                          <td className="p-2">
-                            {items.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeItem(index)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+          {/* Info Text */}
+          <div className="text-sm text-gray-600">
+            <Info className="inline h-4 w-4 mr-1" />
+            * ile işaretli alanlar zorunludur
+          </div>
 
-                {/* Totals */}
-                <div className="mt-6 flex justify-end">
-                  <div className="w-64 space-y-2">
-                    <div className="flex justify-between">
-                      <span>Ara Toplam:</span>
-                      <span className="font-medium">
-                        {new Intl.NumberFormat('tr-TR', {
-                          style: 'currency',
-                          currency: formData.para_birimi
-                        }).format(totals.ara_toplam)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>KDV:</span>
-                      <span className="font-medium">
-                        {new Intl.NumberFormat('tr-TR', {
-                          style: 'currency',
-                          currency: formData.para_birimi
-                        }).format(totals.kdv_tutari)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2 text-lg font-bold">
-                      <span>Toplam:</span>
-                      <span>
-                        {new Intl.NumberFormat('tr-TR', {
-                          style: 'currency',
-                          currency: formData.para_birimi
-                        }).format(totals.toplam_tutar)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" onClick={() => navigate("/sales-invoices")}>
-                İptal
-              </Button>
-              <Button type="submit" disabled={loading}>
-                <Save className="h-4 w-4 mr-2" />
-                {loading ? "Kaydediliyor..." : "Faturayı Kaydet"}
-              </Button>
-            </div>
-
-            {/* E-Invoice Actions */}
-            {savedInvoiceId && (
-              <Card className="mt-6">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">E-Fatura İşlemleri</h3>
-                               <p className="text-gray-600 mb-4">
-               Faturanız başarıyla kaydedildi. E-fatura olarak göndermek için aşağıdaki butona tıklayın.
-             </p>
-                  <div className="flex gap-4">
-                                   <Button 
-                 onClick={handleSendEInvoice}
-                 disabled={isSending || !savedInvoiceId}
-                 className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
-               >
-                 <FileText className="h-4 w-4 mr-2" />
-                 {isSending ? "Gönderiliyor..." : "E-Fatura Gönder"}
-               </Button>
-                    
-                    <Button 
-                      onClick={() => navigate("/sales-invoices")}
-                      variant="outline"
-                    >
-                      Faturalar Sayfasına Git
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </form>
+          {/* E-Invoice Actions */}
+          <InvoiceEInvoiceCard
+            savedInvoiceId={savedInvoiceId}
+            einvoiceStatus={einvoiceStatus}
+            isSending={isSending}
+            onSendEInvoice={handleSendEInvoice}
+            onRefreshStatus={refreshStatus}
+            onNavigateToInvoices={() => navigate("/sales-invoices")}
+          />
+        </form>
+      </FormProvider>
         </div>
   );
 };

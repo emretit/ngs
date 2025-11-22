@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import { ActivityTracker } from "@/components/ActivityTracker";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "@/i18n/config";
 
 const ActivityTrackerWrapper = () => {
@@ -23,15 +24,17 @@ const ActivityTrackerWrapper = () => {
 
 export const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <QueryClientProvider>
-      <AuthProvider>
-        <ActivityTrackerWrapper />
-        <TooltipProvider>
-          {children}
-          <ToastProvider />
-          <Toaster />
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider>
+        <AuthProvider>
+          <ActivityTrackerWrapper />
+          <TooltipProvider>
+            {children}
+            <ToastProvider />
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };

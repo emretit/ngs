@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/auth/AuthContext";
 
 interface InvoiceAnalysisData {
   id: string;
@@ -37,6 +38,7 @@ export const useInvoiceAnalysis = (year?: number) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch invoice analysis data
   const fetchData = async () => {
@@ -44,13 +46,16 @@ export const useInvoiceAnalysis = (year?: number) => {
       setLoading(true);
       setError(null);
       
-      // Auth disabled - no user check needed
-      const user_id = '00000000-0000-0000-0000-000000000001'; // Default user ID
+      if (!user?.id) {
+        setError('Kullanıcı girişi gerekli');
+        setLoading(false);
+        return;
+      }
       
-      // Auth disabled - use default query without user filtering
       let query = supabase
         .from('invoice_analysis')
-        .select('*')
+        .select('id, user_id, year, month, purchase_vat, sales_vat, vat_difference, purchase_invoice, returns_received, sales_invoice, returns_given, profit_loss, created_at, updated_at')
+        .eq('user_id', user.id)
         .order('year', { ascending: true })
         .order('month', { ascending: true });
 
@@ -79,14 +84,19 @@ export const useInvoiceAnalysis = (year?: number) => {
   // Upsert invoice analysis data
   const upsertInvoiceAnalysis = async (input: InvoiceAnalysisInput) => {
     try {
-      // Auth disabled - no user check needed
-      const user_id = '00000000-0000-0000-0000-000000000001'; // Default user ID
+      if (!user?.id) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Kullanıcı girişi gerekli",
+        });
+        return false;
+      }
       
-      // Auth disabled - use default user ID
       const { error } = await supabase
         .from('invoice_analysis')
         .upsert({
-          user_id: user_id,
+          user_id: user.id,
           year: input.year,
           month: input.month,
           purchase_vat: input.purchase_vat || 0,
@@ -135,14 +145,19 @@ export const useInvoiceAnalysis = (year?: number) => {
   // Delete invoice analysis data
   const deleteInvoiceAnalysis = async (year: number, month: number) => {
     try {
-      // Auth disabled - no user check needed
-      const user_id = '00000000-0000-0000-0000-000000000001'; // Default user ID
+      if (!user?.id) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Kullanıcı girişi gerekli",
+        });
+        return false;
+      }
       
-      // Auth disabled - use default user ID
       const { error } = await supabase
         .from('invoice_analysis')
         .delete()
-        .eq('user_id', user_id)
+        .eq('user_id', user.id)
         .eq('year', year)
         .eq('month', month);
 
@@ -164,8 +179,13 @@ export const useInvoiceAnalysis = (year?: number) => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [year]);
+    if (user?.id) {
+      fetchData();
+    } else {
+      setLoading(false);
+      setData([]);
+    }
+  }, [year, user?.id]);
 
   return {
     data,

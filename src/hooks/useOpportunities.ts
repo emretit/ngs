@@ -46,8 +46,10 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
       .eq("company_id", userData.company_id); // Company_id filtresi eklendi
 
     // Apply filters
+    // Note: customer.name cannot be used in or() filter as it's a joined table field
+    // We'll filter by title and description in the query, and customer.name will be filtered client-side
     if (filters.search) {
-      query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%,customer.name.ilike.%${filters.search}%`);
+      query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
     }
 
     if (filters.status && filters.status !== "all") {

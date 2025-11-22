@@ -13,6 +13,9 @@ interface OpportunitiesContentProps {
   totalCount?: number;
   error: any;
   onSelectOpportunity: (opportunity: Opportunity) => void;
+  onEditOpportunity?: (opportunity: Opportunity) => void;
+  onDeleteOpportunity?: (opportunity: Opportunity) => void;
+  onConvertToProposal?: (opportunity: Opportunity) => void;
   searchQuery?: string;
   statusFilter?: string;
   priorityFilter?: string;
@@ -27,6 +30,9 @@ const OpportunitiesContent = ({
   totalCount,
   error,
   onSelectOpportunity,
+  onEditOpportunity,
+  onDeleteOpportunity,
+  onConvertToProposal,
   searchQuery,
   statusFilter,
   priorityFilter
@@ -50,6 +56,9 @@ const OpportunitiesContent = ({
             opportunities={opportunities}
             isLoading={isLoading}
             onSelectOpportunity={onSelectOpportunity}
+            onEditOpportunity={onEditOpportunity}
+            onDeleteOpportunity={onDeleteOpportunity}
+            onConvertToProposal={onConvertToProposal}
             searchQuery={searchQuery}
             statusFilter={statusFilter}
             priorityFilter={priorityFilter}

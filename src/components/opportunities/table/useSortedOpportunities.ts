@@ -41,33 +41,33 @@ export const useSortedOpportunities = (
           bValue = b.employee ? `${b.employee.first_name} ${b.employee.last_name}` : '';
           break;
         case 'expected_close_date':
-          aValue = a.expected_close_date ? new Date(a.expected_close_date).getTime() : 0;
-          bValue = b.expected_close_date ? new Date(b.expected_close_date).getTime() : 0;
+          aValue = a.expected_close_date ? new Date(a.expected_close_date).getTime() : null;
+          bValue = b.expected_close_date ? new Date(b.expected_close_date).getTime() : null;
           break;
         case 'created_at':
-          aValue = a.created_at ? new Date(a.created_at).getTime() : 0;
-          bValue = b.created_at ? new Date(b.created_at).getTime() : 0;
+          aValue = a.created_at ? new Date(a.created_at).getTime() : null;
+          bValue = b.created_at ? new Date(b.created_at).getTime() : null;
           break;
         default:
           return 0;
       }
 
-      // Handle null/undefined values
+      // Handle null/undefined values - null değerler en sona gitsin
       if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return sortDirection === 'asc' ? -1 : 1;
-      if (bValue == null) return sortDirection === 'asc' ? 1 : -1;
+      if (aValue == null) return 1; // A null ise B'den sonra
+      if (bValue == null) return -1; // B null ise A'dan sonra
 
       // Compare values
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
 
+      // String karşılaştırması - Türkçe karakter desteği ile
       const aString = String(aValue).toLowerCase();
       const bString = String(bValue).toLowerCase();
-
-      if (aString < bString) return sortDirection === 'asc' ? -1 : 1;
-      if (aString > bString) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
+      const comparison = aString.localeCompare(bString, 'tr', { numeric: true, sensitivity: 'base' });
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
     });
   }, [opportunities, sortField, sortDirection]);
 };

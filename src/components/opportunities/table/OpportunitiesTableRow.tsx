@@ -6,12 +6,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Edit,
   Trash,
-  Star
+  Star,
+  MoreHorizontal,
+  FileText,
+  Printer,
+  Target,
+  Calendar
 } from "lucide-react";
 import { Opportunity } from "@/types/crm";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { OpportunityStatusCell } from "./OpportunityStatusCell";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OpportunitiesTableRowProps {
   opportunity: Opportunity;
@@ -19,6 +29,7 @@ interface OpportunitiesTableRowProps {
   onEditOpportunity?: (opportunity: Opportunity) => void;
   onDeleteOpportunity?: (opportunity: Opportunity) => void;
   onStatusChange?: (opportunityId: string, status: string) => void;
+  onConvertToProposal?: (opportunity: Opportunity) => void;
 }
 
 const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
@@ -26,8 +37,65 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
   onSelectOpportunity,
   onEditOpportunity,
   onDeleteOpportunity,
-  onStatusChange
+  onStatusChange,
+  onConvertToProposal
 }) => {
+  const navigate = useNavigate();
+  const [relatedActivities, setRelatedActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+
+  // Fırsata bağlı tüm aktiviteleri çek (opportunity_id veya related_item_id ile)
+  useEffect(() => {
+    const fetchRelatedActivities = async () => {
+      if (!opportunity.id) return;
+      
+      setLoadingActivities(true);
+      try {
+        // Önce opportunity_id ile kontrol et
+        let { data: activities1, error: error1 } = await supabase
+          .from("activities")
+          .select("id, title, status, due_date")
+          .eq("opportunity_id", opportunity.id)
+          .order("created_at", { ascending: false });
+
+        // related_item_id ve related_item_type ile kontrol et
+        const { data: activities2, error: error2 } = await supabase
+          .from("activities")
+          .select("id, title, status, due_date")
+          .eq("related_item_id", opportunity.id)
+          .eq("related_item_type", "opportunity")
+          .order("created_at", { ascending: false });
+
+        // Her iki sonucu birleştir ve tekrarları kaldır
+        const allActivities = [
+          ...(activities1 || []),
+          ...(activities2 || [])
+        ];
+
+        // ID'ye göre tekrarları kaldır
+        const uniqueActivities = allActivities.filter((activity, index, self) =>
+          index === self.findIndex((a) => a.id === activity.id)
+        );
+
+        if ((error1 && error1.code !== 'PGRST116') || (error2 && error2.code !== 'PGRST116')) {
+          console.error("Error fetching related activities:", error1 || error2);
+        } else {
+          setRelatedActivities(uniqueActivities);
+        }
+      } catch (error) {
+        console.error("Error fetching related activities:", error);
+      } finally {
+        setLoadingActivities(false);
+      }
+    };
+
+    fetchRelatedActivities();
+  }, [opportunity.id]);
+
+  const handleNavigateToActivity = (e: React.MouseEvent, activityId: string) => {
+    e.stopPropagation();
+    navigate(`/activities?id=${activityId}`);
+  };
   const formatDate = (date: string | null | undefined) => {
     if (!date) return "-";
     
@@ -69,6 +137,23 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
     if (!text) return "";
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength - 3) + "...";
+  };
+
+  const handleConvertToProposal = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onConvertToProposal) {
+      onConvertToProposal(opportunity);
+    } else {
+      // Default behavior: navigate to proposal creation page
+      navigate(`/proposals/new?opportunityId=${opportunity.id}`);
+      toast.success("Teklif oluşturma sayfasına yönlendiriliyorsunuz");
+    }
+  };
+
+  const handlePrint = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // TODO: Implement print functionality for opportunities
+    toast.info("Yazdırma özelliği yakında eklenecek");
   };
 
   return (
@@ -198,6 +283,63 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
               <Trash className="h-4 w-4" />
             </Button>
           )}
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={(e) => e.stopPropagation()}
+                className="h-8 w-8"
+                title="İşlemler"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              {/* Hızlı İşlemler */}
+              <DropdownMenuLabel>Hızlı İşlemler</DropdownMenuLabel>
+              <DropdownMenuItem 
+                onClick={handleConvertToProposal}
+                className="cursor-pointer"
+              >
+                <Target className="h-4 w-4 mr-2 text-blue-500" />
+                <span>Teklif Hazırla</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              {/* İlişkili Öğeler */}
+              {relatedActivities.length > 0 && (
+                <>
+                  <DropdownMenuLabel>İlişkili Aktiviteler</DropdownMenuLabel>
+                  {relatedActivities.map((activity) => (
+                    <DropdownMenuItem 
+                      key={activity.id}
+                      onClick={(e) => handleNavigateToActivity(e, activity.id)}
+                      className="cursor-pointer"
+                    >
+                      <Calendar className="h-4 w-4 mr-2 text-green-500 flex-shrink-0" />
+                      <span className="truncate" title={activity.title}>
+                        {activity.title || 'İsimsiz Aktivite'}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              
+              {/* Yazdırma */}
+              <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
+              <DropdownMenuItem 
+                onClick={handlePrint}
+                className="cursor-pointer"
+              >
+                <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                <span>Yazdır</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </TableCell>
     </TableRow>

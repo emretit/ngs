@@ -583,6 +583,32 @@ const NewProposalCreate = () => {
         return;
       }
 
+      // company_id kontrolü - eğer userData'da yoksa hata ver
+      if (!userData?.company_id) {
+        toast.error("Şirket bilgisi bulunamadı. Lütfen tekrar giriş yapın.");
+        setSaving(false);
+        return;
+      }
+
+      // offer_date kontrolü - eğer Date objesi ise formatla, yoksa null
+      // Eğer offer_date yoksa veya null ise, bugünün tarihini kullan
+      let offerDateValue: string | null = null;
+      if (formData.offer_date) {
+        if (formData.offer_date instanceof Date) {
+          offerDateValue = formatDateToLocalString(formData.offer_date);
+        } else if (typeof formData.offer_date === 'string') {
+          offerDateValue = formData.offer_date;
+        }
+      }
+      
+      // Eğer hala null ise, bugünün tarihini kullan
+      if (!offerDateValue) {
+        offerDateValue = formatDateToLocalString(new Date());
+        console.log('⚠️ offer_date was null/undefined, using today\'s date:', offerDateValue);
+      }
+
+      console.log('💾 Saving proposal with offer_date:', offerDateValue, 'from formData.offer_date:', formData.offer_date);
+
       const proposalData = {
         title: `${customerCompanyName} - Teklif`,
         subject: formData.subject, // Teklif konusu
@@ -590,8 +616,8 @@ const NewProposalCreate = () => {
         number: formData.offer_number,
         customer_id: finalCustomerId, // Boş olamaz, yukarıda kontrol edildi
         employee_id: formData.prepared_by || null,
-        company_id: userData?.company_id || null, // Kullanıcının company_id'si
-        offer_date: formData.offer_date ? formatDateToLocalString(formData.offer_date) : null, // Teklif tarihi (yerel timezone)
+        company_id: userData.company_id, // Kullanıcının company_id'si (artık null olamaz)
+        offer_date: offerDateValue, // Teklif tarihi (yerel timezone)
         valid_until: formData.validity_date ? formatDateToLocalString(formData.validity_date) : "",
         terms: `${formData.payment_terms}\n\n${formData.delivery_terms}\n\nGaranti: ${formData.warranty_terms}`,
         payment_terms: formData.payment_terms,

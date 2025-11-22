@@ -108,7 +108,30 @@ export async function createProposal(proposal: Partial<Proposal>) {
     changes: []
   };
   try {
-    
+    // Get current user's company_id if not provided
+    let companyId = (proposal as any).company_id;
+    if (!companyId) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('id', user.id)
+            .single();
+          if (profile?.company_id) {
+            companyId = profile.company_id;
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching company_id from profile:', e);
+      }
+    }
+
+    console.log('Creating proposal with company_id:', companyId);
+    if (!companyId) {
+      console.warn('⚠️ WARNING: Proposal is being created without company_id!');
+    }
 
     // Generate proposal number
     const proposalNumber = await generateProposalNumber();
@@ -153,11 +176,11 @@ export async function createProposal(proposal: Partial<Proposal>) {
       customer_id: proposal.customer_id,
       employee_id: proposal.employee_id,
       opportunity_id: proposal.opportunity_id,
-      company_id: (proposal as any).company_id || null,
+      company_id: companyId || null,
       number: proposalNumber,
       status: proposal.status || 'draft',
-      offer_date: (proposal as any).offer_date || null,
-      valid_until: proposal.valid_until,
+      offer_date: (proposal as any).offer_date ? (proposal as any).offer_date : null,
+      valid_until: proposal.valid_until || null,
       payment_terms: proposal.payment_terms,
       delivery_terms: proposal.delivery_terms,
       warranty_terms: proposal.warranty_terms,

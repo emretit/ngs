@@ -4,12 +4,12 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { Edit2, MoreHorizontal, Trash2, Printer } from "lucide-react";
+import { Edit2, MoreHorizontal, Trash2, Printer, ShoppingCart, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProposalStatusCell } from "./ProposalStatusCell";
 import { useNavigate } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 
 import { useProposalCalculations } from "@/hooks/proposals/useProposalCalculations";
 import { formatProposalAmount } from "@/services/workflow/proposalWorkflow";
@@ -103,7 +103,7 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
     navigate(`/proposal/${proposal.id}`);
   };
 
-  const handlePdfPrintClick = async (e: React.MouseEvent, templateId: string) => {
+  const handlePdfPrintClick = async (e: React.MouseEvent, templateId?: string) => {
     e.stopPropagation();
     try {
       // Teklif detaylarını çek
@@ -117,6 +117,18 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
       console.error('PDF generation error:', error);
       toast.error("PDF oluşturulurken hata oluştu: " + (error as Error).message);
     }
+  };
+
+  const handleConvertToOrder = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/orders/create?proposalId=${proposal.id}`);
+    toast.success("Sipariş oluşturma sayfasına yönlendiriliyorsunuz");
+  };
+
+  const handleConvertToInvoice = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/sales-invoices/create?proposalId=${proposal.id}`);
+    toast.success("Fatura oluşturma sayfasına yönlendiriliyorsunuz");
   };
 
 
@@ -174,7 +186,9 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
       <TableCell className="text-center p-4 text-sm font-medium">
         {formatProposalAmount(getGrandTotal(), proposal.currency || 'TRY')}
       </TableCell>
-      <TableCell className="text-center p-4 text-sm">{formatDate(proposal.offer_date)}</TableCell>
+      <TableCell className="text-center p-4 text-sm">
+        {formatDate(proposal.offer_date || proposal.created_at)}
+      </TableCell>
       <TableCell className="text-center p-4 text-sm">{formatDate(proposal.valid_until)}</TableCell>
       <TableCell className="p-4 text-center">
         <div className="flex justify-center space-x-2">
@@ -201,32 +215,67 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
             <Trash2 className="h-4 w-4" />
           </Button>
           
-          {templates && templates.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={(e) => e.stopPropagation()}
-                  className="h-8 w-8"
-                  title="Daha Fazla"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {templates.map((template) => (
-                  <DropdownMenuItem
-                    key={template.id}
-                    onClick={(e) => handlePdfPrintClick(e, template.id)}
-                  >
-                    <Printer className="h-4 w-4 mr-2" />
-                    {template.name || 'PDF Yazdır'}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={(e) => e.stopPropagation()}
+                className="h-8 w-8"
+                title="İşlemler"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {/* Yazdırma İşlemleri */}
+              <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                  <span>Yazdır</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-48">
+                  {templates && templates.length > 0 ? (
+                    templates.map((template) => (
+                      <DropdownMenuItem
+                        key={template.id}
+                        onClick={(e) => handlePdfPrintClick(e, template.id)}
+                        className="cursor-pointer"
+                      >
+                        <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                        <span>{template.name || 'PDF Yazdır'}</span>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      Şablon bulunamadı
+                    </div>
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Dönüştürme İşlemleri */}
+              <DropdownMenuLabel>Dönüştür</DropdownMenuLabel>
+              <DropdownMenuItem 
+                onClick={handleConvertToOrder}
+                className="cursor-pointer"
+              >
+                <ShoppingCart className="h-4 w-4 mr-2 text-green-500" />
+                <span>Siparişe Çevir</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                onClick={handleConvertToInvoice}
+                className="cursor-pointer"
+              >
+                <Receipt className="h-4 w-4 mr-2 text-purple-500" />
+                <span>Faturaya Çevir</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </TableCell>
     </TableRow>

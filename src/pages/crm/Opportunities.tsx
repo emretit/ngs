@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { DropResult } from "@hello-pangea/dnd";
 import { Opportunity, OpportunityStatus } from "@/types/crm";
 import { useOpportunities } from "@/hooks/useOpportunities";
@@ -12,7 +12,7 @@ import OpportunitiesContent from "@/components/opportunities/OpportunitiesConten
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
-const Opportunities = () => {
+const Opportunities = memo(() => {
   const { toast } = useToast();
   const [selectedOpportunities, setSelectedOpportunities] = useState<Opportunity[]>([]);
   const [filterKeyword, setFilterKeyword] = useState("");
@@ -133,8 +133,7 @@ const Opportunities = () => {
   };
   const handleConvertToProposal = (opportunity: Opportunity) => {
     // Teklif sayfasına yönlendir
-    console.log('Converting to proposal:', opportunity.id);
-    // TODO: Navigate to new proposal page with opportunity data
+    window.location.href = `/proposals/new?opportunityId=${opportunity.id}`;
   };
   const handlePlanMeeting = (opportunity: Opportunity) => {
     // Yeni aktivite ekranına geçiş
@@ -209,6 +208,9 @@ const Opportunities = () => {
             totalCount={totalCount}
             error={error}
             onSelectOpportunity={handleOpportunityClick}
+            onEditOpportunity={handleEditOpportunity}
+            onDeleteOpportunity={handleDeleteOpportunityClick}
+            onConvertToProposal={handleConvertToProposal}
             searchQuery={filterKeyword}
             statusFilter={statusFilter}
             priorityFilter={priorityFilter}
@@ -241,5 +243,8 @@ const Opportunities = () => {
       />
     </>
   );
-};
+});
+
+Opportunities.displayName = 'Opportunities';
+
 export default Opportunities;

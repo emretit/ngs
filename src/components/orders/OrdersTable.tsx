@@ -77,20 +77,47 @@ const OrdersTable = ({
   const sortedOrders = [...filteredOrders].sort((a, b) => {
     let aValue: any = a[sortField as keyof Order];
     let bValue: any = b[sortField as keyof Order];
+    let isNullA = false;
+    let isNullB = false;
     
+    // Özel alanlar için değer çıkarımı
     if (sortField === 'customer') {
       aValue = a.customer?.name || '';
       bValue = b.customer?.name || '';
+      isNullA = !a.customer?.name;
+      isNullB = !b.customer?.name;
+    } else if (sortField === 'order_date' || sortField === 'delivery_date') {
+      // Tarih alanları için Date objesi kontrolü
+      aValue = aValue ? new Date(aValue).getTime() : null;
+      bValue = bValue ? new Date(bValue).getTime() : null;
+      isNullA = !a[sortField as keyof Order];
+      isNullB = !b[sortField as keyof Order];
+    } else if (sortField === 'total_amount') {
+      aValue = aValue ?? 0;
+      bValue = bValue ?? 0;
+      isNullA = a[sortField as keyof Order] == null;
+      isNullB = b[sortField as keyof Order] == null;
+    } else {
+      isNullA = aValue == null;
+      isNullB = bValue == null;
     }
     
-    if (typeof aValue === 'string') {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
+    // Null değerleri en sona gönder
+    if (isNullA && isNullB) return 0;
+    if (isNullA) return 1; // A null ise B'den sonra
+    if (isNullB) return -1; // B null ise A'dan sonra
+    
+    // Number karşılaştırması
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     }
     
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
+    // String karşılaştırması - Türkçe karakter desteği ile
+    const aString = String(aValue).toLowerCase();
+    const bString = String(bValue).toLowerCase();
+    const comparison = aString.localeCompare(bString, 'tr', { numeric: true, sensitivity: 'base' });
+    
+    return sortDirection === 'asc' ? comparison : -comparison;
   });
 
   return (

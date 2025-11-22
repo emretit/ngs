@@ -16,6 +16,7 @@ interface OpportunitiesTableProps {
   onSelectOpportunity: (opportunity: Opportunity) => void;
   onEditOpportunity?: (opportunity: Opportunity) => void;
   onDeleteOpportunity?: (opportunity: Opportunity) => void;
+  onConvertToProposal?: (opportunity: Opportunity) => void;
   searchQuery?: string;
   statusFilter?: string;
   priorityFilter?: string;
@@ -27,6 +28,7 @@ const OpportunitiesTable = ({
   onSelectOpportunity,
   onEditOpportunity,
   onDeleteOpportunity,
+  onConvertToProposal,
   searchQuery = "",
   statusFilter = "all",
   priorityFilter = null
@@ -82,6 +84,7 @@ const OpportunitiesTable = ({
               onSelectOpportunity={onSelectOpportunity}
               onEditOpportunity={onEditOpportunity}
               onDeleteOpportunity={onDeleteOpportunity}
+              onConvertToProposal={onConvertToProposal}
               onStatusChange={updateOpportunityStatus}
             />
           ))

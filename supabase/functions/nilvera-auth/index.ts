@@ -14,8 +14,12 @@ serve(async (req) => {
   }
 
   try {
-    const SUPABASE_URL = 'https://vwhwufnckpqirxptwncw.supabase.co';
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || Deno.env.get('VITE_SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!SUPABASE_URL) {
+      throw new Error('SUPABASE_URL environment variable is required');
+    }
     
     if (!SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');

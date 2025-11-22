@@ -201,19 +201,20 @@
   border-right: none;
 }
 
-/* Time Gutter - Saat Sütunu */
+/* Time Gutter - Saat Sütunu (Daha az yer kaplasın) */
 .rbc-time-view .rbc-time-gutter {
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   border-right: 2px solid #9ca3af;
-  min-width: 80px;
-  max-width: 80px;
+  min-width: 50px;
+  max-width: 50px;
+  width: 50px !important;
 }
 
 .rbc-time-view .rbc-time-gutter .rbc-time-slot {
   border-right: 1px solid #d1d5db;
-  font-size: 12px;
+  font-size: 11px;
   color: #6b7280;
-  padding: 12px 8px;
+  padding: 8px 4px;
   text-align: center;
   font-weight: 500;
   background: transparent;
@@ -225,9 +226,42 @@
   border-right: 2px solid #9ca3af;
   font-weight: 700;
   color: white;
-  padding: 16px 8px;
+  padding: 12px 4px;
   text-align: center;
-  font-size: 14px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Event kartlarında saat bilgisini gizle */
+.rbc-time-view .rbc-event-label {
+  display: none !important;
+}
+
+.rbc-time-view .rbc-event-content {
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.rbc-time-view .rbc-time-gutter .rbc-time-slot {
+  border-right: 1px solid #d1d5db;
+  font-size: 11px;
+  color: #6b7280;
+  padding: 8px 4px;
+  text-align: center;
+  font-weight: 500;
+  background: transparent;
+}
+
+.rbc-time-view .rbc-time-gutter-header {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-bottom: 2px solid #9ca3af;
+  border-right: 2px solid #9ca3af;
+  font-weight: 700;
+  color: white;
+  padding: 12px 4px;
+  text-align: center;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

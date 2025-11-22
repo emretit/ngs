@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, History } from "lucide-react";
+import { Sparkles, History, RefreshCw } from "lucide-react";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import { useState, memo } from "react";
 import { InsightHistoryDialog } from "./InsightHistoryDialog";
@@ -32,16 +32,29 @@ export const AIInsightsPanel = memo(() => {
               <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
               <span className="truncate">AI İçgörüleri</span>
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowHistory(true)}
-              disabled={isLoading}
-              className="h-7 sm:h-8 w-7 sm:w-auto px-2 sm:px-3 shrink-0"
-            >
-              <History className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline ml-2">Geçmiş</span>
-            </Button>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => generateInsight({ periodDays: 30 })}
+                disabled={isLoading || isGenerating}
+                className="h-7 sm:h-8 w-7 sm:w-auto px-2 sm:px-3 shrink-0"
+                title="Yenile"
+              >
+                <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${isGenerating ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline ml-2">Yenile</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHistory(true)}
+                disabled={isLoading}
+                className="h-7 sm:h-8 w-7 sm:w-auto px-2 sm:px-3 shrink-0"
+              >
+                <History className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline ml-2">Geçmiş</span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
 

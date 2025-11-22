@@ -20,13 +20,13 @@ const ProtectedLayout = () => {
       
       <div 
         className={`flex-1 transition-all duration-300 ease-in-out overflow-auto ${
-          isCollapsed ? "ml-[60px]" : "ml-56"
+          isCollapsed ? "ml-[60px]" : "ml-0 md:ml-56"
         }`}
       >
         <TopBar />
         <Separator />
         
-        <main className="p-6">
+        <main className="p-3 sm:p-4 md:p-6">
           <Outlet />
         </main>
       </div>

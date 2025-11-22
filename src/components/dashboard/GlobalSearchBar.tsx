@@ -235,27 +235,27 @@ const GlobalSearchBar = () => {
 
   return (
     <div 
-      className="w-full mx-auto px-4 sm:px-0" 
+      className="w-full mx-auto px-2 sm:px-4 md:px-0" 
       ref={containerRef}
       role="search"
     >
       {/* Modern Search Card Container */}
-      <div className="relative bg-gradient-to-r from-primary/5 via-primary/3 to-background rounded-2xl p-6 border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="relative bg-gradient-to-r from-primary/5 via-primary/3 to-background rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300">
         {/* Header Section */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-md">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-3 sm:mb-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-2 sm:p-3 bg-gradient-to-br from-primary to-primary/80 rounded-lg sm:rounded-xl shadow-md">
               {mode === "search" ? (
-                <Search className="h-6 w-6 text-primary-foreground" />
+                <Search className="h-4 w-4 sm:h-6 sm:w-6 text-primary-foreground" />
               ) : (
-                <Sparkles className="h-6 w-6 text-primary-foreground" />
+                <Sparkles className="h-4 w-4 sm:h-6 sm:w-6 text-primary-foreground" />
               )}
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">
+              <h2 className="text-sm sm:text-base font-bold text-foreground">
                 {mode === "search" ? "Hızlı Arama" : "AI Analytics"}
               </h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
                 {mode === "search" 
                   ? "Tüm kayıtlarınızda anında arama yapın"
                   : "Doğal dille veri analizi yapın"
@@ -266,14 +266,14 @@ const GlobalSearchBar = () => {
 
           {/* Mode Toggle */}
           <Tabs value={mode} onValueChange={(v) => setMode(v as "search" | "ai")}>
-            <TabsList className="bg-background/50">
-              <TabsTrigger value="search" className="gap-2">
-                <Search className="h-4 w-4" />
-                Arama
+            <TabsList className="bg-background/50 h-8 sm:h-10">
+              <TabsTrigger value="search" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+                <Search className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Arama</span>
               </TabsTrigger>
-              <TabsTrigger value="ai" className="gap-2">
-                <Bot className="h-4 w-4" />
-                AI
+              <TabsTrigger value="ai" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+                <Bot className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">AI</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -291,7 +291,7 @@ const GlobalSearchBar = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="🔍 Müşteri, teklif, çalışan, ürün veya fırsat ara..."
-                className="w-full pl-5 pr-32 h-14 text-sm bg-background border-2 border-border/50 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-300 shadow-sm hover:shadow-md placeholder:text-muted-foreground/60 font-medium"
+                className="w-full pl-4 sm:pl-5 pr-24 sm:pr-32 h-11 sm:h-14 text-xs sm:text-sm bg-background border-2 border-border/50 rounded-lg sm:rounded-xl focus:border-primary focus:ring-2 sm:focus:ring-4 focus:ring-primary/10 transition-all duration-300 shadow-sm hover:shadow-md placeholder:text-muted-foreground/60 font-medium"
                 aria-label="Global arama"
                 aria-expanded={isOpen}
                 aria-controls="search-results"
@@ -300,11 +300,11 @@ const GlobalSearchBar = () => {
               />
               
               {/* Right side controls */}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 sm:gap-2">
                 {isLoading && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg border border-primary/20">
-                    <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                    <span className="text-xs font-semibold text-primary">Aranıyor...</span>
+                  <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-primary/10 rounded-lg border border-primary/20">
+                    <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary animate-spin" />
+                    <span className="text-[10px] sm:text-xs font-semibold text-primary hidden sm:inline">Aranıyor...</span>
                   </div>
                 )}
                 
@@ -313,11 +313,11 @@ const GlobalSearchBar = () => {
                     variant="ghost"
                     size="sm"
                     onClick={handleClear}
-                    className="h-9 px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 rounded-lg font-medium"
+                    className="h-7 sm:h-9 px-2 sm:px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 rounded-lg font-medium"
                     aria-label="Aramayı temizle"
                   >
-                    <X className="h-4 w-4 mr-1" />
-                    <span className="text-xs">Temizle</span>
+                    <X className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                    <span className="text-[10px] sm:text-xs hidden sm:inline">Temizle</span>
                   </Button>
                 )}
               </div>
@@ -325,19 +325,19 @@ const GlobalSearchBar = () => {
 
             {/* Keyboard shortcuts hint */}
             {!isOpen && !searchQuery && (
-              <div className="mt-3 flex items-center justify-center gap-4 text-xs text-muted-foreground/70">
+              <div className="mt-2 sm:mt-3 flex items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground/70">
                 <span className="flex items-center gap-1">
-                  <kbd className="px-2 py-1 bg-muted rounded border border-border/50 font-mono text-[10px]">↑</kbd>
-                  <kbd className="px-2 py-1 bg-muted rounded border border-border/50 font-mono text-[10px]">↓</kbd>
-                  <span>Gezin</span>
+                  <kbd className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-muted rounded border border-border/50 font-mono text-[9px] sm:text-[10px]">↑</kbd>
+                  <kbd className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-muted rounded border border-border/50 font-mono text-[9px] sm:text-[10px]">↓</kbd>
+                  <span className="hidden sm:inline">Gezin</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-2 py-1 bg-muted rounded border border-border/50 font-mono text-[10px]">Enter</kbd>
-                  <span>Seç</span>
+                  <kbd className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-muted rounded border border-border/50 font-mono text-[9px] sm:text-[10px]">Enter</kbd>
+                  <span className="hidden sm:inline">Seç</span>
                 </span>
                 <span className="flex items-center gap-1">
-                  <kbd className="px-2 py-1 bg-muted rounded border border-border/50 font-mono text-[10px]">Esc</kbd>
-                  <span>Kapat</span>
+                  <kbd className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-muted rounded border border-border/50 font-mono text-[9px] sm:text-[10px]">Esc</kbd>
+                  <span className="hidden sm:inline">Kapat</span>
                 </span>
               </div>
             )}
@@ -345,7 +345,7 @@ const GlobalSearchBar = () => {
         ) : (
           <>
             {/* AI Chat Area */}
-            <ScrollArea className="h-[400px] pr-4 mb-4" ref={scrollAreaRef}>
+            <ScrollArea className="h-[300px] sm:h-[400px] pr-2 sm:pr-4 mb-3 sm:mb-4" ref={scrollAreaRef}>
               <div className="space-y-4">
                 {aiMessages.map((message) => (
                   <div
@@ -428,15 +428,15 @@ const GlobalSearchBar = () => {
                 onKeyPress={handleAiKeyPress}
                 placeholder="Soru sorun... (örn: 'Bu ayın toplam geliri nedir?')"
                 disabled={isAiLoading}
-                className="flex-1 h-12"
+                className="flex-1 h-10 sm:h-12 text-xs sm:text-sm"
               />
               <Button
                 onClick={handleAiSendMessage}
                 disabled={isAiLoading || !aiInput.trim()}
-                className="h-12 px-4 gap-2"
+                className="h-10 sm:h-12 px-3 sm:px-4 gap-1 sm:gap-2"
               >
-                <Send className="h-4 w-4" />
-                Gönder
+                <Send className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Gönder</span>
               </Button>
             </div>
           </>
@@ -447,7 +447,7 @@ const GlobalSearchBar = () => {
           <div 
             id="search-results"
             role="listbox"
-            className="absolute top-full left-0 right-0 mt-4 bg-background border-2 border-border/50 rounded-2xl shadow-2xl max-h-[min(500px,70vh)] overflow-hidden z-50 animate-in slide-in-from-top-4 fade-in-0 duration-300"
+            className="absolute top-full left-0 right-0 mt-2 sm:mt-4 bg-background border-2 border-border/50 rounded-xl sm:rounded-2xl shadow-2xl max-h-[min(400px,60vh)] sm:max-h-[min(500px,70vh)] overflow-hidden z-50 animate-in slide-in-from-top-4 fade-in-0 duration-300"
           >
             {error ? (
               <div className="p-8 text-center">
@@ -466,17 +466,17 @@ const GlobalSearchBar = () => {
                 <p className="text-sm text-muted-foreground">Farklı anahtar kelimeler deneyin</p>
               </div>
             ) : (
-              <div className="flex h-[500px]">
+              <div className="flex flex-col sm:flex-row h-[400px] sm:h-[500px]">
                 {/* Left Column - Categories */}
-                <div className="w-64 border-r border-border/50 bg-muted/20">
-                  <div className="px-4 py-3 border-b border-border/50">
-                    <h3 className="font-bold text-sm text-foreground">Kateogriler</h3>
+                <div className="w-full sm:w-48 md:w-64 border-b sm:border-b-0 sm:border-r border-border/50 bg-muted/20 shrink-0">
+                  <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-border/50">
+                    <h3 className="font-bold text-xs sm:text-sm text-foreground">Kategoriler</h3>
                   </div>
-                  <ScrollArea className="h-[calc(500px-49px)]">
-                    <div className="p-2 space-y-1">
+                  <ScrollArea className="h-[120px] sm:h-[calc(500px-49px)]">
+                    <div className="p-1.5 sm:p-2 space-y-1">
                       <button
                         onClick={() => setSelectedCategory("all")}
-                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                           selectedCategory === "all"
                             ? "bg-primary text-primary-foreground shadow-sm"
                             : "text-foreground hover:bg-muted"
@@ -484,7 +484,7 @@ const GlobalSearchBar = () => {
                       >
                         <div className="flex items-center justify-between">
                           <span>Tümü</span>
-                          <Badge variant="secondary" className="ml-2 text-xs">
+                          <Badge variant="secondary" className="ml-2 text-[10px] sm:text-xs">
                             {results.length}
                           </Badge>
                         </div>
@@ -493,15 +493,15 @@ const GlobalSearchBar = () => {
                         <button
                           key={category}
                           onClick={() => setSelectedCategory(category)}
-                          className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                          className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                             selectedCategory === category
                               ? "bg-primary text-primary-foreground shadow-sm"
                               : "text-foreground hover:bg-muted"
                           }`}
                         >
                           <div className="flex items-center justify-between">
-                            <span>{category}</span>
-                            <Badge variant="secondary" className="ml-2 text-xs">
+                            <span className="truncate">{category}</span>
+                            <Badge variant="secondary" className="ml-2 text-[10px] sm:text-xs shrink-0">
                               {groupedResults[category].length}
                             </Badge>
                           </div>
@@ -512,14 +512,14 @@ const GlobalSearchBar = () => {
                 </div>
 
                 {/* Right Column - Results */}
-                <div className="flex-1 bg-background">
-                  <div className="px-4 py-3 border-b border-border/50">
-                    <h3 className="font-bold text-sm text-foreground">
+                <div className="flex-1 bg-background min-w-0">
+                  <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-border/50">
+                    <h3 className="font-bold text-xs sm:text-sm text-foreground truncate">
                       {selectedCategory === "all" ? "Tüm Sonuçlar" : selectedCategory}
                     </h3>
                   </div>
-                  <ScrollArea className="h-[calc(500px-49px)]">
-                    <div className="p-2 space-y-1">
+                  <ScrollArea className="h-[calc(400px-120px-49px)] sm:h-[calc(500px-49px)]">
+                    <div className="p-1.5 sm:p-2 space-y-1">
                       {filteredResults.map((result) => {
                         const globalIndex = results.indexOf(result);
                         const isSelected = selectedIndex === globalIndex;
@@ -530,35 +530,35 @@ const GlobalSearchBar = () => {
                             onMouseEnter={() => setSelectedIndex(globalIndex)}
                             role="option"
                             aria-selected={isSelected}
-                            className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 focus:outline-none group ${
+                            className={`w-full text-left px-2 sm:px-4 py-2 sm:py-3 rounded-lg transition-all duration-200 focus:outline-none group ${
                               isSelected 
                                 ? "bg-primary/10 shadow-sm" 
                                 : "hover:bg-muted/50"
                             }`}
                           >
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2">
                               <div className="flex-1 min-w-0">
-                                <div className={`font-semibold text-sm line-clamp-1 transition-colors ${
+                                <div className={`font-semibold text-xs sm:text-sm line-clamp-1 transition-colors ${
                                   isSelected ? "text-primary" : "text-foreground group-hover:text-primary"
                                 }`}>
                                   {result.title}
                                 </div>
                                 {result.subtitle && (
-                                  <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                  <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 line-clamp-1">
                                     {result.subtitle}
                                   </div>
                                 )}
                                 <div className="mt-1">
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-[10px] sm:text-xs">
                                     {result.category}
                                   </Badge>
                                 </div>
                               </div>
-                              <div className={`ml-3 opacity-0 group-hover:opacity-100 transition-opacity ${
+                              <div className={`ml-2 sm:ml-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ${
                                 isSelected ? "opacity-100" : ""
                               }`}>
-                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                  <span className="text-primary text-sm">→</span>
+                                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                  <span className="text-primary text-xs sm:text-sm">→</span>
                                 </div>
                               </div>
                             </div>

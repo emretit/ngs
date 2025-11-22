@@ -98,61 +98,64 @@ const RecentActivitiesTimeline = () => {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
-          Son Aktiviteler
+      <CardHeader className="flex flex-row items-center justify-between pb-3 gap-2">
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+          <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          <span className="truncate">Son Aktiviteler</span>
         </CardTitle>
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 gap-1"
+          className="h-7 sm:h-8 gap-1 px-2 sm:px-3 shrink-0"
           onClick={() => navigate("/activities")}
         >
-          Tümünü Gör
-          <ChevronRight className="h-4 w-4" />
+          <span className="hidden sm:inline">Tümünü Gör</span>
+          <span className="sm:hidden">Tümü</span>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 sm:p-6">
         {isLoading || userLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-14 bg-muted rounded-lg" />
+                <div className="h-12 sm:h-14 bg-muted rounded-lg" />
               </div>
             ))}
           </div>
         ) : activities && activities.length > 0 ? (
           <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-4 top-2 bottom-2 w-px bg-border" />
+            <div className="absolute left-3 sm:left-4 top-2 bottom-2 w-px bg-border" />
             
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {activities.map((activity, index) => (
                 <div
                   key={activity.id}
-                  className="relative flex items-start gap-4 group cursor-pointer"
+                  className="relative flex items-start gap-2 sm:gap-4 group cursor-pointer"
                   onClick={() => navigate(`/activities?id=${activity.id}`)}
                 >
                   {/* Timeline dot */}
-                  <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full shrink-0 ${getActivityColor(activity.type)}`}>
-                    {getActivityIcon(activity.type)}
+                  <div className={`relative z-10 flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full shrink-0 ${getActivityColor(activity.type)}`}>
+                    <div className="scale-75 sm:scale-100">
+                      {getActivityIcon(activity.type)}
+                    </div>
                   </div>
                   
                   {/* Content */}
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">
+                      <h4 className="text-xs sm:text-sm font-medium line-clamp-2 sm:line-clamp-1 group-hover:text-primary transition-colors">
                         {activity.title}
                       </h4>
                       <Badge
                         variant="secondary"
-                        className="text-xs shrink-0"
+                        className="text-[10px] sm:text-xs shrink-0 ml-1"
                       >
                         {getActivityLabel(activity.type)}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                       {formatDistanceToNow(new Date(activity.created_at), {
                         addSuffix: true,
                         locale: tr,
@@ -164,9 +167,9 @@ const RecentActivitiesTimeline = () => {
             </div>
           </div>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <Activity className="h-12 w-12 mx-auto mb-3 opacity-20" />
-            <p className="text-sm">Henüz aktivite bulunmuyor</p>
+          <div className="text-center py-6 sm:py-8 text-muted-foreground">
+            <Activity className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 opacity-20" />
+            <p className="text-xs sm:text-sm">Henüz aktivite bulunmuyor</p>
           </div>
         )}
       </CardContent>

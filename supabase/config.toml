@@ -19,3 +19,6 @@ verify_jwt = false
 
 [functions.generate-insights]
 verify_jwt = false
+
+[functions.exchange-rates]
+verify_jwt = false

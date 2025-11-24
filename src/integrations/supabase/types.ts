@@ -1152,6 +1152,7 @@ export type Database = {
         Row: {
           account_number: string | null
           address: string | null
+          apartment_number: string | null
           bank_name: string | null
           city: string | null
           country: string | null
@@ -1175,6 +1176,7 @@ export type Database = {
           tax_number: string | null
           tax_office: string | null
           trade_registry_number: string | null
+          unit_number: string | null
           updated_at: string
           updated_by: string | null
           website: string | null
@@ -1182,6 +1184,7 @@ export type Database = {
         Insert: {
           account_number?: string | null
           address?: string | null
+          apartment_number?: string | null
           bank_name?: string | null
           city?: string | null
           country?: string | null
@@ -1205,6 +1208,7 @@ export type Database = {
           tax_number?: string | null
           tax_office?: string | null
           trade_registry_number?: string | null
+          unit_number?: string | null
           updated_at?: string
           updated_by?: string | null
           website?: string | null
@@ -1212,6 +1216,7 @@ export type Database = {
         Update: {
           account_number?: string | null
           address?: string | null
+          apartment_number?: string | null
           bank_name?: string | null
           city?: string | null
           country?: string | null
@@ -1235,6 +1240,7 @@ export type Database = {
           tax_number?: string | null
           tax_office?: string | null
           trade_registry_number?: string | null
+          unit_number?: string | null
           updated_at?: string
           updated_by?: string | null
           website?: string | null
@@ -1376,6 +1382,7 @@ export type Database = {
         Row: {
           account_number: string | null
           address: string | null
+          apartment_number: string | null
           balance: number
           bank_name: string | null
           city: string | null
@@ -1429,12 +1436,14 @@ export type Database = {
           tax_office: string | null
           trade_registry_number: string | null
           type: Database["public"]["Enums"]["customer_type"]
+          unit_number: string | null
           updated_at: string | null
           website: string | null
         }
         Insert: {
           account_number?: string | null
           address?: string | null
+          apartment_number?: string | null
           balance?: number
           bank_name?: string | null
           city?: string | null
@@ -1488,12 +1497,14 @@ export type Database = {
           tax_office?: string | null
           trade_registry_number?: string | null
           type: Database["public"]["Enums"]["customer_type"]
+          unit_number?: string | null
           updated_at?: string | null
           website?: string | null
         }
         Update: {
           account_number?: string | null
           address?: string | null
+          apartment_number?: string | null
           balance?: number
           bank_name?: string | null
           city?: string | null
@@ -1547,6 +1558,7 @@ export type Database = {
           tax_office?: string | null
           trade_registry_number?: string | null
           type?: Database["public"]["Enums"]["customer_type"]
+          unit_number?: string | null
           updated_at?: string | null
           website?: string | null
         }
@@ -2695,6 +2707,7 @@ export type Database = {
           address: string | null
           address_line: string | null
           allowances: Json | null
+          apartment_number: string | null
           avatar_url: string | null
           balance: number | null
           bonus_provision: number | null
@@ -2757,6 +2770,7 @@ export type Database = {
           unemployment_employee_amount: number | null
           unemployment_employee_rate: number | null
           unemployment_employer_rate: number | null
+          unit_number: string | null
           updated_at: string | null
           user_id: string | null
         }
@@ -2765,6 +2779,7 @@ export type Database = {
           address?: string | null
           address_line?: string | null
           allowances?: Json | null
+          apartment_number?: string | null
           avatar_url?: string | null
           balance?: number | null
           bonus_provision?: number | null
@@ -2827,6 +2842,7 @@ export type Database = {
           unemployment_employee_amount?: number | null
           unemployment_employee_rate?: number | null
           unemployment_employer_rate?: number | null
+          unit_number?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -2835,6 +2851,7 @@ export type Database = {
           address?: string | null
           address_line?: string | null
           allowances?: Json | null
+          apartment_number?: string | null
           avatar_url?: string | null
           balance?: number | null
           bonus_provision?: number | null
@@ -2897,6 +2914,7 @@ export type Database = {
           unemployment_employee_amount?: number | null
           unemployment_employee_rate?: number | null
           unemployment_employer_rate?: number | null
+          unit_number?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -3398,6 +3416,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      geocoding_cache: {
+        Row: {
+          address: string
+          city: string | null
+          country: string | null
+          created_at: string | null
+          display_name: string | null
+          district: string | null
+          expires_at: string | null
+          id: string
+          latitude: number
+          longitude: number
+          postal_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          district?: string | null
+          expires_at?: string | null
+          id?: string
+          latitude: number
+          longitude: number
+          postal_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          district?: string | null
+          expires_at?: string | null
+          id?: string
+          latitude?: number
+          longitude?: number
+          postal_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       grn_lines: {
         Row: {
@@ -6762,6 +6825,7 @@ export type Database = {
           order_id: string | null
           para_birimi: string
           pdf_url: string | null
+          proposal_id: string | null
           toplam_tutar: number
           updated_at: string
           vade_tarihi: string | null
@@ -6803,6 +6867,7 @@ export type Database = {
           order_id?: string | null
           para_birimi?: string
           pdf_url?: string | null
+          proposal_id?: string | null
           toplam_tutar?: number
           updated_at?: string
           vade_tarihi?: string | null
@@ -6844,6 +6909,7 @@ export type Database = {
           order_id?: string | null
           para_birimi?: string
           pdf_url?: string | null
+          proposal_id?: string | null
           toplam_tutar?: number
           updated_at?: string
           vade_tarihi?: string | null
@@ -6876,6 +6942,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoices_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
         ]
@@ -7055,8 +7128,17 @@ export type Database = {
           equipment_data: Json | null
           equipment_id: string | null
           id: string
+          is_recurring: boolean | null
+          is_recurring_instance: boolean | null
           issue_date: string | null
+          next_recurrence_date: string | null
           notes: string[] | null
+          parent_service_id: string | null
+          recurrence_day_of_month: number | null
+          recurrence_days: number[] | null
+          recurrence_end_date: string | null
+          recurrence_interval: number | null
+          recurrence_type: string | null
           service_details: Json | null
           service_due_date: string | null
           service_location: string | null
@@ -7070,6 +7152,11 @@ export type Database = {
           service_status: Database["public"]["Enums"]["service_status"] | null
           service_title: string
           service_type: string | null
+          sla_breached_at: string | null
+          sla_due_time: string | null
+          sla_start_time: string | null
+          sla_status: string | null
+          sla_target_hours: number | null
           slip_number: string | null
           slip_status: string | null
           technician_name: string | null
@@ -7088,8 +7175,17 @@ export type Database = {
           equipment_data?: Json | null
           equipment_id?: string | null
           id?: string
+          is_recurring?: boolean | null
+          is_recurring_instance?: boolean | null
           issue_date?: string | null
+          next_recurrence_date?: string | null
           notes?: string[] | null
+          parent_service_id?: string | null
+          recurrence_day_of_month?: number | null
+          recurrence_days?: number[] | null
+          recurrence_end_date?: string | null
+          recurrence_interval?: number | null
+          recurrence_type?: string | null
           service_details?: Json | null
           service_due_date?: string | null
           service_location?: string | null
@@ -7103,6 +7199,11 @@ export type Database = {
           service_status?: Database["public"]["Enums"]["service_status"] | null
           service_title: string
           service_type?: string | null
+          sla_breached_at?: string | null
+          sla_due_time?: string | null
+          sla_start_time?: string | null
+          sla_status?: string | null
+          sla_target_hours?: number | null
           slip_number?: string | null
           slip_status?: string | null
           technician_name?: string | null
@@ -7121,8 +7222,17 @@ export type Database = {
           equipment_data?: Json | null
           equipment_id?: string | null
           id?: string
+          is_recurring?: boolean | null
+          is_recurring_instance?: boolean | null
           issue_date?: string | null
+          next_recurrence_date?: string | null
           notes?: string[] | null
+          parent_service_id?: string | null
+          recurrence_day_of_month?: number | null
+          recurrence_days?: number[] | null
+          recurrence_end_date?: string | null
+          recurrence_interval?: number | null
+          recurrence_type?: string | null
           service_details?: Json | null
           service_due_date?: string | null
           service_location?: string | null
@@ -7136,6 +7246,11 @@ export type Database = {
           service_status?: Database["public"]["Enums"]["service_status"] | null
           service_title?: string
           service_type?: string | null
+          sla_breached_at?: string | null
+          sla_due_time?: string | null
+          sla_start_time?: string | null
+          sla_status?: string | null
+          sla_target_hours?: number | null
           slip_number?: string | null
           slip_status?: string | null
           technician_name?: string | null
@@ -7156,6 +7271,101 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_parent_service_id_fkey"
+            columns: ["parent_service_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_templates: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          created_by: string | null
+          default_location: string | null
+          default_technician_id: string | null
+          description: string | null
+          estimated_duration: number | null
+          id: string
+          instructions: Json | null
+          is_active: boolean | null
+          name: string
+          parts_list: Json | null
+          service_details: Json | null
+          service_priority: string | null
+          service_request_description: string | null
+          service_title: string
+          service_type: string | null
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          default_location?: string | null
+          default_technician_id?: string | null
+          description?: string | null
+          estimated_duration?: number | null
+          id?: string
+          instructions?: Json | null
+          is_active?: boolean | null
+          name: string
+          parts_list?: Json | null
+          service_details?: Json | null
+          service_priority?: string | null
+          service_request_description?: string | null
+          service_title: string
+          service_type?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          default_location?: string | null
+          default_technician_id?: string | null
+          description?: string | null
+          estimated_duration?: number | null
+          id?: string
+          instructions?: Json | null
+          is_active?: boolean | null
+          name?: string
+          parts_list?: Json | null
+          service_details?: Json | null
+          service_priority?: string | null
+          service_request_description?: string | null
+          service_title?: string
+          service_type?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_templates_default_technician_id_fkey"
+            columns: ["default_technician_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -7553,6 +7763,7 @@ export type Database = {
           address: string | null
           address_line: string | null
           aliases: Json | null
+          apartment_number: string | null
           balance: number
           bank_name: string | null
           city: string | null
@@ -7610,6 +7821,7 @@ export type Database = {
           tax_office: string | null
           trade_registry_number: string | null
           type: Database["public"]["Enums"]["supplier_type"]
+          unit_number: string | null
           updated_at: string | null
           website: string | null
         }
@@ -7618,6 +7830,7 @@ export type Database = {
           address?: string | null
           address_line?: string | null
           aliases?: Json | null
+          apartment_number?: string | null
           balance?: number
           bank_name?: string | null
           city?: string | null
@@ -7675,6 +7888,7 @@ export type Database = {
           tax_office?: string | null
           trade_registry_number?: string | null
           type: Database["public"]["Enums"]["supplier_type"]
+          unit_number?: string | null
           updated_at?: string | null
           website?: string | null
         }
@@ -7683,6 +7897,7 @@ export type Database = {
           address?: string | null
           address_line?: string | null
           aliases?: Json | null
+          apartment_number?: string | null
           balance?: number
           bank_name?: string | null
           city?: string | null
@@ -7740,6 +7955,7 @@ export type Database = {
           tax_office?: string | null
           trade_registry_number?: string | null
           type?: Database["public"]["Enums"]["supplier_type"]
+          unit_number?: string | null
           updated_at?: string | null
           website?: string | null
         }
@@ -9820,6 +10036,20 @@ export type Database = {
       }
       base64_decode_with_padding: { Args: { data: string }; Returns: string }
       base64_encode_no_padding: { Args: { data: string }; Returns: string }
+      calculate_next_recurrence_date: {
+        Args: {
+          base_date: string
+          rec_day_of_month?: number
+          rec_days?: number[]
+          rec_interval?: number
+          rec_type: string
+        }
+        Returns: string
+      }
+      calculate_sla_target_hours: {
+        Args: { priority: string }
+        Returns: number
+      }
       check_po_approvals_completed: {
         Args: { p_order_id: string }
         Returns: boolean
@@ -9837,6 +10067,7 @@ export type Database = {
         Returns: boolean
       }
       clean_expired_email_confirmations: { Args: never; Returns: undefined }
+      clean_expired_geocoding_cache: { Args: never; Returns: undefined }
       clean_token: { Args: { token: string }; Returns: string }
       complete_step_notification: {
         Args: { p_completion_data?: Json; p_notification_id: string }
@@ -9933,6 +10164,7 @@ export type Database = {
         Args: { company_id_val: string; status_column: string }
         Returns: string
       }
+      generate_recurring_service_instances: { Args: never; Returns: number }
       generate_work_order_code: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {

@@ -3,9 +3,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Supabase credentials - hardcoded for Lovable deployment
-const SUPABASE_URL = 'https://vwhwufnckpqirxptwncw.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3aHd1Zm5ja3BxaXJ4cHR3bmN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkzODI5MjAsImV4cCI6MjA1NDk1ODkyMH0.Wjw8MAnsBrHxB6-J-bNGObgDQ4fl3zPYrgYI5tOrcKo';
+// Environment variables'dan oku
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error('Missing required Supabase environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -23,15 +27,6 @@ const createCustomSupabaseClient = () => {
     global: {
       headers: {
         'X-Client-Info': 'ngs-app',
-      },
-      fetch: (url, options = {}) => {
-        return fetch(url, {
-          ...options,
-          headers: {
-            ...options.headers,
-            'apikey': SUPABASE_PUBLISHABLE_KEY,
-          },
-        });
       },
     }
   });

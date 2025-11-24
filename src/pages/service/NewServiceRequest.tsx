@@ -38,6 +38,8 @@ import {
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import BackButton from '@/components/ui/back-button';
 import { useCustomerSelect } from '@/hooks/useCustomerSelect';
+import { ServiceRecurrenceForm } from '@/components/service/ServiceRecurrenceForm';
+import { RecurrenceConfig } from '@/utils/serviceRecurrenceUtils';
 
 interface ServiceRequestFormData {
   service_title: string;
@@ -72,6 +74,8 @@ const NewServiceRequest = () => {
     contact_phone: '',
     contact_email: '',
   });
+
+  const [recurrenceConfig, setRecurrenceConfig] = useState<RecurrenceConfig>({ type: 'none' });
 
   const [partnerSearchQuery, setPartnerSearchQuery] = useState('');
   const [partnerPopoverOpen, setPartnerPopoverOpen] = useState(false);
@@ -142,6 +146,13 @@ const NewServiceRequest = () => {
           contact_phone: data.contact_phone || null,
           contact_email: data.contact_email || null,
         },
+        // Tekrarlama ayarları
+        is_recurring: recurrenceConfig.type !== 'none',
+        recurrence_type: recurrenceConfig.type !== 'none' ? recurrenceConfig.type : null,
+        recurrence_interval: recurrenceConfig.interval || 1,
+        recurrence_end_date: recurrenceConfig.endDate?.toISOString().split('T')[0] || null,
+        recurrence_days: recurrenceConfig.days || null,
+        recurrence_day_of_month: recurrenceConfig.dayOfMonth || null,
       };
 
       const { data: result, error } = await supabase
@@ -722,6 +733,12 @@ const NewServiceRequest = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Tekrarlama Ayarları */}
+          <ServiceRecurrenceForm
+            value={recurrenceConfig}
+            onChange={setRecurrenceConfig}
+          />
 
         </form>
       </div>

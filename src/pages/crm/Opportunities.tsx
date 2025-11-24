@@ -115,8 +115,6 @@ const Opportunities = memo(() => {
 
     setIsDeleting(true);
     try {
-      // Burada silme işlemi yapılacak
-      console.log('Deleting opportunity:', opportunityToDelete.id);
       // TODO: Implement delete functionality
     } catch (error) {
       console.error('Error deleting opportunity:', error);
@@ -137,7 +135,6 @@ const Opportunities = memo(() => {
   };
   const handlePlanMeeting = (opportunity: Opportunity) => {
     // Yeni aktivite ekranına geçiş
-    console.log('Planning meeting for opportunity:', opportunity.id);
     // TODO: Navigate to new activity page with opportunity data
     // window.location.href = `/activities/new?opportunity_id=${opportunity.id}&type=meeting`;
   };

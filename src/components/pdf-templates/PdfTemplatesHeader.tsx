@@ -15,6 +15,7 @@ interface PdfTemplatesHeaderProps {
     quoteCount: number;
     invoiceCount: number;
     proposalCount: number;
+    serviceCount?: number;
   };
   onCreateTemplate: () => void;
 }
@@ -32,6 +33,7 @@ const PdfTemplatesHeader = ({
   const quoteCount = statistics?.quoteCount ?? templates.filter(t => t.type === 'quote').length;
   const invoiceCount = statistics?.invoiceCount ?? templates.filter(t => t.type === 'invoice').length;
   const proposalCount = statistics?.proposalCount ?? templates.filter(t => t.type === 'proposal').length;
+  const serviceCount = statistics?.serviceCount ?? 0;
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
@@ -87,6 +89,17 @@ const PdfTemplatesHeader = ({
             {proposalCount}
           </span>
         </div>
+
+        {/* Servis */}
+        {serviceCount > 0 && (
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border border-orange-300">
+            <FileText className="h-3 w-3" />
+            <span className="font-medium">Servis</span>
+            <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+              {serviceCount}
+            </span>
+          </div>
+        )}
 
       </div>
       

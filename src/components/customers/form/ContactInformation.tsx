@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CustomerFormData } from "@/types/customer";
 import { getDigitsOnly, formatPhoneNumber } from "@/utils/phoneFormatter";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
@@ -183,62 +184,72 @@ const ContactInformation = ({ formData, setFormData }: ContactInformationProps) 
             </div>
           </div>
 
-          {/* İkinci Yetkili Kişi */}
-          <div className="space-y-3 pt-3 border-t border-gray-100">
-            <h4 className="text-xs font-medium text-gray-600">İkinci Yetkili Kişi</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="second_contact_name" className="text-xs font-medium text-gray-700">
-                  Ad Soyad
-                </Label>
-                <Input
-                  id="second_contact_name"
-                  value={formData.second_contact_name}
-                  onChange={(e) => setFormData({ ...formData, second_contact_name: e.target.value })}
-                  placeholder="İkinci yetkili kişi adı"
-                  className="h-7 text-xs"
-                />
-              </div>
+          {/* İkinci Yetkili Kişi - Accordion */}
+          <div className="pt-3 border-t border-gray-100">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="second-contact" className="border-0">
+                <AccordionTrigger className="text-xs font-medium text-gray-600 hover:no-underline py-2">
+                  İkinci Yetkili Kişi
+                </AccordionTrigger>
+                <AccordionContent className="pt-2">
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="second_contact_name" className="text-xs font-medium text-gray-700">
+                          Ad Soyad
+                        </Label>
+                        <Input
+                          id="second_contact_name"
+                          value={formData.second_contact_name}
+                          onChange={(e) => setFormData({ ...formData, second_contact_name: e.target.value })}
+                          placeholder="İkinci yetkili kişi adı"
+                          className="h-7 text-xs"
+                        />
+                      </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="second_contact_position" className="text-xs font-medium text-gray-700">
-                  Pozisyon
-                </Label>
-                <Input
-                  id="second_contact_position"
-                  value={formData.second_contact_position}
-                  onChange={(e) => setFormData({ ...formData, second_contact_position: e.target.value })}
-                  placeholder="Müdür, Satış Sorumlusu..."
-                  className="h-7 text-xs"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="second_contact_email" className="text-xs font-medium text-gray-700">
-                  E-posta
-                </Label>
-                <Input
-                  id="second_contact_email"
-                  type="email"
-                  value={formData.second_contact_email}
-                  onChange={(e) => setFormData({ ...formData, second_contact_email: e.target.value })}
-                  placeholder="email@example.com"
-                  className="h-7 text-xs"
-                />
-              </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="second_contact_position" className="text-xs font-medium text-gray-700">
+                          Pozisyon
+                        </Label>
+                        <Input
+                          id="second_contact_position"
+                          value={formData.second_contact_position}
+                          onChange={(e) => setFormData({ ...formData, second_contact_position: e.target.value })}
+                          placeholder="Müdür, Satış Sorumlusu..."
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="second_contact_email" className="text-xs font-medium text-gray-700">
+                          E-posta
+                        </Label>
+                        <Input
+                          id="second_contact_email"
+                          type="email"
+                          value={formData.second_contact_email}
+                          onChange={(e) => setFormData({ ...formData, second_contact_email: e.target.value })}
+                          placeholder="email@example.com"
+                          className="h-7 text-xs"
+                        />
+                      </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="second_contact_phone" className="text-xs font-medium text-gray-700">
-                  Telefon
-                </Label>
-                <PhoneInput
-                  id="second_contact_phone"
-                  value={formData.second_contact_phone ? formatPhoneNumber(formData.second_contact_phone) : ""}
-                  onChange={(value) => setFormData({ ...formData, second_contact_phone: getDigitsOnly(value) })}
-                />
-              </div>
-            </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="second_contact_phone" className="text-xs font-medium text-gray-700">
+                          Telefon
+                        </Label>
+                        <PhoneInput
+                          id="second_contact_phone"
+                          value={formData.second_contact_phone ? formatPhoneNumber(formData.second_contact_phone) : ""}
+                          onChange={(value) => setFormData({ ...formData, second_contact_phone: getDigitsOnly(value) })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </CardContent>
       </Card>

@@ -43,6 +43,7 @@ const PdfTemplatesFilterBar = memo(({
           <SelectItem value="quote">Teklif</SelectItem>
           <SelectItem value="invoice">Fatura</SelectItem>
           <SelectItem value="proposal">Öneri</SelectItem>
+          <SelectItem value="service">Servis</SelectItem>
         </SelectContent>
       </Select>
 

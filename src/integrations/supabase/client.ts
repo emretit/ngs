@@ -20,12 +20,23 @@ const createCustomSupabaseClient = () => {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      flowType: 'pkce', // PKCE flow for better security and CORS handling
+      redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
     },
     global: {
       headers: {
         'X-Client-Info': 'ngs-app',
-      }
+      },
+      fetch: (url, options = {}) => {
+        return fetch(url, {
+          ...options,
+          headers: {
+            ...options.headers,
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+          },
+        });
+      },
     }
   });
 };

@@ -34,7 +34,7 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || Deno.env.get('VITE_SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const EVDS_API_KEY = 'tVCpbbhja8'; // EVDS API anahtarı direkt olarak eklendi
+    const EVDS_API_KEY = Deno.env.get('EVDS_API_KEY') || 'tVCpbbhja8'; // EVDS API anahtarı environment variable'dan okunuyor
     
     if (!SUPABASE_URL) {
       console.error('❌ SUPABASE_URL is not set');

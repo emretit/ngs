@@ -6,6 +6,17 @@ import ServiceKanbanBoard from "@/components/service/ServiceKanbanBoard";
 import ServiceMapView from "@/components/service/ServiceMapView";
 import ResourceSchedulingView from "@/components/service/ResourceSchedulingView";
 import ServiceGanttView from "@/components/service/ServiceGanttView";
+import ServiceCalendarView from "@/components/service/ServiceCalendarView";
+import { SLAAlerter } from "@/components/service/SLAAlerter";
+import { SLADashboard } from "@/components/service/SLADashboard";
+import { MaintenanceCalendarView } from "@/components/service/MaintenanceCalendarView";
+import { ServiceTemplateLibrary } from "@/components/service/ServiceTemplateLibrary";
+import { TechnicianPerformanceDashboard } from "@/components/service/TechnicianPerformanceDashboard";
+import { ServiceCostAnalysis } from "@/components/service/ServiceCostAnalysis";
+import { ServicePartsInventoryAlert } from "@/components/service/ServicePartsInventoryAlert";
+import { ServicePartsUsageReport } from "@/components/service/ServicePartsUsageReport";
+import { CustomerSatisfactionDashboard } from "@/components/service/CustomerSatisfactionDashboard";
+import { ServiceAnalyticsDashboard } from "@/components/service/ServiceAnalyticsDashboard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,35 +24,62 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, Clock, AlertCircle, User, MapPin, Search, Filter, ChevronUp, ChevronDown, Calendar, Trash2, Edit } from "lucide-react";
+import { Users, Clock, AlertCircle, User, MapPin, Search, Filter, ChevronUp, ChevronDown, Calendar, Trash2, Edit, Eye, Settings, FileText } from "lucide-react";
 import ServiceViewToggle from "@/components/service/ServiceViewToggle";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from '@/utils/dateUtils';
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { toast } from "@/hooks/use-toast";
+import { getSLAStatusColor, getSLAStatusLabel, formatSLATimeRemaining, getSLATimeRemaining } from '@/utils/serviceSlaUtils';
 
-const ServicePage = () => {
+interface ServicePageProps {
+  defaultView?: "list" | "kanban" | "map" | "scheduling" | "calendar" | "sla" | "maintenance" | "templates" | "performance" | "costs" | "parts" | "satisfaction" | "analytics";
+}
+
+const ServicePage = ({ defaultView = "scheduling" }: ServicePageProps = {}) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { userData } = useCurrentUser();
   // Silme onayı için state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<ServiceRequest | null>(null);
-  const [activeView, setActiveView] = useState<"list" | "kanban" | "map" | "scheduling">("scheduling");
+  const [activeView, setActiveView] = useState<"list" | "kanban" | "map" | "scheduling" | "calendar" | "sla" | "maintenance" | "templates" | "performance" | "costs" | "parts" | "satisfaction" | "analytics">(defaultView);
   // URL parametresinden view'ı kontrol et
   useEffect(() => {
     const viewParam = searchParams.get('view');
-    if (viewParam === 'list') {
-      setActiveView('list');
-    } else if (viewParam === 'kanban') {
-      setActiveView('kanban');
-    } else if (viewParam === 'map') {
-      setActiveView('map');
-    } else if (viewParam === 'scheduling') {
-      setActiveView('scheduling');
+    if (viewParam) {
+      if (viewParam === 'list') {
+        setActiveView('list');
+      } else if (viewParam === 'kanban') {
+        setActiveView('kanban');
+      } else if (viewParam === 'map') {
+        setActiveView('map');
+      } else if (viewParam === 'scheduling') {
+        setActiveView('scheduling');
+      } else if (viewParam === 'calendar') {
+        setActiveView('calendar');
+      } else if (viewParam === 'sla') {
+        setActiveView('sla');
+      } else if (viewParam === 'maintenance') {
+        setActiveView('maintenance');
+      } else if (viewParam === 'templates') {
+        setActiveView('templates');
+      } else if (viewParam === 'performance') {
+        setActiveView('performance');
+      } else if (viewParam === 'costs') {
+        setActiveView('costs');
+      } else if (viewParam === 'parts') {
+        setActiveView('parts');
+      } else if (viewParam === 'satisfaction') {
+        setActiveView('satisfaction');
+      } else if (viewParam === 'analytics') {
+        setActiveView('analytics');
+      }
+    } else {
+      setActiveView(defaultView);
     }
-  }, [searchParams]);
+  }, [searchParams, defaultView]);
   // Liste görünümü için state'ler
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -120,6 +158,10 @@ const ServicePage = () => {
     enabled: !!userData?.company_id,
   });
   const handleSelectRequest = (request: ServiceRequest) => {
+    navigate(`/service/detail/${request.id}`);
+  };
+
+  const handleEditRequest = (request: ServiceRequest) => {
     navigate(`/service/edit/${request.id}`);
   };
   // Silme fonksiyonu
@@ -207,6 +249,12 @@ const ServicePage = () => {
           onCreateRequest={() => navigate("/service/new")}
           serviceRequests={groupedServiceRequests}
         />
+        
+        {/* SLA Alerts */}
+        <SLAAlerter />
+        
+        {/* Parts Inventory Alerts */}
+        <ServicePartsInventoryAlert />
         
         {/* Content based on view */}
         {activeView === "scheduling" ? (
@@ -297,6 +345,37 @@ const ServicePage = () => {
             technicians={technicians || []}
             onSelectService={handleSelectRequest}
           />
+        ) : activeView === "calendar" ? (
+          /* Calendar View */
+          <ServiceCalendarView
+            serviceRequests={serviceRequests || []}
+            technicians={technicians || []}
+            onSelectService={handleSelectRequest}
+          />
+        ) : activeView === "sla" ? (
+          /* SLA Dashboard View */
+          <SLADashboard />
+        ) : activeView === "maintenance" ? (
+          /* Maintenance Calendar View */
+          <MaintenanceCalendarView />
+        ) : activeView === "templates" ? (
+          /* Service Templates Library */
+          <ServiceTemplateLibrary />
+        ) : activeView === "performance" ? (
+          /* Technician Performance Dashboard */
+          <TechnicianPerformanceDashboard />
+        ) : activeView === "costs" ? (
+          /* Service Cost Analysis */
+          <ServiceCostAnalysis />
+        ) : activeView === "parts" ? (
+          /* Parts Usage Report */
+          <ServicePartsUsageReport />
+        ) : activeView === "satisfaction" ? (
+          /* Customer Satisfaction Dashboard */
+          <CustomerSatisfactionDashboard />
+        ) : activeView === "analytics" ? (
+          /* Service Analytics Dashboard */
+          <ServiceAnalyticsDashboard />
         ) : activeView === "kanban" ? (
           /* Kanban Board View */
           <>
@@ -446,6 +525,9 @@ const ServicePage = () => {
                   ) : (
                     sortedServices.map((service) => {
                       const technician = technicians?.find(tech => tech.id === service.assigned_technician);
+                      const slaTimeRemaining = service.sla_due_time
+                        ? getSLATimeRemaining(new Date(service.sla_due_time))
+                        : null;
                       return (
                         <TableRow 
                           key={service.id} 
@@ -496,20 +578,31 @@ const ServicePage = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="px-4 py-4">
-                            <Badge 
-                              variant="outline"
-                              className={`${
-                                service.service_status === 'new' ? 'border-blue-500 text-blue-700 bg-blue-50' :
-                                service.service_status === 'in_progress' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
-                                service.service_status === 'completed' ? 'border-green-500 text-green-700 bg-green-50' :
-                                'border-gray-500 text-gray-700 bg-gray-50'
-                              }`}
-                            >
-                              {service.service_status === 'new' ? 'Yeni' :
-                               service.service_status === 'in_progress' ? 'Devam Ediyor' :
-                               service.service_status === 'completed' ? 'Tamamlandı' :
-                               service.service_status === 'assigned' ? 'Atanmış' : 'Bilinmeyen'}
-                            </Badge>
+                            <div className="flex flex-col gap-1">
+                              <Badge 
+                                variant="outline"
+                                className={`${
+                                  service.service_status === 'new' ? 'border-blue-500 text-blue-700 bg-blue-50' :
+                                  service.service_status === 'in_progress' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
+                                  service.service_status === 'completed' ? 'border-green-500 text-green-700 bg-green-50' :
+                                  'border-gray-500 text-gray-700 bg-gray-50'
+                                }`}
+                              >
+                                {service.service_status === 'new' ? 'Yeni' :
+                                 service.service_status === 'in_progress' ? 'Devam Ediyor' :
+                                 service.service_status === 'completed' ? 'Tamamlandı' :
+                                 service.service_status === 'assigned' ? 'Atanmış' : 'Bilinmeyen'}
+                              </Badge>
+                              {service.sla_status && (
+                                <Badge 
+                                  variant="outline"
+                                  className={`text-xs ${getSLAStatusColor(service.sla_status as any)}`}
+                                  title={slaTimeRemaining ? formatSLATimeRemaining(slaTimeRemaining) : ''}
+                                >
+                                  {getSLAStatusLabel(service.sla_status as any)}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="px-4 py-4">
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -547,7 +640,7 @@ const ServicePage = () => {
                                   handleSelectRequest(service);
                                 }}
                                 className="h-8 w-8"
-                                title="Düzenle"
+                                title="Detay"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -623,3 +716,4 @@ const ServicePage = () => {
   );
 };
 export default ServicePage;
+export { ServicePage };

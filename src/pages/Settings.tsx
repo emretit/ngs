@@ -9,7 +9,7 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
   const navigate = useNavigate();
   useEffect(() => {
     // Varsayılan olarak kullanıcılar sayfasına yönlendir
-    navigate("/settings/users", { replace: true });
+    navigate("/users", { replace: true });
   }, [navigate]);
   return (
     <div className="space-y-6">
@@ -67,7 +67,7 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Kullanıcılar */}
               <div 
-                onClick={() => navigate("/settings/users")}
+                onClick={() => navigate("/users")}
                 className="p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
@@ -86,7 +86,7 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
               </div>
               {/* Abonelik & Faturalama */}
               <div 
-                onClick={() => navigate("/settings/subscription")}
+                onClick={() => navigate("/subscription")}
                 className="p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
@@ -124,7 +124,7 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
               </div>
               {/* Nilvera E-Fatura */}
               <div 
-                onClick={() => navigate("/settings/nilvera")}
+                onClick={() => navigate("/nilvera")}
                 className="p-6 rounded-xl border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
@@ -143,7 +143,7 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
               </div>
               {/* Sistem Ayarları */}
               <div 
-                onClick={() => navigate("/settings/system")}
+                onClick={() => navigate("/system")}
                 className="p-6 rounded-xl border border-gray-200 hover:border-gray-400 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
@@ -162,7 +162,7 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
               </div>
               {/* PDF Şablonları */}
               <div 
-                onClick={() => navigate("/settings/pdf-templates")}
+                onClick={() => navigate("/pdf-templates")}
                 className="p-6 rounded-xl border border-gray-200 hover:border-green-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
@@ -181,7 +181,7 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
               </div>
               {/* Denetim Günlüğü */}
               <div 
-                onClick={() => navigate("/settings/audit-logs")}
+                onClick={() => navigate("/audit-logs")}
                 className="p-6 rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">

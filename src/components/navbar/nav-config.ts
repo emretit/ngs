@@ -145,6 +145,105 @@ export const navItems = [
     path: "/service",
     icon: Wrench,
     label: "Servis",
+    hasDropdown: true,
+    items: [
+      // Görünümler
+      {
+        path: "/service/scheduling",
+        icon: Gauge,
+        label: "Zaman Çizelgesi",
+      },
+      {
+        path: "/service/list",
+        icon: ListTodo,
+        label: "Liste Görünümü",
+      },
+      {
+        path: "/service/kanban",
+        icon: LayoutDashboard,
+        label: "Kanban Panosu",
+      },
+      {
+        path: "/service/calendar",
+        icon: Calendar,
+        label: "Takvim",
+      },
+      {
+        path: "/service/map",
+        icon: MapPin,
+        label: "Harita Görünümü",
+      },
+      // Yönetim Modülleri
+      {
+        path: "/service/work-orders",
+        icon: ClipboardCheck,
+        label: "İş Emirleri",
+      },
+      {
+        path: "/service/assets",
+        icon: Package,
+        label: "Cihaz Yönetimi",
+      },
+      {
+        path: "/service/contracts",
+        icon: FileText,
+        label: "Sözleşmeler",
+      },
+      {
+        path: "/service/warranties",
+        icon: CheckSquare,
+        label: "Garanti Takibi",
+      },
+      // Bakım ve Planlama
+      {
+        path: "/service/maintenance",
+        icon: Calendar,
+        label: "Bakım Takvimi",
+      },
+      {
+        path: "/service/templates",
+        icon: FileEdit,
+        label: "Servis Şablonları",
+      },
+      // SLA ve Performans
+      {
+        path: "/service/sla",
+        icon: AlertTriangle,
+        label: "SLA Yönetimi",
+      },
+      {
+        path: "/service/performance",
+        icon: BarChart3,
+        label: "Teknisyen Performansı",
+      },
+      // Maliyetler ve Envanter
+      {
+        path: "/service/costs",
+        icon: DollarSign,
+        label: "Maliyet Analizi",
+      },
+      {
+        path: "/service/parts",
+        icon: Package,
+        label: "Parça Yönetimi",
+      },
+      // Müşteri ve Raporlar
+      {
+        path: "/service/satisfaction",
+        icon: MessageSquare,
+        label: "Müşteri Memnuniyeti",
+      },
+      {
+        path: "/service/history",
+        icon: ClipboardList,
+        label: "Servis Geçmişi",
+      },
+      {
+        path: "/service/analytics",
+        icon: TrendingUp,
+        label: "Raporlar ve Analitik",
+      },
+    ],
   },
   // 7. Fatura Yönetimi
   {
@@ -271,32 +370,32 @@ export const navItems = [
     hasDropdown: true,
     items: [
       {
-        path: "/settings/users",
+        path: "/users",
         icon: Users,
         label: "Kullanıcı Yönetimi",
       },
       {
-        path: "/settings/subscription",
+        path: "/subscription",
         icon: CreditCard,
         label: "Abonelik & Faturalama",
       },
       {
-        path: "/settings/nilvera",
+        path: "/nilvera",
         icon: Zap,
         label: "Nilvera E-Fatura",
       },
       {
-        path: "/settings/system",
+        path: "/system",
         icon: Wrench,
         label: "Sistem Ayarları",
       },
       {
-        path: "/settings/pdf-templates",
+        path: "/pdf-templates",
         icon: FileText,
         label: "PDF Şablonları",
       },
       {
-        path: "/settings/audit-logs",
+        path: "/audit-logs",
         icon: ClipboardList,
         label: "Denetim Günlüğü",
       },

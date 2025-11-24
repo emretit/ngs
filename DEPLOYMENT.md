@@ -10,7 +10,14 @@ Bu proje production'da çalışması için aşağıdaki environment variable'lar
 VITE_SUPABASE_URL=https://vwhwufnckpqirxptwncw.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 VITE_GROQ_API_KEY=gsk_...
+VITE_LOCATIONIQ_API_KEY=pk...
 ```
+
+**LocationIQ API Key:**
+- LocationIQ hesabı oluşturun: https://locationiq.com/signup
+- Ücretsiz tier: 5,000 istek/gün
+- API key alın ve `VITE_LOCATIONIQ_API_KEY` olarak ekleyin
+- Autocomplete ve geocoding için kullanılır
 
 ## Deployment Platformları
 
@@ -26,6 +33,7 @@ VITE_GROQ_API_KEY=gsk_...
      - `VITE_SUPABASE_URL`
      - `VITE_SUPABASE_ANON_KEY`
      - `VITE_GROQ_API_KEY`
+     - `VITE_LOCATIONIQ_API_KEY`
 
 3. **Deploy:**
    - Vercel otomatik olarak deploy eder
@@ -47,6 +55,7 @@ VITE_GROQ_API_KEY=gsk_...
      - `VITE_SUPABASE_URL`
      - `VITE_SUPABASE_ANON_KEY`
      - `VITE_GROQ_API_KEY`
+     - `VITE_LOCATIONIQ_API_KEY`
 
 ### 3. Cloudflare Pages
 
@@ -63,6 +72,7 @@ VITE_GROQ_API_KEY=gsk_...
      - `VITE_SUPABASE_URL`
      - `VITE_SUPABASE_ANON_KEY`
      - `VITE_GROQ_API_KEY`
+     - `VITE_LOCATIONIQ_API_KEY`
 
 ### 4. Supabase Edge Functions (Backend)
 

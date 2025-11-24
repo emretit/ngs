@@ -1,9 +1,23 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-markercluster';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'react-leaflet-markercluster/styles';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, User, AlertCircle } from "lucide-react";
+import { MapPin, Clock, User, AlertCircle, Loader2 } from "lucide-react";
 import { ServiceRequest } from "@/hooks/useServiceRequests";
 import { formatDate } from "@/utils/dateUtils";
+import { useLocationIQGeocoding } from "@/hooks/useLocationIQGeocoding";
+
+// Fix for default marker icon in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
 
 interface ServiceMapViewProps {
   serviceRequests: ServiceRequest[];
@@ -11,12 +25,67 @@ interface ServiceMapViewProps {
   onSelectService: (service: ServiceRequest) => void;
 }
 
+interface ServiceWithCoordinates extends ServiceRequest {
+  latitude?: number;
+  longitude?: number;
+}
+
 const ServiceMapView = ({ 
   serviceRequests, 
   technicians,
   onSelectService 
 }: ServiceMapViewProps) => {
-  // Servis lokasyonlarını filtrele ve grupla
+  const { geocode, isGeocoding } = useLocationIQGeocoding();
+  const [servicesWithCoords, setServicesWithCoords] = useState<ServiceWithCoordinates[]>([]);
+  const [isLoadingCoords, setIsLoadingCoords] = useState(false);
+
+  // Geocode all service locations
+  useEffect(() => {
+    const geocodeServices = async () => {
+      setIsLoadingCoords(true);
+      
+      const servicesWithLocations: ServiceWithCoordinates[] = [];
+      
+      for (const service of serviceRequests) {
+        if (service.service_location) {
+          try {
+            const result = await geocode(service.service_location);
+            if (result) {
+              servicesWithLocations.push({
+                ...service,
+                latitude: result.latitude,
+                longitude: result.longitude,
+              });
+            } else {
+              servicesWithLocations.push(service);
+            }
+          } catch (error) {
+            console.error('Geocoding error for service:', service.id, error);
+            servicesWithLocations.push(service);
+          }
+          
+          // Small delay to respect rate limits
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } else {
+          servicesWithLocations.push(service);
+        }
+      }
+      
+      setServicesWithCoords(servicesWithLocations);
+      setIsLoadingCoords(false);
+    };
+
+    if (serviceRequests.length > 0) {
+      geocodeServices();
+    }
+  }, [serviceRequests, geocode]);
+
+  // Services with valid coordinates
+  const mappableServices = useMemo(() => {
+    return servicesWithCoords.filter(s => s.latitude && s.longitude);
+  }, [servicesWithCoords]);
+
+  // Group services by location
   const servicesByLocation = useMemo(() => {
     const grouped: { [key: string]: ServiceRequest[] } = {};
     
@@ -31,7 +100,7 @@ const ServiceMapView = ({
     return grouped;
   }, [serviceRequests]);
 
-  // Öncelik renklerini belirle
+  // Priority colors
   const getPriorityColor = (priority: string) => {
     const colors = {
       urgent: 'bg-red-500',
@@ -42,7 +111,7 @@ const ServiceMapView = ({
     return colors[priority as keyof typeof colors] || 'bg-gray-500';
   };
 
-  // Durum renklerini belirle
+  // Status colors
   const getStatusColor = (status: string) => {
     const colors = {
       new: 'border-blue-500 bg-blue-50',
@@ -55,34 +124,140 @@ const ServiceMapView = ({
     return colors[status as keyof typeof colors] || 'border-gray-500 bg-gray-50';
   };
 
+  // Custom marker icon based on priority
+  const createCustomIcon = (priority: string) => {
+    const color = priority === 'urgent' ? 'red' : 
+                  priority === 'high' ? 'orange' : 
+                  priority === 'medium' ? 'gold' : 'green';
+    
+    return L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    });
+  };
+
+  // Default center (Turkey - Ankara)
+  const defaultCenter: [number, number] = [39.9334, 32.8597];
+  const defaultZoom = 6;
+
   return (
     <div className="space-y-4">
-      {/* Harita Görünümü - Placeholder (Google Maps veya OpenStreetMap entegrasyonu yapılabilir) */}
-      <Card className="h-[600px] relative overflow-hidden">
+      {/* Interactive Map */}
+      <Card className="relative overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
             Servis Lokasyonları Haritası
+            {isLoadingCoords && (
+              <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+            )}
+            <Badge variant="outline" className="ml-auto">
+              {mappableServices.length} lokasyon
+            </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="h-full">
-          {/* Harita placeholder - Gerçek harita entegrasyonu için Google Maps veya Leaflet kullanılabilir */}
-          <div className="h-full bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border-2 border-dashed border-blue-300 flex items-center justify-center">
-            <div className="text-center space-y-2">
-              <MapPin className="h-12 w-12 text-blue-400 mx-auto" />
-              <p className="text-lg font-semibold text-blue-700">Harita Görünümü</p>
-              <p className="text-sm text-blue-600">
-                {Object.keys(servicesByLocation).length} farklı lokasyonda servis
-              </p>
-              <p className="text-xs text-blue-500 mt-2">
-                Google Maps veya OpenStreetMap entegrasyonu yapılacak
-              </p>
-            </div>
+        <CardContent className="p-0">
+          <div className="h-[600px] w-full">
+            {mappableServices.length > 0 ? (
+              <MapContainer
+                center={defaultCenter}
+                zoom={defaultZoom}
+                style={{ height: '100%', width: '100%' }}
+                className="z-0"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                
+                <MarkerClusterGroup>
+                  {mappableServices.map((service) => {
+                    if (!service.latitude || !service.longitude) return null;
+                    
+                    const technician = technicians?.find(
+                      tech => tech.id === service.assigned_technician
+                    );
+
+                    return (
+                      <Marker
+                        key={service.id}
+                        position={[service.latitude, service.longitude]}
+                        icon={createCustomIcon(service.service_priority || 'medium')}
+                        eventHandlers={{
+                          click: () => onSelectService(service),
+                        }}
+                      >
+                        <Popup>
+                          <div className="p-2 min-w-[200px]">
+                            <h3 className="font-semibold text-sm mb-2">
+                              {service.service_title}
+                            </h3>
+                            
+                            <div className="space-y-1 text-xs">
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-3 w-3" />
+                                <span className="text-gray-600">
+                                  {service.service_location}
+                                </span>
+                              </div>
+                              
+                              {technician && (
+                                <div className="flex items-center gap-2">
+                                  <User className="h-3 w-3" />
+                                  <span className="text-gray-600">
+                                    {technician.first_name} {technician.last_name}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {service.service_due_date && (
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-3 w-3" />
+                                  <span className="text-gray-600">
+                                    {formatDate(service.service_due_date, 'dd MMM yyyy')}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              <div className="mt-2 flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {service.service_status}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {service.service_priority}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+                </MarkerClusterGroup>
+              </MapContainer>
+            ) : (
+              <div className="h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+                <div className="text-center space-y-2">
+                  <MapPin className="h-12 w-12 text-blue-400 mx-auto" />
+                  <p className="text-lg font-semibold text-blue-700">
+                    {isLoadingCoords ? 'Lokasyonlar yükleniyor...' : 'Haritada gösterilecek lokasyon yok'}
+                  </p>
+                  <p className="text-sm text-blue-600">
+                    {isLoadingCoords 
+                      ? 'Adresler koordinatlara çevriliyor...'
+                      : 'Servis taleplerine lokasyon ekleyerek harita görünümünde görebilirsiniz'
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Lokasyon Bazlı Servis Listesi */}
+      {/* Location-based Service List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Object.entries(servicesByLocation).map(([location, services]) => (
           <Card 
@@ -150,7 +325,7 @@ const ServiceMapView = ({
         ))}
       </div>
 
-      {/* Boş Durum */}
+      {/* Empty State */}
       {Object.keys(servicesByLocation).length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
@@ -169,4 +344,3 @@ const ServiceMapView = ({
 };
 
 export default ServiceMapView;
-

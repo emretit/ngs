@@ -21,18 +21,20 @@ import {
 import { PdfTemplate } from '@/types/pdf-template';
 import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
+import { Wrench } from 'lucide-react';
 
 type ViewMode = 'grid' | 'list';
+type UnifiedTemplate = any; // PdfTemplate | ServiceTemplate
 
 interface PdfTemplatesListProps {
-  templates: PdfTemplate[];
+  templates: UnifiedTemplate[];
   viewMode: ViewMode;
-  onPreview: (template: PdfTemplate) => void;
-  onEdit: (templateId: string) => void;
-  onDuplicate: (template: PdfTemplate) => void;
-  onDelete: (template: PdfTemplate) => void;
-  getTypeBadgeColor: (type: string) => string;
-  getTypeLabel: (type: string) => string;
+  onPreview: (template: UnifiedTemplate) => void;
+  onEdit: (templateId: string, templateType?: 'pdf' | 'service') => void;
+  onDuplicate: (template: UnifiedTemplate) => void;
+  onDelete: (template: UnifiedTemplate) => void;
+  getTypeBadgeColor: (type: string, templateType?: 'pdf' | 'service') => string;
+  getTypeLabel: (type: string, templateType?: 'pdf' | 'service') => string;
 }
 
 const PdfTemplatesList = memo(({
@@ -58,7 +60,11 @@ const PdfTemplatesList = memo(({
               {/* Template Preview Thumbnail */}
               <div className="relative h-48 bg-gradient-to-br from-gray-50 to-gray-100 rounded-t-lg overflow-hidden border-b">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <FileText className="h-16 w-16 text-gray-300" />
+                  {template.templateType === 'service' ? (
+                    <Wrench className="h-16 w-16 text-gray-300" />
+                  ) : (
+                    <FileText className="h-16 w-16 text-gray-300" />
+                  )}
                 </div>
                 {/* Quick Actions Overlay */}
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -79,7 +85,7 @@ const PdfTemplatesList = memo(({
                     variant="secondary"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onEdit(template.id);
+                      onEdit(template.id, template.templateType);
                     }}
                     className="gap-1"
                   >
@@ -128,7 +134,7 @@ const PdfTemplatesList = memo(({
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={(e) => {
                         e.stopPropagation();
-                        onEdit(template.id);
+                        onEdit(template.id, template.templateType);
                       }}>
                         <Edit className="h-4 w-4 mr-2" />
                         Düzenle
@@ -156,23 +162,30 @@ const PdfTemplatesList = memo(({
                 </div>
 
                 <div className="space-y-2">
-                  <Badge className={getTypeBadgeColor(template.type)}>
-                    {getTypeLabel(template.type)}
+                  <Badge className={getTypeBadgeColor(template.type, template.templateType)}>
+                    {getTypeLabel(template.type, template.templateType)}
                   </Badge>
 
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     <span>
-                      {formatDistanceToNow(new Date(template.updated_at), {
+                      {formatDistanceToNow(new Date(template.updated_at || template.created_at), {
                         addSuffix: true,
                         locale: tr,
                       })}
                     </span>
                   </div>
 
-                  <div className="text-xs text-muted-foreground">
-                    Sürüm: v{template.version}
-                  </div>
+                  {template.templateType === 'pdf' && (
+                    <div className="text-xs text-muted-foreground">
+                      Sürüm: v{template.version}
+                    </div>
+                  )}
+                  {template.templateType === 'service' && (template as any).service_title && (
+                    <div className="text-xs text-muted-foreground line-clamp-1">
+                      {(template as any).service_title}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -196,8 +209,16 @@ const PdfTemplatesList = memo(({
           <div className="flex items-center gap-4 p-5">
             {/* Icon with modern design */}
             <div className="relative flex-shrink-0">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow duration-300">
-                <FileText className="h-7 w-7 text-green-600" />
+              <div className={`w-14 h-14 rounded-xl border flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow duration-300 ${
+                template.templateType === 'service' 
+                  ? 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-100' 
+                  : 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-100'
+              }`}>
+                {template.templateType === 'service' ? (
+                  <Wrench className="h-7 w-7 text-orange-600" />
+                ) : (
+                  <FileText className="h-7 w-7 text-green-600" />
+                )}
               </div>
             </div>
 
@@ -209,8 +230,8 @@ const PdfTemplatesList = memo(({
                     <h4 className="font-semibold text-base text-gray-900 truncate group-hover:text-primary transition-colors">
                       {template.name}
                     </h4>
-                    <Badge className={`text-xs font-medium px-2.5 py-0.5 ${getTypeBadgeColor(template.type)} shadow-sm`}>
-                      {getTypeLabel(template.type)}
+                    <Badge className={`text-xs font-medium px-2.5 py-0.5 ${getTypeBadgeColor(template.type, template.templateType)} shadow-sm`}>
+                      {getTypeLabel(template.type, template.templateType)}
                     </Badge>
                   </div>
                   
@@ -218,16 +239,24 @@ const PdfTemplatesList = memo(({
                     <span className="flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5" />
                       <span className="font-medium">
-                        {formatDistanceToNow(new Date(template.updated_at), {
+                        {formatDistanceToNow(new Date(template.updated_at || template.created_at), {
                           addSuffix: true,
                           locale: tr,
                         })}
                       </span>
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-1 h-1 rounded-full bg-gray-300" />
-                      <span className="font-medium">Sürüm v{template.version}</span>
-                    </span>
+                    {template.templateType === 'pdf' && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-gray-300" />
+                        <span className="font-medium">Sürüm v{template.version}</span>
+                      </span>
+                    )}
+                    {template.templateType === 'service' && (template as any).service_title && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-gray-300" />
+                        <span className="font-medium line-clamp-1">{(template as any).service_title}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -247,7 +276,7 @@ const PdfTemplatesList = memo(({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onEdit(template.id)}
+                onClick={() => onEdit(template.id, template.templateType)}
                 className="h-9 px-3 gap-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
               >
                 <Edit className="h-4 w-4" />

@@ -8,6 +8,9 @@ import { QuickPreviewModal } from '@/components/pdf-templates/QuickPreviewModal'
 import { PdfTemplatesFilterBar } from '@/components/pdf-templates/PdfTemplatesFilterBar';
 import PdfTemplatesHeader from '@/components/pdf-templates/PdfTemplatesHeader';
 import PdfTemplatesContent from '@/components/pdf-templates/PdfTemplatesContent';
+import { ServiceTemplateService, ServiceTemplate } from '@/services/serviceTemplateService';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { TemplateTypeSelectionModal } from '@/components/pdf-templates/TemplateTypeSelectionModal';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'name' | 'updated' | 'created';
@@ -16,10 +19,16 @@ interface PdfTemplatesProps {
   showHeader?: boolean;
 }
 
+// Birleşik template tipi
+type UnifiedTemplate = (PdfTemplate & { templateType: 'pdf' }) | (ServiceTemplate & { templateType: 'service'; type: 'service' });
+
 const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
+  const [serviceTemplates, setServiceTemplates] = useState<ServiceTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTemplateTypeModalOpen, setIsTemplateTypeModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { userData } = useCurrentUser();
 
   // View options
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -29,7 +38,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
 
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [templateToDelete, setTemplateToDelete] = useState<PdfTemplate | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<UnifiedTemplate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Preview modal states
@@ -39,44 +48,75 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
     loadTemplates();
   }, []);
 
+  // Birleşik template listesi oluştur
+  const unifiedTemplates = useMemo(() => {
+    const pdfTemplatesWithType: UnifiedTemplate[] = templates.map(t => ({
+      ...t,
+      templateType: 'pdf' as const,
+    }));
+    
+    const serviceTemplatesWithType: UnifiedTemplate[] = serviceTemplates.map(t => ({
+      ...t,
+      templateType: 'service' as const,
+      type: 'service' as const,
+    }));
+
+    return [...pdfTemplatesWithType, ...serviceTemplatesWithType];
+  }, [templates, serviceTemplates]);
+
   // Filter and sort templates with useMemo for performance
   const filteredTemplates = useMemo(() => {
-    let filtered = [...templates];
+    let filtered = [...unifiedTemplates];
 
     // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(template =>
-        template.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      filtered = filtered.filter(template => {
+        const name = template.name?.toLowerCase() || '';
+        const description = (template as any).description?.toLowerCase() || '';
+        const serviceTitle = (template as any).service_title?.toLowerCase() || '';
+        const query = searchQuery.toLowerCase();
+        return name.includes(query) || description.includes(query) || serviceTitle.includes(query);
+      });
     }
 
     // Apply type filter
     if (typeFilter !== 'all') {
-      filtered = filtered.filter(template => template.type === typeFilter);
+      filtered = filtered.filter(template => {
+        if (template.templateType === 'service') {
+          return typeFilter === 'service';
+        }
+        return template.type === typeFilter;
+      });
     }
 
     // Apply sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
-          return a.name.localeCompare(b.name, 'tr');
+          return (a.name || '').localeCompare(b.name || '', 'tr');
         case 'updated':
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+          return new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime();
         case 'created':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
         default:
           return 0;
       }
     });
 
     return filtered;
-  }, [templates, searchQuery, typeFilter, sortBy]);
+  }, [unifiedTemplates, searchQuery, typeFilter, sortBy]);
 
   const loadTemplates = async () => {
     setIsLoading(true);
     try {
-      const templates = await PdfExportService.getTemplates();
-      setTemplates(templates);
+      const [pdfTemplates, serviceTemplatesData] = await Promise.all([
+        PdfExportService.getTemplates(),
+        userData?.company_id 
+          ? ServiceTemplateService.getTemplates(userData.company_id)
+          : Promise.resolve([]),
+      ]);
+      setTemplates(pdfTemplates);
+      setServiceTemplates(serviceTemplatesData);
     } catch (error) {
       console.error('Error loading templates:', error);
       toast.error('Şablonlar yüklenirken hata oluştu');
@@ -85,30 +125,71 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
     }
   };
   const handleCreateTemplate = () => {
-    navigate('/pdf-templates/new');
+    setIsTemplateTypeModalOpen(true);
   };
-  const handleEditTemplate = (templateId: string) => {
-    navigate(`/pdf-templates/edit/${templateId}`);
+
+  const handleTemplateTypeSelect = (type: 'quote' | 'service') => {
+    if (type === 'quote') {
+      navigate('/pdf-templates/new');
+    } else if (type === 'service') {
+      navigate('/pdf-templates/service/new');
+    }
   };
-  const handleDuplicateTemplate = async (template: PdfTemplate) => {
+  const handleEditTemplate = (templateId: string, templateType?: 'pdf' | 'service') => {
+    if (templateType === 'service') {
+      navigate(`/pdf-templates/service/edit/${templateId}`);
+    } else {
+      navigate(`/pdf-templates/edit/${templateId}`);
+    }
+  };
+  const handleDuplicateTemplate = async (template: UnifiedTemplate) => {
     try {
-      const newTemplate = {
-        ...template,
-        name: `${template.name} - Kopya`,
-        version: 1,
-      };
-      delete (newTemplate as any).id;
-      delete (newTemplate as any).created_at;
-      delete (newTemplate as any).updated_at;
-      await PdfExportService.saveTemplate(newTemplate);
-      toast.success('Şablon başarıyla kopyalandı');
+      if (template.templateType === 'service') {
+        const serviceTemplate = template as ServiceTemplate;
+        if (!userData?.company_id || !userData?.id) {
+          toast.error('Kullanıcı bilgileri bulunamadı');
+          return;
+        }
+        const newTemplate = {
+          name: `${serviceTemplate.name} - Kopya`,
+          description: serviceTemplate.description,
+          service_title: serviceTemplate.service_title,
+          service_request_description: serviceTemplate.service_request_description,
+          service_type: serviceTemplate.service_type,
+          service_priority: serviceTemplate.service_priority,
+          estimated_duration: serviceTemplate.estimated_duration,
+          default_location: serviceTemplate.default_location,
+          default_technician_id: serviceTemplate.default_technician_id,
+          service_details: serviceTemplate.service_details,
+          parts_list: serviceTemplate.parts_list,
+          instructions: serviceTemplate.instructions,
+        };
+        await ServiceTemplateService.createTemplate(
+          userData.company_id,
+          userData.id,
+          newTemplate
+        );
+        toast.success('Servis şablonu başarıyla kopyalandı');
+      } else {
+        const pdfTemplate = template as PdfTemplate;
+        const newTemplate = {
+          ...pdfTemplate,
+          name: `${pdfTemplate.name} - Kopya`,
+          version: 1,
+        };
+        delete (newTemplate as any).id;
+        delete (newTemplate as any).created_at;
+        delete (newTemplate as any).updated_at;
+        await PdfExportService.saveTemplate(newTemplate);
+        toast.success('PDF şablonu başarıyla kopyalandı');
+      }
       loadTemplates();
     } catch (error) {
       console.error('Error duplicating template:', error);
       toast.error('Şablon kopyalanırken hata oluştu');
     }
   };
-  const handleDeleteTemplateClick = (template: PdfTemplate) => {
+  const handleDeleteTemplateClick = (template: UnifiedTemplate) => {
     setTemplateToDelete(template);
     setIsDeleteDialogOpen(true);
   };
@@ -118,8 +199,13 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
 
     setIsDeleting(true);
     try {
-      await PdfExportService.deleteTemplate(templateToDelete.id);
-      toast.success('Şablon başarıyla silindi');
+      if (templateToDelete.templateType === 'service') {
+        await ServiceTemplateService.deleteTemplate(templateToDelete.id);
+        toast.success('Servis şablonu başarıyla silindi');
+      } else {
+        await PdfExportService.deleteTemplate(templateToDelete.id);
+        toast.success('PDF şablonu başarıyla silindi');
+      }
       loadTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
@@ -137,13 +223,21 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
   };
 
 
-  const handlePreviewTemplate = (template: PdfTemplate) => {
-    setTemplateToPreview(template);
-    setIsPreviewModalOpen(true);
+  const handlePreviewTemplate = (template: UnifiedTemplate) => {
+    if (template.templateType === 'pdf') {
+      setTemplateToPreview(template as PdfTemplate);
+      setIsPreviewModalOpen(true);
+    } else {
+      // Servis şablonları için önizleme yok, direkt düzenleme sayfasına yönlendir
+      navigate(`/pdf-templates/service/edit/${template.id}`);
+    }
   };
 
   // Helper function to get template type badge color
-  const getTypeBadgeColor = (type: string) => {
+  const getTypeBadgeColor = (type: string, templateType?: 'pdf' | 'service') => {
+    if (templateType === 'service') {
+      return 'bg-orange-100 text-orange-800 hover:bg-orange-100';
+    }
     switch (type) {
       case 'quote':
         return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
@@ -157,7 +251,10 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
   };
 
   // Helper function to get template type label
-  const getTypeLabel = (type: string) => {
+  const getTypeLabel = (type: string, templateType?: 'pdf' | 'service') => {
+    if (templateType === 'service') {
+      return 'Servis';
+    }
     switch (type) {
       case 'quote':
         return 'Teklif';
@@ -173,12 +270,13 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
   // Calculate statistics - MUST be before any early returns
   const statistics = useMemo(() => {
     return {
-      totalCount: templates.length,
+      totalCount: templates.length + serviceTemplates.length,
       quoteCount: templates.filter(t => t.type === 'quote').length,
       invoiceCount: templates.filter(t => t.type === 'invoice').length,
       proposalCount: templates.filter(t => t.type === 'proposal').length,
+      serviceCount: serviceTemplates.length,
     };
-  }, [templates]);
+  }, [templates, serviceTemplates]);
 
   return (
     <div className="h-full flex flex-col">
@@ -211,7 +309,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
       {/* Content - Scrollable */}
       <div className="flex-1 min-h-0 overflow-hidden">
       <PdfTemplatesContent
-        templates={templates}
+        templates={unifiedTemplates}
         filteredTemplates={filteredTemplates}
         viewMode={viewMode}
         isLoading={isLoading}
@@ -233,7 +331,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         title="Şablonu Sil"
-        description={`"${templateToDelete?.name || 'Bu şablon'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        description={`"${(templateToDelete as any)?.name || 'Bu şablon'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
         confirmText="Sil"
         cancelText="İptal"
         variant="destructive"
@@ -250,6 +348,13 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         onEdit={handleEditTemplate}
         onDuplicate={handleDuplicateTemplate}
         onDelete={handleDeleteTemplateClick}
+      />
+
+      {/* Template Type Selection Modal */}
+      <TemplateTypeSelectionModal
+        open={isTemplateTypeModalOpen}
+        onOpenChange={setIsTemplateTypeModalOpen}
+        onSelectType={handleTemplateTypeSelect}
       />
     </div>
   );

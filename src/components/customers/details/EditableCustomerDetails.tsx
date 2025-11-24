@@ -36,6 +36,8 @@ export const EditableCustomerDetails = ({
     website: customer.website || "",
     country: customer.country || "",
     postal_code: customer.postal_code || "",
+    apartment_number: customer.apartment_number || "",
+    unit_number: customer.unit_number || "",
     fax: customer.fax || "",
     bank_name: customer.bank_name || "",
     iban: customer.iban || "",

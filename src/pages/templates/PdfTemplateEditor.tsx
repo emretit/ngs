@@ -407,7 +407,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       } else {
           // Template not found after templates are loaded
           toast.error('Şablon bulunamadı. Şablon silinmiş olabilir veya erişim yetkiniz olmayabilir.');
-          navigate('/settings/pdf-templates');
+          navigate('/pdf-templates');
       }
       } else {
         // Templates loaded but empty - template might not exist or user has no access

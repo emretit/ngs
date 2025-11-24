@@ -25,7 +25,7 @@ interface QuickPreviewModalProps {
   template: PdfTemplate | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEdit: (templateId: string) => void;
+  onEdit: (templateId: string, templateType?: 'pdf' | 'service') => void;
   onDuplicate: (template: PdfTemplate) => void;
   onDelete: (template: PdfTemplate) => void;
 }
@@ -184,7 +184,7 @@ export const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
             </Button>
             <Button
               onClick={() => {
-                onEdit(template.id);
+                onEdit(template.id, 'pdf');
                 onOpenChange(false);
               }}
               className="gap-2"

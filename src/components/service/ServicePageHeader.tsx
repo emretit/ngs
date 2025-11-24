@@ -1,22 +1,26 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Circle, Clock, CheckCircle2, XCircle, AlertTriangle, Wrench, AlertCircle } from "lucide-react";
+import { Plus, Circle, Clock, CheckCircle2, XCircle, AlertTriangle, Wrench, AlertCircle, FileText, Settings } from "lucide-react";
 import ServiceViewToggle from "./ServiceViewToggle";
 
-type ViewType = "list" | "kanban" | "map" | "scheduling";
+type ViewType = "list" | "kanban" | "map" | "scheduling" | "calendar" | "sla" | "maintenance" | "templates" | "performance" | "costs" | "parts" | "satisfaction" | "analytics";
 
 interface ServicePageHeaderProps {
   activeView: ViewType;
   setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
   onCreateRequest: () => void;
   serviceRequests?: { [key: string]: any[] };
+  onNavigateReports?: () => void;
+  onNavigateSettings?: () => void;
 }
 
 const ServicePageHeader = ({ 
   activeView, 
   setActiveView, 
   onCreateRequest,
-  serviceRequests = {}
+  serviceRequests = {},
+  onNavigateReports,
+  onNavigateSettings
 }: ServicePageHeaderProps) => {
   // Toplam servis talebi sayısını hesapla
   const totalCount = Object.values(serviceRequests).reduce((sum, props) => sum + props.length, 0);
@@ -105,12 +109,35 @@ const ServicePageHeader = ({
             activeView={activeView} 
             setActiveView={setActiveView} 
           />
+          {onNavigateReports && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={onNavigateReports}
+              className="hidden sm:flex"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Raporlar
+            </Button>
+          )}
+          {onNavigateSettings && (
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={onNavigateSettings}
+              className="hidden sm:flex"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Ayarlar
+            </Button>
+          )}
           <Button 
             className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
             onClick={onCreateRequest}
           >
             <Plus className="h-4 w-4" />
-            <span>Yeni Servis Talebi</span>
+            <span className="hidden sm:inline">Yeni Servis Talebi</span>
+            <span className="sm:hidden">Yeni</span>
           </Button>
         </div>
       </div>

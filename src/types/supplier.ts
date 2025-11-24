@@ -23,6 +23,8 @@ export interface Supplier {
   district: string | null;
   country: string | null;
   postal_code: string | null;
+  apartment_number: string | null;
+  unit_number: string | null;
   fax: string | null;
   website: string | null;
   is_active: boolean;
@@ -80,6 +82,8 @@ export interface SupplierFormData {
   district: string;
   country: string;
   postal_code: string;
+  apartment_number: string;
+  unit_number: string;
   fax: string;
   website: string;
   is_active: boolean;

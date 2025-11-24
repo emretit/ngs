@@ -1,21 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-
-interface City {
-  id: number;
-  name: string;
-  code: string;
-}
-
-interface District {
-  id: number;
-  name: string;
-  city_id: number;
-}
+import { useLocationIQAutocomplete } from "@/hooks/useLocationIQAutocomplete";
+import { parseLocationIQResult, formatDisplayName } from "@/utils/locationiqUtils";
+import { MapPin, Loader2 } from "lucide-react";
 
 interface AddressFieldsProps {
   city: string;
@@ -23,11 +12,15 @@ interface AddressFieldsProps {
   address: string;
   country: string;
   postal_code: string;
+  apartment_number?: string;
+  unit_number?: string;
   onCityChange: (value: string) => void;
   onDistrictChange: (value: string) => void;
   onAddressChange: (value: string) => void;
   onCountryChange: (value: string) => void;
   onPostalCodeChange: (value: string) => void;
+  onApartmentNumberChange?: (value: string) => void;
+  onUnitNumberChange?: (value: string) => void;
 }
 
 export const AddressFields = ({
@@ -36,168 +29,175 @@ export const AddressFields = ({
   address,
   country,
   postal_code,
+  apartment_number = '',
+  unit_number = '',
   onCityChange,
   onDistrictChange,
   onAddressChange,
   onCountryChange,
-  onPostalCodeChange
+  onPostalCodeChange,
+  onApartmentNumberChange,
+  onUnitNumberChange
 }: AddressFieldsProps) => {
-  const [cities, setCities] = useState<City[]>([]);
-  const [districts, setDistricts] = useState<District[]>([]);
-  const [loadingCities, setLoadingCities] = useState(false);
-  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [autocompleteQuery, setAutocompleteQuery] = useState('');
+  const autocompleteRef = useRef<HTMLDivElement>(null);
 
-  // Load cities on component mount
-  useEffect(() => {
-    const loadCities = async () => {
-      setLoadingCities(true);
-        try {
-          const { data, error } = await supabase.rpc('get_cities');
-          if (error) {
-            console.error('Supabase error loading cities:', error);
-            throw error;
-          }
-          setCities(data || []);
-      } catch (error) {
-        console.error('Error loading cities:', error);
-        // Fallback: try direct table query (turkey_cities tablosunu kullan)
-        try {
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('turkey_cities')
-            .select('id, name, code')
-            .order('name');
-          if (fallbackError) throw fallbackError;
-          setCities(fallbackData || []);
-        } catch (fallbackError) {
-          console.error('Fallback also failed:', fallbackError);
+  // LocationIQ autocomplete hook
+  const {
+    results: autocompleteResults,
+    isLoading: isAutocompleteLoading,
+    updateQuery,
+    clear: clearAutocomplete,
+  } = useLocationIQAutocomplete({
+    debounceMs: 300,
+    minChars: 3,
+  });
+
+
+  // Handle address autocomplete selection
+  const handleAutocompleteSelect = async (result: any) => {
+    try {
+      const parsed = await parseLocationIQResult(result);
+      
+      if (parsed) {
+        // Set address - use display_name if address is empty
+        const fullAddress = parsed.address || parsed.display_name || '';
+        onAddressChange(fullAddress);
+        
+        // Set city - directly use city name (not ID)
+        if (parsed.city) {
+          onCityChange(parsed.city);
         }
-      } finally {
-        setLoadingCities(false);
+        
+        // Set district - directly use district name (not ID)
+        if (parsed.district) {
+          onDistrictChange(parsed.district);
+        }
+        
+        // Set postal code
+        if (parsed.postal_code) {
+          onPostalCodeChange(parsed.postal_code);
+        }
+        
+        // Set country
+        if (parsed.country) {
+          onCountryChange(parsed.country);
+        }
+      }
+    } catch (error) {
+      console.error('Error processing autocomplete result:', error);
+    } finally {
+      setShowAutocomplete(false);
+      clearAutocomplete();
+    }
+  };
+
+  // Handle click outside autocomplete
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target as Node)) {
+        setShowAutocomplete(false);
       }
     };
 
-    loadCities();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Load districts when city changes
-  useEffect(() => {
-    if (city) {
-      const loadDistricts = async () => {
-        setLoadingDistricts(true);
-        try {
-          const { data, error } = await supabase.rpc('get_districts_by_city', {
-            city_id_param: parseInt(city)
-          });
-          if (error) {
-            console.error('Supabase error loading districts:', error);
-            throw error;
-          }
-          setDistricts(data || []);
-          // Only reset district if it doesn't belong to the new city
-          // Don't reset if we're in edit mode and district is already set
-          if (district) {
-            const districtBelongsToCity = data?.some(d => d.id.toString() === district);
-            if (!districtBelongsToCity) {
-              onDistrictChange('');
-            }
-          }
-        } catch (error) {
-          console.error('Error loading districts:', error);
-          // Fallback: try direct table query (turkey_districts tablosunu kullan)
-          try {
-            const { data: fallbackData, error: fallbackError } = await supabase
-              .from('turkey_districts')
-              .select('id, name, city_id')
-              .eq('city_id', parseInt(city))
-              .order('name');
-            if (fallbackError) throw fallbackError;
-            setDistricts(fallbackData || []);
-            // Only reset if district doesn't belong to new city
-            if (district) {
-              const districtBelongsToCity = fallbackData?.some(d => d.id.toString() === district);
-              if (!districtBelongsToCity) {
-                onDistrictChange('');
-              }
-            }
-          } catch (fallbackError) {
-            console.error('Fallback also failed:', fallbackError);
-          }
-        } finally {
-          setLoadingDistricts(false);
-        }
-      };
-
-      loadDistricts();
+  // Handle address input change
+  const handleAddressInputChange = (value: string) => {
+    onAddressChange(value);
+    setAutocompleteQuery(value);
+    updateQuery(value);
+    if (value.length >= 3) {
+      setShowAutocomplete(true);
     } else {
-      setDistricts([]);
+      setShowAutocomplete(false);
     }
-  }, [city, district]); // district'i dependency'ye ekledik çünkü district değiştiğinde kontrol etmeliyiz
+  };
 
   return (
     <div className="space-y-3">
+      {/* Detaylı Adres with Autocomplete - En üstte */}
+      <div className="space-y-1.5 relative" ref={autocompleteRef}>
+        <Label htmlFor="address" className="text-xs font-medium text-gray-700 flex items-center gap-1">
+          <MapPin className="w-3 h-3 text-blue-500" />
+          Detaylı Adres
+          {isAutocompleteLoading && <Loader2 className="w-3 h-3 animate-spin text-blue-500" />}
+        </Label>
+        <Textarea
+          id="address"
+          value={address}
+          onChange={(e) => handleAddressInputChange(e.target.value)}
+          onFocus={() => {
+            if (autocompleteQuery.length >= 3) {
+              setShowAutocomplete(true);
+            }
+          }}
+          placeholder="Adres aramak için en az 3 karakter girin..."
+          className="text-xs resize-none min-h-[60px]"
+        />
+        
+        {/* Autocomplete Dropdown */}
+        {showAutocomplete && autocompleteResults.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+            {autocompleteResults.map((result, index) => (
+              <button
+                key={`${result.place_id}-${index}`}
+                type="button"
+                onClick={() => handleAutocompleteSelect(result)}
+                className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+              >
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-3 h-3 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      {formatDisplayName(result)}
+                    </div>
+                    {result.address?.postcode && (
+                      <div className="text-gray-500 text-xs mt-0.5">
+                        Posta Kodu: {result.address.postcode}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        
+        <p className="text-xs text-gray-500">
+          💡 İpucu: Adres aramak için LocationIQ otomatik tamamlamayı kullanabilirsiniz
+        </p>
+      </div>
+
       {/* İl ve İlçe */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="city" className="text-xs font-medium text-gray-700">
             İl
           </Label>
-          <Select
+          <Input
+            id="city"
             value={city}
-            onValueChange={onCityChange}
-          >
-            <SelectTrigger className="h-7 text-xs">
-              <SelectValue placeholder={loadingCities ? "Yükleniyor..." : "İl seçiniz"} />
-            </SelectTrigger>
-            <SelectContent>
-              {cities.map((cityItem) => (
-                <SelectItem key={cityItem.id} value={cityItem.id.toString()}>
-                  {cityItem.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(e) => onCityChange(e.target.value)}
+            placeholder="İl adı giriniz"
+            className="h-7 text-xs"
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="district" className="text-xs font-medium text-gray-700">
             İlçe
           </Label>
-          <Select
+          <Input
+            id="district"
             value={district}
-            onValueChange={onDistrictChange}
-            disabled={!city || loadingDistricts}
-          >
-            <SelectTrigger className="h-7 text-xs">
-              <SelectValue placeholder={
-                !city 
-                  ? "Önce il seçiniz" 
-                  : loadingDistricts 
-                    ? "Yükleniyor..." 
-                    : "İlçe seçiniz"
-              } />
-            </SelectTrigger>
-            <SelectContent>
-              {districts.map((districtItem) => (
-                <SelectItem key={districtItem.id} value={districtItem.id.toString()}>
-                  {districtItem.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(e) => onDistrictChange(e.target.value)}
+            placeholder="İlçe adı giriniz"
+            className="h-7 text-xs"
+          />
         </div>
-      </div>
-
-      {/* Detaylı Adres */}
-      <div className="space-y-1.5">
-        <Label htmlFor="address" className="text-xs font-medium text-gray-700">
-          Detaylı Adres
-        </Label>
-        <Textarea
-          id="address"
-          value={address}
-          onChange={(e) => onAddressChange(e.target.value)}
-          placeholder="Mahalle, sokak, bina no..."
-          className="text-xs resize-none min-h-[60px]"
-        />
       </div>
 
       {/* Ülke ve Posta Kodu */}
@@ -223,6 +223,34 @@ export const AddressFields = ({
             value={postal_code}
             onChange={(e) => onPostalCodeChange(e.target.value)}
             placeholder="34000"
+            className="h-7 text-xs"
+          />
+        </div>
+      </div>
+
+      {/* Apartman No ve Daire No */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="apartment_number" className="text-xs font-medium text-gray-700">
+            Apartman No
+          </Label>
+          <Input
+            id="apartment_number"
+            value={apartment_number}
+            onChange={(e) => onApartmentNumberChange?.(e.target.value)}
+            placeholder="Apartman numarası"
+            className="h-7 text-xs"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="unit_number" className="text-xs font-medium text-gray-700">
+            Daire No
+          </Label>
+          <Input
+            id="unit_number"
+            value={unit_number}
+            onChange={(e) => onUnitNumberChange?.(e.target.value)}
+            placeholder="Daire numarası"
             className="h-7 text-xs"
           />
         </div>

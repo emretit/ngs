@@ -5,18 +5,20 @@ import { FileText, Search, Plus } from "lucide-react";
 import { PdfTemplate } from "@/types/pdf-template";
 import { PdfTemplatesList } from "./PdfTemplatesList";
 
+type UnifiedTemplate = any; // PdfTemplate | ServiceTemplate
+
 interface PdfTemplatesContentProps {
-  templates: PdfTemplate[];
-  filteredTemplates: PdfTemplate[];
+  templates: UnifiedTemplate[];
+  filteredTemplates: UnifiedTemplate[];
   viewMode: "grid" | "list";
   isLoading: boolean;
-  onPreview: (template: PdfTemplate) => void;
-  onEdit: (templateId: string) => void;
-  onDuplicate: (template: PdfTemplate) => void;
-  onDelete: (template: PdfTemplate) => void;
+  onPreview: (template: UnifiedTemplate) => void;
+  onEdit: (templateId: string, templateType?: 'pdf' | 'service') => void;
+  onDuplicate: (template: UnifiedTemplate) => void;
+  onDelete: (template: UnifiedTemplate) => void;
   onCreateTemplate: () => void;
-  getTypeBadgeColor: (type: string) => string;
-  getTypeLabel: (type: string) => string;
+  getTypeBadgeColor: (type: string, templateType?: 'pdf' | 'service') => string;
+  getTypeLabel: (type: string, templateType?: 'pdf' | 'service') => string;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   setTypeFilter: (value: string) => void;

@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SupplierFormData } from "@/types/supplier";
 import { CheckCircle, XCircle, Loader2, UserPlus } from "lucide-react";
 import AddressFields from "@/components/shared/AddressFields";
@@ -213,28 +214,40 @@ const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) =>
           address={formData.address}
           country={formData.country}
           postal_code={formData.postal_code}
-          onCityChange={(value) => setFormData({ ...formData, city: value })}
-          onDistrictChange={(value) => setFormData({ ...formData, district: value })}
-          onAddressChange={(value) => setFormData({ ...formData, address: value })}
-          onCountryChange={(value) => setFormData({ ...formData, country: value })}
-          onPostalCodeChange={(value) => setFormData({ ...formData, postal_code: value })}
+          apartment_number={formData.apartment_number}
+          unit_number={formData.unit_number}
+          onCityChange={(value) => setFormData((prev) => ({ ...prev, city: value }))}
+          onDistrictChange={(value) => setFormData((prev) => ({ ...prev, district: value }))}
+          onAddressChange={(value) => setFormData((prev) => ({ ...prev, address: value }))}
+          onCountryChange={(value) => setFormData((prev) => ({ ...prev, country: value }))}
+          onPostalCodeChange={(value) => setFormData((prev) => ({ ...prev, postal_code: value }))}
+          onApartmentNumberChange={(value) => setFormData((prev) => ({ ...prev, apartment_number: value }))}
+          onUnitNumberChange={(value) => setFormData((prev) => ({ ...prev, unit_number: value }))}
         />
 
-        {/* İkinci Adres Bilgileri */}
-        <div className="pt-3 border-t border-gray-100">
-          <h4 className="text-xs font-medium text-gray-600 mb-3">İkinci Adres Bilgileri</h4>
-          <AddressFields
-            city={formData.second_city}
-            district={formData.second_district}
-            address={formData.second_address}
-            country={formData.second_country}
-            postal_code={formData.second_postal_code}
-            onCityChange={(value) => setFormData({ ...formData, second_city: value })}
-            onDistrictChange={(value) => setFormData({ ...formData, second_district: value })}
-            onAddressChange={(value) => setFormData({ ...formData, second_address: value })}
-            onCountryChange={(value) => setFormData({ ...formData, second_country: value })}
-            onPostalCodeChange={(value) => setFormData({ ...formData, second_postal_code: value })}
-          />
+        {/* İkinci Adres Bilgileri - Accordion */}
+        <div className="pt-3 mt-3 border-t border-gray-300">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="second-address" className="border-0">
+              <AccordionTrigger className="text-xs font-medium text-gray-700 hover:no-underline py-2">
+                İkinci Adres Bilgileri
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <AddressFields
+                  city={formData.second_city}
+                  district={formData.second_district}
+                  address={formData.second_address}
+                  country={formData.second_country}
+                  postal_code={formData.second_postal_code}
+                  onCityChange={(value) => setFormData((prev) => ({ ...prev, second_city: value }))}
+                  onDistrictChange={(value) => setFormData((prev) => ({ ...prev, second_district: value }))}
+                  onAddressChange={(value) => setFormData((prev) => ({ ...prev, second_address: value }))}
+                  onCountryChange={(value) => setFormData((prev) => ({ ...prev, second_country: value }))}
+                  onPostalCodeChange={(value) => setFormData((prev) => ({ ...prev, second_postal_code: value }))}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
     </div>
   );

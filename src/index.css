@@ -1,4 +1,10 @@
 
+/* Leaflet CSS */
+@import 'leaflet/dist/leaflet.css';
+
+/* React Leaflet Markercluster CSS */
+@import 'react-leaflet-markercluster/styles';
+
 /* React Big Calendar CSS */
 @import 'react-big-calendar/lib/css/react-big-calendar.css';
 

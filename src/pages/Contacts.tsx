@@ -132,22 +132,12 @@ const Contacts = memo(() => {
 
   const handleBulkDeleteConfirm = useCallback(async () => {
     if (selectedCustomers.length === 0) {
-      console.log('❌ No customers selected');
       return;
     }
-
-    console.log('🗑️  Starting bulk delete...');
-    console.log('📊 Total selected customers:', selectedCustomers.length);
-    console.log('📋 Selected customer IDs:', selectedCustomers.map(c => c.id));
-    console.log('🔍 First 3 customers:', selectedCustomers.slice(0, 3).map(c => ({ id: c.id, name: c.name, company: c.company })));
-    console.log('🔍 Last 3 customers:', selectedCustomers.slice(-3).map(c => ({ id: c.id, name: c.name, company: c.company })));
     
     setIsDeleting(true);
     try {
       const customerIds = selectedCustomers.map(c => c.id);
-      console.log('🆔 Customer IDs array length:', customerIds.length);
-      console.log('🆔 First 5 IDs:', customerIds.slice(0, 5));
-      console.log('🆔 Last 5 IDs:', customerIds.slice(-5));
       
       // Önce hangi müşterilerin referansları olduğunu kontrol et
       const { data: orders, error: ordersError } = await supabase
@@ -181,7 +171,6 @@ const Contacts = memo(() => {
       }
 
       if (orders && orders.length > 0) {
-        console.log('Customers have orders, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
         toast.error('Bu müşteriler siparişlerde kullanıldığı için silinemez', { duration: 2000 });
@@ -189,7 +178,6 @@ const Contacts = memo(() => {
       }
 
       if (salesInvoices && salesInvoices.length > 0) {
-        console.log('Customers have sales invoices, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
         toast.error('Bu müşteriler satış faturalarında kullanıldığı için silinemez', { duration: 2000 });
@@ -197,23 +185,16 @@ const Contacts = memo(() => {
       }
 
       if (proposals && proposals.length > 0) {
-        console.log('Customers have proposals, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
         toast.error('Bu müşteriler tekliflerde kullanıldığı için silinemez', { duration: 2000 });
         return;
       }
-
-      console.log('🔄 Attempting to delete customers from Supabase...');
-      console.log('🔄 Sending', customerIds.length, 'IDs to Supabase');
       
       const { error, count } = await supabase
         .from('customers')
         .delete()
         .in('id', customerIds);
-
-      console.log('✅ Delete response - error:', error);
-      console.log('✅ Delete response - count:', count);
 
       if (error) {
         console.error('Delete error details:', {
@@ -248,7 +229,6 @@ const Contacts = memo(() => {
         return;
       }
 
-      console.log('Customers deleted successfully');
       const deletedCount = selectedCustomers.length;
       
       // Toast mesajını göster

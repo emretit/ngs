@@ -21,6 +21,8 @@ export interface Customer {
   district: string | null;
   country: string | null;
   postal_code: string | null;
+  apartment_number: string | null;
+  unit_number: string | null;
   fax: string | null;
   website: string | null;
   bank_name: string | null;
@@ -68,6 +70,8 @@ export interface CustomerFormData {
   tax_office: string;
   city: string;
   district: string;
+  apartment_number: string;
+  unit_number: string;
   einvoice_alias_name: string;
   website: string;
   country: string;

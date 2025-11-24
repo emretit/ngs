@@ -10,6 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { InviteUserDialog } from "../InviteUserDialog";
 import { useAutoMatchUsersEmployees } from "./useAutoMatchUsersEmployees";
 import { Button } from "@/components/ui/button";
+import UsersFilterBar from "./UsersFilterBar";
+import UsersBulkActions from "./UsersBulkActions";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 interface UserWithEmployee {
   id: string;
@@ -36,6 +40,11 @@ interface UserWithEmployee {
 
 export const UserManagementNew = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedRole, setSelectedRole] = useState("all");
+  const [selectedEmployeeMatch, setSelectedEmployeeMatch] = useState("all");
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [activeRoleTab, setActiveRoleTab] = useState("users");
   const queryClient = useQueryClient();
   const autoMatchMutation = useAutoMatchUsersEmployees();
 
@@ -133,27 +142,100 @@ export const UserManagementNew = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, users.length]); // Run when users are loaded
 
-  // Filter users based on search (includes phone, department, position)
-  const filteredUsers = users.filter(user => {
-    if (!searchQuery) return true;
-    
-    const searchLower = searchQuery.toLowerCase();
-    const fullName = user.full_name?.toLowerCase() || '';
-    const email = user.email?.toLowerCase() || '';
-    const phone = user.phone?.toLowerCase() || '';
-    const employeeName = user.employees
-      ? `${user.employees.first_name} ${user.employees.last_name}`.toLowerCase()
-      : '';
-    const department = user.employees?.department?.toLowerCase() || '';
-    const position = user.employees?.position?.toLowerCase() || '';
+  // Helper function to map owner/admin role to Admin for display
+  const mapRoleForDisplay = (role: string): string => {
+    const lowerRole = role.toLowerCase();
+    if (lowerRole === 'owner' || lowerRole === 'admin') {
+      return 'Admin';
+    }
+    return role;
+  };
 
-    return fullName.includes(searchLower) ||
-           email.includes(searchLower) ||
-           phone.includes(searchLower) ||
-           employeeName.includes(searchLower) ||
-           department.includes(searchLower) ||
-           position.includes(searchLower);
+  // Filter users based on search and filters
+  const filteredUsers = users.filter(user => {
+    // Search filter
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
+      const fullName = user.full_name?.toLowerCase() || '';
+      const email = user.email?.toLowerCase() || '';
+      const phone = user.phone?.toLowerCase() || '';
+      const employeeName = user.employees
+        ? `${user.employees.first_name} ${user.employees.last_name}`.toLowerCase()
+        : '';
+      const department = user.employees?.department?.toLowerCase() || '';
+      const position = user.employees?.position?.toLowerCase() || '';
+
+      const matchesSearch = fullName.includes(searchLower) ||
+             email.includes(searchLower) ||
+             phone.includes(searchLower) ||
+             employeeName.includes(searchLower) ||
+             department.includes(searchLower) ||
+             position.includes(searchLower);
+      
+      if (!matchesSearch) return false;
+    }
+
+    // Status filter
+    if (selectedStatus !== 'all') {
+      if (selectedStatus === 'active' && user.status !== 'active') return false;
+      if (selectedStatus === 'inactive' && user.status === 'active') return false;
+    }
+
+    // Role filter
+    if (selectedRole !== 'all') {
+      const userRole = mapRoleForDisplay(user.user_roles?.[0]?.role || '');
+      if (userRole !== selectedRole) return false;
+    }
+
+    // Employee match filter
+    if (selectedEmployeeMatch !== 'all') {
+      if (selectedEmployeeMatch === 'matched' && !user.employees) return false;
+      if (selectedEmployeeMatch === 'unmatched' && user.employees) return false;
+    }
+
+    return true;
   });
+
+  // Handle bulk actions
+  const handleBulkAction = async (action: string) => {
+    if (selectedUsers.length === 0) return;
+
+    switch (action) {
+      case 'activate':
+        // Aktifleştir
+        for (const userId of selectedUsers) {
+          await supabase.from('profiles').update({ status: 'active' }).eq('id', userId);
+        }
+        toast.success(`${selectedUsers.length} kullanıcı aktifleştirildi`);
+        setSelectedUsers([]);
+        queryClient.invalidateQueries({ queryKey: ['users-management'] });
+        break;
+      case 'deactivate':
+        // Pasifleştir
+        for (const userId of selectedUsers) {
+          await supabase.from('profiles').update({ status: 'inactive' }).eq('id', userId);
+        }
+        toast.success(`${selectedUsers.length} kullanıcı pasifleştirildi`);
+        setSelectedUsers([]);
+        queryClient.invalidateQueries({ queryKey: ['users-management'] });
+        break;
+      case 'delete':
+        // Sil
+        if (confirm(`${selectedUsers.length} kullanıcıyı silmek istediğinize emin misiniz?`)) {
+          // Bu işlem için daha güvenli bir yöntem kullanılmalı
+          toast.info('Silme işlemi henüz implement edilmedi');
+        }
+        break;
+      case 'export':
+        // Excel export
+        toast.info('Excel export özelliği yakında eklenecek');
+        break;
+      case 'assignRole':
+        // Rol ata
+        toast.info('Toplu rol atama özelliği yakında eklenecek');
+        break;
+    }
+  };
 
   // Calculate statistics
   const stats = {
@@ -272,50 +354,61 @@ export const UserManagementNew = () => {
         </div>
       </div>
 
-      {/* Search - Çalışan yönetimi sayfasına benzer stil */}
-      <div className="flex items-center space-x-2">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Kullanıcı ara (isim, email, telefon, departman, pozisyon)..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-sm"
-        />
-        {searchQuery && (
-          <div className="text-xs text-muted-foreground">
-            <span className="font-medium">{filteredUsers.length}</span> kullanıcı bulundu
-          </div>
-        )}
-      </div>
+      {/* Main Tabs - Kullanıcılar ve Roller */}
+      <Tabs value={activeRoleTab} onValueChange={setActiveRoleTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="users" className="text-base">👥 Kullanıcılar</TabsTrigger>
+          <TabsTrigger value="roles" className="text-base">🛡️ Roller</TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left: Users List */}
-        <div className="xl:col-span-2">
-          {/* Users Table - Çalışan yönetimi sayfasına benzer stil */}
+        {/* Kullanıcılar Tab */}
+        <TabsContent value="users" className="space-y-4 mt-0">
+          {/* Filter Bar */}
+          <UsersFilterBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedStatus={selectedStatus}
+            setSelectedStatus={setSelectedStatus}
+            selectedRole={selectedRole}
+            setSelectedRole={setSelectedRole}
+            selectedEmployeeMatch={selectedEmployeeMatch}
+            setSelectedEmployeeMatch={setSelectedEmployeeMatch}
+          />
+
+          {/* Bulk Actions */}
+          <UsersBulkActions
+            selectedUsers={selectedUsers}
+            onClearSelection={() => setSelectedUsers([])}
+            onBulkAction={handleBulkAction}
+          />
+
+          {/* Users Table */}
           <div className="rounded-md border bg-white overflow-hidden">
             <UserListTable
               users={filteredUsers}
               isLoading={isLoading}
               onUserUpdated={() => queryClient.invalidateQueries({ queryKey: ['users-management'] })}
+              selectedUsers={selectedUsers}
+              onSelectionChange={setSelectedUsers}
             />
           </div>
-        </div>
+        </TabsContent>
 
-        {/* Right: Role Management */}
-        <div>
+        {/* Roller Tab */}
+        <TabsContent value="roles" className="mt-0">
           <div className="rounded-md border bg-white overflow-hidden">
             <div className="p-4 border-b bg-gray-50">
               <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-purple-600" />
-                <h3 className="text-sm font-semibold text-foreground">Rol Yönetimi</h3>
+                <Shield className="h-5 w-5 text-purple-600" />
+                <h3 className="text-base font-semibold text-foreground">Rol Yönetimi</h3>
               </div>
             </div>
             <div className="p-4">
               <RoleManagementPanel users={users} />
             </div>
           </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

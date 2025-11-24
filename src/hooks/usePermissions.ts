@@ -23,25 +23,33 @@ export const usePermissions = () => {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data, error } = await supabase
+      // Check user role first - owner and admin have full access
+      const { data: userRoleData, error: roleError } = await supabase
         .from('user_roles')
-        .select('role_id, roles!inner(permissions, is_active)')
+        .select('role, role_id, roles(permissions, is_active)')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching user permissions:', error);
+      if (roleError) {
+        console.error('Error fetching user permissions:', roleError);
         return null;
       }
 
-      if (!data) {
+      if (!userRoleData) {
         // Kullanıcıya rol atanmamış - bu normal olabilir, varsayılan olarak tüm modüllere erişim veriliyor
         // console.warn('No role assigned to user:', user.id);
         return null;
       }
 
+      // Owner ve admin rolüne sahip kullanıcılar için tüm yetkilere erişim ver
+      const userRole = userRoleData.role?.toLowerCase();
+      if (userRole === 'owner' || userRole === 'admin') {
+        // Return null to indicate full access (hasModuleAccess will return true)
+        return null;
+      }
+
       // @ts-ignore - roles is from the join
-      const role = data?.roles;
+      const role = userRoleData?.roles;
       if (!role || !role.is_active) {
         return null;
       }

@@ -6,27 +6,56 @@ import { Label } from "@/components/ui/label";
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton } from "@/components/ui/unified-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Plus } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const InviteUserDialog = () => {
   const [newUserEmail, setNewUserEmail] = useState("");
+  const [selectedRole, setSelectedRole] = useState("Admin");
   const [isOpen, setIsOpen] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
 
+  // Default roles - Admin is always first
+  const roles = [
+    'Admin',
+    'Yönetici',
+    'Satış Müdürü',
+    'Satış Temsilcisi',
+    'Muhasebe',
+    'İnsan Kaynakları'
+  ];
+
+  // Helper function to map Admin to admin for database
+  const mapRoleForDatabase = (role: string): string => {
+    if (role === 'Admin') {
+      return 'admin';
+    }
+    return role;
+  };
+
   const inviteUserMutation = useMutation({
-    mutationFn: async (email: string) => {
+    mutationFn: async ({ email, role }: { email: string; role: string }) => {
       if (!userData?.company_id) {
         throw new Error("Şirket bilgisi bulunamadı");
       }
 
+      // Map Admin to admin for database
+      const dbRole = mapRoleForDatabase(role);
+
       const { data, error } = await supabase.functions.invoke('invite-user', {
         body: {
           email,
-          inviting_company_id: userData.company_id
+          inviting_company_id: userData.company_id,
+          role: dbRole
         }
       });
 
@@ -35,19 +64,14 @@ export const InviteUserDialog = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast({
-        title: "Başarılı",
-        description: "Şifre belirleme maili gönderildi",
-      });
+      queryClient.invalidateQueries({ queryKey: ['users-management'] });
+      toast.success("Şifre belirleme maili gönderildi");
       setNewUserEmail("");
+      setSelectedRole("Admin");
       setIsOpen(false);
     },
     onError: (error: any) => {
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Davet gönderilirken bir hata oluştu: " + error.message,
-      });
+      toast.error("Davet gönderilirken bir hata oluştu: " + error.message);
     },
   });
 
@@ -75,7 +99,7 @@ export const InviteUserDialog = () => {
         <div className="space-y-4">
           <div>
             <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-              E-posta adresi
+              E-posta adresi <span className="text-red-500">*</span>
             </Label>
             <Input
               id="email"
@@ -90,13 +114,48 @@ export const InviteUserDialog = () => {
               Bu kullanıcıya şifre belirleme maili gönderilecek
             </p>
           </div>
+
+          <div>
+            <Label htmlFor="role" className="text-sm font-medium text-gray-700">
+              Rol <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={selectedRole}
+              onValueChange={setSelectedRole}
+              disabled={inviteUserMutation.isPending}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Rol seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                {roles.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {role}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500 mt-1">
+              Kullanıcıya atanacak rolü seçin
+            </p>
+          </div>
           
           <UnifiedDialogFooter>
-            <UnifiedDialogCancelButton onClick={() => setIsOpen(false)} disabled={inviteUserMutation.isPending} />
+            <UnifiedDialogCancelButton 
+              onClick={() => {
+                setIsOpen(false);
+                setNewUserEmail("");
+                setSelectedRole("Admin");
+              }} 
+              disabled={inviteUserMutation.isPending} 
+            />
             <UnifiedDialogActionButton
-              onClick={() => inviteUserMutation.mutate(newUserEmail)}
+              onClick={() => inviteUserMutation.mutate({ 
+                email: newUserEmail, 
+                role: selectedRole 
+              })}
               variant="primary"
-              disabled={inviteUserMutation.isPending || !newUserEmail.trim()}
+              disabled={inviteUserMutation.isPending || !newUserEmail.trim() || !selectedRole}
               loading={inviteUserMutation.isPending}
             >
               Davet Gönder

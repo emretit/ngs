@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -26,6 +26,8 @@ import { tr } from "date-fns/locale";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmployeeUserMatchDialog } from "./EmployeeUserMatchDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface UserWithEmployee {
   id: string;
@@ -54,14 +56,59 @@ interface UserListTableProps {
   users: UserWithEmployee[];
   isLoading: boolean;
   onUserUpdated: () => void;
+  selectedUsers?: string[];
+  onSelectionChange?: (selectedIds: string[]) => void;
 }
 
-export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTableProps) => {
+export const UserListTable = ({ 
+  users, 
+  isLoading, 
+  onUserUpdated,
+  selectedUsers = [],
+  onSelectionChange
+}: UserListTableProps) => {
   const [matchDialogOpen, setMatchDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithEmployee | null>(null);
+  const { userData } = useCurrentUser();
 
-  // Default roles if no custom roles exist
-  const defaultRoles = [
+  const handleSelectAll = (checked: boolean) => {
+    if (onSelectionChange) {
+      onSelectionChange(checked ? users.map(u => u.id) : []);
+    }
+  };
+
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    if (onSelectionChange) {
+      if (checked) {
+        onSelectionChange([...selectedUsers, userId]);
+      } else {
+        onSelectionChange(selectedUsers.filter(id => id !== userId));
+      }
+    }
+  };
+
+  const allSelected = users.length > 0 && selectedUsers.length === users.length;
+  const someSelected = selectedUsers.length > 0 && selectedUsers.length < users.length;
+
+  // Helper function to map owner/admin role to Admin for display
+  const mapRoleForDisplay = (role: string): string => {
+    const lowerRole = role.toLowerCase();
+    if (lowerRole === 'owner' || lowerRole === 'admin') {
+      return 'Admin';
+    }
+    return role;
+  };
+
+  // Helper function to map Admin to admin for database
+  const mapRoleForDatabase = (role: string): string => {
+    if (role === 'Admin') {
+      return 'admin';
+    }
+    return role;
+  };
+
+  // Default roles - Admin is always first
+  const roles = [
     'Admin',
     'Yönetici',
     'Satış Müdürü',
@@ -70,44 +117,27 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
     'İnsan Kaynakları'
   ];
 
-  // Fetch available roles
-  const { data: customRoles = [] } = useQuery({
-    queryKey: ['roles'],
-    queryFn: async () => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (!profile?.company_id) return [];
-
-      const { data, error } = await supabase
-        .from('roles')
-        .select('name')
-        .eq('company_id', profile.company_id)
-        .order('name');
-
-      if (error) throw error;
-      return (data || []).map(r => r.name);
-    }
-  });
-
-  // Combine custom roles with default roles, removing duplicates
-  const roles = customRoles.length > 0
-    ? [...new Set([...customRoles, ...defaultRoles])]
-    : defaultRoles;
-
   // Update user role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      if (!userData?.company_id) {
+        throw new Error('Şirket bilgisi bulunamadı');
+      }
+
       // Delete existing roles
       await supabase.from('user_roles').delete().eq('user_id', userId);
+
+      // Map Admin back to owner for database
+      const dbRole = mapRoleForDatabase(role);
 
       // Insert new role
       const { error } = await supabase
         .from('user_roles')
-        .insert({ user_id: userId, role });
+        .insert({ 
+          user_id: userId, 
+          role: dbRole,
+          company_id: userData.company_id
+        });
 
       if (error) throw error;
     },
@@ -122,27 +152,68 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
 
   if (isLoading) {
     return (
-      <div className="p-4 space-y-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-[200px]" />
-              <Skeleton className="h-3 w-[150px]" />
-            </div>
-            <Skeleton className="h-9 w-[150px]" />
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader className="bg-gradient-to-r from-gray-50 to-gray-50/50 border-b">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-12"></TableHead>
+              <TableHead className="font-semibold text-gray-700">Kullanıcı</TableHead>
+              <TableHead className="font-semibold text-gray-700">İletişim</TableHead>
+              <TableHead className="font-semibold text-gray-700">Çalışan Kaydı</TableHead>
+              <TableHead className="font-semibold text-gray-700">Rol</TableHead>
+              <TableHead className="font-semibold text-gray-700">Durum</TableHead>
+              <TableHead className="text-center font-semibold text-gray-700">İşlemler</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <TableRow key={i} className="border-b border-gray-100">
+                <TableCell className="py-4">
+                  <Skeleton className="h-4 w-4 rounded" />
+                </TableCell>
+                <TableCell className="py-4">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-11 w-11 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-[180px]" />
+                      <Skeleton className="h-3 w-[150px]" />
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="py-4">
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-[120px]" />
+                    <Skeleton className="h-3 w-[100px]" />
+                  </div>
+                </TableCell>
+                <TableCell className="py-4">
+                  <Skeleton className="h-6 w-[140px]" />
+                </TableCell>
+                <TableCell className="py-4">
+                  <Skeleton className="h-9 w-[180px] rounded-md" />
+                </TableCell>
+                <TableCell className="py-4">
+                  <Skeleton className="h-6 w-[70px] rounded-full" />
+                </TableCell>
+                <TableCell className="py-4">
+                  <Skeleton className="h-8 w-[100px] rounded-md mx-auto" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     );
   }
 
   if (users.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 px-4">
-        <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
-        <h3 className="text-lg font-medium text-foreground mb-1">Kullanıcı Bulunamadı</h3>
-        <p className="text-sm text-muted-foreground text-center max-w-sm">
+      <div className="flex flex-col items-center justify-center py-20 px-4">
+        <div className="p-4 bg-gray-100 rounded-full mb-4">
+          <Users className="h-10 w-10 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Kullanıcı Bulunamadı</h3>
+        <p className="text-sm text-gray-500 text-center max-w-sm">
           Arama kriterlerinize uygun kullanıcı bulunamadı.
         </p>
       </div>
@@ -152,19 +223,30 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
   return (
     <div className="overflow-x-auto">
       <Table>
-        <TableHeader className="bg-gray-50">
-          <TableRow>
-            <TableHead>Kullanıcı</TableHead>
-            <TableHead>İletişim</TableHead>
-            <TableHead>Çalışan Kaydı</TableHead>
-            <TableHead>Rol</TableHead>
-            <TableHead>Durum</TableHead>
-            <TableHead className="text-center">İşlemler</TableHead>
+        <TableHeader className="bg-gradient-to-r from-gray-50 to-gray-50/50 border-b">
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-12">
+              {onSelectionChange && (
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={handleSelectAll}
+                  className={someSelected ? "data-[state=checked]:bg-blue-500" : ""}
+                />
+              )}
+            </TableHead>
+            <TableHead className="font-semibold text-gray-700">Kullanıcı</TableHead>
+            <TableHead className="font-semibold text-gray-700">İletişim</TableHead>
+            <TableHead className="font-semibold text-gray-700">Çalışan Kaydı</TableHead>
+            <TableHead className="font-semibold text-gray-700">Rol</TableHead>
+            <TableHead className="font-semibold text-gray-700">Durum</TableHead>
+            <TableHead className="text-center font-semibold text-gray-700">İşlemler</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user) => {
-            const currentRole = user.user_roles?.[0]?.role || '';
+          {users.map((user, index) => {
+            // Map owner role to Admin for display
+            const rawRole = user.user_roles?.[0]?.role || '';
+            const currentRole = mapRoleForDisplay(rawRole);
             const initials = user.full_name
               ?.split(' ')
               .map(n => n[0])
@@ -177,27 +259,47 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
             };
 
             return (
-              <TableRow key={user.id} className="hover:bg-gray-50 transition-colors group">
+              <TableRow 
+                key={user.id} 
+                className={`hover:bg-blue-50/50 transition-all duration-200 group border-b border-gray-100 ${
+                  selectedUsers.includes(user.id) ? 'bg-blue-50/30' : ''
+                }`}
+              >
+                {/* Checkbox */}
+                <TableCell className="py-4">
+                  {onSelectionChange && (
+                    <Checkbox
+                      checked={selectedUsers.includes(user.id)}
+                      onCheckedChange={(checked) => handleSelectUser(user.id, checked as boolean)}
+                    />
+                  )}
+                </TableCell>
+
                 {/* User Info */}
-                <TableCell>
+                <TableCell className="py-4">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 font-semibold">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="font-medium text-sm truncate">
+                    <div className="relative">
+                      <Avatar className="h-11 w-11 ring-2 ring-white shadow-sm">
+                        <AvatarImage src={user.avatar_url || undefined} />
+                        <AvatarFallback className="text-sm bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold shadow-sm">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      {user.status === 'active' && (
+                        <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-sm text-gray-900 truncate mb-0.5">
                         {user.full_name || 'İsimsiz Kullanıcı'}
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Mail className="h-3 w-3 flex-shrink-0" />
+                      <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+                        <Mail className="h-3 w-3 flex-shrink-0 text-gray-400" />
                         <span className="truncate">{user.email}</span>
                       </div>
                       {user.last_login && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                          <Clock className="h-3 w-3 flex-shrink-0" />
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                          <Clock className="h-3 w-3 flex-shrink-0 text-gray-400" />
                           <span className="truncate">
                             {formatDistanceToNow(new Date(user.last_login), { 
                               addSuffix: true, 
@@ -211,17 +313,19 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
                 </TableCell>
 
                 {/* Contact Info */}
-                <TableCell>
-                  <div className="space-y-1">
-                    {user.phone && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        <span>{user.phone}</span>
+                <TableCell className="py-4">
+                  <div className="space-y-1.5">
+                    {user.phone ? (
+                      <div className="flex items-center gap-1.5 text-xs text-gray-700">
+                        <Phone className="h-3.5 w-3.5 text-gray-400" />
+                        <span className="font-medium">{user.phone}</span>
                       </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">-</span>
                     )}
                     {user.created_at && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Calendar className="h-3 w-3 text-gray-400" />
                         <span>
                           {new Date(user.created_at).toLocaleDateString('tr-TR', {
                             day: '2-digit',
@@ -235,17 +339,19 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
                 </TableCell>
 
                 {/* Employee Match */}
-                <TableCell>
+                <TableCell className="py-4">
                   {user.employees ? (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 text-sm">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
-                        <span className="font-medium truncate">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1 bg-green-100 rounded-full">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                        </div>
+                        <span className="font-semibold text-sm text-gray-900 truncate">
                           {user.employees.first_name} {user.employees.last_name}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Building2 className="h-3 w-3 flex-shrink-0" />
+                      <div className="flex items-center gap-1.5 text-xs text-gray-600 pl-6">
+                        <Building2 className="h-3 w-3 text-gray-400" />
                         <span className="truncate">
                           {user.employees.department} • {user.employees.position}
                         </span>
@@ -253,22 +359,24 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                      <span className="text-sm text-amber-600 font-medium">Eşleşmemiş</span>
+                      <div className="p-1 bg-amber-100 rounded-full">
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
+                      </div>
+                      <span className="text-sm text-amber-700 font-medium">Eşleşmemiş</span>
                     </div>
                   )}
                 </TableCell>
 
                 {/* Role Select */}
-                <TableCell>
+                <TableCell className="py-4">
                   <Select
-                    value={currentRole}
+                    value={currentRole || undefined}
                     onValueChange={(role) =>
                       updateRoleMutation.mutate({ userId: user.id, role })
                     }
                     disabled={updateRoleMutation.isPending}
                   >
-                    <SelectTrigger className="w-[180px] h-9">
+                    <SelectTrigger className="w-[180px] h-9 border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-blue-500/20">
                       <SelectValue placeholder="Rol seçin" />
                     </SelectTrigger>
                     <SelectContent>
@@ -288,13 +396,13 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
                 </TableCell>
 
                 {/* Status */}
-                <TableCell>
+                <TableCell className="py-4">
                   <Badge
                     variant={user.status === 'active' ? 'default' : 'secondary'}
                     className={
                       user.status === 'active'
-                        ? 'bg-green-100 text-green-700 border-green-200'
-                        : 'bg-gray-100 text-gray-700 border-gray-200'
+                        ? 'bg-green-50 text-green-700 border-green-200 font-medium shadow-sm'
+                        : 'bg-gray-50 text-gray-600 border-gray-200 font-medium'
                     }
                   >
                     {user.status === 'active' ? 'Aktif' : 'Pasif'}
@@ -302,15 +410,15 @@ export const UserListTable = ({ users, isLoading, onUserUpdated }: UserListTable
                 </TableCell>
 
                 {/* Actions */}
-                <TableCell>
+                <TableCell className="py-4">
                   <div className="flex items-center justify-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleOpenMatchDialog}
-                      className="h-8 text-xs"
+                      className="h-8 text-xs border-gray-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all"
                     >
-                      <Link2 className="h-3 w-3 mr-1.5" />
+                      <Link2 className="h-3.5 w-3.5 mr-1.5" />
                       {user.employees ? 'Değiştir' : 'Eşleştir'}
                     </Button>
                   </div>

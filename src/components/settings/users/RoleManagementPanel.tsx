@@ -1,12 +1,163 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Shield, Users, Plus } from "lucide-react";
+import { Shield, Users, Save } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AddRoleDialog } from "./AddRoleDialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { ChevronDown } from "lucide-react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+
+// Modül tanımlamaları - Sidebar sırasına göre tam olarak aynı yapı
+const MODULE_DEFINITIONS = [
+  // 1. Gösterge Paneli
+  { key: 'dashboard', label: 'Gösterge Paneli', category: 'Genel', subModules: [] },
+  
+  // 2. Müşteriler
+  { key: 'customers', label: 'Müşteriler', category: 'Müşteri İlişkileri', subModules: [] },
+  
+  // 3. Tedarikçiler
+  { key: 'suppliers', label: 'Tedarikçiler', category: 'Müşteri İlişkileri', subModules: [] },
+  
+  // 4. Satış Yönetimi
+  { 
+    key: 'crm', 
+    label: 'Satış Yönetimi', 
+    category: 'Satış Yönetimi', 
+    subModules: [
+      { key: 'activities', label: 'Aktiviteler' },
+      { key: 'opportunities', label: 'Fırsatlar' },
+      { key: 'proposals', label: 'Teklifler' },
+      { key: 'orders', label: 'Siparişler' },
+      { key: 'deliveries', label: 'Teslimatlar' },
+      { key: 'returns', label: 'İadeler' },
+    ]
+  },
+  
+  // 5. Satın Alma
+  { 
+    key: 'purchasing', 
+    label: 'Satın Alma', 
+    category: 'Satın Alma', 
+    subModules: [
+      { key: 'purchase-requests', label: 'Talepler' },
+      { key: 'purchase-rfqs', label: 'Teklif İst.' },
+      { key: 'purchase-orders', label: 'Siparişler' },
+      { key: 'purchase-grns', label: 'Teslimatlar' },
+      { key: 'vendor-invoices', label: 'Faturalar' },
+    ]
+  },
+  
+  // 6. Servis
+  { 
+    key: 'service', 
+    label: 'Servis', 
+    category: 'Servis', 
+    subModules: [
+      { key: 'service-scheduling', label: 'Zaman Çizelgesi' },
+      { key: 'service-list', label: 'Liste Görünümü' },
+      { key: 'service-kanban', label: 'Kanban Panosu' },
+      { key: 'service-calendar', label: 'Takvim' },
+      { key: 'service-map', label: 'Harita Görünümü' },
+      { key: 'service-work-orders', label: 'İş Emirleri' },
+      { key: 'service-assets', label: 'Cihaz Yönetimi' },
+      { key: 'service-contracts', label: 'Sözleşmeler' },
+      { key: 'service-warranties', label: 'Garanti Takibi' },
+      { key: 'service-maintenance', label: 'Bakım Takvimi' },
+      { key: 'service-templates', label: 'Servis Şablonları' },
+      { key: 'service-sla', label: 'SLA Yönetimi' },
+      { key: 'service-performance', label: 'Teknisyen Performansı' },
+      { key: 'service-costs', label: 'Maliyet Analizi' },
+      { key: 'service-parts', label: 'Parça Yönetimi' },
+      { key: 'service-satisfaction', label: 'Müşteri Memnuniyeti' },
+      { key: 'service-history', label: 'Servis Geçmişi' },
+      { key: 'service-analytics', label: 'Raporlar ve Analitik' },
+    ]
+  },
+  
+  // 7. Fatura Yönetimi
+  { 
+    key: 'invoices', 
+    label: 'Fatura Yönetimi', 
+    category: 'Fatura Yönetimi', 
+    subModules: [
+      { key: 'sales-invoices', label: 'Satış Faturaları' },
+      { key: 'purchase-invoices', label: 'Alış Faturaları' },
+      { key: 'e-invoice', label: 'E-Fatura' },
+    ]
+  },
+  
+  // 8. Nakit Akış
+  { 
+    key: 'cashflow', 
+    label: 'Nakit Akış', 
+    category: 'Nakit Akış', 
+    subModules: [
+      { key: 'bank-accounts', label: 'Hesaplar' },
+      { key: 'expenses', label: 'Gelirler ve Giderler' },
+      { key: 'budget-management', label: 'Bütçe Yönetimi' },
+      { key: 'checks-notes', label: 'Çekler ve Senetler' },
+      { key: 'loans', label: 'Krediler' },
+    ]
+  },
+  
+  // 9. Stok Yönetimi
+  { 
+    key: 'inventory', 
+    label: 'Stok Yönetimi', 
+    category: 'Stok Yönetimi', 
+    subModules: [
+      { key: 'products', label: 'Ürünler' },
+      { key: 'transactions', label: 'Stok Hareketleri' },
+      { key: 'counts', label: 'Stok Sayımları' },
+      { key: 'warehouses', label: 'Depolar' },
+      { key: 'production', label: 'Üretim' },
+    ]
+  },
+  
+  // 10. Çalışanlar
+  { key: 'employees', label: 'Çalışanlar', category: 'İnsan Kaynakları', subModules: [] },
+  
+  // 11. Araç Yönetimi
+  { key: 'vehicles', label: 'Araç Yönetimi', category: 'İnsan Kaynakları', subModules: [] },
+  
+  // 12. Raporlar
+  { key: 'reports', label: 'Raporlar', category: 'Genel', subModules: [] },
+  
+  // 13. Modül Ağacı
+  { key: 'modules-tree', label: 'Modül Ağacı', category: 'Sistem', subModules: [] },
+  
+  // 14. Ayarlar
+  { 
+    key: 'settings', 
+    label: 'Ayarlar', 
+    category: 'Sistem', 
+    subModules: [
+      { key: 'users', label: 'Kullanıcı Yönetimi' },
+      { key: 'subscription', label: 'Abonelik & Faturalama' },
+      { key: 'nilvera', label: 'Nilvera E-Fatura' },
+      { key: 'system', label: 'Sistem Ayarları' },
+      { key: 'pdf-templates', label: 'PDF Şablonları' },
+      { key: 'audit-logs', label: 'Denetim Günlüğü' },
+    ]
+  },
+];
+
+// Sadece menü görünürlüğü için access yetkisi kullanılıyor
 
 interface UserWithEmployee {
   id: string;
@@ -24,165 +175,398 @@ interface Role {
   id: string;
   name: string;
   description: string | null;
-  permissions: string[] | null;
+  permissions: Record<string, any> | null;
+  isSystem?: boolean;
 }
 
+type RolePermissions = Record<string, Record<string, boolean>>;
+
 export const RoleManagementPanel = ({ users }: RoleManagementPanelProps) => {
-  const [isAddRoleDialogOpen, setIsAddRoleDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
+  
+  // Default roles - Admin is always first
+  const defaultRoles: Role[] = [
+    {
+      id: 'admin-system',
+      name: 'Admin',
+      description: 'Sistem yöneticisi - Tüm yetkilere sahip',
+      permissions: null,
+      isSystem: true
+    },
+    {
+      id: 'yonetici-default',
+      name: 'Yönetici',
+      description: 'Şirket yöneticisi',
+      permissions: null,
+      isSystem: false
+    },
+    {
+      id: 'satis-muduru-default',
+      name: 'Satış Müdürü',
+      description: 'Satış departmanı yöneticisi',
+      permissions: null,
+      isSystem: false
+    },
+    {
+      id: 'satis-temsilcisi-default',
+      name: 'Satış Temsilcisi',
+      description: 'Satış ekibi üyesi',
+      permissions: null,
+      isSystem: false
+    },
+    {
+      id: 'muhasebe-default',
+      name: 'Muhasebe',
+      description: 'Muhasebe departmanı',
+      permissions: null,
+      isSystem: false
+    },
+    {
+      id: 'ik-default',
+      name: 'İnsan Kaynakları',
+      description: 'İnsan kaynakları departmanı',
+      permissions: null,
+      isSystem: false
+    }
+  ];
 
-  // Fetch roles
-  const { data: roles = [], isLoading } = useQuery<Role[]>({
-    queryKey: ['roles'],
+  // Her rol için yetki state'i
+  const [rolePermissions, setRolePermissions] = useState<Record<string, RolePermissions>>({});
+  // Her modül için açık/kapalı state'i (rol-modül kombinasyonu)
+  const [moduleOpenStates, setModuleOpenStates] = useState<Record<string, Record<string, boolean>>>({});
+
+  // Veritabanından rolleri çek
+  const { data: dbRoles = [] } = useQuery({
+    queryKey: ['roles', userData?.company_id],
     queryFn: async () => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (!profile?.company_id) return [];
-
+      if (!userData?.company_id) return [];
+      
+      const roleNames = defaultRoles.map(r => r.name);
+      
       const { data, error } = await supabase
         .from('roles')
         .select('*')
-        .eq('company_id', profile.company_id)
-        .order('created_at', { ascending: false });
+        .eq('company_id', userData.company_id)
+        .in('name', roleNames);
 
       if (error) throw error;
       return data || [];
-    }
+    },
+    enabled: !!userData?.company_id,
   });
 
-  // Calculate user count per role
+  // Admin rolü için tüm modülleri görünür yapan helper fonksiyon
+  const getAllPermissionsForAdmin = (): RolePermissions => {
+    const allPermissions: RolePermissions = {};
+    
+    MODULE_DEFINITIONS.forEach(module => {
+      // Ana modül için sadece access yetkisini true yap
+      allPermissions[module.key] = {
+        access: true,
+      };
+      
+      // Alt modüller için de sadece access yetkisini true yap
+      if (module.subModules && module.subModules.length > 0) {
+        module.subModules.forEach(subModule => {
+          allPermissions[subModule.key] = {
+            access: true,
+          };
+        });
+      }
+    });
+    
+    return allPermissions;
+  };
+
+  // Rolleri birleştir ve yetkileri yükle
+  useEffect(() => {
+    const permissions: Record<string, RolePermissions> = {};
+    
+    defaultRoles.forEach(role => {
+      // Admin rolü için tüm yetkileri true yap
+      if (role.name === 'Admin') {
+        const dbRole = dbRoles.find(r => r.name === role.name);
+        if (dbRole?.permissions && typeof dbRole.permissions === 'object' && 'modules' in dbRole.permissions) {
+          // Veritabanında varsa onu kullan, yoksa tüm yetkileri true yap
+          const dbPermissions = (dbRole.permissions as any).modules || {};
+          // Eğer boşsa veya eksik modüller varsa, tüm yetkileri true yap
+          const allAdminPermissions = getAllPermissionsForAdmin();
+          permissions[role.id] = { ...allAdminPermissions, ...dbPermissions };
+        } else {
+          // Veritabanında yoksa, tüm yetkileri true yap
+          permissions[role.id] = getAllPermissionsForAdmin();
+        }
+      } else {
+        const dbRole = dbRoles.find(r => r.name === role.name);
+        if (dbRole?.permissions && typeof dbRole.permissions === 'object' && 'modules' in dbRole.permissions) {
+          permissions[role.id] = (dbRole.permissions as any).modules || {};
+        } else {
+          // Varsayılan yetkiler (boş)
+          permissions[role.id] = {};
+        }
+      }
+    });
+    
+    setRolePermissions(permissions);
+  }, [dbRoles]);
+
+  // Yetki değiştirme
+  const togglePermission = (roleId: string, moduleKey: string, permissionKey: string) => {
+    setRolePermissions(prev => ({
+      ...prev,
+      [roleId]: {
+        ...prev[roleId],
+        [moduleKey]: {
+          ...prev[roleId]?.[moduleKey],
+          [permissionKey]: !prev[roleId]?.[moduleKey]?.[permissionKey],
+        },
+      },
+    }));
+  };
+
+  // Yetkileri kaydet
+  const savePermissionsMutation = useMutation({
+    mutationFn: async ({ roleId, roleName, permissions }: { roleId: string; roleName: string; permissions: RolePermissions }) => {
+      if (!userData?.company_id) throw new Error('Şirket bilgisi bulunamadı');
+
+      // Veritabanında rol var mı kontrol et
+      const existingRole = dbRoles.find(r => r.name === roleName);
+      
+      const permissionsData = {
+        modules: permissions
+      };
+
+      if (existingRole) {
+        // Güncelle
+        const { error } = await supabase
+          .from('roles')
+          .update({ permissions: permissionsData })
+          .eq('id', existingRole.id);
+
+        if (error) throw error;
+      } else {
+        // Yeni rol oluştur
+        const { error } = await supabase
+          .from('roles')
+          .insert({
+            name: roleName,
+            description: defaultRoles.find(r => r.id === roleId)?.description || null,
+            permissions: permissionsData,
+            company_id: userData.company_id,
+            role_type: 'custom',
+            is_active: true,
+          });
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success('Yetkiler başarıyla kaydedildi');
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+    },
+    onError: (error: any) => {
+      toast.error('Yetkiler kaydedilirken hata oluştu: ' + error.message);
+    },
+  });
+
+  // Helper function to map owner/admin role to Admin for display
+  const mapRoleForDisplay = (role: string): string => {
+    const lowerRole = role.toLowerCase();
+    if (lowerRole === 'owner' || lowerRole === 'admin') {
+      return 'Admin';
+    }
+    return role;
+  };
+
+  // Calculate user count per role (including owner as Admin)
   const getRoleUserCount = (roleName: string) => {
+    // Count both the role name and owner if roleName is Admin
+    if (roleName === 'Admin') {
+      return users.filter(u => {
+        const userRole = u.user_roles?.[0]?.role || '';
+        return userRole.toLowerCase() === 'owner' || userRole === 'Admin' || userRole === 'admin';
+      }).length;
+    }
     return users.filter(u => u.user_roles?.some(r => r.role === roleName)).length;
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="p-3 border rounded-lg">
-            <Skeleton className="h-4 w-[120px] mb-2" />
-            <Skeleton className="h-3 w-full" />
-          </div>
-        ))}
-      </div>
-    );
-  }
+  // Use default roles only
+  const displayRoles = defaultRoles;
 
-  if (roles.length === 0) {
-    return (
-      <>
-        <div className="text-center py-12 px-4">
-          <div className="p-4 bg-purple-100 rounded-full mb-4 w-fit mx-auto">
-            <Shield className="h-12 w-12 text-purple-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Henüz rol tanımlanmamış</h3>
-          <p className="text-sm text-gray-500 mb-6">İlk rolünüzü ekleyerek başlayabilirsiniz</p>
-          <Button
-            onClick={() => setIsAddRoleDialogOpen(true)}
-            className="gap-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg"
-          >
-            <Plus className="h-4 w-4" />
-            İlk Rolü Ekle
-          </Button>
-        </div>
-        <AddRoleDialog
-          open={isAddRoleDialogOpen}
-          onOpenChange={setIsAddRoleDialogOpen}
-        />
-      </>
-    );
-  }
+  // Modülleri sidebar sırasına göre doğrudan kullan (kategoriler olmadan)
+  const sortedModules = MODULE_DEFINITIONS;
 
   return (
     <>
-      <div className="mb-4">
-        <Button
-          onClick={() => setIsAddRoleDialogOpen(true)}
-          className="w-full gap-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg"
-          size="sm"
-        >
-          <Plus className="h-4 w-4" />
-          Yeni Rol Ekle
-        </Button>
-      </div>
+      <ScrollArea className="h-[600px] pr-4">
+        <div className="grid grid-cols-2 gap-4">
+          {displayRoles.map((role) => {
+            const userCount = getRoleUserCount(role.name);
+            const isSystemRole = role.isSystem || false;
+            const permissions = rolePermissions[role.id] || {};
+            const isSaving = savePermissionsMutation.isPending;
 
-      <ScrollArea className="h-[530px] pr-4">
-        <div className="space-y-3">
-        {roles.map((role) => {
-          const userCount = getRoleUserCount(role.name);
-          const permissionsCount = role.permissions?.length || 0;
-
-          return (
-            <div
-              key={role.id}
-              className="group relative overflow-hidden bg-white border-2 border-purple-100 rounded-xl shadow-sm hover:shadow-md hover:border-purple-200 transition-all duration-300 hover:-translate-y-0.5"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-50 to-purple-100 rounded-full -translate-y-12 translate-x-12"></div>
-
-              <div className="relative p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md">
-                      <Shield className="h-4 w-4 text-white" />
+            return (
+              <div key={role.id} className="mb-0">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value={role.id} className="border-0">
+                    <div className={`bg-white border rounded-lg shadow-sm h-full ${
+                      isSystemRole 
+                        ? 'border-blue-200 bg-blue-50/50' 
+                        : 'border-gray-200'
+                    }`}>
+                      <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                    <div className="flex items-center justify-between gap-3 w-full pr-2">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`p-2 rounded-md flex-shrink-0 ${
+                          isSystemRole 
+                            ? 'bg-blue-500' 
+                            : 'bg-purple-500'
+                        }`}>
+                          <Shield className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-sm text-gray-900 truncate">{role.name}</h4>
+                            {isSystemRole && (
+                              <span className="text-xs text-blue-600 font-medium whitespace-nowrap">Sistem</span>
+                            )}
+                          </div>
+                          {role.description && (
+                            <p className="text-xs text-gray-500 truncate mt-1">
+                              {role.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Badge className={`border-0 text-xs gap-1.5 font-semibold flex-shrink-0 px-2.5 py-1 ${
+                        isSystemRole 
+                          ? 'bg-blue-100 text-blue-700' 
+                          : 'bg-purple-100 text-purple-700'
+                      }`}>
+                        <Users className="h-3.5 w-3.5" />
+                        {userCount}
+                      </Badge>
                     </div>
-                    <h4 className="font-bold text-sm text-gray-900">{role.name}</h4>
-                  </div>
-                  <Badge className="bg-purple-100 text-purple-700 border-0 text-xs gap-1 font-semibold">
-                    <Users className="h-3 w-3" />
-                    {userCount}
-                  </Badge>
+                  </AccordionTrigger>
+                  
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-3 pt-3">
+                      {/* Modüller - Sidebar sırasına göre, kategoriler olmadan */}
+                      <div className="space-y-3">
+                            {sortedModules.map((module) => {
+                              // Alt modülü olan modüller için akordiyon, olmayanlar için normal checkbox
+                              const hasSubModules = module.subModules && module.subModules.length > 0;
+                              
+                              if (hasSubModules) {
+                                // Collapsible yapısı - Checkbox dışarda, modül adı collapsible içinde
+                                const moduleStateKey = `${role.id}-${module.key}`;
+                                const isOpen = moduleOpenStates[role.id]?.[module.key] || false;
+                                
+                                return (
+                                  <div key={module.key} className="flex items-center justify-between py-2 pr-2">
+                                    <div className="flex items-center gap-2 flex-1">
+                                      <Collapsible 
+                                        open={isOpen} 
+                                        onOpenChange={(open) => {
+                                          setModuleOpenStates(prev => ({
+                                            ...prev,
+                                            [role.id]: {
+                                              ...prev[role.id],
+                                              [module.key]: open
+                                            }
+                                          }));
+                                        }} 
+                                        className="flex-1"
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <CollapsibleTrigger asChild>
+                                            <button className="py-1 px-0 hover:no-underline flex items-center gap-2 flex-1 text-left">
+                                              <span className="text-sm font-medium text-gray-800">
+                                                {module.label}
+                                              </span>
+                                              <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+                                          </CollapsibleTrigger>
+                                        </div>
+                                        <CollapsibleContent className="pt-3 pb-0">
+                                          <div className="space-y-2 pl-3">
+                                            {module.subModules.map((subModule) => {
+                                              const isParentAccessEnabled = permissions[module.key]?.access || false;
+                                              return (
+                                                <div key={subModule.key} className="flex items-center justify-between pr-2 py-1">
+                                                  <span 
+                                                    className={`text-xs font-medium ${
+                                                      isParentAccessEnabled ? 'text-gray-700' : 'text-gray-400'
+                                                    }`}
+                                                  >
+                                                    {subModule.label}
+                                                  </span>
+                                                  <Checkbox
+                                                    checked={permissions[subModule.key]?.access || false}
+                                                    onCheckedChange={() => togglePermission(role.id, subModule.key, 'access')}
+                                                    disabled={!isParentAccessEnabled}
+                                                    className="h-4 w-4 shrink-0"
+                                                  />
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </CollapsibleContent>
+                                      </Collapsible>
+                                    </div>
+                                    <Checkbox
+                                      checked={permissions[module.key]?.access || false}
+                                      onCheckedChange={() => togglePermission(role.id, module.key, 'access')}
+                                      className="h-4 w-4 shrink-0"
+                                    />
+                                  </div>
+                                );
+                              } else {
+                                // Alt modülü olmayan modüller için normal checkbox
+                                return (
+                                  <div key={module.key} className="flex items-center justify-between py-2 pr-2">
+                                    <span className="text-sm font-medium text-gray-800">
+                                      {module.label}
+                                    </span>
+                                    <Checkbox
+                                      checked={permissions[module.key]?.access || false}
+                                      onCheckedChange={() => togglePermission(role.id, module.key, 'access')}
+                                      className="h-4 w-4 shrink-0"
+                                    />
+                                  </div>
+                                );
+                              }
+                            })}
+                      </div>
+                      
+                      {/* Kaydet butonu */}
+                      <div className="pt-4 border-t mt-4">
+                        <Button
+                          onClick={() => savePermissionsMutation.mutate({
+                            roleId: role.id,
+                            roleName: role.name,
+                            permissions: permissions
+                          })}
+                          disabled={isSaving}
+                          size="default"
+                          className="w-full h-10 text-sm gap-2"
+                        >
+                          <Save className="h-4 w-4" />
+                          {isSaving ? 'Kaydediliyor...' : 'Yetkileri Kaydet'}
+                        </Button>
+                      </div>
+                    </div>
+                  </AccordionContent>
                 </div>
-
-                {role.description && (
-                  <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                    {role.description}
-                  </p>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <span className="text-xs text-gray-500 font-medium">{permissionsCount} İzin</span>
-                  </div>
-                </div>
-
-                {/* Permissions Preview */}
-                {role.permissions && role.permissions.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    {role.permissions.slice(0, 3).map((permission) => (
-                      <Badge
-                        key={`${role.id}-${permission}`}
-                        variant="outline"
-                        className="text-[10px] px-2 py-0.5 border-purple-200 text-purple-700"
-                      >
-                        {permission}
-                      </Badge>
-                    ))}
-                    {role.permissions.length > 3 && (
-                      <Badge
-                        key={`${role.id}-more`}
-                        variant="outline"
-                        className="text-[10px] px-2 py-0.5 border-purple-200 text-purple-700 font-semibold"
-                      >
-                        +{role.permissions.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-                )}
+              </AccordionItem>
+            </Accordion>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
         </div>
       </ScrollArea>
-
-      <AddRoleDialog
-        open={isAddRoleDialogOpen}
-        onOpenChange={setIsAddRoleDialogOpen}
-      />
     </>
   );
 };

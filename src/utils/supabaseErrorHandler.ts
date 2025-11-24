@@ -1,5 +1,12 @@
-import { PostgrestError } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+
+// PostgrestError type definition
+export interface PostgrestError {
+  message: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+}
 
 /**
  * Supabase error handler utility

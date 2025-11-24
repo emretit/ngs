@@ -54,20 +54,20 @@ export const queryKeys = {
   invoices: {
     all: ['invoices'] as const,
     sales: {
-      all: [...queryKeys.invoices.all, 'sales'] as const,
-      lists: () => [...queryKeys.invoices.sales.all, 'list'] as const,
+      all: ['invoices', 'sales'] as const,
+      lists: () => ['invoices', 'sales', 'list'] as const,
       list: (filters?: Record<string, unknown>) => 
-        [...queryKeys.invoices.sales.lists(), filters] as const,
-      detail: (id: string) => [...queryKeys.invoices.sales.all, 'detail', id] as const,
+        ['invoices', 'sales', 'list', filters] as const,
+      detail: (id: string) => ['invoices', 'sales', 'detail', id] as const,
     },
     purchase: {
-      all: [...queryKeys.invoices.all, 'purchase'] as const,
-      lists: () => [...queryKeys.invoices.purchase.all, 'list'] as const,
+      all: ['invoices', 'purchase'] as const,
+      lists: () => ['invoices', 'purchase', 'list'] as const,
       list: (filters?: Record<string, unknown>) => 
-        [...queryKeys.invoices.purchase.lists(), filters] as const,
-      detail: (id: string) => [...queryKeys.invoices.purchase.all, 'detail', id] as const,
+        ['invoices', 'purchase', 'list', filters] as const,
+      detail: (id: string) => ['invoices', 'purchase', 'detail', id] as const,
     },
-    analysis: (year?: number) => [...queryKeys.invoices.all, 'analysis', year] as const,
+    analysis: (year?: number) => ['invoices', 'analysis', year] as const,
   },
 
   // Calendar

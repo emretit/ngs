@@ -63,6 +63,8 @@ const SupplierNew = () => {
     notes: "",
     // İlk yetkili kişi pozisyonu
     first_contact_position: "",
+    apartment_number: "",
+    unit_number: "",
   });
   // URL parametrelerinden form verilerini doldur
   useEffect(() => {

@@ -345,9 +345,9 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         template={templateToPreview}
         open={isPreviewModalOpen}
         onOpenChange={setIsPreviewModalOpen}
-        onEdit={handleEditTemplate}
-        onDuplicate={handleDuplicateTemplate}
-        onDelete={handleDeleteTemplateClick}
+        onEdit={(template) => handleEditTemplate(template as any)}
+        onDuplicate={(template) => handleDuplicateTemplate(template as any)}
+        onDelete={(template) => handleDeleteTemplateClick(template as any)}
       />
 
       {/* Template Type Selection Modal */}

@@ -17,15 +17,16 @@ export default function ServiceHistory() {
 
   // Tamamlanmış servisleri filtrele
   const completedServices = serviceRequests?.filter(
-    service => service.service_status === 'completed' || service.service_status === 'closed'
+    service => service.service_status === 'completed'
   );
 
   // Arama ve zaman filtreleme
   const filteredServices = completedServices?.filter(service => {
+    const customerData = service.customer_data as any;
     const matchesSearch = 
       service.service_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       service.service_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.customer_data?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      customerData?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     
     if (!matchesSearch) return false;
 
@@ -170,7 +171,7 @@ export default function ServiceHistory() {
                     <CardTitle className="text-lg">{service.service_title}</CardTitle>
                     <CardDescription>
                       <span className="font-medium">{service.service_number}</span>
-                      {service.customer_data?.name && ` • ${service.customer_data.name}`}
+                      {(service.customer_data as any)?.name && ` • ${(service.customer_data as any).name}`}
                     </CardDescription>
                   </div>
                   <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
@@ -191,18 +192,6 @@ export default function ServiceHistory() {
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span>{format(new Date(service.completion_date), 'dd MMM yyyy', { locale: tr })}</span>
-                    </div>
-                  )}
-                  {service.total_cost && (
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span>{service.total_cost.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
-                    </div>
-                  )}
-                  {service.customer_rating && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-yellow-500">★</span>
-                      <span>{service.customer_rating}/5</span>
                     </div>
                   )}
                 </div>

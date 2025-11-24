@@ -28,9 +28,9 @@ export default function ServiceWorkOrders() {
   // İstatistikler
   const stats = {
     total: serviceRequests?.length || 0,
-    open: serviceRequests?.filter(s => s.service_status === 'open' || s.service_status === 'pending').length || 0,
+    open: serviceRequests?.filter(s => s.service_status === 'new').length || 0,
     inProgress: serviceRequests?.filter(s => s.service_status === 'in_progress' || s.service_status === 'assigned').length || 0,
-    completed: serviceRequests?.filter(s => s.service_status === 'completed' || s.service_status === 'closed').length || 0,
+    completed: serviceRequests?.filter(s => s.service_status === 'completed').length || 0,
   };
 
   const getStatusIcon = (status: string) => {
@@ -204,7 +204,7 @@ export default function ServiceWorkOrders() {
                   >
                     <TableCell className="font-medium">{workOrder.service_number}</TableCell>
                     <TableCell>{workOrder.service_title}</TableCell>
-                    <TableCell>{workOrder.customer_data?.name || 'N/A'}</TableCell>
+                    <TableCell>{(workOrder.customer_data as any)?.name || 'N/A'}</TableCell>
                     <TableCell>
                       {workOrder.assigned_technician ? (
                         <div className="flex items-center gap-2">

@@ -12,7 +12,7 @@ import { useEffect } from "react";
 
 interface SupplierBasicInfoProps {
   formData: SupplierFormData;
-  setFormData: (value: SupplierFormData) => void;
+  setFormData: React.Dispatch<React.SetStateAction<SupplierFormData>>;
 }
 
 const SupplierBasicInfo = ({ formData, setFormData }: SupplierBasicInfoProps) => {

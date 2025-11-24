@@ -53,6 +53,8 @@ const CustomerNew = () => {
     second_country: "",
     second_postal_code: "",
     payment_terms: "",
+    apartment_number: "",
+    unit_number: "",
   });
   const mutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {

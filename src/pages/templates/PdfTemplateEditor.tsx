@@ -13,7 +13,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { PDFViewer } from '@react-pdf/renderer';
-import { Download, Save, Eye, EyeOff, Plus, FileText, MoreHorizontal, FileDown, Send } from 'lucide-react';
+import { Download, Save, Eye, EyeOff, Plus, FileText, MoreHorizontal, FileDown, Send, Bold, Italic, Underline } from 'lucide-react';
 import BackButton from '@/components/ui/back-button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { TemplateSchema, PdfTemplate, QuoteData } from '@/types/pdf-template';
@@ -42,6 +42,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   const [isNewTemplate, setIsNewTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const companyInfoLoadedRef = useRef(false);
+  const footerTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const form = useForm<TemplateSchema>({
     resolver: zodResolver(z.object({
@@ -104,6 +105,8 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       notes: z.object({
         footer: z.string(),
         footerFontSize: z.number().min(8).max(32),
+        showFooterLogo: z.boolean().optional(),
+        footerLogoSize: z.number().min(20).max(100).optional(),
         termsSettings: z.object({
           showPaymentTerms: z.boolean(),
           showDeliveryTerms: z.boolean(),
@@ -153,6 +156,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       },
       lineTable: {
         columns: [
+          { key: 'product_image', show: true, label: 'Görsel', align: 'center' },
           { key: 'description', show: true, label: 'Açıklama', align: 'left' },
           { key: 'quantity', show: true, label: 'Miktar', align: 'center' },
           { key: 'unit_price', show: true, label: 'Birim Fiyat', align: 'right' },
@@ -170,6 +174,8 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       notes: {
         footer: 'İyi çalışmalar dileriz.',
         footerFontSize: 12,
+        showFooterLogo: true,
+        footerLogoSize: 40,
         termsSettings: {
           showPaymentTerms: true,
           showDeliveryTerms: true,
@@ -360,12 +366,34 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             columns: (() => {
               const existingColumns = template.schema_json.lineTable?.columns || [];
               const hasDiscountColumn = existingColumns.some(col => col.key === 'discount');
+              const hasProductImageColumn = existingColumns.some(col => col.key === 'product_image');
                 
                 // Ensure all columns have align field
                 let newColumns = existingColumns.map(col => ({
                   ...col,
-                  align: col.align || (col.key === 'quantity' ? 'center' : col.key === 'total' || col.key === 'unit_price' || col.key === 'discount' ? 'right' : 'left')
+                  align: col.align || (col.key === 'quantity' ? 'center' : col.key === 'total' || col.key === 'unit_price' || col.key === 'discount' ? 'right' : col.key === 'product_image' ? 'center' : 'left')
                 }));
+              
+              if (!hasProductImageColumn) {
+                // Insert product_image column before description column (after row number)
+                const descriptionIndex = newColumns.findIndex(col => col.key === 'description');
+                if (descriptionIndex !== -1) {
+                  newColumns.splice(descriptionIndex, 0, {
+                    key: 'product_image',
+                    show: true,
+                    label: 'Görsel',
+                    align: 'center'
+                  });
+                } else {
+                  // If no description column, add at the beginning
+                  newColumns.unshift({
+                    key: 'product_image',
+                    show: true,
+                    label: 'Görsel',
+                    align: 'center'
+                  });
+                }
+              }
               
               if (!hasDiscountColumn) {
                 // Insert discount column before total column
@@ -394,6 +422,8 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           notes: {
             ...template.schema_json.notes,
             footerFontSize: template.schema_json.notes.footerFontSize || 12,
+            showFooterLogo: template.schema_json.notes.showFooterLogo ?? true,
+            footerLogoSize: template.schema_json.notes.footerLogoSize || 40,
             termsSettings: template.schema_json.notes.termsSettings || {
               showPaymentTerms: true,
               showDeliveryTerms: true,
@@ -478,6 +508,8 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
         payment_terms: '30 gün vadeli',
         delivery_terms: '1 hafta içinde',
         warranty_terms: '1 yıl garanti',
+        price_terms: 'Fiyatlar KDV hariç olup, 30 gün süreyle geçerlidir.',
+        other_terms: 'Teklif edilen ürünler stokla sınırlıdır. Sipariş öncesi stok kontrolü yapılmalıdır.',
         id: 'sample-1',
         created_at: new Date().toISOString(),
       };
@@ -572,6 +604,47 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   };
 
   const watchedValues = form.watch();
+
+  // Rich text formatting functions for footer
+  const insertFormatting = (tag: string) => {
+    const textarea = footerTextareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentValue = form.getValues('notes.footer') || '';
+    const selectedText = currentValue.substring(start, end);
+
+    if (selectedText) {
+      // Wrap selected text with tags
+      const beforeText = currentValue.substring(0, start);
+      const afterText = currentValue.substring(end);
+      const newValue = `${beforeText}<${tag}>${selectedText}</${tag}>${afterText}`;
+
+      form.setValue('notes.footer', newValue);
+
+      // Set cursor position after the closing tag
+      setTimeout(() => {
+        textarea.focus();
+        const newPosition = start + tag.length + 2 + selectedText.length + tag.length + 3;
+        textarea.setSelectionRange(newPosition, newPosition);
+      }, 0);
+    } else {
+      // Insert empty tags
+      const beforeText = currentValue.substring(0, start);
+      const afterText = currentValue.substring(start);
+      const newValue = `${beforeText}<${tag}></${tag}>${afterText}`;
+
+      form.setValue('notes.footer', newValue);
+
+      // Set cursor position between tags
+      setTimeout(() => {
+        textarea.focus();
+        const newPosition = start + tag.length + 2;
+        textarea.setSelectionRange(newPosition, newPosition);
+      }, 0);
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -1332,9 +1405,65 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                         </div>
                       </div>
                       
-                      <div className="space-y-1 pt-1.5 border-t border-gray-200">
-                        <Label className="text-xs">Alt Bilgi</Label>
-                        <Textarea {...form.register('notes.footer')} rows={2} className="text-xs" />
+                      <div className="space-y-1.5 pt-1.5 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-semibold text-gray-800">Alt Bilgi</Label>
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              id="show-footer-logo"
+                              checked={watchedValues.notes?.showFooterLogo ?? true}
+                              onCheckedChange={(checked) => form.setValue('notes.showFooterLogo', checked)}
+                              className="scale-75"
+                            />
+                            <Label htmlFor="show-footer-logo" className="text-xs text-gray-600">Logo</Label>
+                          </div>
+                        </div>
+
+                        {/* Rich Text Formatting Buttons */}
+                        <div className="flex items-center gap-1 mb-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => insertFormatting('b')}
+                            className="h-6 w-6 p-0"
+                            title="Kalın (Bold)"
+                          >
+                            <Bold className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => insertFormatting('i')}
+                            className="h-6 w-6 p-0"
+                            title="İtalik (Italic)"
+                          >
+                            <Italic className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => insertFormatting('u')}
+                            className="h-6 w-6 p-0"
+                            title="Altı Çizili (Underline)"
+                          >
+                            <Underline className="h-3 w-3" />
+                          </Button>
+                          <span className="text-xs text-gray-500 ml-2">Metni seçip butonlara tıklayarak biçimlendirin</span>
+                        </div>
+
+                        <Textarea
+                          {...form.register('notes.footer')}
+                          ref={(e) => {
+                            form.register('notes.footer').ref(e);
+                            (footerTextareaRef as any).current = e;
+                          }}
+                          rows={3}
+                          className="text-xs font-mono"
+                          placeholder="Örn: <b>Kalın metin</b>, <i>italik</i>, <u>altı çizili</u>"
+                        />
                         <div className="flex items-center gap-2">
                           <Label className="text-xs">Font:</Label>
                           <Input
@@ -1345,6 +1474,19 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                             placeholder="12"
                             className="h-6 w-14 text-center text-xs"
                           />
+                          {watchedValues.notes?.showFooterLogo && (
+                            <>
+                              <Label className="text-xs ml-2">Logo Boyut:</Label>
+                              <Input
+                                type="number"
+                                {...form.register('notes.footerLogoSize', { valueAsNumber: true })}
+                                min="20"
+                                max="100"
+                                placeholder="40"
+                                className="h-6 w-14 text-center text-xs"
+                              />
+                            </>
+                          )}
                         </div>
                       </div>
                     </AccordionContent>

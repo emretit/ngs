@@ -205,7 +205,8 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                         unit_price: item.unit_price,
                         vat_rate: item.tax_rate || 20,
                         discount_rate: item.discount_rate || 0,
-                        currency: item.currency
+                        currency: item.currency,
+                        image_url: item.image_url // PDF export için ürün resmi
                       };
                       
                       onProductModalSelect(existingData, index);

@@ -217,3 +217,5 @@ const EquipmentServiceCard: React.FC<EquipmentServiceCardProps> = ({
 
 export default EquipmentServiceCard;
 
+
+

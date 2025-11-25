@@ -1,6 +1,7 @@
 
 import Settings from "@/pages/Settings";
 import UsersSettings from "@/pages/settings/UsersSettings";
+import RolesSettings from "@/pages/settings/RolesSettings";
 import NilveraSettingsPage from "@/pages/settings/NilveraSettings";
 import SystemSettingsPage from "@/pages/settings/SystemSettings";
 import PdfTemplates from "@/pages/PdfTemplates";
@@ -15,6 +16,7 @@ import { RouteConfig } from "./types";
 export const settingsRoutes: RouteConfig[] = [
   { path: "/settings", component: Settings, protected: true },
   { path: "/users", component: UsersSettings, protected: true },
+  { path: "/roles", component: RolesSettings, protected: true },
   { path: "/subscription", component: Subscription, protected: true },
   { path: "/nilvera", component: NilveraSettingsPage, protected: true },
   { path: "/system", component: SystemSettingsPage, protected: true },

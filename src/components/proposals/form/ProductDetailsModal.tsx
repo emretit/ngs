@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Plus, History } from "lucide-react";
+import { Plus, History, Check } from "lucide-react";
 import { Product } from "@/types/product";
 import { formatCurrency, areCurrenciesEqual, normalizeCurrency } from "@/utils/formatters";
 import { useCurrencyManagement } from "@/components/proposals/form/items/hooks/useCurrencyManagement";
@@ -30,6 +30,7 @@ interface ProductDetailsModalProps {
     currency: string;
     original_price?: number;
     original_currency?: string;
+    image_url?: string;
   }) => void;
   currency: string;
   existingData?: {
@@ -80,8 +81,10 @@ const ProductDetailsModal = ({
   // Track previous currency to handle bidirectional conversion
   const prevCurrencyRef = React.useRef<string>(originalCurrency);
   
-  // Initialize form data when product or existingData changes
+  // Initialize form data when dialog opens with product or existingData
   useEffect(() => {
+    if (!open) return; // Dialog kapalıysa state'leri değiştirme
+    
     if (product) {
       // We're adding a new product
       setQuantity(1);
@@ -95,17 +98,17 @@ const ProductDetailsModal = ({
       prevCurrencyRef.current = originalCurrency;
     } else if (existingData) {
       // We're editing an existing line item
-      setQuantity(existingData.quantity);
-      setUnitPrice(existingData.unit_price);
-      setVatRate(existingData.vat_rate);
-      setDiscountRate(existingData.discount_rate);
-      setDescription(existingData.description);
-      setUnit(existingData.unit);
+      setQuantity(existingData.quantity || 1);
+      setUnitPrice(existingData.unit_price || 0);
+      setVatRate(existingData.vat_rate || 20);
+      setDiscountRate(existingData.discount_rate || 0);
+      setDescription(existingData.description || "");
+      setUnit(existingData.unit || "adet");
       setIsManualPriceEdit(true);
       // Reset currency ref to original currency
       prevCurrencyRef.current = existingData.currency || originalCurrency;
     }
-  }, [product, existingData, originalCurrency]);
+  }, [open, product, existingData, originalCurrency]);
   
   // Reset manual exchange rate when currency changes
   useEffect(() => {
@@ -196,6 +199,8 @@ const ProductDetailsModal = ({
 
   const handleAddToProposal = () => {
     const productName = product ? product.name : (existingData ? existingData.name : "");
+    // image_url: önce product'tan, yoksa existingData'dan al
+    const imageUrl = product?.image_url || (existingData as any)?.image_url;
     
     onAddToProposal({
       name: productName,
@@ -208,7 +213,8 @@ const ProductDetailsModal = ({
       total_price: total,
       currency: selectedCurrency,
       original_price: originalPrice,
-      original_currency: originalCurrency
+      original_currency: originalCurrency,
+      image_url: imageUrl, // PDF export için ürün resmi
     });
 
     onOpenChange(false);
@@ -221,9 +227,13 @@ const ProductDetailsModal = ({
   // Don't render if neither product nor existingData is provided
   if (!product && !existingData) return null;
 
+  // Determine if we're in edit mode
+  const isEditMode = !!existingData;
+  const displayName = product ? product.name : (existingData ? existingData.name : "Ürün Detayları");
+  
   const dialogTitle = (
     <div className="flex items-center justify-between w-full gap-3">
-      <span className="truncate">{product ? product.name : (existingData ? existingData.name : "Ürün Detayları")}</span>
+      <span className="truncate">{isEditMode ? `${displayName} - Düzenle` : displayName}</span>
       {product?.sku && (
         <span className="text-sm font-normal text-gray-500 whitespace-nowrap flex-shrink-0">
           {product.sku}
@@ -564,8 +574,17 @@ const ProductDetailsModal = ({
             variant="primary"
             className="gap-2"
           >
-            <Plus className="h-4 w-4" />
-            Ekle
+            {existingData ? (
+              <>
+                <Check className="h-4 w-4" />
+                Güncelle
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" />
+                Ekle
+              </>
+            )}
           </UnifiedDialogActionButton>
         </UnifiedDialogFooter>
       </div>

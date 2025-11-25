@@ -1,12 +1,12 @@
 
 /**
- * Normalizes currency code: TRY and TL are treated as the same (returns TL for display)
+ * Normalizes currency code: TRY is the standard code
  * @param currency The currency code to normalize
- * @returns Normalized currency code (TL for TRY/TL, otherwise unchanged)
+ * @returns Normalized currency code (TRY for TL/TRY, otherwise unchanged)
  */
 export const normalizeCurrency = (currency: string | null | undefined): string => {
-  if (!currency) return 'TL';
-  return currency === 'TRY' ? 'TL' : currency;
+  if (!currency) return 'TRY';
+  return currency === 'TL' ? 'TRY' : currency;
 };
 
 /**
@@ -34,21 +34,18 @@ export const capitalizeFirstLetter = (string: string): string => {
 /**
  * Formats a number as currency with the Turkish Lira symbol
  * @param amount The amount to format
- * @param currency The currency code (default: 'TL')
+ * @param currency The currency code (default: 'TRY')
  * @returns The formatted currency string
  */
-export const formatCurrency = (amount: number, currency = 'TL'): string => {
+export const formatCurrency = (amount: number, currency = 'TRY'): string => {
   // Handle NaN, undefined, null, or invalid numbers
   const validAmount = isNaN(amount) || !isFinite(amount) ? 0 : amount;
-  // Intl.NumberFormat için geçerli currency code kullan (TL -> TRY)
-  const currencyCode = currency === 'TL' ? 'TRY' : currency;
-  const formatted = new Intl.NumberFormat('tr-TR', { 
+  // Intl.NumberFormat için geçerli currency code kullan
+  const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
+  return new Intl.NumberFormat('tr-TR', { 
     style: 'currency', 
     currency: currencyCode,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(validAmount);
-  
-  // TRY yerine TL göster
-  return formatted.replace('TRY', 'TL');
 };

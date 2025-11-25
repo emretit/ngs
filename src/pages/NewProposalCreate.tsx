@@ -146,6 +146,8 @@ const NewProposalCreate = () => {
 
   // handleFieldChange - State'lerden sonra tanımlanmalı
   const handleFieldChange = useCallback((field: string, value: any) => {
+    console.log('🔍 handleFieldChange:', { field, value }); // Debug
+    
     // Update the appropriate state based on field
     if (['contact_name', 'customer_id'].includes(field)) {
       setCustomerData(prev => ({ ...prev, [field]: value }));
@@ -154,6 +156,7 @@ const NewProposalCreate = () => {
     } else if (['currency', 'exchange_rate', 'vat_percentage'].includes(field)) {
       setFinancialData(prev => ({ ...prev, [field]: value }));
     } else if (['payment_terms', 'delivery_terms', 'warranty_terms', 'price_terms', 'other_terms'].includes(field)) {
+      console.log('🔍 Updating termsData:', { field, value }); // Debug
       setTermsData(prev => ({ ...prev, [field]: value }));
     }
   }, []);
@@ -411,7 +414,8 @@ const NewProposalCreate = () => {
         tax_rate: productData.vat_rate,
         discount_rate: productData.discount_rate,
         total_price: productData.total_price,
-        currency: productData.currency || formData.currency
+        currency: productData.currency || formData.currency,
+        image_url: productData.image_url // PDF export için ürün resmi
       };
       setItems(updatedItems);
     } else {
@@ -427,7 +431,8 @@ const NewProposalCreate = () => {
         tax_rate: productData.vat_rate,
         discount_rate: productData.discount_rate,
         total_price: productData.total_price,
-        currency: productData.currency || formData.currency
+        currency: productData.currency || formData.currency,
+        image_url: productData.image_url // PDF export için ürün resmi
       };
       setItems([...items, newItem]);
     }
@@ -619,12 +624,12 @@ const NewProposalCreate = () => {
         company_id: userData.company_id, // Kullanıcının company_id'si (artık null olamaz)
         offer_date: offerDateValue, // Teklif tarihi (yerel timezone)
         valid_until: formData.validity_date ? formatDateToLocalString(formData.validity_date) : "",
-        terms: `${formData.payment_terms}\n\n${formData.delivery_terms}\n\nGaranti: ${formData.warranty_terms}`,
-        payment_terms: formData.payment_terms,
-        delivery_terms: formData.delivery_terms,
-        warranty_terms: formData.warranty_terms,
-        price_terms: formData.price_terms,
-        other_terms: formData.other_terms,
+        terms: `${termsData.payment_terms}\n\n${termsData.delivery_terms}\n\nGaranti: ${termsData.warranty_terms}`,
+        payment_terms: termsData.payment_terms,
+        delivery_terms: termsData.delivery_terms,
+        warranty_terms: termsData.warranty_terms,
+        price_terms: termsData.price_terms,
+        other_terms: termsData.other_terms,
         // Seçili şart ID'leri
         selected_payment_terms: selectedTermsData.selected_payment_terms,
         selected_delivery_terms: selectedTermsData.selected_delivery_terms,

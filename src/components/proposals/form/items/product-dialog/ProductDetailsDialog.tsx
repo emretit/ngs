@@ -31,9 +31,11 @@ interface ProductDetailsDialogProps {
   setSelectedDepo: (value: string) => void;
   discountRate: number;
   setDiscountRate: (value: number) => void;
-  formatCurrency: (amount: number, currency?: string) => string;
-  onSelectProduct: () => void;
+  formatCurrency?: (amount: number, currency?: string) => string;
+  onSelectProduct?: () => void;
+  onConfirm?: () => void;
   selectedCurrency: string;
+  isEditMode?: boolean;
 }
 
 const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
@@ -48,10 +50,20 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
   setSelectedDepo,
   discountRate,
   setDiscountRate,
-  formatCurrency,
+  formatCurrency: formatCurrencyProp,
   onSelectProduct,
-  selectedCurrency
+  onConfirm,
+  selectedCurrency,
+  isEditMode = false
 }) => {
+  // Default formatCurrency function
+  const formatCurrency = formatCurrencyProp || ((amount: number, currency?: string) => {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: currency || 'TRY',
+      minimumFractionDigits: 2,
+    }).format(amount);
+  });
   const [notes, setNotes] = React.useState("");
   const [availableStock, setAvailableStock] = React.useState(0);
   const [stockStatus, setStockStatus] = React.useState("");
@@ -73,8 +85,12 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
   // Reset state when dialog opens with a product
   useEffect(() => {
     if (open && selectedProduct) {
-      setQuantity(1);
-      setDiscountRate(0);
+      // Only reset quantity and discount if NOT in edit mode
+      if (!isEditMode) {
+        setQuantity(1);
+        setDiscountRate(0);
+      }
+      
       setAvailableStock(selectedProduct.stock_quantity || 0);
       setStockStatus(
         selectedProduct.stock_quantity 
@@ -92,11 +108,15 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
       // Initialize current currency from selected currency
       setCurrentCurrency(selectedCurrency);
     }
-  }, [open, selectedProduct, selectedCurrency, setQuantity, setDiscountRate]);
+  }, [open, selectedProduct, selectedCurrency, setQuantity, setDiscountRate, isEditMode]);
 
   // Handle clicking the Add to Proposal button
   const handleAddToProposal = () => {
-    onSelectProduct();
+    if (isEditMode && onConfirm) {
+      onConfirm();
+    } else if (onSelectProduct) {
+      onSelectProduct();
+    }
   };
 
   if (!selectedProduct) return null;
@@ -105,7 +125,7 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ürün Detayları</DialogTitle>
+          <DialogTitle>{isEditMode ? "Teklif Kalemini Düzenle" : "Ürün Detayları"}</DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
@@ -184,7 +204,7 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
             onClick={handleAddToProposal}
             disabled={quantity < 1 || calculatedTotal <= 0}
           >
-            Teklife Ekle
+            {isEditMode ? "Güncelle" : "Teklife Ekle"}
           </Button>
         </DialogFooter>
       </DialogContent>

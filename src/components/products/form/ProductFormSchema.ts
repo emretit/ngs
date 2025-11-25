@@ -5,7 +5,7 @@ export const productSchema = z.object({
   name: z.string().min(1, "Ürün adı zorunludur").max(255, "Ürün adı çok uzun"),
   price: z.coerce.number().min(0, "Fiyat 0'dan küçük olamaz").max(999999999, "Fiyat çok büyük"),
   stock_quantity: z.coerce.number().min(0, "Stok miktarı 0'dan küçük olamaz").max(999999, "Stok miktarı çok büyük"),
-  unit: z.string().min(1, "Birim zorunludur").max(50, "Birim adı çok uzun"),
+  unit: z.string().min(1, "Birim zorunludur").max(50, "Birim adı çok uzun").default("piece"),
   tax_rate: z.coerce.number().min(0, "Vergi oranı 0'dan küçük olamaz").max(100, "Vergi oranı 100'den büyük olamaz"),
   currency: z.string().min(1, "Para birimi zorunludur").length(3, "Para birimi 3 karakter olmalıdır"),
   product_type: z.string().min(1, "Ürün tipi zorunludur").max(100, "Ürün tipi çok uzun"),
@@ -19,7 +19,10 @@ export const productSchema = z.object({
   stock_threshold: z.coerce.number().min(0, "Stok eşiği 0'dan küçük olamaz").optional().default(0),
   exchange_rate: z.coerce.number().min(0.001, "Döviz kuru çok küçük").optional(),
   category_type: z.string().optional().default("product").refine(val => ["product", "service"].includes(val), "Geçersiz kategori tipi"),
-  status: z.string().optional().default("active").refine(val => ["active", "inactive", "discontinued"].includes(val), "Geçersiz durum"),
+  status: z.preprocess(
+    (val) => val || "active",
+    z.string().refine(val => ["active", "inactive", "discontinued"].includes(val), "Geçersiz durum")
+  ),
   image_url: z.string().url("Geçersiz URL formatı").nullable().optional(),
   category_id: z.string().nullable().optional().transform(val => {
     if (!val || val === "") return null;

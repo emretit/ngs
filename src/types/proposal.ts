@@ -50,6 +50,7 @@ export interface ProposalItem {
   original_currency?: string; // Original currency of the product
   original_price?: number; // Original price of the product
   row_number?: number; // Row number for display
+  image_url?: string; // Product image URL for PDF export
 }
 
 export interface ProposalAttachment {

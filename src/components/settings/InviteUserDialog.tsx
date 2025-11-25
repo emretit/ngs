@@ -78,7 +78,7 @@ export const InviteUserDialog = () => {
   return (
     <>
       <Button 
-        className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg transition-all duration-300" 
+        className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg transition-all duration-300" 
         onClick={() => setIsOpen(true)}
       >
         <Plus className="h-4 w-4" />

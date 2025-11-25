@@ -169,6 +169,74 @@ const safeText = (text: string | undefined | null): string => {
   return normalized.trim() === '' ? '' : normalized;
 };
 
+// Parse HTML-like formatting tags and return React-PDF Text components
+const parseFormattedText = (text: string, baseStyle: any): React.ReactElement => {
+  if (!text) return <Text style={baseStyle}></Text>;
+  
+  // Simple regex to match <b>, <i>, <u> tags and their content
+  const parts: React.ReactNode[] = [];
+  let currentIndex = 0;
+  
+  // Match all formatting tags
+  const tagRegex = /<(b|i|u)>(.*?)<\/\1>/g;
+  let match;
+  const matches: Array<{ start: number; end: number; tag: string; content: string }> = [];
+  
+  while ((match = tagRegex.exec(text)) !== null) {
+    matches.push({
+      start: match.index,
+      end: match.index + match[0].length,
+      tag: match[1],
+      content: match[2],
+    });
+  }
+  
+  // Sort matches by start position
+  matches.sort((a, b) => a.start - b.start);
+  
+  // Build parts array
+  let lastIndex = 0;
+  
+  matches.forEach((m) => {
+    // Add text before the tag
+    if (m.start > lastIndex) {
+      const beforeText = text.substring(lastIndex, m.start);
+      if (beforeText) {
+        parts.push(beforeText);
+      }
+    }
+    
+    // Add formatted text
+    const style: any = { ...baseStyle };
+    if (m.tag === 'b') style.fontWeight = 'bold';
+    if (m.tag === 'i') style.fontStyle = 'italic';
+    if (m.tag === 'u') style.textDecoration = 'underline';
+    
+    parts.push(
+      <Text key={`${m.start}-${m.end}`} style={style}>
+        {m.content}
+      </Text>
+    );
+    
+    lastIndex = m.end;
+  });
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    const remainingText = text.substring(lastIndex);
+    if (remainingText) {
+      parts.push(remainingText);
+    }
+  }
+  
+  // If no matches, return plain text
+  if (parts.length === 0) {
+    return <Text style={baseStyle}>{text}</Text>;
+  }
+  
+  return <Text style={baseStyle}>{parts}</Text>;
+};
+
 interface PdfRendererProps {
   data: QuoteData;
   schema: TemplateSchema;
@@ -187,6 +255,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       fontSize: schema.page.fontSize,
       fontFamily: schema.page.fontFamily || 'Roboto',
       fontWeight: schema.page.fontWeight === 'bold' ? 'bold' : 'normal',
+      minHeight: '100%',
     },
     header: {
       flexDirection: 'row',
@@ -236,16 +305,19 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       borderBottomColor: '#E5E7EB',
       paddingBottom: 8,
       marginBottom: 8,
+      alignItems: 'center', // Header içeriğini dikey olarak ortala
     },
     tableRow: {
       flexDirection: 'row',
       paddingVertical: 8,
       borderBottomWidth: 0.5,
       borderBottomColor: '#F3F4F6',
+      alignItems: 'center', // Satır içeriğini dikey olarak ortala
     },
     tableCell: {
       flex: 1,
       fontSize: 10,
+      justifyContent: 'center', // İçeriği dikey olarak ortala
     },
     tableCellHeader: {
       fontSize: 11,
@@ -300,7 +372,8 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       color: schema.page.fontColor || '#1F2937',
     },
     notesSection: {
-      marginTop: 'auto',
+      marginTop: 20,
+      marginBottom: 10,
     },
     sectionTitle: {
       fontSize: 12,
@@ -316,13 +389,21 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       marginBottom: 5,
     },
     footer: {
-      marginTop: 20,
-      paddingTop: 15,
+      marginTop: 'auto',
+      paddingTop: 8,
+      paddingBottom: 8,
       borderTopWidth: 1,
       borderTopColor: '#E5E7EB',
       fontSize: 8,
       color: schema.page.fontColor || '#9CA3AF',
       textAlign: 'center',
+      minHeight: 30,
+      maxHeight: 60,
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     customField: {
       marginVertical: 8,
@@ -583,7 +664,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     <Document>
       <Page size={schema.page.size === "LETTER" ? "LETTER" : schema.page.size} style={styles.page}>
         {/* Content Wrapper - Önce render edilir (önde olur) */}
-        <View style={{ position: 'relative' }}>
+        <View style={{ position: 'relative', flex: 1, flexDirection: 'column', minHeight: '100%' }}>
         {/* Header */}
         <View style={[
           styles.header, 
@@ -986,7 +1067,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
           <View style={styles.tableHeader}>
             {/* Sıra Numarası Header */}
             {schema.lineTable.showRowNumber && (
-              <View key="row-number" style={[styles.tableCell, { flex: 0.5 }]}>
+              <View key="row-number" style={[styles.tableCell, { flex: 0.5, justifyContent: 'center', alignItems: 'center' }]}>
                 <Text style={[styles.tableCellHeader, { textAlign: 'center' }]}>
                   {safeText('#')}
                 </Text>
@@ -995,11 +1076,11 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
             {schema.lineTable.columns
               .filter(col => col.show)
               .map(col => (
-                                  <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : 1 }]}>
-                    <Text style={[styles.tableCellHeader, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : 'center' }]}>
-                      {safeText(col.label)}
-                    </Text>
-                  </View>
+                <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : col.key === 'product_image' ? 1 : 1, justifyContent: 'center', alignItems: 'center' }]}>
+                  <Text style={[styles.tableCellHeader, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : col.key === 'product_image' ? 'center' : 'center' }]}>
+                    {safeText(col.label)}
+                  </Text>
+                </View>
               ))
             }
           </View>
@@ -1009,7 +1090,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
             <View key={index} style={styles.tableRow}>
               {/* Sıra Numarası */}
               {schema.lineTable.showRowNumber && (
-                <View key="row-number" style={[styles.tableCell, { flex: 0.5 }]}>
+                <View key="row-number" style={[styles.tableCell, { flex: 0.5, justifyContent: 'center', alignItems: 'center', alignSelf: 'stretch' }]}>
                   <Text style={[styles.tableCell, { textAlign: 'center' }]}>
                     {safeText(String(index + 1))}
                   </Text>
@@ -1018,6 +1099,23 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               {schema.lineTable.columns
                 .filter(col => col.show)
                 .map(col => {
+                  // Product Image Column - Special handling
+                  if (col.key === 'product_image') {
+                    const imageUrl = (item as any).image_url || (item as any).product?.image_url;
+                    return (
+                      <View key={col.key} style={[styles.tableCell, { flex: 1, justifyContent: 'center', alignItems: 'center', alignSelf: 'stretch' }]}>
+                        {imageUrl ? (
+                          <Image
+                            src={imageUrl}
+                            style={{ width: 40, height: 40, objectFit: 'contain' }}
+                          />
+                        ) : (
+                          <Text style={[styles.tableCell, { textAlign: 'center', color: '#9CA3AF' }]}>-</Text>
+                        )}
+                      </View>
+                    );
+                  }
+                  
                   let cellContent: string | null = null;
                   if (col.key === 'description') {
                     const text = safeText(item.description);
@@ -1041,8 +1139,8 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   }
                   
                   return (
-                    <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : 1 }]}>
-                      <Text style={[styles.tableCell, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : 'center' }]}>
+                    <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : col.key === 'product_image' ? 1 : 1, justifyContent: 'center', alignItems: 'center', alignSelf: 'stretch' }]}>
+                      <Text style={[styles.tableCell, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : col.key === 'product_image' ? 'center' : 'center' }]}>
                         {cellContent}
                       </Text>
                     </View>
@@ -1113,32 +1211,103 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                 Şartlar ve Koşullar
               </Text>
               {schema.notes.termsSettings?.showPaymentTerms && data.payment_terms && String(data.payment_terms).trim() !== '' && (
-                <Text style={styles.notesText}>{safeText(`Ödeme Şartları: ${data.payment_terms}`)}</Text>
+                <View style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }}>
+                  <View style={{ width: 80, flexShrink: 0 }}>
+                    <Text style={[styles.notesText, { fontWeight: 'bold' }]}>Ödeme</Text>
+                  </View>
+                  <Text style={[styles.notesText, { fontWeight: 'bold', marginRight: 5 }]}>:</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.notesText}>{safeText(String(data.payment_terms))}</Text>
+                  </View>
+                </View>
               )}
               {schema.notes.termsSettings?.showDeliveryTerms && data.delivery_terms && String(data.delivery_terms).trim() !== '' && (
-                <Text style={styles.notesText}>{safeText(`Teslimat Şartları: ${data.delivery_terms}`)}</Text>
+                <View style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }}>
+                  <View style={{ width: 80, flexShrink: 0 }}>
+                    <Text style={[styles.notesText, { fontWeight: 'bold' }]}>Teslimat</Text>
+                  </View>
+                  <Text style={[styles.notesText, { fontWeight: 'bold', marginRight: 5 }]}>:</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.notesText}>{safeText(String(data.delivery_terms))}</Text>
+                  </View>
+                </View>
               )}
               {schema.notes.termsSettings?.showWarrantyTerms && data.warranty_terms && String(data.warranty_terms).trim() !== '' && (
-                <Text style={styles.notesText}>{safeText(`Garanti Şartları: ${data.warranty_terms}`)}</Text>
+                <View style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }}>
+                  <View style={{ width: 80, flexShrink: 0 }}>
+                    <Text style={[styles.notesText, { fontWeight: 'bold' }]}>Garanti</Text>
+                  </View>
+                  <Text style={[styles.notesText, { fontWeight: 'bold', marginRight: 5 }]}>:</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.notesText}>{safeText(String(data.warranty_terms))}</Text>
+                  </View>
+                </View>
               )}
               {schema.notes.termsSettings?.showPriceTerms && data.price_terms && String(data.price_terms).trim() !== '' && (
-                <Text style={styles.notesText}>{safeText(`Fiyat Şartları: ${data.price_terms}`)}</Text>
+                <View style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }}>
+                  <View style={{ width: 80, flexShrink: 0 }}>
+                    <Text style={[styles.notesText, { fontWeight: 'bold' }]}>Fiyatlar</Text>
+                  </View>
+                  <Text style={[styles.notesText, { fontWeight: 'bold', marginRight: 5 }]}>:</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.notesText}>{safeText(String(data.price_terms))}</Text>
+                  </View>
+                </View>
               )}
               {schema.notes.termsSettings?.showOtherTerms && data.other_terms && String(data.other_terms).trim() !== '' && (
-                <Text style={styles.notesText}>{safeText(`Diğer Şartlar: ${data.other_terms}`)}</Text>
+                <View style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }}>
+                  <View style={{ width: 80, flexShrink: 0 }}>
+                    <Text style={[styles.notesText, { fontWeight: 'bold' }]}>Ticari Şartlar</Text>
+                  </View>
+                  <Text style={[styles.notesText, { fontWeight: 'bold', marginRight: 5 }]}>:</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.notesText}>{safeText(String(data.other_terms))}</Text>
+                  </View>
+                </View>
               )}
             </>
           ) : null}
         </View>
 
         {/* Footer */}
-        {schema.notes.footer && schema.notes.footer.trim() !== '' && (
-          <View style={styles.footer}>
-            <Text style={{ fontSize: schema.notes.footerFontSize || 12 }}>
-              {safeText(schema.notes.footer)}
-            </Text>
+        {(schema.notes.footer && schema.notes.footer.trim() !== '') || (schema.notes.showFooterLogo && (schema.header as any).logoUrl) ? (
+          <View style={[
+            styles.footer,
+            {
+              flexDirection: 'row',
+              gap: 8,
+              alignItems: 'center',
+            }
+          ]}>
+            {/* Footer Logo - Header'daki logoyu kullanır */}
+            {schema.notes.showFooterLogo && (schema.header as any).logoUrl && (
+              <View style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                maxHeight: 44,
+                overflow: 'hidden',
+                flexShrink: 0,
+              }}>
+                <Image
+                  style={{
+                    width: schema.notes.footerLogoSize || 40,
+                    maxHeight: 44,
+                    objectFit: 'contain',
+                  }}
+                  src={(schema.header as any).logoUrl}
+                />
+              </View>
+            )}
+
+            {/* Footer Text */}
+            {schema.notes.footer && schema.notes.footer.trim() !== '' && (
+              parseFormattedText(schema.notes.footer, {
+                fontSize: schema.notes.footerFontSize || 10,
+                textAlign: 'center',
+              })
+            )}
           </View>
-        )}
+        ) : null}
         </View>
         
         {/* Background Style - En son render edilir (arkada kalır) */}

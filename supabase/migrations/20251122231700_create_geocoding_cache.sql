@@ -37,3 +37,5 @@ COMMENT ON COLUMN geocoding_cache.address IS 'Full address string used for geoco
 COMMENT ON COLUMN geocoding_cache.expires_at IS 'Cache expiration time (30 days from creation)';
 
 
+
+

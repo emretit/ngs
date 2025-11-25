@@ -20,12 +20,12 @@ const CurrencySelect = ({ form }: CurrencySelectProps) => {
   const selectedCurrency = useWatch({
     control: form.control,
     name: "currency",
-    defaultValue: "TL"
+    defaultValue: "TRY"
   });
 
   // Update exchange rate when currency changes
   useEffect(() => {
-    if (selectedCurrency && selectedCurrency !== "TL") {
+    if (selectedCurrency && selectedCurrency !== "TRY") {
       const rates = getCurrentExchangeRates();
       form.setValue("exchange_rate", rates[selectedCurrency] || 1);
     } else {
@@ -34,7 +34,7 @@ const CurrencySelect = ({ form }: CurrencySelectProps) => {
   }, [selectedCurrency, form]);
 
   const currencyOptions = [
-    { value: "TL", label: "Türk Lirası (TL)", symbol: "₺" },
+    { value: "TRY", label: "Türk Lirası (TRY)", symbol: "₺" },
     { value: "USD", label: "Amerikan Doları (USD)", symbol: "$" },
     { value: "EUR", label: "Euro (EUR)", symbol: "€" },
     { value: "GBP", label: "İngiliz Sterlini (GBP)", symbol: "£" }
@@ -50,7 +50,7 @@ const CurrencySelect = ({ form }: CurrencySelectProps) => {
             <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">Para Birimi</FormLabel>
             <FormControl>
               <CurrencyDropdown
-                value={field.value || "TL"}
+                value={field.value || "TRY"}
                 onValueChange={field.onChange}
                 currencyOptions={currencyOptions}
                 triggerClassName="h-7 text-xs"

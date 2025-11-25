@@ -218,3 +218,5 @@ Eğer LocationIQ yetersiz gelirse:
 - Cluster'lar otomatik oluşturulur (>100 marker için)
 
 
+
+

@@ -111,6 +111,7 @@ export const useProposalItems = () => {
       stock_status: product.stock_quantity && product.stock_quantity > 0 
         ? (product.stock_quantity > product.stock_threshold ? 'in_stock' : 'low_stock')
         : 'out_of_stock',
+      image_url: product.image_url, // Ürün fotoğrafını PDF export için sakla
     };
     
     console.log("Eklenen ürün para birimi:", productCurrency);

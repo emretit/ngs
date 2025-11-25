@@ -28,10 +28,10 @@ export const useProductForm = () => {
       tax_rate: 20,
       unit: "piece",
       is_active: true,
-      currency: "TL",
+      currency: "TRY",
       category_type: "product",
       product_type: "physical",
-      status: "active",
+      status: "active", // is_active: true olduğu için status: "active"
       image_url: null,
       category_id: "",
       supplier_id: "",
@@ -46,6 +46,16 @@ export const useProductForm = () => {
       vat_included: null,
     },
   });
+
+  // is_active değiştiğinde status'u da güncelle
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "is_active") {
+        form.setValue("status", value.is_active ? "active" : "inactive", { shouldValidate: false });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   // Watch price and discount_rate for automatic discount calculation
   const watchedPrice = form.watch("price");
@@ -101,8 +111,21 @@ export const useProductForm = () => {
           }
 
           // Sadece veritabanında mevcut olan kolonları kullan
-          // Veritabanından gelen TRY değerlerini TL olarak normalize et
-          const displayCurrency = data.currency === "TRY" ? "TL" : (data.currency || "TL");
+          // Para birimi değerini direkt kullan (TRY olarak)
+          const displayCurrency = data.currency || "TRY";
+          const isActive = data.is_active ?? true;
+
+          // Validate and fix status value
+          const validStatuses = ["active", "inactive", "discontinued"];
+          let statusValue = data.status;
+          if (!statusValue || !validStatuses.includes(statusValue)) {
+            statusValue = isActive ? "active" : "inactive";
+            console.log("🟡 Geçersiz status değeri düzeltildi:", data.status, "->", statusValue);
+          }
+
+          // Validate and fix unit value
+          const unitValue = (data.unit && data.unit.trim() !== "") ? data.unit : "piece";
+
           form.reset({
             name: data.name || "",
             description: data.description || "",
@@ -114,12 +137,12 @@ export const useProductForm = () => {
             min_stock_level: data.min_stock_level || 0,
             stock_threshold: data.stock_threshold || data.min_stock_level || 0,
             tax_rate: data.tax_rate || 20,
-            unit: data.unit || "piece",
-            is_active: data.is_active ?? true,
+            unit: unitValue,
+            is_active: isActive,
             currency: displayCurrency,
             category_type: data.category_type || "product",
             product_type: data.product_type || "physical",
-            status: data.status || "active",
+            status: statusValue,
             image_url: data.image_url || null,
             category_id: data.category_id || "",
             supplier_id: data.supplier_id || "",

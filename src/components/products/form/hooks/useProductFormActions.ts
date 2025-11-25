@@ -15,14 +15,16 @@ export const useProductFormActions = (
   const queryClient = useQueryClient();
 
   const onSubmit = async (values: ProductFormSchema, addAnother = false) => {
+    console.log("🟣 useProductFormActions.onSubmit başladı");
+    console.log("🟣 isEditing:", isEditing, "productId:", productId);
+    console.log("🟣 Gelen values:", values);
+
     setIsSubmitting(true);
     try {
         // Prepare data by ensuring null values for empty strings in UUID fields
-        // TL -> TRY dönüşümü (veritabanı için)
-        const dbCurrency = values.currency === "TL" ? "TRY" : values.currency;
         const preparedData = {
           ...values,
-          currency: dbCurrency, // Veritabanına TRY olarak kaydet
+          currency: values.currency || "TRY", // Para birimi TRY olarak kaydet
           category_id: values.category_id && values.category_id.trim() !== "" && values.category_id !== "none" ? values.category_id : null,
           supplier_id: values.supplier_id && values.supplier_id.trim() !== "" && values.supplier_id !== "none" ? values.supplier_id : null,
           // Make sure stock_threshold is explicitly included
@@ -30,9 +32,12 @@ export const useProductFormActions = (
           // Ensure company_id is included
             company_id: values.company_id || "5a9c24d2-876e-4eb6-aea5-19328bc38a3a"
         };
-        
-      
+
+        console.log("🟣 Hazırlanan data (preparedData):", preparedData);
+
+
       if (isEditing && productId) {
+        console.log("🟣 GÜNCELLEME modu aktif, productId:", productId);
         // Sadece veritabanında mevcut olan kolonları gönder
         // Stock artık warehouse_stock tablosunda tutulduğu için products tablosunda güncellenmiyor
         const updateData: any = {
@@ -60,13 +65,17 @@ export const useProductFormActions = (
           updated_at: new Date().toISOString()
         };
 
+        console.log("🟣 Supabase update işlemi başlatılıyor, updateData:", updateData);
+
         const { error } = await supabase
           .from("products")
           .update(updateData)
           .eq("id", productId);
 
+        console.log("🟣 Supabase update tamamlandı, error:", error);
+
         if (error) {
-          console.error("Supabase update error:", error);
+          console.error("❌ Supabase update error:", error);
           let errorMessage = "Ürün güncellenirken bir hata oluştu";
           
           // Provide more specific error message based on the error code
@@ -84,16 +93,20 @@ export const useProductFormActions = (
           throw error;
         }
 
+        console.log("✅ Update başarılı, toast gösteriliyor");
         showSuccess("Ürün başarıyla güncellendi", { duration: 900 });
-        
+
+        console.log("🟣 Cache invalidate ediliyor...");
         // Invalidate products queries to refresh the table
         await queryClient.invalidateQueries({ queryKey: ["products"] });
         // Also invalidate the specific product query
         if (productId) {
           await queryClient.invalidateQueries({ queryKey: ["product", productId] });
         }
-        
+
+        console.log("🟣 Ürünler sayfasına yönlendiriliyor...");
         navigate(`/products`);
+        console.log("✅ İşlem tamamlandı");
         return { resetForm: false };
       } else {
         // Create a new product with explicit fields that match the database schema
@@ -207,19 +220,21 @@ export const useProductFormActions = (
         }
       }
     } catch (error: any) {
-      console.error("Submit error:", error);
+      console.error("❌ Submit error:", error);
       let errorMessage = "Ürün kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.";
-      
+
       // Daha detaylı hata mesajı göster
       if (error?.message) {
         errorMessage = `${errorMessage} (${error.message})`;
       } else if (error?.code) {
         errorMessage = `${errorMessage} (Hata kodu: ${error.code})`;
       }
-      
+
+      console.log("❌ Hata mesajı gösteriliyor:", errorMessage);
       showError(errorMessage);
       return { resetForm: false };
     } finally {
+      console.log("🟣 Finally bloğu çalıştı, isSubmitting = false yapılıyor");
       setIsSubmitting(false);
     }
   };

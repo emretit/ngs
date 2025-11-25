@@ -30,6 +30,7 @@ interface ProposalItemsTableProps {
   handleRemoveItem: (index: number) => void;
   handleMoveItemUp?: (index: number) => void;
   handleMoveItemDown?: (index: number) => void;
+  handleEditItem?: (index: number) => void;
   selectedCurrency: string;
   formatCurrency: (amount: number, currency?: string) => string;
   currencyOptions: { value: string; label: string; symbol: string }[];
@@ -43,6 +44,7 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
   handleRemoveItem,
   handleMoveItemUp,
   handleMoveItemDown,
+  handleEditItem,
   selectedCurrency,
   formatCurrency,
   currencyOptions,
@@ -321,21 +323,24 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
                       )}
                       
                       {/* Düzenle Butonu */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 opacity-70 group-hover:opacity-100 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Düzenle</span>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left">
-                          <p>Düzenle</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      {handleEditItem && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditItem(index)}
+                              className="h-8 w-8 p-0 opacity-70 group-hover:opacity-100 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Düzenle</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            <p>Düzenle</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                       
                       {/* Sil Butonu */}
                       <Tooltip>

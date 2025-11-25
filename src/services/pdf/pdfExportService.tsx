@@ -319,6 +319,7 @@ export class PdfExportService {
           tax_rate: Number(item?.tax_rate) || 0,
           discount_rate: Number(item?.discount_rate) || 0,
           total: Number(item?.total) || (Number(item?.quantity || 1) * Number(item?.unit_price || 0)) || 0,
+          image_url: item?.image_url || undefined, // PDF export için ürün resmi
         })),
         subtotal: Number(subtotal) || 0,
         total_discount: Number(totalDiscount) || 0,
@@ -329,6 +330,8 @@ export class PdfExportService {
         payment_terms: proposal?.payment_terms || undefined,
         delivery_terms: proposal?.delivery_terms || undefined,
         warranty_terms: proposal?.warranty_terms || undefined,
+        price_terms: proposal?.price_terms || undefined, // Fiyat şartları
+        other_terms: proposal?.other_terms || undefined, // Diğer şartlar
         notes: proposal?.notes || undefined,
         created_at: proposal?.created_at || new Date().toISOString(),
       };
@@ -714,13 +717,14 @@ export class PdfExportService {
     const proposalItems = proposal.proposal_items || proposal.items || [];
     const lines = proposalItems.length > 0 ? proposalItems.map((item: any) => ({
       id: item.id || '',
-      description: item.product_name || item.description || '',
+      description: item.product_name || item.name || item.description || '',
       quantity: Number(item.quantity) || 0,
       unit_price: Number(item.unit_price) || 0,
       unit: item.unit || '',
       tax_rate: Number(item.tax_rate || item.tax_percentage) || 18,
-      discount_rate: Number(item.discount_percentage) || 0,
-      total: Number(item.total_amount) || (Number(item.quantity) * Number(item.unit_price))
+      discount_rate: Number(item.discount_percentage || item.discount_rate) || 0,
+      total: Number(item.total_amount || item.total_price) || (Number(item.quantity) * Number(item.unit_price)),
+      image_url: item.image_url || item.product?.image_url || null, // Ürün fotoğrafını PDF için aktar
     })) : [
       // Default empty item if no items exist
       {
@@ -731,7 +735,8 @@ export class PdfExportService {
         unit: 'adet',
         tax_rate: 18,
         discount_rate: 0,
-        total: 0
+        total: 0,
+        image_url: undefined
       }
     ];
 
@@ -787,6 +792,8 @@ export class PdfExportService {
       payment_terms: proposal.payment_terms || '',
       delivery_terms: proposal.delivery_terms || '',
       warranty_terms: proposal.warranty_terms || '',
+      price_terms: proposal.price_terms || '', // Fiyat şartları
+      other_terms: proposal.other_terms || '', // Diğer şartlar
       notes: proposal.notes || '',
       created_at: proposal.created_at || new Date().toISOString(),
       prepared_by: proposal.prepared_by || proposal.created_by || proposal.employee?.name || companySettings?.default_prepared_by || 'Sistem'

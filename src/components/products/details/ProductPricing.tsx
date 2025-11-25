@@ -65,8 +65,8 @@ const ProductPricing = ({
   }, [price, taxRate, currency, purchasePrice, exchangeRate, isEditing]);
 
   const formatPrice = (amount: number) => {
-    // Intl.NumberFormat için geçerli currency code kullan (TL -> TRY)
-    const currencyCode = currency === 'TL' ? 'TRY' : currency;
+    // Intl.NumberFormat için geçerli currency code kullan
+    const currencyCode = currency || 'TRY';
     return new Intl.NumberFormat('tr-TR', { 
       style: 'currency', 
       currency: currencyCode 
@@ -79,7 +79,7 @@ const ProductPricing = ({
     setEditValues(prev => {
       // Get current exchange rates
       const rates = getCurrentExchangeRates();
-      const newExchangeRate = newCurrency === "TL" ? undefined : rates[newCurrency];
+      const newExchangeRate = newCurrency === "TRY" ? undefined : rates[newCurrency];
       
       // Show currency change alert
       if (prev.currency !== newCurrency) {
@@ -117,7 +117,7 @@ const ProductPricing = ({
     };
 
     // Include exchange rate if not TRY
-    if (editValues.currency !== "TL") {
+    if (editValues.currency !== "TRY") {
       updateData.exchange_rate = rates[editValues.currency] || 1;
     } else {
       updateData.exchange_rate = undefined;
@@ -130,7 +130,7 @@ const ProductPricing = ({
   };
 
   const currencyOptions = [
-    { value: "TL", label: "Türk Lirası (TL)" },
+    { value: "TRY", label: "Türk Lirası (TRY)" },
     { value: "USD", label: "Amerikan Doları (USD)" },
     { value: "EUR", label: "Euro (EUR)" },
     { value: "GBP", label: "İngiliz Sterlini (GBP)" }

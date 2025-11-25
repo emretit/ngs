@@ -71,8 +71,16 @@ export interface CustomTextField {
 }
 
 export interface NotesSettings {
-  footer?: string;
+  footer?: string; // HTML benzeri format destekler: <b>bold</b>, <i>italic</i>, <u>underline</u>
   footerFontSize: number;
+  // Footer logo ayarları (header'daki logoyu kullanır)
+  showFooterLogo?: boolean;
+  footerLogoSize?: number;
+  footerLogo?: {
+    showLogo?: boolean;
+    logoPosition?: 'left' | 'center' | 'right';
+    logoSize?: number;
+  };
   // Şartlar ve Koşullar göster/gizle ayarları
   termsSettings?: {
     showPaymentTerms: boolean;
@@ -153,6 +161,10 @@ export interface QuoteData extends Record<string, unknown> {
     tax_rate?: number;
     discount_rate?: number;
     total: number;
+    image_url?: string;
+    product?: {
+      image_url?: string;
+    };
   }>;
   subtotal: number;
   total_discount?: number;
@@ -163,6 +175,8 @@ export interface QuoteData extends Record<string, unknown> {
   payment_terms?: string;
   delivery_terms?: string;
   warranty_terms?: string;
+  price_terms?: string;
+  other_terms?: string;
   notes?: string;
   created_at: string;
 }

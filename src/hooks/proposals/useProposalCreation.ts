@@ -30,6 +30,16 @@ export const useProposalCreation = () => {
         valid_until: formData.valid_until,
         payment_terms: formData.payment_terms,
         delivery_terms: formData.delivery_terms,
+        warranty_terms: formData.warranty_terms, // Garanti şartları
+        price_terms: formData.price_terms, // Fiyat şartları
+        other_terms: formData.other_terms, // Diğer şartlar
+        terms: formData.terms, // Birleştirilmiş şartlar metni
+        // Seçili şart ID'leri
+        selected_payment_terms: formData.selected_payment_terms || [],
+        selected_delivery_terms: formData.selected_delivery_terms || [],
+        selected_warranty_terms: formData.selected_warranty_terms || [],
+        selected_pricing_terms: formData.selected_pricing_terms || [],
+        selected_other_terms: formData.selected_other_terms || [],
         notes: formData.notes,
         status: formData.status,
         created_at: new Date().toISOString(),

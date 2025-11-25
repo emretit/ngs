@@ -45,6 +45,8 @@ const ProposalDetailFullView = ({
         valid_until: proposal.valid_until || "",
         payment_terms: proposal.payment_terms || "",
         delivery_terms: proposal.delivery_terms || "",
+        warranty_terms: proposal.warranty_terms || "",
+        price_terms: proposal.price_terms || "",
         notes: proposal.notes || ""
       });
     }
@@ -264,6 +266,42 @@ const ProposalDetailFullView = ({
                     ) : (
                       <p className="text-sm text-muted-foreground">
                         {proposal.delivery_terms || "Belirtilmemiş"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-sm">Garanti Şartları</h3>
+                    {isEditMode ? (
+                      <Textarea 
+                        name="warranty_terms"
+                        value={editedData.warranty_terms || ""} 
+                        onChange={handleInputChange}
+                        placeholder="Garanti şartlarını belirtin"
+                        className="min-h-[100px]"
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {proposal.warranty_terms || "Belirtilmemiş"}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-sm">Fiyat Şartları</h3>
+                    {isEditMode ? (
+                      <Textarea 
+                        name="price_terms"
+                        value={editedData.price_terms || ""} 
+                        onChange={handleInputChange}
+                        placeholder="Fiyat şartlarını belirtin"
+                        className="min-h-[100px]"
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {proposal.price_terms || "Belirtilmemiş"}
                       </p>
                     )}
                   </div>

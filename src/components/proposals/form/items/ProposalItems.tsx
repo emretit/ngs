@@ -7,6 +7,7 @@ import { Product } from "@/types/product";
 import ProposalItemsHeader from "./ProposalItemsHeader";
 import ProposalItemsTable from "./ProposalItemsTable";
 import ProductSearchDialog from "./product-dialog/ProductSearchDialog";
+import ProductDetailsDialog from "./product-dialog/ProductDetailsDialog";
 import { useProposalItems } from "./useProposalItems";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -20,14 +21,23 @@ interface ProposalItemsProps {
   globalCurrency?: string; // Global para birimi
 }
 
-const ProposalItems: React.FC<ProposalItemsProps> = ({ 
-  items, 
+const ProposalItems: React.FC<ProposalItemsProps> = ({
+  items,
   onItemsChange,
   globalCurrency = "TRY"
 }) => {
   // Get dashboard exchange rates
   const { exchangeRates: dashboardRates, convertCurrency: dashboardConvert } = useExchangeRates();
-  
+
+  // State for edit dialog
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [editingItem, setEditingItem] = React.useState<ProposalItem | null>(null);
+  const [editingIndex, setEditingIndex] = React.useState<number | null>(null);
+  const [editQuantity, setEditQuantity] = React.useState(1);
+  const [editCustomPrice, setEditCustomPrice] = React.useState<number | undefined>(undefined);
+  const [editSelectedDepo, setEditSelectedDepo] = React.useState("");
+  const [editDiscountRate, setEditDiscountRate] = React.useState(0);
+
   const {
     selectedCurrency,
     setSelectedCurrency,
@@ -257,11 +267,56 @@ const ProposalItems: React.FC<ProposalItemsProps> = ({
     return counts;
   }, [items]);
 
+  // Handle editing an item - open ProductDetailsDialog with item data
+  const handleEditItem = (index: number) => {
+    const item = items[index];
+    setEditingItem(item);
+    setEditingIndex(index);
+    setEditQuantity(item.quantity || 1);
+    setEditCustomPrice(item.unit_price);
+    setEditDiscountRate(item.discount_rate || 0);
+    setEditSelectedDepo("");
+    setEditDialogOpen(true);
+  };
+
+  // Handle updating the edited item
+  const handleUpdateItem = () => {
+    if (editingIndex === null || !editingItem) return;
+
+    const updatedItem: ProposalItem = {
+      ...editingItem,
+      quantity: editQuantity,
+      unit_price: editCustomPrice || editingItem.unit_price,
+      discount_rate: editDiscountRate,
+    };
+
+    // Recalculate total price
+    const qty = Number(updatedItem.quantity);
+    const unitPrice = Number(updatedItem.unit_price);
+    const discount = Number(updatedItem.discount_rate || 0);
+    const tax = Number(updatedItem.tax_rate || 0);
+
+    const discountedPrice = unitPrice * (1 - discount / 100);
+    updatedItem.total_price = qty * discountedPrice * (1 + tax / 100);
+
+    // Update items array
+    const updatedItems = [...items];
+    updatedItems[editingIndex] = updatedItem;
+
+    onItemsChange(updatedItems);
+    toast.success(`${updatedItem.name} güncellendi`);
+
+    // Reset edit state
+    setEditDialogOpen(false);
+    setEditingItem(null);
+    setEditingIndex(null);
+  };
+
   // Para birimi değişikliğini ele alma
   const handleGlobalCurrencyChange = (currency: string) => {
     // Para birimi değişikliği için handleCurrencyChange fonksiyonunu çağır
     handleCurrencyChange(currency);
-    
+
     // Tüm kalemlerin para birimini güncelle
     if (items.length > 0) {
       const updatedItems = updateAllItemsCurrency(currency);
@@ -313,6 +368,7 @@ const ProposalItems: React.FC<ProposalItemsProps> = ({
           items={items}
           handleItemChange={onItemChange}
           handleRemoveItem={onRemoveItem}
+          handleEditItem={handleEditItem}
           selectedCurrency={globalCurrency || "TRY"}
           formatCurrency={formatCurrency}
           currencyOptions={currencyOptions}
@@ -373,6 +429,40 @@ const ProposalItems: React.FC<ProposalItemsProps> = ({
         onSelectProduct={handleProductSelect}
         selectedCurrency={globalCurrency || "TRY"}
       />
+
+      {/* Edit Item Dialog */}
+      {editingItem && (
+        <ProductDetailsDialog
+          open={editDialogOpen}
+          onOpenChange={(open) => {
+            setEditDialogOpen(open);
+            if (!open) {
+              setEditingItem(null);
+              setEditingIndex(null);
+            }
+          }}
+          selectedProduct={{
+            id: editingItem.product_id || "",
+            name: editingItem.name,
+            price: editingItem.unit_price,
+            currency: editingItem.currency || globalCurrency,
+            sku: "",
+            stock_quantity: 0,
+            description: editingItem.description || "",
+          } as Product}
+          quantity={editQuantity}
+          setQuantity={setEditQuantity}
+          customPrice={editCustomPrice}
+          setCustomPrice={setEditCustomPrice}
+          selectedDepo={editSelectedDepo}
+          setSelectedDepo={setEditSelectedDepo}
+          discountRate={editDiscountRate}
+          setDiscountRate={setEditDiscountRate}
+          onConfirm={handleUpdateItem}
+          selectedCurrency={globalCurrency || "TRY"}
+          isEditMode={true}
+        />
+      )}
     </div>
   );
 };

@@ -53,8 +53,8 @@ const InviteSetup = () => {
       setLoading(false);
       return;
     }
-    if (password.length < 10) {
-      setError("Şifre en az 10 karakter olmalıdır.");
+    if (password.length < 8) {
+      setError("Şifre en az 8 karakter olmalıdır.");
       setLoading(false);
       return;
     }
@@ -189,11 +189,11 @@ const InviteSetup = () => {
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Şifre (en az 10 karakter)"
+                    placeholder="Şifre (en az 8 karakter)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="h-12 pl-10 pr-12 text-base border-gray-300 focus:border-primary focus:ring-primary"
-                    minLength={10}
+                    minLength={8}
                     required
                   />
                   <button
@@ -209,7 +209,7 @@ const InviteSetup = () => {
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Şifreniz en az 10 karakter içermelidir
+                  Şifreniz en az 8 karakter içermelidir
                 </p>
               </div>
               {/* Error Display */}

@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Shield, Search, Users, AlertCircle, Phone, Clock, UserCheck, UserX, Link2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { UserListTable } from "./UserListTable";
-import { RoleManagementPanel } from "./RoleManagementPanel";
 import { Badge } from "@/components/ui/badge";
 import { InviteUserDialog } from "../InviteUserDialog";
 import { useAutoMatchUsersEmployees } from "./useAutoMatchUsersEmployees";
 import UsersFilterBar from "./UsersFilterBar";
 import UsersBulkActions from "./UsersBulkActions";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
@@ -39,12 +39,12 @@ interface UserWithEmployee {
 }
 
 export const UserManagementNew = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedRole, setSelectedRole] = useState("all");
   const [selectedEmployeeMatch, setSelectedEmployeeMatch] = useState("all");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [activeRoleTab, setActiveRoleTab] = useState("users");
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const autoMatchMutation = useAutoMatchUsersEmployees();
@@ -402,65 +402,50 @@ export const UserManagementNew = () => {
 
         {/* Sağ taraf - Butonlar */}
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 border-2 border-primary/50 hover:bg-primary hover:text-white transition-all duration-300"
+            onClick={() => navigate("/roles")}
+          >
+            <Shield className="h-4 w-4" />
+            <span>Roller</span>
+          </Button>
           <InviteUserDialog />
         </div>
       </div>
 
-      {/* Main Tabs - Kullanıcılar ve Roller */}
-      <Tabs value={activeRoleTab} onValueChange={setActiveRoleTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="users" className="text-base">👥 Kullanıcılar</TabsTrigger>
-          <TabsTrigger value="roles" className="text-base">🛡️ Roller</TabsTrigger>
-        </TabsList>
+      {/* Kullanıcılar Content */}
+      <div className="space-y-4">
+        {/* Filter Bar */}
+        <UsersFilterBar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          selectedRole={selectedRole}
+          setSelectedRole={setSelectedRole}
+          selectedEmployeeMatch={selectedEmployeeMatch}
+          setSelectedEmployeeMatch={setSelectedEmployeeMatch}
+        />
 
-        {/* Kullanıcılar Tab */}
-        <TabsContent value="users" className="space-y-4 mt-0">
-          {/* Filter Bar */}
-          <UsersFilterBar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedStatus={selectedStatus}
-            setSelectedStatus={setSelectedStatus}
-            selectedRole={selectedRole}
-            setSelectedRole={setSelectedRole}
-            selectedEmployeeMatch={selectedEmployeeMatch}
-            setSelectedEmployeeMatch={setSelectedEmployeeMatch}
-          />
+        {/* Bulk Actions */}
+        <UsersBulkActions
+          selectedUsers={selectedUsers}
+          onClearSelection={() => setSelectedUsers([])}
+          onBulkAction={handleBulkAction}
+        />
 
-          {/* Bulk Actions */}
-          <UsersBulkActions
+        {/* Users Table */}
+        <div className="rounded-md border bg-white overflow-hidden">
+          <UserListTable
+            users={filteredUsers}
+            isLoading={isLoading}
+            onUserUpdated={() => queryClient.invalidateQueries({ queryKey: ['users-management'] })}
             selectedUsers={selectedUsers}
-            onClearSelection={() => setSelectedUsers([])}
-            onBulkAction={handleBulkAction}
+            onSelectionChange={setSelectedUsers}
           />
-
-          {/* Users Table */}
-          <div className="rounded-md border bg-white overflow-hidden">
-            <UserListTable
-              users={filteredUsers}
-              isLoading={isLoading}
-              onUserUpdated={() => queryClient.invalidateQueries({ queryKey: ['users-management'] })}
-              selectedUsers={selectedUsers}
-              onSelectionChange={setSelectedUsers}
-            />
-          </div>
-        </TabsContent>
-
-        {/* Roller Tab */}
-        <TabsContent value="roles" className="mt-0">
-          <div className="rounded-md border bg-white overflow-hidden">
-            <div className="p-4 border-b bg-gray-50">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-purple-600" />
-                <h3 className="text-base font-semibold text-foreground">Rol Yönetimi</h3>
-              </div>
-            </div>
-            <div className="p-4">
-              <RoleManagementPanel users={users} />
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       {/* Bulk Delete Confirmation Dialog */}
       <ConfirmationDialogComponent

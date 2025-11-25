@@ -234,7 +234,7 @@ const ProductCompactForm = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs font-medium text-gray-700 mb-1.5 block">Birim</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value || "piece"}>
                       <FormControl>
                         <SelectTrigger className="h-7 text-xs">
                           <SelectValue placeholder="Adet" />
@@ -248,10 +248,10 @@ const ProductCompactForm = ({
                         ))}
                       </SelectContent>
                     </Select>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
                 </div>
 
             {/* Min Stock Level and Threshold */}
@@ -370,7 +370,7 @@ const ProductCompactForm = ({
               <PricePreviewCard 
                 price={price || 0}
                 taxRate={taxRate || 20}
-                currency={currency || "TL"}
+                currency={currency || "TRY"}
                 priceIncludesVat={priceIncludesVat || false}
               />
             </div>

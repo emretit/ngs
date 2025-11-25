@@ -404,7 +404,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         tax_rate: productData.vat_rate,
         discount_rate: productData.discount_rate,
         total_price: productData.total_price,
-        currency: productData.currency || formData.currency
+        currency: productData.currency || formData.currency,
+        image_url: productData.image_url // PDF export için ürün resmi
       };
       setItems(updatedItems);
     } else {
@@ -420,7 +421,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         tax_rate: productData.vat_rate,
         discount_rate: productData.discount_rate,
         total_price: productData.total_price,
-        currency: productData.currency || formData.currency
+        currency: productData.currency || formData.currency,
+        image_url: productData.image_url // PDF export için ürün resmi
       };
       setItems([...items, newItem]);
     }

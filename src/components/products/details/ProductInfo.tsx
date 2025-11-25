@@ -78,7 +78,7 @@ export const ProductInfo = ({ product, onUpdate }: ProductInfoProps) => {
                 <span>Satış Fiyatı</span>
               </div>
               <div className="text-xs font-medium text-gray-900 truncate">
-                {formatCurrency(product.price, product.currency === 'TRY' ? 'TL' : (product.currency || 'TL'))}
+                {formatCurrency(product.price, product.currency || 'TRY')}
               </div>
             </div>
 
@@ -88,7 +88,7 @@ export const ProductInfo = ({ product, onUpdate }: ProductInfoProps) => {
                 <span>Alış Fiyatı</span>
               </div>
               <div className="text-xs font-medium text-gray-900 truncate">
-                {product.purchase_price ? formatCurrency(product.purchase_price, product.currency === 'TRY' ? 'TL' : (product.currency || 'TL')) : <span className="text-gray-400 italic">Belirtilmemiş</span>}
+                {product.purchase_price ? formatCurrency(product.purchase_price, product.currency || 'TRY') : <span className="text-gray-400 italic">Belirtilmemiş</span>}
               </div>
             </div>
 
@@ -98,7 +98,7 @@ export const ProductInfo = ({ product, onUpdate }: ProductInfoProps) => {
                 <span>Para Birimi</span>
               </div>
               <div className="text-xs font-medium text-gray-900 truncate">
-                {product.currency === 'TRY' ? 'TL' : (product.currency || 'TL')}
+                {product.currency || 'TRY'}
               </div>
             </div>
 

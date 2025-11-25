@@ -1,9 +1,13 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText, ArrowLeft, Save } from "lucide-react";
-import ProductFormWrapper from "@/components/products/form/ProductFormWrapper";
 import { Toaster } from "@/components/ui/toaster";
+import { Form } from "@/components/ui/form";
+import { useProductForm } from "@/components/products/form/hooks/useProductForm";
+import { useProductFormActions } from "@/components/products/form/hooks/useProductFormActions";
+import ProductCompactForm from "@/components/products/form/ProductCompactForm";
+import { showError } from "@/utils/toastUtils";
 
 interface ProductFormProps {
   isCollapsed?: boolean;
@@ -14,18 +18,91 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const title = id ? "Ürün Düzenle" : "Yeni Ürün Ekle";
-  const [submitForm, setSubmitForm] = useState<(() => void) | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { form, isEditing, isSubmitting, setIsSubmitting, productId } = useProductForm();
+  const { onSubmit, handleDuplicate } = useProductFormActions(
+    isEditing, 
+    productId, 
+    setIsSubmitting
+  );
 
-  const handleFormReady = useCallback((submitFn: () => void, submitting: boolean) => {
-    setSubmitForm(() => submitFn);
-    setIsSubmitting(submitting);
-  }, []);
+  // Watch for form errors and display them via toast
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      if (Object.keys(form.formState.errors).length > 0) {
+        // Only log errors to console, not display toast on every keystroke
+        console.log("Form has errors:", form.formState.errors);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  const handleSubmit = useCallback(async (values: any, addAnother = false): Promise<{ resetForm: boolean }> => {
+    console.log("🟢 handleSubmit çağrıldı, values:", values);
+    // Ensure currency is properly set before submission
+    if (!values.currency || values.currency.trim() === "") {
+      values.currency = "TRY";
+      console.log("🟡 Currency değeri TRY olarak ayarlandı");
+    }
+
+    try {
+      console.log("🟢 onSubmit çağrılıyor...");
+      const result = await onSubmit(values, addAnother);
+      console.log("🟢 onSubmit tamamlandı, sonuç:", result);
+      if (result?.resetForm) {
+        form.reset();
+      }
+      return result || { resetForm: false };
+    } catch (error) {
+      console.error("❌ Submit error:", error);
+      // Error handling zaten onSubmit içinde yapılıyor
+      return { resetForm: false };
+    }
+  }, [form, onSubmit]);
 
   const handleSaveClick = () => {
-    if (submitForm) {
-      submitForm();
-    }
+    console.log("🔵 Kaydet butonuna tıklandı");
+    const submitForm = async () => {
+      // Ensure status is set based on is_active before validation
+      const currentIsActive = form.getValues("is_active");
+      const currentStatus = form.getValues("status");
+      const currentUnit = form.getValues("unit");
+
+      console.log("🔵 Mevcut is_active:", currentIsActive, "status:", currentStatus, "unit:", currentUnit);
+
+      // If status is not set or invalid, set it based on is_active
+      if (!currentStatus || !["active", "inactive", "discontinued"].includes(currentStatus)) {
+        const newStatus = currentIsActive ? "active" : "inactive";
+        console.log("🟡 Status geçersiz, yeni değer:", newStatus);
+        form.setValue("status", newStatus);
+      }
+
+      // If unit is not set or empty, set default value
+      if (!currentUnit || currentUnit.trim() === "") {
+        console.log("🟡 Unit boş, varsayılan değer (piece) ayarlanıyor");
+        form.setValue("unit", "piece");
+      }
+
+      console.log("🔵 Form validasyonu başlatılıyor...");
+      const isValid = await form.trigger();
+      console.log("🔵 Form validasyonu sonucu:", isValid);
+
+      if (!isValid) {
+        console.log("❌ Form geçersiz, hatalar:", form.formState.errors);
+        console.log("❌ Status hatası detayı:", form.formState.errors.status);
+        console.log("❌ Mevcut form değerleri:", form.getValues());
+        showError("Lütfen form hatalarını düzeltin");
+        return;
+      }
+
+      console.log("✅ Form geçerli, submit ediliyor...");
+      form.handleSubmit(async (values) => {
+        console.log("🔵 Submit fonksiyonu çağrıldı, values:", values);
+        await handleSubmit(values, false);
+      })();
+    };
+    submitForm();
   };
   
   return (
@@ -63,7 +140,7 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
           <div className="flex items-center gap-3">
             <Button
               onClick={handleSaveClick}
-              disabled={isSubmitting || !submitForm}
+              disabled={isSubmitting}
               className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
             >
               <Save className="h-4 w-4" />
@@ -75,7 +152,25 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
 
       {/* Main Content */}
       <div className="space-y-4">
-        <ProductFormWrapper onFormReady={handleFormReady} />
+        <div className="w-full">
+          <Form {...form}>
+            <form 
+              id="product-form" 
+              noValidate 
+              onSubmit={form.handleSubmit(async (values) => {
+                await handleSubmit(values, false);
+              })}
+            >
+              <ProductCompactForm 
+                form={form} 
+                onSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                isEditing={isEditing}
+                productId={productId}
+              />
+            </form>
+          </Form>
+        </div>
       </div>
       
       <Toaster />

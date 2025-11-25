@@ -91,7 +91,7 @@ const ProductGrid = ({
             </div>
             <h3 className="font-medium mb-2 line-clamp-2">{product.name}</h3>
             <div className="text-lg font-semibold">
-              {product.price.toLocaleString('tr-TR', { style: 'currency', currency: product.currency })}
+              {product.price.toLocaleString('tr-TR', { style: 'currency', currency: product.currency || 'TRY' })}
             </div>
           </CardContent>
         </Card>

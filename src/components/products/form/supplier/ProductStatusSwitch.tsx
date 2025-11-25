@@ -25,7 +25,11 @@ const ProductStatusSwitch = ({ form }: ProductStatusSwitchProps) => {
           <FormControl>
             <Switch
               checked={field.value}
-              onCheckedChange={field.onChange}
+              onCheckedChange={(checked) => {
+                field.onChange(checked);
+                // is_active değiştiğinde status alanını da güncelle
+                form.setValue("status", checked ? "active" : "inactive");
+              }}
             />
           </FormControl>
         </FormItem>

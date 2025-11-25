@@ -154,7 +154,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
     if (selectedSupplier) {
       return selectedSupplier.company || selectedSupplier.name || "Tedarikçi seçin...";
     }
-    return placeholder ?? (partnerType === "customer" ? "Müşteri seçin..." : "Tedarikçi seçin...");
+    return placeholder ?? "Müşteri veya Tedarikçi seçin...";
   };
 
   const selectedPartner = partnerType === "customer" ? selectedCustomer : selectedSupplier;
@@ -191,7 +191,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
       <div>
         {!hideLabel && (
           <Label className="text-sm font-medium text-gray-700">
-            {label ?? (partnerType === "customer" ? "Müşteri" : "Tedarikçi")}
+            {label ?? "Müşteri / Tedarikçi"}
             {required && <span className="text-red-500 ml-1">*</span>}
           </Label>
         )}

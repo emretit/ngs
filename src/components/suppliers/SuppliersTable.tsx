@@ -42,8 +42,8 @@ const SuppliersTable = ({
 }: SuppliersTableProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [sortField, setSortField] = useState<string>("created_at");
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortField, setSortField] = useState<string>("company");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

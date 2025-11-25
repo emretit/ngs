@@ -23,6 +23,7 @@ import { format, addDays, subDays, addMonths, subMonths, startOfWeek, endOfWeek,
 import { tr } from "date-fns/locale";
 import { Gantt, Task, ViewMode as GanttViewMode } from "gantt-task-react";
 import "gantt-task-react/dist/index.css";
+import { useNavigate } from "react-router-dom";
 
 interface ServiceGanttViewProps {
   serviceRequests: ServiceRequest[];
@@ -41,6 +42,7 @@ const ServiceGanttView = ({
   onSelectService,
   onUpdateAssignment
 }: ServiceGanttViewProps) => {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>('week');
@@ -578,9 +580,16 @@ const ServiceGanttView = ({
                       </Badge>
                     </div>
                     {service.service_location && (
-                      <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
-                        <MapPin className="h-2.5 w-2.5 text-gray-500 flex-shrink-0" />
-                        <span className="truncate">{service.service_location}</span>
+                      <div 
+                        className="flex items-center gap-1 text-xs text-gray-600 mb-1 cursor-pointer hover:text-blue-600 transition-colors group"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/service/map?serviceId=${service.id}`);
+                        }}
+                        title="Haritada göster"
+                      >
+                        <MapPin className="h-2.5 w-2.5 text-gray-500 group-hover:text-blue-500 flex-shrink-0 transition-colors" />
+                        <span className="truncate group-hover:text-blue-600">{service.service_location}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between text-xs">

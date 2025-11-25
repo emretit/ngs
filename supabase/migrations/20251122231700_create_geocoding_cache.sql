@@ -36,3 +36,4 @@ COMMENT ON TABLE geocoding_cache IS 'Cache for LocationIQ geocoding results to r
 COMMENT ON COLUMN geocoding_cache.address IS 'Full address string used for geocoding';
 COMMENT ON COLUMN geocoding_cache.expires_at IS 'Cache expiration time (30 days from creation)';
 
+

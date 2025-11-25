@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
@@ -6,6 +6,8 @@ import ServiceMapView from "@/components/service/ServiceMapView";
 
 export default function ServiceMapPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedServiceId = searchParams.get('serviceId');
   const { data: serviceRequests = [], isLoading } = useServiceRequests();
 
   // Teknisyenleri getir
@@ -51,8 +53,10 @@ export default function ServiceMapPage() {
         serviceRequests={serviceRequests}
         technicians={technicians}
         onSelectService={handleSelectService}
+        selectedServiceId={selectedServiceId || undefined}
       />
     </div>
   );
 }
+
 

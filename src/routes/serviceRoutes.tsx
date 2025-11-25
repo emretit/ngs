@@ -1,5 +1,6 @@
 
 import NewServiceRequest from "@/pages/service/NewServiceRequest";
+import ServiceEdit from "@/pages/service/ServiceEdit";
 import ServiceDetail from "@/pages/service/ServiceDetail";
 import ServiceReports from "@/pages/service/ServiceReports";
 import ServiceSettings from "@/pages/service/ServiceSettings";
@@ -59,7 +60,7 @@ export const serviceRoutes: RouteConfig[] = [
   // CRUD İşlemleri
   { path: "/service/new", component: NewServiceRequest, protected: true },
   { path: "/service/detail/:id", component: ServiceDetail, protected: true },
-  { path: "/service/edit/:id", component: NewServiceRequest, protected: true },
+  { path: "/service/edit/:id", component: ServiceEdit, protected: true },
   
   // Ayarlar ve Raporlar
   { path: "/service/reports", component: ServiceReports, protected: true },

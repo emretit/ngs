@@ -43,13 +43,13 @@ const CustomerInfoCard: React.FC<CustomerInfoCardProps> = ({
           <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
             <Building2 className="h-4 w-4 text-blue-600" />
           </div>
-          Müşteri Bilgileri
+          Müşteri / Tedarikçi Bilgileri
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
         <FormProvider {...formToUse}>
           <div className="grid grid-cols-1 gap-3">
-            <ProposalPartnerSelect partnerType="customer" required />
+            <ProposalPartnerSelect partnerType="customer" placeholder="Müşteri veya Tedarikçi seçin..." required />
             <ContactPersonInput
               value={formData.contact_name}
               onChange={(value) => handleFieldChange('contact_name', value)}

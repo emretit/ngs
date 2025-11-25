@@ -68,21 +68,43 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
       }
 
       // Warehouse_stock tablosundan toplam stok miktarlarını çek
+      // Batch halinde çek - URL limitine takılmamak için
       const productIds = data.map(p => p.id);
       let stockMap = new Map<string, number>();
 
       if (companyId && productIds.length > 0) {
-        const { data: stockData } = await supabase
-          .from("warehouse_stock")
-          .select("product_id, quantity")
-          .in("product_id", productIds)
-          .eq("company_id", companyId);
+        try {
+          // Batch size: 100 ürün - URL limitine takılmamak için
+          const BATCH_SIZE = 100;
+          const batches = [];
+          
+          for (let i = 0; i < productIds.length; i += BATCH_SIZE) {
+            batches.push(productIds.slice(i, i + BATCH_SIZE));
+          }
 
-        if (stockData) {
-          stockData.forEach((stock: { product_id: string; quantity: number }) => {
-            const current = stockMap.get(stock.product_id) || 0;
-            stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+          // Paralel olarak tüm batch'leri çek
+          const stockResults = await Promise.all(
+            batches.map(batch => 
+              supabase
+                .from("warehouse_stock")
+                .select("product_id, quantity")
+                .in("product_id", batch)
+                .eq("company_id", companyId)
+            )
+          );
+
+          // Sonuçları birleştir
+          stockResults.forEach(result => {
+            if (result.data) {
+              result.data.forEach((stock: { product_id: string; quantity: number }) => {
+                const current = stockMap.get(stock.product_id) || 0;
+                stockMap.set(stock.product_id, current + Number(stock.quantity || 0));
+              });
+            }
           });
+        } catch (stockError) {
+          // Stok bilgisi alınamazsa devam et, sayfayı bloklama
+          console.warn("Stok bilgisi alınamadı:", stockError);
         }
       }
 
@@ -93,6 +115,9 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
       })) as Product[];
     },
     enabled: !!companyId,
+    staleTime: 1000 * 60 * 5, // 5 dakika - gereksiz yeniden sorgulamayı önle
+    gcTime: 1000 * 60 * 10, // 10 dakika cache
+    retry: false, // Hata durumunda retry yapma - main thread'i bloklamamak için
   });
 
   // Filter products based on search query

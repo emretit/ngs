@@ -164,7 +164,7 @@ export default function ServiceManagement() {
   };
 
   const handleSelectService = (service: ServiceRequest) => {
-    navigate(`/service/detail/${service.id}`);
+    navigate(`/service/edit/${service.id}`);
   };
 
   const handleUpdateStatus = async (serviceId: string, newStatus: string) => {

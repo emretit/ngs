@@ -217,3 +217,4 @@ Eğer LocationIQ yetersiz gelirse:
 - Marker icon'ları öncelik bazlı renklendirilmiştir
 - Cluster'lar otomatik oluşturulur (>100 marker için)
 
+

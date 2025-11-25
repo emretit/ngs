@@ -38,7 +38,8 @@ export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) =>
     // Pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
-    query = query.range(from, to).order("created_at", { ascending: false });
+    // İsme göre sıralama: önce company, yoksa name
+    query = query.range(from, to).order("name", { ascending: true });
 
     const { data, error, count } = await query;
 

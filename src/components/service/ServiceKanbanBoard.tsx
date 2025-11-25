@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 interface ServiceKanbanBoardProps {
   serviceRequests: ServiceRequest[];
@@ -58,6 +59,7 @@ const ServiceKanbanBoard = ({
   searchQuery = '',
   priorityFilter = 'all',
 }: ServiceKanbanBoardProps) => {
+  const navigate = useNavigate();
   const [draggedItem, setDraggedItem] = useState<ServiceRequest | null>(null);
 
   // Kanban kolonları - ServiceNow tarzı
@@ -217,7 +219,7 @@ const ServiceKanbanBoard = ({
   // Müşteri adını bul
   const getCustomerName = (customerId: string) => {
     const customer = customers?.find(c => c.id === customerId);
-    return customer?.name || customer?.company || 'Bilinmeyen Müşteri';
+    return customer?.company || customer?.name || 'Bilinmeyen Müşteri';
   };
 
   // Teknisyen adını bul
@@ -349,9 +351,16 @@ const ServiceKanbanBoard = ({
 
                         {/* Lokasyon */}
                         {service.service_location && (
-                          <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-2">
-                            <MapPin className="h-3 w-3 flex-shrink-0 text-red-500" />
-                            <span className="truncate">{service.service_location}</span>
+                          <div 
+                            className="flex items-center gap-1.5 text-xs text-gray-600 mb-2 cursor-pointer hover:text-blue-600 transition-colors group"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/service/map?serviceId=${service.id}`);
+                            }}
+                            title="Haritada göster"
+                          >
+                            <MapPin className="h-3 w-3 flex-shrink-0 text-red-500 group-hover:text-blue-500 transition-colors" />
+                            <span className="truncate group-hover:text-blue-600">{service.service_location}</span>
                           </div>
                         )}
 

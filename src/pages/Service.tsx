@@ -159,7 +159,7 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
     enabled: !!userData?.company_id,
   });
   const handleSelectRequest = (request: ServiceRequest) => {
-    navigate(`/service/detail/${request.id}`);
+    navigate(`/service/edit/${request.id}`);
   };
 
   const handleEditRequest = (request: ServiceRequest) => {
@@ -548,7 +548,7 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
                                 <span className="font-medium">Müşteri:</span> {
                                   service.customer_id ? (() => {
                                     const customer = customers?.find(c => c.id === service.customer_id);
-                                    return customer?.name || customer?.company || 'Bilinmeyen Müşteri';
+                                    return customer?.company || customer?.name || 'Bilinmeyen Müşteri';
                                   })() : 'Belirtilmemiş'
                                 }
                               </p>

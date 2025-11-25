@@ -23,6 +23,7 @@ interface ServiceMapViewProps {
   serviceRequests: ServiceRequest[];
   technicians?: any[];
   onSelectService: (service: ServiceRequest) => void;
+  selectedServiceId?: string;
 }
 
 interface ServiceWithCoordinates extends ServiceRequest {
@@ -33,7 +34,8 @@ interface ServiceWithCoordinates extends ServiceRequest {
 const ServiceMapView = ({ 
   serviceRequests, 
   technicians,
-  onSelectService 
+  onSelectService,
+  selectedServiceId
 }: ServiceMapViewProps) => {
   const { geocode, isGeocoding } = useLocationIQGeocoding();
   const [servicesWithCoords, setServicesWithCoords] = useState<ServiceWithCoordinates[]>([]);
@@ -125,22 +127,42 @@ const ServiceMapView = ({
   };
 
   // Custom marker icon based on priority
-  const createCustomIcon = (priority: string) => {
+  const createCustomIcon = (priority: string, isSelected: boolean = false) => {
     const color = priority === 'urgent' ? 'red' : 
                   priority === 'high' ? 'orange' : 
                   priority === 'medium' ? 'gold' : 'green';
     
+    const size = isSelected ? 32 : 24;
+    const borderWidth = isSelected ? 4 : 2;
+    
     return L.divIcon({
       className: 'custom-marker',
-      html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
+      html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: ${borderWidth}px solid ${isSelected ? '#3b82f6' : 'white'}; box-shadow: 0 2px 8px rgba(0,0,0,${isSelected ? 0.5 : 0.3});"></div>`,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
     });
   };
 
-  // Default center (Turkey - Ankara)
-  const defaultCenter: [number, number] = [39.9334, 32.8597];
-  const defaultZoom = 6;
+  // Find selected service coordinates
+  const selectedService = useMemo(() => {
+    if (!selectedServiceId) return null;
+    return servicesWithCoords.find(s => s.id === selectedServiceId && s.latitude && s.longitude);
+  }, [selectedServiceId, servicesWithCoords]);
+
+  // Default center (Turkey - Ankara) or selected service location
+  const mapCenter = useMemo(() => {
+    if (selectedService?.latitude && selectedService?.longitude) {
+      return [selectedService.latitude, selectedService.longitude] as [number, number];
+    }
+    return [39.9334, 32.8597] as [number, number];
+  }, [selectedService]);
+
+  const mapZoom = useMemo(() => {
+    if (selectedService?.latitude && selectedService?.longitude) {
+      return 15; // Zoom in to selected service
+    }
+    return 6; // Default zoom for all services
+  }, [selectedService]);
 
   return (
     <div className="space-y-4">
@@ -162,10 +184,11 @@ const ServiceMapView = ({
           <div className="h-[600px] w-full">
             {mappableServices.length > 0 ? (
               <MapContainer
-                center={defaultCenter}
-                zoom={defaultZoom}
+                center={mapCenter}
+                zoom={mapZoom}
                 style={{ height: '100%', width: '100%' }}
                 className="z-0"
+                key={`${mapCenter[0]}-${mapCenter[1]}-${mapZoom}`}
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -180,11 +203,13 @@ const ServiceMapView = ({
                       tech => tech.id === service.assigned_technician
                     );
 
+                    const isSelected = selectedServiceId === service.id;
+
                     return (
                       <Marker
                         key={service.id}
                         position={[service.latitude, service.longitude]}
-                        icon={createCustomIcon(service.service_priority || 'medium')}
+                        icon={createCustomIcon(service.service_priority || 'medium', isSelected)}
                         eventHandlers={{
                           click: () => onSelectService(service),
                         }}

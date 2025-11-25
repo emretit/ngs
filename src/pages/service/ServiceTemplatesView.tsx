@@ -5,3 +5,4 @@ export default function ServiceTemplatesView() {
   return <Service defaultView="templates" />;
 }
 
+

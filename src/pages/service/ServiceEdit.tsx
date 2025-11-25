@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
@@ -12,7 +12,8 @@ import {
   Eye,
   FileDown,
   Send,
-  CheckCircle2
+  CheckCircle2,
+  ArrowLeft
 } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import BackButton from '@/components/ui/back-button';
@@ -80,11 +81,48 @@ const priorityConfig = {
   urgent: { label: 'Acil', color: 'bg-red-100 text-red-800', icon: '🔴' },
 };
 
-const NewServiceRequest = () => {
+const ServiceEdit = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
   const { customers, suppliers, isLoading: partnersLoading } = useCustomerSelect();
+
+  // Servis verisini çek
+  const { data: serviceRequest, isLoading: loading } = useQuery({
+    queryKey: ['service-request', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Servis ID bulunamadı');
+      
+      const { data, error } = await supabase
+        .from('service_requests')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  // Service items'ı çek (order_items gibi ayrı tablo)
+  const { data: serviceItems = [], isLoading: itemsLoading } = useQuery({
+    queryKey: ['service-items', id],
+    queryFn: async () => {
+      if (!id) return [];
+      
+      const { data, error } = await supabase
+        .from('service_items')
+        .select('*')
+        .eq('service_request_id', id)
+        .order('row_number', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!id,
+  });
 
   // Form state
   const [formData, setFormData] = useState<ServiceRequestFormData>({
@@ -126,12 +164,136 @@ const NewServiceRequest = () => {
   const [recurrenceConfig, setRecurrenceConfig] = useState<RecurrenceConfig>({ type: 'none' });
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [newNote, setNewNote] = useState('');
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // ProposalEdit'teki gibi: proposalLoaded flag'i yerine isInitialized kullanıyoruz
   
   // Product modal state
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
   const [editingItemData, setEditingItemData] = useState<any>(null);
+
+  // ID değiştiğinde initialize flag'ini sıfırla (ProposalEdit'te yok ama biz ekliyoruz)
+  useEffect(() => {
+    setIsInitialized(false);
+    setHasChanges(false);
+  }, [id]);
+
+  // Servis verisi yüklendiğinde form state'i initialize et (ProposalEdit'teki gibi)
+  useEffect(() => {
+    // ProposalEdit'teki gibi: sadece serviceRequest varsa ve henüz initialize edilmemişse çalış
+    if (serviceRequest && !isInitialized) {
+      // Service items'ı service_items tablosundan çek (order_items gibi)
+      let productItems = [{
+        id: "1",
+        row_number: 1,
+        product_id: null,
+        name: '',
+        description: '',
+        quantity: 1,
+        unit: 'adet',
+        unit_price: 0,
+        tax_rate: 20,
+        discount_rate: 0,
+        total_price: 0,
+        currency: 'TRY'
+      }];
+
+      // Önce service_items tablosundan çek
+      if (serviceItems && serviceItems.length > 0) {
+        productItems = serviceItems.map((item: any) => ({
+          id: item.id || Date.now().toString(),
+          row_number: item.row_number || 1,
+          product_id: item.product_id || null,
+          name: item.name || '',
+          description: item.description || '',
+          quantity: item.quantity || 1,
+          unit: item.unit || 'adet',
+          unit_price: item.unit_price || 0,
+          tax_rate: item.tax_rate || 20,
+          discount_rate: item.discount_rate || 0,
+          total_price: item.total_price || (item.quantity || 1) * (item.unit_price || 0),
+          currency: item.currency || 'TRY'
+        }));
+      } else if (serviceRequest.service_details && typeof serviceRequest.service_details === 'object') {
+        // Fallback: Eski JSONB formatından oku (backward compatibility)
+        const serviceDetails = serviceRequest.service_details as any;
+        if (serviceDetails.equipment_items && Array.isArray(serviceDetails.equipment_items) && serviceDetails.equipment_items.length > 0) {
+          productItems = serviceDetails.equipment_items.map((item: any, index: number) => ({
+            id: item.id || `${index + 1}`,
+            row_number: index + 1,
+            product_id: item.product_id || item.equipment_id || null,
+            name: item.name || '',
+            description: item.description || '',
+            quantity: item.quantity || 1,
+            unit: item.unit || 'adet',
+            unit_price: item.unit_price || 0,
+            tax_rate: item.tax_rate || 20,
+            discount_rate: item.discount_rate || 0,
+            total_price: item.total_price || (item.quantity || 1) * (item.unit_price || 0),
+            currency: item.currency || 'TRY'
+          }));
+        }
+      }
+
+      // Parse warranty_info
+      let warrantyInfo = null;
+      if (serviceRequest.warranty_info && typeof serviceRequest.warranty_info === 'object') {
+        warrantyInfo = serviceRequest.warranty_info as any;
+      }
+
+      // Parse attachments
+      let attachments: Array<{ name: string; path: string; type: string; size: number }> = [];
+      if (serviceRequest.attachments && Array.isArray(serviceRequest.attachments)) {
+        attachments = serviceRequest.attachments;
+      }
+
+      // Parse notes
+      let notes: string[] = [];
+      if (serviceRequest.notes && Array.isArray(serviceRequest.notes)) {
+        notes = serviceRequest.notes;
+      }
+
+      setFormData({
+        service_title: serviceRequest.service_title || '',
+        service_request_description: serviceRequest.service_request_description || '',
+        service_location: serviceRequest.service_location || '',
+        service_priority: serviceRequest.service_priority || 'medium',
+        service_status: serviceRequest.service_status || 'new',
+        service_type: serviceRequest.service_type || '',
+        customer_id: serviceRequest.customer_id || null,
+        supplier_id: serviceRequest.supplier_id || null,
+        service_due_date: serviceRequest.service_due_date ? new Date(serviceRequest.service_due_date) : null,
+        service_reported_date: serviceRequest.service_reported_date ? new Date(serviceRequest.service_reported_date) : new Date(),
+        contact_person: serviceRequest.contact_person || '',
+        contact_phone: serviceRequest.contact_phone || '',
+        contact_email: serviceRequest.contact_email || '',
+        product_items: productItems,
+        warranty_info: warrantyInfo,
+        attachments: attachments,
+        notes: notes,
+        slip_number: serviceRequest.slip_number || '',
+        service_result: serviceRequest.service_result || '',
+        received_by: serviceRequest.received_by || null,
+      });
+
+      // Parse recurrence config if exists
+      if (serviceRequest.is_recurring) {
+        setRecurrenceConfig({
+          type: serviceRequest.recurrence_type || 'none',
+          interval: serviceRequest.recurrence_interval || 1,
+          endDate: serviceRequest.recurrence_end_date ? new Date(serviceRequest.recurrence_end_date) : undefined,
+          days: serviceRequest.recurrence_days || [],
+          dayOfMonth: serviceRequest.recurrence_day_of_month || undefined,
+        });
+      }
+        
+      setIsInitialized(true);
+      setHasChanges(false);
+    }
+  }, [serviceRequest, serviceItems, isInitialized]);
 
   // Ürün item yönetimi
   const addProductItem = () => {
@@ -155,6 +317,7 @@ const NewServiceRequest = () => {
         }
       ]
     }));
+    setHasChanges(true);
   };
 
   const removeProductItem = (index: number) => {
@@ -171,6 +334,7 @@ const NewServiceRequest = () => {
       }
       return prev;
     });
+    setHasChanges(true);
   };
 
   const handleProductItemChange = (index: number, field: keyof ServiceRequestFormData['product_items'][0], value: any) => {
@@ -189,17 +353,16 @@ const NewServiceRequest = () => {
         product_items: updatedItems
       };
     });
+    setHasChanges(true);
   };
 
   const handleProductModalSelect = (product: any, itemIndex?: number) => {
     if (itemIndex !== undefined) {
-      // Editing existing item
       setSelectedProduct(product);
       setEditingItemIndex(itemIndex);
       setEditingItemData(product);
       setProductModalOpen(true);
     } else {
-      // Adding new item
       setSelectedProduct(product);
       setEditingItemIndex(undefined);
       setEditingItemData(null);
@@ -209,7 +372,6 @@ const NewServiceRequest = () => {
 
   const handleAddProductToItems = (productData: any, itemIndex?: number) => {
     if (itemIndex !== undefined) {
-      // Update existing item
       setFormData(prev => {
         const updatedItems = [...prev.product_items];
         updatedItems[itemIndex] = {
@@ -231,7 +393,6 @@ const NewServiceRequest = () => {
         };
       });
     } else {
-      // Add new item
       setFormData(prev => {
         const newItem = {
           id: Date.now().toString(),
@@ -258,6 +419,7 @@ const NewServiceRequest = () => {
     setEditingItemIndex(undefined);
     setSelectedProduct(null);
     setEditingItemData(null);
+    setHasChanges(true);
   };
 
 
@@ -279,6 +441,7 @@ const NewServiceRequest = () => {
       ...prev,
       [field]: value,
     }));
+    setHasChanges(true);
   };
 
   // Müşteri/Tedarikçi seçildiğinde iletişim bilgilerini otomatik doldur
@@ -293,9 +456,9 @@ const NewServiceRequest = () => {
           contact_person: selectedCustomer.name || prev.contact_person,
           contact_phone: selectedCustomer.mobile_phone || selectedCustomer.office_phone || prev.contact_phone,
           contact_email: selectedCustomer.email || prev.contact_email,
-          // Müşterinin detaylı adres bilgisini service_location'a kopyala
           service_location: selectedCustomer.address || prev.service_location,
         }));
+        setHasChanges(true);
       }
     } else {
       const selectedSupplier = suppliers?.find(s => s.id === partnerId);
@@ -307,9 +470,9 @@ const NewServiceRequest = () => {
           contact_person: selectedSupplier.name || prev.contact_person,
           contact_phone: selectedSupplier.mobile_phone || selectedSupplier.office_phone || prev.contact_phone,
           contact_email: selectedSupplier.email || prev.contact_email,
-          // Tedarikçinin detaylı adres bilgisini service_location'a kopyala
           service_location: selectedSupplier.address || prev.service_location,
         }));
+        setHasChanges(true);
       }
     }
   };
@@ -359,6 +522,7 @@ const NewServiceRequest = () => {
           attachments: [...prev.attachments, ...uploadedFiles],
         }));
         toast.success(`${uploadedFiles.length} dosya yüklendi`);
+        setHasChanges(true);
       }
     } catch (error) {
       console.error('File upload error:', error);
@@ -376,6 +540,7 @@ const NewServiceRequest = () => {
         notes: [...prev.notes, newNote.trim()],
       }));
       setNewNote('');
+      setHasChanges(true);
     }
   };
 
@@ -384,22 +549,29 @@ const NewServiceRequest = () => {
       ...prev,
       notes: prev.notes.filter((_, i) => i !== index),
     }));
+    setHasChanges(true);
   };
 
-  // Servis oluşturma mutation
-  const createServiceMutation = useMutation({
+  // Servis güncelleme mutation
+  const updateServiceMutation = useMutation({
     mutationFn: async (data: ServiceRequestFormData) => {
-      const companyId = userData?.company_id;
+      if (!id) throw new Error('Servis ID bulunamadı');
       
-      if (!companyId) {
+      // Company ID al
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!profile?.company_id) {
         throw new Error('Şirket bilgisi bulunamadı');
       }
 
-      // Ana servis kaydını oluştur
+      // Ana servis bilgilerini güncelle
       const { data: result, error } = await supabase
         .from('service_requests')
-        .insert({
-          company_id: companyId,
+        .update({
           service_title: data.service_title,
           service_request_description: data.service_request_description,
           service_location: data.service_location,
@@ -419,7 +591,6 @@ const NewServiceRequest = () => {
           slip_number: data.slip_number,
           service_result: data.service_result,
           received_by: data.received_by,
-          created_by: userData?.id,
           // Recurrence fields
           is_recurring: recurrenceConfig.type !== 'none',
           recurrence_type: recurrenceConfig.type !== 'none' ? recurrenceConfig.type : null,
@@ -428,18 +599,31 @@ const NewServiceRequest = () => {
           recurrence_days: recurrenceConfig.days || null,
           recurrence_day_of_month: recurrenceConfig.dayOfMonth || null,
         })
+        .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
 
-      // Service items'ı ayrı tabloya ekle (order_items gibi)
+      // Service items'ı güncelle (order_items gibi)
       if (data.product_items && data.product_items.length > 0) {
+        // Mevcut items'ları sil
+        const { error: deleteError } = await supabase
+          .from('service_items')
+          .delete()
+          .eq('service_request_id', id);
+
+        if (deleteError) {
+          console.error('Service items silinirken hata:', deleteError);
+          // Devam et, yeni items eklemeye çalış
+        }
+
+        // Yeni items'ları ekle
         const serviceItemsToInsert = data.product_items
           .filter(item => item.name.trim() || item.description?.trim()) // Boş item'ları filtrele
           .map((item, index) => ({
-            service_request_id: result.id,
-            company_id: companyId,
+            service_request_id: id,
+            company_id: profile.company_id,
             product_id: item.product_id || null,
             name: item.name || '',
             description: item.description || '',
@@ -463,24 +647,37 @@ const NewServiceRequest = () => {
             throw itemsError;
           }
         }
+      } else {
+        // Eğer items yoksa, mevcut items'ları sil
+        const { error: deleteError } = await supabase
+          .from('service_items')
+          .delete()
+          .eq('service_request_id', id);
+
+        if (deleteError) {
+          console.error('Service items silinirken hata:', deleteError);
+        }
       }
 
       return result;
     },
     onSuccess: (data) => {
-      toast.success('Servis talebi başarıyla oluşturuldu!', {
+      toast.success('Servis talebi başarıyla güncellendi!', {
         description: `"${data.service_title}" servisi kaydedildi.`,
         icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
       });
       queryClient.invalidateQueries({ queryKey: ['service-requests'] });
-      // Kısa bir gecikme ile servisler sayfasına yönlendir
+      queryClient.invalidateQueries({ queryKey: ['service-request', id] });
+      queryClient.invalidateQueries({ queryKey: ['service-items', id] });
+      setHasChanges(false);
+      // Kısa bir gecikme ile servis yönetimi sayfasına yönlendir
       setTimeout(() => {
-        navigate('/service');
+        navigate('/service/management');
       }, 1500);
     },
     onError: (error: any) => {
-      console.error('Servis oluşturma hatası:', error);
-      toast.error('Servis talebi oluşturulurken bir hata oluştu', {
+      console.error('Servis güncelleme hatası:', error);
+      toast.error('Servis talebi güncellenirken bir hata oluştu', {
         description: error.message || 'Bilinmeyen hata',
       });
     },
@@ -500,8 +697,26 @@ const NewServiceRequest = () => {
       return;
     }
 
-    createServiceMutation.mutate(formData);
+    updateServiceMutation.mutate(formData);
   };
+
+  if (loading || itemsLoading) {
+    return (
+      <div className="flex items-center justify-center h-[600px]">
+        <div className="w-8 h-8 border-4 border-t-blue-600 border-b-blue-600 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!serviceRequest) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[600px]">
+        <h2 className="text-xl font-semibold mb-2">Servis Bulunamadı</h2>
+        <p className="text-muted-foreground mb-6">İstediğiniz servis mevcut değil veya erişim izniniz yok.</p>
+        <Button onClick={() => navigate('/service/management')}>Servisler Sayfasına Dön</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -510,7 +725,7 @@ const NewServiceRequest = () => {
         <div className="flex items-center justify-between p-3 pl-12">
           <div className="flex items-center gap-3">
             <BackButton 
-              onClick={() => navigate("/service")}
+              onClick={() => navigate("/service/management")}
               variant="ghost"
               size="sm"
             >
@@ -521,10 +736,10 @@ const NewServiceRequest = () => {
               <Wrench className="h-5 w-5 text-muted-foreground" />
               <div className="space-y-0.5">
                 <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                  Yeni Servis Talebi
+                  Servis Düzenle
                 </h1>
                 <p className="text-xs text-muted-foreground/70">
-                  Yeni servis kaydı oluşturun
+                  {serviceRequest.service_number || `SR-${serviceRequest.id.slice(-6).toUpperCase()}`}
                 </p>
               </div>
             </div>
@@ -533,11 +748,11 @@ const NewServiceRequest = () => {
           <div className="flex items-center gap-4">
             <Button 
               onClick={handleSubmit}
-              disabled={createServiceMutation.isPending}
+              disabled={updateServiceMutation.isPending || !hasChanges}
               className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
             >
               <Save className="h-4 w-4" />
-              <span>{createServiceMutation.isPending ? "Kaydediliyor..." : "Kaydet"}</span>
+              <span>{updateServiceMutation.isPending ? "Kaydediliyor..." : hasChanges ? "Değişiklikleri Kaydet" : "Kaydedildi"}</span>
             </Button>
             
             <DropdownMenu>
@@ -551,9 +766,9 @@ const NewServiceRequest = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => toast.info("Önizleme özelliği yakında eklenecek")} className="gap-2 cursor-pointer">
+                <DropdownMenuItem onClick={() => navigate(`/service/detail/${id}`)} className="gap-2 cursor-pointer">
                   <Eye className="h-4 w-4" />
-                  <span>Önizle</span>
+                  <span>Detayları Görüntüle</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => toast.info("PDF export özelliği yakında eklenecek")} className="gap-2 cursor-pointer">
                   <FileDown className="h-4 w-4" />
@@ -597,15 +812,15 @@ const NewServiceRequest = () => {
         </div>
 
         {/* Row 3 - Ürün/Hizmet Listesi (Full Width) */}
-          <ProductServiceCard
-            items={formData.product_items}
-            onAddItem={addProductItem}
-            onRemoveItem={removeProductItem}
-            onItemChange={handleProductItemChange}
-            onProductModalSelect={handleProductModalSelect}
-            showMoveButtons={false}
-            inputHeight="h-10"
-          />
+        <ProductServiceCard
+          items={formData.product_items}
+          onAddItem={addProductItem}
+          onRemoveItem={removeProductItem}
+          onItemChange={handleProductItemChange}
+          onProductModalSelect={handleProductModalSelect}
+          showMoveButtons={false}
+          inputHeight="h-10"
+        />
 
         {/* Row 4 - Ek Bilgiler, Dosya/Notlar */}
         <ServiceAttachmentsNotesCard
@@ -623,7 +838,10 @@ const NewServiceRequest = () => {
         {/* Tekrarlama Ayarları */}
         <ServiceRecurrenceForm
           value={recurrenceConfig}
-          onChange={setRecurrenceConfig}
+          onChange={(config) => {
+            setRecurrenceConfig(config);
+            setHasChanges(true);
+          }}
         />
       </div>
 
@@ -647,4 +865,5 @@ const NewServiceRequest = () => {
   );
 };
 
-export default NewServiceRequest;
+export default ServiceEdit;
+

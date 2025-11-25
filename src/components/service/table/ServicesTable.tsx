@@ -54,6 +54,7 @@ const ServicesTable = ({
         !searchQuery ||
         service.service_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         service.service_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customerData?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         customerData?.name?.toLowerCase().includes(searchQuery.toLowerCase());
 
       if (!matchesSearch) return false;
@@ -184,6 +185,9 @@ const ServicesTable = ({
       <TableBody>
         {sortedServices.map((service) => {
           const customerData = service.customer_data as any;
+          // Önce company name'i kontrol et, yoksa name'i göster
+          const customerName = customerData?.company || customerData?.name || 
+            (service.customer_id ? 'Yükleniyor...' : 'Belirtilmemiş');
           const isSelected = isServiceSelected(service.id);
           return (
             <TableRow 
@@ -228,7 +232,7 @@ const ServicesTable = ({
                 onClick={() => onSelectService(service)}
               >
                 <div className="text-sm">
-                  {customerData?.name || customerData?.company || 'Belirtilmemiş'}
+                  {customerName}
                 </div>
               </TableCell>
               <TableCell 

@@ -29,7 +29,7 @@ const ServiceContent = ({
   const navigate = useNavigate();
 
   const handleSelectService = (service: ServiceRequest) => {
-    navigate(`/service/detail/${service.id}`);
+    navigate(`/service/edit/${service.id}`);
   };
 
   return (

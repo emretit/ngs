@@ -20,7 +20,18 @@ export const useServiceQueries = (): ServiceQueriesResult => {
       
       const { data, error } = await supabase
         .from('service_requests')
-        .select('*')
+        .select(`
+          *,
+          customers (
+            id,
+            name,
+            company,
+            email,
+            mobile_phone,
+            office_phone,
+            address
+          )
+        `)
         .eq('company_id', userData.company_id)
         .order('created_at', { ascending: false });
 
@@ -31,8 +42,17 @@ export const useServiceQueries = (): ServiceQueriesResult => {
       
       console.log("Service requests data:", data);
       
-      return (data || []).map(item => ({
+      return (data || []).map((item: any) => ({
         ...item,
+        customer_data: item.customers ? {
+          id: item.customers.id,
+          name: item.customers.name,
+          company: item.customers.company,
+          email: item.customers.email,
+          mobile_phone: item.customers.mobile_phone,
+          office_phone: item.customers.office_phone,
+          address: item.customers.address
+        } : null,
         attachments: Array.isArray(item.attachments) 
           ? item.attachments.map((att: any) => ({
               name: String(att.name || ''),
@@ -60,7 +80,18 @@ export const useServiceQueries = (): ServiceQueriesResult => {
     try {
       const { data, error } = await supabase
         .from('service_requests')
-        .select('*')
+        .select(`
+          *,
+          customers (
+            id,
+            name,
+            company,
+            email,
+            mobile_phone,
+            office_phone,
+            address
+          )
+        `)
         .eq('id', id)
         .eq('company_id', userData.company_id)
         .single();
@@ -77,6 +108,15 @@ export const useServiceQueries = (): ServiceQueriesResult => {
 
       return {
         ...data,
+        customer_data: (data as any).customers ? {
+          id: (data as any).customers.id,
+          name: (data as any).customers.name,
+          company: (data as any).customers.company,
+          email: (data as any).customers.email,
+          mobile_phone: (data as any).customers.mobile_phone,
+          office_phone: (data as any).customers.office_phone,
+          address: (data as any).customers.address
+        } : null,
         attachments: Array.isArray(data.attachments) 
           ? data.attachments.map((att: any) => ({
               name: String(att.name || ''),

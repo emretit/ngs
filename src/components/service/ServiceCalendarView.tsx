@@ -19,6 +19,7 @@ import { formatDate } from "@/utils/dateUtils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { useNavigate } from "react-router-dom";
 
 // Setup the localizer for react-big-calendar
 const localizer = dateFnsLocalizer({
@@ -55,6 +56,7 @@ const ServiceCalendarView = ({
   technicians,
   onSelectService,
 }: ServiceCalendarViewProps) => {
+  const navigate = useNavigate();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -389,9 +391,16 @@ const ServiceCalendarView = ({
                 {selectedEvent.resource.service.service_location && (
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground">Lokasyon</label>
-                    <div className="mt-1 flex items-center gap-1 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedEvent.resource.service.service_location}</span>
+                    <div 
+                      className="mt-1 flex items-center gap-1 text-sm cursor-pointer hover:text-blue-600 transition-colors group"
+                      onClick={() => {
+                        navigate(`/service/map?serviceId=${selectedEvent.resource.service.id}`);
+                        setIsDetailOpen(false);
+                      }}
+                      title="Haritada göster"
+                    >
+                      <MapPin className="h-4 w-4 text-muted-foreground group-hover:text-blue-500 transition-colors" />
+                      <span className="group-hover:text-blue-600">{selectedEvent.resource.service.service_location}</span>
                     </div>
                   </div>
                 )}
@@ -430,4 +439,5 @@ const ServiceCalendarView = ({
 };
 
 export default ServiceCalendarView;
+
 

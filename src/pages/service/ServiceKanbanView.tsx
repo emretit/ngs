@@ -5,3 +5,4 @@ export default function ServiceKanbanView() {
   return <Service defaultView="kanban" />;
 }
 
+

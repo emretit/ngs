@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from "@/components/ui/custom-tabs";
-import { User, Building2, Phone, Mail, Search, CheckCircle2 } from "lucide-react";
+import { User, Building2, Phone, Mail, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ContactPersonInput from "@/components/proposals/form/ContactPersonInput";
+import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 
 interface ServiceCustomerInfoCardProps {
   formData: {
@@ -17,6 +18,7 @@ interface ServiceCustomerInfoCardProps {
     contact_person: string;
     contact_phone: string;
     contact_email: string;
+    received_by: string | null;
   };
   handleInputChange: (field: string, value: any) => void;
   handlePartnerSelect: (partnerId: string, type: 'customer' | 'supplier') => void;
@@ -108,7 +110,7 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
                     <User className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                   )}
                   {selectedPartner 
-                    ? selectedPartner.name || selectedPartner.company || 'İsimsiz'
+                    ? selectedPartner.company || selectedPartner.name || 'İsimsiz'
                     : 'Müşteri veya Tedarikçi seçin...'}
                 </div>
                 <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -282,26 +284,24 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
               </CustomTabs>
             </PopoverContent>
           </Popover>
-          {(formData.customer_id || formData.supplier_id) && selectedPartner && (
-            <Badge variant="secondary" className="mt-1.5 text-xs py-0.5">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              {selectedPartner.name || selectedPartner.company || 'Seçildi'}
-            </Badge>
-          )}
         </div>
 
         <div className="grid grid-cols-1 gap-2">
-          <div>
-            <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
-              İletişim Kişisi
-            </Label>
-            <Input
-              value={formData.contact_person}
-              onChange={(e) => handleInputChange('contact_person', e.target.value)}
-              placeholder="Ad Soyad"
-              className="h-10 text-sm"
-            />
-          </div>
+          <ContactPersonInput
+            value={formData.contact_person}
+            onChange={(value) => handleInputChange('contact_person', value)}
+            customerId={formData.customer_id || undefined}
+            supplierId={formData.supplier_id || undefined}
+            error={errors.contact_person}
+            onContactChange={(contactInfo) => {
+              if (contactInfo.phone) {
+                handleInputChange('contact_phone', contactInfo.phone);
+              }
+              if (contactInfo.email) {
+                handleInputChange('contact_email', contactInfo.email);
+              }
+            }}
+          />
 
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -329,6 +329,15 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
               />
             </div>
           </div>
+
+          {/* Talebi Alan */}
+          <EmployeeSelector
+            value={formData.received_by || ""}
+            onChange={(value) => handleInputChange('received_by', value)}
+            label="Talebi Alan"
+            placeholder="Talebi alan kişiyi seçin..."
+            error={errors.received_by}
+          />
         </div>
       </CardContent>
     </Card>

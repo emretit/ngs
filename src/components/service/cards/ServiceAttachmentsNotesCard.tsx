@@ -2,8 +2,9 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Paperclip, StickyNote, X, Loader2 } from "lucide-react";
+import { Paperclip, StickyNote, X, Loader2, FileText } from "lucide-react";
 
 interface ServiceAttachmentsNotesCardProps {
   formData: {
@@ -14,6 +15,7 @@ interface ServiceAttachmentsNotesCardProps {
       size: number;
     }>;
     notes: string[];
+    service_result: string;
   };
   handleInputChange: (field: string, value: any) => void;
   handleFileUpload: (files: FileList | null) => Promise<void>;
@@ -43,9 +45,9 @@ const ServiceAttachmentsNotesCard: React.FC<ServiceAttachmentsNotesCardProps> = 
       <CardHeader className="pb-2 pt-2.5">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-50 to-amber-50/50 border border-amber-200/50">
-            <Paperclip className="h-4 w-4 text-amber-600" />
+            <FileText className="h-4 w-4 text-amber-600" />
           </div>
-          Dosya Ekleri ve Notlar
+          Ek Bilgiler, Dosya Ekleri ve Notlar
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 pt-0 px-3 pb-3">
@@ -139,6 +141,20 @@ const ServiceAttachmentsNotesCard: React.FC<ServiceAttachmentsNotesCardProps> = 
               ))}
             </div>
           )}
+        </div>
+
+        {/* Servis Sonucu */}
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            Servis Sonucu
+          </Label>
+          <Textarea
+            value={formData.service_result}
+            onChange={(e) => handleInputChange('service_result', e.target.value)}
+            placeholder="Servis sonucu veya ön görüş (opsiyonel)"
+            rows={3}
+            className="resize-none text-sm"
+          />
         </div>
       </CardContent>
     </Card>

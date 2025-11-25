@@ -413,14 +413,8 @@ const NewServiceRequest = () => {
 
       {/* Main Content - Her kart bağımsız Card komponenti */}
       <div className="space-y-4">
-        {/* Row 1 - Temel Bilgiler ve Müşteri */}
+        {/* Row 1 - Müşteri ve Temel Bilgiler */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <ServiceBasicInfoCard
-            formData={formData}
-            handleInputChange={handleInputChange}
-            priorityConfig={priorityConfig}
-          />
-
           <ServiceCustomerInfoCard
             formData={formData}
             handleInputChange={handleInputChange}
@@ -429,6 +423,12 @@ const NewServiceRequest = () => {
             suppliers={suppliers}
             partnersLoading={partnersLoading}
             selectedPartner={selectedPartner}
+          />
+
+          <ServiceBasicInfoCard
+            formData={formData}
+            handleInputChange={handleInputChange}
+            priorityConfig={priorityConfig}
           />
         </div>
 

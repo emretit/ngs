@@ -11,7 +11,8 @@ import {
   XCircle, 
   MapPin,
   User,
-  Calendar
+  Calendar,
+  Circle
 } from "lucide-react";
 import type { ServiceRequest } from "@/hooks/service/types";
 import ServicesTableHeader, { SortField, SortDirection } from "./ServicesTableHeader";
@@ -90,23 +91,33 @@ const ServicesTable = ({
     }
   };
 
-  // Durum badge renkleri
+  // Durum badge renkleri - form sayfalarındaki durumlarla eşleşmeli
   const getStatusBadge = (status: string | null) => {
     switch (status) {
+      case 'new':
+        return <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Yeni
+        </Badge>;
+      case 'assigned':
+        return <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">
+          <Circle className="h-3 w-3 mr-1" />
+          Atanmış
+        </Badge>;
+      case 'in_progress':
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+          <Clock className="h-3 w-3 mr-1" />
+          Devam Ediyor
+        </Badge>;
+      case 'on_hold':
+        return <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Beklemede
+        </Badge>;
       case 'completed':
         return <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
           <CheckCircle className="h-3 w-3 mr-1" />
           Tamamlandı
-        </Badge>;
-      case 'in_progress':
-        return <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-          <Clock className="h-3 w-3 mr-1" />
-          Devam Ediyor
-        </Badge>;
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-          <AlertCircle className="h-3 w-3 mr-1" />
-          Beklemede
         </Badge>;
       case 'cancelled':
         return <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">

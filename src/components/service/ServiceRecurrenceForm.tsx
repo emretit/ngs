@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -35,10 +35,16 @@ export const ServiceRecurrenceForm: React.FC<ServiceRecurrenceFormProps> = ({
   const [endDate, setEndDate] = useState<Date | undefined>(value?.endDate);
   const [selectedDays, setSelectedDays] = useState<number[]>(value?.days || []);
   const [dayOfMonth, setDayOfMonth] = useState(value?.dayOfMonth);
+  
+  // onChange'i useRef ile sabit tutuyoruz sonsuz döngüyü önlemek için
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     if (!isRecurring) {
-      onChange({ type: 'none' });
+      onChangeRef.current({ type: 'none' });
       return;
     }
 
@@ -50,8 +56,8 @@ export const ServiceRecurrenceForm: React.FC<ServiceRecurrenceFormProps> = ({
       dayOfMonth: recurrenceType === 'monthly' ? dayOfMonth : undefined,
     };
 
-    onChange(config);
-  }, [isRecurring, recurrenceType, interval, endDate, selectedDays, dayOfMonth, onChange]);
+    onChangeRef.current(config);
+  }, [isRecurring, recurrenceType, interval, endDate, selectedDays, dayOfMonth]);
 
   const handleDayToggle = (day: number) => {
     setSelectedDays((prev) => {

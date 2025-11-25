@@ -91,7 +91,12 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
 
         {/* Veri Satırları */}
         <div className="space-y-2">
-          {items.map((item, index) => (
+          {items.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              Henüz ürün/hizmet eklenmemiş. "Satır Ekle" butonuna tıklayarak ekleyebilirsiniz.
+            </div>
+          ) : (
+            items.map((item, index) => (
             <div key={item.id} className="border rounded-lg p-1.5 bg-gray-50/50">
               <div className="grid grid-cols-12 gap-2 items-center">
                 {/* Ürün/Hizmet */}
@@ -225,7 +230,8 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                 </div>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </CardContent>
     </Card>

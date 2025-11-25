@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
@@ -60,6 +60,18 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactEmail, setNewContactEmail] = useState("");
   const queryClient = useQueryClient();
+  
+  // onChange ve onContactChange'i useRef ile sabit tutuyoruz sonsuz döngüyü önlemek için
+  const onChangeRef = useRef(onChange);
+  const onContactChangeRef = useRef(onContactChange);
+  
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  
+  useEffect(() => {
+    onContactChangeRef.current = onContactChange;
+  }, [onContactChange]);
 
   // Fetch customer's contact persons when customer is selected
   const { data: customerData, refetch: refetchCustomer } = useQuery({
@@ -165,20 +177,20 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
     const partnerData = customerData || supplierData;
     if (contactPersons.length > 0 && !value && partnerData) {
       // Birinci yetkili kişiyi varsayılan olarak seç (name alanı)
-      onChange(partnerData.name);
+      onChangeRef.current(partnerData.name);
       // İletişim bilgilerini de doldur
-      if (onContactChange && partnerData) {
-        onContactChange({
+      if (onContactChangeRef.current && partnerData) {
+        onContactChangeRef.current({
           phone: partnerData.mobile_phone || partnerData.office_phone || undefined,
           email: partnerData.email || undefined
         });
       }
     }
-  }, [contactPersons, value, customerData, supplierData, onChange, onContactChange]);
+  }, [contactPersons, value, customerData, supplierData]);
 
   // İletişim kişisi değiştiğinde telefon ve e-postayı güncelle
   useEffect(() => {
-    if (!value || !onContactChange) return;
+    if (!value || !onContactChangeRef.current) return;
     
     const partnerData = customerData || supplierData;
     if (!partnerData) return;
@@ -204,9 +216,9 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
 
     // Eğer telefon veya e-posta bulunduysa güncelle
     if (phone || email) {
-      onContactChange({ phone, email });
+      onContactChangeRef.current({ phone, email });
     }
-  }, [value, customerData, supplierData, onContactChange]);
+  }, [value, customerData, supplierData]);
 
   // Create new contact person mutation
   const createContactMutation = useMutation({
@@ -251,9 +263,9 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
       } else if (supplierId) {
         refetchSupplier();
       }
-      onChange(variables.name);
-      if (onContactChange) {
-        onContactChange({
+      onChangeRef.current(variables.name);
+      if (onContactChangeRef.current) {
+        onContactChangeRef.current({
           phone: variables.phone || undefined,
           email: variables.email || undefined,
         });
@@ -301,7 +313,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
     if (selectedValue === "__add_new__") {
       setIsDialogOpen(true);
     } else {
-      onChange(selectedValue);
+      onChangeRef.current(selectedValue);
     }
   };
 
@@ -343,7 +355,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
       ) : (
         <Input
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChangeRef.current(e.target.value)}
           placeholder={hasContacts ? "İletişim kişisi adını girin" : "Önce müşteri/tedarikçi seçin"}
           className={error ? "border-red-500" : ""}
           disabled={!partnerId}

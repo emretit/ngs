@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -82,16 +82,21 @@ const priorityConfig = {
 };
 
 const ServiceEdit = () => {
+  console.log('[ServiceEdit] Component render başladı');
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
+  console.log('[ServiceEdit] userData:', userData?.id);
+  
   const { customers, suppliers, isLoading: partnersLoading } = useCustomerSelect();
+  console.log('[ServiceEdit] customers length:', customers?.length, 'suppliers length:', suppliers?.length);
 
   // Servis verisini çek
   const { data: serviceRequest, isLoading: loading } = useQuery({
     queryKey: ['service-request', id],
     queryFn: async () => {
+      console.log('[ServiceEdit] serviceRequest queryFn çalışıyor, id:', id);
       if (!id) throw new Error('Servis ID bulunamadı');
       
       const { data, error } = await supabase
@@ -100,7 +105,11 @@ const ServiceEdit = () => {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[ServiceEdit] serviceRequest query error:', error);
+        throw error;
+      }
+      console.log('[ServiceEdit] serviceRequest data alındı:', data?.id);
       return data;
     },
     enabled: !!id,
@@ -110,6 +119,7 @@ const ServiceEdit = () => {
   const { data: serviceItems = [], isLoading: itemsLoading } = useQuery({
     queryKey: ['service-items', id],
     queryFn: async () => {
+      console.log('[ServiceEdit] serviceItems queryFn çalışıyor, id:', id);
       if (!id) return [];
       
       const { data, error } = await supabase
@@ -118,7 +128,11 @@ const ServiceEdit = () => {
         .eq('service_request_id', id)
         .order('row_number', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[ServiceEdit] serviceItems query error:', error);
+        throw error;
+      }
+      console.log('[ServiceEdit] serviceItems data alındı, count:', data?.length);
       return data || [];
     },
     enabled: !!id,
@@ -177,15 +191,27 @@ const ServiceEdit = () => {
 
   // ID değiştiğinde initialize flag'ini sıfırla (ProposalEdit'te yok ama biz ekliyoruz)
   useEffect(() => {
+    console.log('[ServiceEdit] ID değişti, initialize sıfırlanıyor, id:', id);
     setIsInitialized(false);
     setHasChanges(false);
   }, [id]);
 
   // Servis verisi yüklendiğinde form state'i initialize et (ProposalEdit'teki gibi)
   useEffect(() => {
+    console.log('[ServiceEdit] Initialize useEffect çalışıyor', {
+      hasServiceRequest: !!serviceRequest,
+      isInitialized,
+      serviceRequestId: serviceRequest?.id,
+      currentId: id,
+      serviceItemsLength: serviceItems?.length,
+      itemsLoading
+    });
+    
     // ProposalEdit'teki gibi: sadece serviceRequest varsa ve henüz initialize edilmemişse çalış
     // serviceRequest ve serviceItems'ın ID'lerini kullanarak gereksiz re-render'ları önle
-    if (serviceRequest && !isInitialized && serviceRequest.id === id) {
+    // serviceItems yüklenene kadar bekle
+    if (serviceRequest && !isInitialized && serviceRequest.id === id && !itemsLoading) {
+      console.log('[ServiceEdit] Form initialize başlıyor...');
       // Service items'ı service_items tablosundan çek (order_items gibi)
       let productItems = [{
         id: "1",
@@ -203,6 +229,7 @@ const ServiceEdit = () => {
       }];
 
       // Önce service_items tablosundan çek
+      console.log('[ServiceEdit] serviceItems:', serviceItems);
       if (serviceItems && serviceItems.length > 0) {
         productItems = serviceItems.map((item: any) => ({
           id: item.id || Date.now().toString(),
@@ -218,6 +245,7 @@ const ServiceEdit = () => {
           total_price: item.total_price || (item.quantity || 1) * (item.unit_price || 0),
           currency: item.currency || 'TRY'
         }));
+        console.log('[ServiceEdit] productItems mapped:', productItems);
       } else if (serviceRequest.service_details && typeof serviceRequest.service_details === 'object') {
         // Fallback: Eski JSONB formatından oku (backward compatibility)
         const serviceDetails = serviceRequest.service_details as any;
@@ -291,10 +319,23 @@ const ServiceEdit = () => {
         });
       }
         
+      console.log('[ServiceEdit] Form initialize tamamlandı', {
+        productItemsCount: productItems.length,
+        productItems: productItems
+      });
       setIsInitialized(true);
       setHasChanges(false);
+    } else {
+      console.log('[ServiceEdit] Initialize koşulları sağlanmadı, atlanıyor', {
+        hasServiceRequest: !!serviceRequest,
+        isInitialized,
+        serviceRequestId: serviceRequest?.id,
+        currentId: id,
+        itemsLoading
+      });
     }
-  }, [serviceRequest?.id, serviceItems?.length, isInitialized, id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceRequest?.id, serviceItems, isInitialized, id, itemsLoading]);
 
   // Ürün item yönetimi
   const addProductItem = () => {
@@ -426,24 +467,54 @@ const ServiceEdit = () => {
 
   // Seçili müşteri/tedarikçi bilgisi - sadece ID değiştiğinde yeniden hesapla
   const selectedPartner = React.useMemo(() => {
-    if (formData.customer_id && customers) {
-      return customers.find(c => c.id === formData.customer_id);
+    console.log('[ServiceEdit] selectedPartner useMemo çalışıyor', {
+      customer_id: formData.customer_id,
+      supplier_id: formData.supplier_id,
+      customersLength: customers?.length,
+      suppliersLength: suppliers?.length
+    });
+    
+    if (formData.customer_id && customers && customers.length > 0) {
+      const found = customers.find(c => c.id === formData.customer_id);
+      console.log('[ServiceEdit] Customer bulundu:', found?.name);
+      return found;
     }
-    if (formData.supplier_id && suppliers) {
-      return suppliers.find(s => s.id === formData.supplier_id);
+    if (formData.supplier_id && suppliers && suppliers.length > 0) {
+      const found = suppliers.find(s => s.id === formData.supplier_id);
+      console.log('[ServiceEdit] Supplier bulundu:', found?.name);
+      return found;
     }
     return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.customer_id, formData.supplier_id, customers?.length, suppliers?.length]);
 
 
   // Input change handler
-  const handleInputChange = (field: keyof ServiceRequestFormData, value: any) => {
+  const handleInputChange = useCallback((field: keyof ServiceRequestFormData, value: any) => {
+    console.log('[ServiceEdit] handleInputChange:', field, value);
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
     setHasChanges(true);
-  };
+  }, []);
+
+  // Recurrence config change handler - useCallback ile sarmalıyoruz sonsuz döngüyü önlemek için
+  const handleRecurrenceChange = useCallback((config: RecurrenceConfig) => {
+    console.log('[ServiceEdit] RecurrenceConfig değişti:', config);
+    setRecurrenceConfig(config);
+    setHasChanges(true);
+  }, []);
+
+  // onContactChange callback'ini useCallback ile sarmalıyoruz
+  const handleContactChange = useCallback((contactInfo: { phone?: string; email?: string }) => {
+    if (contactInfo.phone) {
+      handleInputChange('contact_phone', contactInfo.phone);
+    }
+    if (contactInfo.email) {
+      handleInputChange('contact_email', contactInfo.email);
+    }
+  }, [handleInputChange]);
 
   // Müşteri/Tedarikçi seçildiğinde iletişim bilgilerini otomatik doldur
   const handlePartnerSelect = (partnerId: string, type: 'customer' | 'supplier') => {
@@ -701,7 +772,18 @@ const ServiceEdit = () => {
     updateServiceMutation.mutate(formData);
   };
 
+  useEffect(() => {
+    console.log('[ServiceEdit] Render kontrolü:', {
+      loading,
+      itemsLoading,
+      hasServiceRequest: !!serviceRequest,
+      isInitialized,
+      formDataTitle: formData.service_title
+    });
+  }, [loading, itemsLoading, serviceRequest, isInitialized, formData.service_title]);
+
   if (loading || itemsLoading) {
+    console.log('[ServiceEdit] Loading state, render ediliyor');
     return (
       <div className="flex items-center justify-center h-[600px]">
         <div className="w-8 h-8 border-4 border-t-blue-600 border-b-blue-600 border-l-transparent border-r-transparent rounded-full animate-spin"></div>
@@ -710,6 +792,7 @@ const ServiceEdit = () => {
   }
 
   if (!serviceRequest) {
+    console.log('[ServiceEdit] ServiceRequest yok, hata sayfası render ediliyor');
     return (
       <div className="flex flex-col items-center justify-center h-[600px]">
         <h2 className="text-xl font-semibold mb-2">Servis Bulunamadı</h2>
@@ -719,6 +802,7 @@ const ServiceEdit = () => {
     );
   }
 
+  console.log('[ServiceEdit] Ana render başlıyor');
   return (
     <div className="space-y-2">
       {/* Enhanced Sticky Header */}
@@ -803,6 +887,7 @@ const ServiceEdit = () => {
             suppliers={suppliers}
             partnersLoading={partnersLoading}
             selectedPartner={selectedPartner}
+            onContactChange={handleContactChange}
           />
 
           <ServiceBasicInfoCard
@@ -839,10 +924,7 @@ const ServiceEdit = () => {
         {/* Tekrarlama Ayarları */}
         <ServiceRecurrenceForm
           value={recurrenceConfig}
-          onChange={(config) => {
-            setRecurrenceConfig(config);
-            setHasChanges(true);
-          }}
+          onChange={handleRecurrenceChange}
         />
       </div>
 

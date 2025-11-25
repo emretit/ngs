@@ -59,14 +59,16 @@ export default function ServiceManagement() {
   // Servisleri duruma göre grupla (header için istatistikler)
   const groupedServices = useMemo(() => {
     const grouped: {
-      pending?: any[];
+      new?: any[];
+      assigned?: any[];
       in_progress?: any[];
+      on_hold?: any[];
       completed?: any[];
       cancelled?: any[];
     } = {};
 
     serviceRequests.forEach(service => {
-      const status = service.service_status || 'pending';
+      const status = service.service_status || 'new';
       if (!grouped[status as keyof typeof grouped]) {
         grouped[status as keyof typeof grouped] = [];
       }

@@ -436,7 +436,7 @@ const NewServiceRequest = () => {
       // Service items'ı ayrı tabloya ekle (order_items gibi)
       if (data.product_items && data.product_items.length > 0) {
         const serviceItemsToInsert = data.product_items
-          .filter(item => item.name.trim() || item.description?.trim()) // Boş item'ları filtrele
+          .filter(item => (item.name && item.name.trim()) || (item.description && item.description.trim())) // Boş item'ları filtrele
           .map((item, index) => ({
             service_request_id: result.id,
             company_id: companyId,
@@ -475,7 +475,7 @@ const NewServiceRequest = () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] });
       // Kısa bir gecikme ile servisler sayfasına yönlendir
       setTimeout(() => {
-        navigate('/service');
+        navigate('/service/management');
       }, 1500);
     },
     onError: (error: any) => {
@@ -510,7 +510,7 @@ const NewServiceRequest = () => {
         <div className="flex items-center justify-between p-3 pl-12">
           <div className="flex items-center gap-3">
             <BackButton 
-              onClick={() => navigate("/service")}
+              onClick={() => navigate("/service/management")}
               variant="ghost"
               size="sm"
             >

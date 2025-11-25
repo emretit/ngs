@@ -26,6 +26,7 @@ interface ServiceCustomerInfoCardProps {
   suppliers?: any[];
   partnersLoading?: boolean;
   selectedPartner?: any;
+  onContactChange?: (contactInfo: { phone?: string; email?: string }) => void;
   errors?: Record<string, string>;
 }
 
@@ -37,6 +38,7 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
   suppliers = [],
   partnersLoading = false,
   selectedPartner,
+  onContactChange,
   errors = {}
 }) => {
   const navigate = useNavigate();
@@ -293,14 +295,7 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
             customerId={formData.customer_id || undefined}
             supplierId={formData.supplier_id || undefined}
             error={errors.contact_person}
-            onContactChange={(contactInfo) => {
-              if (contactInfo.phone) {
-                handleInputChange('contact_phone', contactInfo.phone);
-              }
-              if (contactInfo.email) {
-                handleInputChange('contact_email', contactInfo.email);
-              }
-            }}
+            onContactChange={onContactChange}
           />
 
           <div className="grid grid-cols-2 gap-2">

@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Wrench, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Plus, Wrench, Clock, CheckCircle2, XCircle, AlertCircle, Circle, AlertTriangle } from "lucide-react";
 import ServiceViewToggle, { ViewType } from "../ServiceViewToggle";
 
 interface ServicePageHeaderProps {
   onCreateService: () => void;
   services?: {
-    pending?: any[];
+    new?: any[];
+    assigned?: any[];
     in_progress?: any[];
+    on_hold?: any[];
     completed?: any[];
     cancelled?: any[];
   };
@@ -18,10 +20,12 @@ const ServicePageHeader = ({ onCreateService, services = {}, activeView, setActi
   // Toplam servis sayısını hesapla
   const totalCount = Object.values(services).reduce((sum, arr) => sum + (arr?.length || 0), 0);
 
-  // Durum kartları
+  // Durum kartları - form sayfalarındaki durumlarla eşleşmeli
   const statusCards = [
-    { status: 'pending', icon: AlertCircle, label: 'Beklemede', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-    { status: 'in_progress', icon: Clock, label: 'Devam Ediyor', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+    { status: 'new', icon: AlertCircle, label: 'Yeni', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+    { status: 'assigned', icon: Circle, label: 'Atanmış', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+    { status: 'in_progress', icon: Clock, label: 'Devam Ediyor', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+    { status: 'on_hold', icon: AlertTriangle, label: 'Beklemede', color: 'bg-orange-100 text-orange-800 border-orange-200' },
     { status: 'completed', icon: CheckCircle2, label: 'Tamamlandı', color: 'bg-green-100 text-green-800 border-green-200' },
     { status: 'cancelled', icon: XCircle, label: 'İptal Edildi', color: 'bg-red-100 text-red-800 border-red-200' },
   ];

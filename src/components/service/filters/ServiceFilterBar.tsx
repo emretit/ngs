@@ -56,10 +56,42 @@ const ServiceFilterBar = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tüm Durumlar</SelectItem>
-          <SelectItem value="pending">🟡 Beklemede</SelectItem>
-          <SelectItem value="in_progress">🔵 Devam Ediyor</SelectItem>
-          <SelectItem value="completed">🟢 Tamamlandı</SelectItem>
-          <SelectItem value="cancelled">🔴 İptal Edildi</SelectItem>
+          <SelectItem value="new">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              <span>Yeni</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="assigned">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+              <span>Atanmış</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="in_progress">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+              <span>Devam Ediyor</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="on_hold">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+              <span>Beklemede</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="completed">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              <span>Tamamlandı</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="cancelled">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+              <span>İptal Edildi</span>
+            </div>
+          </SelectItem>
         </SelectContent>
       </Select>
 

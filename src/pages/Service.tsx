@@ -35,9 +35,10 @@ import { getSLAStatusColor, getSLAStatusLabel, formatSLATimeRemaining, getSLATim
 
 interface ServicePageProps {
   defaultView?: "list" | "kanban" | "map" | "scheduling" | "calendar" | "sla" | "maintenance" | "templates" | "performance" | "costs" | "parts" | "satisfaction" | "analytics";
+  hideHeader?: boolean;
 }
 
-const ServicePage = ({ defaultView = "scheduling" }: ServicePageProps = {}) => {
+const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: ServicePageProps = {}) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { userData } = useCurrentUser();
@@ -243,12 +244,14 @@ const ServicePage = ({ defaultView = "scheduling" }: ServicePageProps = {}) => {
   return (
     <>
       <div className="space-y-6">
-        <ServicePageHeader 
-          activeView={activeView} 
-          setActiveView={setActiveView}
-          onCreateRequest={() => navigate("/service/new")}
-          serviceRequests={groupedServiceRequests}
-        />
+        {!hideHeader && (
+          <ServicePageHeader 
+            activeView={activeView} 
+            setActiveView={setActiveView}
+            onCreateRequest={() => navigate("/service/new")}
+            serviceRequests={groupedServiceRequests}
+          />
+        )}
         
         {/* SLA Alerts */}
         <SLAAlerter />

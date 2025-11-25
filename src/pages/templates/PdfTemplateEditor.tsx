@@ -13,7 +13,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { PDFViewer } from '@react-pdf/renderer';
-import { Download, Save, Eye, EyeOff, Plus, ArrowLeft } from 'lucide-react';
+import { Download, Save, Eye, EyeOff, Plus, FileText, MoreHorizontal, FileDown, Send } from 'lucide-react';
+import BackButton from '@/components/ui/back-button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { TemplateSchema, PdfTemplate, QuoteData } from '@/types/pdf-template';
 import PdfRenderer from '@/components/pdf/PdfRenderer';
 import { PdfExportService } from '@/services/pdf/pdfExportService';
@@ -572,44 +574,72 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   const watchedValues = form.watch();
 
   return (
-    <>
-      {/* Header */}
-      <div className="border-b bg-background px-4 py-2 sticky top-0 z-10">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            <Button
+    <div className="space-y-2">
+      {/* Enhanced Sticky Header */}
+      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
+        <div className="flex items-center justify-between p-3 pl-12">
+          <div className="flex items-center gap-3">
+            <BackButton 
+              onClick={() => navigate("/pdf-templates")}
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/pdf-templates')}
-              className="flex items-center gap-2 h-7"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Geri
-            </Button>
-            <div className="flex-1">
-              <h1 className="text-lg font-bold leading-tight">
-                {isNewTemplate ? 'Yeni PDF Şablonu' : 'PDF Şablon Editörü'}
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                {isNewTemplate ? 'Yeni bir PDF şablonu oluşturun' : `${selectedTemplate?.name || 'Şablon'} düzenleniyor`}
-              </p>
+              PDF Şablonları
+            </BackButton>
+            
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <div className="space-y-0.5">
+                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  {isNewTemplate ? 'Yeni PDF Şablonu' : 'PDF Şablon Editörü'}
+                </h1>
+                <p className="text-xs text-muted-foreground/70">
+                  {isNewTemplate ? 'Yeni bir PDF şablonu oluşturun' : `${selectedTemplate?.name || 'Şablon'} düzenleniyor`}
+                </p>
+              </div>
             </div>
           </div>
-          <Button 
-            type="submit" 
-            form="pdf-template-form"
-            disabled={isLoading} 
-            size="sm" 
-            className="h-8 text-xs"
-          >
-            <Save className="mr-1.5 h-3.5 w-3.5" />
-            {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
-          </Button>
+          
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={form.handleSubmit(handleSave, (errors) => {
+                console.error('Form validation errors:', errors);
+                toast.error('Lütfen form alanlarını kontrol edin');
+              })}
+              disabled={isLoading}
+              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+            >
+              <Save className="h-4 w-4" />
+              <span>{isLoading ? "Kaydediliyor..." : "Kaydet"}</span>
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="font-medium">İşlemler</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={handleDownloadPdf} className="gap-2 cursor-pointer" disabled={!previewData || !selectedTemplate}>
+                  <Download className="h-4 w-4" />
+                  <span>PDF İndir</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast.info("E-posta gönderimi özelliği yakında eklenecek")} className="gap-2 cursor-pointer">
+                  <Send className="h-4 w-4" />
+                  <span>E-posta Gönder</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
       {/* Top Panel - Genel Ayarlar */}
-      <div className="border-b bg-background px-4 py-2">
+      <div className="bg-background px-4 py-2 rounded-md border border-gray-200">
         <div className="flex items-center gap-6">
           {/* Genel Ayarlar - Accordion */}
           <div className="flex-1">
@@ -843,20 +873,12 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       </div>
 
       {/* Main Content */}
-      <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-12rem)]">
+      <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-16rem)] rounded-md border border-gray-200 overflow-hidden">
           {/* Settings Panel */}
           <ResizablePanel defaultSize={28} minSize={22} className="min-w-0 flex flex-col">
             <div className="h-full flex flex-col bg-gradient-to-b from-background via-background/98 to-muted/20 border-r border-border/20 min-h-0 overflow-hidden">
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-2 min-h-0">
-                <form 
-                  id="pdf-template-form"
-                  onSubmit={form.handleSubmit(handleSave, (errors) => {
-                    console.error('Form validation errors:', errors); // Debug
-                    toast.error('Lütfen form alanlarını kontrol edin');
-                  })} 
-                  className="space-y-2"
-                >
+              <div className="flex-1 overflow-y-auto p-2 min-h-0 space-y-2">
 
                 {/* Header Settings */}
                 <Accordion type="single" collapsible defaultValue="header">
@@ -1329,7 +1351,6 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                   </AccordionItem>
                 </Accordion>
 
-                </form>
               </div>
             </div>
           </ResizablePanel>
@@ -1359,7 +1380,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
-    </>
+    </div>
   );
 };
 

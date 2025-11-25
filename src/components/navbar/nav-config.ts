@@ -147,31 +147,17 @@ export const navItems = [
     label: "Servis",
     hasDropdown: true,
     items: [
-      // Görünümler
+      // Servis Yönetimi
       {
-        path: "/service/scheduling",
-        icon: Gauge,
-        label: "Zaman Çizelgesi",
-      },
-      {
-        path: "/service/list",
-        icon: ListTodo,
-        label: "Liste Görünümü",
-      },
-      {
-        path: "/service/kanban",
+        path: "/service/management",
         icon: LayoutDashboard,
-        label: "Kanban Panosu",
+        label: "Servis Yönetimi",
       },
-      {
-        path: "/service/calendar",
-        icon: Calendar,
-        label: "Takvim",
-      },
+      // Harita
       {
         path: "/service/map",
         icon: MapPin,
-        label: "Harita Görünümü",
+        label: "Harita",
       },
       // Yönetim Modülleri
       {
@@ -199,11 +185,6 @@ export const navItems = [
         path: "/service/maintenance",
         icon: Calendar,
         label: "Bakım Takvimi",
-      },
-      {
-        path: "/service/templates",
-        icon: FileEdit,
-        label: "Servis Şablonları",
       },
       // SLA ve Performans
       {

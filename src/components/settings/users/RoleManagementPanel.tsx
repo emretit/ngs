@@ -68,11 +68,7 @@ const MODULE_DEFINITIONS = [
     label: 'Servis', 
     category: 'Servis', 
     subModules: [
-      { key: 'service-scheduling', label: 'Zaman Çizelgesi' },
-      { key: 'service-list', label: 'Liste Görünümü' },
-      { key: 'service-kanban', label: 'Kanban Panosu' },
-      { key: 'service-calendar', label: 'Takvim' },
-      { key: 'service-map', label: 'Harita Görünümü' },
+      { key: 'service-views', label: 'Servis Yönetimi' },
       { key: 'service-work-orders', label: 'İş Emirleri' },
       { key: 'service-assets', label: 'Cihaz Yönetimi' },
       { key: 'service-contracts', label: 'Sözleşmeler' },

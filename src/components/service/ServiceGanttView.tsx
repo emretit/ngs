@@ -45,6 +45,7 @@ const ServiceGanttView = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [ganttViewMode, setGanttViewMode] = useState<GanttViewMode>(GanttViewMode.Week);
+  const [draggedService, setDraggedService] = useState<ServiceRequest | null>(null);
 
   // Öncelik renkleri
   const getPriorityColor = (priority: string) => {
@@ -318,6 +319,85 @@ const ServiceGanttView = ({
     }
   }, [serviceRequests, onSelectService]);
 
+  // Drag handlers for unassigned services
+  const handleDragStart = useCallback((e: React.DragEvent, service: ServiceRequest) => {
+    setDraggedService(service);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', service.id);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedService(null);
+  }, []);
+
+  // Handle drop on Gantt chart area
+  const handleGanttDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedService || !onUpdateAssignment) return;
+
+    // Get drop coordinates relative to Gantt chart container
+    const ganttContainer = e.currentTarget.closest('.gantt-container') || e.currentTarget;
+    const rect = (ganttContainer as HTMLElement).getBoundingClientRect();
+    const y = e.clientY - rect.top;
+
+    // Calculate which technician row was dropped on
+    // Gantt chart has a header (~60px) and each row is ~50px
+    const headerHeight = 60;
+    const rowHeight = 50;
+    const scrollTop = (ganttContainer as HTMLElement).scrollTop || 0;
+    const adjustedY = y + scrollTop - headerHeight;
+    const rowIndex = Math.floor(adjustedY / rowHeight);
+    
+    // Find technician based on row index
+    // We need to match with the tasks that are projects (technicians)
+    const projectTasks = ganttTasks.filter(t => t.type === 'project' && t.id !== 'project-unassigned');
+    
+    if (rowIndex >= 0 && rowIndex < projectTasks.length) {
+      const projectTask = projectTasks[rowIndex];
+      // Extract technician ID from project task ID (format: "project-{techId}")
+      const technicianId = projectTask.id.replace('project-', '');
+      const technician = technicians?.find(tech => tech.id === technicianId);
+      
+      if (technician) {
+        // Calculate date from x position
+        const x = e.clientX - rect.left;
+        const listCellWidth = 200; // Width of the list cell
+        const chartX = x - listCellWidth;
+        
+        // Calculate date based on x position and view mode
+        let dropDate = new Date(currentDate);
+        if (chartX > 0) {
+          const columnWidth = 65;
+          const columnIndex = Math.floor(chartX / columnWidth);
+          
+          if (viewMode === 'day') {
+            dropDate = new Date(currentDate);
+          } else if (viewMode === 'week') {
+            const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+            dropDate = addDays(weekStart, columnIndex);
+          } else {
+            const monthStart = startOfMonth(currentDate);
+            dropDate = addDays(monthStart, columnIndex);
+          }
+        }
+        
+        const startTime = new Date(dropDate);
+        startTime.setHours(9, 0, 0, 0); // Default to 9 AM
+        const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000); // Default 2 hours
+        
+        onUpdateAssignment(draggedService.id, technician.id, startTime, endTime);
+      }
+    }
+    
+    setDraggedService(null);
+  }, [draggedService, onUpdateAssignment, technicians, currentDate, viewMode, ganttTasks]);
+
+  const handleGanttDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }, []);
+
   return (
     <div className="space-y-4">
       {/* Üst Kontrol Paneli */}
@@ -392,9 +472,13 @@ const ServiceGanttView = ({
       <div className="flex rounded-xl overflow-hidden shadow-lg border border-gray-200" style={{ height: 'calc(100vh - 250px)' }}>
         {/* Ana Gantt Chart Alanı */}
         <Card className="overflow-hidden flex-1">
-          <CardContent className="p-0 h-full">
+          <CardContent 
+            className="p-0 h-full"
+            onDrop={handleGanttDrop}
+            onDragOver={handleGanttDragOver}
+          >
             {ganttTasks && Array.isArray(ganttTasks) && ganttTasks.length > 0 ? (
-              <div className="h-full overflow-auto">
+              <div className="h-full overflow-auto gantt-container">
                 <Gantt
                   tasks={ganttTasks}
                   viewMode={ganttViewMode}
@@ -464,8 +548,13 @@ const ServiceGanttView = ({
                 return (
                   <div
                     key={service.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, service)}
+                    onDragEnd={handleDragEnd}
                     onClick={() => onSelectService(service)}
-                    className="bg-white border border-orange-200 rounded-lg p-2 cursor-pointer shadow-sm hover:shadow-md transition-all duration-200 hover:border-orange-300"
+                    className={`bg-white border border-orange-200 rounded-lg p-2 cursor-move shadow-sm hover:shadow-md transition-all duration-200 hover:border-orange-300 ${
+                      draggedService?.id === service.id ? 'opacity-50' : ''
+                    }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5 flex-1 min-w-0">

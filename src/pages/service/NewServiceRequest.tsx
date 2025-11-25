@@ -1,45 +1,30 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DatePicker } from '@/components/ui/date-picker';
-import { Badge } from '@/components/ui/badge';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  ArrowLeft,
   Save,
-  User,
-  MapPin,
-  Calendar,
-  AlertTriangle,
-  FileText,
   Wrench,
-  Clock,
-  Phone,
-  Mail,
-  Search,
-  Building2,
-  CheckCircle2,
-  Loader2
+  MoreHorizontal,
+  Eye,
+  FileDown,
+  Send,
+  CheckCircle2
 } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import BackButton from '@/components/ui/back-button';
 import { useCustomerSelect } from '@/hooks/useCustomerSelect';
 import { ServiceRecurrenceForm } from '@/components/service/ServiceRecurrenceForm';
 import { RecurrenceConfig } from '@/utils/serviceRecurrenceUtils';
+import ServiceBasicInfoCard from '@/components/service/cards/ServiceBasicInfoCard';
+import ServiceCustomerInfoCard from '@/components/service/cards/ServiceCustomerInfoCard';
+import ServiceDateInfoCard from '@/components/service/cards/ServiceDateInfoCard';
+import ServiceEquipmentCard from '@/components/service/cards/ServiceEquipmentCard';
+import ServiceAttachmentsNotesCard from '@/components/service/cards/ServiceAttachmentsNotesCard';
+import ServiceAdditionalInfoCard from '@/components/service/cards/ServiceAdditionalInfoCard';
 
 interface ServiceRequestFormData {
   service_title: string;
@@ -54,12 +39,40 @@ interface ServiceRequestFormData {
   contact_person: string;
   contact_phone: string;
   contact_email: string;
+  equipment_id: string | null;
+  warranty_info: {
+    is_under_warranty: boolean;
+    warranty_start?: string;
+    warranty_end?: string;
+    warranty_notes?: string;
+  } | null;
+  attachments: Array<{
+    name: string;
+    path: string;
+    type: string;
+    size: number;
+  }>;
+  notes: string[];
+  slip_number: string;
+  service_result: string;
+  sla_target_hours: number | null;
 }
+
+// Priority config
+const priorityConfig = {
+  low: { label: 'Düşük', color: 'bg-gray-100 text-gray-800', icon: '🟢' },
+  medium: { label: 'Orta', color: 'bg-yellow-100 text-yellow-800', icon: '🟡' },
+  high: { label: 'Yüksek', color: 'bg-orange-100 text-orange-800', icon: '🟠' },
+  urgent: { label: 'Acil', color: 'bg-red-100 text-red-800', icon: '🔴' },
+};
 
 const NewServiceRequest = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
+  const { customers, suppliers, isLoading: partnersLoading } = useCustomerSelect();
 
+  // Form state
   const [formData, setFormData] = useState<ServiceRequestFormData>({
     service_title: '',
     service_request_description: '',
@@ -73,51 +86,190 @@ const NewServiceRequest = () => {
     contact_person: '',
     contact_phone: '',
     contact_email: '',
+    equipment_id: null,
+    warranty_info: null,
+    attachments: [],
+    notes: [],
+    slip_number: '',
+    service_result: '',
+    sla_target_hours: null,
   });
 
   const [recurrenceConfig, setRecurrenceConfig] = useState<RecurrenceConfig>({ type: 'none' });
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [newNote, setNewNote] = useState('');
 
-  const [partnerSearchQuery, setPartnerSearchQuery] = useState('');
-  const [partnerPopoverOpen, setPartnerPopoverOpen] = useState(false);
-  const [partnerType, setPartnerType] = useState<'customer' | 'supplier'>('customer');
-  const { userData } = useCurrentUser();
-  const { customers, suppliers, isLoading: partnersLoading } = useCustomerSelect();
+  // Ekipmanları getir
+  const { data: equipmentList = [], isLoading: equipmentLoading } = useQuery({
+    queryKey: ['equipment', userData?.company_id, formData.customer_id],
+    queryFn: async () => {
+      if (!userData?.company_id) return [];
+      
+      let query = supabase
+        .from('equipment')
+        .select('*')
+        .eq('company_id', userData.company_id);
+      
+      if (formData.customer_id) {
+        query = query.eq('customer_id', formData.customer_id);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userData?.company_id,
+  });
 
-  // Müşteri arama filtresi
-  const filteredCustomers = useMemo(() => {
-    if (!customers) return [];
-    if (!partnerSearchQuery.trim()) return customers;
-    
-    const query = partnerSearchQuery.toLowerCase();
-    return customers.filter(customer => {
-      const searchableText = [
-        customer.name,
-        customer.company,
-        customer.email,
-        customer.mobile_phone,
-        customer.office_phone
-      ].filter(Boolean).join(' ').toLowerCase();
-      return searchableText.includes(query);
-    });
-  }, [customers, partnerSearchQuery]);
+  // Seçili müşteri/tedarikçi bilgisi
+  const selectedPartner = React.useMemo(() => {
+    if (formData.customer_id) {
+      return customers?.find(c => c.id === formData.customer_id);
+    }
+    if (formData.supplier_id) {
+      return suppliers?.find(s => s.id === formData.supplier_id);
+    }
+    return null;
+  }, [formData.customer_id, formData.supplier_id, customers, suppliers]);
 
-  // Tedarikçi arama filtresi
-  const filteredSuppliers = useMemo(() => {
-    if (!suppliers) return [];
-    if (!partnerSearchQuery.trim()) return suppliers;
-    
-    const query = partnerSearchQuery.toLowerCase();
-    return suppliers.filter(supplier => {
-      const searchableText = [
-        supplier.name,
-        supplier.company,
-        supplier.email,
-        supplier.mobile_phone,
-        supplier.office_phone
-      ].filter(Boolean).join(' ').toLowerCase();
-      return searchableText.includes(query);
-    });
-  }, [suppliers, partnerSearchQuery]);
+  // Müşteri değiştiğinde ekipman seçimini temizle
+  React.useEffect(() => {
+    if (formData.customer_id) {
+      const selectedEquipment = equipmentList.find((eq: any) => eq.id === formData.equipment_id);
+      if (selectedEquipment && selectedEquipment.customer_id !== formData.customer_id) {
+        setFormData(prev => ({
+          ...prev,
+          equipment_id: null,
+          warranty_info: null,
+        }));
+      }
+    }
+  }, [formData.customer_id, equipmentList]);
+
+  // Input change handler
+  const handleInputChange = (field: keyof ServiceRequestFormData, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Müşteri/Tedarikçi seçildiğinde iletişim bilgilerini otomatik doldur
+  const handlePartnerSelect = (partnerId: string, type: 'customer' | 'supplier') => {
+    if (type === 'customer') {
+      const selectedCustomer = customers?.find(c => c.id === partnerId);
+      if (selectedCustomer) {
+        setFormData(prev => ({
+          ...prev,
+          customer_id: partnerId,
+          supplier_id: null,
+          contact_person: selectedCustomer.name || prev.contact_person,
+          contact_phone: selectedCustomer.mobile_phone || selectedCustomer.office_phone || prev.contact_phone,
+          contact_email: selectedCustomer.email || prev.contact_email,
+        }));
+      }
+    } else {
+      const selectedSupplier = suppliers?.find(s => s.id === partnerId);
+      if (selectedSupplier) {
+        setFormData(prev => ({
+          ...prev,
+          supplier_id: partnerId,
+          customer_id: null,
+          contact_person: selectedSupplier.name || prev.contact_person,
+          contact_phone: selectedSupplier.mobile_phone || selectedSupplier.office_phone || prev.contact_phone,
+          contact_email: selectedSupplier.email || prev.contact_email,
+        }));
+      }
+    }
+  };
+
+  // Ekipman seçimi handler
+  const handleEquipmentSelect = (equipmentId: string) => {
+    const selectedEquipment = equipmentList.find((eq: any) => eq.id === equipmentId);
+    if (selectedEquipment) {
+      setFormData(prev => ({
+        ...prev,
+        equipment_id: equipmentId,
+        warranty_info: selectedEquipment.warranty_end ? {
+          is_under_warranty: new Date(selectedEquipment.warranty_end) > new Date(),
+          warranty_start: selectedEquipment.warranty_start || undefined,
+          warranty_end: selectedEquipment.warranty_end || undefined,
+          warranty_notes: undefined,
+        } : null,
+      }));
+    }
+  };
+
+  // Dosya yükleme fonksiyonu
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploadingFiles(true);
+    try {
+      const uploadedFiles = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`${file.name} dosyası 10MB'dan büyük`);
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `service-attachments/${userData?.company_id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('attachments')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error(`${file.name} yüklenirken hata oluştu`);
+          continue;
+        }
+
+        uploadedFiles.push({
+          name: file.name,
+          path: filePath,
+          type: file.type,
+          size: file.size,
+        });
+      }
+
+      if (uploadedFiles.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          attachments: [...prev.attachments, ...uploadedFiles],
+        }));
+        toast.success(`${uploadedFiles.length} dosya yüklendi`);
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      toast.error('Dosya yüklenirken bir hata oluştu');
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
+
+  // Not ekleme/silme fonksiyonları
+  const handleAddNote = () => {
+    if (newNote.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        notes: [...prev.notes, newNote.trim()],
+      }));
+      setNewNote('');
+    }
+  };
+
+  const handleRemoveNote = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      notes: prev.notes.filter((_, i) => i !== index),
+    }));
+  };
 
   // Servis oluşturma mutation
   const createServiceMutation = useMutation({
@@ -128,36 +280,32 @@ const NewServiceRequest = () => {
         throw new Error('Şirket bilgisi bulunamadı');
       }
 
-      const serviceData = {
-        service_title: data.service_title,
-        service_request_description: data.service_request_description,
-        service_location: data.service_location,
-        service_priority: data.service_priority,
-        service_type: data.service_type || null,
-        customer_id: data.customer_id || null,
-        supplier_id: data.supplier_id || null,
-        service_due_date: data.service_due_date?.toISOString() || null,
-        service_reported_date: data.service_reported_date.toISOString(),
-        service_status: 'new' as const,
-        company_id: companyId,
-        // İletişim bilgilerini customer_data JSONB'ye kaydet
-        customer_data: {
-          contact_person: data.contact_person || null,
-          contact_phone: data.contact_phone || null,
-          contact_email: data.contact_email || null,
-        },
-        // Tekrarlama ayarları
-        is_recurring: recurrenceConfig.type !== 'none',
-        recurrence_type: recurrenceConfig.type !== 'none' ? recurrenceConfig.type : null,
-        recurrence_interval: recurrenceConfig.interval || 1,
-        recurrence_end_date: recurrenceConfig.endDate?.toISOString().split('T')[0] || null,
-        recurrence_days: recurrenceConfig.days || null,
-        recurrence_day_of_month: recurrenceConfig.dayOfMonth || null,
-      };
-
       const { data: result, error } = await supabase
         .from('service_requests')
-        .insert([serviceData])
+        .insert({
+          company_id: companyId,
+          service_title: data.service_title,
+          service_request_description: data.service_request_description,
+          service_location: data.service_location,
+          service_priority: data.service_priority,
+          service_type: data.service_type,
+          customer_id: data.customer_id,
+          supplier_id: data.supplier_id,
+          service_due_date: data.service_due_date?.toISOString(),
+          service_reported_date: data.service_reported_date.toISOString(),
+          contact_person: data.contact_person,
+          contact_phone: data.contact_phone,
+          contact_email: data.contact_email,
+          equipment_id: data.equipment_id,
+          warranty_info: data.warranty_info,
+          attachments: data.attachments,
+          notes: data.notes,
+          slip_number: data.slip_number,
+          service_result: data.service_result,
+          sla_target_hours: data.sla_target_hours,
+          service_status: 'open',
+          created_by: userData?.id,
+        })
         .select()
         .single();
 
@@ -175,572 +323,156 @@ const NewServiceRequest = () => {
     onError: (error: any) => {
       console.error('Servis oluşturma hatası:', error);
       toast.error('Servis talebi oluşturulurken bir hata oluştu', {
-        description: error.message || 'Lütfen tekrar deneyin.',
+        description: error.message || 'Bilinmeyen hata',
       });
     },
   });
 
+  // Form submit handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validation
+    
     if (!formData.service_title.trim()) {
-      toast.error('Servis başlığı gereklidir', {
-        description: 'Lütfen servis başlığını girin.',
-      });
+      toast.error('Servis başlığı zorunludur');
       return;
     }
 
     if (!formData.service_request_description.trim()) {
-      toast.error('Servis açıklaması gereklidir', {
-        description: 'Lütfen servis açıklamasını girin.',
-      });
+      toast.error('Servis açıklaması zorunludur');
       return;
     }
 
     createServiceMutation.mutate(formData);
   };
 
-  const isFormValid = formData.service_title.trim() && formData.service_request_description.trim();
-
-  const handleInputChange = (field: keyof ServiceRequestFormData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  // Müşteri/Tedarikçi seçildiğinde iletişim bilgilerini otomatik doldur
-  const handlePartnerSelect = (partnerId: string, type: 'customer' | 'supplier') => {
-    if (type === 'customer') {
-      const selectedCustomer = customers?.find(c => c.id === partnerId);
-      if (selectedCustomer) {
-        setFormData(prev => ({
-          ...prev,
-          customer_id: partnerId,
-          supplier_id: null, // Müşteri seçildiğinde tedarikçiyi temizle
-          contact_person: selectedCustomer.name || prev.contact_person,
-          contact_phone: selectedCustomer.mobile_phone || selectedCustomer.office_phone || prev.contact_phone,
-          contact_email: selectedCustomer.email || prev.contact_email,
-        }));
-      }
-    } else {
-      const selectedSupplier = suppliers?.find(s => s.id === partnerId);
-      if (selectedSupplier) {
-        setFormData(prev => ({
-          ...prev,
-          supplier_id: partnerId,
-          customer_id: null, // Tedarikçi seçildiğinde müşteriyi temizle
-          contact_person: selectedSupplier.name || prev.contact_person,
-          contact_phone: selectedSupplier.mobile_phone || selectedSupplier.office_phone || prev.contact_phone,
-          contact_email: selectedSupplier.email || prev.contact_email,
-        }));
-      }
-    }
-    setPartnerSearchQuery('');
-    setPartnerPopoverOpen(false);
-  };
-
-  const selectedCustomer = customers?.find(c => c.id === formData.customer_id);
-  const selectedSupplier = suppliers?.find(s => s.id === formData.supplier_id);
-  const selectedPartner = formData.customer_id ? selectedCustomer : selectedSupplier;
-
-  const priorityConfig = {
-    low: { 
-      label: 'Düşük', 
-      color: 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200',
-      icon: '🟢'
-    },
-    medium: { 
-      label: 'Orta', 
-      color: 'bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200',
-      icon: '🟡'
-    },
-    high: { 
-      label: 'Yüksek', 
-      color: 'bg-orange-100 text-orange-800 border-orange-300 hover:bg-orange-200',
-      icon: '🟠'
-    },
-    urgent: { 
-      label: 'Acil', 
-      color: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200',
-      icon: '🔴'
-    }
-  };
-
   return (
-    <div>
+    <div className="space-y-2">
       {/* Enhanced Sticky Header */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm rounded-lg border border-border shadow-md mb-6">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-4">
+      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
+        <div className="flex items-center justify-between p-3 pl-12">
+          <div className="flex items-center gap-3">
             <BackButton 
               onClick={() => navigate("/service")}
               variant="ghost"
               size="sm"
-              className="gap-2"
             >
-              <ArrowLeft className="h-4 w-4" />
               Servisler
             </BackButton>
             
-            <div className="h-6 w-px bg-border" />
-            
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Wrench className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">
+            <div className="flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-muted-foreground" />
+              <div className="space-y-0.5">
+                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                   Yeni Servis Talebi
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  Hızlı ve kolay servis talebi oluşturma
+                <p className="text-xs text-muted-foreground/70">
+                  Yeni servis kaydı oluşturun
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Button 
-              variant="outline" 
-              type="button"
-              onClick={() => navigate("/service")}
+              onClick={handleSubmit}
               disabled={createServiceMutation.isPending}
-              className="gap-2"
+              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
             >
-              İptal
+              <Save className="h-4 w-4" />
+              <span>{createServiceMutation.isPending ? "Kaydediliyor..." : "Kaydet"}</span>
             </Button>
-            <Button 
-              type="submit"
-              form="service-form"
-              disabled={createServiceMutation.isPending || !isFormValid}
-              className="gap-2 shadow-md"
-            >
-              {createServiceMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Kaydediliyor...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Kaydet
-                </>
-              )}
-            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="font-medium">İşlemler</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => toast.info("Önizleme özelliği yakında eklenecek")} className="gap-2 cursor-pointer">
+                  <Eye className="h-4 w-4" />
+                  <span>Önizle</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast.info("PDF export özelliği yakında eklenecek")} className="gap-2 cursor-pointer">
+                  <FileDown className="h-4 w-4" />
+                  <span>PDF İndir</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast.info("E-posta gönderimi özelliği yakında eklenecek")} className="gap-2 cursor-pointer">
+                  <Send className="h-4 w-4" />
+                  <span>E-posta Gönder</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto space-y-4">
-
-        <form id="service-form" onSubmit={handleSubmit} className="space-y-4">
-          {/* İlk Satır - Temel Bilgiler ve Müşteri Bilgileri Yan Yana */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {/* Ana Bilgiler */}
-            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-              <CardHeader className="pb-2 pt-2.5">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
-                    <FileText className="h-4 w-4 text-blue-600" />
-                  </div>
-                  Temel Bilgiler
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 pt-0 px-3 pb-3">
-                <div>
-                  <Label htmlFor="service_title" className="text-xs font-medium text-gray-700 mb-1.5 block">
-                    Servis Başlığı <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="service_title"
-                    value={formData.service_title}
-                    onChange={(e) => handleInputChange('service_title', e.target.value)}
-                    placeholder="Örn: Klima bakımı, Elektrik arızası..."
-                    className="h-7 text-xs"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="service_type" className="text-xs font-medium text-gray-700 mb-1.5 block">
-                    Servis Türü
-                  </Label>
-                  <Select
-                    value={formData.service_type}
-                    onValueChange={(value) => handleInputChange('service_type', value)}
-                  >
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue placeholder="Servis türü seçin..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bakım">Bakım</SelectItem>
-                      <SelectItem value="onarım">Onarım</SelectItem>
-                      <SelectItem value="kurulum">Kurulum</SelectItem>
-                      <SelectItem value="yazılım">Yazılım</SelectItem>
-                      <SelectItem value="donanım">Donanım</SelectItem>
-                      <SelectItem value="ağ">Ağ</SelectItem>
-                      <SelectItem value="güvenlik">Güvenlik</SelectItem>
-                      <SelectItem value="diğer">Diğer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="service_request_description" className="text-xs font-medium text-gray-700 mb-1.5 block">
-                    Servis Açıklaması <span className="text-red-500">*</span>
-                  </Label>
-                  <Textarea
-                    id="service_request_description"
-                    value={formData.service_request_description}
-                    onChange={(e) => handleInputChange('service_request_description', e.target.value)}
-                    placeholder="Servisin detaylarını, yapılması gereken işlemleri ve özel notları açıklayın..."
-                    rows={4}
-                    className="resize-none text-xs min-h-[80px]"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                      Lokasyon
-                    </Label>
-                    <Input
-                      value={formData.service_location}
-                      onChange={(e) => handleInputChange('service_location', e.target.value)}
-                      placeholder="Örn: İstanbul, Şişli..."
-                      className="h-7 text-xs"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                      Öncelik
-                    </Label>
-                    <Select
-                      value={formData.service_priority}
-                      onValueChange={(value) => handleInputChange('service_priority', value as any)}
-                    >
-                      <SelectTrigger className={`h-7 text-xs ${priorityConfig[formData.service_priority].color} border font-medium`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(priorityConfig).map(([key, config]) => (
-                          <SelectItem key={key} value={key}>
-                            <div className="flex items-center gap-2">
-                              <span>{config.icon}</span>
-                              <span>{config.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Müşteri ve İletişim */}
-            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-              <CardHeader className="pb-2 pt-2.5">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-green-50 to-green-50/50 border border-green-200/50">
-                    <User className="h-4 w-4 text-green-600" />
-                  </div>
-                  Müşteri / Tedarikçi ve İletişim
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 pt-0 px-3 pb-3">
-                <div>
-                  <Label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                    Müşteri / Tedarikçi
-                  </Label>
-                  <Popover open={partnerPopoverOpen} onOpenChange={setPartnerPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={partnerPopoverOpen}
-                        className="w-full h-7 text-xs justify-between"
-                      >
-                        <div className="flex items-center">
-                          {formData.customer_id ? (
-                            <User className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                          ) : formData.supplier_id ? (
-                            <Building2 className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                          ) : (
-                            <User className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                          )}
-                          {selectedPartner 
-                            ? selectedPartner.name || selectedPartner.company || 'İsimsiz'
-                            : 'Müşteri veya Tedarikçi seçin...'}
-                        </div>
-                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] max-w-[90vw] p-0" align="start">
-                      <div className="p-4 border-b">
-                        <Input
-                          placeholder="Arama..."
-                          value={partnerSearchQuery}
-                          onChange={(e) => setPartnerSearchQuery(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
-                      
-                      <CustomTabs defaultValue={partnerType} onValueChange={(value) => setPartnerType(value as "customer" | "supplier")}>
-                        <div className="px-4 pt-3 pb-1">
-                          <CustomTabsList className="w-full">
-                            <CustomTabsTrigger value="customer" className="flex-1 text-xs">
-                              <User className="h-4 w-4 mr-2" />
-                              Müşteriler
-                            </CustomTabsTrigger>
-                            <CustomTabsTrigger value="supplier" className="flex-1 text-xs">
-                              <Building2 className="h-4 w-4 mr-2" />
-                              Tedarikçiler
-                            </CustomTabsTrigger>
-                          </CustomTabsList>
-                        </div>
-                        
-                        <CustomTabsContent value="customer" className="p-0 focus-visible:outline-none focus-visible:ring-0">
-                          <ScrollArea className="h-[300px]">
-                            {partnersLoading ? (
-                              <div className="p-4 text-center text-xs text-muted-foreground">
-                                Yükleniyor...
-                              </div>
-                            ) : filteredCustomers && filteredCustomers.length > 0 ? (
-                              <div className="grid gap-1 p-2">
-                                {filteredCustomers.map((customer) => (
-                                  <div
-                                    key={customer.id}
-                                    className={`flex items-start p-2 cursor-pointer rounded-md hover:bg-muted/50 ${
-                                      customer.id === formData.customer_id ? "bg-muted" : ""
-                                    }`}
-                                    onClick={() => handlePartnerSelect(customer.id, 'customer')}
-                                  >
-                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3 mt-1">
-                                      {customer.name?.charAt(0)?.toUpperCase() || '?'}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex justify-between">
-                                        <p className="font-medium text-xs truncate">
-                                          {customer.name || customer.company || 'İsimsiz Müşteri'}
-                                        </p>
-                                      </div>
-                                      {customer.company && customer.name && (
-                                        <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                          {customer.company}
-                                        </p>
-                                      )}
-                                      {customer.email && (
-                                        <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                          <Mail className="h-3 w-3 mr-1" />
-                                          <span className="truncate">{customer.email}</span>
-                                        </div>
-                                      )}
-                                      {(customer.mobile_phone || customer.office_phone) && (
-                                        <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                          <Phone className="h-3 w-3 mr-1" />
-                                          <span>{customer.mobile_phone || customer.office_phone}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="p-4 text-center text-xs text-muted-foreground">
-                                Müşteri bulunamadı
-                              </div>
-                            )}
-                          </ScrollArea>
-                          <div className="p-2 border-t">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full text-xs"
-                              onClick={() => {
-                                setPartnerPopoverOpen(false);
-                                navigate('/contacts/new');
-                              }}
-                            >
-                              <Building2 className="h-3 w-3 mr-2" />
-                              Yeni Müşteri Ekle
-                            </Button>
-                          </div>
-                        </CustomTabsContent>
-                        
-                        <CustomTabsContent value="supplier" className="p-0 focus-visible:outline-none focus-visible:ring-0">
-                          <ScrollArea className="h-[300px]">
-                            {partnersLoading ? (
-                              <div className="p-4 text-center text-xs text-muted-foreground">
-                                Yükleniyor...
-                              </div>
-                            ) : filteredSuppliers && filteredSuppliers.length > 0 ? (
-                              <div className="grid gap-1 p-2">
-                                {filteredSuppliers.map((supplier) => (
-                                  <div
-                                    key={supplier.id}
-                                    className={`flex items-start p-2 cursor-pointer rounded-md hover:bg-muted/50 ${
-                                      supplier.id === formData.supplier_id ? "bg-muted" : ""
-                                    }`}
-                                    onClick={() => handlePartnerSelect(supplier.id, 'supplier')}
-                                  >
-                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3 mt-1">
-                                      <Building2 className="h-4 w-4" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex justify-between">
-                                        <p className="font-medium text-xs truncate">
-                                          {supplier.name || supplier.company || 'İsimsiz Tedarikçi'}
-                                        </p>
-                                      </div>
-                                      {supplier.company && supplier.name && (
-                                        <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                          {supplier.company}
-                                        </p>
-                                      )}
-                                      {supplier.email && (
-                                        <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                          <Mail className="h-3 w-3 mr-1" />
-                                          <span className="truncate">{supplier.email}</span>
-                                        </div>
-                                      )}
-                                      {(supplier.mobile_phone || supplier.office_phone) && (
-                                        <div className="flex items-center text-xs text-muted-foreground mt-1">
-                                          <Phone className="h-3 w-3 mr-1" />
-                                          <span>{supplier.mobile_phone || supplier.office_phone}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="p-4 text-center text-xs text-muted-foreground">
-                                Tedarikçi bulunamadı
-                              </div>
-                            )}
-                          </ScrollArea>
-                          <div className="p-2 border-t">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full text-xs"
-                              onClick={() => {
-                                setPartnerPopoverOpen(false);
-                                navigate('/suppliers/new');
-                              }}
-                            >
-                              <Building2 className="h-3 w-3 mr-2" />
-                              Yeni Tedarikçi Ekle
-                            </Button>
-                          </div>
-                        </CustomTabsContent>
-                      </CustomTabs>
-                    </PopoverContent>
-                  </Popover>
-                  {(formData.customer_id || formData.supplier_id) && selectedPartner && (
-                    <Badge variant="secondary" className="mt-1.5 text-xs py-0.5">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      {selectedPartner.name || selectedPartner.company || 'Seçildi'}
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 gap-2">
-                  <div>
-                    <Label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                      İletişim Kişisi
-                    </Label>
-                    <Input
-                      value={formData.contact_person}
-                      onChange={(e) => handleInputChange('contact_person', e.target.value)}
-                      placeholder="Ad Soyad"
-                      className="h-7 text-xs"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                        Telefon
-                      </Label>
-                      <Input
-                        value={formData.contact_phone}
-                        onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-                        placeholder="0(555) 123 45 67"
-                        className="h-7 text-xs"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                        E-posta
-                      </Label>
-                      <Input
-                        type="email"
-                        value={formData.contact_email}
-                        onChange={(e) => handleInputChange('contact_email', e.target.value)}
-                        placeholder="email@ornek.com"
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* İkinci Satır - Tarih Bilgileri */}
-          <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-            <CardHeader className="pb-2 pt-2.5">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
-                  <Calendar className="h-4 w-4 text-purple-600" />
-                </div>
-                Tarih Bilgileri
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 pt-0 px-3 pb-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                    Bildirim Tarihi
-                  </Label>
-                  <DatePicker
-                    date={formData.service_reported_date}
-                    onSelect={(date) => handleInputChange('service_reported_date', date || new Date())}
-                    placeholder="Bildirim tarihi seçin"
-                    className="h-7 text-xs w-full"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs font-medium text-gray-700 mb-1.5 block">
-                    Hedef Teslim Tarihi <span className="text-gray-500 font-normal">(İsteğe bağlı)</span>
-                  </Label>
-                  <DatePicker
-                    date={formData.service_due_date}
-                    onSelect={(date) => handleInputChange('service_due_date', date)}
-                    placeholder="Hedef tarih seçin"
-                    className="h-7 text-xs w-full"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Tekrarlama Ayarları */}
-          <ServiceRecurrenceForm
-            value={recurrenceConfig}
-            onChange={setRecurrenceConfig}
+      {/* Main Content - Her kart bağımsız Card komponenti */}
+      <div className="space-y-4">
+        {/* Row 1 - Temel Bilgiler ve Müşteri */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <ServiceBasicInfoCard
+            formData={formData}
+            handleInputChange={handleInputChange}
+            priorityConfig={priorityConfig}
           />
 
-        </form>
+          <ServiceCustomerInfoCard
+            formData={formData}
+            handleInputChange={handleInputChange}
+            handlePartnerSelect={handlePartnerSelect}
+            customers={customers}
+            suppliers={suppliers}
+            partnersLoading={partnersLoading}
+            selectedPartner={selectedPartner}
+          />
+        </div>
+
+        {/* Row 2 - Tarih Bilgileri */}
+        <ServiceDateInfoCard
+          formData={formData}
+          handleInputChange={handleInputChange}
+        />
+
+        {/* Row 3 - Ekipman ve Dosya/Notlar */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <ServiceEquipmentCard
+            formData={formData}
+            handleInputChange={handleInputChange}
+            handleEquipmentSelect={handleEquipmentSelect}
+            equipmentList={equipmentList}
+            equipmentLoading={equipmentLoading}
+            setFormData={setFormData}
+          />
+
+          <ServiceAttachmentsNotesCard
+            formData={formData}
+            handleInputChange={handleInputChange}
+            handleFileUpload={handleFileUpload}
+            handleAddNote={handleAddNote}
+            handleRemoveNote={handleRemoveNote}
+            newNote={newNote}
+            setNewNote={setNewNote}
+            uploadingFiles={uploadingFiles}
+            setFormData={setFormData}
+          />
+        </div>
+
+        {/* Row 4 - Ek Bilgiler */}
+        <ServiceAdditionalInfoCard
+          formData={formData}
+          handleInputChange={handleInputChange}
+        />
+
+        {/* Tekrarlama Ayarları */}
+        <ServiceRecurrenceForm
+          value={recurrenceConfig}
+          onChange={setRecurrenceConfig}
+        />
       </div>
     </div>
   );

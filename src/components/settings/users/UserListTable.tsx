@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, Building2, CheckCircle2, Users, Loader2, Phone, Clock, Calendar, AlertCircle, UserCheck, Link2 } from "lucide-react";
+import { Mail, Building2, CheckCircle2, Users, Loader2, Phone, Clock, Calendar, AlertCircle, UserCheck, Link2, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { EmployeeUserMatchDialog } from "./EmployeeUserMatchDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface UserWithEmployee {
   id: string;
@@ -69,6 +70,8 @@ export const UserListTable = ({
 }: UserListTableProps) => {
   const [matchDialogOpen, setMatchDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserWithEmployee | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithEmployee | null>(null);
   const { userData } = useCurrentUser();
 
   const handleSelectAll = (checked: boolean) => {
@@ -149,6 +152,64 @@ export const UserListTable = ({
       toast.error("Rol güncellenirken hata oluştu");
     },
   });
+
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      // Delete user roles first
+      const { error: rolesError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (rolesError) {
+        console.error('Error deleting user roles:', rolesError);
+        throw new Error('Kullanıcı rollerini silerken hata oluştu: ' + rolesError.message);
+      }
+      
+      // Delete user profile (this will cascade to auth.users if configured)
+      const { error, data } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId)
+        .select();
+
+      if (error) {
+        console.error('Error deleting profile:', error);
+        throw new Error('Kullanıcı profilini silerken hata oluştu: ' + error.message);
+      }
+
+      // Check if any rows were actually deleted
+      if (!data || data.length === 0) {
+        throw new Error('Kullanıcı silinemedi. Lütfen yetkilerinizi kontrol edin.');
+      }
+    },
+    onSuccess: () => {
+      toast.success("Kullanıcı başarıyla silindi");
+      onUserUpdated();
+    },
+    onError: (error: any) => {
+      console.error('Delete user error:', error);
+      toast.error(error.message || "Kullanıcı silinirken hata oluştu");
+    },
+  });
+
+  const handleDeleteClick = (user: UserWithEmployee) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+    await deleteUserMutation.mutateAsync(userToDelete.id);
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
+  };
 
   if (isLoading) {
     return (
@@ -413,13 +474,23 @@ export const UserListTable = ({
                 <TableCell className="py-4">
                   <div className="flex items-center justify-center gap-2">
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={handleOpenMatchDialog}
-                      className="h-8 text-xs border-gray-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all"
+                      className="h-8 w-8"
+                      title={user.employees ? 'Eşleştirmeyi Değiştir' : 'Çalışan ile Eşleştir'}
                     >
-                      <Link2 className="h-3.5 w-3.5 mr-1.5" />
-                      {user.employees ? 'Değiştir' : 'Eşleştir'}
+                      <Link2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteClick(user)}
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      title="Kullanıcıyı Sil"
+                      disabled={deleteUserMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
@@ -446,6 +517,20 @@ export const UserListTable = ({
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Kullanıcıyı Sil"
+        description={`"${userToDelete?.full_name || userToDelete?.email || 'Bu kullanıcı'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteUserMutation.isPending}
+      />
     </div>
   );
 };

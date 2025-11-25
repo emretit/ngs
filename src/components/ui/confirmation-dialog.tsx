@@ -135,8 +135,18 @@ const ConfirmationDialogComponent = React.forwardRef<
   ...props
 }, ref) => {
   const handleConfirm = async () => {
-    await onConfirm()
-    // Dialog'u onConfirm içinde kapatılıyor, burada kapatmaya gerek yok
+    try {
+      await onConfirm()
+      // onConfirm başarılı olduğunda dialog'u kapat
+      // Not: onConfirm içinde dialog kapatılmıyorsa burada kapatılır
+      // Eğer onConfirm içinde zaten kapatılıyorsa, burada kapatma işlemi çift kapatma yapmaz
+      // Çünkü onOpenChange zaten false ise tekrar false yapmak sorun yaratmaz
+      onOpenChange(false)
+    } catch (error) {
+      // Hata durumunda dialog açık kalsın, kullanıcı hatayı görebilsin
+      console.error('Confirmation action failed:', error)
+      // Hata durumunda dialog'u kapatma, kullanıcı hatayı görebilsin
+    }
   }
 
   const handleCancel = () => {

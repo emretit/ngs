@@ -7,7 +7,7 @@ type ViewType = "list" | "kanban" | "map" | "scheduling" | "calendar" | "sla" | 
 
 interface ServicePageHeaderProps {
   activeView: ViewType;
-  setActiveView: React.Dispatch<React.SetStateAction<ViewType>>;
+  setActiveView: (view: ViewType) => void;
   onCreateRequest: () => void;
   serviceRequests?: { [key: string]: any[] };
   onNavigateReports?: () => void;
@@ -105,10 +105,6 @@ const ServicePageHeader = ({
         
         {/* Sağ taraf - Butonlar */}
         <div className="flex items-center gap-2">
-          <ServiceViewToggle 
-            activeView={activeView} 
-            setActiveView={setActiveView} 
-          />
           {onNavigateReports && (
             <Button 
               variant="outline"

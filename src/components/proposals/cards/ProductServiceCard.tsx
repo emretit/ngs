@@ -45,7 +45,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
   inputHeight = "h-10"
 }) => {
   return (
-    <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+    <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl relative z-10">
       <CardHeader className="pb-2 pt-2.5">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">

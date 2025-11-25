@@ -1,9 +1,7 @@
 import React, { useMemo, useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'react-leaflet-markercluster/styles';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, User, AlertCircle, Loader2 } from "lucide-react";
@@ -195,72 +193,70 @@ const ServiceMapView = ({
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 
-                <MarkerClusterGroup>
-                  {mappableServices.map((service) => {
-                    if (!service.latitude || !service.longitude) return null;
-                    
-                    const technician = technicians?.find(
-                      tech => tech.id === service.assigned_technician
-                    );
+                {mappableServices.map((service) => {
+                  if (!service.latitude || !service.longitude) return null;
+                  
+                  const technician = technicians?.find(
+                    tech => tech.id === service.assigned_technician
+                  );
 
-                    const isSelected = selectedServiceId === service.id;
+                  const isSelected = selectedServiceId === service.id;
 
-                    return (
-                      <Marker
-                        key={service.id}
-                        position={[service.latitude, service.longitude]}
-                        icon={createCustomIcon(service.service_priority || 'medium', isSelected)}
-                        eventHandlers={{
-                          click: () => onSelectService(service),
-                        }}
-                      >
-                        <Popup>
-                          <div className="p-2 min-w-[200px]">
-                            <h3 className="font-semibold text-sm mb-2">
-                              {service.service_title}
-                            </h3>
+                  return (
+                    <Marker
+                      key={service.id}
+                      position={[service.latitude, service.longitude]}
+                      icon={createCustomIcon(service.service_priority || 'medium', isSelected)}
+                      eventHandlers={{
+                        click: () => onSelectService(service),
+                      }}
+                    >
+                      <Popup>
+                        <div className="p-2 min-w-[200px]">
+                          <h3 className="font-semibold text-sm mb-2">
+                            {service.service_title}
+                          </h3>
+                          
+                          <div className="space-y-1 text-xs">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-3 w-3" />
+                              <span className="text-gray-600">
+                                {service.service_location}
+                              </span>
+                            </div>
                             
-                            <div className="space-y-1 text-xs">
+                            {technician && (
                               <div className="flex items-center gap-2">
-                                <MapPin className="h-3 w-3" />
+                                <User className="h-3 w-3" />
                                 <span className="text-gray-600">
-                                  {service.service_location}
+                                  {technician.first_name} {technician.last_name}
                                 </span>
                               </div>
-                              
-                              {technician && (
-                                <div className="flex items-center gap-2">
-                                  <User className="h-3 w-3" />
-                                  <span className="text-gray-600">
-                                    {technician.first_name} {technician.last_name}
-                                  </span>
-                                </div>
-                              )}
-                              
-                              {service.service_due_date && (
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-3 w-3" />
-                                  <span className="text-gray-600">
-                                    {formatDate(service.service_due_date, 'dd MMM yyyy')}
-                                  </span>
-                                </div>
-                              )}
-                              
-                              <div className="mt-2 flex items-center gap-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {service.service_status}
-                                </Badge>
-                                <Badge variant="outline" className="text-xs">
-                                  {service.service_priority}
-                                </Badge>
+                            )}
+                            
+                            {service.service_due_date && (
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-3 w-3" />
+                                <span className="text-gray-600">
+                                  {formatDate(service.service_due_date, 'dd MMM yyyy')}
+                                </span>
                               </div>
+                            )}
+                            
+                            <div className="mt-2 flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {service.service_status}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {service.service_priority}
+                              </Badge>
                             </div>
                           </div>
-                        </Popup>
-                      </Marker>
-                    );
-                  })}
-                </MarkerClusterGroup>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
               </MapContainer>
             ) : (
               <div className="h-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">

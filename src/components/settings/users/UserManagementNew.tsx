@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Shield, Search, Users, AlertCircle, Phone, Clock, UserCheck, UserX, Link2, Sparkles } from "lucide-react";
+import { Shield, Search, Users, AlertCircle, Phone, Clock, UserCheck, UserX, Link2 } from "lucide-react";
 import { UserListTable } from "./UserListTable";
 import { RoleManagementPanel } from "./RoleManagementPanel";
 import { Badge } from "@/components/ui/badge";
 import { InviteUserDialog } from "../InviteUserDialog";
 import { useAutoMatchUsersEmployees } from "./useAutoMatchUsersEmployees";
-import { Button } from "@/components/ui/button";
 import UsersFilterBar from "./UsersFilterBar";
 import UsersBulkActions from "./UsersBulkActions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface UserWithEmployee {
   id: string;
@@ -45,6 +45,7 @@ export const UserManagementNew = () => {
   const [selectedEmployeeMatch, setSelectedEmployeeMatch] = useState("all");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [activeRoleTab, setActiveRoleTab] = useState("users");
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const autoMatchMutation = useAutoMatchUsersEmployees();
 
@@ -116,15 +117,79 @@ export const UserManagementNew = () => {
     }
   });
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (userIds: string[]) => {
+      const errors: string[] = [];
+      let successCount = 0;
+
+      for (const userId of userIds) {
+        try {
+          // Delete user roles first
+          const { error: rolesError } = await supabase
+            .from('user_roles')
+            .delete()
+            .eq('user_id', userId);
+
+          if (rolesError) {
+            console.error('Error deleting user roles:', rolesError);
+            errors.push(`Kullanıcı rolleri silinemedi: ${rolesError.message}`);
+            continue;
+          }
+
+          // Delete user profile
+          const { error, data } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', userId)
+            .select();
+
+          if (error) {
+            console.error('Error deleting profile:', error);
+            errors.push(`Kullanıcı profilini silinemedi: ${error.message}`);
+            continue;
+          }
+
+          // Check if any rows were actually deleted
+          if (!data || data.length === 0) {
+            errors.push('Kullanıcı silinemedi. Lütfen yetkilerinizi kontrol edin.');
+            continue;
+          }
+
+          successCount++;
+        } catch (err: any) {
+          console.error('Error deleting user:', err);
+          errors.push(err.message || 'Bilinmeyen hata');
+        }
+      }
+
+      return { successCount, errors };
+    },
+    onSuccess: ({ successCount, errors }) => {
+      if (successCount > 0) {
+        toast.success(`${successCount} kullanıcı başarıyla silindi`);
+      }
+      if (errors.length > 0) {
+        toast.error(`${errors.length} kullanıcı silinirken hata oluştu`);
+      }
+      queryClient.invalidateQueries({ queryKey: ['users-management'] });
+      setSelectedUsers([]);
+    },
+    onError: (error: any) => {
+      console.error('Bulk delete error:', error);
+      toast.error(error.message || "Kullanıcılar silinirken hata oluştu");
+    },
+  });
+
   // Auto-match on component mount (only once per session)
   useEffect(() => {
     if (isLoading) return; // Wait for data to load
-    
+
     // Check if we should auto-match on mount
     // This will run once when component mounts, but allow manual re-trigger
     const autoMatchKey = `auto-match-${new Date().toDateString()}`;
     const shouldAutoMatch = sessionStorage.getItem(autoMatchKey) !== "true";
-    
+
     if (shouldAutoMatch && users.length > 0) {
       // Auto-match silently in background after a short delay
       const timer = setTimeout(() => {
@@ -220,11 +285,8 @@ export const UserManagementNew = () => {
         queryClient.invalidateQueries({ queryKey: ['users-management'] });
         break;
       case 'delete':
-        // Sil
-        if (confirm(`${selectedUsers.length} kullanıcıyı silmek istediğinize emin misiniz?`)) {
-          // Bu işlem için daha güvenli bir yöntem kullanılmalı
-          toast.info('Silme işlemi henüz implement edilmedi');
-        }
+        // Sil - Dialog aç
+        setBulkDeleteDialogOpen(true);
         break;
       case 'export':
         // Excel export
@@ -235,6 +297,15 @@ export const UserManagementNew = () => {
         toast.info('Toplu rol atama özelliği yakında eklenecek');
         break;
     }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    await bulkDeleteMutation.mutateAsync(selectedUsers);
+    setBulkDeleteDialogOpen(false);
+  };
+
+  const handleBulkDeleteCancel = () => {
+    setBulkDeleteDialogOpen(false);
   };
 
   // Calculate statistics
@@ -331,25 +402,6 @@ export const UserManagementNew = () => {
 
         {/* Sağ taraf - Butonlar */}
         <div className="flex items-center gap-2">
-          <Button
-            onClick={() => autoMatchMutation.mutate()}
-            disabled={autoMatchMutation.isPending}
-            variant="outline"
-            size="sm"
-            className="gap-2 text-xs"
-          >
-            {autoMatchMutation.isPending ? (
-              <>
-                <Clock className="h-3 w-3 animate-spin" />
-                Eşleştiriliyor...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-3 w-3" />
-                Otomatik Eşleştir
-              </>
-            )}
-          </Button>
           <InviteUserDialog />
         </div>
       </div>
@@ -409,6 +461,20 @@ export const UserManagementNew = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        title="Toplu Kullanıcı Silme"
+        description={`Seçili ${selectedUsers.length} kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleBulkDeleteConfirm}
+        onCancel={handleBulkDeleteCancel}
+        isLoading={bulkDeleteMutation.isPending}
+      />
     </div>
   );
 };

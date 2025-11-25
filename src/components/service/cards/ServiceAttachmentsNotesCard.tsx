@@ -47,10 +47,24 @@ const ServiceAttachmentsNotesCard: React.FC<ServiceAttachmentsNotesCardProps> = 
           <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-50 to-amber-50/50 border border-amber-200/50">
             <FileText className="h-4 w-4 text-amber-600" />
           </div>
-          Ek Bilgiler, Dosya Ekleri ve Notlar
+          Servis Açıklaması
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 pt-0 px-3 pb-3">
+        {/* Servis Sonucu */}
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            Servis Sonucu
+          </Label>
+          <Textarea
+            value={formData.service_result}
+            onChange={(e) => handleInputChange('service_result', e.target.value)}
+            placeholder="Servis sonucu veya ön görüş (opsiyonel)"
+            rows={3}
+            className="resize-none text-sm"
+          />
+        </div>
+
         {/* Dosya Yükleme */}
         <div>
           <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
@@ -94,16 +108,16 @@ const ServiceAttachmentsNotesCard: React.FC<ServiceAttachmentsNotesCardProps> = 
           )}
         </div>
 
-        {/* Notlar */}
+        {/* Şirket İçi Notlar */}
         <div>
           <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
-            Notlar
+            Şirket İçi Notlar
           </Label>
           <div className="flex gap-2">
             <Input
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Not ekle..."
+              placeholder="Şirket içi not ekle..."
               className="h-10 text-sm"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -141,20 +155,6 @@ const ServiceAttachmentsNotesCard: React.FC<ServiceAttachmentsNotesCardProps> = 
               ))}
             </div>
           )}
-        </div>
-
-        {/* Servis Sonucu */}
-        <div>
-          <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
-            Servis Sonucu
-          </Label>
-          <Textarea
-            value={formData.service_result}
-            onChange={(e) => handleInputChange('service_result', e.target.value)}
-            placeholder="Servis sonucu veya ön görüş (opsiyonel)"
-            rows={3}
-            className="resize-none text-sm"
-          />
         </div>
       </CardContent>
     </Card>

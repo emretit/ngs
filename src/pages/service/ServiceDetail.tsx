@@ -262,7 +262,7 @@ export default function ServiceDetail() {
           <TabsTrigger value="costs">Maliyet</TabsTrigger>
           <TabsTrigger value="parts">Parçalar</TabsTrigger>
           <TabsTrigger value="history">Geçmiş</TabsTrigger>
-          <TabsTrigger value="notes">Notlar</TabsTrigger>
+          <TabsTrigger value="notes">Şirket İçi Notlar</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -536,7 +536,7 @@ export default function ServiceDetail() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                <span>Notlar</span>
+                <span>Şirket İçi Notlar</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -549,7 +549,7 @@ export default function ServiceDetail() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Henüz not eklenmemiş</p>
+                <p className="text-sm text-muted-foreground">Henüz şirket içi not eklenmemiş</p>
               )}
             </CardContent>
           </Card>

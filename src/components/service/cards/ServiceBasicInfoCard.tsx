@@ -93,7 +93,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
   };
 
   return (
-    <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
+    <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl relative z-10">
       <CardHeader className="pb-2 pt-2.5">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50">
@@ -246,7 +246,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
             
             {/* Autocomplete Dropdown */}
             {showAutocomplete && autocompleteResults.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+              <div className="absolute z-[9999] w-full bottom-full mb-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
                 {autocompleteResults.map((result, index) => (
                   <button
                     key={`${result.place_id}-${index}`}

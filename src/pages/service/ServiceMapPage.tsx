@@ -3,24 +3,31 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import ServiceMapView from "@/components/service/ServiceMapView";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function ServiceMapPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const selectedServiceId = searchParams.get('serviceId');
+  const { userData } = useCurrentUser();
   const { data: serviceRequests = [], isLoading } = useServiceRequests();
 
   // Teknisyenleri getir
   const { data: technicians = [] } = useQuery({
-    queryKey: ["technicians-for-map"],
+    queryKey: ["technicians-for-map", userData?.company_id],
     queryFn: async () => {
+      if (!userData?.company_id) {
+        return [];
+      }
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name, position, department, status")
+        .eq("company_id", userData.company_id)
         .eq("status", "aktif");
       if (error) throw error;
       return data || [];
     },
+    enabled: !!userData?.company_id,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });

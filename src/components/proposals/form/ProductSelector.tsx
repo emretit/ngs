@@ -171,7 +171,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
           <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[550px] p-0" align="start">
+      <PopoverContent className="w-[550px] p-0 z-[100]" align="start">
         <Command shouldFilter={false} className="rounded-lg border shadow-md">
           <CommandInput 
             placeholder="Ürün ara..." 

@@ -245,11 +245,11 @@ export default function ServiceManagement() {
                 technicians={technicians}
                 customers={customers}
                 onSelectRequest={handleSelectService}
-                onDeleteService={async (id: string) => {
+                onDeleteService={async (request: ServiceRequest) => {
                   const { error } = await supabase
                     .from('service_requests')
                     .delete()
-                    .eq('id', id);
+                    .eq('id', request.id);
                   if (!error) {
                     queryClient.invalidateQueries({ queryKey: ['service-requests'] });
                     toast.success('Servis silindi');

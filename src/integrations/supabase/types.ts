@@ -1419,16 +1419,19 @@ export type Database = {
           neighborhood_id: number | null
           notes: string | null
           office_phone: string | null
+          payment_terms: string | null
           postal_code: string | null
           representative: string | null
           second_address: string | null
           second_city: string | null
+          second_city_id: number | null
           second_contact_email: string | null
           second_contact_name: string | null
           second_contact_phone: string | null
           second_contact_position: string | null
           second_country: string | null
           second_district: string | null
+          second_district_id: number | null
           second_postal_code: string | null
           sector: string | null
           status: Database["public"]["Enums"]["customer_status"]
@@ -1480,16 +1483,19 @@ export type Database = {
           neighborhood_id?: number | null
           notes?: string | null
           office_phone?: string | null
+          payment_terms?: string | null
           postal_code?: string | null
           representative?: string | null
           second_address?: string | null
           second_city?: string | null
+          second_city_id?: number | null
           second_contact_email?: string | null
           second_contact_name?: string | null
           second_contact_phone?: string | null
           second_contact_position?: string | null
           second_country?: string | null
           second_district?: string | null
+          second_district_id?: number | null
           second_postal_code?: string | null
           sector?: string | null
           status?: Database["public"]["Enums"]["customer_status"]
@@ -1541,16 +1547,19 @@ export type Database = {
           neighborhood_id?: number | null
           notes?: string | null
           office_phone?: string | null
+          payment_terms?: string | null
           postal_code?: string | null
           representative?: string | null
           second_address?: string | null
           second_city?: string | null
+          second_city_id?: number | null
           second_contact_email?: string | null
           second_contact_name?: string | null
           second_contact_phone?: string | null
           second_contact_position?: string | null
           second_country?: string | null
           second_district?: string | null
+          second_district_id?: number | null
           second_postal_code?: string | null
           sector?: string | null
           status?: Database["public"]["Enums"]["customer_status"]
@@ -1589,6 +1598,20 @@ export type Database = {
             columns: ["neighborhood_id"]
             isOneToOne: false
             referencedRelation: "turkey_neighborhoods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_second_city_id_fkey"
+            columns: ["second_city_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_second_district_id_fkey"
+            columns: ["second_district_id"]
+            isOneToOne: false
+            referencedRelation: "turkey_districts"
             referencedColumns: ["id"]
           },
           {
@@ -7116,13 +7139,103 @@ export type Database = {
           },
         ]
       }
+      service_items: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          discount_rate: number | null
+          id: string
+          name: string
+          product_id: string | null
+          quantity: number
+          row_number: number | null
+          service_request_id: string
+          tax_rate: number | null
+          total_price: number | null
+          unit: string | null
+          unit_price: number | null
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          discount_rate?: number | null
+          id?: string
+          name: string
+          product_id?: string | null
+          quantity?: number
+          row_number?: number | null
+          service_request_id: string
+          tax_rate?: number | null
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          discount_rate?: number | null
+          id?: string
+          name?: string
+          product_id?: string | null
+          quantity?: number
+          row_number?: number | null
+          service_request_id?: string
+          tax_rate?: number | null
+          total_price?: number | null
+          unit?: string | null
+          unit_price?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_warehouse_stocks"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "service_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_items_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_requests: {
         Row: {
           assigned_technician: string | null
           attachments: Json | null
           company_id: string | null
           completion_date: string | null
+          contact_email: string | null
+          contact_person: string | null
+          contact_phone: string | null
           created_at: string | null
+          created_by: string | null
           customer_data: Json | null
           customer_id: string | null
           equipment_data: Json | null
@@ -7134,6 +7247,7 @@ export type Database = {
           next_recurrence_date: string | null
           notes: string[] | null
           parent_service_id: string | null
+          received_by: string | null
           recurrence_day_of_month: number | null
           recurrence_days: number[] | null
           recurrence_end_date: string | null
@@ -7156,9 +7270,9 @@ export type Database = {
           sla_due_time: string | null
           sla_start_time: string | null
           sla_status: string | null
-          sla_target_hours: number | null
           slip_number: string | null
           slip_status: string | null
+          supplier_id: string | null
           technician_name: string | null
           technician_signature: string | null
           updated_at: string | null
@@ -7169,7 +7283,11 @@ export type Database = {
           attachments?: Json | null
           company_id?: string | null
           completion_date?: string | null
+          contact_email?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
           created_at?: string | null
+          created_by?: string | null
           customer_data?: Json | null
           customer_id?: string | null
           equipment_data?: Json | null
@@ -7181,6 +7299,7 @@ export type Database = {
           next_recurrence_date?: string | null
           notes?: string[] | null
           parent_service_id?: string | null
+          received_by?: string | null
           recurrence_day_of_month?: number | null
           recurrence_days?: number[] | null
           recurrence_end_date?: string | null
@@ -7203,9 +7322,9 @@ export type Database = {
           sla_due_time?: string | null
           sla_start_time?: string | null
           sla_status?: string | null
-          sla_target_hours?: number | null
           slip_number?: string | null
           slip_status?: string | null
+          supplier_id?: string | null
           technician_name?: string | null
           technician_signature?: string | null
           updated_at?: string | null
@@ -7216,7 +7335,11 @@ export type Database = {
           attachments?: Json | null
           company_id?: string | null
           completion_date?: string | null
+          contact_email?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
           created_at?: string | null
+          created_by?: string | null
           customer_data?: Json | null
           customer_id?: string | null
           equipment_data?: Json | null
@@ -7228,6 +7351,7 @@ export type Database = {
           next_recurrence_date?: string | null
           notes?: string[] | null
           parent_service_id?: string | null
+          received_by?: string | null
           recurrence_day_of_month?: number | null
           recurrence_days?: number[] | null
           recurrence_end_date?: string | null
@@ -7250,9 +7374,9 @@ export type Database = {
           sla_due_time?: string | null
           sla_start_time?: string | null
           sla_status?: string | null
-          sla_target_hours?: number | null
           slip_number?: string | null
           slip_status?: string | null
+          supplier_id?: string | null
           technician_name?: string | null
           technician_signature?: string | null
           updated_at?: string | null
@@ -7278,6 +7402,13 @@ export type Database = {
             columns: ["parent_service_id"]
             isOneToOne: false
             referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -10703,11 +10834,11 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
         | {
             Args: { area: unknown; npoints: number; seed: number }
             Returns: unknown
           }
-        | { Args: { area: unknown; npoints: number }; Returns: unknown }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
@@ -10975,11 +11106,11 @@ export type Database = {
           }
       st_triangulatepolygon: { Args: { g1: unknown }; Returns: unknown }
       st_union:
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
         | {
             Args: { geom1: unknown; geom2: unknown; gridsize: number }
             Returns: unknown
           }
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
       st_voronoilines: {
         Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
         Returns: unknown

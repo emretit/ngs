@@ -184,7 +184,8 @@ const ServiceEdit = () => {
   // Servis verisi yüklendiğinde form state'i initialize et (ProposalEdit'teki gibi)
   useEffect(() => {
     // ProposalEdit'teki gibi: sadece serviceRequest varsa ve henüz initialize edilmemişse çalış
-    if (serviceRequest && !isInitialized) {
+    // serviceRequest ve serviceItems'ın ID'lerini kullanarak gereksiz re-render'ları önle
+    if (serviceRequest && !isInitialized && serviceRequest.id === id) {
       // Service items'ı service_items tablosundan çek (order_items gibi)
       let productItems = [{
         id: "1",
@@ -293,7 +294,7 @@ const ServiceEdit = () => {
       setIsInitialized(true);
       setHasChanges(false);
     }
-  }, [serviceRequest, serviceItems, isInitialized]);
+  }, [serviceRequest?.id, serviceItems?.length, isInitialized, id]);
 
   // Ürün item yönetimi
   const addProductItem = () => {
@@ -423,16 +424,16 @@ const ServiceEdit = () => {
   };
 
 
-  // Seçili müşteri/tedarikçi bilgisi
+  // Seçili müşteri/tedarikçi bilgisi - sadece ID değiştiğinde yeniden hesapla
   const selectedPartner = React.useMemo(() => {
-    if (formData.customer_id) {
-      return customers?.find(c => c.id === formData.customer_id);
+    if (formData.customer_id && customers) {
+      return customers.find(c => c.id === formData.customer_id);
     }
-    if (formData.supplier_id) {
-      return suppliers?.find(s => s.id === formData.supplier_id);
+    if (formData.supplier_id && suppliers) {
+      return suppliers.find(s => s.id === formData.supplier_id);
     }
     return null;
-  }, [formData.customer_id, formData.supplier_id, customers, suppliers]);
+  }, [formData.customer_id, formData.supplier_id, customers?.length, suppliers?.length]);
 
 
   // Input change handler

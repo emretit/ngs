@@ -32,7 +32,7 @@ export default function ServiceDashboard() {
   const totalServices = serviceRequests?.length || 0;
   const completedServices = serviceRequests?.filter(s => s.service_status === 'completed').length || 0;
   const inProgressServices = serviceRequests?.filter(s => s.service_status === 'in_progress').length || 0;
-  const pendingServices = serviceRequests?.filter(s => s.service_status === 'pending').length || 0;
+  const newServices = serviceRequests?.filter(s => s.service_status === 'new').length || 0;
   const cancelledServices = serviceRequests?.filter(s => s.service_status === 'cancelled').length || 0;
   
   // Bu hafta tamamlanan servisler
@@ -147,7 +147,7 @@ export default function ServiceDashboard() {
             <AlertCircle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingServices}</div>
+            <div className="text-2xl font-bold">{newServices}</div>
             <p className="text-xs text-muted-foreground">Onay bekleyen servisler</p>
           </CardContent>
         </Card>
@@ -235,7 +235,7 @@ export default function ServiceDashboard() {
                       {service.service_status === 'in_progress' && (
                         <Clock className="h-5 w-5 text-blue-500" />
                       )}
-                      {service.service_status === 'pending' && (
+                      {service.service_status === 'new' && (
                         <AlertCircle className="h-5 w-5 text-yellow-500" />
                       )}
                     </div>

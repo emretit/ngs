@@ -1,10 +1,15 @@
 import Groq from 'groq-sdk';
 
-// Groq API Key - .env dosyasında olmalı: VITE_GROQ_API_KEY
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+/**
+ * Groq API Service
+ * 
+ * Note: For production use, API keys should be stored in Supabase Secrets
+ * and accessed via Edge Functions. Client-side API key usage is only for development.
+ */
+const GROQ_API_KEY: string = ''; // Configure via Supabase Secrets for production
 
 if (!GROQ_API_KEY) {
-  // Groq API key not configured - AI reporting features will be disabled
+  console.warn('Groq API key not configured - AI features will be disabled');
 }
 
 let groq: Groq | null = null;
@@ -148,7 +153,7 @@ export const generateSQLFromQuery = async (
   if (!GROQ_API_KEY || !groq) {
     return {
       sql: '',
-      explanation: 'Groq API key bulunamadı. Lütfen VITE_GROQ_API_KEY environment variable\'ını ayarlayın.',
+      explanation: 'Groq API key bulunamadı. Lütfen API anahtarını Supabase Secrets üzerinden yapılandırın.',
       error: 'API_KEY_MISSING'
     };
   }
@@ -216,7 +221,7 @@ export const generateSQLFromQuery = async (
 export const testGroqConnection = async (): Promise<boolean> => {
   console.log('Testing Groq connection...');
   console.log('API Key available:', !!GROQ_API_KEY);
-  console.log('API Key prefix:', GROQ_API_KEY ? GROQ_API_KEY.substring(0, 8) + '...' : 'none');
+  console.log('API Key prefix:', GROQ_API_KEY && GROQ_API_KEY.length > 0 ? GROQ_API_KEY.substring(0, 8) + '...' : 'none');
 
   if (!GROQ_API_KEY || !groq) {
     console.error('No Groq API key found or Groq client not initialized');

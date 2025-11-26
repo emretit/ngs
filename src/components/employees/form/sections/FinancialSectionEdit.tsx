@@ -70,60 +70,6 @@ export const FinancialSectionEdit = ({ control }: FinancialSectionEditProps) => 
 
           <FormField
             control={control}
-            name="salary_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Maaş Tipi</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  value={field.value || ""}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Maaş tipi seçin" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="gross">Brüt</SelectItem>
-                    <SelectItem value="net">Net</SelectItem>
-                    <SelectItem value="hourly">Saatlik</SelectItem>
-                    <SelectItem value="daily">Günlük</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
-            name="payment_frequency"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Ödeme Sıklığı</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  value={field.value || ""}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Ödeme sıklığı seçin" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="monthly">Aylık</SelectItem>
-                    <SelectItem value="weekly">Haftalık</SelectItem>
-                    <SelectItem value="daily">Günlük</SelectItem>
-                    <SelectItem value="hourly">Saatlik</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
             name="salary_start_date"
             render={({ field }) => (
               <FormItem>

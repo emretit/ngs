@@ -487,7 +487,6 @@ export const RoleManagementPanel = ({ users }: RoleManagementPanelProps) => {
                         <Button
                           onClick={() => savePermissionsMutation.mutate({
                             roleId: role.id,
-                            roleName: role.name,
                             permissions: permissions
                           })}
                           disabled={isSaving}

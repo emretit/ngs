@@ -61,23 +61,14 @@ export const useSupplierPortalAuth = () => {
       }
 
       try {
-        const { data, error } = await supabase.functions.invoke('supplier-portal-auth', {
-          body: {},
-          headers: {
-            'x-supplier-session': token,
-          },
-          method: 'GET',
-        });
-
-        // Parse the URL to add action parameter
         const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supplier-portal-auth?action=verify`,
+          `https://vwhwufnckpqirxptwncw.supabase.co/functions/v1/supplier-portal-auth?action=verify`,
           {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
               'x-supplier-session': token,
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3aHd1Zm5ja3BxaXJ4cHR3bmN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkzODI5MjAsImV4cCI6MjA1NDk1ODkyMH0.Wjw8MAnsBrHxB6-J-bNGObgDQ4fl3zPYrgYI5tOrcKo',
             },
           }
         );
@@ -111,12 +102,12 @@ export const useSupplierPortalAuth = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supplier-portal-auth?action=login`,
+        `https://vwhwufnckpqirxptwncw.supabase.co/functions/v1/supplier-portal-auth?action=login`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3aHd1Zm5ja3BxaXJ4cHR3bmN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkzODI5MjAsImV4cCI6MjA1NDk1ODkyMH0.Wjw8MAnsBrHxB6-J-bNGObgDQ4fl3zPYrgYI5tOrcKo',
           },
           body: JSON.stringify({ token }),
         }
@@ -158,13 +149,13 @@ export const useSupplierPortalAuth = () => {
     if (token) {
       try {
         await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supplier-portal-auth?action=logout`,
+          `https://vwhwufnckpqirxptwncw.supabase.co/functions/v1/supplier-portal-auth?action=logout`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'x-supplier-session': token,
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3aHd1Zm5ja3BxaXJ4cHR3bmN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkzODI5MjAsImV4cCI6MjA1NDk1ODkyMH0.Wjw8MAnsBrHxB6-J-bNGObgDQ4fl3zPYrgYI5tOrcKo',
             },
           }
         );
@@ -195,7 +186,7 @@ const fetchPortalData = async (action: string, params?: Record<string, string>) 
   const token = getSessionToken();
   if (!token) throw new Error('Not authenticated');
 
-  const url = new URL(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supplier-portal-data`);
+  const url = new URL(`https://vwhwufnckpqirxptwncw.supabase.co/functions/v1/supplier-portal-data`);
   url.searchParams.set('action', action);
   
   if (params) {
@@ -209,7 +200,7 @@ const fetchPortalData = async (action: string, params?: Record<string, string>) 
     headers: {
       'Content-Type': 'application/json',
       'x-supplier-session': token,
-      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3aHd1Zm5ja3BxaXJ4cHR3bmN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkzODI5MjAsImV4cCI6MjA1NDk1ODkyMH0.Wjw8MAnsBrHxB6-J-bNGObgDQ4fl3zPYrgYI5tOrcKo',
     },
   });
 
@@ -274,13 +265,13 @@ export const useSubmitQuote = () => {
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supplier-portal-data?action=submit_quote`,
+        `https://vwhwufnckpqirxptwncw.supabase.co/functions/v1/supplier-portal-data?action=submit_quote`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-supplier-session': token,
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3aHd1Zm5ja3BxaXJ4cHR3bmN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkzODI5MjAsImV4cCI6MjA1NDk1ODkyMH0.Wjw8MAnsBrHxB6-J-bNGObgDQ4fl3zPYrgYI5tOrcKo',
           },
           body: JSON.stringify({
             rfq_id: rfqId,

@@ -1,7 +1,11 @@
 import Groq from 'groq-sdk';
 
-// Groq API Key - .env dosyasında olmalı: VITE_GROQ_API_KEY
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+/**
+ * Supplier Column Mapping Service using Groq AI
+ * 
+ * Note: For production, configure GROQ_API_KEY via Supabase Secrets
+ */
+const GROQ_API_KEY = ''; // Configure via Supabase Secrets
 
 let groq: Groq | null = null;
 

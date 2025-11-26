@@ -1,6 +1,12 @@
 import Groq from 'groq-sdk';
+import { supabase } from '@/integrations/supabase/client';
 
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+/**
+ * Groq Usage Tracker
+ * 
+ * Note: For production, configure GROQ_API_KEY via Supabase Secrets
+ */
+const GROQ_API_KEY = ''; // Configure via Supabase Secrets
 
 let groq: Groq | null = null;
 

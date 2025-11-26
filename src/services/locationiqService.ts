@@ -1,10 +1,12 @@
 /**
  * LocationIQ API Service
  * Provides address autocomplete and geocoding functionality
- * Free tier: 5,000 requests/day
+ * 
+ * Note: API key should be configured via Supabase Secrets for production use.
+ * For development, you can set LOCATIONIQ_API_KEY directly here.
  */
 
-const LOCATIONIQ_API_KEY = import.meta.env.VITE_LOCATIONIQ_API_KEY;
+const LOCATIONIQ_API_KEY = ''; // Configure via Supabase Secrets in production
 const BASE_URL = 'https://api.locationiq.com/v1';
 
 export interface LocationIQAutocompleteResult {
@@ -49,7 +51,7 @@ class LocationIQService {
   constructor() {
     this.apiKey = LOCATIONIQ_API_KEY || '';
     if (!this.apiKey) {
-      console.warn('LocationIQ API key not found. Set VITE_LOCATIONIQ_API_KEY in environment variables.');
+      console.warn('LocationIQ API key not configured. Set LOCATIONIQ_API_KEY constant or use Supabase Secrets in production.');
     }
   }
 

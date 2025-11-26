@@ -223,10 +223,10 @@ const CustomTooltip: React.FC<{
       {/* Detaylar */}
       <div className="space-y-1.5 text-xs">
         {/* Müşteri */}
-        {service.customers?.name && (
+        {service.customer_data && (service.customer_data as any)?.name && (
           <div className="flex items-center gap-2">
             <User className="h-3 w-3 text-slate-400" />
-            <span className="text-slate-300">{service.customers.name}</span>
+            <span className="text-slate-300">{(service.customer_data as any).name}</span>
           </div>
         )}
         

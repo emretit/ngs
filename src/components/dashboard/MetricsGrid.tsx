@@ -48,10 +48,10 @@ const MetricsGrid = ({ crmStats, financialData }: MetricsGridProps) => {
         icon={TrendingUp}
         trend="neutral"
         description="Bekleyen tahsilatlar"
-        onClick={() => navigate("/contacts")}
+        onClick={() => navigate("/customers")}
         quickAction={{
           label: "Müşteri Ekle",
-          onClick: () => navigate("/contacts/new")
+          onClick: () => navigate("/customers/new")
         }}
       />
 

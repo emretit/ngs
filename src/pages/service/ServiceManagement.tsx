@@ -28,14 +28,15 @@ export default function ServiceManagement() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
-  // Teknisyenleri getir
+  // Teknisyenleri getir - sadece Teknik departmanındaki aktif çalışanlar
   const { data: technicians = [] } = useQuery({
     queryKey: ["technicians-for-filter"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, last_name, position, department, status, user_id")
-        .eq("status", "aktif");
+        .eq("status", "aktif")
+        .eq("department", "Teknik");
       if (error) throw error;
       return data || [];
     },
@@ -239,6 +240,19 @@ export default function ServiceManagement() {
                 selectedServices={selectedServices}
                 onToggleServiceSelection={handleToggleServiceSelection}
                 onSelectAll={handleSelectAll}
+                technicians={technicians}
+                onDeleteService={async (service) => {
+                  const { error } = await supabase
+                    .from('service_requests')
+                    .delete()
+                    .eq('id', service.id);
+                  if (!error) {
+                    queryClient.invalidateQueries({ queryKey: ['service-requests'] });
+                    toast.success('Servis silindi');
+                  } else {
+                    toast.error('Servis silinirken hata oluştu');
+                  }
+                }}
               />
             )}
             {activeView === "kanban" && (

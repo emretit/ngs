@@ -1,5 +1,5 @@
 
-import { Activity, Receipt, CreditCard, FileStack, Package } from "lucide-react";
+import { Activity, Receipt, CreditCard, FileStack, Package, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SupplierInvoicesTab from './SupplierInvoicesTab';
 import { PaymentsTab } from './PaymentsTab';
+import SupplierPortalActivityLog from "@/components/supplier-portal/SupplierPortalActivityLog";
 
 interface ContactTabsProps {
   supplier: Supplier;
@@ -124,6 +125,13 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
           label="Sözleşmeler" 
           count={tabCounts?.contracts}
         />
+        {supplier.portal_enabled && (
+          <TabTrigger 
+            value="portal" 
+            icon={<ExternalLink className="h-4 w-4" />} 
+            label="Portal" 
+          />
+        )}
       </CustomTabsList>
 
       <CustomTabsContent value="payments">
@@ -160,6 +168,12 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
           description="Bu tedarikçi ile imzalanan sözleşmeler burada görüntülenecek."
         />
       </CustomTabsContent>
+
+      {supplier.portal_enabled && (
+        <CustomTabsContent value="portal">
+          <SupplierPortalActivityLog supplierId={supplier.id} />
+        </CustomTabsContent>
+      )}
     </CustomTabs>
   );
 };

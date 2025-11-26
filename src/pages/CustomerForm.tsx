@@ -34,7 +34,7 @@ const CustomerForm = ({ isCollapsed, setIsCollapsed }: CustomerFormProps) => {
       <CustomerFormHeader 
         id={id} 
         isPending={mutation.isPending}
-        onCancel={() => navigate('/contacts')}
+        onCancel={() => navigate('/customers')}
       />
 
       {(isDataLoading || isWaitingForData) ? (
@@ -51,7 +51,7 @@ const CustomerForm = ({ isCollapsed, setIsCollapsed }: CustomerFormProps) => {
           handleSubmit={handleSubmit}
           isPending={mutation.isPending}
           isEdit={isEditMode}
-          onCancel={() => navigate('/contacts')}
+          onCancel={() => navigate('/customers')}
         />
       )}
     </div>

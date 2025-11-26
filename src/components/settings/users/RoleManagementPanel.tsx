@@ -181,93 +181,19 @@ export const RoleManagementPanel = ({ users }: RoleManagementPanelProps) => {
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
   
-  // Default roles - Admin is always first
-  const defaultRoles: Role[] = [
-    {
-      id: 'admin-system',
-      name: 'Admin',
-      description: 'Sistem yöneticisi - Tüm yetkilere sahip',
-      permissions: null,
-      isSystem: true
-    },
-    {
-      id: 'yonetici-default',
-      name: 'Yönetici',
-      description: 'Şirket yöneticisi',
-      permissions: null,
-      isSystem: false
-    },
-    {
-      id: 'satis-muduru-default',
-      name: 'Satış Müdürü',
-      description: 'Satış departmanı yöneticisi',
-      permissions: null,
-      isSystem: false
-    },
-    {
-      id: 'satis-temsilcisi-default',
-      name: 'Satış Temsilcisi',
-      description: 'Satış ekibi üyesi',
-      permissions: null,
-      isSystem: false
-    },
-    {
-      id: 'muhasebe-default',
-      name: 'Muhasebe',
-      description: 'Muhasebe departmanı',
-      permissions: null,
-      isSystem: false
-    },
-    {
-      id: 'ik-default',
-      name: 'İnsan Kaynakları',
-      description: 'İnsan kaynakları departmanı',
-      permissions: null,
-      isSystem: false
-    }
-  ];
-
-  // Her rol için yetki state'i
-  const [rolePermissions, setRolePermissions] = useState<Record<string, RolePermissions>>({});
-  // Her modül için açık/kapalı state'i (rol-modül kombinasyonu)
-  const [moduleOpenStates, setModuleOpenStates] = useState<Record<string, Record<string, boolean>>>({});
-
-  // Veritabanından rolleri çek
-  const { data: dbRoles = [] } = useQuery({
-    queryKey: ['roles', userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      
-      const roleNames = defaultRoles.map(r => r.name);
-      
-      const { data, error } = await supabase
-        .from('roles')
-        .select('*')
-        .eq('company_id', userData.company_id)
-        .in('name', roleNames);
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userData?.company_id,
-  });
+  // Sistem admin rol isimleri (bunlar özel işaretlenecek)
+  const systemAdminNames = ['admin', 'sistem yöneticisi', 'system admin'];
 
   // Admin rolü için tüm modülleri görünür yapan helper fonksiyon
   const getAllPermissionsForAdmin = (): RolePermissions => {
     const allPermissions: RolePermissions = {};
     
     MODULE_DEFINITIONS.forEach(module => {
-      // Ana modül için sadece access yetkisini true yap
-      allPermissions[module.key] = {
-        access: true,
-      };
+      allPermissions[module.key] = { access: true };
       
-      // Alt modüller için de sadece access yetkisini true yap
       if (module.subModules && module.subModules.length > 0) {
         module.subModules.forEach(subModule => {
-          allPermissions[subModule.key] = {
-            access: true,
-          };
+          allPermissions[subModule.key] = { access: true };
         });
       }
     });
@@ -275,30 +201,71 @@ export const RoleManagementPanel = ({ users }: RoleManagementPanelProps) => {
     return allPermissions;
   };
 
-  // Rolleri birleştir ve yetkileri yükle
+  // Her rol için yetki state'i
+  const [rolePermissions, setRolePermissions] = useState<Record<string, RolePermissions>>({});
+  // Her modül için açık/kapalı state'i (rol-modül kombinasyonu)
+  const [moduleOpenStates, setModuleOpenStates] = useState<Record<string, Record<string, boolean>>>({});
+
+  // Veritabanından rolleri çek: Global (company_id = NULL) + Şirket rolleri
+  const { data: dbRoles = [], isLoading: rolesLoading } = useQuery({
+    queryKey: ['roles', userData?.company_id],
+    queryFn: async () => {
+      if (!userData?.company_id) return [];
+      
+      // Global roller (company_id IS NULL) + Şirket rolleri
+      const { data, error } = await supabase
+        .from('roles')
+        .select('*')
+        .or(`company_id.is.null,company_id.eq.${userData.company_id}`)
+        .order('company_id', { ascending: true, nullsFirst: true })
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userData?.company_id,
+  });
+
+  // Rolleri filtrele: Şirket rolleri öncelikli, aynı isimde global roller filtrelenir
+  const companyRoles = dbRoles.filter(r => r.company_id && r.company_id === userData?.company_id);
+  const globalRoles = dbRoles.filter(r => !r.company_id); // company_id null veya undefined
+  const companyRoleNames = new Set(companyRoles.map(r => r.name.toLowerCase()));
+  
+  // Sadece şirket rolleriyle aynı isimde olmayan global rolleri ekle
+  const uniqueGlobalRoles = globalRoles.filter(r => !companyRoleNames.has(r.name.toLowerCase()));
+      
+  // Şirket rolleri + benzersiz global roller (global roller önce, sonra şirket rolleri)
+  const allRoles = [...uniqueGlobalRoles, ...companyRoles];
+  
+  // Rolleri Role tipine dönüştür
+  const displayRoles: Role[] = allRoles.map(dbRole => ({
+    id: dbRole.id,
+    name: dbRole.name,
+    description: dbRole.description,
+    permissions: dbRole.permissions,
+    isSystem: systemAdminNames.includes(dbRole.name.toLowerCase()) || dbRole.role_type === 'system',
+  }));
+
+  // Rolleri yükle ve yetkileri oluştur
   useEffect(() => {
     const permissions: Record<string, RolePermissions> = {};
     
-    defaultRoles.forEach(role => {
-      // Admin rolü için tüm yetkileri true yap
-      if (role.name === 'Admin') {
-        const dbRole = dbRoles.find(r => r.name === role.name);
-        if (dbRole?.permissions && typeof dbRole.permissions === 'object' && 'modules' in dbRole.permissions) {
-          // Veritabanında varsa onu kullan, yoksa tüm yetkileri true yap
-          const dbPermissions = (dbRole.permissions as any).modules || {};
-          // Eğer boşsa veya eksik modüller varsa, tüm yetkileri true yap
+    dbRoles.forEach(role => {
+      const isSystemAdmin = systemAdminNames.includes(role.name.toLowerCase());
+      
+      // Sistem admin rolü için tüm yetkileri true yap
+      if (isSystemAdmin) {
+        if (role.permissions && typeof role.permissions === 'object' && 'modules' in role.permissions) {
+          const dbPermissions = (role.permissions as any).modules || {};
           const allAdminPermissions = getAllPermissionsForAdmin();
           permissions[role.id] = { ...allAdminPermissions, ...dbPermissions };
         } else {
-          // Veritabanında yoksa, tüm yetkileri true yap
           permissions[role.id] = getAllPermissionsForAdmin();
         }
       } else {
-        const dbRole = dbRoles.find(r => r.name === role.name);
-        if (dbRole?.permissions && typeof dbRole.permissions === 'object' && 'modules' in dbRole.permissions) {
-          permissions[role.id] = (dbRole.permissions as any).modules || {};
+        if (role.permissions && typeof role.permissions === 'object' && 'modules' in role.permissions) {
+          permissions[role.id] = (role.permissions as any).modules || {};
         } else {
-          // Varsayılan yetkiler (boş)
           permissions[role.id] = {};
         }
       }
@@ -323,39 +290,20 @@ export const RoleManagementPanel = ({ users }: RoleManagementPanelProps) => {
 
   // Yetkileri kaydet
   const savePermissionsMutation = useMutation({
-    mutationFn: async ({ roleId, roleName, permissions }: { roleId: string; roleName: string; permissions: RolePermissions }) => {
+    mutationFn: async ({ roleId, permissions }: { roleId: string; permissions: RolePermissions }) => {
       if (!userData?.company_id) throw new Error('Şirket bilgisi bulunamadı');
-
-      // Veritabanında rol var mı kontrol et
-      const existingRole = dbRoles.find(r => r.name === roleName);
       
       const permissionsData = {
         modules: permissions
       };
 
-      if (existingRole) {
-        // Güncelle
+      // Doğrudan ID ile güncelle
         const { error } = await supabase
           .from('roles')
           .update({ permissions: permissionsData })
-          .eq('id', existingRole.id);
+        .eq('id', roleId);
 
         if (error) throw error;
-      } else {
-        // Yeni rol oluştur
-        const { error } = await supabase
-          .from('roles')
-          .insert({
-            name: roleName,
-            description: defaultRoles.find(r => r.id === roleId)?.description || null,
-            permissions: permissionsData,
-            company_id: userData.company_id,
-            role_type: 'custom',
-            is_active: true,
-          });
-
-        if (error) throw error;
-      }
     },
     onSuccess: () => {
       toast.success('Yetkiler başarıyla kaydedildi');
@@ -386,9 +334,6 @@ export const RoleManagementPanel = ({ users }: RoleManagementPanelProps) => {
     }
     return users.filter(u => u.user_roles?.some(r => r.role === roleName)).length;
   };
-
-  // Use default roles only
-  const displayRoles = defaultRoles;
 
   // Modülleri sidebar sırasına göre doğrudan kullan (kategoriler olmadan)
   const sortedModules = MODULE_DEFINITIONS;

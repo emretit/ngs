@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, MapPin, Loader2 } from "lucide-react";
+import { FileText, MapPin, Loader2, User } from "lucide-react";
 import { useLocationIQAutocomplete } from "@/hooks/useLocationIQAutocomplete";
 import { parseLocationIQResult, formatDisplayName } from "@/utils/locationiqUtils";
 
@@ -17,6 +17,7 @@ interface ServiceBasicInfoCardProps {
     service_location: string;
     service_priority: 'low' | 'medium' | 'high' | 'urgent';
     service_status: 'new' | 'assigned' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
+    assigned_technician?: string | null;
   };
   handleInputChange: (field: string, value: any) => void;
   priorityConfig: {
@@ -26,6 +27,7 @@ interface ServiceBasicInfoCardProps {
       icon: string;
     };
   };
+  technicians?: Array<{ id: string; first_name: string; last_name: string }>;
   errors?: Record<string, string>;
 }
 
@@ -33,6 +35,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
   formData,
   handleInputChange,
   priorityConfig,
+  technicians = [],
   errors = {}
 }) => {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
@@ -225,54 +228,54 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="relative" ref={autocompleteRef}>
-            <Label className="text-sm font-medium text-gray-700 mb-1.5 block flex items-center gap-1">
-              <MapPin className="w-3 h-3 text-blue-500" />
-              Lokasyon
-              {isAutocompleteLoading && <Loader2 className="w-3 h-3 animate-spin text-blue-500" />}
-            </Label>
-            <Input
-              value={formData.service_location}
-              onChange={(e) => handleLocationInputChange(e.target.value)}
-              onFocus={() => {
-                if (autocompleteQuery.length >= 3) {
-                  setShowAutocomplete(true);
-                }
-              }}
-              placeholder="Adres aramak için en az 3 karakter girin..."
-              className="h-10 text-sm"
-            />
-            
-            {/* Autocomplete Dropdown */}
-            {showAutocomplete && autocompleteResults.length > 0 && (
-              <div className="absolute z-[9999] w-full bottom-full mb-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                {autocompleteResults.map((result, index) => (
-                  <button
-                    key={`${result.place_id}-${index}`}
-                    type="button"
-                    onClick={() => handleAutocompleteSelect(result)}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
-                  >
-                    <div className="flex items-start gap-2">
-                      <MapPin className="w-3 h-3 text-blue-500 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">
-                          {formatDisplayName(result)}
-                        </div>
-                        {result.address?.postcode && (
-                          <div className="text-gray-500 text-xs mt-0.5">
-                            Posta Kodu: {result.address.postcode}
-                          </div>
-                        )}
+        <div className="relative" ref={autocompleteRef}>
+          <Label className="text-sm font-medium text-gray-700 mb-1.5 block flex items-center gap-1">
+            <MapPin className="w-3 h-3 text-blue-500" />
+            Lokasyon
+            {isAutocompleteLoading && <Loader2 className="w-3 h-3 animate-spin text-blue-500" />}
+          </Label>
+          <Input
+            value={formData.service_location}
+            onChange={(e) => handleLocationInputChange(e.target.value)}
+            onFocus={() => {
+              if (autocompleteQuery.length >= 3) {
+                setShowAutocomplete(true);
+              }
+            }}
+            placeholder="Adres aramak için en az 3 karakter girin..."
+            className="h-10 text-sm"
+          />
+          
+          {/* Autocomplete Dropdown */}
+          {showAutocomplete && autocompleteResults.length > 0 && (
+            <div className="absolute z-[9999] w-full bottom-full mb-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+              {autocompleteResults.map((result, index) => (
+                <button
+                  key={`${result.place_id}-${index}`}
+                  type="button"
+                  onClick={() => handleAutocompleteSelect(result)}
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                >
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-3 h-3 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        {formatDisplayName(result)}
                       </div>
+                      {result.address?.postcode && (
+                        <div className="text-gray-500 text-xs mt-0.5">
+                          Posta Kodu: {result.address.postcode}
+                        </div>
+                      )}
                     </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
               Öncelik
@@ -293,6 +296,35 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
                     </div>
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="assigned_technician" className="text-sm font-medium text-gray-700 mb-1.5 block flex items-center gap-1">
+              <User className="w-3 h-3 text-blue-500" />
+              Teknisyen
+            </Label>
+            <Select
+              value={formData.assigned_technician || "unassigned"}
+              onValueChange={(value) => handleInputChange('assigned_technician', value === 'unassigned' ? null : value)}
+            >
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue placeholder="Teknisyen seçin (opsiyonel)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Atanmamış</SelectItem>
+                {technicians && technicians.length > 0 ? (
+                  technicians.map((tech) => (
+                    <SelectItem key={tech.id} value={tech.id}>
+                      {tech.first_name} {tech.last_name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-technicians" disabled>
+                    Teknisyen bulunamadı
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

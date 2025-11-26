@@ -1,7 +1,7 @@
 
 import React from "react";
 import { TableHeader, TableRow, TableHead } from "@/components/ui/table";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Circle } from "lucide-react";
 import type { SortField, SortDirection } from "./types";
 import { cn } from "@/lib/utils";
 
@@ -27,7 +27,7 @@ const TasksTableHeader: React.FC<TasksTableHeaderProps> = ({
   const renderSortableHeader = (label: string, field: SortField) => (
     <TableHead 
       className={cn(
-        "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
+        "py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-left",
         "cursor-pointer hover:bg-slate-200"
       )}
       onClick={() => handleSort(field)}
@@ -48,15 +48,21 @@ const TasksTableHeader: React.FC<TasksTableHeaderProps> = ({
   return (
     <TableHeader>
       <TableRow className="bg-slate-100 border-b border-slate-200">
+        {/* Tamamla sütunu - Microsoft To Do tarzı */}
+        <TableHead className="py-1.5 px-1.5 w-10 text-center">
+          <div className="flex items-center justify-center">
+            <Circle className="h-3 w-3 text-gray-400" />
+          </div>
+        </TableHead>
         {renderSortableHeader("Başlık", "title")}
         {renderSortableHeader("Tarih", "due_date")}
         {renderSortableHeader("Önem", "priority")}
         {renderSortableHeader("Sorumlu", "assignee")}
         {renderSortableHeader("İlişkili Öğe", "related_item")}
         {renderSortableHeader("Durum", "status")}
-        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
+        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-center">
           <div className="flex items-center justify-center gap-1">
-            <span className="text-lg mr-2">⚙️</span>
+            <span className="text-sm mr-1">⚙️</span>
             <span>İşlemler</span>
           </div>
         </TableHead>

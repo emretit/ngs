@@ -204,7 +204,7 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
                       className="w-full text-xs"
                       onClick={() => {
                         setPartnerPopoverOpen(false);
-                        navigate('/contacts/new');
+                        navigate('/customers/new');
                       }}
                     >
                       <Building2 className="h-3 w-3 mr-2" />

@@ -75,7 +75,7 @@ const PurchaseRequestsList = () => {
 
   // Request tıklama handler'ı - useCallback ile optimize edildi
   const handleRequestClick = useCallback((request: any) => {
-    navigate(`/purchase-requests/${request.id}`);
+    navigate(`/purchasing/requests/${request.id}`);
   }, [navigate]);
 
   // Group requests by status for header stats - optimize edildi (tek geçişte gruplama)

@@ -76,7 +76,7 @@ export default function RFQDetail() {
   const handleCreatePO = () => {
     const selectedQuote = rfq.quotes?.find(q => q.is_selected);
     if (selectedQuote) {
-      navigate(`/purchase-orders/new?rfq_id=${rfq.id}&vendor_id=${selectedQuote.vendor_id}`);
+      navigate(`/purchasing/orders/new?rfq_id=${rfq.id}&vendor_id=${selectedQuote.vendor_id}`);
     }
   };
 
@@ -93,7 +93,7 @@ export default function RFQDetail() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/purchase-rfqs")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/purchasing/rfqs")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">

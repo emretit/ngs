@@ -260,7 +260,6 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
               <CustomerSelector
                 value={selectedCustomerId}
                 onChange={handleCustomerChange}
-                error=""
               />
             </div>
             <div className="space-y-1">

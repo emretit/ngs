@@ -86,7 +86,7 @@ export default function PurchaseRequestDetail() {
             target_price: item.estimated_price,
           }));
           
-          navigate(`/purchase-rfqs/new?pr_id=${request.id}`, { 
+          navigate(`/purchasing/rfqs/new?pr_id=${request.id}`, { 
             state: { prItems: items } 
           });
         },
@@ -118,7 +118,7 @@ export default function PurchaseRequestDetail() {
             discount_rate: 0,
           }));
           
-          navigate(`/purchase-orders/new?pr_id=${request.id}`, { 
+          navigate(`/purchasing/orders/new?pr_id=${request.id}`, { 
             state: { prItems: items } 
           });
         },
@@ -140,7 +140,7 @@ export default function PurchaseRequestDetail() {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/purchase-requests")}>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/purchasing/requests")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Geri
           </Button>

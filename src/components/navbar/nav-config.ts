@@ -57,7 +57,7 @@ export const navItems = [
   },
   // 2. Müşteriler
   {
-    path: "/contacts",
+    path: "/customers",
     icon: User,
     label: "Müşteriler",
   },
@@ -114,29 +114,54 @@ export const navItems = [
     hasDropdown: true,
     items: [
       {
-        path: "/purchase-requests",
+        path: "/purchasing/requests",
         icon: FileText,
-        label: "Talepler",
+        label: "Talepler (PR)",
       },
       {
-        path: "/purchase-rfqs",
+        path: "/purchasing/requests/new",
+        icon: Plus,
+        label: "Yeni Talep",
+      },
+      {
+        path: "/purchasing/rfqs",
         icon: MessageSquare,
-        label: "Teklif İst.",
+        label: "Teklif İstekleri (RFQ)",
       },
       {
-        path: "/purchase-orders",
+        path: "/purchasing/rfqs/new",
+        icon: Plus,
+        label: "Yeni RFQ",
+      },
+      {
+        path: "/purchasing/orders",
         icon: ShoppingCart,
-        label: "Siparişler",
+        label: "Siparişler (PO)",
       },
       {
-        path: "/purchase-grns",
+        path: "/purchasing/orders/new",
+        icon: Plus,
+        label: "Yeni Sipariş",
+      },
+      {
+        path: "/purchasing/grns",
         icon: ClipboardCheck,
-        label: "Teslimatlar",
+        label: "Mal Kabul (GRN)",
       },
       {
-        path: "/vendor-invoices",
+        path: "/purchasing/invoices",
         icon: Receipt,
-        label: "Faturalar",
+        label: "Tedarikçi Faturaları",
+      },
+      {
+        path: "/suppliers",
+        icon: Building2,
+        label: "Tedarikçiler",
+      },
+      {
+        path: "/purchasing/settings",
+        icon: Settings,
+        label: "Ayarlar",
       },
     ],
   },

@@ -75,7 +75,7 @@ BEGIN
   
   -- Insert CRM children
   INSERT INTO public.modules (id, name, code, kind, parent, href, icon, color, order_no, tags, kpi_count, is_active, description, company_id) VALUES
-  ('crm-customers', 'Müşteri Yönetimi', 'CRM_CUST', 'leaf', 'crm', '/contacts', 'Users2', '#10b981', 1, '["müşteri", "iletişim", "yönetim"]', 5, true, 'Müşteri bilgileri ve iletişim yönetimi', p_company_id),
+  ('crm-customers', 'Müşteri Yönetimi', 'CRM_CUST', 'leaf', 'crm', '/customers', 'Users2', '#10b981', 1, '["müşteri", "iletişim", "yönetim"]', 5, true, 'Müşteri bilgileri ve iletişim yönetimi', p_company_id),
   ('crm-opportunities', 'Fırsatlar', 'CRM_OPP', 'leaf', 'crm', '/opportunities', 'Target', '#10b981', 2, '["fırsat", "satış", "potansiyel"]', 3, true, 'Satış fırsatları ve takibi', p_company_id),
   ('crm-proposals', 'Teklifler', 'CRM_PROP', 'leaf', 'crm', '/proposals', 'FileText', '#10b981', 3, '["teklif", "öneri", "dokuman"]', 7, true, 'Teklif hazırlama ve yönetimi', p_company_id);
   

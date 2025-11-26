@@ -2,8 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Calculator, TrendingUp, Percent, DollarSign, Receipt, Coins } from "lucide-react";
+import { TrendingUp, Percent, DollarSign, Receipt } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 
 interface FinancialTotals {
@@ -97,24 +96,26 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                 )}
 
                 {/* Financial Summary */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {/* Gross Total */}
-                  <div className="flex justify-between items-center p-2 bg-slate-50 rounded-lg">
-                    <span className="text-xs text-gray-600 flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
+                  <div className="flex justify-between items-center py-1.5 px-2">
+                    <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                      <TrendingUp className="h-3.5 w-3.5 text-gray-400" />
                       Brüt Toplam:
                     </span>
-                    <span className="font-semibold text-sm">{formatCurrency(totals.gross, currency)}</span>
+                    <span className="font-medium text-sm text-right tabular-nums">
+                      {formatCurrency(totals.gross, currency)}
+                    </span>
                   </div>
 
                   {/* VAT Control - Only in edit mode */}
                   {showVatControl && onVatPercentageChange && (
-                    <div className="border border-orange-200 rounded-lg p-3 bg-orange-50/30">
-                      <div className="text-xs text-center text-orange-700 font-medium mb-2 flex items-center justify-center gap-1">
-                        <Percent className="h-3 w-3" />
+                    <div className="flex justify-between items-center py-1.5 px-2">
+                      <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                        <Percent className="h-3.5 w-3.5 text-orange-400" />
                         KDV Oranı
-                      </div>
-                      <div className="flex gap-2">
+                      </span>
+                      <div className="flex items-center gap-1">
                         <Input
                           type="number"
                           value={vatPercentage}
@@ -123,27 +124,25 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                           min="0"
                           max="100"
                           step="0.1"
-                          className={`flex-1 ${inputHeight}`}
+                          className="w-16 h-7 text-xs text-right"
                         />
-                        <div className="px-2 py-1 bg-orange-100 text-orange-700 text-xs flex items-center rounded font-medium">
-                          %
-                        </div>
+                        <span className="text-xs text-gray-400">%</span>
                       </div>
                     </div>
                   )}
 
                   {/* Global Discount Controls */}
-                  <div className="border border-blue-200 rounded-lg p-3 bg-blue-50/30">
-                    <div className="text-xs text-center text-blue-700 font-medium mb-2 flex items-center justify-center gap-1">
-                      <Receipt className="h-3 w-3" />
+                  <div className="flex justify-between items-center py-1.5 px-2">
+                    <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                      <Receipt className="h-3.5 w-3.5 text-blue-400" />
                       Genel İndirim
-                    </div>
-                    <div className="flex gap-2">
+                    </span>
+                    <div className="flex items-center gap-1">
                       <Select 
                         value={globalDiscountType} 
                         onValueChange={onGlobalDiscountTypeChange}
                       >
-                        <SelectTrigger className={`w-16 ${inputHeight}`}>
+                        <SelectTrigger className="w-14 h-7 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -161,7 +160,6 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                           </SelectItem>
                         </SelectContent>
                       </Select>
-                      
                       <Input
                         type="number"
                         value={globalDiscountValue}
@@ -169,43 +167,46 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                         placeholder="0"
                         min="0"
                         step={globalDiscountType === 'percentage' ? '0.1' : '0.01'}
-                        className={`flex-1 ${inputHeight}`}
+                        className="w-16 h-7 text-xs text-right"
                       />
                     </div>
                   </div>
 
                   {/* Discount Display */}
                   {totals.discount > 0 && (
-                    <div className="flex justify-between items-center p-2 bg-red-50 rounded-lg border border-red-200">
-                      <span className="text-red-600 text-xs font-medium">İndirim:</span>
-                      <span className="text-red-600 font-semibold text-sm">
+                    <div className="flex justify-between items-center py-1.5 px-2">
+                      <span className="text-xs text-red-500">İndirim:</span>
+                      <span className="text-red-500 font-medium text-sm text-right tabular-nums">
                         -{formatCurrency(totals.discount, currency)}
                       </span>
                     </div>
                   )}
 
                   {/* Net Total */}
-                  <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
-                    <span className="text-xs text-gray-600 font-medium">Net Toplam:</span>
-                    <span className="font-semibold text-sm">{formatCurrency(totals.net, currency)}</span>
+                  <div className="flex justify-between items-center py-1.5 px-2">
+                    <span className="text-xs text-gray-500">Net Toplam:</span>
+                    <span className="font-medium text-sm text-right tabular-nums">
+                      {formatCurrency(totals.net, currency)}
+                    </span>
                   </div>
 
                   {/* VAT Display */}
                   {totals.vat > 0 && (
-                    <div className="flex justify-between items-center p-2 bg-purple-50 rounded-lg border border-purple-200">
-                      <span className="text-purple-600 text-xs font-medium">KDV:</span>
-                      <span className="text-purple-600 font-semibold text-sm">
+                    <div className="flex justify-between items-center py-1.5 px-2">
+                      <span className="text-xs text-gray-500">KDV:</span>
+                      <span className="font-medium text-sm text-right tabular-nums">
                         {formatCurrency(totals.vat, currency)}
                       </span>
                     </div>
                   )}
 
-                  <Separator className="my-2" />
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 my-2" />
 
                   {/* Grand Total */}
-                  <div className="flex justify-between items-center p-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border-2 border-emerald-200">
-                    <span className="font-bold text-sm text-emerald-800">GENEL TOPLAM:</span>
-                    <span className="font-bold text-lg text-emerald-600">
+                  <div className="flex justify-between items-center py-2 px-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg">
+                    <span className="font-semibold text-sm text-emerald-700">GENEL TOPLAM:</span>
+                    <span className="font-bold text-base text-emerald-600 text-right tabular-nums">
                       {formatCurrency(totals.grand, currency)}
                     </span>
                   </div>

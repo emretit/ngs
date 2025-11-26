@@ -92,6 +92,32 @@ const InviteSetup = () => {
         throw updateError;
       }
       console.log('User successfully updated');
+
+      // Get current user to check for employee_id in metadata
+      const { data: { user } } = await supabase.auth.getUser();
+      const employeeId = user?.user_metadata?.employee_id;
+      
+      if (employeeId && user?.id) {
+        console.log('Linking user to employee:', employeeId);
+        try {
+          // Update employee with user_id
+          await supabase
+            .from('employees')
+            .update({ user_id: user.id })
+            .eq('id', employeeId);
+          
+          // Update profile with employee_id
+          await supabase
+            .from('profiles')
+            .update({ employee_id: employeeId })
+            .eq('id', user.id);
+          
+          console.log('User-Employee link established');
+        } catch (linkError) {
+          console.error('Error linking user to employee:', linkError);
+          // Don't throw - user is already created
+        }
+      }
       toast({
         title: "Hesap Kuruldu",
         description: "Şifreniz başarıyla oluşturuldu. Dashboard'a yönlendiriliyorsunuz.",

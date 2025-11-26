@@ -82,6 +82,12 @@ const ServicesTableHeader: React.FC<ServicesTableHeaderProps> = ({
         {renderSortableHeader("Öncelik", "service_priority", "⭐")}
         {renderSortableHeader("Teknisyen", "assigned_technician", "🔧")}
         {renderSortableHeader("Tarih", "created_at", "📅")}
+        <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
+          <div className="flex items-center justify-center gap-1">
+            <span className="text-lg mr-2">⚙️</span>
+            <span>İşlemler</span>
+          </div>
+        </TableHead>
       </TableRow>
     </TableHeader>
   );

@@ -24,7 +24,7 @@ const QuickActions = () => {
     {
       label: "Müşteri Ekle",
       icon: Users,
-      onClick: () => navigate("/contacts/new"),
+      onClick: () => navigate("/customers/new"),
       color: "text-green-600 dark:text-green-400",
       bgColor: "bg-green-50 dark:bg-green-950",
     },

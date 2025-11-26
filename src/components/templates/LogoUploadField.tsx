@@ -188,7 +188,7 @@ export const LogoUploadField: React.FC<LogoUploadFieldProps> = ({
                   onChange={(e) => onSizeChange?.(Number(e.target.value))}
                   className="h-7 w-16 text-center text-xs"
                   min="20"
-                  max="200"
+                  max="150"
                   placeholder="80"
                 />
               </div>

@@ -37,8 +37,6 @@ const employeeFormSchema = z.object({
   // Mali Bilgiler
   salary_amount: z.number().optional(),
   salary_currency: z.enum(["TRY", "USD", "EUR", "GBP"]).optional(),
-  salary_type: z.enum(["gross", "net", "hourly", "daily"]).optional(),
-  payment_frequency: z.enum(["monthly", "weekly", "daily", "hourly"]).optional(),
   salary_start_date: z.string().optional(),
   salary_notes: z.string().optional(),
   net_salary: z.number().optional(),
@@ -53,29 +51,6 @@ const employeeFormSchema = z.object({
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeFormSchema>;
-
-// Helper functions to convert between database and form values
-const salaryTypeToTurkish = (type: string | null | undefined): "brüt" | "net" | "saatlik" | "günlük" | null => {
-  if (!type) return null;
-  const mapping: Record<string, "brüt" | "net" | "saatlik" | "günlük"> = {
-    "gross": "brüt",
-    "net": "net",
-    "hourly": "saatlik",
-    "daily": "günlük"
-  };
-  return mapping[type] || null;
-};
-
-const paymentFrequencyToTurkish = (freq: string | null | undefined): "aylık" | "haftalık" | "günlük" | "saatlik" | null => {
-  if (!freq) return null;
-  const mapping: Record<string, "aylık" | "haftalık" | "günlük" | "saatlik"> = {
-    "monthly": "aylık",
-    "weekly": "haftalık",
-    "daily": "günlük",
-    "hourly": "saatlik"
-  };
-  return mapping[freq] || null;
-};
 
 export const useEmployeeForm = (employee?: Employee) => {
   const defaultValues: EmployeeFormValues = employee ? {
@@ -101,8 +76,6 @@ export const useEmployeeForm = (employee?: Employee) => {
     emergency_contact_relation: employee.emergency_contact_relation || "",
     salary_amount: employee.salary_amount || undefined,
     salary_currency: employee.salary_currency || undefined,
-    salary_type: employee.salary_type || undefined,
-    payment_frequency: employee.payment_frequency || undefined,
     salary_start_date: employee.salary_start_date || "",
     salary_notes: employee.salary_notes || "",
     net_salary: employee.net_salary || undefined,
@@ -135,8 +108,6 @@ export const useEmployeeForm = (employee?: Employee) => {
     emergency_contact_relation: "",
     salary_amount: undefined,
     salary_currency: undefined,
-    salary_type: undefined,
-    payment_frequency: undefined,
     salary_start_date: "",
     salary_notes: "",
     net_salary: undefined,

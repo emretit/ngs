@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -74,6 +74,20 @@ const SimpleEmployeeForm = () => {
   const [documents, setDocuments] = useState<DocumentFile[]>([]);
   const navigate = useNavigate();
   const { userData } = useCurrentUser();
+  
+  // State for user linking
+  const [userLinkState, setUserLinkState] = useState<{
+    userId: string | null;
+    shouldLink: boolean;
+  }>({
+    userId: null,
+    shouldLink: false,
+  });
+
+  // Handle user link changes from RoleSection - memoized to prevent re-renders
+  const handleUserLinkChange = useCallback((userId: string | null, shouldLink: boolean) => {
+    setUserLinkState({ userId, shouldLink });
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -116,12 +130,7 @@ const SimpleEmployeeForm = () => {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     
-    // Show more detailed loading message
-    const loadingMessage = data.email 
-      ? "Çalışan oluşturuluyor ve davet maili gönderiliyor..." 
-      : "Çalışan oluşturuluyor...";
-    
-    console.log(loadingMessage);
+    console.log("Çalışan oluşturuluyor...");
     
     try {
       // Get user session and company_id
@@ -187,15 +196,34 @@ const SimpleEmployeeForm = () => {
         effective_date: data.hire_date || new Date().toISOString().split('T')[0],
       };
 
+      // Add user_id if linking to existing user
+      const employeeDataWithUser = {
+        ...employeeData,
+        user_id: userLinkState.shouldLink ? userLinkState.userId : null,
+      };
+
       const { data: newEmployee, error } = await supabase
         .from("employees")
-        .insert(employeeData)
+        .insert(employeeDataWithUser)
         .select()
         .single();
 
       if (error) throw error;
 
       console.log("✅ Employee created:", newEmployee);
+
+      // If linking to a user, also update the profile's employee_id (bidirectional)
+      if (userLinkState.shouldLink && userLinkState.userId && newEmployee?.id) {
+        try {
+          await supabase
+            .from("profiles")
+            .update({ employee_id: newEmployee.id })
+            .eq("id", userLinkState.userId);
+          console.log("✅ Profile linked to employee");
+        } catch (linkError) {
+          console.error("Error linking profile to employee:", linkError);
+        }
+      }
 
       // Upload documents if any
       if (documents.length > 0 && newEmployee?.id) {
@@ -248,57 +276,8 @@ const SimpleEmployeeForm = () => {
         }
       }
 
-      // Send invitation email if employee has an email
-      if (newEmployee?.email) {
-        console.log("📧 Sending invite email to:", newEmployee.email);
-        
-        try {
-          // Get company info for the invitation email
-          const { data: companyProfile, error: profileError } = await supabase
-            .from('profiles')
-            .select('company_id, companies(name)')
-            .eq('id', user.id)
-            .single();
-
-          console.log("🏢 Company profile:", companyProfile);
-
-          if (profileError) {
-            console.error("Profile error:", profileError);
-            throw new Error("Şirket bilgisi alınamadı");
-          }
-
-          if (!companyProfile?.company_id) {
-            console.error("No company_id found");
-            throw new Error("Şirket ID bulunamadı");
-          }
-
-          console.log("🚀 Invoking invite-user function...");
-          
-          const { data: inviteResult, error: inviteError } = await supabase.functions.invoke('invite-user', {
-            body: {
-              email: newEmployee.email,
-              inviting_company_id: companyProfile.company_id,
-              company_name: companyProfile.companies?.name || 'Şirket',
-            }
-          });
-
-          console.log("📬 Invite result:", inviteResult, "Error:", inviteError);
-
-          if (inviteError) {
-            console.error('❌ Davet maili gönderilemedi:', inviteError);
-            showSuccess("Çalışan oluşturuldu ancak davet maili gönderilemedi");
-          } else {
-            console.log("✅ Invite email sent successfully");
-            showSuccess("Çalışan oluşturuldu ve davet maili gönderildi");
-          }
-        } catch (inviteError) {
-          console.error('❌ Davet maili gönderilirken hata:', inviteError);
-          showSuccess("Çalışan oluşturuldu ancak davet maili gönderilemedi");
-        }
-      } else {
-        console.log("ℹ️ No email provided, skipping invite");
+      // Çalışan oluşturuldu - kullanıcı hesabı için RoleSection'daki "Davet Gönder" butonu kullanılacak
         showSuccess("Çalışan başarıyla oluşturuldu");
-      }
       
       // Navigate to the employee details page
       if (newEmployee?.id) {
@@ -311,13 +290,15 @@ const SimpleEmployeeForm = () => {
       
       // Handle specific error cases
       if (error?.code === '23505') {
-        if (error?.message?.includes('employees_email_key')) {
-          showError("Bu e-posta adresi zaten kullanılıyor. Lütfen farklı bir e-posta adresi girin.");
+        if (error?.message?.includes('employees_email_company_unique') || error?.message?.includes('employees_email_key') || error?.message?.includes('email')) {
+          showError("Bu e-posta adresi bu şirkette zaten kullanılıyor. Lütfen farklı bir e-posta adresi girin veya mevcut çalışanı düzenleyin.");
+        } else if (error?.message?.includes('unique_employee_user')) {
+          showError("Bu kullanıcı hesabı bu şirkette zaten başka bir çalışana bağlı. Lütfen farklı bir kullanıcı seçin veya mevcut çalışanı düzenleyin.");
         } else {
           showError("Bu bilgiler zaten kayıtlı. Lütfen farklı bilgiler girin.");
         }
       } else {
-        showError("Çalışan oluşturulurken hata oluştu. Lütfen tekrar deneyin.");
+        showError(`Çalışan oluşturulurken hata oluştu: ${error?.message || 'Bilinmeyen hata'}. Lütfen tekrar deneyin.`);
       }
     } finally {
       setIsSubmitting(false);
@@ -392,7 +373,10 @@ const SimpleEmployeeForm = () => {
           </div>
 
           {/* Kullanıcı Yetkileri */}
-          <RoleSection control={form.control} />
+          <RoleSection 
+            control={form.control} 
+            onUserLinkChange={handleUserLinkChange}
+          />
 
           {/* Özlük Dosyaları */}
           <DocumentUploadSection

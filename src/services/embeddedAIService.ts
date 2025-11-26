@@ -184,7 +184,7 @@ Yanıtını JSON formatında ver:
           content: userPrompt
         }
       ],
-      model: 'llama-3.1-8b-instant',
+      model: 'llama-3.3-70b-versatile',
       temperature: 0.7,
       max_tokens: 1000,
       response_format: { type: 'json_object' }

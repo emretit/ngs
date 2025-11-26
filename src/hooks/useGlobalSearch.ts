@@ -170,7 +170,7 @@ export const useGlobalSearch = (query: string) => {
           title: result.item.name,
           subtitle: result.item.company || result.item.email,
           category: "Müşteri" as const,
-          url: `/contacts/${result.item.id}`,
+          url: `/customers/${result.item.id}`,
         }))
       );
     }

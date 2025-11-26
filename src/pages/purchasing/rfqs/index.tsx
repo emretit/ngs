@@ -39,7 +39,7 @@ export default function RFQsList() {
           <h1 className="text-3xl font-bold">Teklif Talepleri</h1>
           <p className="text-muted-foreground">Tedarikçilerden teklif alın ve karşılaştırın</p>
         </div>
-        <Button onClick={() => navigate("/purchase-rfqs/new")}>
+        <Button onClick={() => navigate("/purchasing/rfqs/new")}>
           <Plus className="h-4 w-4 mr-2" />
           Yeni RFQ
         </Button>
@@ -87,7 +87,7 @@ export default function RFQsList() {
                   <TableRow
                     key={rfq.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/purchase-rfqs/${rfq.id}`)}
+                    onClick={() => navigate(`/purchasing/rfqs/${rfq.id}`)}
                   >
                     <TableCell className="font-medium">{rfq.rfq_number}</TableCell>
                     <TableCell><StatusBadge status={rfq.status} /></TableCell>
@@ -106,7 +106,7 @@ export default function RFQsList() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/purchase-rfqs/${rfq.id}`);
+                            navigate(`/purchasing/rfqs/${rfq.id}`);
                           }}
                         >
                           Detay

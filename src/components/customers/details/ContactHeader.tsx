@@ -109,7 +109,7 @@ export const ContactHeader = ({ customer, id, onEdit, onUpdate }: ContactHeaderP
       {/* Sol taraf - Başlık */}
       <div className="flex items-center gap-3">
         <Link 
-          to="/contacts" 
+          to="/customers" 
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />

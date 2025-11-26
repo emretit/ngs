@@ -64,7 +64,7 @@ const PurchaseOrdersList = () => {
   // Order tıklama handler'ı - useCallback ile optimize edildi
   const handleOrderClick = useCallback(
     (order: any) => {
-      navigate(`/purchase-orders/${order.id}`);
+      navigate(`/purchasing/orders/${order.id}`);
     },
     [navigate]
   );

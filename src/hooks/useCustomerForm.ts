@@ -254,7 +254,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         description: "Müşteri bilgileri yüklenemedi. Lütfen tekrar deneyin.",
         variant: "destructive",
       });
-      navigate('/contacts');
+      navigate('/customers');
     }
   }, [customerError, navigate, toast]);
 
@@ -420,7 +420,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         description: id ? "Müşteri bilgileri başarıyla güncellendi." : "Yeni müşteri başarıyla eklendi.",
       });
 
-      navigate('/contacts');
+      navigate('/customers');
     },
     onError: (error) => {
       console.error('Mutation error:', error);

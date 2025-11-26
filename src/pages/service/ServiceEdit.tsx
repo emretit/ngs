@@ -71,6 +71,7 @@ interface ServiceRequestFormData {
   slip_number: string;
   service_result: string;
   received_by: string | null;
+  assigned_technician: string | null;
 }
 
 // Priority config
@@ -91,6 +92,22 @@ const ServiceEdit = () => {
   
   const { customers, suppliers, isLoading: partnersLoading } = useCustomerSelect();
   console.log('[ServiceEdit] customers length:', customers?.length, 'suppliers length:', suppliers?.length);
+
+  // Teknisyenleri getir
+  const { data: technicians = [] } = useQuery({
+    queryKey: ["technicians-for-service", userData?.company_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, first_name, last_name")
+        .eq("status", "aktif")
+        .eq("department", "Teknik")
+        .order("first_name");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userData?.company_id,
+  });
 
   // Servis verisini çek
   const { data: serviceRequest, isLoading: loading } = useQuery({
@@ -173,6 +190,7 @@ const ServiceEdit = () => {
     slip_number: '',
     service_result: '',
     received_by: null,
+    assigned_technician: null,
   });
 
   const [recurrenceConfig, setRecurrenceConfig] = useState<RecurrenceConfig>({ type: 'none' });
@@ -306,6 +324,7 @@ const ServiceEdit = () => {
         slip_number: serviceRequest.slip_number || '',
         service_result: serviceRequest.service_result || '',
         received_by: serviceRequest.received_by || null,
+        assigned_technician: serviceRequest.assigned_technician || null,
       });
 
       // Parse recurrence config if exists
@@ -663,6 +682,7 @@ const ServiceEdit = () => {
           slip_number: data.slip_number,
           service_result: data.service_result,
           received_by: data.received_by,
+          assigned_technician: data.assigned_technician || null,
           // Recurrence fields
           is_recurring: recurrenceConfig.type !== 'none',
           recurrence_type: recurrenceConfig.type !== 'none' ? recurrenceConfig.type : null,
@@ -894,6 +914,7 @@ const ServiceEdit = () => {
             formData={formData}
             handleInputChange={handleInputChange}
             priorityConfig={priorityConfig}
+            technicians={technicians}
           />
         </div>
 

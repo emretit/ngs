@@ -20,7 +20,7 @@ const CustomerFormHeader = ({ id, isPending, onSubmit, onCancel }: CustomerFormH
         <div className="flex items-center gap-3">
           {/* Simple Back Button */}
           <BackButton 
-            onClick={() => navigate("/contacts")}
+            onClick={() => navigate("/customers")}
             variant="ghost"
             size="sm"
           >
@@ -45,7 +45,7 @@ const CustomerFormHeader = ({ id, isPending, onSubmit, onCancel }: CustomerFormH
           <Button
             variant="outline"
             type="button"
-            onClick={onCancel || (() => navigate("/contacts"))}
+            onClick={onCancel || (() => navigate("/customers"))}
             disabled={isPending}
             className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
           >

@@ -41,6 +41,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
   const [isNewTemplate, setIsNewTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [companyInfoLoaded, setCompanyInfoLoaded] = useState(false);
   const companyInfoLoadedRef = useRef(false);
   const footerTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -67,11 +68,11 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       header: z.object({
         showTitle: z.boolean().optional(),
         title: z.string().min(1),
-        titleFontSize: z.number().min(8).max(32),
+        titleFontSize: z.number().min(8).max(30),
         showLogo: z.boolean(),
         logoUrl: z.string().optional(),
         logoPosition: z.enum(['left', 'center', 'right']),
-        logoSize: z.number().min(20).max(200),
+        logoSize: z.number().min(20).max(150),
         showValidity: z.boolean(),
         showCompanyInfo: z.boolean(),
         companyName: z.string().optional(),
@@ -84,7 +85,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       }),
 
       customer: z.object({
-        customerTitleFontSize: z.number().min(8).max(32).optional(),
+        customerTitleFontSize: z.number().min(8).max(25).optional(),
         customerInfoFontSize: z.number().min(8).max(32).optional(),
       }).optional(),
       lineTable: z.object({
@@ -151,7 +152,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
       },
 
       customer: {
-        customerTitleFontSize: 14,
+        customerTitleFontSize: 12,
         customerInfoFontSize: 10,
       },
       lineTable: {
@@ -221,54 +222,32 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
           company_tax_number: settings.company_tax_number,
         }); // Debug
         
-        // Use setValue for each field with proper options
-        form.setValue('header.companyName', settings.company_name || '', { 
-          shouldValidate: false,
-          shouldDirty: true,
-          shouldTouch: true
-        });
-        form.setValue('header.companyAddress', settings.company_address || '', { 
-          shouldValidate: false,
-          shouldDirty: true,
-          shouldTouch: true
-        });
-        form.setValue('header.companyPhone', settings.company_phone || '', { 
-          shouldValidate: false,
-          shouldDirty: true,
-          shouldTouch: true
-        });
-        form.setValue('header.companyEmail', settings.company_email || '', { 
-          shouldValidate: false,
-          shouldDirty: true,
-          shouldTouch: true
-        });
-        form.setValue('header.companyWebsite', settings.company_website || '', { 
-          shouldValidate: false,
-          shouldDirty: true,
-          shouldTouch: true
-        });
-        form.setValue('header.companyTaxNumber', settings.company_tax_number || '', { 
-          shouldValidate: false,
-          shouldDirty: true,
-          shouldTouch: true
+        // Update header with company info using form.reset for reliable update
+        const updatedValues = {
+          ...currentValues,
+          header: {
+            ...currentValues.header,
+            companyName: settings.company_name || '',
+            companyAddress: settings.company_address || '',
+            companyPhone: settings.company_phone || '',
+            companyEmail: settings.company_email || '',
+            companyWebsite: settings.company_website || '',
+            companyTaxNumber: settings.company_tax_number || '',
+            ...(settings.company_logo_url ? { logoUrl: settings.company_logo_url } : {})
+          }
+        };
+        
+        // Use form.reset to reliably update all values and trigger re-render
+        form.reset(updatedValues, {
+          keepDirty: false,
+          keepErrors: false,
+          keepIsSubmitted: false,
+          keepTouched: false,
+          keepIsValid: false,
+          keepSubmitCount: false
         });
         
-        // Set logo URL if available
-        if (settings.company_logo_url) {
-          form.setValue('header.logoUrl', settings.company_logo_url, { 
-            shouldValidate: false,
-            shouldDirty: true,
-            shouldTouch: true
-          });
-        }
-        
-        // Trigger form update
-        form.trigger('header');
-        
-        // Wait a bit for form to update
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        console.log('Form values after setValue:', form.getValues('header')); // Debug
+        console.log('Form values after reset:', form.getValues('header')); // Debug
         
         if (showToast && !companyInfoLoadedRef.current) {
           companyInfoLoadedRef.current = true;
@@ -357,7 +336,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
             // Migration: Add discount column if it doesn't exist and ensure align field exists
           customer: {
             ...template.schema_json.customer,
-            customerTitleFontSize: template.schema_json.customer?.customerTitleFontSize || 14,
+            customerTitleFontSize: template.schema_json.customer?.customerTitleFontSize || 12,
             customerInfoFontSize: template.schema_json.customer?.customerInfoFontSize || 10,
           },
           lineTable: {
@@ -998,7 +977,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                   type="number"
                                   {...form.register('header.titleFontSize', { valueAsNumber: true })}
                                   min="8"
-                                  max="32"
+                                  max="30"
                                   placeholder="16"
                                   className="h-7 w-14 text-center text-xs"
                                 />
@@ -1060,7 +1039,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                   type="number"
                                   {...form.register('header.companyInfoFontSize', { valueAsNumber: true })}
                                   min="8"
-                                  max="32"
+                                  max="15"
                                   placeholder="10"
                                   className="h-7 w-14 text-center text-xs"
                                 />
@@ -1105,10 +1084,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                                 />
                               </div>
                               <div>
-                                <Label className="text-xs text-gray-600 mb-0.5 block">Vergi No</Label>
+                                <Label className="text-xs text-gray-600 mb-0.5 block">Diğer</Label>
                                 <Input 
                                   {...form.register('header.companyTaxNumber')} 
-                                  placeholder="Vergi no" 
+                                  placeholder="İstediğiniz metni yazın" 
                                   className="h-7 text-xs placeholder:text-gray-400 placeholder:italic" 
                                 />
                               </div>
@@ -1145,8 +1124,8 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                             type="number"
                             {...form.register('customer.customerTitleFontSize', { valueAsNumber: true })}
                             min="8"
-                            max="32"
-                            placeholder="14"
+                            max="25"
+                            placeholder="12"
                             className="h-7 w-16 text-center text-xs"
                           />
                         </div>
@@ -1157,7 +1136,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                             type="number"
                             {...form.register('customer.customerInfoFontSize', { valueAsNumber: true })}
                             min="8"
-                            max="32"
+                            max="15"
                             placeholder="10"
                             className="h-7 w-16 text-center text-xs"
                           />
@@ -1419,6 +1398,34 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                           </div>
                         </div>
 
+                        {/* Font and Logo Size Settings */}
+                        <div className="flex items-center gap-3 mb-2 pb-2 border-b border-gray-200">
+                          <div className="flex items-center gap-1.5">
+                            <Label className="text-xs text-gray-600">Font:</Label>
+                            <Input
+                              type="number"
+                              {...form.register('notes.footerFontSize', { valueAsNumber: true })}
+                              min="6"
+                              max="14"
+                              placeholder="9"
+                              className="h-6 w-14 text-center text-xs"
+                            />
+                          </div>
+                          {watchedValues.notes?.showFooterLogo && (
+                            <div className="flex items-center gap-1.5">
+                              <Label className="text-xs text-gray-600">Logo Boyut:</Label>
+                              <Input
+                                type="number"
+                                {...form.register('notes.footerLogoSize', { valueAsNumber: true })}
+                                min="20"
+                                max="80"
+                                placeholder="40"
+                                className="h-6 w-14 text-center text-xs"
+                              />
+                            </div>
+                          )}
+                        </div>
+
                         {/* Rich Text Formatting Buttons */}
                         <div className="flex items-center gap-1 mb-1">
                           <Button
@@ -1454,6 +1461,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                           <span className="text-xs text-gray-500 ml-2">Metni seçip butonlara tıklayarak biçimlendirin</span>
                         </div>
 
+                        {/* Footer Text Input */}
                         <Textarea
                           {...form.register('notes.footer')}
                           ref={(e) => {
@@ -1461,33 +1469,9 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                             (footerTextareaRef as any).current = e;
                           }}
                           rows={3}
-                          className="text-xs font-mono"
-                          placeholder="Örn: <b>Kalın metin</b>, <i>italik</i>, <u>altı çizili</u>"
+                          className="text-xs"
+                          placeholder="Alt bilgi metnini buraya yazın. Formatlama için metni seçip yukarıdaki butonları kullanın."
                         />
-                        <div className="flex items-center gap-2">
-                          <Label className="text-xs">Font:</Label>
-                          <Input
-                            type="number"
-                            {...form.register('notes.footerFontSize', { valueAsNumber: true })}
-                            min="8"
-                            max="32"
-                            placeholder="12"
-                            className="h-6 w-14 text-center text-xs"
-                          />
-                          {watchedValues.notes?.showFooterLogo && (
-                            <>
-                              <Label className="text-xs ml-2">Logo Boyut:</Label>
-                              <Input
-                                type="number"
-                                {...form.register('notes.footerLogoSize', { valueAsNumber: true })}
-                                min="20"
-                                max="100"
-                                placeholder="40"
-                                className="h-6 w-14 text-center text-xs"
-                              />
-                            </>
-                          )}
-                        </div>
                       </div>
                     </AccordionContent>
                   </AccordionItem>

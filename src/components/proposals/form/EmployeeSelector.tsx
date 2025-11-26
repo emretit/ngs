@@ -124,10 +124,10 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              "w-full justify-between",
+              "w-full justify-between h-8",
               triggerClassName,
               !value && "text-muted-foreground",
-              error && "border-red-500"
+              error && error.trim() && "border-red-500"
             )}
           >
             <span className="truncate text-left flex-1">

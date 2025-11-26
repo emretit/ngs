@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Plus, Trash, FileText, Eye, MoreHorizontal, Save, FileDown, Send, ShoppingCart } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { Plus, Trash, FileText, Eye, MoreHorizontal, Save, FileDown, Send, ShoppingCart, Printer, Receipt } from "lucide-react";
+import { PdfExportService } from "@/services/pdf/pdfExportService";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { ProposalStatus } from "@/types/proposal";
@@ -100,6 +101,10 @@ const NewProposalCreate = () => {
   // Preview modal state
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   
+  // PDF templates state
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  
   // Global discount state
   const [globalDiscountType, setGlobalDiscountType] = useState<'percentage' | 'amount'>('percentage');
   const [globalDiscountValue, setGlobalDiscountValue] = useState<number>(0);
@@ -143,6 +148,23 @@ const NewProposalCreate = () => {
     selected_pricing_terms: [],
     selected_other_terms: [],
   });
+
+  // Load templates when component mounts
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    try {
+      setIsLoadingTemplates(true);
+      const data = await PdfExportService.getTemplates('quote');
+      setTemplates(data);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  };
 
   // handleFieldChange - State'lerden sonra tanımlanmalı
   const handleFieldChange = useCallback((field: string, value: any) => {
@@ -716,6 +738,17 @@ const NewProposalCreate = () => {
     // navigate("/orders/create", { state: { proposalData: formData, items } });
   };
 
+  const handleConvertToInvoice = () => {
+    // TODO: Implement convert to invoice functionality
+    toast.info("Fatura oluşturma özelliği yakında eklenecek");
+    // navigate("/sales-invoices/create", { state: { proposalData: formData, items } });
+  };
+
+  const handlePdfPrint = async (templateId?: string) => {
+    // Önce teklifi kaydet
+    toast.info("PDF oluşturmak için önce teklifi kaydedin");
+  };
+
 
   return (
     <div className="space-y-2">
@@ -767,24 +800,52 @@ const NewProposalCreate = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                {/* Yazdırma İşlemleri */}
+                <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="cursor-pointer">
+                    <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                    <span>Yazdır</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-48">
+                    {templates && templates.length > 0 ? (
+                      templates.map((template) => (
+                        <DropdownMenuItem
+                          key={template.id}
+                          onClick={() => handlePdfPrint(template.id)}
+                          className="cursor-pointer"
+                        >
+                          <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                          <span>{template.name || 'PDF Yazdır'}</span>
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        Şablon bulunamadı
+                      </div>
+                    )}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 <DropdownMenuItem onClick={handlePreview} className="gap-2 cursor-pointer">
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-4 w-4 text-slate-500" />
                   <span>Önizle</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
-                  <FileDown className="h-4 w-4" />
-                  <span>PDF İndir</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSendEmail} className="gap-2 cursor-pointer">
-                  <Send className="h-4 w-4" />
+                  <Send className="h-4 w-4 text-slate-500" />
                   <span>E-posta Gönder</span>
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
-                  <ShoppingCart className="h-4 w-4" />
+                {/* Dönüştürme İşlemleri */}
+                <DropdownMenuLabel>Dönüştür</DropdownMenuLabel>
+                <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer">
+                  <ShoppingCart className="h-4 w-4 text-green-500" />
                   <span>Siparişe Çevir</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleConvertToInvoice} className="gap-2 cursor-pointer">
+                  <Receipt className="h-4 w-4 text-purple-500" />
+                  <span>Faturaya Çevir</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

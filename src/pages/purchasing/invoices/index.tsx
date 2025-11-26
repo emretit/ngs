@@ -62,7 +62,7 @@ export default function VendorInvoicesList() {
           <h1 className="text-3xl font-bold">Tedarikçi Faturaları</h1>
           <p className="text-muted-foreground">Gelen faturaları yönetin</p>
         </div>
-        <Button onClick={() => navigate("/vendor-invoices/new")}>
+        <Button onClick={() => navigate("/purchasing/invoices/new")}>
           <Plus className="h-4 w-4 mr-2" />
           Yeni Fatura
         </Button>
@@ -110,7 +110,7 @@ export default function VendorInvoicesList() {
                 <TableRow
                   key={invoice.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`/vendor-invoices/${invoice.id}`)}
+                  onClick={() => navigate(`/purchasing/invoices/${invoice.id}`)}
                 >
                   <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
                   <TableCell>{invoice.vendor?.name}</TableCell>
@@ -135,7 +135,7 @@ export default function VendorInvoicesList() {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/vendor-invoices/${invoice.id}`);
+                          navigate(`/purchasing/invoices/${invoice.id}`);
                         }}
                       >
                         Detay

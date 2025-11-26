@@ -116,7 +116,7 @@ const CustomerNew = () => {
         title: "Başarılı",
         description: "Müşteri başarıyla eklendi.",
       });
-      navigate('/contacts');
+      navigate('/customers');
     },
     onError: (error) => {
       console.error('Form submission error:', error);
@@ -139,7 +139,7 @@ const CustomerNew = () => {
     <div>
       <CustomerFormHeader
         isPending={mutation.isPending}
-        onCancel={() => navigate('/contacts')}
+        onCancel={() => navigate('/customers')}
       />
       <CustomerFormContent 
         formData={formData}
@@ -147,7 +147,7 @@ const CustomerNew = () => {
         handleSubmit={handleSubmit}
         isPending={mutation.isPending}
         isEdit={false}
-        onCancel={() => navigate('/contacts')}
+        onCancel={() => navigate('/customers')}
       />
     </div>
   );

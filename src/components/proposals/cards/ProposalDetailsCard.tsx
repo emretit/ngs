@@ -77,7 +77,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
             value={formData.subject || ""}
             onChange={(e) => handleFieldChange('subject', e.target.value)}
             placeholder="Teklif konusunu girin"
-            className="mt-1 h-10 text-sm"
+            className="mt-1 h-8 text-sm"
           />
         </div>
 
@@ -105,21 +105,21 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
           </div>
         </div>
 
-        {/* Teklif No, Durum ve Para Birimi */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Teklif No ve Durum */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <Label htmlFor="offer_number" className="text-sm font-medium text-gray-700">Teklif No</Label>
             <Input
               id="offer_number"
               value={formData.offer_number}
               onChange={(e) => handleFieldChange('offer_number', e.target.value)}
-              className="mt-1 h-10 text-sm"
+              className="mt-1 h-8 text-sm"
             />
           </div>
           <div>
             <Label htmlFor="status" className="text-sm font-medium text-gray-700">Teklif Durumu</Label>
             <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
-              <SelectTrigger className="mt-1 h-10 text-sm">
+              <SelectTrigger className="mt-1 h-8 text-sm">
                 <SelectValue placeholder="Durum seçin" />
               </SelectTrigger>
               <SelectContent>
@@ -134,10 +134,14 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        {/* Para Birimi ve Döviz Kuru - İki Sütunlu */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
             <Select value={formData.currency || "TRY"} onValueChange={(value) => handleFieldChange('currency', value)}>
-              <SelectTrigger className="mt-1 h-10">
+              <SelectTrigger className="mt-1 h-8">
                 <SelectValue placeholder="Para birimi" />
               </SelectTrigger>
               <SelectContent>
@@ -154,57 +158,60 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
               </div>
             )}
           </div>
-        </div>
-
-        {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
-        {formData.currency && formData.currency !== "TRY" && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="exchange_rate" className="text-sm font-medium text-gray-700">
-                Döviz Kuru
-            </Label>
-              {currentRate && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <ArrowRightLeft className="h-3 w-3" />
-                  <span>Güncel: {currentRate.toFixed(4)} TL</span>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-2 items-center">
-              <div className="flex-1 relative">
-            <Input
-              id="exchange_rate"
-              type="number"
-                  step="0.0001"
-              min="0"
-              value={formData.exchange_rate || ""}
-              onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
-                  placeholder={currentRate ? currentRate.toFixed(4) : "Örn: 32.50"}
-                  className="h-10 text-sm pr-20"
-            />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                  1 {formData.currency === "TRY" ? "TL" : formData.currency} = ? TL
-                </div>
+          {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
+          {formData.currency && formData.currency !== "TRY" ? (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="exchange_rate" className="text-sm font-medium text-gray-700">
+                  Döviz Kuru
+                </Label>
+                {currentRate && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <ArrowRightLeft className="h-3 w-3" />
+                    <span>Güncel: {currentRate.toFixed(4)} TL</span>
+                  </div>
+                )}
               </div>
-              {currentRate && (
-                <button
-                  type="button"
-                  onClick={() => handleFieldChange('exchange_rate', currentRate)}
-                  className="px-3 py-2 text-xs border rounded-md hover:bg-muted whitespace-nowrap flex items-center gap-1"
-                  title="Güncel kuru uygula"
-                >
-                  <ArrowRightLeft className="h-3 w-3" />
-                  <span>Uygula</span>
-                </button>
+              <div className="flex gap-2 items-center">
+                <div className="flex-1 relative">
+                  <Input
+                    id="exchange_rate"
+                    type="number"
+                    step="0.0001"
+                    min="0"
+                    value={formData.exchange_rate || ""}
+                    onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
+                    placeholder={currentRate ? currentRate.toFixed(4) : "Örn: 32.50"}
+                    className="h-8 text-sm pr-20"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                    1 {formData.currency} = ? TL
+                  </div>
+                </div>
+                {currentRate && (
+                  <button
+                    type="button"
+                    onClick={() => handleFieldChange('exchange_rate', currentRate)}
+                    className="px-3 py-2 text-xs border rounded-md hover:bg-muted whitespace-nowrap flex items-center gap-1 h-8"
+                    title="Güncel kuru uygula"
+                  >
+                    <ArrowRightLeft className="h-3 w-3" />
+                    <span>Uygula</span>
+                  </button>
+                )}
+              </div>
+              {formData.exchange_rate && currentRate && Math.abs(formData.exchange_rate - currentRate) > 0.01 && (
+                <p className="text-xs text-orange-600 mt-1">
+                  Güncel kurdan {formData.exchange_rate > currentRate ? '+' : ''}{((formData.exchange_rate - currentRate) / currentRate * 100).toFixed(2)}% farklı
+                </p>
               )}
             </div>
-            {formData.exchange_rate && currentRate && Math.abs(formData.exchange_rate - currentRate) > 0.01 && (
-              <p className="text-xs text-orange-600">
-                Güncel kurdan {formData.exchange_rate > currentRate ? '+' : ''}{((formData.exchange_rate - currentRate) / currentRate * 100).toFixed(2)}% farklı
-            </p>
-            )}
-          </div>
-        )}
+          ) : (
+            <div>
+              {/* TRY seçildiğinde boş alan - layout'u korumak için */}
+            </div>
+          )}
+        </div>
 
         {/* Notlar Alanı */}
         <div>
@@ -214,7 +221,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
             value={formData.notes}
             onChange={(e) => handleFieldChange('notes', e.target.value)}
             placeholder="Teklif hakkında notlarınızı yazın..."
-            className="mt-1 resize-none h-10 text-sm"
+            className="mt-1 resize-none h-8 text-sm"
           />
         </div>
       </CardContent>

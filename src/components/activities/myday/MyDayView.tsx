@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useKanbanTasks } from "../hooks/useKanbanTasks";
-import TaskKanbanBoard from "../kanban/TaskKanbanBoard";
+import { useActivitiesInfiniteScroll } from "@/hooks/useActivitiesInfiniteScroll";
+import TasksContent from "../TasksContent";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, User } from "lucide-react";
 import type { TaskStatus } from "@/types/task";
@@ -18,15 +19,53 @@ interface MyDayViewProps {
 const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus, startDate, endDate }: MyDayViewProps) => {
   const { userData, displayName, loading } = useCurrentUser();
   
-  const { tasks, isLoading, error } = useKanbanTasks({
+  // Bugün için tarih filtresi
+  const todayStart = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }, []);
+
+  const todayEnd = useMemo(() => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return today;
+  }, []);
+
+  // İstatistikler için kanban tasks kullan (bugün filtresi ile)
+  const { tasks: kanbanTasks, isLoading: isLoadingStats, error: statsError } = useKanbanTasks({
     searchQuery,
-    selectedEmployee,
+    selectedEmployee: selectedEmployee || userData?.employee_id || null,
     selectedType,
     selectedStatus,
-    isMyDay: true, // Bu önemli - "Benim Günüm" filtresini aktif eder
-    startDate,
-    endDate
+    isMyDay: true,
+    startDate: todayStart,
+    endDate: todayEnd
   });
+
+  // Liste görünümü için infinite scroll hook (bugün filtresi ile)
+  const {
+    data: tasks,
+    isLoading: isLoadingTasks,
+    isLoadingMore,
+    hasNextPage,
+    error: tasksError,
+    loadMore,
+    totalCount,
+  } = useActivitiesInfiniteScroll(
+    {
+      searchQuery,
+      selectedEmployee: selectedEmployee || userData?.employee_id || null,
+      selectedType,
+      selectedStatus: selectedStatus || undefined,
+      startDate: todayStart,
+      endDate: todayEnd,
+    },
+    20
+  );
+
+  const isLoading = loading || isLoadingStats || isLoadingTasks;
+  const error = statsError || tasksError;
 
   if (loading || isLoading) {
     return (
@@ -84,14 +123,14 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
     );
   }
 
-  const totalTasks = Object.values(tasks).flat().length;
-  const completedTasks = tasks.completed?.length || 0;
-  const todoTasks = tasks.todo?.length || 0;
-  const inProgressTasks = tasks.in_progress?.length || 0;
+  const totalTasks = Object.values(kanbanTasks).flat().length;
+  const completedTasks = kanbanTasks.completed?.length || 0;
+  const todoTasks = kanbanTasks.todo?.length || 0;
+  const inProgressTasks = kanbanTasks.in_progress?.length || 0;
 
   return (
     <div className="space-y-6">
-      {/* Benim Günüm Header */}
+      {/* Bugün İstatistikleri */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -100,7 +139,7 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalTasks}</div>
-            <p className="text-xs text-muted-foreground">Toplam görev</p>
+            <p className="text-xs text-muted-foreground">Bugün toplam görev</p>
           </CardContent>
         </Card>
 
@@ -138,77 +177,22 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
         </Card>
       </div>
 
-      {/* Kanban Board - Sadece boş bir div şimdilik, çünkü TaskKanbanBoard tipi uyumsuz */}
-      <div className="rounded-lg border bg-card p-6">
-        <h3 className="text-lg font-semibold mb-4">Görevlerim</h3>
-        {totalTasks === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
-            Size atanmış görev bulunmamaktadır.
-          </p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-4">
-            {/* Yapılacaklar */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm">Yapılacaklar ({todoTasks})</h4>
-              <div className="space-y-2">
-                {tasks.todo?.map(task => (
-                  <div key={task.id} className="p-3 bg-background border rounded-lg">
-                    <p className="font-medium text-sm">{task.title}</p>
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground mt-1">{task.description}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Devam Eden */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm">Devam Eden ({inProgressTasks})</h4>
-              <div className="space-y-2">
-                {tasks.in_progress?.map(task => (
-                  <div key={task.id} className="p-3 bg-background border rounded-lg">
-                    <p className="font-medium text-sm">{task.title}</p>
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground mt-1">{task.description}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Ertelenen */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm">Ertelenen ({tasks.postponed?.length || 0})</h4>
-              <div className="space-y-2">
-                {tasks.postponed?.map(task => (
-                  <div key={task.id} className="p-3 bg-background border rounded-lg">
-                    <p className="font-medium text-sm">{task.title}</p>
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground mt-1">{task.description}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Tamamlanan */}
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm">Tamamlanan ({completedTasks})</h4>
-              <div className="space-y-2">
-                {tasks.completed?.map(task => (
-                  <div key={task.id} className="p-3 bg-background border rounded-lg opacity-60">
-                    <p className="font-medium text-sm line-through">{task.title}</p>
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground mt-1">{task.description}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Liste Görünümü - Bugün ile ilgili detaylar */}
+      <TasksContent 
+        tasks={tasks}
+        isLoading={isLoadingTasks}
+        isLoadingMore={isLoadingMore}
+        hasNextPage={hasNextPage}
+        loadMore={loadMore}
+        totalCount={totalCount}
+        error={tasksError ? (typeof tasksError === 'string' ? new Error(tasksError) : tasksError) : null}
+        searchQuery={searchQuery}
+        selectedEmployee={selectedEmployee || userData?.employee_id || null}
+        selectedType={selectedType}
+        selectedStatus={selectedStatus}
+        startDate={todayStart}
+        endDate={todayEnd}
+      />
     </div>
   );
 };

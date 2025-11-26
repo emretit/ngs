@@ -1,6 +1,6 @@
 import { RouteConfig } from "./types";
 
-// Yeni satın alma modülü - sadece bu kullanılacak
+// Satın alma modülü sayfaları
 import PurchaseManagement from "@/pages/PurchaseManagement";
 import PurchasingDashboard from "@/pages/purchasing/index";
 import PurchaseRequestsList from "@/pages/purchasing/requests/index";
@@ -20,18 +20,114 @@ import VendorInvoiceDetail from "@/pages/purchasing/invoices/[id]";
 import PurchasingSettings from "@/pages/purchasing/settings/index";
 
 export const purchaseRoutes: RouteConfig[] = [
+  // Eski route (geriye dönük uyumluluk)
   {
     path: "/purchase-management",
     component: PurchaseManagement,
     protected: true,
   },
   
-  // Yeni satın alma modülü
+  // ============================================
+  // SATIN ALMA MODÜLÜ - /purchasing altında
+  // ============================================
+  
+  // Dashboard - Ana sayfa
   {
     path: "/purchasing",
     component: PurchasingDashboard,
     protected: true,
   },
+  
+  // Talepler (Purchase Requests)
+  {
+    path: "/purchasing/requests",
+    component: PurchaseRequestsList,
+    protected: true,
+  },
+  {
+    path: "/purchasing/requests/new",
+    component: NewPurchaseRequest,
+    protected: true,
+  },
+  {
+    path: "/purchasing/requests/:id",
+    component: PurchaseRequestDetail,
+    protected: true,
+  },
+  
+  // Teklif İstekleri (RFQ)
+  {
+    path: "/purchasing/rfqs",
+    component: RFQsList,
+    protected: true,
+  },
+  {
+    path: "/purchasing/rfqs/new",
+    component: NewRFQ,
+    protected: true,
+  },
+  {
+    path: "/purchasing/rfqs/:id",
+    component: RFQDetail,
+    protected: true,
+  },
+  
+  // Siparişler (Purchase Orders)
+  {
+    path: "/purchasing/orders",
+    component: PurchaseOrdersList,
+    protected: true,
+  },
+  {
+    path: "/purchasing/orders/new",
+    component: NewPurchaseOrder,
+    protected: true,
+  },
+  {
+    path: "/purchasing/orders/:id",
+    component: PurchaseOrderDetail,
+    protected: true,
+  },
+  {
+    path: "/purchasing/orders/:id/receive",
+    component: ReceivePurchaseOrder,
+    protected: true,
+  },
+  
+  // Mal Kabul (GRN)
+  {
+    path: "/purchasing/grns",
+    component: GRNsList,
+    protected: true,
+  },
+  {
+    path: "/purchasing/grns/:id",
+    component: GRNDetail,
+    protected: true,
+  },
+  
+  // Tedarikçi Faturaları
+  {
+    path: "/purchasing/invoices",
+    component: VendorInvoicesList,
+    protected: true,
+  },
+  {
+    path: "/purchasing/invoices/:id",
+    component: VendorInvoiceDetail,
+    protected: true,
+  },
+  
+  // Ayarlar
+  {
+    path: "/purchasing/settings",
+    component: PurchasingSettings,
+    protected: true,
+  },
+  
+  // ============================================
+  // ESKİ ROUTE'LAR (geriye dönük uyumluluk için)
+  // ============================================
   {
     path: "/purchase-requests",
     component: PurchaseRequestsList,
@@ -100,11 +196,6 @@ export const purchaseRoutes: RouteConfig[] = [
   {
     path: "/vendor-invoices/:id",
     component: VendorInvoiceDetail,
-    protected: true,
-  },
-  {
-    path: "/purchasing/settings",
-    component: PurchasingSettings,
     protected: true,
   },
 ];

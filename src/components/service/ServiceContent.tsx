@@ -13,6 +13,8 @@ interface ServiceContentProps {
   selectedServices?: ServiceRequest[];
   onToggleServiceSelection?: (service: ServiceRequest) => void;
   onSelectAll?: (checked: boolean) => void;
+  technicians?: Array<{ id: string; first_name: string; last_name: string }>;
+  onDeleteService?: (service: ServiceRequest) => void;
 }
 
 const ServiceContent = ({ 
@@ -24,7 +26,9 @@ const ServiceContent = ({
   selectedTechnician,
   selectedServices = [],
   onToggleServiceSelection,
-  onSelectAll
+  onSelectAll,
+  technicians = [],
+  onDeleteService
 }: ServiceContentProps) => {
   const navigate = useNavigate();
 
@@ -48,6 +52,8 @@ const ServiceContent = ({
               selectedServices={selectedServices}
               onToggleServiceSelection={onToggleServiceSelection}
               onSelectAll={onSelectAll}
+              technicians={technicians}
+              onDeleteService={onDeleteService}
             />
           </div>
         </div>

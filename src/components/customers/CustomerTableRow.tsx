@@ -32,7 +32,7 @@ const CustomerTableRow = ({ customer }: CustomerTableRowProps) => {
   return (
     <TableRow 
       className="cursor-pointer hover:bg-gray-50 transition-colors"
-      onClick={() => navigate(`/contacts/${customer.id}`)}
+      onClick={() => navigate(`/customers/${customer.id}`)}
     >
       <TableCell className="px-4 py-3 font-medium">
         {customer.company || customer.name}
@@ -88,7 +88,7 @@ const CustomerTableRow = ({ customer }: CustomerTableRowProps) => {
             className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 rounded"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/contacts/${customer.id}/edit`);
+              navigate(`/customers/${customer.id}/edit`);
             }}
           >
             <Edit2 className="h-4 w-4 text-gray-500" />

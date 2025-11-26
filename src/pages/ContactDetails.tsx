@@ -28,7 +28,7 @@ const ContactDetails = () => {
     enabled: !!id,
   });
   const handleEdit = () => {
-    navigate(`/contacts/${id}/edit`);
+    navigate(`/customers/${id}/edit`);
   };
   const handleCustomerUpdate = (updatedCustomer: Customer) => {
     setCustomer(updatedCustomer);

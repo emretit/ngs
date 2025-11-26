@@ -93,7 +93,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({ value, onChange, er
             className={cn(
               "w-full h-8 text-sm justify-between",
               !value && "text-muted-foreground",
-              error && "border-red-500"
+              error && error.trim() && "border-red-500"
             )}
           >
             <span className="truncate text-left flex-1">

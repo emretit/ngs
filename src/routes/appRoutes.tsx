@@ -15,6 +15,7 @@ import { purchaseRoutes } from "./purchaseRoutes";
 import { proposalRoutes } from "./proposalRoutes";
 import { vehicleRoutes } from "./vehicleRoutes";
 import { adminRoutes } from "./adminRoutes";
+import { supplierPortalRoutes } from "./supplierPortalRoutes";
 
 
 import Deliveries from "@/pages/Deliveries";
@@ -27,6 +28,7 @@ import Profile from "@/pages/Profile";
 
 export const appRoutes: RouteConfig[] = [
   ...publicRoutes,
+  ...supplierPortalRoutes, // Supplier portal önce (public routes)
   ...dashboardRoutes,
   ...productRoutes,
   ...inventoryRoutes,

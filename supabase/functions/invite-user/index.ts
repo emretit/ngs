@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, inviting_company_id, company_name, role } = await req.json();
+    const { email, inviting_company_id, company_name, role, employee_id } = await req.json();
 
     if (!email) {
       return new Response(
@@ -28,7 +28,7 @@ serve(async (req) => {
     // Default role is 'admin' if not provided
     const userRole = role || 'admin';
 
-    console.log('📧 Invite request for:', email);
+    console.log('📧 Invite request for:', email, 'employee_id:', employee_id);
 
     // Supabase client with service role
     const supabase = createClient(
@@ -244,15 +244,11 @@ serve(async (req) => {
         email,
         options: {
           redirectTo: `${APP_URL}/invite-setup?email=${encodeURIComponent(email)}`,
-          data: inviting_company_id
-            ? { 
-                invited_by_company_id: inviting_company_id, 
+          data: {
+            ...(inviting_company_id && { invited_by_company_id: inviting_company_id }),
                 company_name: companyName,
-                invited_role: userRole
-              }
-            : { 
-                company_name: companyName,
-                invited_role: userRole
+            invited_role: userRole,
+            ...(employee_id && { employee_id: employee_id })
               }
         }
       });

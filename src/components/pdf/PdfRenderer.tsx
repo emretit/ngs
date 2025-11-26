@@ -170,14 +170,13 @@ const safeText = (text: string | undefined | null): string => {
 };
 
 // Parse HTML-like formatting tags and return React-PDF Text components
+// Parse HTML-like formatting tags and return React-PDF Text components
 const parseFormattedText = (text: string, baseStyle: any): React.ReactElement => {
   if (!text) return <Text style={baseStyle}></Text>;
   
-  // Simple regex to match <b>, <i>, <u> tags and their content
   const parts: React.ReactNode[] = [];
-  let currentIndex = 0;
   
-  // Match all formatting tags
+  // Match all formatting tags: <b>, <i>, <u>
   const tagRegex = /<(b|i|u)>(.*?)<\/\1>/g;
   let match;
   const matches: Array<{ start: number; end: number; tag: string; content: string }> = [];
@@ -186,7 +185,7 @@ const parseFormattedText = (text: string, baseStyle: any): React.ReactElement =>
     matches.push({
       start: match.index,
       end: match.index + match[0].length,
-      tag: match[1],
+      tag: match[1].toLowerCase(),
       content: match[2],
     });
   }
@@ -243,15 +242,17 @@ interface PdfRendererProps {
 }
 
 const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
+  // Sayfa kenarlarını daha verimli kullan - maksimum 25px padding
+  const maxPadding = 25;
   const styles = StyleSheet.create({
     page: {
       flexDirection: 'column',
       backgroundColor: schema.page.backgroundColor || '#FFFFFF',
       color: schema.page.fontColor || '#000000',
-      paddingTop: schema.page.padding.top,
-      paddingRight: schema.page.padding.right,
-      paddingBottom: schema.page.padding.bottom,
-      paddingLeft: schema.page.padding.left,
+      paddingTop: Math.min(schema.page.padding.top, maxPadding),
+      paddingRight: Math.min(schema.page.padding.right, maxPadding),
+      paddingBottom: Math.min(schema.page.padding.bottom, maxPadding),
+      paddingLeft: Math.min(schema.page.padding.left, maxPadding),
       fontSize: schema.page.fontSize,
       fontFamily: schema.page.fontFamily || 'Roboto',
       fontWeight: schema.page.fontWeight === 'bold' ? 'bold' : 'normal',
@@ -261,8 +262,8 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 30,
-      paddingBottom: 15,
+      marginBottom: 12,
+      paddingBottom: 10,
       borderBottomWidth: 1,
       borderBottomColor: '#E5E7EB',
     },
@@ -283,12 +284,12 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       marginTop: 5,
     },
     customerSection: {
-      marginBottom: 30,
+      marginBottom: 12,
     },
     customerTitle: {
-      fontSize: schema.customer?.customerTitleFontSize || 14,
+      fontSize: schema.customer?.customerTitleFontSize || 12,
       fontWeight: 'bold',
-      marginBottom: 10,
+      marginBottom: 6,
       color: schema.page.fontColor || '#374151',
     },
     customerInfo: {
@@ -297,7 +298,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       color: schema.page.fontColor || '#4B5563',
     },
     table: {
-      marginBottom: 30,
+      marginBottom: 12,
     },
     tableHeader: {
       flexDirection: 'row',
@@ -309,18 +310,20 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     },
     tableRow: {
       flexDirection: 'row',
-      paddingVertical: 8,
+      paddingTop: 8,
+      paddingBottom: 8,
       borderBottomWidth: 0.5,
       borderBottomColor: '#F3F4F6',
-      alignItems: 'center', // Satır içeriğini dikey olarak ortala
+      alignItems: 'flex-start', // Üstten hizala
     },
     tableCell: {
       flex: 1,
-      fontSize: 10,
-      justifyContent: 'center', // İçeriği dikey olarak ortala
+      fontSize: 8, // Varsayılan font boyutu - tüm tablo hücreleri için
+      justifyContent: 'flex-start', // Üstten başla
+      paddingTop: 2,
     },
     tableCellHeader: {
-      fontSize: 11,
+      fontSize: 9, // Header'ları da küçült - tablo daha kompakt
       fontWeight: 'bold',
       color: schema.page.fontColor || '#374151',
     },
@@ -336,7 +339,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
     totalsSection: {
       marginLeft: 'auto',
       width: 200,
-      marginBottom: 30,
+      marginBottom: 12,
     },
     totalRow: {
       flexDirection: 'row',
@@ -372,14 +375,14 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       color: schema.page.fontColor || '#1F2937',
     },
     notesSection: {
-      marginTop: 20,
-      marginBottom: 10,
+      marginTop: 10,
+      marginBottom: 6,
     },
     sectionTitle: {
       fontSize: 12,
       fontWeight: 'bold',
-      marginBottom: 10,
-      marginTop: 10,
+      marginBottom: 6,
+      marginTop: 6,
       color: schema.page.fontColor || '#374151',
     },
     notesText: {
@@ -761,7 +764,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         fontSize: (schema.header.companyInfoFontSize || 12) - 1,
                         color: schema.page.fontColor || '#4B5563'
                       }}>
-                        Vergi No: {safeText(schema.header.companyTaxNumber)}
+                        {safeText(schema.header.companyTaxNumber)}
                       </Text>
                     )}
                   </View>
@@ -856,7 +859,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                       color: schema.page.fontColor || '#4B5563',
                       textAlign: 'center'
                     }}>
-                      Vergi No: {safeText(schema.header.companyTaxNumber)}
+                      {safeText(schema.header.companyTaxNumber)}
                     </Text>
                   )}
                 </View>
@@ -951,7 +954,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                         color: schema.page.fontColor || '#4B5563',
                         textAlign: 'right'
                       }}>
-                        Vergi No: {safeText(schema.header.companyTaxNumber)}
+                        {safeText(schema.header.companyTaxNumber)}
                       </Text>
                     )}
                   </View>
@@ -977,13 +980,13 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
 
 
         {/* Customer and Quote Information Container */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
           {/* Müşteri Bilgileri Container - Her zaman göster */}
           {data.customer && (
             <View style={[styles.customerSection, { flex: 2, marginRight: 20, marginBottom: 0, alignItems: 'flex-start' }]}>
               {/* Firma İsmi */}
               {data.customer?.company && data.customer.company.trim() !== '' && (() => {
-                const titleFontSize = schema?.customer?.customerTitleFontSize ?? 14;
+                const titleFontSize = schema?.customer?.customerTitleFontSize ?? 12;
                 return (
                   <Text style={{
                     fontSize: titleFontSize,
@@ -1045,7 +1048,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
             <Text style={[styles.customerTitle, { 
               textAlign: 'center', 
               marginBottom: 10,
-              fontSize: schema.customer?.customerTitleFontSize || 14
+              fontSize: schema.customer?.customerTitleFontSize || 12
             }]}>
               {safeText('Teklif Bilgileri')}
             </Text>
@@ -1077,7 +1080,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               .filter(col => col.show)
               .map(col => (
                 <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : col.key === 'product_image' ? 1 : 1, justifyContent: 'center', alignItems: 'center' }]}>
-                  <Text style={[styles.tableCellHeader, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : col.key === 'product_image' ? 'center' : 'center' }]}>
+                  <Text style={[styles.tableCellHeader, { textAlign: col.key === 'description' ? 'center' : (col.key === 'total' || col.key === 'unit_price') ? 'right' : col.key === 'product_image' ? 'center' : 'center' }]}>
                     {safeText(col.label)}
                   </Text>
                 </View>
@@ -1091,7 +1094,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               {/* Sıra Numarası */}
               {schema.lineTable.showRowNumber && (
                 <View key="row-number" style={[styles.tableCell, { flex: 0.5, justifyContent: 'center', alignItems: 'center', alignSelf: 'stretch' }]}>
-                  <Text style={[styles.tableCell, { textAlign: 'center' }]}>
+                  <Text style={[styles.tableCell, { textAlign: 'center', fontSize: 8 }]}>
                     {safeText(String(index + 1))}
                   </Text>
                 </View>
@@ -1138,9 +1141,32 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                     cellContent = ' '; // Boş string yerine boşluk karakteri
                   }
                   
+                  // Description sütunu için özel stil - metin sarılması için
+                  const isDescription = col.key === 'description';
+                  const isNumericColumn = ['quantity', 'unit_price', 'discount', 'total'].includes(col.key);
+                  
+                  // Her sütun için font boyutu
+                  const cellFontSize = isDescription ? 9 : 8; // Açıklama 9px, diğer tüm sütunlar 8px
+                  
                   return (
-                    <View key={col.key} style={[styles.tableCell, { flex: col.key === 'description' ? 3 : col.key === 'product_image' ? 1 : 1, justifyContent: 'center', alignItems: 'center', alignSelf: 'stretch' }]}>
-                      <Text style={[styles.tableCell, { textAlign: col.key === 'description' ? 'center' : col.key === 'total' ? 'right' : col.key === 'product_image' ? 'center' : 'center' }]}>
+                    <View key={col.key} style={[
+                      styles.tableCell, 
+                      { 
+                        flex: isDescription ? 3 : col.key === 'product_image' ? 1 : 1, 
+                        justifyContent: 'flex-start', 
+                        alignItems: isDescription ? 'flex-start' : 'center', 
+                        alignSelf: 'stretch',
+                        paddingRight: isDescription ? 6 : 2,
+                        paddingLeft: isDescription ? 4 : 2,
+                      }
+                    ]}>
+                      <Text style={{
+                        fontSize: cellFontSize, // Açıkça belirtilmiş font boyutu
+                        textAlign: isDescription ? 'left' : (col.key === 'total' || col.key === 'unit_price') ? 'right' : 'center',
+                        lineHeight: 1.2,
+                        color: schema.page.fontColor || '#000000',
+                        fontWeight: isDescription ? 'bold' : 'normal', // Açıklama sütunu bold
+                      }}>
                         {cellContent}
                       </Text>
                     </View>

@@ -133,7 +133,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
   };
   
   const handleCreateNew = (type: "customer" | "supplier") => {
-    navigate(type === "customer" ? "/contacts/new" : "/suppliers/new");
+    navigate(type === "customer" ? "/customers/new" : "/suppliers/new");
   };
 
   const handleLoadMore = () => {
@@ -209,7 +209,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
               variant="outline"
               role="combobox"
               aria-expanded={isOpen}
-              className="w-full justify-between mt-1"
+              className="w-full justify-between mt-1 h-8"
             >
               <div className="flex items-center">
                 {partnerType === "customer" ? (

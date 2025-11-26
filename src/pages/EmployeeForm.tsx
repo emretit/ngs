@@ -39,7 +39,9 @@ const EmployeeForm = () => {
   });
 
   const handleSuccess = () => {
+    console.log("🟢 [EmployeeForm] handleSuccess çağrıldı", { id });
     refetch();
+    console.log("🟢 [EmployeeForm] navigate çağrılıyor:", `/employees/${id}`);
     navigate(`/employees/${id}`);
   };
 

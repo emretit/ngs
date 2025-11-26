@@ -1,7 +1,10 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { 
@@ -12,7 +15,11 @@ import {
   MapPin,
   User,
   Calendar,
-  Circle
+  Circle,
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import type { ServiceRequest } from "@/hooks/service/types";
 import ServicesTableHeader, { SortField, SortDirection } from "./ServicesTableHeader";
@@ -29,6 +36,8 @@ interface ServicesTableProps {
   selectedServices?: ServiceRequest[];
   onToggleServiceSelection?: (service: ServiceRequest) => void;
   onSelectAll?: (checked: boolean) => void;
+  technicians?: Array<{ id: string; first_name: string; last_name: string }>;
+  onDeleteService?: (service: ServiceRequest) => void;
 }
 
 const ServicesTable = ({
@@ -41,10 +50,20 @@ const ServicesTable = ({
   selectedTechnician = null,
   selectedServices = [],
   onToggleServiceSelection,
-  onSelectAll
+  onSelectAll,
+  technicians = [],
+  onDeleteService
 }: ServicesTableProps) => {
+  const navigate = useNavigate();
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+
+  // Teknisyen ismini bul
+  const getTechnicianName = (technicianId: string | null | undefined) => {
+    if (!technicianId) return '-';
+    const technician = technicians.find(t => t.id === technicianId);
+    return technician ? `${technician.first_name} ${technician.last_name}` : '-';
+  };
 
   // Filtreleme
   const filteredServices = useMemo(() => {
@@ -273,7 +292,7 @@ const ServicesTable = ({
               >
                 <div className="flex items-center gap-1 text-sm">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  {service.assigned_technician || service.technician_name || '-'}
+                  {getTechnicianName(service.assigned_technician)}
                 </div>
               </TableCell>
               <TableCell 
@@ -284,6 +303,40 @@ const ServicesTable = ({
                   <Calendar className="h-4 w-4" />
                   {formatDate(service.created_at)}
                 </div>
+              </TableCell>
+              <TableCell className="px-4 py-4 text-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem 
+                      onClick={() => navigate(`/service/detail/${service.id}`)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span>Detay Görüntüle</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => navigate(`/service/edit/${service.id}`)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      <span>Düzenle</span>
+                    </DropdownMenuItem>
+                    {onDeleteService && (
+                      <DropdownMenuItem 
+                        onClick={() => onDeleteService(service)}
+                        className="gap-2 cursor-pointer text-red-600 focus:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Sil</span>
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           );

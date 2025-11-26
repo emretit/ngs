@@ -37,6 +37,12 @@ const STATUS_CONFIGS = {
   posted: { label: "Kaydedildi", className: "bg-indigo-100 text-indigo-800 border-indigo-300" },
   void: { label: "İptal", className: "bg-red-100 text-red-800 border-red-300" },
 
+  // Service Requests
+  new: { label: "Yeni", className: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+  in_progress: { label: "Devam Ediyor", className: "bg-blue-100 text-blue-800 border-blue-300" },
+  service_status_completed: { label: "Tamamlandı", className: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+  service_status_cancelled: { label: "İptal Edildi", className: "bg-red-100 text-red-800 border-red-300" },
+
   // General
   active: { label: "Aktif", className: "bg-green-100 text-green-800 border-green-300" },
   inactive: { label: "Pasif", className: "bg-gray-100 text-gray-800 border-gray-300" },

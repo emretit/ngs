@@ -63,7 +63,7 @@ const moduleData: Record<string, ModuleInfo> = {
     description: 'Müşteri bilgilerini merkezi olarak yönetin, iletişim geçmişini takip edin.',
     status: 'active',
     features: ['Müşteri Profilleri', 'İletişim Geçmişi', 'Segmentasyon', 'Aktivite Takibi'],
-    route: '/contacts',
+    route: '/customers',
     users: 42,
     lastUpdated: '2024-01-09'
   },

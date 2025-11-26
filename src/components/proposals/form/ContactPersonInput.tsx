@@ -16,6 +16,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { UserCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { formatPhoneNumber, getDigitsOnly } from "@/utils/phoneFormatter";
+import { cn } from "@/lib/utils";
 
 interface ContactPersonInputProps {
   value: string;
@@ -332,7 +333,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
           value={value}
           onValueChange={handleSelectChange}
         >
-          <SelectTrigger className={error ? "border-red-500" : ""}>
+          <SelectTrigger className={cn(error ? "border-red-500" : "", "h-8")}>
             <SelectValue placeholder="İletişim kişisi seçin..." />
           </SelectTrigger>
           <SelectContent>
@@ -357,7 +358,7 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
           value={value}
           onChange={(e) => onChangeRef.current(e.target.value)}
           placeholder={hasContacts ? "İletişim kişisi adını girin" : "Önce müşteri/tedarikçi seçin"}
-          className={error ? "border-red-500" : ""}
+          className={cn(error ? "border-red-500" : "", "h-8")}
           disabled={!partnerId}
         />
       )}

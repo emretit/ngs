@@ -19,11 +19,78 @@ export const useTaskOperations = () => {
       if (error) throw error;
       return updatedTask;
     },
+    onMutate: async (data) => {
+      // Optimistic update - hemen UI'ı güncelle
+      await queryClient.cancelQueries({ queryKey: ["activities"] });
+      await queryClient.cancelQueries({ queryKey: ["activities-infinite"] });
+
+      // Önceki state'i sakla (rollback için)
+      const previousActivities = queryClient.getQueriesData({ queryKey: ["activities"] });
+      const previousInfinite = queryClient.getQueriesData({ queryKey: ["activities-infinite"] });
+
+      // Tüm activity query'lerini güncelle (normal query)
+      queryClient.setQueriesData<Task[]>(
+        { queryKey: ["activities"] },
+        (old) => {
+          if (!old) return old;
+          return old.map((task) =>
+            task.id === data.taskId
+              ? { ...task, status: data.status }
+              : task
+          );
+        }
+      );
+
+      // Infinite scroll query'lerini güncelle
+      queryClient.setQueriesData(
+        { queryKey: ["activities-infinite"] },
+        (old: any) => {
+          if (!old) return old;
+          // Infinite query data structure: { pages: [...], pageParams: [...] }
+          if (old.pages) {
+            return {
+              ...old,
+              pages: old.pages.map((page: any) => ({
+                ...page,
+                data: (page.data || []).map((task: Task) =>
+                  task.id === data.taskId
+                    ? { ...task, status: data.status }
+                    : task
+                ),
+              })),
+            };
+          }
+          // Eğer düz array ise
+          if (Array.isArray(old)) {
+            return old.map((task: Task) =>
+              task.id === data.taskId
+                ? { ...task, status: data.status }
+                : task
+            );
+          }
+          return old;
+        }
+      );
+
+      return { previousActivities, previousInfinite };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["activities-infinite"] });
       toast.success("Görev durumu güncellendi");
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Hata durumunda önceki state'e geri dön
+      if (context?.previousActivities) {
+        context.previousActivities.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousInfinite) {
+        context.previousInfinite.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
       console.error("Error updating task status:", error);
       toast.error("Görev durumu güncellenemedi");
     },

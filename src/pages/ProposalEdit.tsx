@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download, MoreHorizontal, Save, FileDown, Eye, ArrowRight, Building2, CalendarDays, XCircle } from "lucide-react";
+import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download, MoreHorizontal, Save, FileDown, Eye, ArrowRight, Building2, CalendarDays, XCircle, Printer, Receipt } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { proposalStatusColors, proposalStatusLabels, ProposalStatus } from "@/types/proposal";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { handleProposalStatusChange } from "@/services/workflow/proposalWorkflow";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
 import ProposalFormTerms from "@/components/proposals/form/ProposalFormTerms";
@@ -446,6 +446,44 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     }
   };
 
+  // Move item up
+  const moveItemUp = useCallback((index: number) => {
+    setItems(prevItems => {
+      if (index > 0) {
+        const updatedItems = [...prevItems];
+        const [movedItem] = updatedItems.splice(index, 1);
+        updatedItems.splice(index - 1, 0, movedItem);
+        
+        // Renumber items
+        return updatedItems.map((item, i) => ({
+          ...item,
+          row_number: i + 1
+        }));
+      }
+      return prevItems;
+    });
+    setHasChanges(true);
+  }, []);
+
+  // Move item down
+  const moveItemDown = useCallback((index: number) => {
+    setItems(prevItems => {
+      if (index < prevItems.length - 1) {
+        const updatedItems = [...prevItems];
+        const [movedItem] = updatedItems.splice(index, 1);
+        updatedItems.splice(index + 1, 0, movedItem);
+        
+        // Renumber items
+        return updatedItems.map((item, i) => ({
+          ...item,
+          row_number: i + 1
+        }));
+      }
+      return prevItems;
+    });
+    setHasChanges(true);
+  }, []);
+
   // Save function
   const handleSaveChanges = async (status: ProposalStatus = proposal?.status || 'draft') => {
     console.log("🔍 Save changes clicked with status:", status);
@@ -625,6 +663,13 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     toast.success("Sipariş oluşturma sayfasına yönlendiriliyorsunuz");
   };
 
+  const handleConvertToInvoice = () => {
+    if (!proposal) return;
+    
+    navigate(`/sales-invoices/create?proposalId=${proposal.id}`);
+    toast.success("Fatura oluşturma sayfasına yönlendiriliyorsunuz");
+  };
+
   const getStatusActions = () => {
     // Status action butonları artık İşlemler dropdown menüsünde
     return null;
@@ -716,22 +761,45 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                {/* Yazdırma İşlemleri */}
+                <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="cursor-pointer">
+                    <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                    <span>Yazdır</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-48">
+                    {templates && templates.length > 0 ? (
+                      templates.map((template) => (
+                        <DropdownMenuItem
+                          key={template.id}
+                          onClick={() => handlePdfPrint(template.id)}
+                          className="cursor-pointer"
+                        >
+                          <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                          <span>{template.name || 'PDF Yazdır'}</span>
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        Şablon bulunamadı
+                      </div>
+                    )}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 <DropdownMenuItem onClick={handlePreview} className="gap-2 cursor-pointer">
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-4 w-4 text-slate-500" />
                   <span>Önizle</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
-                  <FileDown className="h-4 w-4" />
-                  <span>PDF İndir</span>
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSendEmail} className="gap-2 cursor-pointer">
-                  <Send className="h-4 w-4" />
+                  <Send className="h-4 w-4 text-slate-500" />
                   <span>E-posta Gönder</span>
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator />
                 
-                {/* Status Actions */}
+                {/* Durum İşlemleri */}
+                <DropdownMenuLabel>Durum</DropdownMenuLabel>
                 {proposal.status === 'draft' && (
                   <>
                     <DropdownMenuItem onClick={handleSendToCustomer} className="gap-2 cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50">
@@ -773,9 +841,15 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                 
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
-                  <ShoppingCart className="h-4 w-4" />
+                {/* Dönüştürme İşlemleri */}
+                <DropdownMenuLabel>Dönüştür</DropdownMenuLabel>
+                <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer">
+                  <ShoppingCart className="h-4 w-4 text-green-500" />
                   <span>Siparişe Çevir</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleConvertToInvoice} className="gap-2 cursor-pointer">
+                  <Receipt className="h-4 w-4 text-purple-500" />
+                  <span>Faturaya Çevir</span>
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator />
@@ -818,6 +892,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           items={items}
           onAddItem={addItem}
           onRemoveItem={removeItem}
+          onMoveItemUp={moveItemUp}
+          onMoveItemDown={moveItemDown}
           onItemChange={handleItemChange}
           onProductModalSelect={(product, itemIndex) => {
             if (itemIndex !== undefined) {
@@ -831,7 +907,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
               handleProductModalSelect(product, itemIndex);
             }
           }}
-          showMoveButtons={false}
+          showMoveButtons={true}
           inputHeight="h-8"
         />
 

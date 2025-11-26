@@ -1,28 +1,117 @@
 import { Control, useWatch } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Shield, Wrench } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Shield, Wrench, UserCheck, UserPlus, Link2, Unlink, Mail, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useUserEmailCheck } from "@/hooks/useUserEmailCheck";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { toast } from "sonner";
 
 interface RoleSectionProps {
   control: Control<any>;
+  userId?: string | null; // Employee's user_id from profiles table
+  employeeId?: string; // For linking when inviting
+  onUserLinkChange?: (userId: string | null, shouldLink: boolean) => void;
 }
 
-export const RoleSection = ({ control }: RoleSectionProps) => {
-  // Watch department field to sync with technical toggle
+export const RoleSection = ({ control, userId, employeeId, onUserLinkChange }: RoleSectionProps) => {
+  const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
+  
+  // Watch fields
   const department = useWatch({ control, name: "department" });
+  const email = useWatch({ control, name: "email" });
   const isTechnical = department === "Teknik";
   const selectedRoles = useWatch({ control, name: "user_roles" }) || [];
 
-  // Fetch roles from database
+  // User check hook
+  const { checkResult, checkUserByEmail, resetCheck } = useUserEmailCheck();
+  
+  // State for linking
+  const [shouldLinkUser, setShouldLinkUser] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
+  
+  // Check user when email changes (debounced) - only for new employees
+  useEffect(() => {
+    // Skip if userId already exists (editing existing linked employee)
+    if (userId) return;
+    
+    const timer = setTimeout(() => {
+      if (email && email.includes("@")) {
+        checkUserByEmail(email);
+      } else {
+        resetCheck();
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [email, userId]); // Removed checkUserByEmail and resetCheck from deps
+  
+  // Reset shouldLinkUser when email changes
+  useEffect(() => {
+    setShouldLinkUser(false);
+  }, [email]);
+  
+  // Notify parent when link state changes - use callback ref to avoid infinite loop
+  useEffect(() => {
+    if (!onUserLinkChange) return;
+    
+    if (checkResult.exists && checkResult.userId) {
+      onUserLinkChange(checkResult.userId, shouldLinkUser);
+    } else {
+      onUserLinkChange(null, false);
+    }
+  }, [shouldLinkUser, checkResult.exists, checkResult.userId]); // Removed onUserLinkChange from deps
+
+  // Invite user mutation
+  const inviteUserMutation = useMutation({
+    mutationFn: async ({ email, role }: { email: string; role: string }) => {
+      if (!userData?.company_id) {
+        throw new Error("Şirket bilgisi bulunamadı");
+      }
+
+      const { data, error } = await supabase.functions.invoke('invite-user', {
+        body: {
+          email,
+          inviting_company_id: userData.company_id,
+          role: role === 'Admin' ? 'admin' : role,
+          employee_id: employeeId // Pass employee_id for auto-linking
+        }
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success("Kullanıcı davet edildi! Şifre belirleme maili gönderildi.");
+      setIsInviting(false);
+    },
+    onError: (error: any) => {
+      toast.error("Davet gönderilirken hata oluştu: " + error.message);
+      setIsInviting(false);
+    },
+  });
+
+  // Handle invite
+  const handleInviteUser = () => {
+    if (!email) return;
+    setIsInviting(true);
+    inviteUserMutation.mutate({ email, role: 'Admin' });
+  };
+
+  // Fetch roles from database: Global (company_id = NULL) + Şirket rolleri
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      // Get current user's company_id
       const { data: profile } = await supabase
         .from('profiles')
         .select('company_id')
@@ -33,11 +122,13 @@ export const RoleSection = ({ control }: RoleSectionProps) => {
         return [];
       }
 
+      // Global roller (company_id IS NULL) + Şirket rolleri
       const { data, error } = await supabase
         .from('roles')
         .select('*')
-        .eq('company_id', profile.company_id)
-        .order('created_at', { ascending: false });
+        .or(`company_id.is.null,company_id.eq.${profile.company_id}`)
+        .order('company_id', { ascending: true, nullsFirst: true })
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
       return data || [];
@@ -95,7 +186,99 @@ export const RoleSection = ({ control }: RoleSectionProps) => {
           )}
         />
 
-        {/* Roller Dropdown */}
+        {/* Kullanıcı Hesabı Bağlantısı */}
+        <div className="space-y-2">
+          <FormLabel className="text-xs font-medium text-gray-700">Kullanıcı Hesabı</FormLabel>
+          
+          {/* Zaten bağlı ise */}
+          {userId ? (
+            <Alert className="border-green-200 bg-green-50">
+              <UserCheck className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-xs text-green-700 flex items-center justify-between">
+                <span>
+                  <strong>{email}</strong> kullanıcı hesabına bağlı
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => onUserLinkChange?.(null, false)}
+                >
+                  <Unlink className="h-3 w-3 mr-1" />
+                  Bağlantıyı Kaldır
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : checkResult.isLoading ? (
+            <Alert className="border-gray-200 bg-gray-50">
+              <Loader2 className="h-4 w-4 text-gray-500 animate-spin" />
+              <AlertDescription className="text-xs text-gray-600">
+                Kullanıcı kontrol ediliyor...
+              </AlertDescription>
+            </Alert>
+          ) : checkResult.exists && checkResult.userInfo ? (
+            /* Kullanıcı bulundu - bağlama seçeneği */
+            <Alert className="border-blue-200 bg-blue-50">
+              <UserCheck className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-xs text-blue-700">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <strong>{checkResult.userInfo.email}</strong> ile kullanıcı hesabı bulundu
+                    {checkResult.userInfo.full_name && (
+                      <span className="text-blue-600"> ({checkResult.userInfo.full_name})</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Checkbox
+                    id="link-user"
+                    checked={shouldLinkUser}
+                    onCheckedChange={(checked) => setShouldLinkUser(!!checked)}
+                  />
+                  <label htmlFor="link-user" className="text-xs cursor-pointer">
+                    Bu kullanıcı hesabına bağla
+                  </label>
+                </div>
+              </AlertDescription>
+            </Alert>
+          ) : email && email.includes("@") ? (
+            /* Kullanıcı bulunamadı - davet seçeneği */
+            <Alert className="border-amber-200 bg-amber-50">
+              <Mail className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-xs text-amber-700">
+                <div className="flex items-center justify-between">
+                  <span>Bu email ile kullanıcı hesabı bulunamadı</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-3 text-xs border-amber-300 text-amber-700 hover:bg-amber-100"
+                    onClick={handleInviteUser}
+                    disabled={isInviting || inviteUserMutation.isPending}
+                  >
+                    {isInviting || inviteUserMutation.isPending ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <UserPlus className="h-3 w-3 mr-1" />
+                    )}
+                    Kullanıcı Oluştur ve Davet Gönder
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert className="border-gray-200 bg-gray-50">
+              <Mail className="h-4 w-4 text-gray-400" />
+              <AlertDescription className="text-xs text-gray-500">
+                Kullanıcı hesabı kontrolü için email adresi girin
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        {/* Roller Dropdown - sadece mevcut bağlı kullanıcı varsa göster (yeni bağlama yapılıyorsa gösterme - mevcut kullanıcının zaten rolü var) */}
+        {userId && !shouldLinkUser && (
           <FormField
             control={control}
             name="user_roles"
@@ -120,8 +303,8 @@ export const RoleSection = ({ control }: RoleSectionProps) => {
                   {roles.map((role) => (
                     <SelectItem 
                       key={role.id}
-                      value={role.name}
-                      disabled={selectedRoles.includes(role.name)}
+                        value={role.id}
+                        disabled={selectedRoles.includes(role.id)}
                     >
                         <div className="flex items-center gap-2">
                         <span>{role.name}</span>
@@ -139,19 +322,19 @@ export const RoleSection = ({ control }: RoleSectionProps) => {
               {/* Seçili Roller */}
               {selectedRoles.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {selectedRoles.map((roleName: string) => {
-                    const role = roles.find(r => r.name === roleName);
+                    {selectedRoles.map((roleId: string) => {
+                      const role = roles.find(r => r.id === roleId);
                     return (
                       <Badge
-                        key={roleName}
+                          key={roleId}
                         variant="secondary"
                         className="text-xs px-2 py-0.5 flex items-center gap-1"
                       >
-                        <span>{roleName}</span>
+                          <span>{role?.name || roleId}</span>
                         <button
                           type="button"
                           onClick={() => {
-                            const newRoles = (field.value || []).filter((r: string) => r !== roleName);
+                              const newRoles = (field.value || []).filter((r: string) => r !== roleId);
                             field.onChange(newRoles);
                           }}
                           className="ml-1 hover:text-destructive transition-colors"
@@ -176,6 +359,7 @@ export const RoleSection = ({ control }: RoleSectionProps) => {
               </FormItem>
             )}
           />
+        )}
       </CardContent>
     </Card>
   );

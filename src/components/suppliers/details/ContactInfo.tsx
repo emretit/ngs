@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Mail, Phone, Building, MapPin, FileText, User, Users, Printer, Globe, CreditCard, Building2, Clock, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Mail, Phone, Building, MapPin, FileText, User, Users, Printer, Globe, CreditCard, Building2, Clock, CheckCircle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Supplier } from "@/types/supplier";
 import { formatPhoneNumber } from "@/utils/phoneFormatter";
+import SupplierPortalStatus from "@/components/supplier-portal/SupplierPortalStatus";
 
 interface ContactInfoProps {
   supplier: Supplier;
@@ -472,6 +473,22 @@ export const ContactInfo = ({ supplier, onUpdate }: ContactInfoProps) => {
               <div className="text-xs font-medium text-gray-900 truncate">
                 {supplier.payment_terms || <span className="text-gray-400 italic">Belirtilmemiş</span>}
               </div>
+            </div>
+
+            {/* Tedarikçi Portalı */}
+            <div className="space-y-0.5 col-span-2">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <ExternalLink className="w-2.5 h-2.5 text-emerald-600" />
+                <span>Tedarikçi Portalı</span>
+              </div>
+              <SupplierPortalStatus
+                supplierId={supplier.id}
+                supplierName={supplier.name}
+                supplierEmail={supplier.email || undefined}
+                portalEnabled={supplier.portal_enabled}
+                portalEmail={supplier.portal_email || undefined}
+                lastPortalLogin={supplier.last_portal_login || undefined}
+              />
             </div>
           </div>
         </div>

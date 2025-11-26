@@ -63,6 +63,10 @@ export interface Supplier {
   created_at: string;
   updated_at: string;
   company_id: string | null;
+  // Portal alanları
+  portal_enabled?: boolean;
+  portal_email?: string | null;
+  last_portal_login?: string | null;
 }
 
 export interface SupplierFormData {

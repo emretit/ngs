@@ -70,6 +70,7 @@ interface ServiceRequestFormData {
   slip_number: string;
   service_result: string;
   received_by: string | null;
+  assigned_technician: string | null;
 }
 
 // Priority config
@@ -85,6 +86,22 @@ const NewServiceRequest = () => {
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
   const { customers, suppliers, isLoading: partnersLoading } = useCustomerSelect();
+
+  // Teknisyenleri getir
+  const { data: technicians = [] } = useQuery({
+    queryKey: ["technicians-for-service", userData?.company_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, first_name, last_name")
+        .eq("status", "aktif")
+        .eq("department", "Teknik")
+        .order("first_name");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userData?.company_id,
+  });
 
   // Form state
   const [formData, setFormData] = useState<ServiceRequestFormData>({
@@ -121,6 +138,7 @@ const NewServiceRequest = () => {
     slip_number: '',
     service_result: '',
     received_by: null,
+    assigned_technician: null,
   });
 
   const [recurrenceConfig, setRecurrenceConfig] = useState<RecurrenceConfig>({ type: 'none' });
@@ -420,6 +438,7 @@ const NewServiceRequest = () => {
           service_result: data.service_result,
           received_by: data.received_by,
           created_by: userData?.id,
+          assigned_technician: data.assigned_technician || null,
           // Recurrence fields
           is_recurring: recurrenceConfig.type !== 'none',
           recurrence_type: recurrenceConfig.type !== 'none' ? recurrenceConfig.type : null,
@@ -593,6 +612,7 @@ const NewServiceRequest = () => {
             formData={formData}
             handleInputChange={handleInputChange}
             priorityConfig={priorityConfig}
+            technicians={technicians}
           />
         </div>
 

@@ -681,6 +681,129 @@ export type Database = {
           },
         ]
       }
+      budget_categories: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          is_auto_populated: boolean | null
+          name: string
+          parent_id: string | null
+          sort_order: number | null
+          type: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_auto_populated?: boolean | null
+          name: string
+          parent_id?: string | null
+          sort_order?: number | null
+          type?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_auto_populated?: boolean | null
+          name?: string
+          parent_id?: string | null
+          sort_order?: number | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_categories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          actual_amount: number
+          budget_amount: number
+          category: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          department_id: string | null
+          forecast_amount: number | null
+          id: string
+          month: number
+          notes: string | null
+          project_id: string | null
+          status: string
+          subcategory: string | null
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          actual_amount?: number
+          budget_amount?: number
+          category: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          department_id?: string | null
+          forecast_amount?: number | null
+          id?: string
+          month: number
+          notes?: string | null
+          project_id?: string | null
+          status?: string
+          subcategory?: string | null
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          actual_amount?: number
+          budget_amount?: number
+          category?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          department_id?: string | null
+          forecast_amount?: number | null
+          id?: string
+          month?: number
+          notes?: string | null
+          project_id?: string | null
+          status?: string
+          subcategory?: string | null
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_transactions: {
         Row: {
           amount: number
@@ -2973,7 +3096,7 @@ export type Database = {
           {
             foreignKeyName: "employees_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -5543,13 +5666,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_profiles_company_id"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "profiles_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
@@ -6476,6 +6592,8 @@ export type Database = {
           quote_number: string | null
           rfq_id: string
           shipping_cost: number | null
+          submitted_at: string | null
+          submitted_via_portal: boolean | null
           subtotal: number | null
           supplier_id: string
           tax_total: number | null
@@ -6498,6 +6616,8 @@ export type Database = {
           quote_number?: string | null
           rfq_id: string
           shipping_cost?: number | null
+          submitted_at?: string | null
+          submitted_via_portal?: boolean | null
           subtotal?: number | null
           supplier_id: string
           tax_total?: number | null
@@ -6520,6 +6640,8 @@ export type Database = {
           quote_number?: string | null
           rfq_id?: string
           shipping_cost?: number | null
+          submitted_at?: string | null
+          submitted_via_portal?: boolean | null
           subtotal?: number | null
           supplier_id?: string
           tax_total?: number | null
@@ -6670,7 +6792,7 @@ export type Database = {
       }
       roles: {
         Row: {
-          company_id: string
+          company_id: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -6682,7 +6804,7 @@ export type Database = {
           role_type: string | null
         }
         Insert: {
-          company_id: string
+          company_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -6694,7 +6816,7 @@ export type Database = {
           role_type?: string | null
         }
         Update: {
-          company_id?: string
+          company_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -7147,15 +7269,20 @@ export type Database = {
           description: string | null
           discount_rate: number | null
           id: string
+          item_group: string | null
           name: string
+          original_currency: string | null
+          original_price: number | null
           product_id: string | null
           quantity: number
           row_number: number | null
           service_request_id: string
+          sort_order: number | null
+          stock_status: string | null
           tax_rate: number | null
-          total_price: number | null
-          unit: string | null
-          unit_price: number | null
+          total_price: number
+          unit: string
+          unit_price: number
           updated_at: string
         }
         Insert: {
@@ -7165,15 +7292,20 @@ export type Database = {
           description?: string | null
           discount_rate?: number | null
           id?: string
+          item_group?: string | null
           name: string
+          original_currency?: string | null
+          original_price?: number | null
           product_id?: string | null
           quantity?: number
           row_number?: number | null
           service_request_id: string
+          sort_order?: number | null
+          stock_status?: string | null
           tax_rate?: number | null
-          total_price?: number | null
-          unit?: string | null
-          unit_price?: number | null
+          total_price?: number
+          unit?: string
+          unit_price?: number
           updated_at?: string
         }
         Update: {
@@ -7183,15 +7315,20 @@ export type Database = {
           description?: string | null
           discount_rate?: number | null
           id?: string
+          item_group?: string | null
           name?: string
+          original_currency?: string | null
+          original_price?: number | null
           product_id?: string | null
           quantity?: number
           row_number?: number | null
           service_request_id?: string
+          sort_order?: number | null
+          stock_status?: string | null
           tax_rate?: number | null
-          total_price?: number | null
-          unit?: string | null
-          unit_price?: number | null
+          total_price?: number
+          unit?: string
+          unit_price?: number
           updated_at?: string
         }
         Relationships: [
@@ -7888,6 +8025,162 @@ export type Database = {
           },
         ]
       }
+      supplier_portal_activities: {
+        Row: {
+          activity_type: string
+          company_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          object_id: string | null
+          object_type: string | null
+          supplier_id: string
+        }
+        Insert: {
+          activity_type: string
+          company_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          object_id?: string | null
+          object_type?: string | null
+          supplier_id: string
+        }
+        Update: {
+          activity_type?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          object_id?: string | null
+          object_type?: string | null
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_portal_activities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_portal_activities_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_portal_sessions: {
+        Row: {
+          company_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          last_activity: string | null
+          session_token: string
+          supplier_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          session_token: string
+          supplier_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          session_token?: string
+          supplier_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_portal_sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_portal_sessions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_portal_tokens: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          email: string
+          expires_at: string
+          id: string
+          is_used: boolean | null
+          supplier_id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          is_used?: boolean | null
+          supplier_id: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          is_used?: boolean | null
+          supplier_id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_portal_tokens_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_portal_tokens_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           account_number: string | null
@@ -7923,6 +8216,7 @@ export type Database = {
           is_active: boolean | null
           is_einvoice_mukellef: boolean | null
           last_interaction: string | null
+          last_portal_login: string | null
           mersis_number: string | null
           mobile_phone: string | null
           name: string
@@ -7933,6 +8227,8 @@ export type Database = {
           payment_means_channel_code: string | null
           payment_means_code: string | null
           payment_terms: string | null
+          portal_email: string | null
+          portal_enabled: boolean | null
           postal_code: string | null
           representative: string | null
           second_address: string | null
@@ -7990,6 +8286,7 @@ export type Database = {
           is_active?: boolean | null
           is_einvoice_mukellef?: boolean | null
           last_interaction?: string | null
+          last_portal_login?: string | null
           mersis_number?: string | null
           mobile_phone?: string | null
           name: string
@@ -8000,6 +8297,8 @@ export type Database = {
           payment_means_channel_code?: string | null
           payment_means_code?: string | null
           payment_terms?: string | null
+          portal_email?: string | null
+          portal_enabled?: boolean | null
           postal_code?: string | null
           representative?: string | null
           second_address?: string | null
@@ -8057,6 +8356,7 @@ export type Database = {
           is_active?: boolean | null
           is_einvoice_mukellef?: boolean | null
           last_interaction?: string | null
+          last_portal_login?: string | null
           mersis_number?: string | null
           mobile_phone?: string | null
           name?: string
@@ -8067,6 +8367,8 @@ export type Database = {
           payment_means_channel_code?: string | null
           payment_means_code?: string | null
           payment_terms?: string | null
+          portal_email?: string | null
+          portal_enabled?: boolean | null
           postal_code?: string | null
           representative?: string | null
           second_address?: string | null
@@ -10241,9 +10543,22 @@ export type Database = {
         }
         Returns: string
       }
+      create_supplier_portal_session: {
+        Args: { p_ip_address?: string; p_token: string; p_user_agent?: string }
+        Returns: {
+          company_id: string
+          expires_at: string
+          session_token: string
+          supplier_id: string
+        }[]
+      }
       current_company_id: { Args: never; Returns: string }
       current_user_id: { Args: never; Returns: string }
       decode_simple_jwt_token: { Args: { token: string }; Returns: Json }
+      delete_employee_with_cleanup: {
+        Args: { employee_id_param: string }
+        Returns: undefined
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -10468,13 +10783,13 @@ export type Database = {
       gettransactionid: { Args: never; Returns: unknown }
       has_role:
         | {
-            Args: { required_role: Database["public"]["Enums"]["user_role"] }
+            Args: { required_role: string }
             Returns: {
               error: true
             } & "Could not choose the best candidate function between: public.has_role(required_role => text), public.has_role(required_role => user_role). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
           }
         | {
-            Args: { required_role: string }
+            Args: { required_role: Database["public"]["Enums"]["user_role"] }
             Returns: {
               error: true
             } & "Could not choose the best candidate function between: public.has_role(required_role => text), public.has_role(required_role => user_role). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
@@ -10612,6 +10927,10 @@ export type Database = {
         | { Args: { "": string }; Returns: string }
       st_asgml:
         | {
+            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
+            Returns: string
+          }
+        | {
             Args: {
               geom: unknown
               id?: string
@@ -10623,17 +10942,12 @@ export type Database = {
             Returns: string
           }
         | {
-            Args: { geom: unknown; maxdecimaldigits?: number; options?: number }
-            Returns: string
-          }
-        | {
             Args: {
               geog: unknown
               id?: string
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
-              version: number
             }
             Returns: string
           }
@@ -10644,6 +10958,7 @@ export type Database = {
               maxdecimaldigits?: number
               nprefix?: string
               options?: number
+              version: number
             }
             Returns: string
           }
@@ -10834,16 +11149,16 @@ export type Database = {
         Returns: unknown
       }
       st_generatepoints:
-        | { Args: { area: unknown; npoints: number }; Returns: unknown }
         | {
             Args: { area: unknown; npoints: number; seed: number }
             Returns: unknown
           }
+        | { Args: { area: unknown; npoints: number }; Returns: unknown }
       st_geogfromtext: { Args: { "": string }; Returns: unknown }
       st_geographyfromtext: { Args: { "": string }; Returns: unknown }
       st_geohash:
-        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
         | { Args: { geog: unknown; maxchars?: number }; Returns: string }
+        | { Args: { geom: unknown; maxchars?: number }; Returns: string }
       st_geomcollfromtext: { Args: { "": string }; Returns: unknown }
       st_geometricmedian: {
         Args: {
@@ -11041,8 +11356,8 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid:
-        | { Args: { geom: unknown; srid: number }; Returns: unknown }
         | { Args: { geog: unknown; srid: number }; Returns: unknown }
+        | { Args: { geom: unknown; srid: number }; Returns: unknown }
       st_sharedpaths: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -11065,8 +11380,8 @@ export type Database = {
         Returns: Record<string, unknown>[]
       }
       st_srid:
-        | { Args: { geog: unknown }; Returns: number }
         | { Args: { geom: unknown }; Returns: number }
+        | { Args: { geog: unknown }; Returns: number }
       st_subdivide: {
         Args: { geom: unknown; gridsize?: number; maxvertices?: number }
         Returns: unknown[]
@@ -11106,11 +11421,11 @@ export type Database = {
           }
       st_triangulatepolygon: { Args: { g1: unknown }; Returns: unknown }
       st_union:
+        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
         | {
             Args: { geom1: unknown; geom2: unknown; gridsize: number }
             Returns: unknown
           }
-        | { Args: { geom1: unknown; geom2: unknown }; Returns: unknown }
       st_voronoilines: {
         Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
         Returns: unknown
@@ -11170,6 +11485,23 @@ export type Database = {
         Returns: boolean
       }
       validate_jwt_token: { Args: { token: string }; Returns: Json }
+      verify_supplier_portal_session: {
+        Args: { p_session_token: string }
+        Returns: {
+          company_id: string
+          is_valid: boolean
+          supplier_id: string
+        }[]
+      }
+      verify_supplier_portal_token: {
+        Args: { p_token: string }
+        Returns: {
+          company_id: string
+          email: string
+          is_valid: boolean
+          supplier_id: string
+        }[]
+      }
     }
     Enums: {
       account_type: "vadesiz" | "vadeli" | "kredi" | "pos"

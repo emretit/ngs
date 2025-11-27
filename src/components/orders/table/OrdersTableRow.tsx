@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { formatCurrency } from "@/lib/utils";
+import { formatProposalAmount } from "@/services/workflow/proposalWorkflow";
 
 interface OrdersTableRowProps {
   order: Order;
@@ -154,7 +154,7 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
         </Badge>
       </TableCell>
       <TableCell className="text-center p-4 text-sm font-medium">
-        {order.total_amount != null ? formatCurrency(order.total_amount) : '-'}
+        {order.total_amount != null ? formatProposalAmount(order.total_amount, order.currency || 'TRY') : '-'}
       </TableCell>
       <TableCell className="text-center p-4 text-sm">{formatDate(order.order_date)}</TableCell>
       <TableCell className="text-center p-4 text-sm">{formatDate(order.delivery_date)}</TableCell>

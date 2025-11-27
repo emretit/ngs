@@ -1,4 +1,4 @@
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, LayoutGrid, List, CalendarDays, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutGrid, List, CalendarDays, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -31,82 +31,55 @@ export const ModernCalendarHeader = ({
     }).format(date);
   };
 
-  const formatDayInfo = (date: Date) => {
-    return new Intl.DateTimeFormat('tr-TR', { 
-      weekday: 'long'
-    }).format(date);
-  };
-
   const currentViewOption = viewOptions.find(v => v.value === view);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 shadow-xl">
+    <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 shadow-lg">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-3xl" />
         <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 blur-3xl" />
       </div>
       
-      <div className="relative z-10">
-        {/* Üst Kısım - Başlık ve Navigasyon */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          {/* Başlık */}
-          <div className="flex items-center gap-4">
-            <div className={cn(
-              "p-3 rounded-xl text-white shadow-lg",
-              currentViewOption?.activeColor || 'bg-gradient-to-r from-indigo-500 to-purple-500'
-            )}>
-              <CalendarIcon className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                Genel Takvim
-              </h1>
-              <p className="text-sm text-slate-400">
-                {formatDayInfo(currentDate)} • {formatMonthYear(currentDate)}
-              </p>
-            </div>
+      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Navigasyon */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl p-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-lg text-white hover:bg-white/20"
+              onClick={() => onNavigate('PREV')}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 px-4 font-semibold text-white hover:bg-white/20 rounded-lg"
+              onClick={() => onNavigate('TODAY')}
+            >
+              Bugün
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-lg text-white hover:bg-white/20"
+              onClick={() => onNavigate('NEXT')}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
           </div>
-
-          {/* Navigasyon */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl p-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-lg text-white hover:bg-white/20"
-                onClick={() => onNavigate('PREV')}
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 px-4 font-semibold text-white hover:bg-white/20 rounded-lg"
-                onClick={() => onNavigate('TODAY')}
-              >
-                Bugün
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-lg text-white hover:bg-white/20"
-                onClick={() => onNavigate('NEXT')}
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-            
-            <div className="px-4 py-2.5 bg-white/10 backdrop-blur-sm rounded-xl">
-              <span className="text-sm font-bold text-white capitalize">
-                {formatMonthYear(currentDate)}
-              </span>
-            </div>
+          
+          <div className="px-4 py-2.5 bg-white/10 backdrop-blur-sm rounded-xl">
+            <span className="text-sm font-bold text-white capitalize">
+              {formatMonthYear(currentDate)}
+            </span>
           </div>
         </div>
 
-        {/* Alt Kısım - Görünüm Seçicileri */}
-        <div className="flex items-center gap-2 mt-5 pt-5 border-t border-white/10">
+        {/* Görünüm Seçicileri */}
+        <div className="flex items-center gap-2">
           {viewOptions.map((option) => {
             const Icon = option.icon;
             const isActive = view === option.value;

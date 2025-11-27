@@ -45,7 +45,8 @@ import {
   ClipboardCheck,
   ArrowRightLeft,
   Factory,
-  Warehouse
+  Warehouse,
+  FileSignature
 } from "lucide-react";
 
 export const navItems = [
@@ -119,19 +120,9 @@ export const navItems = [
         label: "Talepler (PR)",
       },
       {
-        path: "/purchasing/requests/new",
-        icon: Plus,
-        label: "Yeni Talep",
-      },
-      {
         path: "/purchasing/rfqs",
         icon: MessageSquare,
         label: "Teklif İstekleri (RFQ)",
-      },
-      {
-        path: "/purchasing/rfqs/new",
-        icon: Plus,
-        label: "Yeni RFQ",
       },
       {
         path: "/purchasing/orders",
@@ -139,24 +130,9 @@ export const navItems = [
         label: "Siparişler (PO)",
       },
       {
-        path: "/purchasing/orders/new",
-        icon: Plus,
-        label: "Yeni Sipariş",
-      },
-      {
         path: "/purchasing/grns",
         icon: ClipboardCheck,
         label: "Mal Kabul (GRN)",
-      },
-      {
-        path: "/purchasing/invoices",
-        icon: Receipt,
-        label: "Tedarikçi Faturaları",
-      },
-      {
-        path: "/suppliers",
-        icon: Building2,
-        label: "Tedarikçiler",
       },
       {
         path: "/purchasing/settings",
@@ -186,19 +162,9 @@ export const navItems = [
       },
       // Yönetim Modülleri
       {
-        path: "/service/work-orders",
-        icon: ClipboardCheck,
-        label: "İş Emirleri",
-      },
-      {
         path: "/service/assets",
         icon: Package,
         label: "Cihaz Yönetimi",
-      },
-      {
-        path: "/service/contracts",
-        icon: FileText,
-        label: "Sözleşmeler",
       },
       {
         path: "/service/warranties",
@@ -240,11 +206,6 @@ export const navItems = [
         label: "Müşteri Memnuniyeti",
       },
       {
-        path: "/service/history",
-        icon: ClipboardList,
-        label: "Servis Geçmişi",
-      },
-      {
         path: "/service/analytics",
         icon: TrendingUp,
         label: "Raporlar ve Analitik",
@@ -276,7 +237,36 @@ export const navItems = [
       
     ],
   },
-  // 8. Nakit Akış
+  // 8. Sözleşme Yönetimi
+  {
+    path: "/contracts",
+    icon: FileSignature,
+    label: "Sözleşme Yönetimi",
+    hasDropdown: true,
+    items: [
+      {
+        path: "/contracts",
+        icon: LayoutDashboard,
+        label: "Genel Bakış",
+      },
+      {
+        path: "/contracts/service",
+        icon: Wrench,
+        label: "Servis Sözleşmeleri",
+      },
+      {
+        path: "/contracts/vehicle",
+        icon: Car,
+        label: "Araç Sözleşmeleri",
+      },
+      {
+        path: "/contracts/customer",
+        icon: User,
+        label: "Müşteri Sözleşmeleri",
+      },
+    ],
+  },
+  // 9. Nakit Akış (eski 8)
   {
     path: "/cashflow",
     icon: CreditCard,

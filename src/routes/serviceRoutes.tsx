@@ -14,15 +14,13 @@ const ServiceCostsView = React.lazy(() => import("@/pages/service/ServiceCostsVi
 const ServicePartsView = React.lazy(() => import("@/pages/service/ServicePartsView"));
 const ServiceSatisfactionView = React.lazy(() => import("@/pages/service/ServiceSatisfactionView"));
 const ServiceAnalyticsView = React.lazy(() => import("@/pages/service/ServiceAnalyticsView"));
-const ServiceWorkOrders = React.lazy(() => import("@/pages/service/ServiceWorkOrders"));
 const ServiceAssets = React.lazy(() => import("@/pages/service/ServiceAssets"));
-const ServiceContracts = React.lazy(() => import("@/pages/service/ServiceContracts"));
 const ServiceWarranties = React.lazy(() => import("@/pages/service/ServiceWarranties"));
-const ServiceHistory = React.lazy(() => import("@/pages/service/ServiceHistory"));
 const ServiceDashboard = React.lazy(() => import("@/pages/service/ServiceDashboard"));
 const ServiceManagement = React.lazy(() => import("@/pages/service/ServiceManagement"));
 const ServiceMapPage = React.lazy(() => import("@/pages/service/ServiceMapPage"));
 const ServiceRedirect = React.lazy(() => import("@/pages/service/ServiceRedirect"));
+const ServiceContractsRedirect = React.lazy(() => import("@/pages/service/ServiceContractsRedirect"));
 
 // Define service routes
 export const serviceRoutes: RouteConfig[] = [
@@ -40,11 +38,10 @@ export const serviceRoutes: RouteConfig[] = [
   { path: "/service/kanban", component: ServiceRedirect, protected: true },
   { path: "/service/scheduling", component: ServiceRedirect, protected: true },
   { path: "/service/calendar", component: ServiceRedirect, protected: true },
+  { path: "/service/contracts", component: ServiceContractsRedirect, protected: true },
   
   // Yönetim Modülleri
-  { path: "/service/work-orders", component: ServiceWorkOrders, protected: true },
   { path: "/service/assets", component: ServiceAssets, protected: true },
-  { path: "/service/contracts", component: ServiceContracts, protected: true },
   { path: "/service/warranties", component: ServiceWarranties, protected: true },
   
   // Bakım ve Planlama
@@ -57,7 +54,6 @@ export const serviceRoutes: RouteConfig[] = [
   { path: "/service/parts", component: ServicePartsView, protected: true },
   { path: "/service/satisfaction", component: ServiceSatisfactionView, protected: true },
   { path: "/service/analytics", component: ServiceAnalyticsView, protected: true },
-  { path: "/service/history", component: ServiceHistory, protected: true },
   
   // CRUD İşlemleri
   { path: "/service/new", component: NewServiceRequest, protected: true },

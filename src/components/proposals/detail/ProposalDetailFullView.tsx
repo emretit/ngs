@@ -226,6 +226,14 @@ const ProposalDetailFullView = ({
                       {formatMoney(proposal.total_amount || proposal.total_value || 0)}
                     </span>
                   </div>
+                  {proposal.currency && proposal.currency !== "TRY" && proposal.currency !== "TL" && (proposal as any).exchange_rate && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Döviz Kuru:</span>
+                      <span className="font-medium">
+                        1 {proposal.currency} = {(proposal as any).exchange_rate} TRY
+                      </span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

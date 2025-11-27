@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { format } from "date-fns";
 import BackButton from "@/components/ui/back-button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import InvoiceHeaderCard from "@/components/invoices/cards/InvoiceHeaderCard";
-import InvoiceItemsCard from "@/components/invoices/cards/InvoiceItemsCard";
+import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
+import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
 import InvoiceFinancialCard from "@/components/invoices/cards/InvoiceFinancialCard";
 import InvoiceEInvoiceCard from "@/components/invoices/cards/InvoiceEInvoiceCard";
 
@@ -19,6 +20,8 @@ interface InvoiceItem {
   id: string;
   urun_adi: string;
   aciklama: string;
+  seller_code?: string; // Satıcı ürün kodu
+  buyer_code?: string; // Alıcı ürün kodu
   miktar: number;
   birim: string;
   birim_fiyat: number;
@@ -60,17 +63,40 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   
+  // Product modal state'leri
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
+  const [editingItemData, setEditingItemData] = useState<any>(null);
+  
   // E-fatura durumu takibi
   const { status: einvoiceStatus, refreshStatus } = useEInvoiceStatus(savedInvoiceId || undefined);
   
+  // Şu anki saati HH:mm formatında al
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   const [formData, setFormData] = useState({
     customer_id: "",
     fatura_no: "", // Boş bırakılacak, E-fatura gönderilirken otomatik atanacak
     fatura_tarihi: new Date(),
+    issue_time: getCurrentTime(), // Varsayılan olarak şu anki saat
     vade_tarihi: null as Date | null,
+    invoice_type: "SATIS", // Varsayılan: Satış Faturası
+    invoice_profile: "TEMELFATURA", // Varsayılan: Temel Fatura
+    send_type: "ELEKTRONIK", // Varsayılan: Elektronik
+    sales_platform: "NORMAL", // Varsayılan: Normal
+    is_despatch: false, // Varsayılan: false
+    internet_info: {} as any, // JSONB - İnternet satış bilgileri
+    return_invoice_info: {} as any, // JSONB - İade fatura bilgileri
     aciklama: "",
     notlar: "",
     para_birimi: "TRY",
+    exchange_rate: 1, // Varsayılan: 1 (TRY için)
     odeme_sekli: "",
     banka_bilgileri: "",
   });
@@ -173,6 +199,7 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
           }
         }
         
+        const orderCurrency = order.currency === 'TL' ? 'TRY' : (order.currency || "TRY");
         setFormData(prev => ({
           ...prev,
           customer_id: order.customer_id || "",
@@ -180,7 +207,8 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
           vade_tarihi: vadeTarihi,
           aciklama: aciklama,
           notlar: order.notes || "",
-          para_birimi: order.currency === 'TL' ? 'TRY' : (order.currency || "TRY"),
+          para_birimi: orderCurrency,
+          exchange_rate: order.exchange_rate || (orderCurrency === 'TRY' ? 1 : 1),
           odeme_sekli: order.payment_terms || "",
         }));
         
@@ -205,8 +233,10 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
             id: (index + 1).toString(),
             urun_adi: item.name,
             aciklama: item.description || "",
+            seller_code: item.seller_code || undefined,
+            buyer_code: item.buyer_code || undefined,
             miktar: parseFloat(item.quantity),
-            birim: item.unit || "adet",
+            birim: item.unit || item.birim || "adet", // Hem unit hem birim kontrolü
             birim_fiyat: parseFloat(item.unit_price),
             kdv_orani: parseFloat(item.tax_rate) || 18,
             indirim_orani: parseFloat(item.discount_rate) || 0,
@@ -275,6 +305,7 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
           }
         }
         
+        const proposalCurrency = proposal.currency === 'TL' ? 'TRY' : (proposal.currency || "TRY");
         setFormData(prev => ({
           ...prev,
           customer_id: proposal.customer_id || "",
@@ -282,7 +313,8 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
           vade_tarihi: vadeTarihi,
           aciklama: aciklama,
           notlar: proposal.notes || "",
-          para_birimi: proposal.currency === 'TL' ? 'TRY' : (proposal.currency || "TRY"),
+          para_birimi: proposalCurrency,
+          exchange_rate: proposal.exchange_rate || (proposalCurrency === 'TRY' ? 1 : 1),
           odeme_sekli: proposal.payment_terms || "",
         }));
         
@@ -335,6 +367,8 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
               id: (index + 1).toString(),
               urun_adi: item.name || item.urun_adi || item.product_name || "",
               aciklama: item.description || item.aciklama || "",
+              seller_code: item.seller_code || undefined,
+              buyer_code: item.buyer_code || undefined,
               miktar: quantity,
               birim: item.unit || item.birim || "adet",
               birim_fiyat: unitPrice,
@@ -404,6 +438,82 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     }
   };
 
+  const moveItemUp = (index: number) => {
+    if (index > 0) {
+      const newItems = [...items];
+      [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
+      setItems(newItems);
+    }
+  };
+
+  const moveItemDown = (index: number) => {
+    if (index < items.length - 1) {
+      const newItems = [...items];
+      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+      setItems(newItems);
+    }
+  };
+
+  // ProductServiceCard formatına uygun handleItemChange
+  const handleItemChange = useCallback((index: number, field: string, value: any) => {
+    // Field mapping: ProductServiceCard -> InvoiceItem
+    const fieldMapping: Record<string, keyof InvoiceItem> = {
+      'name': 'urun_adi',
+      'description': 'aciklama',
+      'quantity': 'miktar',
+      'unit': 'birim',
+      'unit_price': 'birim_fiyat',
+      'tax_rate': 'kdv_orani',
+      'discount_rate': 'indirim_orani',
+    };
+
+    const mappedField = fieldMapping[field] || field;
+    updateItem(index, mappedField as keyof InvoiceItem, value);
+  }, [items]);
+
+  // Product modal'dan ürün seçildiğinde
+  const handleProductModalSelect = (product: any, itemIndex?: number) => {
+    if (!product) return;
+
+    const newItem: InvoiceItem = {
+      id: (items.length + 1).toString(),
+      urun_adi: product.name || product.product_name || "",
+      aciklama: product.description || "",
+      seller_code: product.seller_code || undefined,
+      buyer_code: product.buyer_code || undefined,
+      miktar: parseFloat(product.quantity) || 1,
+      birim: product.unit || "adet",
+      birim_fiyat: parseFloat(product.unit_price) || parseFloat(product.price) || 0,
+      kdv_orani: parseFloat(product.tax_rate) || 18,
+      indirim_orani: parseFloat(product.discount_rate) || 0,
+      satir_toplami: 0,
+      kdv_tutari: 0,
+    };
+
+    // Calculate totals
+    const calculatedItem = calculateItemTotals(newItem);
+
+    if (itemIndex !== undefined && itemIndex >= 0 && itemIndex < items.length) {
+      // Editing existing item
+      const updatedItems = [...items];
+      updatedItems[itemIndex] = { ...calculatedItem, id: items[itemIndex].id };
+      setItems(updatedItems);
+    } else {
+      // Adding new item
+      setItems([...items, calculatedItem]);
+    }
+
+    setProductModalOpen(false);
+    setSelectedProduct(null);
+    setEditingItemIndex(undefined);
+    setEditingItemData(null);
+  };
+
+  // Product modal'dan ürün eklendiğinde (ProductDetailsModal için)
+  const handleAddProductToProposal = (productData: any) => {
+    handleProductModalSelect(productData, editingItemIndex);
+  };
+
   const calculateTotals = () => {
     // Calculate indirim tutarı (toplam indirim miktarı)
     const indirim_tutari = items.reduce((sum, item) => {
@@ -418,6 +528,23 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
 
     return { ara_toplam, kdv_tutari, toplam_tutar, indirim_tutari };
   };
+
+  // Items'ı ProductServiceCard formatına dönüştür
+  const productServiceItems = React.useMemo(() => {
+    return items.map((item, index) => ({
+      id: item.id,
+      row_number: index + 1,
+      name: item.urun_adi,
+      description: item.aciklama,
+      quantity: item.miktar,
+      unit: item.birim,
+      unit_price: item.birim_fiyat,
+      tax_rate: item.kdv_orani,
+      discount_rate: item.indirim_orani,
+      total_price: item.satir_toplami + item.kdv_tutari,
+      currency: formData.para_birimi,
+    }));
+  }, [items, formData.para_birimi]);
 
   // Currency code'u Intl.NumberFormat için geçerli formata çevir
   const getValidCurrencyCode = (currency: string): string => {
@@ -514,6 +641,25 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
       
       if (profileError) throw profileError;
 
+      // Saat formatını HH:mm:ss'e çevir (HH:mm formatından)
+      const issueTimeFormatted = formData.issue_time 
+        ? `${formData.issue_time}:00` 
+        : null;
+
+      // İnternet bilgilerini temizle (sadece dolu alanları gönder)
+      const internetInfo = formData.sales_platform === "INTERNET" && formData.internet_info
+        ? Object.fromEntries(
+            Object.entries(formData.internet_info).filter(([_, v]) => v !== null && v !== undefined && v !== "")
+          )
+        : null;
+
+      // İade fatura bilgilerini temizle (sadece dolu alanları gönder)
+      const returnInvoiceInfo = formData.invoice_type === "IADE" && formData.return_invoice_info
+        ? Object.fromEntries(
+            Object.entries(formData.return_invoice_info).filter(([_, v]) => v !== null && v !== undefined && v !== "")
+          )
+        : null;
+
       const invoiceData = {
         order_id: orderId || null,
         proposal_id: proposalId || null,
@@ -521,6 +667,15 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
         employee_id: employeeId || null,
         fatura_no: null, // NULL olarak kaydedilecek, E-fatura gönderilirken otomatik atanacak
         fatura_tarihi: format(formData.fatura_tarihi, "yyyy-MM-dd"),
+        issue_time: issueTimeFormatted,
+        invoice_type: formData.invoice_type || "SATIS",
+        invoice_profile: formData.invoice_profile || "TEMELFATURA",
+        send_type: formData.send_type || "ELEKTRONIK",
+        sales_platform: formData.sales_platform || "NORMAL",
+        is_despatch: formData.is_despatch || false,
+        internet_info: internetInfo || {},
+        return_invoice_info: returnInvoiceInfo || null,
+        exchange_rate: formData.exchange_rate || 1,
         vade_tarihi: formData.vade_tarihi ? format(formData.vade_tarihi, "yyyy-MM-dd") : null,
         aciklama: formData.aciklama,
         notlar: formData.notlar,
@@ -560,6 +715,8 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
         sales_invoice_id: invoice.id,
         urun_adi: item.urun_adi,
         aciklama: item.aciklama,
+        seller_code: item.seller_code || null,
+        buyer_code: item.buyer_code || null,
         miktar: item.miktar,
         birim: item.birim,
         birim_fiyat: item.birim_fiyat,
@@ -777,13 +934,44 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
           />
 
           {/* Invoice Items - Full Width */}
-          <InvoiceItemsCard
-            items={items}
-            currency={formData.para_birimi}
+          <ProductServiceCard
+            items={productServiceItems}
             onAddItem={addItem}
             onRemoveItem={removeItem}
-            onItemChange={updateItem}
-            formatCurrency={formatCurrency}
+            onMoveItemUp={moveItemUp}
+            onMoveItemDown={moveItemDown}
+            onItemChange={handleItemChange}
+            onProductModalSelect={(product, itemIndex) => {
+              if (itemIndex !== undefined) {
+                // Editing existing item
+                setSelectedProduct(null);
+                setEditingItemIndex(itemIndex);
+                setEditingItemData(product);
+                setProductModalOpen(true);
+              } else {
+                // Adding new item
+                handleProductModalSelect(product, itemIndex);
+              }
+            }}
+            showMoveButtons={true}
+            inputHeight="h-10"
+          />
+
+          {/* Product Details Modal */}
+          <ProductDetailsModal
+            open={productModalOpen}
+            onOpenChange={(open) => {
+              setProductModalOpen(open);
+              if (!open) {
+                setEditingItemIndex(undefined);
+                setSelectedProduct(null);
+                setEditingItemData(null);
+              }
+            }}
+            product={selectedProduct}
+            onAddToProposal={handleAddProductToProposal}
+            currency={formData.para_birimi}
+            existingData={editingItemData}
           />
 
           {/* Financial Summary */}

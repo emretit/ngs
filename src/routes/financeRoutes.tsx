@@ -15,6 +15,7 @@ const PurchaseInvoices = React.lazy(() => import("@/pages/PurchaseInvoices"));
 const PurchaseInvoiceDetail = React.lazy(() => import("@/pages/PurchaseInvoiceDetail"));
 const SalesInvoices = React.lazy(() => import("@/pages/SalesInvoices"));
 const CreateSalesInvoice = React.lazy(() => import("@/pages/CreateSalesInvoice"));
+const ProposalToInvoiceCreate = React.lazy(() => import("@/pages/ProposalToInvoiceCreate"));
 const SalesInvoiceDetail = React.lazy(() => import("@/pages/SalesInvoiceDetail"));
 const FinancialOverview = React.lazy(() => import("@/pages/FinancialOverview"));
 const CashAccountDetail = React.lazy(() => import("@/pages/CashAccountDetail"));
@@ -54,6 +55,7 @@ export const financeRoutes: RouteConfig[] = [
   { path: "/purchase-invoices/:id", component: PurchaseInvoiceDetail, protected: true },
   { path: "/sales-invoices", component: SalesInvoices, protected: true },
   { path: "/sales-invoices/create", component: CreateSalesInvoice, protected: true },
+  { path: "/sales-invoices/from-proposal", component: ProposalToInvoiceCreate, protected: true }, // Tekliften fatura oluştur
   { path: "/sales-invoices/:id", component: SalesInvoiceDetail, protected: true },
   { path: "/e-invoice", component: EInvoices, protected: true },
   { path: "/e-invoice/process/:invoiceId", component: EInvoiceProcess, protected: true },

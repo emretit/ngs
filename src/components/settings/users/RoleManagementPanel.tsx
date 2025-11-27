@@ -69,9 +69,7 @@ const MODULE_DEFINITIONS = [
     category: 'Servis', 
     subModules: [
       { key: 'service-views', label: 'Servis Yönetimi' },
-      { key: 'service-work-orders', label: 'İş Emirleri' },
       { key: 'service-assets', label: 'Cihaz Yönetimi' },
-      { key: 'service-contracts', label: 'Sözleşmeler' },
       { key: 'service-warranties', label: 'Garanti Takibi' },
       { key: 'service-maintenance', label: 'Bakım Takvimi' },
       { key: 'service-templates', label: 'Servis Şablonları' },
@@ -80,7 +78,6 @@ const MODULE_DEFINITIONS = [
       { key: 'service-costs', label: 'Maliyet Analizi' },
       { key: 'service-parts', label: 'Parça Yönetimi' },
       { key: 'service-satisfaction', label: 'Müşteri Memnuniyeti' },
-      { key: 'service-history', label: 'Servis Geçmişi' },
       { key: 'service-analytics', label: 'Raporlar ve Analitik' },
     ]
   },
@@ -97,7 +94,20 @@ const MODULE_DEFINITIONS = [
     ]
   },
   
-  // 8. Nakit Akış
+  // 8. Sözleşme Yönetimi
+  { 
+    key: 'contracts', 
+    label: 'Sözleşme Yönetimi', 
+    category: 'Sözleşme Yönetimi', 
+    subModules: [
+      { key: 'contracts-dashboard', label: 'Genel Bakış' },
+      { key: 'contracts-service', label: 'Servis Sözleşmeleri' },
+      { key: 'contracts-vehicle', label: 'Araç Sözleşmeleri' },
+      { key: 'contracts-customer', label: 'Müşteri Sözleşmeleri' },
+    ]
+  },
+  
+  // 9. Nakit Akış
   { 
     key: 'cashflow', 
     label: 'Nakit Akış', 

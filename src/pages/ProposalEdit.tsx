@@ -676,7 +676,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const handleConvertToInvoice = () => {
     if (!proposal) return;
     
-    navigate(`/sales-invoices/create?proposalId=${proposal.id}`);
+    navigate(`/sales-invoices/from-proposal?proposalId=${proposal.id}`);
     toast.success("Fatura oluşturma sayfasına yönlendiriliyorsunuz");
   };
 

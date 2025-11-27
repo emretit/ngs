@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Search, FileText, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, FileText, Calendar, AlertCircle, CheckCircle, Clock, ArrowLeft, Wrench } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,15 +8,30 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function ServiceContracts() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sözleşme Yönetimi</h1>
-          <p className="text-muted-foreground">Bakım ve servis sözleşmelerini yönetin</p>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate('/contracts')}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+              <Wrench className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Servis Sözleşmeleri</h1>
+              <p className="text-muted-foreground text-sm">Bakım ve servis sözleşmelerini yönetin</p>
+            </div>
+          </div>
         </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
@@ -94,13 +110,13 @@ export default function ServiceContracts() {
         <TabsContent value="all" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Tüm Sözleşmeler</CardTitle>
+              <CardTitle>Tüm Servis Sözleşmeleri</CardTitle>
               <CardDescription>Sistemde kayıtlı tüm bakım ve servis sözleşmeleri</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Henüz sözleşme eklenmemiş</h3>
+                <Wrench className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Henüz servis sözleşmesi eklenmemiş</h3>
                 <p className="text-muted-foreground mb-4">
                   Müşterilerinizle bakım ve servis sözleşmelerini takip etmek için yeni bir sözleşme ekleyin.
                 </p>
@@ -152,10 +168,4 @@ export default function ServiceContracts() {
     </div>
   );
 }
-
-
-
-
-
-
 

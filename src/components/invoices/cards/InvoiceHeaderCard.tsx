@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Badge } from "@/components/ui/badge";
 import { Building2, FileText, CheckCircle2, Info, CheckCircle2 as CheckIcon } from "lucide-react";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
@@ -18,10 +20,19 @@ interface InvoiceHeaderCardProps {
   formData: {
     fatura_no: string;
     fatura_tarihi: Date;
+    issue_time: string; // HH:mm formatında saat
     vade_tarihi: Date | null;
+    invoice_type: string; // SATIS, IADE, ISTISNA, OZELMATRAH, IHRACKAYITLI, SGK
+    invoice_profile: string; // TEMELFATURA, TICARIFATURA
+    send_type: string; // KAGIT, ELEKTRONIK
+    sales_platform: string; // NORMAL, INTERNET
+    is_despatch: boolean; // İrsaliye yerine geçer
+    internet_info: any; // JSONB - İnternet satış bilgileri
+    return_invoice_info: any; // JSONB - İade fatura bilgileri
     aciklama: string;
     notlar: string;
     para_birimi: string;
+    exchange_rate: number; // Döviz kuru
     odeme_sekli: string;
     banka_bilgileri: string;
   };
@@ -118,6 +129,15 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="issue_time">Fatura Saati</Label>
+            <TimePicker
+              time={formData.issue_time}
+              onSelect={(time) => onFieldChange("issue_time", time)}
+              placeholder="Saat seçin"
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="vade_tarihi">Vade Tarihi</Label>
             <DatePicker
               date={formData.vade_tarihi}
@@ -129,10 +149,52 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
         {/* İkinci Satır: Dört Kolon */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
+            <Label htmlFor="invoice_type">Fatura Tipi</Label>
+            <Select
+              value={formData.invoice_type}
+              onValueChange={(value) => onFieldChange("invoice_type", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Fatura tipi seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SATIS">Satış Faturası</SelectItem>
+                <SelectItem value="IADE">İade Faturası</SelectItem>
+                <SelectItem value="ISTISNA">İstisna Faturası</SelectItem>
+                <SelectItem value="OZELMATRAH">Özel Matrah Faturası</SelectItem>
+                <SelectItem value="IHRACKAYITLI">İhraç Kayıtlı Fatura</SelectItem>
+                <SelectItem value="SGK">SGK Faturası</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="invoice_profile">Fatura Profili</Label>
+            <Select
+              value={formData.invoice_profile}
+              onValueChange={(value) => onFieldChange("invoice_profile", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Fatura profili seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TEMELFATURA">Temel Fatura</SelectItem>
+                <SelectItem value="TICARIFATURA">Ticari Fatura</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <Label htmlFor="para_birimi">Para Birimi</Label>
             <Select
               value={formData.para_birimi}
-              onValueChange={(value) => onFieldChange("para_birimi", value)}
+              onValueChange={(value) => {
+                onFieldChange("para_birimi", value);
+                // TRY seçildiğinde exchange_rate'ı 1 yap
+                if (value === "TRY") {
+                  onFieldChange("exchange_rate", 1);
+                }
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -146,6 +208,28 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
             </Select>
           </div>
 
+          {formData.para_birimi !== "TRY" && (
+            <div>
+              <Label htmlFor="exchange_rate">Döviz Kuru</Label>
+              <Input
+                id="exchange_rate"
+                type="number"
+                step="0.0001"
+                min="0.0001"
+                value={formData.exchange_rate || 1}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value) || 1;
+                  onFieldChange("exchange_rate", value);
+                }}
+                placeholder="1.0000"
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                1 {formData.para_birimi} = {formData.exchange_rate || 1} TRY
+              </p>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="odeme_sekli">Ödeme Şekli</Label>
             <Input
@@ -155,8 +239,11 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
               placeholder="Nakit, Kredi Kartı, Havale..."
             />
           </div>
+          </div>
 
-          <div className="md:col-span-2">
+        {/* Üçüncü Satır: Açıklama */}
+        <div className="grid grid-cols-1 gap-4">
+          <div>
             <Label htmlFor="aciklama">Açıklama</Label>
             <Textarea
               id="aciklama"
@@ -168,7 +255,147 @@ const InvoiceHeaderCard: React.FC<InvoiceHeaderCardProps> = ({
           </div>
         </div>
 
-        {/* Üçüncü Satır: Notlar ve Banka Bilgileri */}
+        {/* E-Arşiv ve İade Bilgileri */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <Label htmlFor="send_type">Gönderim Tipi</Label>
+            <Select
+              value={formData.send_type}
+              onValueChange={(value) => onFieldChange("send_type", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Gönderim tipi seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ELEKTRONIK">Elektronik</SelectItem>
+                <SelectItem value="KAGIT">Kağıt</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="sales_platform">Satış Platformu</Label>
+            <Select
+              value={formData.sales_platform}
+              onValueChange={(value) => onFieldChange("sales_platform", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Satış platformu seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NORMAL">Normal</SelectItem>
+                <SelectItem value="INTERNET">İnternet</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-end">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="is_despatch"
+                checked={formData.is_despatch || false}
+                onCheckedChange={(checked) => onFieldChange("is_despatch", checked)}
+              />
+              <Label htmlFor="is_despatch" className="text-sm font-normal cursor-pointer">
+                İrsaliye Yerine Geçer
+              </Label>
+            </div>
+          </div>
+        </div>
+
+        {/* İnternet Satış Bilgileri - Sadece sales_platform = INTERNET ise */}
+        {formData.sales_platform === "INTERNET" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div>
+              <Label htmlFor="internet_website">Web Sitesi</Label>
+              <Input
+                id="internet_website"
+                value={formData.internet_info?.website || ""}
+                onChange={(e) => onFieldChange("internet_info", {
+                  ...formData.internet_info,
+                  website: e.target.value
+                })}
+                placeholder="www.example.com"
+              />
+            </div>
+            <div>
+              <Label htmlFor="internet_payment_method">Ödeme Yöntemi</Label>
+              <Input
+                id="internet_payment_method"
+                value={formData.internet_info?.payment_method || ""}
+                onChange={(e) => onFieldChange("internet_info", {
+                  ...formData.internet_info,
+                  payment_method: e.target.value
+                })}
+                placeholder="KREDIKARTI, BANKAKARTI, vb."
+              />
+            </div>
+            <div>
+              <Label htmlFor="internet_payment_method_name">Ödeme Yöntemi Adı</Label>
+              <Input
+                id="internet_payment_method_name"
+                value={formData.internet_info?.payment_method_name || ""}
+                onChange={(e) => onFieldChange("internet_info", {
+                  ...formData.internet_info,
+                  payment_method_name: e.target.value
+                })}
+                placeholder="Kredi Kartı"
+              />
+            </div>
+            <div>
+              <Label htmlFor="internet_payment_agent_name">Ödeme Aracı Adı</Label>
+              <Input
+                id="internet_payment_agent_name"
+                value={formData.internet_info?.payment_agent_name || ""}
+                onChange={(e) => onFieldChange("internet_info", {
+                  ...formData.internet_info,
+                  payment_agent_name: e.target.value
+                })}
+                placeholder="iyzico, paytr, vb."
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="internet_payment_date">Ödeme Tarihi</Label>
+              <DatePicker
+                date={formData.internet_info?.payment_date ? new Date(formData.internet_info.payment_date) : undefined}
+                onSelect={(date) => onFieldChange("internet_info", {
+                  ...formData.internet_info,
+                  payment_date: date ? date.toISOString().split('T')[0] : null
+                })}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* İade Fatura Bilgileri - Sadece invoice_type = IADE ise */}
+        {formData.invoice_type === "IADE" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+            <div>
+              <Label htmlFor="return_invoice_number">İade Edilen Fatura No</Label>
+              <Input
+                id="return_invoice_number"
+                value={formData.return_invoice_info?.invoice_number || ""}
+                onChange={(e) => onFieldChange("return_invoice_info", {
+                  ...formData.return_invoice_info,
+                  invoice_number: e.target.value
+                })}
+                placeholder="FTR2024000001"
+              />
+            </div>
+            <div>
+              <Label htmlFor="return_issue_date">İade Edilen Fatura Tarihi</Label>
+              <DatePicker
+                date={formData.return_invoice_info?.issue_date ? new Date(formData.return_invoice_info.issue_date) : undefined}
+                onSelect={(date) => onFieldChange("return_invoice_info", {
+                  ...formData.return_invoice_info,
+                  issue_date: date ? date.toISOString().split('T')[0] : null
+                })}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Dördüncü Satır: Notlar ve Banka Bilgileri */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="notlar">Notlar</Label>

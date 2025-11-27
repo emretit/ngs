@@ -195,6 +195,14 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
               <p className="text-xs text-muted-foreground">Para Birimi</p>
               <p className="font-medium">{proposal.currency || "TRY"}</p>
             </div>
+            {(proposal as any).exchange_rate && (proposal.currency !== "TRY" && proposal.currency !== "TL") && (
+              <div className="space-y-1 col-span-2">
+                <p className="text-xs text-muted-foreground">Döviz Kuru</p>
+                <p className="font-medium">
+                  1 {proposal.currency} = {(proposal as any).exchange_rate} TRY
+                </p>
+              </div>
+            )}
           </div>
 
           <Separator />

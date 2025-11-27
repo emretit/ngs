@@ -11,7 +11,6 @@ import {
   TrendingUp,
   Settings,
   BarChart3,
-  History,
   Plus,
   DollarSign,
 } from 'lucide-react';
@@ -267,60 +266,6 @@ export default function ServiceDashboard() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-600">Bu Hafta</span>
                   <span className="text-sm font-bold text-orange-600">{stats.thisWeekCompleted}</span>
-                </div>
-                <div className="pt-2 border-t border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">Bu Ay</span>
-                    <span className="text-sm font-bold text-green-600">{stats.thisMonthCompleted}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Servis Geçmişi Card */}
-          <div
-            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200 cursor-pointer"
-            onClick={() => navigate("/service/history")}
-          >
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
-                    <History className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-gray-900">Servis Geçmişi</h2>
-                    <p className="text-xs text-gray-500">Tamamlanmış servisler</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate("/service/history");
-                    }}
-                  >
-                    <Plus className="h-3 w-3" />
-                    Görüntüle
-                  </Button>
-                </div>
-              </div>
-              <div className="mb-3">
-                <span className="text-xs font-normal text-purple-600 bg-purple-50 px-2 py-1 rounded">{dateLabel}</span>
-              </div>
-
-              {/* Summary Content */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Tamamlanan</span>
-                  <span className="text-sm font-bold text-gray-900">{stats.completed}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Tamamlama Oranı</span>
-                  <span className="text-sm font-bold text-orange-600">%{stats.completionRate}</span>
                 </div>
                 <div className="pt-2 border-t border-gray-100">
                   <div className="flex items-center justify-between">

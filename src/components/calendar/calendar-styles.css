@@ -34,9 +34,23 @@
 /* ============================================
    BASE STYLES
    ============================================ */
+.modern-calendar {
+  display: flex;
+  flex-direction: column;
+}
+
 .modern-calendar .rbc-calendar {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   background: transparent;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.modern-calendar .rbc-month-view,
+.modern-calendar .rbc-time-view,
+.modern-calendar .rbc-agenda-view {
+  flex: 1;
 }
 
 /* ============================================
@@ -45,11 +59,12 @@
 .modern-calendar .rbc-month-view {
   border: none;
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;
   background: var(--cal-bg);
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.05),
     0 10px 40px -10px rgba(0, 0, 0, 0.1);
+  min-height: 900px;
 }
 
 /* Day Header - Fantastical Style */
@@ -82,7 +97,7 @@
 /* Month Rows */
 .modern-calendar .rbc-month-row {
   border: none;
-  min-height: 110px;
+  min-height: 140px;
   overflow: visible;
 }
 
@@ -135,31 +150,48 @@
 }
 
 .modern-calendar .rbc-off-range {
-  color: var(--cal-text-muted);
-  opacity: 0.5;
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* Date Cell - Large Numbers like Calendars 5 */
+/* Date Cell - Compact Style with Dark Background */
 .modern-calendar .rbc-date-cell {
-  padding: 8px 10px;
+  padding: 4px 8px;
   text-align: right;
+  background: #374151;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .modern-calendar .rbc-date-cell {
+  background: #1f2937;
+}
+
+/* Weekend Date Cells - Slightly different shade */
+.modern-calendar .rbc-date-cell:nth-child(6),
+.modern-calendar .rbc-date-cell:nth-child(7) {
+  background: #4b5563;
+}
+
+.dark .modern-calendar .rbc-date-cell:nth-child(6),
+.dark .modern-calendar .rbc-date-cell:nth-child(7) {
+  background: #374151;
 }
 
 .modern-calendar .rbc-date-cell > a,
 .modern-calendar .rbc-date-cell > button {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--cal-text);
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
-  padding: 4px 8px;
-  border-radius: 8px;
+  padding: 2px 6px;
+  border-radius: 6px;
   transition: all 0.15s ease;
   display: inline-block;
 }
 
 .modern-calendar .rbc-date-cell > a:hover,
 .modern-calendar .rbc-date-cell > button:hover {
-  background: var(--cal-primary-light);
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
 }
 
 /* Today's Date Number - Sunrise Style */
@@ -168,8 +200,8 @@
   background: linear-gradient(135deg, var(--cal-primary) 0%, #8b5cf6 100%);
   color: white !important;
   font-weight: 700;
-  min-width: 28px;
-  height: 28px;
+  min-width: 22px;
+  height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -250,11 +282,11 @@
 }
 
 .modern-calendar .rbc-row-segment {
-  padding: 0 2px 2px;
+  padding: 0 3px 2px;
 }
 
 /* ============================================
-   WEEK VIEW - Fantastical Style
+   WEEK VIEW - Clean Modern Style
    ============================================ */
 .modern-calendar .rbc-time-view {
   border: none;
@@ -264,67 +296,116 @@
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.05),
     0 10px 40px -10px rgba(0, 0, 0, 0.1);
+  min-height: 800px;
 }
 
-/* Time Header */
+/* ---- WEEK HEADER ROW ---- */
 .modern-calendar .rbc-time-header {
-  border-bottom: none;
+  border-bottom: 1px solid var(--cal-border);
 }
 
 .modern-calendar .rbc-time-header-content {
   border-left: none;
-}
-
-.modern-calendar .rbc-time-header-gutter {
-  background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
-  min-width: 60px;
-}
-
-/* Day Headers - Fantastical Dark Style */
-.modern-calendar .rbc-time-header .rbc-header {
-  background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
-  padding: 12px 8px;
-  border: none !important;
-  min-width: 100px;
-}
-
-.modern-calendar .rbc-time-header .rbc-header a,
-.modern-calendar .rbc-time-header .rbc-header button {
-  color: rgba(255, 255, 255, 0.9) !important;
-  text-decoration: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 10px;
-  transition: all 0.2s ease;
   background: transparent;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
 }
 
-.modern-calendar .rbc-time-header .rbc-header a:hover,
-.modern-calendar .rbc-time-header .rbc-header button:hover {
-  background: rgba(255, 255, 255, 0.1);
+/* Ensure today header cell has proper background and text */
+.modern-calendar .rbc-time-header-content .rbc-header.rbc-today {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
-/* Today Header - Sunrise Accent */
+.modern-calendar .rbc-time-header-content .rbc-header.rbc-today * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Left gutter (empty cell above time column) */
+.modern-calendar .rbc-time-header-gutter {
+  background: #1f2937 !important;
+  min-width: 60px;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+/* Day header cells (Pzt 24, Sal 25, etc.) */
+.modern-calendar .rbc-time-header .rbc-header {
+  background: #1f2937 !important;
+  padding: 10px 8px !important;
+  border: none !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Day header text - FORCE white color on everything */
+.modern-calendar .rbc-time-header .rbc-header {
+  color: #ffffff !important;
+}
+
+.modern-calendar .rbc-time-header .rbc-header span,
+.modern-calendar .rbc-time-header .rbc-header a,
+.modern-calendar .rbc-time-header .rbc-header button,
+.modern-calendar .rbc-time-header .rbc-header div,
+.modern-calendar .rbc-time-header .rbc-header p,
+.modern-calendar .rbc-time-header .rbc-header * {
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  background: transparent !important;
+}
+
+/* Today header - vibrant purple gradient with better contrast */
 .modern-calendar .rbc-time-header .rbc-header.rbc-today {
-  background: linear-gradient(135deg, var(--cal-primary) 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%) !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4) !important;
+  position: relative;
+  z-index: 2;
+  color: #ffffff !important;
 }
 
+.modern-calendar .rbc-time-header .rbc-header.rbc-today::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ec4899, #f59e0b);
+  border-radius: 2px 2px 0 0;
+  z-index: 1;
+}
+
+/* Force white text on today header children - NOT background transparent */
+.modern-calendar .rbc-time-header .rbc-header.rbc-today span,
 .modern-calendar .rbc-time-header .rbc-header.rbc-today a,
-.modern-calendar .rbc-time-header .rbc-header.rbc-today button {
-  color: white !important;
+.modern-calendar .rbc-time-header .rbc-header.rbc-today button,
+.modern-calendar .rbc-time-header .rbc-header.rbc-today div,
+.modern-calendar .rbc-time-header .rbc-header.rbc-today p,
+.modern-calendar .rbc-time-header .rbc-header.rbc-today * {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
-.modern-calendar .rbc-time-header .rbc-header + .rbc-header {
-  border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+/* ---- ALL DAY ROW - HIDDEN ---- */
+.modern-calendar .rbc-allday-cell {
+  display: none !important;
 }
 
-/* Time Content */
+.modern-calendar .rbc-row-bg {
+  display: none !important;
+}
+
+.modern-calendar .rbc-allday {
+  display: none !important;
+}
+
+/* ---- TIME CONTENT AREA ---- */
 .modern-calendar .rbc-time-content {
   border-top: none;
   background: var(--cal-bg);
@@ -334,21 +415,26 @@
   border-left: 1px solid var(--cal-border);
 }
 
-/* Time Slots - Compact */
+/* Time slots - Compact like month view */
 .modern-calendar .rbc-timeslot-group {
   border-bottom: 1px solid var(--cal-border);
-  min-height: 48px !important;
+  min-height: 28px !important;
+  height: 28px !important;
 }
 
 .modern-calendar .rbc-time-slot {
-  border-top: 1px dashed rgba(0, 0, 0, 0.05);
-  min-height: 24px !important;
+  border-top: none;
+  min-height: 28px !important;
+  height: 28px !important;
 }
 
-/* Time Gutter - Calendars 5 Style */
+/* Time gutter (08:00, 09:00, etc.) - Fixed on scroll */
 .modern-calendar .rbc-time-gutter {
   background: var(--cal-bg-secondary);
   min-width: 60px;
+  position: sticky;
+  left: 0;
+  z-index: 4;
 }
 
 .modern-calendar .rbc-time-gutter .rbc-timeslot-group {
@@ -364,48 +450,78 @@
   letter-spacing: 0.02em;
 }
 
-/* Day Column */
+/* ---- DAY COLUMNS ---- */
 .modern-calendar .rbc-day-slot {
   position: relative;
+  background: var(--cal-bg);
 }
 
 .modern-calendar .rbc-day-slot .rbc-time-slot {
   border-top: 1px dashed rgba(0, 0, 0, 0.04);
 }
 
+/* Today column highlight - more visible */
 .modern-calendar .rbc-day-slot.rbc-today {
-  background: var(--cal-today-bg);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%);
+  position: relative;
 }
 
-/* Events in Week/Day View */
+.modern-calendar .rbc-day-slot.rbc-today::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  z-index: 1;
+}
+
+/* Weekend columns - subtle tint */
+.modern-calendar .rbc-time-content .rbc-day-slot:nth-last-child(-n+2) {
+  background: rgba(248, 113, 113, 0.03);
+}
+
+/* ---- EVENTS IN WEEK VIEW - Compact like month view ---- */
+.modern-calendar .rbc-day-slot .rbc-events-container {
+  margin-right: 0 !important;
+}
+
 .modern-calendar .rbc-day-slot .rbc-event {
-  border-radius: 8px !important;
-  border-left: 4px solid currentColor !important;
-  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  border: none !important;
+  padding: 2px 6px !important;
   font-size: 11px !important;
-  background-color: var(--cal-bg) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-weight: 500 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  margin: 1px 2px !important;
+  line-height: 1.4 !important;
+  overflow: hidden;
+  width: calc(100% - 4px) !important;
+  left: 0 !important;
+  right: 0 !important;
 }
 
 .modern-calendar .rbc-day-slot .rbc-event::before {
   display: none;
 }
 
-.modern-calendar .rbc-day-slot .rbc-event-label {
-  font-size: 10px;
-  font-weight: 700;
-  opacity: 0.8;
-  margin-bottom: 2px;
-}
-
+/* Event content - single line */
 .modern-calendar .rbc-day-slot .rbc-event-content {
-  font-weight: 500;
-  color: var(--cal-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: white !important;
 }
 
-/* Current Time Indicator - Fantastical Style */
+/* Hide time label in compact view */
+.modern-calendar .rbc-day-slot .rbc-event-label {
+  display: none;
+}
+
+/* ---- CURRENT TIME INDICATOR ---- */
 .modern-calendar .rbc-current-time-indicator {
-  background: linear-gradient(90deg, var(--cal-danger), #f97316);
+  background: linear-gradient(90deg, #ef4444, #f97316);
   height: 2px;
   z-index: 10;
 }
@@ -418,7 +534,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--cal-danger);
+  background: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
   animation: pulse 2s ease-in-out infinite;
 }
@@ -430,17 +546,6 @@
   50% { 
     box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.1);
   }
-}
-
-/* All Day Events */
-.modern-calendar .rbc-allday-cell {
-  padding: 4px;
-  background: var(--cal-bg-secondary);
-  min-height: 36px;
-}
-
-.modern-calendar .rbc-row-bg {
-  min-height: 36px;
 }
 
 /* ============================================
@@ -591,23 +696,23 @@
   }
   
   .modern-calendar .rbc-date-cell {
-    padding: 4px;
+    padding: 2px;
   }
   
   .modern-calendar .rbc-date-cell > a,
   .modern-calendar .rbc-date-cell > button {
-    font-size: 12px;
-    padding: 2px 4px;
+    font-size: 10px;
+    padding: 1px 3px;
   }
   
   .modern-calendar .rbc-date-cell.rbc-now > a,
   .modern-calendar .rbc-date-cell.rbc-now > button {
-    min-width: 24px;
-    height: 24px;
+    min-width: 18px;
+    height: 18px;
   }
   
   .modern-calendar .rbc-month-row {
-    min-height: 80px;
+    min-height: 100px;
   }
   
   .modern-calendar .rbc-time-header .rbc-header {

@@ -10,6 +10,8 @@ interface InvoiceItem {
   id: string;
   urun_adi: string;
   aciklama: string;
+  seller_code?: string; // Satıcı ürün kodu
+  buyer_code?: string; // Alıcı ürün kodu
   miktar: number;
   birim: string;
   birim_fiyat: number;
@@ -59,6 +61,8 @@ const InvoiceItemsCard: React.FC<InvoiceItemsCardProps> = ({
               <tr className="border-b bg-gray-50">
                 <th className="text-left p-3 font-semibold text-gray-700">Ürün/Hizmet *</th>
                 <th className="text-left p-3 font-semibold text-gray-700">Açıklama</th>
+                <th className="text-left p-3 font-semibold text-gray-700">Satıcı Kodu</th>
+                <th className="text-left p-3 font-semibold text-gray-700">Alıcı Kodu</th>
                 <th className="text-left p-3 font-semibold text-gray-700">Miktar *</th>
                 <th className="text-left p-3 font-semibold text-gray-700">Birim *</th>
                 <th className="text-left p-3 font-semibold text-gray-700">Birim Fiyat *</th>
@@ -84,6 +88,22 @@ const InvoiceItemsCard: React.FC<InvoiceItemsCardProps> = ({
                       value={item.aciklama}
                       onChange={(e) => onItemChange(index, "aciklama", e.target.value)}
                       placeholder="Açıklama"
+                    />
+                  </td>
+                  <td className="p-2">
+                    <Input
+                      value={item.seller_code || ""}
+                      onChange={(e) => onItemChange(index, "seller_code", e.target.value)}
+                      placeholder="Satıcı kodu"
+                      className="w-28"
+                    />
+                  </td>
+                  <td className="p-2">
+                    <Input
+                      value={item.buyer_code || ""}
+                      onChange={(e) => onItemChange(index, "buyer_code", e.target.value)}
+                      placeholder="Alıcı kodu"
+                      className="w-28"
                     />
                   </td>
                   <td className="p-2">

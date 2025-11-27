@@ -1,11 +1,6 @@
-import { Calendar as CalendarIcon, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Calendar as CalendarIcon } from 'lucide-react';
 
-interface CalendarHeaderProps {
-  onFilterToggle: () => void;
-}
-
-export const CalendarHeader = ({ onFilterToggle }: CalendarHeaderProps) => {
+export const CalendarHeader = () => {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
       {/* Sol taraf - Başlık */}
@@ -21,18 +16,6 @@ export const CalendarHeader = ({ onFilterToggle }: CalendarHeaderProps) => {
             Tüm aktiviteler, siparişler ve teslimatlarınızı tek bir yerde görüntüleyin
           </p>
         </div>
-      </div>
-      {/* Sağ taraf - Filtre Butonu */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onFilterToggle}
-          className="flex items-center gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          Filtrele
-        </Button>
       </div>
     </div>
   );

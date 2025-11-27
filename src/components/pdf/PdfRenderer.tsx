@@ -304,13 +304,13 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
       flexDirection: 'row',
       borderBottomWidth: 2,
       borderBottomColor: '#E5E7EB',
-      paddingBottom: 8,
-      marginBottom: 8,
+      paddingBottom: 2,
+      marginBottom: 1,
       alignItems: 'center', // Header içeriğini dikey olarak ortala
     },
     tableRow: {
       flexDirection: 'row',
-      paddingTop: 8,
+      paddingTop: 1,
       paddingBottom: 8,
       borderBottomWidth: 0.5,
       borderBottomColor: '#F3F4F6',

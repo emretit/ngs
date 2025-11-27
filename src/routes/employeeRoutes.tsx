@@ -1,9 +1,11 @@
-
-import Employees from "@/pages/Employees";
-import AddEmployee from "@/pages/AddEmployee";
-import EmployeeDetails from "@/pages/EmployeeDetails";
-import EmployeeForm from "@/pages/EmployeeForm";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all employee pages
+const Employees = React.lazy(() => import("@/pages/Employees"));
+const AddEmployee = React.lazy(() => import("@/pages/AddEmployee"));
+const EmployeeDetails = React.lazy(() => import("@/pages/EmployeeDetails"));
+const EmployeeForm = React.lazy(() => import("@/pages/EmployeeForm"));
 
 // Define employee routes
 export const employeeRoutes: RouteConfig[] = [

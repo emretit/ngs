@@ -1,8 +1,10 @@
-
-import Contacts from "@/pages/Contacts";
-import CustomerForm from "@/pages/CustomerForm";
-import ContactDetails from "@/pages/ContactDetails";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all customer pages
+const Contacts = React.lazy(() => import("@/pages/Contacts"));
+const CustomerForm = React.lazy(() => import("@/pages/CustomerForm"));
+const ContactDetails = React.lazy(() => import("@/pages/ContactDetails"));
 
 // Define customer routes
 export const customerRoutes: RouteConfig[] = [

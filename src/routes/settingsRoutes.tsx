@@ -1,16 +1,18 @@
-
-import Settings from "@/pages/Settings";
-import UsersSettings from "@/pages/settings/UsersSettings";
-import RolesSettings from "@/pages/settings/RolesSettings";
-import NilveraSettingsPage from "@/pages/settings/NilveraSettings";
-import SystemSettingsPage from "@/pages/settings/SystemSettings";
-import PdfTemplates from "@/pages/PdfTemplates";
-import PdfTemplateEditor from "@/pages/templates/PdfTemplateEditor";
-import ServiceTemplateEdit from "@/pages/service/ServiceTemplateEdit";
-import NotificationSettings from "@/pages/NotificationSettings";
-import Subscription from "@/pages/settings/Subscription";
-import AuditLogs from "@/pages/admin/AuditLogs";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all settings pages
+const Settings = React.lazy(() => import("@/pages/Settings"));
+const UsersSettings = React.lazy(() => import("@/pages/settings/UsersSettings"));
+const RolesSettings = React.lazy(() => import("@/pages/settings/RolesSettings"));
+const NilveraSettingsPage = React.lazy(() => import("@/pages/settings/NilveraSettings"));
+const SystemSettingsPage = React.lazy(() => import("@/pages/settings/SystemSettings"));
+const PdfTemplates = React.lazy(() => import("@/pages/PdfTemplates"));
+const PdfTemplateEditor = React.lazy(() => import("@/pages/templates/PdfTemplateEditor"));
+const ServiceTemplateEdit = React.lazy(() => import("@/pages/service/ServiceTemplateEdit"));
+const NotificationSettings = React.lazy(() => import("@/pages/NotificationSettings"));
+const Subscription = React.lazy(() => import("@/pages/settings/Subscription"));
+const AuditLogs = React.lazy(() => import("@/pages/admin/AuditLogs"));
 
 // Define settings routes
 export const settingsRoutes: RouteConfig[] = [

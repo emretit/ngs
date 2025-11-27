@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download, MoreHorizontal, Save, FileDown, Eye, ArrowRight, Building2, CalendarDays, XCircle, Printer, Receipt } from "lucide-react";
+import { Plus, Trash, Edit, ArrowLeft, Calculator, Check, ChevronsUpDown, Clock, Send, ShoppingCart, FileText, Download, MoreHorizontal, Save, FileDown, Eye, ArrowRight, Building2, CalendarDays, XCircle, Printer, Receipt, GitBranch, Copy, Users, UserPlus } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { proposalStatusColors, proposalStatusLabels, ProposalStatus } from "@/types/proposal";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { handleProposalStatusChange } from "@/services/workflow/proposalWorkflow";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
@@ -39,6 +40,7 @@ import ProposalDetailsCard from "@/components/proposals/cards/ProposalDetailsCar
 import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
 import TermsConditionsCard from "@/components/proposals/cards/TermsConditionsCard";
 import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
+import RevisionInfoCard from "@/components/proposals/cards/RevisionInfoCard";
 
 interface LineItem extends ProposalItem {
   row_number: number;
@@ -115,6 +117,12 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Copy states
+  const [isCopying, setIsCopying] = useState(false);
+  const [isCustomerSelectDialogOpen, setIsCustomerSelectDialogOpen] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [customerSelectOpen, setCustomerSelectOpen] = useState(false);
 
   // Form state matching the proposal edit format
   const [formData, setFormData] = useState({
@@ -123,6 +131,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     contact_title: "",
     offer_date: undefined as Date | undefined,
     offer_number: "",
+    revision_number: 0 as number | null, // Revizyon numarası - yeni teklif için 0
     
     // General Section
     validity_date: undefined as Date | undefined,
@@ -191,6 +200,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         contact_title: "",
         offer_date: proposal.offer_date ? new Date(proposal.offer_date) : undefined,
         offer_number: proposal.number || "",
+        revision_number: (proposal as any).revision_number ?? 0, // Revizyon numarası
         validity_date: proposal.valid_until ? new Date(proposal.valid_until) : undefined,
         prepared_by: initialPreparedBy,
         notes: proposal.notes || "",
@@ -705,6 +715,205 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     handleStatusChange('rejected');
   };
 
+  // Revizyon oluşturma fonksiyonu
+  const handleCreateRevision = async () => {
+    try {
+      toast.loading("Revizyon oluşturuluyor...", { id: 'revision' });
+      
+      // Orijinal teklifi belirle (bu zaten bir revizyon mu?)
+      const originalProposalId = (proposal as any).parent_proposal_id || proposal.id;
+      
+      // Mevcut revizyonların sayısını al
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: revisionCount } = await supabase.rpc('get_next_revision_number', { p_parent_id: originalProposalId });
+      
+      const nextRevisionNumber = revisionCount || 1;
+      
+      // Revizyon için yeni proposal verisi hazırla
+      const { createProposal } = await import('@/services/proposal/api/crudOperations');
+      
+      const revisionData = {
+        title: proposal.title,
+        subject: (proposal as any).subject,
+        description: proposal.description,
+        customer_id: proposal.customer_id,
+        employee_id: proposal.employee_id,
+        opportunity_id: proposal.opportunity_id,
+        status: 'draft' as ProposalStatus,
+        valid_until: undefined,
+        payment_terms: proposal.payment_terms,
+        delivery_terms: proposal.delivery_terms,
+        warranty_terms: proposal.warranty_terms,
+        price_terms: proposal.price_terms,
+        other_terms: proposal.other_terms,
+        notes: proposal.notes,
+        terms: proposal.terms,
+        currency: proposal.currency || 'TRY',
+        exchange_rate: (proposal as any).exchange_rate,
+        total_amount: proposal.total_amount,
+        items: proposal.items?.map(item => ({
+          ...item,
+          id: undefined
+        })) || [],
+        parent_proposal_id: originalProposalId,
+        revision_number: nextRevisionNumber,
+      };
+
+      const { data: newProposal, error } = await createProposal(revisionData as any);
+      
+      if (error) {
+        throw error;
+      }
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      queryClient.invalidateQueries({ queryKey: ['proposal', proposal.id] });
+      
+      toast.success(`Revizyon R${nextRevisionNumber} başarıyla oluşturuldu!`, { id: 'revision' });
+      
+      // Yeni revizyona yönlendir
+      if (newProposal?.id) {
+        navigate(`/proposal/${newProposal.id}`);
+      }
+    } catch (error) {
+      console.error('Error creating revision:', error);
+      toast.error("Revizyon oluşturulurken bir hata oluştu.", { id: 'revision' });
+    }
+  };
+
+  // Aynı müşteri için kopyalama
+  const handleCopySameCustomer = async () => {
+    if (!proposal || isCopying) return;
+    
+    setIsCopying(true);
+    try {
+      const { createProposal, getProposalById } = await import('@/services/proposal/api/crudOperations');
+      const { data: fullProposal, error: fetchError } = await getProposalById(proposal.id);
+      
+      if (fetchError || !fullProposal) {
+        throw new Error('Teklif detayları alınamadı');
+      }
+
+      const copyData = {
+        title: `${fullProposal.title} (Kopya)`,
+        subject: fullProposal.subject ? `${fullProposal.subject} (Kopya)` : undefined,
+        description: fullProposal.description,
+        customer_id: fullProposal.customer_id,
+        employee_id: fullProposal.employee_id,
+        opportunity_id: undefined,
+        status: 'draft' as ProposalStatus,
+        valid_until: undefined,
+        payment_terms: fullProposal.payment_terms,
+        delivery_terms: fullProposal.delivery_terms,
+        warranty_terms: fullProposal.warranty_terms,
+        price_terms: fullProposal.price_terms,
+        other_terms: fullProposal.other_terms,
+        notes: fullProposal.notes,
+        terms: fullProposal.terms,
+        currency: fullProposal.currency || 'TRY',
+        exchange_rate: (fullProposal as any).exchange_rate,
+        total_amount: fullProposal.total_amount,
+        items: fullProposal.items?.map(item => ({
+          ...item,
+          id: undefined
+        })) || [],
+      };
+
+      const { data: newProposal, error } = await createProposal(copyData as any);
+      
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      
+      toast.success("Teklif aynı müşteri için kopyalandı!");
+      
+      if (newProposal?.id) {
+        navigate(`/proposal/${newProposal.id}`);
+      }
+    } catch (error) {
+      console.error('Error copying proposal:', error);
+      toast.error("Teklif kopyalanırken bir hata oluştu.");
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
+  // Farklı müşteri için kopyalama - müşteri seçim dialog'unu aç
+  const handleCopyDifferentCustomer = () => {
+    setSelectedCustomerId("");
+    setIsCustomerSelectDialogOpen(true);
+  };
+
+  // Farklı müşteri için kopyalama işlemini gerçekleştir
+  const handleConfirmCopyDifferentCustomer = async () => {
+    if (!proposal || !selectedCustomerId) {
+      toast.error("Lütfen bir müşteri seçin");
+      return;
+    }
+
+    if (isCopying) return;
+    
+    setIsCopying(true);
+    try {
+      const { createProposal, getProposalById } = await import('@/services/proposal/api/crudOperations');
+      const { data: fullProposal, error: fetchError } = await getProposalById(proposal.id);
+      
+      if (fetchError || !fullProposal) {
+        throw new Error('Teklif detayları alınamadı');
+      }
+
+      const copyData = {
+        title: `${fullProposal.title} (Kopya)`,
+        subject: fullProposal.subject ? `${fullProposal.subject} (Kopya)` : undefined,
+        description: fullProposal.description,
+        customer_id: selectedCustomerId,
+        employee_id: fullProposal.employee_id,
+        opportunity_id: undefined,
+        status: 'draft' as ProposalStatus,
+        valid_until: undefined,
+        payment_terms: fullProposal.payment_terms,
+        delivery_terms: fullProposal.delivery_terms,
+        warranty_terms: fullProposal.warranty_terms,
+        price_terms: fullProposal.price_terms,
+        other_terms: fullProposal.other_terms,
+        notes: fullProposal.notes,
+        terms: fullProposal.terms,
+        currency: fullProposal.currency || 'TRY',
+        exchange_rate: (fullProposal as any).exchange_rate,
+        total_amount: fullProposal.total_amount,
+        items: fullProposal.items?.map(item => ({
+          ...item,
+          id: undefined
+        })) || [],
+      };
+
+      const { data: newProposal, error } = await createProposal(copyData as any);
+      
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      
+      toast.success("Teklif farklı müşteri için kopyalandı!");
+      
+      setIsCustomerSelectDialogOpen(false);
+      setSelectedCustomerId("");
+      
+      if (newProposal?.id) {
+        navigate(`/proposal/${newProposal.id}`);
+      }
+    } catch (error) {
+      console.error('Error copying proposal:', error);
+      toast.error("Teklif kopyalanırken bir hata oluştu.");
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
   return (
     <div>
       {/* Header Actions */}
@@ -735,6 +944,16 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                   <span className="text-xs text-slate-500">
                     {proposal.number || 'Teklif #' + id}
                   </span>
+                  <Badge 
+                    variant="outline" 
+                    className={`text-[10px] px-1.5 py-0 ${
+                      (proposal as any).revision_number 
+                        ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700'
+                        : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700'
+                    }`}
+                  >
+                    R{(proposal as any).revision_number || 0}
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -841,6 +1060,39 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
                 
                 <DropdownMenuSeparator />
                 
+                {/* Kopyala & Revizyon İşlemleri */}
+                <DropdownMenuLabel>Kopyala & Revizyon</DropdownMenuLabel>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="cursor-pointer">
+                    <Copy className="h-4 w-4 mr-2 text-blue-500" />
+                    <span>Teklifi Kopyala</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-48">
+                    <DropdownMenuItem
+                      onClick={handleCopySameCustomer}
+                      className="cursor-pointer"
+                      disabled={isCopying}
+                    >
+                      <Users className="h-4 w-4 mr-2 text-blue-500" />
+                      <span>Aynı Müşteri İçin</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleCopyDifferentCustomer}
+                      className="cursor-pointer"
+                      disabled={isCopying}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2 text-green-500" />
+                      <span>Farklı Müşteri İçin</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuItem onClick={handleCreateRevision} className="gap-2 cursor-pointer text-orange-600 hover:text-orange-700 hover:bg-orange-50">
+                  <GitBranch className="h-4 w-4" />
+                  <span>Yeni Revizyon Oluştur</span>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
                 {/* Dönüştürme İşlemleri */}
                 <DropdownMenuLabel>Dönüştür</DropdownMenuLabel>
                 <DropdownMenuItem onClick={handleConvertToOrder} className="gap-2 cursor-pointer">
@@ -869,6 +1121,16 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
 
       {/* Main Content */}
       <div className="space-y-4">
+        {/* Revision Info Card - Sadece revizyon varsa göster */}
+        {proposal && (
+          <RevisionInfoCard
+            proposalId={proposal.id}
+            parentProposalId={(proposal as any).parent_proposal_id}
+            revisionNumber={(proposal as any).revision_number}
+            currentProposalNumber={proposal.number}
+          />
+        )}
+
         {/* Top Row - Customer & Proposal Details Combined */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {/* Customer Information */}
@@ -962,6 +1224,101 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           currency={formData.currency}
           existingData={editingItemData}
         />
+
+        {/* Müşteri Seçim Dialog - Farklı Müşteri İçin Kopyalama */}
+        <Dialog open={isCustomerSelectDialogOpen} onOpenChange={setIsCustomerSelectDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Müşteri Seçin</DialogTitle>
+              <DialogDescription>
+                Teklifi kopyalamak için bir müşteri seçin.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Label htmlFor="customer-select">Müşteri</Label>
+              <Popover open={customerSelectOpen} onOpenChange={setCustomerSelectOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={customerSelectOpen}
+                    className={cn(
+                      "w-full justify-between mt-2",
+                      !selectedCustomerId && "text-muted-foreground"
+                    )}
+                  >
+                    {selectedCustomerId && customers
+                      ? (() => {
+                          const selected = customers.find(c => c.id === selectedCustomerId);
+                          return selected
+                            ? selected.company 
+                              ? `${selected.name} (${selected.company})`
+                              : selected.name
+                            : "Müşteri seçin...";
+                        })()
+                      : "Müşteri seçin..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Müşteri ara..." />
+                    <CommandList>
+                      <CommandEmpty>Müşteri bulunamadı.</CommandEmpty>
+                      <CommandGroup>
+                        {customers?.map((customer) => (
+                          <CommandItem
+                            key={customer.id}
+                            value={`${customer.name} ${customer.company || ''}`}
+                            onSelect={() => {
+                              setSelectedCustomerId(customer.id);
+                              setCustomerSelectOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedCustomerId === customer.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex flex-col">
+                              <span className="font-medium">{customer.name}</span>
+                              {customer.company && (
+                                <span className="text-sm text-muted-foreground">{customer.company}</span>
+                              )}
+                              {customer.email && (
+                                <span className="text-xs text-muted-foreground">{customer.email}</span>
+                              )}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsCustomerSelectDialogOpen(false);
+                  setSelectedCustomerId("");
+                }}
+                disabled={isCopying}
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={handleConfirmCopyDifferentCustomer}
+                disabled={isCopying || !selectedCustomerId}
+              >
+                {isCopying ? "Kopyalanıyor..." : "Kopyala"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Confirmation Dialog */}
         <ConfirmationDialogComponent

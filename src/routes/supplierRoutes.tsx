@@ -1,9 +1,11 @@
-
-import Suppliers from "@/pages/Suppliers";
-import SupplierDetails from "@/pages/SupplierDetails";
-import SupplierNew from "@/pages/SupplierNew";
-import SupplierForm from "@/pages/SupplierForm";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all supplier pages
+const Suppliers = React.lazy(() => import("@/pages/Suppliers"));
+const SupplierDetails = React.lazy(() => import("@/pages/SupplierDetails"));
+const SupplierNew = React.lazy(() => import("@/pages/SupplierNew"));
+const SupplierForm = React.lazy(() => import("@/pages/SupplierForm"));
 
 // Define supplier routes
 export const supplierRoutes: RouteConfig[] = [

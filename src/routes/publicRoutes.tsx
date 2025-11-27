@@ -1,11 +1,13 @@
-
-import Index from "@/pages/Index";
-import SignIn from "@/pages/SignIn";
-import SignUp from "@/pages/SignUp";
-import InviteSetup from "@/pages/InviteSetup";
-import ForgotPassword from "@/pages/ForgotPassword";
-import SetPassword from "@/pages/SetPassword";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all public pages
+const Index = React.lazy(() => import("@/pages/Index"));
+const SignIn = React.lazy(() => import("@/pages/SignIn"));
+const SignUp = React.lazy(() => import("@/pages/SignUp"));
+const InviteSetup = React.lazy(() => import("@/pages/InviteSetup"));
+const ForgotPassword = React.lazy(() => import("@/pages/ForgotPassword"));
+const SetPassword = React.lazy(() => import("@/pages/SetPassword"));
 
 // Define public routes
 export const publicRoutes: RouteConfig[] = [

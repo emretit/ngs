@@ -1,12 +1,13 @@
+import React from "react";
 import { RouteConfig } from "./types";
 
-// Supplier Portal Pages
-import SupplierPortalLogin from "@/pages/supplier-portal/index";
-import SupplierPortalDashboard from "@/pages/supplier-portal/dashboard";
-import SupplierPortalRFQs from "@/pages/supplier-portal/rfqs/index";
-import SupplierPortalRFQDetail from "@/pages/supplier-portal/rfqs/[id]";
-import SupplierPortalOrders from "@/pages/supplier-portal/orders/index";
-import SupplierPortalOrderDetail from "@/pages/supplier-portal/orders/[id]";
+// Lazy load all supplier portal pages
+const SupplierPortalLogin = React.lazy(() => import("@/pages/supplier-portal/index"));
+const SupplierPortalDashboard = React.lazy(() => import("@/pages/supplier-portal/dashboard"));
+const SupplierPortalRFQs = React.lazy(() => import("@/pages/supplier-portal/rfqs/index"));
+const SupplierPortalRFQDetail = React.lazy(() => import("@/pages/supplier-portal/rfqs/[id]"));
+const SupplierPortalOrders = React.lazy(() => import("@/pages/supplier-portal/orders/index"));
+const SupplierPortalOrderDetail = React.lazy(() => import("@/pages/supplier-portal/orders/[id]"));
 
 export const supplierPortalRoutes: RouteConfig[] = [
   {
@@ -45,4 +46,3 @@ export const supplierPortalRoutes: RouteConfig[] = [
     protected: false,
   },
 ];
-

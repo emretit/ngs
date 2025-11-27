@@ -1,23 +1,24 @@
+import React from "react";
 import { RouteConfig } from "./types";
 
-// Satın alma modülü sayfaları
-import PurchaseManagement from "@/pages/PurchaseManagement";
-import PurchasingDashboard from "@/pages/purchasing/index";
-import PurchaseRequestsList from "@/pages/purchasing/requests/index";
-import NewPurchaseRequest from "@/pages/purchasing/requests/new";
-import PurchaseRequestDetail from "@/pages/purchasing/requests/[id]";
-import PurchaseOrdersList from "@/pages/purchasing/orders/index";
-import NewPurchaseOrder from "@/pages/purchasing/orders/new";
-import PurchaseOrderDetail from "@/pages/purchasing/orders/[id]";
-import ReceivePurchaseOrder from "@/pages/purchasing/orders/receive";
-import RFQsList from "@/pages/purchasing/rfqs/index";
-import NewRFQ from "@/pages/purchasing/rfqs/new";
-import RFQDetail from "@/pages/purchasing/rfqs/[id]";
-import GRNsList from "@/pages/purchasing/grns/index";
-import GRNDetail from "@/pages/purchasing/grns/[id]";
-import VendorInvoicesList from "@/pages/purchasing/invoices/index";
-import VendorInvoiceDetail from "@/pages/purchasing/invoices/[id]";
-import PurchasingSettings from "@/pages/purchasing/settings/index";
+// Lazy load all purchase pages
+const PurchaseManagement = React.lazy(() => import("@/pages/PurchaseManagement"));
+const PurchasingDashboard = React.lazy(() => import("@/pages/purchasing/index"));
+const PurchaseRequestsList = React.lazy(() => import("@/pages/purchasing/requests/index"));
+const NewPurchaseRequest = React.lazy(() => import("@/pages/purchasing/requests/new"));
+const PurchaseRequestDetail = React.lazy(() => import("@/pages/purchasing/requests/[id]"));
+const PurchaseOrdersList = React.lazy(() => import("@/pages/purchasing/orders/index"));
+const NewPurchaseOrder = React.lazy(() => import("@/pages/purchasing/orders/new"));
+const PurchaseOrderDetail = React.lazy(() => import("@/pages/purchasing/orders/[id]"));
+const ReceivePurchaseOrder = React.lazy(() => import("@/pages/purchasing/orders/receive"));
+const RFQsList = React.lazy(() => import("@/pages/purchasing/rfqs/index"));
+const NewRFQ = React.lazy(() => import("@/pages/purchasing/rfqs/new"));
+const RFQDetail = React.lazy(() => import("@/pages/purchasing/rfqs/[id]"));
+const GRNsList = React.lazy(() => import("@/pages/purchasing/grns/index"));
+const GRNDetail = React.lazy(() => import("@/pages/purchasing/grns/[id]"));
+const VendorInvoicesList = React.lazy(() => import("@/pages/purchasing/invoices/index"));
+const VendorInvoiceDetail = React.lazy(() => import("@/pages/purchasing/invoices/[id]"));
+const PurchasingSettings = React.lazy(() => import("@/pages/purchasing/settings/index"));
 
 export const purchaseRoutes: RouteConfig[] = [
   // Eski route (geriye dönük uyumluluk)

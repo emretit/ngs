@@ -1,8 +1,10 @@
-
-import Proposals from "@/pages/Proposals";
-import NewProposalCreate from "@/pages/NewProposalCreate";
-import ProposalEdit from "@/pages/ProposalEdit";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all proposal pages
+const Proposals = React.lazy(() => import("@/pages/Proposals"));
+const NewProposalCreate = React.lazy(() => import("@/pages/NewProposalCreate"));
+const ProposalEdit = React.lazy(() => import("@/pages/ProposalEdit"));
 
 // Define proposal routes
 export const proposalRoutes: RouteConfig[] = [

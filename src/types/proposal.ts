@@ -130,6 +130,11 @@ export interface Proposal extends Record<string, unknown> {
   // Relations
   customer?: Customer;
   employee?: Employee;
+  
+  // Revizyon sistemi
+  parent_proposal_id?: string; // Orijinal teklif ID'si (bu bir revizyon ise)
+  revision_number?: number; // Revizyon numarası (1, 2, 3...) - orijinal için null
+  history?: any; // Değişiklik geçmişi
 }
 
 export interface ProposalFormValues {

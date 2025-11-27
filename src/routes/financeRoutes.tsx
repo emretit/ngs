@@ -1,27 +1,29 @@
-
-import Cashflow from "@/pages/Cashflow";
-import CashflowExpenses from "@/pages/CashflowExpenses";
-import CashflowLoansAndChecks from "@/pages/CashflowLoansAndChecks";
-import CashflowChecksAndNotes from "@/pages/CashflowChecksAndNotes";
-import CashflowChecks from "@/pages/CashflowChecks";
-import CashflowNotes from "@/pages/CashflowNotes";
-import CashflowLoans from "@/pages/CashflowLoans";
-import CashflowBankAccounts from "@/pages/CashflowBankAccounts";
-import CashflowCategories from "@/pages/CashflowCategories";
-import PurchaseInvoices from "@/pages/PurchaseInvoices";
-import PurchaseInvoiceDetail from "@/pages/PurchaseInvoiceDetail";
-import SalesInvoices from "@/pages/SalesInvoices";
-import CreateSalesInvoice from "@/pages/CreateSalesInvoice";
-import SalesInvoiceDetail from "@/pages/SalesInvoiceDetail";
-import FinancialOverview from "@/pages/FinancialOverview";
-import CashAccountDetail from "@/pages/CashAccountDetail";
-import CreditCardDetail from "@/pages/CreditCardDetail";
-import BankAccountDetail from "@/pages/BankAccountDetail";
-import PartnerAccountDetail from "@/pages/PartnerAccountDetail";
-import EInvoiceProcess from "@/pages/EInvoiceProcess";
-import EInvoices from "@/pages/EInvoices";
-import BudgetManagement from "@/pages/BudgetManagement";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all finance pages
+const Cashflow = React.lazy(() => import("@/pages/Cashflow"));
+const CashflowExpenses = React.lazy(() => import("@/pages/CashflowExpenses"));
+const CashflowLoansAndChecks = React.lazy(() => import("@/pages/CashflowLoansAndChecks"));
+const CashflowChecksAndNotes = React.lazy(() => import("@/pages/CashflowChecksAndNotes"));
+const CashflowChecks = React.lazy(() => import("@/pages/CashflowChecks"));
+const CashflowNotes = React.lazy(() => import("@/pages/CashflowNotes"));
+const CashflowLoans = React.lazy(() => import("@/pages/CashflowLoans"));
+const CashflowBankAccounts = React.lazy(() => import("@/pages/CashflowBankAccounts"));
+const CashflowCategories = React.lazy(() => import("@/pages/CashflowCategories"));
+const PurchaseInvoices = React.lazy(() => import("@/pages/PurchaseInvoices"));
+const PurchaseInvoiceDetail = React.lazy(() => import("@/pages/PurchaseInvoiceDetail"));
+const SalesInvoices = React.lazy(() => import("@/pages/SalesInvoices"));
+const CreateSalesInvoice = React.lazy(() => import("@/pages/CreateSalesInvoice"));
+const SalesInvoiceDetail = React.lazy(() => import("@/pages/SalesInvoiceDetail"));
+const FinancialOverview = React.lazy(() => import("@/pages/FinancialOverview"));
+const CashAccountDetail = React.lazy(() => import("@/pages/CashAccountDetail"));
+const CreditCardDetail = React.lazy(() => import("@/pages/CreditCardDetail"));
+const BankAccountDetail = React.lazy(() => import("@/pages/BankAccountDetail"));
+const PartnerAccountDetail = React.lazy(() => import("@/pages/PartnerAccountDetail"));
+const EInvoiceProcess = React.lazy(() => import("@/pages/EInvoiceProcess"));
+const EInvoices = React.lazy(() => import("@/pages/EInvoices"));
+const BudgetManagement = React.lazy(() => import("@/pages/BudgetManagement"));
 
 // Define cashflow routes
 export const cashflowRoutes: RouteConfig[] = [

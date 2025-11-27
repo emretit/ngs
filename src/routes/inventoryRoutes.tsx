@@ -1,19 +1,22 @@
+import React from "react";
 import { RouteConfig } from "./types";
-import InventoryDashboard from "@/pages/inventory/InventoryDashboard.tsx";
-import Production from "@/pages/inventory/Production.tsx";
-import ProductionBOMNew from "@/pages/inventory/ProductionBOMNew.tsx";
-import ProductionBOMDetail from "@/pages/inventory/ProductionBOMDetail.tsx";
-import Warehouses from "@/pages/inventory/Warehouses.tsx";
-import WarehouseDetails from "@/pages/inventory/WarehouseDetails.tsx";
-import WarehouseNew from "@/pages/inventory/WarehouseNew.tsx";
-import WarehouseEdit from "@/pages/inventory/WarehouseEdit.tsx";
-import InventoryTransactions from "@/pages/inventory/InventoryTransactions.tsx";
-import InventoryCounts from "@/pages/inventory/InventoryCounts.tsx";
-import NewInventoryCount from "@/pages/inventory/transactions/sayim/new.tsx";
-import NewStockEntry from "@/pages/inventory/transactions/giris/new.tsx";
-import NewStockExit from "@/pages/inventory/transactions/cikis/new.tsx";
-import NewStockTransfer from "@/pages/inventory/transactions/transfer/new.tsx";
-import InventoryTransactionDetail from "@/pages/inventory/transactions/[id].tsx";
+
+// Lazy load all inventory pages
+const InventoryDashboard = React.lazy(() => import("@/pages/inventory/InventoryDashboard"));
+const Production = React.lazy(() => import("@/pages/inventory/Production"));
+const ProductionBOMNew = React.lazy(() => import("@/pages/inventory/ProductionBOMNew"));
+const ProductionBOMDetail = React.lazy(() => import("@/pages/inventory/ProductionBOMDetail"));
+const Warehouses = React.lazy(() => import("@/pages/inventory/Warehouses"));
+const WarehouseDetails = React.lazy(() => import("@/pages/inventory/WarehouseDetails"));
+const WarehouseNew = React.lazy(() => import("@/pages/inventory/WarehouseNew"));
+const WarehouseEdit = React.lazy(() => import("@/pages/inventory/WarehouseEdit"));
+const InventoryTransactions = React.lazy(() => import("@/pages/inventory/InventoryTransactions"));
+const InventoryCounts = React.lazy(() => import("@/pages/inventory/InventoryCounts"));
+const NewInventoryCount = React.lazy(() => import("@/pages/inventory/transactions/sayim/new"));
+const NewStockEntry = React.lazy(() => import("@/pages/inventory/transactions/giris/new"));
+const NewStockExit = React.lazy(() => import("@/pages/inventory/transactions/cikis/new"));
+const NewStockTransfer = React.lazy(() => import("@/pages/inventory/transactions/transfer/new"));
+const InventoryTransactionDetail = React.lazy(() => import("@/pages/inventory/transactions/[id]"));
 
 // Define inventory routes
 export const inventoryRoutes: RouteConfig[] = [

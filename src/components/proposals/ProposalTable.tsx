@@ -9,11 +9,21 @@ import ProposalTableSkeleton from "./table/ProposalTableSkeleton";
 import { useSortedProposals } from "./table/useSortedProposals";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { changeProposalStatus } from "@/services/crmService";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
 import { PdfTemplate } from "@/types/pdf-template";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import type { ProposalSortField, ProposalSortDirection } from "./table/types";
+import { createProposal, getProposalById } from "@/services/proposal/api/crudOperations";
 
 interface ProposalTableProps {
   proposals: Proposal[];
@@ -35,6 +45,7 @@ const ProposalTable = ({
   employeeFilter = "all"
 }: ProposalTableProps) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
   const [sortField, setSortField] = useState<ProposalSortField>("offer_date");
   const [sortDirection, setSortDirection] = useState<ProposalSortDirection>("desc");
@@ -43,6 +54,14 @@ const ProposalTable = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [proposalToDelete, setProposalToDelete] = useState<Proposal | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Copy/Revision states
+  const [isCopying, setIsCopying] = useState(false);
+  const [isCustomerSelectDialogOpen, setIsCustomerSelectDialogOpen] = useState(false);
+  const [proposalToCopy, setProposalToCopy] = useState<Proposal | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [customerSelectOpen, setCustomerSelectOpen] = useState(false);
+  const { customers } = useCustomerSelect();
 
   // Load templates when component mounts
   useEffect(() => {
@@ -133,6 +152,224 @@ const ProposalTable = ({
     setProposalToDelete(null);
   };
 
+  // Aynı müşteri için kopyalama - direkt kopyala
+  const handleCopySameCustomer = async (proposal: Proposal) => {
+    if (isCopying) return;
+    
+    setIsCopying(true);
+    try {
+      const { data: fullProposal, error: fetchError } = await getProposalById(proposal.id);
+      
+      if (fetchError || !fullProposal) {
+        throw new Error('Teklif detayları alınamadı');
+      }
+
+      const copyData = {
+        title: `${fullProposal.title} (Kopya)`,
+        subject: fullProposal.subject ? `${fullProposal.subject} (Kopya)` : undefined,
+        description: fullProposal.description,
+        customer_id: fullProposal.customer_id,
+        employee_id: fullProposal.employee_id,
+        opportunity_id: undefined,
+        status: 'draft' as ProposalStatus,
+        valid_until: undefined,
+        payment_terms: fullProposal.payment_terms,
+        delivery_terms: fullProposal.delivery_terms,
+        warranty_terms: fullProposal.warranty_terms,
+        price_terms: fullProposal.price_terms,
+        other_terms: fullProposal.other_terms,
+        notes: fullProposal.notes,
+        terms: fullProposal.terms,
+        currency: fullProposal.currency || 'TRY',
+        exchange_rate: (fullProposal as any).exchange_rate,
+        total_amount: fullProposal.total_amount,
+        items: fullProposal.items?.map(item => ({
+          ...item,
+          id: undefined
+        })) || [],
+      };
+
+      const { data: newProposal, error } = await createProposal(copyData as any);
+      
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      
+      toast.success("Teklif aynı müşteri için kopyalandı!");
+      
+      if (newProposal?.id) {
+        navigate(`/proposal/${newProposal.id}`);
+      }
+    } catch (error) {
+      console.error('Error copying proposal:', error);
+      toast.error("Teklif kopyalanırken bir hata oluştu.");
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
+  // Farklı müşteri için kopyalama - müşteri seçim dialog'unu aç
+  const handleCopyDifferentCustomer = (proposal: Proposal) => {
+    setProposalToCopy(proposal);
+    setSelectedCustomerId("");
+    setIsCustomerSelectDialogOpen(true);
+  };
+
+  // Farklı müşteri için kopyalama işlemini gerçekleştir
+  const handleConfirmCopyDifferentCustomer = async () => {
+    if (!proposalToCopy || !selectedCustomerId) {
+      toast.error("Lütfen bir müşteri seçin");
+      return;
+    }
+
+    if (isCopying) return;
+    
+    setIsCopying(true);
+    try {
+      const { data: fullProposal, error: fetchError } = await getProposalById(proposalToCopy.id);
+      
+      if (fetchError || !fullProposal) {
+        throw new Error('Teklif detayları alınamadı');
+      }
+
+      const copyData = {
+        title: `${fullProposal.title} (Kopya)`,
+        subject: fullProposal.subject ? `${fullProposal.subject} (Kopya)` : undefined,
+        description: fullProposal.description,
+        customer_id: selectedCustomerId,
+        employee_id: fullProposal.employee_id,
+        opportunity_id: undefined,
+        status: 'draft' as ProposalStatus,
+        valid_until: undefined,
+        payment_terms: fullProposal.payment_terms,
+        delivery_terms: fullProposal.delivery_terms,
+        warranty_terms: fullProposal.warranty_terms,
+        price_terms: fullProposal.price_terms,
+        other_terms: fullProposal.other_terms,
+        notes: fullProposal.notes,
+        terms: fullProposal.terms,
+        currency: fullProposal.currency || 'TRY',
+        exchange_rate: (fullProposal as any).exchange_rate,
+        total_amount: fullProposal.total_amount,
+        items: fullProposal.items?.map(item => ({
+          ...item,
+          id: undefined
+        })) || [],
+      };
+
+      const { data: newProposal, error } = await createProposal(copyData as any);
+      
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      
+      toast.success("Teklif farklı müşteri için kopyalandı!");
+      
+      setIsCustomerSelectDialogOpen(false);
+      setProposalToCopy(null);
+      setSelectedCustomerId("");
+      
+      if (newProposal?.id) {
+        navigate(`/proposal/${newProposal.id}`);
+      }
+    } catch (error) {
+      console.error('Error copying proposal:', error);
+      toast.error("Teklif kopyalanırken bir hata oluştu.");
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
+  const handleCustomerSelectDialogClose = () => {
+    setIsCustomerSelectDialogOpen(false);
+    setProposalToCopy(null);
+    setSelectedCustomerId("");
+  };
+
+  // Revizyon oluşturma fonksiyonu
+  const handleCreateRevision = async (proposal: Proposal) => {
+    if (isCopying) return;
+    
+    setIsCopying(true);
+    try {
+      // Önce tam proposal verisini çekelim
+      const { data: fullProposal, error: fetchError } = await getProposalById(proposal.id);
+      
+      if (fetchError || !fullProposal) {
+        throw new Error('Teklif detayları alınamadı');
+      }
+
+      // Orijinal teklifi belirle (bu zaten bir revizyon mu?)
+      const originalProposalId = (fullProposal as any).parent_proposal_id || fullProposal.id;
+      
+      // Mevcut teklifin numarasından base numarayı al
+      const baseNumber = fullProposal.number?.replace(/-R\d+$/, '') || fullProposal.number;
+      
+      // Mevcut revizyonların sayısını al (database fonksiyonu kullanarak)
+      const { data: revisionCount } = await import('@/integrations/supabase/client').then(m => 
+        m.supabase.rpc('get_next_revision_number', { p_parent_id: originalProposalId })
+      );
+      
+      const nextRevisionNumber = revisionCount || 1;
+      
+      // Revizyon için yeni proposal verisi hazırla
+      const revisionData = {
+        title: fullProposal.title, // Başlığı değiştirme
+        subject: fullProposal.subject,
+        description: fullProposal.description,
+        customer_id: fullProposal.customer_id,
+        employee_id: fullProposal.employee_id,
+        opportunity_id: fullProposal.opportunity_id, // Opportunity bağlantısını koru
+        status: 'draft' as ProposalStatus,
+        valid_until: undefined, // Yeni geçerlilik tarihi girilmeli
+        payment_terms: fullProposal.payment_terms,
+        delivery_terms: fullProposal.delivery_terms,
+        warranty_terms: fullProposal.warranty_terms,
+        price_terms: fullProposal.price_terms,
+        other_terms: fullProposal.other_terms,
+        notes: fullProposal.notes,
+        terms: fullProposal.terms,
+        currency: fullProposal.currency || 'TRY',
+        exchange_rate: (fullProposal as any).exchange_rate,
+        total_amount: fullProposal.total_amount,
+        items: fullProposal.items?.map(item => ({
+          ...item,
+          id: undefined
+        })) || [],
+        // Revizyon bilgileri
+        parent_proposal_id: originalProposalId,
+        revision_number: nextRevisionNumber,
+      };
+
+      const { data: newProposal, error } = await createProposal(revisionData as any);
+      
+      if (error) {
+        throw error;
+      }
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposals-infinite'] });
+      await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
+      
+      toast.success(`Revizyon ${nextRevisionNumber} başarıyla oluşturuldu!`);
+      
+      // Yeni oluşturulan revizyonu düzenleme sayfasına yönlendir
+      if (newProposal?.id) {
+        navigate(`/proposal/${newProposal.id}`);
+      }
+    } catch (error) {
+      console.error('Error creating revision:', error);
+      toast.error("Revizyon oluşturulurken bir hata oluştu.");
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
   const handleSort = (field: ProposalSortField) => {
     if (field === sortField) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -199,6 +436,9 @@ const ProposalTable = ({
               onSelect={onProposalSelect}
               onStatusChange={handleStatusUpdate}
               onDelete={handleDeleteProposalClick}
+              onCopySameCustomer={handleCopySameCustomer}
+              onCopyDifferentCustomer={handleCopyDifferentCustomer}
+              onCreateRevision={handleCreateRevision}
               templates={templates}
               onPdfPrint={handlePdfPrint}
             />
@@ -220,6 +460,99 @@ const ProposalTable = ({
       onCancel={handleDeleteProposalCancel}
       isLoading={isDeleting}
     />
+
+    {/* Farklı Müşteri için Müşteri Seçim Dialog'u */}
+    <Dialog open={isCustomerSelectDialogOpen} onOpenChange={handleCustomerSelectDialogClose}>
+      <DialogContent className="sm:max-w-[450px]">
+        <DialogHeader>
+          <DialogTitle>Müşteri Seçin</DialogTitle>
+          <DialogDescription>
+            Teklifi kopyalamak istediğiniz müşteriyi seçin
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="py-4">
+          <Label htmlFor="customer-select">Müşteri <span className="text-red-500">*</span></Label>
+          <Popover open={customerSelectOpen} onOpenChange={setCustomerSelectOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={customerSelectOpen}
+                className={cn(
+                  "w-full justify-between mt-2",
+                  !selectedCustomerId && "text-muted-foreground"
+                )}
+              >
+                {selectedCustomerId && customers
+                  ? (() => {
+                      const selected = customers.find(c => c.id === selectedCustomerId);
+                      return selected
+                        ? selected.company 
+                          ? `${selected.name} (${selected.company})`
+                          : selected.name
+                        : "Müşteri seçin...";
+                    })()
+                  : "Müşteri seçin..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Müşteri ara..." />
+                <CommandList>
+                  <CommandEmpty>Müşteri bulunamadı.</CommandEmpty>
+                  <CommandGroup>
+                    {customers?.map((customer) => (
+                      <CommandItem
+                        key={customer.id}
+                        value={`${customer.name} ${customer.company || ''}`}
+                        onSelect={() => {
+                          setSelectedCustomerId(customer.id);
+                          setCustomerSelectOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedCustomerId === customer.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-medium">{customer.name}</span>
+                          {customer.company && (
+                            <span className="text-sm text-muted-foreground">{customer.company}</span>
+                          )}
+                          {customer.email && (
+                            <span className="text-xs text-muted-foreground">{customer.email}</span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={handleCustomerSelectDialogClose}
+            disabled={isCopying}
+          >
+            İptal
+          </Button>
+          <Button
+            onClick={handleConfirmCopyDifferentCustomer}
+            disabled={isCopying || !selectedCustomerId}
+          >
+            {isCopying ? "Kopyalanıyor..." : "Kopyala"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </> );
 };
 

@@ -1,0 +1,644 @@
+/* ============================================
+   MODERN CALENDAR - Inspired by Fantastical, 
+   Calendars 5 & Sunrise Calendar
+   ============================================ */
+
+/* ============================================
+   CSS VARIABLES
+   ============================================ */
+.modern-calendar {
+  --cal-primary: #6366f1;
+  --cal-primary-light: rgba(99, 102, 241, 0.15);
+  --cal-accent: #f59e0b;
+  --cal-success: #10b981;
+  --cal-danger: #ef4444;
+  --cal-bg: #ffffff;
+  --cal-bg-secondary: #f8fafc;
+  --cal-border: #e2e8f0;
+  --cal-text: #1e293b;
+  --cal-text-muted: #64748b;
+  --cal-today-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
+  --cal-weekend-bg: rgba(248, 113, 113, 0.04);
+}
+
+.dark .modern-calendar {
+  --cal-bg: #0f172a;
+  --cal-bg-secondary: #1e293b;
+  --cal-border: #334155;
+  --cal-text: #f1f5f9;
+  --cal-text-muted: #94a3b8;
+  --cal-today-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+  --cal-weekend-bg: rgba(248, 113, 113, 0.08);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+.modern-calendar .rbc-calendar {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  background: transparent;
+}
+
+/* ============================================
+   MONTH VIEW - Calendars 5 Style
+   ============================================ */
+.modern-calendar .rbc-month-view {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--cal-bg);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 40px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* Day Header - Fantastical Style */
+.modern-calendar .rbc-month-header {
+  background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modern-calendar .rbc-header {
+  padding: 14px 8px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.7);
+  border: none !important;
+  background: transparent;
+}
+
+.modern-calendar .rbc-header + .rbc-header {
+  border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Weekend Headers - Sunrise Style */
+.modern-calendar .rbc-header:nth-child(6),
+.modern-calendar .rbc-header:nth-child(7) {
+  color: #f87171;
+}
+
+/* Month Rows */
+.modern-calendar .rbc-month-row {
+  border: none;
+  min-height: 110px;
+  overflow: visible;
+}
+
+.modern-calendar .rbc-month-row + .rbc-month-row {
+  border-top: 1px solid var(--cal-border);
+}
+
+/* Day Cells - Calendars 5 Style */
+.modern-calendar .rbc-day-bg {
+  transition: all 0.2s ease;
+  border: none !important;
+  background: var(--cal-bg);
+}
+
+.modern-calendar .rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid var(--cal-border) !important;
+}
+
+.modern-calendar .rbc-day-bg:hover {
+  background: var(--cal-primary-light);
+}
+
+/* Weekend Background */
+.modern-calendar .rbc-day-bg:nth-child(6),
+.modern-calendar .rbc-day-bg:nth-child(7) {
+  background: var(--cal-weekend-bg);
+}
+
+/* TODAY - Fantastical Style Highlight */
+.modern-calendar .rbc-today {
+  background: var(--cal-today-bg) !important;
+  position: relative;
+}
+
+.modern-calendar .rbc-today::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cal-primary), #a855f7, #ec4899);
+  border-radius: 0 0 2px 2px;
+}
+
+/* Off Range Days */
+.modern-calendar .rbc-off-range-bg {
+  background: var(--cal-bg-secondary);
+  opacity: 0.6;
+}
+
+.modern-calendar .rbc-off-range {
+  color: var(--cal-text-muted);
+  opacity: 0.5;
+}
+
+/* Date Cell - Large Numbers like Calendars 5 */
+.modern-calendar .rbc-date-cell {
+  padding: 8px 10px;
+  text-align: right;
+}
+
+.modern-calendar .rbc-date-cell > a,
+.modern-calendar .rbc-date-cell > button {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cal-text);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  display: inline-block;
+}
+
+.modern-calendar .rbc-date-cell > a:hover,
+.modern-calendar .rbc-date-cell > button:hover {
+  background: var(--cal-primary-light);
+}
+
+/* Today's Date Number - Sunrise Style */
+.modern-calendar .rbc-date-cell.rbc-now > a,
+.modern-calendar .rbc-date-cell.rbc-now > button {
+  background: linear-gradient(135deg, var(--cal-primary) 0%, #8b5cf6 100%);
+  color: white !important;
+  font-weight: 700;
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+/* ============================================
+   EVENTS - Sunrise Calendar Style
+   ============================================ */
+.modern-calendar .rbc-event {
+  padding: 2px 8px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  margin: 1px 3px !important;
+  line-height: 1.4 !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Event Shine Effect */
+.modern-calendar .rbc-event::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.modern-calendar .rbc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.modern-calendar .rbc-event:active {
+  transform: scale(0.98);
+}
+
+.modern-calendar .rbc-event-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1;
+}
+
+/* Show More - Fantastical Style */
+.modern-calendar .rbc-show-more {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cal-primary);
+  background: var(--cal-primary-light);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin: 2px 3px;
+  display: inline-block;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.modern-calendar .rbc-show-more:hover {
+  background: var(--cal-primary);
+  color: white;
+}
+
+/* Row Content */
+.modern-calendar .rbc-row-content {
+  z-index: 1;
+}
+
+.modern-calendar .rbc-row-segment {
+  padding: 0 2px 2px;
+}
+
+/* ============================================
+   WEEK VIEW - Fantastical Style
+   ============================================ */
+.modern-calendar .rbc-time-view {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--cal-bg);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 40px -10px rgba(0, 0, 0, 0.1);
+}
+
+/* Time Header */
+.modern-calendar .rbc-time-header {
+  border-bottom: none;
+}
+
+.modern-calendar .rbc-time-header-content {
+  border-left: none;
+}
+
+.modern-calendar .rbc-time-header-gutter {
+  background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+  min-width: 60px;
+}
+
+/* Day Headers - Fantastical Dark Style */
+.modern-calendar .rbc-time-header .rbc-header {
+  background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+  padding: 12px 8px;
+  border: none !important;
+  min-width: 100px;
+}
+
+.modern-calendar .rbc-time-header .rbc-header a,
+.modern-calendar .rbc-time-header .rbc-header button {
+  color: rgba(255, 255, 255, 0.9) !important;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.modern-calendar .rbc-time-header .rbc-header a:hover,
+.modern-calendar .rbc-time-header .rbc-header button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Today Header - Sunrise Accent */
+.modern-calendar .rbc-time-header .rbc-header.rbc-today {
+  background: linear-gradient(135deg, var(--cal-primary) 0%, #8b5cf6 100%);
+}
+
+.modern-calendar .rbc-time-header .rbc-header.rbc-today a,
+.modern-calendar .rbc-time-header .rbc-header.rbc-today button {
+  color: white !important;
+}
+
+.modern-calendar .rbc-time-header .rbc-header + .rbc-header {
+  border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Time Content */
+.modern-calendar .rbc-time-content {
+  border-top: none;
+  background: var(--cal-bg);
+}
+
+.modern-calendar .rbc-time-content > * + * > * {
+  border-left: 1px solid var(--cal-border);
+}
+
+/* Time Slots - Compact */
+.modern-calendar .rbc-timeslot-group {
+  border-bottom: 1px solid var(--cal-border);
+  min-height: 48px !important;
+}
+
+.modern-calendar .rbc-time-slot {
+  border-top: 1px dashed rgba(0, 0, 0, 0.05);
+  min-height: 24px !important;
+}
+
+/* Time Gutter - Calendars 5 Style */
+.modern-calendar .rbc-time-gutter {
+  background: var(--cal-bg-secondary);
+  min-width: 60px;
+}
+
+.modern-calendar .rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: none;
+}
+
+.modern-calendar .rbc-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cal-text-muted);
+  padding: 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Day Column */
+.modern-calendar .rbc-day-slot {
+  position: relative;
+}
+
+.modern-calendar .rbc-day-slot .rbc-time-slot {
+  border-top: 1px dashed rgba(0, 0, 0, 0.04);
+}
+
+.modern-calendar .rbc-day-slot.rbc-today {
+  background: var(--cal-today-bg);
+}
+
+/* Events in Week/Day View */
+.modern-calendar .rbc-day-slot .rbc-event {
+  border-radius: 8px !important;
+  border-left: 4px solid currentColor !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  background-color: var(--cal-bg) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.modern-calendar .rbc-day-slot .rbc-event::before {
+  display: none;
+}
+
+.modern-calendar .rbc-day-slot .rbc-event-label {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+
+.modern-calendar .rbc-day-slot .rbc-event-content {
+  font-weight: 500;
+  color: var(--cal-text);
+}
+
+/* Current Time Indicator - Fantastical Style */
+.modern-calendar .rbc-current-time-indicator {
+  background: linear-gradient(90deg, var(--cal-danger), #f97316);
+  height: 2px;
+  z-index: 10;
+}
+
+.modern-calendar .rbc-current-time-indicator::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cal-danger);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.1);
+  }
+}
+
+/* All Day Events */
+.modern-calendar .rbc-allday-cell {
+  padding: 4px;
+  background: var(--cal-bg-secondary);
+  min-height: 36px;
+}
+
+.modern-calendar .rbc-row-bg {
+  min-height: 36px;
+}
+
+/* ============================================
+   DAY VIEW - Sunrise Style
+   ============================================ */
+.modern-calendar .rbc-time-view .rbc-time-header-cell-single-day .rbc-header {
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%);
+  padding: 16px;
+}
+
+.modern-calendar .rbc-time-view .rbc-time-header-cell-single-day .rbc-header.rbc-today {
+  background: linear-gradient(135deg, var(--cal-accent) 0%, #f97316 100%);
+}
+
+/* ============================================
+   AGENDA VIEW - Calendars 5 List Style
+   ============================================ */
+.modern-calendar .rbc-agenda-view {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--cal-bg);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 40px -10px rgba(0, 0, 0, 0.1);
+}
+
+.modern-calendar .rbc-agenda-view table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Agenda Header */
+.modern-calendar .rbc-agenda-view table thead tr th {
+  padding: 14px 16px;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.8);
+  background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+  border: none;
+}
+
+/* Agenda Rows */
+.modern-calendar .rbc-agenda-view table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.modern-calendar .rbc-agenda-view table tbody tr:hover {
+  background: var(--cal-primary-light);
+}
+
+.modern-calendar .rbc-agenda-view table tbody tr td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--cal-border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+/* Date Column */
+.modern-calendar .rbc-agenda-date-cell {
+  font-weight: 600;
+  color: var(--cal-text);
+  white-space: nowrap;
+  min-width: 180px;
+}
+
+/* Time Column */
+.modern-calendar .rbc-agenda-time-cell {
+  color: var(--cal-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  min-width: 100px;
+}
+
+/* Event Column */
+.modern-calendar .rbc-agenda-event-cell {
+  color: var(--cal-text);
+  font-weight: 500;
+}
+
+/* Empty Message */
+.modern-calendar .rbc-agenda-empty {
+  text-align: center;
+  padding: 48px;
+  color: var(--cal-text-muted);
+  font-size: 14px;
+}
+
+/* ============================================
+   TOOLBAR - Hidden (custom header)
+   ============================================ */
+.modern-calendar .rbc-toolbar {
+  display: none;
+}
+
+/* ============================================
+   OVERLAY & POPUPS - Fantastical Style
+   ============================================ */
+.modern-calendar .rbc-overlay {
+  background: var(--cal-bg);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 20px 40px -10px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  z-index: 50;
+  min-width: 220px;
+  backdrop-filter: blur(10px);
+}
+
+.modern-calendar .rbc-overlay-header {
+  font-weight: 700;
+  font-size: 13px;
+  padding: 12px;
+  color: white;
+  background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+  border-radius: 8px;
+  margin: -8px -8px 8px;
+}
+
+/* Selected Event */
+.modern-calendar .rbc-selected {
+  box-shadow: 0 0 0 2px var(--cal-primary) !important;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .modern-calendar .rbc-month-view,
+  .modern-calendar .rbc-time-view,
+  .modern-calendar .rbc-agenda-view {
+    border-radius: 12px;
+  }
+  
+  .modern-calendar .rbc-header {
+    padding: 10px 4px;
+    font-size: 9px;
+  }
+  
+  .modern-calendar .rbc-event {
+    font-size: 9px !important;
+    padding: 1px 4px !important;
+  }
+  
+  .modern-calendar .rbc-date-cell {
+    padding: 4px;
+  }
+  
+  .modern-calendar .rbc-date-cell > a,
+  .modern-calendar .rbc-date-cell > button {
+    font-size: 12px;
+    padding: 2px 4px;
+  }
+  
+  .modern-calendar .rbc-date-cell.rbc-now > a,
+  .modern-calendar .rbc-date-cell.rbc-now > button {
+    min-width: 24px;
+    height: 24px;
+  }
+  
+  .modern-calendar .rbc-month-row {
+    min-height: 80px;
+  }
+  
+  .modern-calendar .rbc-time-header .rbc-header {
+    min-width: 60px;
+    padding: 8px 4px;
+  }
+  
+  .modern-calendar .rbc-time-gutter {
+    min-width: 45px;
+  }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modern-calendar .rbc-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Smooth scroll for time views */
+.modern-calendar .rbc-time-content {
+  scroll-behavior: smooth;
+}

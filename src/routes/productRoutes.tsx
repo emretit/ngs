@@ -1,8 +1,10 @@
-
-import Products from "@/pages/Products";
-import ProductForm from "@/pages/ProductForm";
-import ProductDetails from "@/pages/ProductDetails";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all product pages
+const Products = React.lazy(() => import("@/pages/Products"));
+const ProductForm = React.lazy(() => import("@/pages/ProductForm"));
+const ProductDetails = React.lazy(() => import("@/pages/ProductDetails"));
 
 // Define product routes
 export const productRoutes: RouteConfig[] = [

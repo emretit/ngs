@@ -1,9 +1,11 @@
-
-import Orders from "@/pages/Orders";
-import OrdersList from "@/pages/OrdersList";
-import PurchaseManagement from "@/pages/PurchaseManagement";
-import NewOrderCreate from "@/pages/NewOrderCreate";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all order pages
+const Orders = React.lazy(() => import("@/pages/Orders"));
+const OrdersList = React.lazy(() => import("@/pages/OrdersList"));
+const PurchaseManagement = React.lazy(() => import("@/pages/PurchaseManagement"));
+const NewOrderCreate = React.lazy(() => import("@/pages/NewOrderCreate"));
 
 // Define order routes
 export const orderRoutes: RouteConfig[] = [

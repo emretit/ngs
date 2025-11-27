@@ -1,13 +1,15 @@
-
-import Dashboard from "@/pages/Dashboard";
-import CrmDashboard from "@/pages/crm/CrmDashboard";
-import ExpenseManagement from "@/pages/ExpenseManagement";
-import InvestmentManagement from "@/pages/InvestmentManagement";
-import FinancingManagement from "@/pages/FinancingManagement";
-import OtherActivitiesManagement from "@/pages/OtherActivitiesManagement";
-import Reports from "@/pages/Reports";
-import GeneralCalendar from "@/pages/GeneralCalendar";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all dashboard pages
+const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
+const CrmDashboard = React.lazy(() => import("@/pages/crm/CrmDashboard"));
+const ExpenseManagement = React.lazy(() => import("@/pages/ExpenseManagement"));
+const InvestmentManagement = React.lazy(() => import("@/pages/InvestmentManagement"));
+const FinancingManagement = React.lazy(() => import("@/pages/FinancingManagement"));
+const OtherActivitiesManagement = React.lazy(() => import("@/pages/OtherActivitiesManagement"));
+const Reports = React.lazy(() => import("@/pages/Reports"));
+const GeneralCalendar = React.lazy(() => import("@/pages/GeneralCalendar"));
 
 export const dashboardRoutes: RouteConfig[] = [
   { 

@@ -1,3 +1,4 @@
+import React from "react";
 import { RouteConfig } from "./types";
 import { publicRoutes } from "./publicRoutes";
 import { dashboardRoutes } from "./dashboardRoutes";
@@ -17,14 +18,12 @@ import { vehicleRoutes } from "./vehicleRoutes";
 import { adminRoutes } from "./adminRoutes";
 import { supplierPortalRoutes } from "./supplierPortalRoutes";
 
-
-import Deliveries from "@/pages/Deliveries";
-import Returns from "@/pages/Returns";
-import InvoiceManagement from "@/pages/InvoiceManagement";
-import ModuleTreePage from "@/pages/ModuleTreePage";
-import Profile from "@/pages/Profile";
-
-
+// Lazy load remaining pages
+const Deliveries = React.lazy(() => import("@/pages/Deliveries"));
+const Returns = React.lazy(() => import("@/pages/Returns"));
+const InvoiceManagement = React.lazy(() => import("@/pages/InvoiceManagement"));
+const ModuleTreePage = React.lazy(() => import("@/pages/ModuleTreePage"));
+const Profile = React.lazy(() => import("@/pages/Profile"));
 
 export const appRoutes: RouteConfig[] = [
   ...publicRoutes,

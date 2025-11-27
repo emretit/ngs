@@ -1,9 +1,11 @@
-
-import Activities from "@/pages/Activities";
-import NewActivity from "@/pages/NewActivity";
-import Opportunities from "@/pages/crm/Opportunities";
-import PurchaseManagement from "@/pages/PurchaseManagement";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all CRM pages
+const Activities = React.lazy(() => import("@/pages/Activities"));
+const NewActivity = React.lazy(() => import("@/pages/NewActivity"));
+const Opportunities = React.lazy(() => import("@/pages/crm/Opportunities"));
+const PurchaseManagement = React.lazy(() => import("@/pages/PurchaseManagement"));
 
 // Define CRM and workflow routes
 export const crmRoutes: RouteConfig[] = [

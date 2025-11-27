@@ -1,26 +1,28 @@
-
-import NewServiceRequest from "@/pages/service/NewServiceRequest";
-import ServiceEdit from "@/pages/service/ServiceEdit";
-import ServiceDetail from "@/pages/service/ServiceDetail";
-import ServiceReports from "@/pages/service/ServiceReports";
-import ServiceSettings from "@/pages/service/ServiceSettings";
-import ServiceSLAView from "@/pages/service/ServiceSLAView";
-import ServiceMaintenanceView from "@/pages/service/ServiceMaintenanceView";
-import ServicePerformanceView from "@/pages/service/ServicePerformanceView";
-import ServiceCostsView from "@/pages/service/ServiceCostsView";
-import ServicePartsView from "@/pages/service/ServicePartsView";
-import ServiceSatisfactionView from "@/pages/service/ServiceSatisfactionView";
-import ServiceAnalyticsView from "@/pages/service/ServiceAnalyticsView";
-import ServiceWorkOrders from "@/pages/service/ServiceWorkOrders";
-import ServiceAssets from "@/pages/service/ServiceAssets";
-import ServiceContracts from "@/pages/service/ServiceContracts";
-import ServiceWarranties from "@/pages/service/ServiceWarranties";
-import ServiceHistory from "@/pages/service/ServiceHistory";
-import ServiceDashboard from "@/pages/service/ServiceDashboard";
-import ServiceManagement from "@/pages/service/ServiceManagement";
-import ServiceMapPage from "@/pages/service/ServiceMapPage";
-import ServiceRedirect from "@/pages/service/ServiceRedirect";
+import React from "react";
 import { RouteConfig } from "./types";
+
+// Lazy load all service pages
+const NewServiceRequest = React.lazy(() => import("@/pages/service/NewServiceRequest"));
+const ServiceEdit = React.lazy(() => import("@/pages/service/ServiceEdit"));
+const ServiceDetail = React.lazy(() => import("@/pages/service/ServiceDetail"));
+const ServiceReports = React.lazy(() => import("@/pages/service/ServiceReports"));
+const ServiceSettings = React.lazy(() => import("@/pages/service/ServiceSettings"));
+const ServiceSLAView = React.lazy(() => import("@/pages/service/ServiceSLAView"));
+const ServiceMaintenanceView = React.lazy(() => import("@/pages/service/ServiceMaintenanceView"));
+const ServicePerformanceView = React.lazy(() => import("@/pages/service/ServicePerformanceView"));
+const ServiceCostsView = React.lazy(() => import("@/pages/service/ServiceCostsView"));
+const ServicePartsView = React.lazy(() => import("@/pages/service/ServicePartsView"));
+const ServiceSatisfactionView = React.lazy(() => import("@/pages/service/ServiceSatisfactionView"));
+const ServiceAnalyticsView = React.lazy(() => import("@/pages/service/ServiceAnalyticsView"));
+const ServiceWorkOrders = React.lazy(() => import("@/pages/service/ServiceWorkOrders"));
+const ServiceAssets = React.lazy(() => import("@/pages/service/ServiceAssets"));
+const ServiceContracts = React.lazy(() => import("@/pages/service/ServiceContracts"));
+const ServiceWarranties = React.lazy(() => import("@/pages/service/ServiceWarranties"));
+const ServiceHistory = React.lazy(() => import("@/pages/service/ServiceHistory"));
+const ServiceDashboard = React.lazy(() => import("@/pages/service/ServiceDashboard"));
+const ServiceManagement = React.lazy(() => import("@/pages/service/ServiceManagement"));
+const ServiceMapPage = React.lazy(() => import("@/pages/service/ServiceMapPage"));
+const ServiceRedirect = React.lazy(() => import("@/pages/service/ServiceRedirect"));
 
 // Define service routes
 export const serviceRoutes: RouteConfig[] = [

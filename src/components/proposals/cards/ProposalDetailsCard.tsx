@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { CalendarDays, ArrowRightLeft, RefreshCcw } from "lucide-react";
+import { CalendarDays, ArrowRightLeft, RefreshCcw, GitBranch } from "lucide-react";
 import { ProposalStatus, proposalStatusLabels, proposalStatusColors } from "@/types/proposal";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
 
@@ -15,6 +15,7 @@ interface ProposalDetailsCardProps {
     offer_date?: Date;
     validity_date?: Date;
     offer_number?: string;
+    revision_number?: number | null;
     status: ProposalStatus;
     currency?: string;
     exchange_rate?: number;
@@ -105,8 +106,8 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
           </div>
         </div>
 
-        {/* Teklif No ve Durum */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Teklif No, Revizyon No ve Durum */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
             <Label htmlFor="offer_number" className="text-sm font-medium text-gray-700">Teklif No</Label>
             <Input
@@ -115,6 +116,25 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
               onChange={(e) => handleFieldChange('offer_number', e.target.value)}
               className="mt-1 h-8 text-sm"
             />
+          </div>
+          <div>
+            <Label htmlFor="revision_number" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+              <GitBranch className="h-3.5 w-3.5 text-orange-500" />
+              Revizyon No
+            </Label>
+            <div className="relative mt-1">
+              <Input
+                id="revision_number"
+                value={`R${formData.revision_number ?? 0}`}
+                readOnly
+                disabled
+                className={`h-8 text-sm font-medium ${
+                  formData.revision_number 
+                    ? 'bg-orange-50 text-orange-700 border-orange-200' 
+                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                }`}
+              />
+            </div>
           </div>
           <div>
             <Label htmlFor="status" className="text-sm font-medium text-gray-700">Teklif Durumu</Label>

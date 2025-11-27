@@ -1,7 +1,8 @@
+import { ComponentType, LazyExoticComponent } from "react";
 
 export interface RouteConfig {
   path: string;
-  component: any; // Using any for component type to avoid excessive prop passing
+  component: ComponentType<any> | LazyExoticComponent<ComponentType<any>>;
   protected?: boolean;
   requiredModule?: string;
   isAdmin?: boolean;

@@ -4,9 +4,10 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { Edit2, MoreHorizontal, Trash2, Printer, ShoppingCart, Receipt } from "lucide-react";
+import { Edit2, MoreHorizontal, Trash2, Printer, ShoppingCart, Receipt, Copy, FileEdit, Users, UserPlus, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { ProposalStatusCell } from "./ProposalStatusCell";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
@@ -26,6 +27,9 @@ interface ProposalTableRowProps {
   onSelect: (proposal: Proposal) => void;
   onStatusChange: (proposalId: string, newStatus: ProposalStatus) => void;
   onDelete: (proposal: Proposal) => void;
+  onCopySameCustomer?: (proposal: Proposal) => void;
+  onCopyDifferentCustomer?: (proposal: Proposal) => void;
+  onCreateRevision?: (proposal: Proposal) => void;
   templates: any[];
   onPdfPrint: (proposal: Proposal, templateId: string) => void;
   isLoading?: boolean;
@@ -38,6 +42,9 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
   onSelect,
   onStatusChange,
   onDelete,
+  onCopySameCustomer,
+  onCopyDifferentCustomer,
+  onCreateRevision,
   templates,
   onPdfPrint,
   isLoading = false
@@ -139,7 +146,22 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
       className="h-16 cursor-pointer transition-colors hover:bg-gray-50"
       onClick={() => onSelect(proposal)}
     >
-      <TableCell className="p-4 font-medium text-sm">#{proposal.number}</TableCell>
+      <TableCell className="p-4">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm">#{proposal.number}</span>
+          <Badge 
+            variant="outline" 
+            className={`text-[10px] px-1.5 py-0 ${
+              (proposal as any).revision_number 
+                ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700'
+                : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700'
+            }`}
+          >
+            <GitBranch className="h-3 w-3 mr-0.5" />
+            R{(proposal as any).revision_number || 0}
+          </Badge>
+        </div>
+      </TableCell>
       <TableCell className="p-4">
         {proposal.customer ? (
           <div className="flex flex-col space-y-0">
@@ -254,6 +276,56 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
                   )}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Kopyala ve Revizyon İşlemleri */}
+              <DropdownMenuLabel>Kopyala</DropdownMenuLabel>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Copy className="h-4 w-4 mr-2 text-blue-500" />
+                  <span>Teklifi Kopyala</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-48">
+                  {onCopySameCustomer && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCopySameCustomer(proposal);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <Users className="h-4 w-4 mr-2 text-blue-500" />
+                      <span>Aynı Müşteri İçin</span>
+                    </DropdownMenuItem>
+                  )}
+                  {onCopyDifferentCustomer && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCopyDifferentCustomer(proposal);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2 text-green-500" />
+                      <span>Farklı Müşteri İçin</span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              
+              {onCreateRevision && (
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateRevision(proposal);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <FileEdit className="h-4 w-4 mr-2 text-orange-500" />
+                  <span>Revizyon Oluştur</span>
+                </DropdownMenuItem>
+              )}
               
               <DropdownMenuSeparator />
               

@@ -45,6 +45,7 @@ interface ProposalData {
   subject: string;
   offer_date: Date;
   offer_number: string;
+  revision_number: number; // Revizyon numarası - yeni teklif için 0
   validity_date: Date | undefined;
   prepared_by: string;
   employee_id: string;
@@ -119,6 +120,7 @@ const NewProposalCreate = () => {
     subject: "",
     offer_date: new Date(),
     offer_number: `TKF-${Date.now().toString().slice(-6)}`,
+    revision_number: 0, // Yeni teklif R0 olarak başlar
     validity_date: undefined,
     prepared_by: "",
     employee_id: "",
@@ -680,7 +682,16 @@ const NewProposalCreate = () => {
         await queryClient.refetchQueries({ queryKey: ['proposals-infinite'] });
         
         toast.success(status === 'draft' ? "Teklif taslak olarak kaydedildi" : "Teklif başarıyla oluşturuldu");
+        
+        // Yeni oluşturulan teklifi düzenleme sayfasına yönlendir
+        if (result.data?.id) {
+          navigate(`/proposal/${result.data.id}`);
+        } else if ((result as any).id) {
+          navigate(`/proposal/${(result as any).id}`);
+        } else {
+          // Eğer ID bulunamazsa, teklifler sayfasına dön
         navigate("/proposals");
+        }
       }
     } catch (error) {
       console.error('Error saving proposal:', error);

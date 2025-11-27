@@ -99,10 +99,15 @@ export async function createProposal(proposal: Partial<Proposal>) {
   }
 
   // Create history entry for new proposal
+  const isRevision = !!(proposal as any).parent_proposal_id;
+  const revNum = (proposal as any).revision_number;
+  
   const historyEntry = {
-    type: 'created',
-    title: 'Teklif Oluşturuldu',
-    description: `#${proposal.number || 'Yeni'} numaralı teklif oluşturuldu`,
+    type: isRevision ? 'revision_created' : 'created',
+    title: isRevision ? `Revizyon ${revNum} Oluşturuldu` : 'Teklif Oluşturuldu',
+    description: isRevision 
+      ? `Bu teklif, orijinal teklifin ${revNum}. revizyonu olarak oluşturuldu`
+      : `#${proposal.number || 'Yeni'} numaralı teklif oluşturuldu`,
     timestamp: new Date().toISOString(),
     user: userName,
     changes: []
@@ -134,7 +139,29 @@ export async function createProposal(proposal: Partial<Proposal>) {
     }
 
     // Generate proposal number
-    const proposalNumber = await generateProposalNumber();
+    // Eğer bu bir revizyon ise, numarayı farklı formatla (örn: TKF-001-R1)
+    const parentProposalId = (proposal as any).parent_proposal_id;
+    const revisionNumber = (proposal as any).revision_number;
+    
+    let proposalNumber: string;
+    if (parentProposalId && revisionNumber) {
+      // Orijinal teklifin numarasını al
+      const { data: parentProposal } = await supabase
+        .from('proposals')
+        .select('number')
+        .eq('id', parentProposalId)
+        .single();
+      
+      if (parentProposal?.number) {
+        // Orijinal numaradan base numarayı al (eğer zaten revizyon ise -R kısmını kaldır)
+        const baseNumber = parentProposal.number.replace(/-R\d+$/, '');
+        proposalNumber = `${baseNumber}-R${revisionNumber}`;
+      } else {
+        proposalNumber = await generateProposalNumber();
+      }
+    } else {
+      proposalNumber = await generateProposalNumber();
+    }
     
     // Create proposal data object with required fields
     const insertData: {
@@ -169,6 +196,8 @@ export async function createProposal(proposal: Partial<Proposal>) {
       history?: Json;
       created_at: string;
       updated_at: string;
+      parent_proposal_id?: string;
+      revision_number?: number;
     } = {
       title: proposal.title || "Untitled Proposal",
       description: proposal.description,
@@ -198,7 +227,9 @@ export async function createProposal(proposal: Partial<Proposal>) {
       total_amount: proposal.total_amount || 0,
       history: JSON.stringify([historyEntry]) as unknown as Json,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      parent_proposal_id: parentProposalId || null,
+      revision_number: revisionNumber || null
     };
     
     // Handle complex types by proper serialization

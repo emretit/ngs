@@ -5747,8 +5747,10 @@ export type Database = {
           offer_date: string | null
           opportunity_id: string | null
           other_terms: string | null
+          parent_proposal_id: string | null
           payment_terms: string | null
           price_terms: string | null
+          revision_number: number | null
           selected_delivery_terms: string[] | null
           selected_other_terms: string[] | null
           selected_payment_terms: string[] | null
@@ -5781,8 +5783,10 @@ export type Database = {
           offer_date?: string | null
           opportunity_id?: string | null
           other_terms?: string | null
+          parent_proposal_id?: string | null
           payment_terms?: string | null
           price_terms?: string | null
+          revision_number?: number | null
           selected_delivery_terms?: string[] | null
           selected_other_terms?: string[] | null
           selected_payment_terms?: string[] | null
@@ -5815,8 +5819,10 @@ export type Database = {
           offer_date?: string | null
           opportunity_id?: string | null
           other_terms?: string | null
+          parent_proposal_id?: string | null
           payment_terms?: string | null
           price_terms?: string | null
+          revision_number?: number | null
           selected_delivery_terms?: string[] | null
           selected_other_terms?: string[] | null
           selected_payment_terms?: string[] | null
@@ -5851,6 +5857,13 @@ export type Database = {
             columns: ["opportunity_id"]
             isOneToOne: false
             referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_parent_proposal_id_fkey"
+            columns: ["parent_proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
         ]
@@ -10752,6 +10765,10 @@ export type Database = {
           name: string
           postal_code: string
         }[]
+      }
+      get_next_revision_number: {
+        Args: { p_parent_id: string }
+        Returns: number
       }
       get_or_create_warehouse_stock: {
         Args: {

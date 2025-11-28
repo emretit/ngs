@@ -553,10 +553,6 @@ serve(async (req: Request) => {
         InvoiceNumber: nilveraData.InvoiceNumber || nilveraData.invoiceNumber || nilveraData.ID,
         IssueDate: nilveraData.IssueDate || nilveraData.issueDate || nilveraData.InvoiceDate,
         CurrencyCode: nilveraData.CurrencyCode || nilveraData.currency || 'TRY',
-        // Financial amounts - use calculated/parsed values
-        TaxExclusiveAmount: finalSubtotal,
-        TaxTotalAmount: finalTaxTotal,
-        PayableAmount: finalTotal,
         // Additional fields from original response
         ...nilveraData,
         // Override with parsed/calculated values (these come after spread to ensure they take precedence)

@@ -20,7 +20,7 @@ import { useVehicleContracts } from '@/hooks/useVehicleContracts';
 
 export default function ContractsDashboard() {
   const navigate = useNavigate();
-  const { contracts: vehicleContracts = [], stats: vehicleStats } = useVehicleContracts();
+  const { data: vehicleContracts = [], isLoading } = useVehicleContracts();
 
   // Toplam istatistikler
   const stats = useMemo(() => {

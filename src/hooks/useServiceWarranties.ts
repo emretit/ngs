@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tantml:react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentUser } from './useCurrentUser';
 import { toast } from '@/hooks/use-toast';
@@ -78,7 +78,7 @@ export function useServiceWarranties() {
   // Create warranty
   const createWarranty = useMutation({
     mutationFn: async (newWarranty: Partial<ServiceWarranty>) => {
-      if (!userData?.company_id || !userData?.user_id) {
+      if (!userData?.company_id || !userData?.id) {
         throw new Error('User data not available');
       }
 
@@ -87,8 +87,8 @@ export function useServiceWarranties() {
         .insert({
           ...newWarranty,
           company_id: userData.company_id,
-          created_by: userData.user_id,
-          updated_by: userData.user_id,
+          created_by: userData.id,
+          updated_by: userData.id,
         })
         .select()
         .single();
@@ -115,7 +115,7 @@ export function useServiceWarranties() {
   // Update warranty
   const updateWarranty = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ServiceWarranty> & { id: string }) => {
-      if (!userData?.user_id) {
+      if (!userData?.id) {
         throw new Error('User data not available');
       }
 
@@ -123,7 +123,7 @@ export function useServiceWarranties() {
         .from('service_warranties')
         .update({
           ...updates,
-          updated_by: userData.user_id,
+          updated_by: userData.id,
         })
         .eq('id', id)
         .select()

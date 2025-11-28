@@ -64,7 +64,7 @@ export function useServiceEquipment() {
   // Create equipment
   const createEquipment = useMutation({
     mutationFn: async (newEquipment: Partial<ServiceEquipment>) => {
-      if (!userData?.company_id || !userData?.user_id) {
+      if (!userData?.company_id || !userData?.id) {
         throw new Error('User data not available');
       }
 
@@ -73,8 +73,8 @@ export function useServiceEquipment() {
         .insert({
           ...newEquipment,
           company_id: userData.company_id,
-          created_by: userData.user_id,
-          updated_by: userData.user_id,
+          created_by: userData.id,
+          updated_by: userData.id,
         })
         .select()
         .single();
@@ -101,7 +101,7 @@ export function useServiceEquipment() {
   // Update equipment
   const updateEquipment = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<ServiceEquipment> & { id: string }) => {
-      if (!userData?.user_id) {
+      if (!userData?.id) {
         throw new Error('User data not available');
       }
 
@@ -109,7 +109,7 @@ export function useServiceEquipment() {
         .from('service_equipment')
         .update({
           ...updates,
-          updated_by: userData.user_id,
+          updated_by: userData.id,
         })
         .eq('id', id)
         .select()

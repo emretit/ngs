@@ -172,7 +172,7 @@ const RevisionInfoCard: React.FC<RevisionInfoCardProps> = ({
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          <span>{formatDateToLocalString(rev.created_at, 'dd MMM yyyy')}</span>
+                          <span>{formatDateToLocalString(new Date(rev.created_at))}</span>
                         </div>
                       </div>
                     </div>

@@ -152,7 +152,7 @@ export function WarrantyDialog({ open, onOpenChange, warranty, equipment }: Warr
 
             <div>
               <Label htmlFor="warranty_type">Garanti Tipi *</Label>
-              <Select value={watch('warranty_type')} onValueChange={(value) => setValue('warranty_type', value)}>
+              <Select value={watch('warranty_type')} onValueChange={(value) => setValue('warranty_type', value as 'manufacturer' | 'extended' | 'service_contract')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

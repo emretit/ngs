@@ -42,7 +42,7 @@ const contractTypeLabels: Record<string, string> = {
 
 export default function VehicleContracts() {
   const navigate = useNavigate();
-  const { contracts = [], isLoading, stats } = useVehicleContracts();
+  const { data: contracts = [], isLoading } = useVehicleContracts();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');

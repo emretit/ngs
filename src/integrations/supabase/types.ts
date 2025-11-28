@@ -6862,6 +6862,7 @@ export type Database = {
           aciklama: string | null
           birim: string
           birim_fiyat: number
+          buyer_code: string | null
           company_id: string | null
           created_at: string
           id: string
@@ -6873,6 +6874,7 @@ export type Database = {
           product_id: string | null
           sales_invoice_id: string
           satir_toplami: number
+          seller_code: string | null
           sira_no: number | null
           updated_at: string
           urun_adi: string
@@ -6881,6 +6883,7 @@ export type Database = {
           aciklama?: string | null
           birim?: string
           birim_fiyat?: number
+          buyer_code?: string | null
           company_id?: string | null
           created_at?: string
           id?: string
@@ -6892,6 +6895,7 @@ export type Database = {
           product_id?: string | null
           sales_invoice_id: string
           satir_toplami?: number
+          seller_code?: string | null
           sira_no?: number | null
           updated_at?: string
           urun_adi: string
@@ -6900,6 +6904,7 @@ export type Database = {
           aciklama?: string | null
           birim?: string
           birim_fiyat?: number
+          buyer_code?: string | null
           company_id?: string | null
           created_at?: string
           id?: string
@@ -6911,6 +6916,7 @@ export type Database = {
           product_id?: string | null
           sales_invoice_id?: string
           satir_toplami?: number
+          seller_code?: string | null
           sira_no?: number | null
           updated_at?: string
           urun_adi?: string
@@ -6954,6 +6960,7 @@ export type Database = {
           company_id: string | null
           created_at: string
           customer_id: string
+          delivery_terms: string | null
           document_type: string | null
           durum: string
           einvoice_answer_type: number | null
@@ -6969,10 +6976,16 @@ export type Database = {
           einvoice_xml_content: string | null
           ek_belgeler: Json | null
           employee_id: string | null
+          exchange_rate: number | null
           fatura_no: string | null
           fatura_tarihi: string
           id: string
           indirim_tutari: number
+          internet_info: Json | null
+          invoice_profile: string | null
+          invoice_type: string | null
+          is_despatch: boolean | null
+          issue_time: string | null
           kdv_tutari: number
           nilvera_invoice_id: string | null
           nilvera_transfer_id: string | null
@@ -6981,12 +6994,19 @@ export type Database = {
           odeme_sekli: string | null
           odenen_tutar: number
           order_id: string | null
+          other_terms: string | null
           para_birimi: string
+          payment_terms: string | null
           pdf_url: string | null
+          price_terms: string | null
           proposal_id: string | null
+          return_invoice_info: Json | null
+          sales_platform: string | null
+          send_type: string | null
           toplam_tutar: number
           updated_at: string
           vade_tarihi: string | null
+          warranty_terms: string | null
           xml_data: Json | null
         }
         Insert: {
@@ -6996,6 +7016,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           customer_id: string
+          delivery_terms?: string | null
           document_type?: string | null
           durum?: string
           einvoice_answer_type?: number | null
@@ -7011,10 +7032,16 @@ export type Database = {
           einvoice_xml_content?: string | null
           ek_belgeler?: Json | null
           employee_id?: string | null
+          exchange_rate?: number | null
           fatura_no?: string | null
           fatura_tarihi?: string
           id?: string
           indirim_tutari?: number
+          internet_info?: Json | null
+          invoice_profile?: string | null
+          invoice_type?: string | null
+          is_despatch?: boolean | null
+          issue_time?: string | null
           kdv_tutari?: number
           nilvera_invoice_id?: string | null
           nilvera_transfer_id?: string | null
@@ -7023,12 +7050,19 @@ export type Database = {
           odeme_sekli?: string | null
           odenen_tutar?: number
           order_id?: string | null
+          other_terms?: string | null
           para_birimi?: string
+          payment_terms?: string | null
           pdf_url?: string | null
+          price_terms?: string | null
           proposal_id?: string | null
+          return_invoice_info?: Json | null
+          sales_platform?: string | null
+          send_type?: string | null
           toplam_tutar?: number
           updated_at?: string
           vade_tarihi?: string | null
+          warranty_terms?: string | null
           xml_data?: Json | null
         }
         Update: {
@@ -7038,6 +7072,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           customer_id?: string
+          delivery_terms?: string | null
           document_type?: string | null
           durum?: string
           einvoice_answer_type?: number | null
@@ -7053,10 +7088,16 @@ export type Database = {
           einvoice_xml_content?: string | null
           ek_belgeler?: Json | null
           employee_id?: string | null
+          exchange_rate?: number | null
           fatura_no?: string | null
           fatura_tarihi?: string
           id?: string
           indirim_tutari?: number
+          internet_info?: Json | null
+          invoice_profile?: string | null
+          invoice_type?: string | null
+          is_despatch?: boolean | null
+          issue_time?: string | null
           kdv_tutari?: number
           nilvera_invoice_id?: string | null
           nilvera_transfer_id?: string | null
@@ -7065,12 +7106,19 @@ export type Database = {
           odeme_sekli?: string | null
           odenen_tutar?: number
           order_id?: string | null
+          other_terms?: string | null
           para_birimi?: string
+          payment_terms?: string | null
           pdf_url?: string | null
+          price_terms?: string | null
           proposal_id?: string | null
+          return_invoice_info?: Json | null
+          sales_platform?: string | null
+          send_type?: string | null
           toplam_tutar?: number
           updated_at?: string
           vade_tarihi?: string | null
+          warranty_terms?: string | null
           xml_data?: Json | null
         }
         Relationships: [
@@ -7416,10 +7464,6 @@ export type Database = {
           service_status: Database["public"]["Enums"]["service_status"] | null
           service_title: string
           service_type: string | null
-          sla_breached_at: string | null
-          sla_due_time: string | null
-          sla_start_time: string | null
-          sla_status: string | null
           slip_number: string | null
           slip_status: string | null
           supplier_id: string | null
@@ -7468,10 +7512,6 @@ export type Database = {
           service_status?: Database["public"]["Enums"]["service_status"] | null
           service_title: string
           service_type?: string | null
-          sla_breached_at?: string | null
-          sla_due_time?: string | null
-          sla_start_time?: string | null
-          sla_status?: string | null
           slip_number?: string | null
           slip_status?: string | null
           supplier_id?: string | null
@@ -7520,10 +7560,6 @@ export type Database = {
           service_status?: Database["public"]["Enums"]["service_status"] | null
           service_title?: string
           service_type?: string | null
-          sla_breached_at?: string | null
-          sla_due_time?: string | null
-          sla_start_time?: string | null
-          sla_status?: string | null
           slip_number?: string | null
           slip_status?: string | null
           supplier_id?: string | null

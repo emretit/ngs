@@ -26,6 +26,19 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
   const [showDeliveryForm, setShowDeliveryForm] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>(undefined);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | undefined>(undefined);
+  
+  // Sıralama state'leri - veritabanı seviyesinde sıralama için
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
   const {
     data: deliveries = [],
     isLoading,
@@ -40,7 +53,9 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
     shipping_method: shippingMethodFilter,
     customer_id: customerFilter,
     startDate,
-    endDate
+    endDate,
+    sortField,
+    sortDirection
   });
   
   // Route kontrolü: /deliveries/new ise dialog'u aç
@@ -121,6 +136,9 @@ const Deliveries = ({ isCollapsed, setIsCollapsed }: DeliveriesProps) => {
           isLoadingMore={isLoadingMore}
           hasNextPage={hasNextPage}
           loadMore={loadMore}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
       </div>
 

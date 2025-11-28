@@ -23,6 +23,9 @@ interface DeliveriesTableProps {
   onSelectDelivery: (delivery: Delivery) => void;
   searchQuery?: string;
   statusFilter?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const DeliveriesTable = ({
@@ -30,11 +33,18 @@ const DeliveriesTable = ({
   isLoading,
   onSelectDelivery,
   searchQuery,
-  statusFilter
+  statusFilter,
+  sortField: externalSortField,
+  sortDirection: externalSortDirection,
+  onSort: externalOnSort
 }: DeliveriesTableProps) => {
-  // Sorting state
-  const [sortField, setSortField] = useState<string>('planlanan_tarih');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  // Fallback için internal state (eğer dışarıdan prop geçilmezse)
+  const [internalSortField, setInternalSortField] = useState<string>('planlanan_tarih');
+  const [internalSortDirection, setInternalSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Dışarıdan prop geçilmişse onu kullan, yoksa internal state kullan
+  const sortField = externalSortField ?? internalSortField;
+  const sortDirection = externalSortDirection ?? internalSortDirection;
 
   // Columns definition
   const columns = [
@@ -49,11 +59,17 @@ const DeliveriesTable = ({
 
   // Handle sort
   const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    // Eğer dışarıdan onSort prop'u geçilmişse onu kullan (veritabanı seviyesinde sıralama)
+    if (externalOnSort) {
+      externalOnSort(field);
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      // Fallback: client-side sıralama
+      if (field === internalSortField) {
+        setInternalSortDirection(internalSortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        setInternalSortField(field);
+        setInternalSortDirection('asc');
+      }
     }
   };
 
@@ -71,20 +87,25 @@ const DeliveriesTable = ({
     return shortenText(customerName, 35);
   };
 
-  // Filter and sort deliveries
-  const filteredDeliveries = deliveries
-    .filter(delivery => {
-      const matchesSearch = !searchQuery ||
-        delivery.delivery_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (delivery.customer?.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (delivery.customer?.company?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (delivery.tracking_number?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+  // Filter deliveries
+  const filteredDeliveries = deliveries.filter(delivery => {
+    const matchesSearch = !searchQuery ||
+      delivery.delivery_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (delivery.customer?.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (delivery.customer?.company?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (delivery.tracking_number?.toLowerCase() || "").includes(searchQuery.toLowerCase());
 
-      const matchesStatus = statusFilter === "all" || delivery.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || delivery.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
+    return matchesSearch && matchesStatus;
+  });
+
+  // Eğer dışarıdan sıralama geçilmişse (veritabanı seviyesinde sıralama), 
+  // client-side sıralama YAPMA çünkü veriler zaten sıralı geliyor.
+  // Aksi halde fallback olarak client-side sıralama yap.
+  const sortedDeliveries = externalOnSort 
+    ? filteredDeliveries // Veritabanından sıralı geliyor, tekrar sıralama
+    : [...filteredDeliveries].sort((a, b) => {
       let aValue: any;
       let bValue: any;
 
@@ -112,7 +133,7 @@ const DeliveriesTable = ({
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
-    });
+      });
 
   const getStatusBadge = (status: DeliveryStatus) => {
     switch (status) {
@@ -185,14 +206,14 @@ const DeliveriesTable = ({
         hasSelection={false}
       />
       <TableBody>
-        {filteredDeliveries.length === 0 ? (
+        {sortedDeliveries.length === 0 ? (
           <TableRow>
             <TableCell colSpan={7} className="text-center py-8 text-gray-500">
               Bu kriterlere uygun teslimat bulunamadı
             </TableCell>
           </TableRow>
         ) : (
-          filteredDeliveries.map((delivery) => (
+          sortedDeliveries.map((delivery) => (
             <TableRow
               key={delivery.id}
               onClick={() => onSelectDelivery(delivery)}

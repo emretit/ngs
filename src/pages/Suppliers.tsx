@@ -23,6 +23,19 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   const [selectedSuppliers, setSelectedSuppliers] = useState<Supplier[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Sıralama state'leri - veritabanı seviyesinde sıralama için
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = useCallback((field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }, [sortField, sortDirection]);
 
   const {
     data: suppliers,
@@ -36,7 +49,9 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   } = useSuppliersInfiniteScroll({
     search: searchQuery,
     status: selectedStatus,
-    type: selectedType
+    type: selectedType,
+    sortField,
+    sortDirection
   });
 
   // Tüm tedarikçiler için istatistikleri çek (filtre olmadan)
@@ -315,6 +330,9 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
             searchQuery={searchQuery}
             statusFilter={selectedStatus}
             typeFilter={selectedType}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
         )}
 

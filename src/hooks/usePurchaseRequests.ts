@@ -20,6 +20,8 @@ interface PurchaseRequestFilters {
   priority?: string;
   department?: string;
   dateRange?: { from: Date | null; to: Date | null };
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 // Original hook for backward compatibility
@@ -134,8 +136,13 @@ export const usePurchaseRequestsInfiniteScroll = (filters?: PurchaseRequestFilte
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
+    // Apply sorting - veritabanı seviyesinde sıralama
+    const sortField = filters?.sortField || 'created_at';
+    const sortDirection = filters?.sortDirection || 'desc';
+    const ascending = sortDirection === 'asc';
+
     const { data, error, count } = await query
-      .order('created_at', { ascending: false })
+      .order(sortField, { ascending })
       .range(from, to);
 
     if (error) {

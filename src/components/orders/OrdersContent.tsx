@@ -21,6 +21,9 @@ interface OrdersContentProps {
   selectedCustomer: string;
   onSelectOrder: (order: Order) => void;
   activeView: ViewType;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const OrdersContent = ({
@@ -35,7 +38,10 @@ const OrdersContent = ({
   selectedStatus,
   selectedCustomer,
   onSelectOrder,
-  activeView
+  activeView,
+  sortField,
+  sortDirection,
+  onSort
 }: OrdersContentProps) => {
   const navigate = useNavigate();
 
@@ -126,6 +132,9 @@ const OrdersContent = ({
                   onConvertToInvoice={handleConvertToInvoice}
                   onConvertToService={handleConvertToService}
                   onPrintOrder={handlePrintOrder}
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={onSort}
                 />
               </div>
             </div>

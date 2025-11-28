@@ -15,6 +15,8 @@ interface UseOpportunitiesFilters {
   employeeId?: string | null;
   startDate?: Date | undefined;
   endDate?: Date | undefined;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
@@ -79,7 +81,13 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     // Pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
-    query = query.range(from, to).order("created_at", { ascending: false });
+    
+    // Apply sorting - veritabanı seviyesinde sıralama
+    const sortField = filters.sortField || 'created_at';
+    const sortDirection = filters.sortDirection || 'desc';
+    const ascending = sortDirection === 'asc';
+    
+    query = query.range(from, to).order(sortField, { ascending });
 
     const { data, error, count } = await query;
 

@@ -15,6 +15,8 @@ export interface ProposalFilters {
   };
   employeeId?: string;
   customerId?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export interface ProposalTableHeaderProps {

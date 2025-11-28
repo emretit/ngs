@@ -18,6 +18,19 @@ const Contacts = memo(() => {
   const [selectedCustomers, setSelectedCustomers] = useState<Customer[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Sıralama state'leri - veritabanı seviyesinde sıralama için
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = useCallback((field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }, [sortField, sortDirection]);
 
   const {
     data: customers,
@@ -31,7 +44,9 @@ const Contacts = memo(() => {
   } = useCustomersInfiniteScroll({
     search: searchQuery,
     status: selectedStatus,
-    type: selectedType
+    type: selectedType,
+    sortField,
+    sortDirection
   });
 
   // Tüm müşteriler için istatistikleri çek (filtre olmadan)
@@ -306,6 +321,9 @@ const Contacts = memo(() => {
             onCustomerSelectToggle={handleCustomerSelect}
             selectedCustomers={selectedCustomers}
             setSelectedCustomers={setSelectedCustomers}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
         )}
 

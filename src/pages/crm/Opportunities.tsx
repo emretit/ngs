@@ -23,6 +23,19 @@ const Opportunities = memo(() => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   
+  // Sıralama state'leri - veritabanı seviyesinde sıralama için
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+  
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [opportunityToDelete, setOpportunityToDelete] = useState<Opportunity | null>(null);
@@ -65,7 +78,9 @@ const Opportunities = memo(() => {
     priority: priorityFilter,
     employeeId: selectedEmployee === 'all' ? null : selectedEmployee,
     startDate: startDate,
-    endDate: endDate
+    endDate: endDate,
+    sortField,
+    sortDirection
   });
   // Group opportunities by status (6-stage system) - sorted by creation date only
   const sortByCreatedAt = (a: any, b: any) => {
@@ -211,6 +226,9 @@ const Opportunities = memo(() => {
             searchQuery={filterKeyword}
             statusFilter={statusFilter}
             priorityFilter={priorityFilter}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
         )}
       </div>

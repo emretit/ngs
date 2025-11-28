@@ -9,6 +9,8 @@ interface UseDeliveriesFilters {
   shipping_method?: string;
   startDate?: Date | undefined;
   endDate?: Date | undefined;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export const useDeliveriesInfiniteScroll = (filters: UseDeliveriesFilters = {}) => {
@@ -57,7 +59,13 @@ export const useDeliveriesInfiniteScroll = (filters: UseDeliveriesFilters = {}) 
     // Pagination + ordering
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
-    query = query.order("created_at", { ascending: false }).range(from, to);
+    
+    // Apply sorting - veritabanı seviyesinde sıralama
+    const sortField = filters.sortField || 'created_at';
+    const sortDirection = filters.sortDirection || 'desc';
+    const ascending = sortDirection === 'asc';
+    
+    query = query.order(sortField, { ascending }).range(from, to);
 
     const { data, error, count } = await query;
 
@@ -82,6 +90,8 @@ export const useDeliveriesInfiniteScroll = (filters: UseDeliveriesFilters = {}) 
       String(filters.shipping_method || "all"),
       String(filters.startDate?.toISOString() || ""),
       String(filters.endDate?.toISOString() || ""),
+      String(filters.sortField || "created_at"),
+      String(filters.sortDirection || "desc"),
     ],
     fetchDeliveries,
     {

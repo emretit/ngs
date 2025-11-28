@@ -33,6 +33,9 @@ interface ProposalTableProps {
   searchQuery?: string;
   statusFilter?: string;
   employeeFilter?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const ProposalTable = ({ 
@@ -42,13 +45,22 @@ const ProposalTable = ({
   onStatusChange,
   searchQuery = "",
   statusFilter = "all",
-  employeeFilter = "all"
+  employeeFilter = "all",
+  sortField: externalSortField,
+  sortDirection: externalSortDirection,
+  onSort: externalOnSort
 }: ProposalTableProps) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<PdfTemplate[]>([]);
-  const [sortField, setSortField] = useState<ProposalSortField>("offer_date");
-  const [sortDirection, setSortDirection] = useState<ProposalSortDirection>("desc");
+  
+  // Fallback için internal state (eğer dışarıdan prop geçilmezse)
+  const [internalSortField, setInternalSortField] = useState<ProposalSortField>("offer_date");
+  const [internalSortDirection, setInternalSortDirection] = useState<ProposalSortDirection>("desc");
+  
+  // Dışarıdan prop geçilmişse onu kullan, yoksa internal state kullan
+  const sortField = (externalSortField as ProposalSortField) ?? internalSortField;
+  const sortDirection = (externalSortDirection as ProposalSortDirection) ?? internalSortDirection;
   
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -371,11 +383,17 @@ const ProposalTable = ({
   };
 
   const handleSort = (field: ProposalSortField) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    // Eğer dışarıdan onSort prop'u geçilmişse onu kullan (veritabanı seviyesinde sıralama)
+    if (externalOnSort) {
+      externalOnSort(field);
     } else {
-      setSortField(field);
-      setSortDirection("asc");
+      // Fallback: client-side sıralama
+      if (field === internalSortField) {
+        setInternalSortDirection(internalSortDirection === "asc" ? "desc" : "asc");
+      } else {
+        setInternalSortField(field);
+        setInternalSortDirection("asc");
+      }
     }
   };
 
@@ -413,8 +431,12 @@ const ProposalTable = ({
     return matchesSearch && matchesStatus && matchesEmployee;
   });
 
-  // Sort the filtered proposals
-  const sortedProposals = useSortedProposals(filteredProposals, sortField, sortDirection);
+  // Eğer dışarıdan sıralama geçilmişse (veritabanı seviyesinde sıralama), 
+  // client-side sıralama YAPMA çünkü veriler zaten sıralı geliyor.
+  // Aksi halde fallback olarak client-side sıralama yap.
+  const sortedProposals = externalOnSort 
+    ? filteredProposals // Veritabanından sıralı geliyor, tekrar sıralama
+    : useSortedProposals(filteredProposals, sortField, sortDirection);
 
   return (<>
     <Table>

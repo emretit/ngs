@@ -17,6 +17,9 @@ interface ProposalsContentProps {
   searchQuery?: string;
   statusFilter?: string;
   employeeFilter?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const ProposalsContent = ({
@@ -31,7 +34,10 @@ const ProposalsContent = ({
   onStatusChange,
   searchQuery,
   statusFilter,
-  employeeFilter
+  employeeFilter,
+  sortField,
+  sortDirection,
+  onSort
 }: ProposalsContentProps) => {
   const { toast } = useToast();
 
@@ -56,6 +62,9 @@ const ProposalsContent = ({
             searchQuery={searchQuery}
             statusFilter={statusFilter}
             employeeFilter={employeeFilter}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
             />
           </div>
         </div>

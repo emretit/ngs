@@ -21,6 +21,10 @@ interface CustomersTableProps {
   onCustomerSelectToggle?: (customer: Customer) => void;
   selectedCustomers?: Customer[];
   setSelectedCustomers?: (customers: Customer[]) => void;
+  // Veritabanı seviyesinde sıralama için prop'lar (dışarıdan geçilirse kullan)
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const CustomersTable = ({ 
@@ -31,12 +35,21 @@ const CustomersTable = ({
   onCustomerSelect, 
   onCustomerSelectToggle,
   selectedCustomers = [],
-  setSelectedCustomers
+  setSelectedCustomers,
+  sortField: externalSortField,
+  sortDirection: externalSortDirection,
+  onSort: externalOnSort
 }: CustomersTableProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [sortField, setSortField] = useState<string>("company");
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Fallback için internal state (eğer dışarıdan prop geçilmezse)
+  const [internalSortField, setInternalSortField] = useState<string>("company");
+  const [internalSortDirection, setInternalSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Dışarıdan prop geçilmişse onu kullan, yoksa internal state kullan
+  const sortField = externalSortField ?? internalSortField;
+  const sortDirection = externalSortDirection ?? internalSortDirection;
   
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -56,11 +69,17 @@ const CustomersTable = ({
   ]);
 
   const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    // Eğer dışarıdan onSort prop'u geçilmişse onu kullan (veritabanı seviyesinde sıralama)
+    if (externalOnSort) {
+      externalOnSort(field);
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      // Fallback: client-side sıralama
+      if (field === internalSortField) {
+        setInternalSortDirection(internalSortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        setInternalSortField(field);
+        setInternalSortDirection('asc');
+      }
     }
   };
 
@@ -150,37 +169,41 @@ const CustomersTable = ({
 
   // Not: Boş durumda da başlıkların görünmesi için tablo render'ını sürdür.
 
-  // Sort customers based on the sort field and direction
-  const sortedCustomers = [...customers].sort((a, b) => {
-    if (!a || !b) return 0;
-    
-    const fieldA = sortField === 'company' 
-      ? a.company || a.name || ''
-      : sortField === 'representative'
-      ? a.representative || ''
-      : (a as any)[sortField];
-      
-    const fieldB = sortField === 'company' 
-      ? b.company || b.name || ''
-      : sortField === 'representative'
-      ? b.representative || ''
-      : (b as any)[sortField];
-    
-    if (!fieldA && !fieldB) return 0;
-    if (!fieldA) return sortDirection === 'asc' ? -1 : 1;
-    if (!fieldB) return sortDirection === 'asc' ? 1 : -1;
-    
-    if (typeof fieldA === 'number' && typeof fieldB === 'number') {
-      return sortDirection === 'asc' ? fieldA - fieldB : fieldB - fieldA;
-    }
-    
-    const valueA = String(fieldA).toLowerCase();
-    const valueB = String(fieldB).toLowerCase();
-    
-    return sortDirection === 'asc'
-      ? valueA.localeCompare(valueB)
-      : valueB.localeCompare(valueA);
-  });
+  // Eğer dışarıdan sıralama geçilmişse (veritabanı seviyesinde sıralama), 
+  // client-side sıralama YAPMA çünkü veriler zaten sıralı geliyor.
+  // Aksi halde fallback olarak client-side sıralama yap.
+  const sortedCustomers = externalOnSort 
+    ? customers // Veritabanından sıralı geliyor, tekrar sıralama
+    : [...customers].sort((a, b) => {
+        if (!a || !b) return 0;
+        
+        const fieldA = sortField === 'company' 
+          ? a.company || a.name || ''
+          : sortField === 'representative'
+          ? a.representative || ''
+          : (a as any)[sortField];
+          
+        const fieldB = sortField === 'company' 
+          ? b.company || b.name || ''
+          : sortField === 'representative'
+          ? b.representative || ''
+          : (b as any)[sortField];
+        
+        if (!fieldA && !fieldB) return 0;
+        if (!fieldA) return sortDirection === 'asc' ? -1 : 1;
+        if (!fieldB) return sortDirection === 'asc' ? 1 : -1;
+        
+        if (typeof fieldA === 'number' && typeof fieldB === 'number') {
+          return sortDirection === 'asc' ? fieldA - fieldB : fieldB - fieldA;
+        }
+        
+        const valueA = String(fieldA).toLowerCase();
+        const valueB = String(fieldB).toLowerCase();
+        
+        return sortDirection === 'asc'
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      });
 
   // NOT: Frontend'de filtreleme YAPMAYIN! Backend zaten filtreliyor (useCustomersInfiniteScroll).
   // Bu sayede "Tümünü Seç" sadece ekranda görünen müşterileri seçer, karışıklık olmaz.

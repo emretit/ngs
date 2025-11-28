@@ -24,6 +24,9 @@ interface OrdersTableProps {
   onConvertToInvoice?: (order: Order) => void;
   onConvertToService?: (order: Order) => void;
   onPrintOrder?: (order: Order) => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const OrdersTable = ({
@@ -37,10 +40,18 @@ const OrdersTable = ({
   onDeleteOrder,
   onConvertToInvoice,
   onConvertToService,
-  onPrintOrder
+  onPrintOrder,
+  sortField: externalSortField,
+  sortDirection: externalSortDirection,
+  onSort: externalOnSort
 }: OrdersTableProps) => {
-  const [sortField, setSortField] = useState<string>("order_date");
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  // Fallback için internal state (eğer dışarıdan prop geçilmezse)
+  const [internalSortField, setInternalSortField] = useState<string>("order_date");
+  const [internalSortDirection, setInternalSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Dışarıdan prop geçilmişse onu kullan, yoksa internal state kullan
+  const sortField = externalSortField ?? internalSortField;
+  const sortDirection = externalSortDirection ?? internalSortDirection;
 
   const columns: Column[] = [
     { id: 'order_number', label: 'Sipariş No', sortable: true, visible: true },
@@ -53,11 +64,17 @@ const OrdersTable = ({
   ];
 
   const handleSort = (fieldId: string) => {
-    if (sortField === fieldId) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    // Eğer dışarıdan onSort prop'u geçilmişse onu kullan (veritabanı seviyesinde sıralama)
+    if (externalOnSort) {
+      externalOnSort(fieldId);
     } else {
-      setSortField(fieldId);
-      setSortDirection('asc');
+      // Fallback: client-side sıralama
+      if (fieldId === internalSortField) {
+        setInternalSortDirection(internalSortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        setInternalSortField(fieldId);
+        setInternalSortDirection('asc');
+      }
     }
   };
 
@@ -73,8 +90,12 @@ const OrdersTable = ({
     return matchesSearch && matchesStatus && matchesCustomer;
   });
 
-  // Sort orders
-  const sortedOrders = [...filteredOrders].sort((a, b) => {
+  // Eğer dışarıdan sıralama geçilmişse (veritabanı seviyesinde sıralama), 
+  // client-side sıralama YAPMA çünkü veriler zaten sıralı geliyor.
+  // Aksi halde fallback olarak client-side sıralama yap.
+  const sortedOrders = externalOnSort 
+    ? filteredOrders // Veritabanından sıralı geliyor, tekrar sıralama
+    : [...filteredOrders].sort((a, b) => {
     let aValue: any = a[sortField as keyof Order];
     let bValue: any = b[sortField as keyof Order];
     let isNullA = false;
@@ -118,7 +139,7 @@ const OrdersTable = ({
     const comparison = aString.localeCompare(bString, 'tr', { numeric: true, sensitivity: 'base' });
     
     return sortDirection === 'asc' ? comparison : -comparison;
-  });
+      });
 
   return (
     <div className="overflow-x-auto">

@@ -11,6 +11,9 @@ interface PurchaseOrdersTableProps {
   orders: PurchaseOrder[];
   isLoading: boolean;
   onOrderSelect: (order: PurchaseOrder) => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const PurchaseOrdersTable = ({ orders, isLoading, onOrderSelect }: PurchaseOrdersTableProps) => {

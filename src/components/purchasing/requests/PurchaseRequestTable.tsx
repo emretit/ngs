@@ -11,6 +11,9 @@ interface PurchaseRequestTableProps {
   isLoading: boolean;
   onRequestSelect: (request: any) => void;
   onStatusChange?: () => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const statusConfig = {

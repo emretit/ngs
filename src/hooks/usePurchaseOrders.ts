@@ -429,6 +429,8 @@ export interface PurchaseOrderFilters {
   supplier_id?: string;
   warehouse_id?: string;
   dateRange?: { from: Date | null; to: Date | null };
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 // Infinite scroll hook for purchase orders
@@ -478,8 +480,13 @@ export const usePurchaseOrdersInfiniteScroll = (filters?: PurchaseOrderFilters, 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
+    // Apply sorting - veritabanı seviyesinde sıralama
+    const sortField = filters?.sortField || 'created_at';
+    const sortDirection = filters?.sortDirection || 'desc';
+    const ascending = sortDirection === 'asc';
+
     const { data, error, count } = await query
-      .order('created_at', { ascending: false })
+      .order(sortField, { ascending })
       .range(from, to);
 
     if (error) {

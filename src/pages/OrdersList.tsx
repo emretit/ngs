@@ -16,6 +16,19 @@ const OrdersList = ({ isCollapsed, setIsCollapsed }: OrdersListProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedCustomer, setSelectedCustomer] = useState("all");
+  
+  // Sıralama state'leri - veritabanı seviyesinde sıralama için
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   // Table view için infinite scroll hook
   const {
@@ -35,6 +48,8 @@ const OrdersList = ({ isCollapsed, setIsCollapsed }: OrdersListProps) => {
       dateRange: { from: null, to: null },
       page: 1,
       pageSize: 20,
+      sortField,
+      sortDirection
     },
     20
   );
@@ -90,6 +105,9 @@ const OrdersList = ({ isCollapsed, setIsCollapsed }: OrdersListProps) => {
               selectedCustomer={selectedCustomer}
               onSelectOrder={handleSelectOrder}
               activeView={activeView}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
             />
           )
         )}

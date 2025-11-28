@@ -19,6 +19,9 @@ interface OpportunitiesContentProps {
   searchQuery?: string;
   statusFilter?: string;
   priorityFilter?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const OpportunitiesContent = ({
@@ -35,7 +38,10 @@ const OpportunitiesContent = ({
   onConvertToProposal,
   searchQuery,
   statusFilter,
-  priorityFilter
+  priorityFilter,
+  sortField,
+  sortDirection,
+  onSort
 }: OpportunitiesContentProps) => {
   const { toast } = useToast();
 
@@ -62,6 +68,9 @@ const OpportunitiesContent = ({
             searchQuery={searchQuery}
             statusFilter={statusFilter}
             priorityFilter={priorityFilter}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
             />
           </div>
         </div>

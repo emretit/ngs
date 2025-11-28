@@ -6,6 +6,8 @@ interface UseCustomersFilters {
   search?: string;
   status?: string;
   type?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) => {
@@ -38,8 +40,13 @@ export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) =>
     // Pagination
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
-    // İsme göre sıralama: önce company, yoksa name
-    query = query.range(from, to).order("name", { ascending: true });
+    
+    // Apply sorting - veritabanı seviyesinde sıralama
+    const sortField = filters.sortField || 'name';
+    const sortDirection = filters.sortDirection || 'asc';
+    const ascending = sortDirection === 'asc';
+    
+    query = query.range(from, to).order(sortField, { ascending });
 
     const { data, error, count } = await query;
 

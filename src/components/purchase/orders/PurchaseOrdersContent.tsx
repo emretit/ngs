@@ -12,6 +12,9 @@ interface PurchaseOrdersContentProps {
   totalCount?: number;
   error: any;
   onOrderSelect: (order: PurchaseOrder) => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const PurchaseOrdersContent = ({
@@ -23,6 +26,9 @@ const PurchaseOrdersContent = ({
   totalCount,
   error,
   onOrderSelect,
+  sortField,
+  sortDirection,
+  onSort
 }: PurchaseOrdersContentProps) => {
 
   if (error) {
@@ -71,6 +77,9 @@ const PurchaseOrdersContent = ({
           orders={orders}
           isLoading={isLoading}
           onOrderSelect={onOrderSelect}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={onSort}
         />
 
         {/* Infinite scroll trigger - PurchaseOrdersTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}

@@ -20,6 +20,9 @@ interface OpportunitiesTableProps {
   searchQuery?: string;
   statusFilter?: string;
   priorityFilter?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const OpportunitiesTable = ({
@@ -31,18 +34,33 @@ const OpportunitiesTable = ({
   onConvertToProposal,
   searchQuery = "",
   statusFilter = "all",
-  priorityFilter = null
+  priorityFilter = null,
+  sortField: externalSortField,
+  sortDirection: externalSortDirection,
+  onSort: externalOnSort
 }: OpportunitiesTableProps) => {
-  const [sortField, setSortField] = useState<OpportunitySortField>("created_at");
-  const [sortDirection, setSortDirection] = useState<OpportunitySortDirection>("desc");
+  // Fallback için internal state (eğer dışarıdan prop geçilmezse)
+  const [internalSortField, setInternalSortField] = useState<OpportunitySortField>("created_at");
+  const [internalSortDirection, setInternalSortDirection] = useState<OpportunitySortDirection>("desc");
+  
+  // Dışarıdan prop geçilmişse onu kullan, yoksa internal state kullan
+  const sortField = (externalSortField as OpportunitySortField) ?? internalSortField;
+  const sortDirection = (externalSortDirection as OpportunitySortDirection) ?? internalSortDirection;
+  
   const { updateOpportunityStatus } = useOpportunityStatusUpdate();
 
   const handleSort = (field: OpportunitySortField) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    // Eğer dışarıdan onSort prop'u geçilmişse onu kullan (veritabanı seviyesinde sıralama)
+    if (externalOnSort) {
+      externalOnSort(field);
     } else {
-      setSortField(field);
-      setSortDirection("asc");
+      // Fallback: client-side sıralama
+      if (field === internalSortField) {
+        setInternalSortDirection(internalSortDirection === "asc" ? "desc" : "asc");
+      } else {
+        setInternalSortField(field);
+        setInternalSortDirection("asc");
+      }
     }
   };
 
@@ -59,8 +77,12 @@ const OpportunitiesTable = ({
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  // Sort the filtered opportunities
-  const sortedOpportunities = useSortedOpportunities(filteredOpportunities, sortField, sortDirection);
+  // Eğer dışarıdan sıralama geçilmişse (veritabanı seviyesinde sıralama), 
+  // client-side sıralama YAPMA çünkü veriler zaten sıralı geliyor.
+  // Aksi halde fallback olarak client-side sıralama yap.
+  const sortedOpportunities = externalOnSort 
+    ? filteredOpportunities // Veritabanından sıralı geliyor, tekrar sıralama
+    : useSortedOpportunities(filteredOpportunities, sortField, sortDirection);
 
   if (isLoading) {
     return <OpportunitiesTableLoading />;

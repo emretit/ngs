@@ -15,6 +15,9 @@ interface CustomersContentProps {
   onCustomerSelectToggle?: (customer: Customer) => void;
   selectedCustomers?: Customer[];
   setSelectedCustomers?: (customers: Customer[]) => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const CustomersContent = ({
@@ -28,7 +31,10 @@ const CustomersContent = ({
   onCustomerSelect,
   onCustomerSelectToggle,
   selectedCustomers = [],
-  setSelectedCustomers
+  setSelectedCustomers,
+  sortField,
+  sortDirection,
+  onSort
 }: CustomersContentProps) => {
 
   if (error) {
@@ -51,6 +57,9 @@ const CustomersContent = ({
             onCustomerSelectToggle={onCustomerSelectToggle}
             selectedCustomers={selectedCustomers}
             setSelectedCustomers={setSelectedCustomers}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
           />
           
           {/* Infinite scroll trigger - CustomersTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}

@@ -25,6 +25,19 @@ const Proposals = memo(() => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const pageSize = 20;
+  
+  // Sıralama state'leri - veritabanı seviyesinde sıralama için
+  const [sortField, setSortField] = useState<string>("offer_date");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   // Fetch employees data
   const { data: employees = [] } = useQuery({
@@ -64,7 +77,9 @@ const Proposals = memo(() => {
       status: selectedStatus,
       search: searchQuery,
       employeeId: selectedEmployee,
-      dateRange: { from: null, to: null }
+      dateRange: { from: null, to: null },
+      sortField,
+      sortDirection
     },
     pageSize
   );
@@ -173,6 +188,9 @@ const Proposals = memo(() => {
             searchQuery={searchQuery}
             statusFilter={selectedStatus}
             employeeFilter={selectedEmployee}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
         )}
       </div>

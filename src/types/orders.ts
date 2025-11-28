@@ -156,6 +156,8 @@ export interface OrderFilters {
   };
   page?: number;
   pageSize?: number;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export interface OrderStats {

@@ -11,6 +11,8 @@ interface UseActivitiesFilters {
   selectedStatus?: string | null;
   startDate?: Date | undefined;
   endDate?: Date | undefined;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 export const useActivitiesInfiniteScroll = (
@@ -91,8 +93,13 @@ export const useActivitiesInfiniteScroll = (
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
+      // Apply sorting - veritabanı seviyesinde sıralama
+      const sortField = filters.sortField || 'created_at';
+      const sortDirection = filters.sortDirection || 'desc';
+      const ascending = sortDirection === 'asc';
+
       const { data, error, count } = await query
-        .order("created_at", { ascending: false })
+        .order(sortField, { ascending })
         .range(from, to);
 
       if (error) {
@@ -126,6 +133,8 @@ export const useActivitiesInfiniteScroll = (
       filters.selectedStatus,
       filters.startDate,
       filters.endDate,
+      filters.sortField,
+      filters.sortDirection,
       userLoading,
       client,
     ]

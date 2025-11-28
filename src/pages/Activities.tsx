@@ -29,6 +29,19 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
   const [activeView, setActiveView] = useState<ViewType>("table");
   const [isNewActivityDialogOpen, setIsNewActivityDialogOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  
+  // Sıralama state'leri - veritabanı seviyesinde sıralama için
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
@@ -73,6 +86,8 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
       selectedStatus: selectedStatus || undefined,
       startDate,
       endDate,
+      sortField,
+      sortDirection
     },
     20
   );
@@ -153,6 +168,9 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
               startDate={startDate}
               endDate={endDate}
               selectedTaskId={selectedTaskId}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
             />
           )
         )}

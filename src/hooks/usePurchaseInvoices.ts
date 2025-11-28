@@ -350,6 +350,8 @@ export interface PurchaseInvoiceFilters {
   search?: string;
   supplier_id?: string;
   dateRange?: { from: Date | null; to: Date | null };
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
 }
 
 // Infinite scroll hook for purchase invoices
@@ -395,8 +397,13 @@ export const usePurchaseInvoicesInfiniteScroll = (filters?: PurchaseInvoiceFilte
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
+    // Apply sorting - veritabanı seviyesinde sıralama
+    const sortField = filters?.sortField || 'invoice_date';
+    const sortDirection = filters?.sortDirection || 'desc';
+    const ascending = sortDirection === 'asc';
+
     const { data, error, count } = await query
-      .order('invoice_date', { ascending: false })
+      .order(sortField, { ascending })
       .range(from, to);
 
     if (error) {

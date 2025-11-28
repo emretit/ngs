@@ -13,6 +13,9 @@ interface DeliveriesContentProps {
   isLoadingMore?: boolean;
   hasNextPage?: boolean;
   loadMore?: () => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const DeliveriesContent = ({
@@ -24,7 +27,10 @@ const DeliveriesContent = ({
   statusFilter,
   isLoadingMore = false,
   hasNextPage = false,
-  loadMore
+  loadMore,
+  sortField,
+  sortDirection,
+  onSort
 }: DeliveriesContentProps) => {
   if (error) {
     return (
@@ -43,6 +49,9 @@ const DeliveriesContent = ({
           onSelectDelivery={onSelectDelivery}
           searchQuery={searchQuery}
           statusFilter={statusFilter}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={onSort}
         />
 
         {/* Infinite scroll trigger - DeliveriesTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}

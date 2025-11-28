@@ -19,6 +19,9 @@ interface SuppliersContentProps {
   searchQuery?: string;
   statusFilter?: string;
   typeFilter?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const SuppliersContent = ({
@@ -35,7 +38,10 @@ const SuppliersContent = ({
   setSelectedSuppliers,
   searchQuery,
   statusFilter,
-  typeFilter
+  typeFilter,
+  sortField,
+  sortDirection,
+  onSort
 }: SuppliersContentProps) => {
   const { toast } = useToast();
 
@@ -62,6 +68,9 @@ const SuppliersContent = ({
             searchQuery={searchQuery}
             statusFilter={statusFilter}
             typeFilter={typeFilter}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
           />
           
           {/* Infinite scroll trigger - SuppliersTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}

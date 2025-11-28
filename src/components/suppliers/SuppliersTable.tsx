@@ -25,6 +25,9 @@ interface SuppliersTableProps {
   searchQuery?: string;
   statusFilter?: string;
   typeFilter?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const SuppliersTable = ({ 
@@ -38,12 +41,21 @@ const SuppliersTable = ({
   setSelectedSuppliers,
   searchQuery,
   statusFilter,
-  typeFilter
+  typeFilter,
+  sortField: externalSortField,
+  sortDirection: externalSortDirection,
+  onSort: externalOnSort
 }: SuppliersTableProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [sortField, setSortField] = useState<string>("company");
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Fallback için internal state (eğer dışarıdan prop geçilmezse)
+  const [internalSortField, setInternalSortField] = useState<string>("company");
+  const [internalSortDirection, setInternalSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Dışarıdan prop geçilmişse onu kullan, yoksa internal state kullan
+  const sortField = externalSortField ?? internalSortField;
+  const sortDirection = externalSortDirection ?? internalSortDirection;
   
   // Confirmation dialog states
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -63,11 +75,17 @@ const SuppliersTable = ({
   ]);
 
   const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    // Eğer dışarıdan onSort prop'u geçilmişse onu kullan (veritabanı seviyesinde sıralama)
+    if (externalOnSort) {
+      externalOnSort(field);
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      // Fallback: client-side sıralama
+      if (field === internalSortField) {
+        setInternalSortDirection(internalSortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        setInternalSortField(field);
+        setInternalSortDirection('asc');
+      }
     }
   };
 
@@ -165,7 +183,12 @@ const SuppliersTable = ({
   // Not: Boş durumda da başlıkların görünmesi için tablo render'ını sürdür.
 
   // Sort suppliers based on the sort field and direction
-  const sortedSuppliers = [...suppliers].sort((a, b) => {
+  // Eğer dışarıdan sıralama geçilmişse (veritabanı seviyesinde sıralama), 
+  // client-side sıralama YAPMA çünkü veriler zaten sıralı geliyor.
+  // Aksi halde fallback olarak client-side sıralama yap.
+  const sortedSuppliers = externalOnSort 
+    ? suppliers // Veritabanından sıralı geliyor, tekrar sıralama
+    : [...suppliers].sort((a, b) => {
     if (!a || !b) return 0;
     
     const fieldA = sortField === 'company' 

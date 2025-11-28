@@ -20,6 +20,9 @@ interface TasksContentProps {
   endDate?: Date | undefined;
   selectedTaskId?: string | null;
   onSelectTask?: (task: Task) => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const TasksContent = ({ 
@@ -37,7 +40,10 @@ const TasksContent = ({
   startDate,
   endDate,
   selectedTaskId,
-  onSelectTask 
+  onSelectTask,
+  sortField,
+  sortDirection,
+  onSort
 }: TasksContentProps) => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -82,6 +88,9 @@ const TasksContent = ({
               selectedEmployee={selectedEmployee}
               selectedType={selectedType}
               selectedStatus={selectedStatus}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={onSort}
             />
           </div>
         </div>

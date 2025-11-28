@@ -142,8 +142,13 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters, pageSize: 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
+    // Apply sorting - veritabanı seviyesinde sıralama
+    const sortField = filters?.sortField || 'offer_date';
+    const sortDirection = filters?.sortDirection || 'desc';
+    const ascending = sortDirection === 'asc';
+
     const { data, error, count } = await query
-      .order('offer_date', { ascending: false, nullsFirst: false })
+      .order(sortField, { ascending, nullsFirst: false })
       .range(from, to);
 
     if (error) {
@@ -156,7 +161,7 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters, pageSize: 
       totalCount: count || 0,
       hasNextPage: data ? data.length === pageSize : false,
     };
-  }, [userData?.company_id, filters?.status, filters?.search, filters?.employeeId, filters?.dateRange?.from, filters?.dateRange?.to]);
+  }, [userData?.company_id, filters?.status, filters?.search, filters?.employeeId, filters?.dateRange?.from, filters?.dateRange?.to, filters?.sortField, filters?.sortDirection]);
 
   // Use infinite scroll hook
   const {

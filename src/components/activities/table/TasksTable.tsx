@@ -19,6 +19,9 @@ export interface TasksTableProps {
   selectedEmployee?: string | null;
   selectedType?: string | null;
   selectedStatus?: TaskStatus | null;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 export const TasksTable = ({
@@ -28,10 +31,18 @@ export const TasksTable = ({
   searchQuery = "",
   selectedEmployee = null,
   selectedType = null,
-  selectedStatus = null
+  selectedStatus = null,
+  sortField: externalSortField,
+  sortDirection: externalSortDirection,
+  onSort: externalOnSort
 }: TasksTableProps) => {
-  const [sortField, setSortField] = useState<SortField>("title");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  // Fallback için internal state (eğer dışarıdan prop geçilmezse)
+  const [internalSortField, setInternalSortField] = useState<SortField>("title");
+  const [internalSortDirection, setInternalSortDirection] = useState<SortDirection>("asc");
+  
+  // Dışarıdan prop geçilmişse onu kullan, yoksa internal state kullan
+  const sortField = (externalSortField as SortField) ?? internalSortField;
+  const sortDirection = (externalSortDirection as SortDirection) ?? internalSortDirection;
   
   // Setup realtime updates
   useTaskRealtime();
@@ -39,18 +50,28 @@ export const TasksTable = ({
   // Filter tasks based on search and filters
   const filteredTasks = filterTasks(tasks, searchQuery, selectedEmployee, selectedType, selectedStatus);
   
-  // Sort the filtered tasks
-  const sortedTasks = useSortedTasks(filteredTasks, sortField, sortDirection);
+  // Eğer dışarıdan sıralama geçilmişse (veritabanı seviyesinde sıralama), 
+  // client-side sıralama YAPMA çünkü veriler zaten sıralı geliyor.
+  // Aksi halde fallback olarak client-side sıralama yap.
+  const sortedTasks = externalOnSort 
+    ? filteredTasks // Veritabanından sıralı geliyor, tekrar sıralama
+    : useSortedTasks(filteredTasks, sortField, sortDirection);
   
   // Task operations (status update, important, delete)
   const { updateTaskStatus, toggleTaskImportant, deleteTask } = useTaskOperations();
   
   const handleSort = (field: SortField) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    // Eğer dışarıdan onSort prop'u geçilmişse onu kullan (veritabanı seviyesinde sıralama)
+    if (externalOnSort) {
+      externalOnSort(field);
     } else {
-      setSortField(field);
-      setSortDirection("asc");
+      // Fallback: client-side sıralama
+      if (field === internalSortField) {
+        setInternalSortDirection(internalSortDirection === "asc" ? "desc" : "asc");
+      } else {
+        setInternalSortField(field);
+        setInternalSortDirection("asc");
+      }
     }
   };
 

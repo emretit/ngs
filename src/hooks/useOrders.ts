@@ -527,8 +527,13 @@ export const useOrdersInfiniteScroll = (filters?: OrderFilters, pageSize: number
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
+    // Apply sorting - veritabanı seviyesinde sıralama
+    const sortField = filters?.sortField || 'created_at';
+    const sortDirection = filters?.sortDirection || 'desc';
+    const ascending = sortDirection === 'asc';
+
     const { data, error, count } = await query
-      .order("created_at", { ascending: false })
+      .order(sortField, { ascending })
       .range(from, to);
 
     if (error) {
@@ -541,7 +546,7 @@ export const useOrdersInfiniteScroll = (filters?: OrderFilters, pageSize: number
       totalCount: count || 0,
       hasNextPage: data ? data.length === pageSize : false,
     };
-  }, [userData?.company_id, filters?.status, filters?.customer_id, filters?.search, filters?.dateRange?.from, filters?.dateRange?.to, userLoading]);
+  }, [userData?.company_id, filters?.status, filters?.customer_id, filters?.search, filters?.dateRange?.from, filters?.dateRange?.to, filters?.sortField, filters?.sortDirection, userLoading]);
 
   // Use infinite scroll hook
   const {

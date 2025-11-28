@@ -17,6 +17,19 @@ const PurchaseOrdersList = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const pageSize = 20;
+  
+  // Sıralama state'leri - veritabanı seviyesinde sıralama için
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = useCallback((field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }, [sortField, sortDirection]);
 
   // Debounced search - 300ms gecikme ile optimize edildi
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -52,6 +65,8 @@ const PurchaseOrdersList = () => {
       search: debouncedSearchQuery, // Debounced search kullanılıyor
       supplier_id: selectedSupplier !== "all" ? selectedSupplier : undefined,
       dateRange: { from: startDate || null, to: endDate || null },
+      sortField,
+      sortDirection
     },
     pageSize
   );
@@ -113,6 +128,9 @@ const PurchaseOrdersList = () => {
             totalCount={totalCount}
             error={error}
             onOrderSelect={handleOrderClick}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
         )}
       </div>

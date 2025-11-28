@@ -16,6 +16,9 @@ interface PurchaseRequestsContentProps {
   searchQuery?: string;
   statusFilter?: string;
   priorityFilter?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 const PurchaseRequestsContent = ({
@@ -30,7 +33,10 @@ const PurchaseRequestsContent = ({
   onStatusChange,
   searchQuery,
   statusFilter,
-  priorityFilter
+  priorityFilter,
+  sortField,
+  sortDirection,
+  onSort
 }: PurchaseRequestsContentProps) => {
   const { toast } = useToast();
 
@@ -51,6 +57,9 @@ const PurchaseRequestsContent = ({
             isLoading={isLoading}
             onRequestSelect={onRequestSelect}
             onStatusChange={onStatusChange}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={onSort}
           />
           
           {/* Infinite scroll trigger - PurchaseRequestTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}

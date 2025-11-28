@@ -85,7 +85,7 @@ export default defineConfig(({ mode }) => ({
           'motion-vendor': ['framer-motion'],
           
           // Maps (heavy)
-          'map-vendor': ['leaflet', 'react-leaflet', 'react-leaflet-markercluster'],
+          'map-vendor': ['leaflet', 'react-leaflet'],
           
           // Excel export
           'excel-vendor': ['xlsx'],

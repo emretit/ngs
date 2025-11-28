@@ -1,50 +1,107 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useForm, FormProvider } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save, Loader2, Info, FileText, MoreHorizontal, Send, FileDown } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { FileText, Eye, MoreHorizontal, Save, Send, Printer, ShoppingCart, FileCheck } from "lucide-react";
 import { toast } from "sonner";
-import { useCustomerSelect } from "@/hooks/useCustomerSelect";
-import { useEInvoice, useEInvoiceStatus } from "@/hooks/useEInvoice";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import BackButton from "@/components/ui/back-button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import InvoiceHeaderCard from "@/components/invoices/cards/InvoiceHeaderCard";
-import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
+import { formatCurrency } from "@/utils/formatters";
 import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
-import InvoiceFinancialCard from "@/components/invoices/cards/InvoiceFinancialCard";
-import InvoiceEInvoiceCard from "@/components/invoices/cards/InvoiceEInvoiceCard";
+import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
+import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
+import InvoiceHeaderCard from "@/components/invoices/cards/InvoiceHeaderCard";
+import TermsConditionsCard from "@/components/proposals/cards/TermsConditionsCard";
+import { useCustomerSelect } from "@/hooks/useCustomerSelect";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useEInvoice } from "@/hooks/useEInvoice";
 
-interface InvoiceItem {
+// Constants
+const DEFAULT_VAT_PERCENTAGE = 18;
+const DEFAULT_CURRENCY = "TRY";
+const DEFAULT_QUANTITY = 1;
+const DEFAULT_UNIT = "adet";
+
+interface LineItem {
   id: string;
-  urun_adi: string;
-  aciklama: string;
-  seller_code?: string; // Satıcı ürün kodu
-  buyer_code?: string; // Alıcı ürün kodu
-  miktar: number;
-  birim: string;
-  birim_fiyat: number;
-  kdv_orani: number;
-  indirim_orani: number;
-  satir_toplami: number;
-  kdv_tutari: number;
+  row_number: number;
+  name: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  tax_rate?: number;
+  discount_rate?: number;
+  total_price: number;
+  currency?: string;
 }
 
-interface CreateSalesInvoiceProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (value: boolean) => void;
+interface CustomerData {
+  contact_name: string;
+  customer_id: string;
 }
 
-const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceProps) => {
+interface InvoiceData {
+  invoice_date: Date;
+  invoice_number: string;
+  issue_time: string;
+  due_date: Date | null;
+  invoice_type: string;
+  invoice_profile: string;
+  send_type: string;
+  sales_platform: string;
+  is_despatch: boolean;
+  description: string;
+  notes: string;
+  banka_bilgileri: string;
+}
+
+interface FinancialData {
+  currency: string;
+  exchange_rate: number;
+  vat_percentage: number;
+}
+
+interface EInvoiceData {
+  internet_info: any;
+  return_invoice_info: any;
+}
+
+const CreateSalesInvoice = () => {
+  // Component mount/unmount tracking
+  useEffect(() => {
+    console.log("🟢 [CreateSalesInvoice] Component MOUNTED", {
+      timestamp: new Date().toISOString(),
+      pathname: window.location.pathname,
+      search: window.location.search
+    });
+
+    return () => {
+      console.log("🔴 [CreateSalesInvoice] Component UNMOUNTED", {
+        timestamp: new Date().toISOString()
+      });
+    };
+  }, []);
+
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { customers: customerOptions, isLoading: isLoadingCustomers } = useCustomerSelect();
-  const { sendInvoice, isSending } = useEInvoice();
   const orderId = searchParams.get("orderId");
   const proposalId = searchParams.get("proposalId");
 
-  // React Hook Form setup for ProposalPartnerSelect
+  // Log URL params only when they change
+  useEffect(() => {
+    if (orderId || proposalId) {
+      console.log("🔵 [CreateSalesInvoice] URL Params:", { orderId, proposalId });
+    }
+  }, [orderId, proposalId]);
+
+  // Form setup
   const form = useForm({ 
     defaultValues: { 
       customer_id: "", 
@@ -53,797 +110,710 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
     mode: "onChange"
   });
   const watchCustomerId = form.watch("customer_id");
-
-  const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(false);
-  const [orderData, setOrderData] = useState<any>(null);
-  const [proposalData, setProposalData] = useState<any>(null);
-  const [savedInvoiceId, setSavedInvoiceId] = useState<string | null>(null);
-  const [assignedInvoiceNumber, setAssignedInvoiceNumber] = useState<string | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
   
-  // Product modal state'leri
-  const [productModalOpen, setProductModalOpen] = useState(false);
+  // Hooks
+  const { customers } = useCustomerSelect();
+  const { userData } = useCurrentUser();
+  const { sendInvoice, isSending } = useEInvoice();
+
+  // State
+  const [saving, setSaving] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
   const [editingItemData, setEditingItemData] = useState<any>(null);
-  
-  // E-fatura durumu takibi
-  const { status: einvoiceStatus, refreshStatus } = useEInvoiceStatus(savedInvoiceId || undefined);
-  
-  // Şu anki saati HH:mm formatında al
-  const getCurrentTime = () => {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
-  };
 
-  const [formData, setFormData] = useState({
+  // Source tracking
+  const [sourceData, setSourceData] = useState<{
+    type: 'proposal' | 'order' | null;
+    data: any;
+  }>({ type: null, data: null });
+  
+  // Global discount state
+  const [globalDiscountType, setGlobalDiscountType] = useState<'percentage' | 'amount'>('percentage');
+  const [globalDiscountValue, setGlobalDiscountValue] = useState<number>(0);
+
+  // Customer data state
+  const [customerData, setCustomerData] = useState<CustomerData>({
+    contact_name: "",
     customer_id: "",
-    fatura_no: "", // Boş bırakılacak, E-fatura gönderilirken otomatik atanacak
-    fatura_tarihi: new Date(),
-    issue_time: getCurrentTime(), // Varsayılan olarak şu anki saat
-    vade_tarihi: null as Date | null,
-    invoice_type: "SATIS", // Varsayılan: Satış Faturası
-    invoice_profile: "TEMELFATURA", // Varsayılan: Temel Fatura
-    send_type: "ELEKTRONIK", // Varsayılan: Elektronik
-    sales_platform: "NORMAL", // Varsayılan: Normal
-    is_despatch: false, // Varsayılan: false
-    internet_info: {} as any, // JSONB - İnternet satış bilgileri
-    return_invoice_info: {} as any, // JSONB - İade fatura bilgileri
-    aciklama: "",
-    notlar: "",
-    para_birimi: "TRY",
-    exchange_rate: 1, // Varsayılan: 1 (TRY için)
-    odeme_sekli: "",
-    banka_bilgileri: "",
   });
 
-  // Müşteri seçildiğinde bilgilerini yükle (form'dan gelen değeri kullan)
+  // Invoice data state - issue_time sadece mount'ta bir kere set edilsin
+  const [invoiceData, setInvoiceData] = useState<InvoiceData>(() => {
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    return {
+      invoice_date: new Date(),
+      invoice_number: "",
+      issue_time: currentTime,
+      due_date: null,
+      invoice_type: "SATIS",
+      invoice_profile: "TEMELFATURA",
+      send_type: "ELEKTRONIK",
+      sales_platform: "NORMAL",
+      is_despatch: false,
+      description: "",
+      notes: "",
+      banka_bilgileri: "",
+    };
+  });
+
+  // Financial data state
+  const [financialData, setFinancialData] = useState<FinancialData>({
+    currency: DEFAULT_CURRENCY,
+    exchange_rate: 1,
+    vat_percentage: DEFAULT_VAT_PERCENTAGE,
+  });
+
+  // E-invoice data state
+  const [eInvoiceData, setEInvoiceData] = useState<EInvoiceData>({
+    internet_info: {},
+    return_invoice_info: {},
+  });
+
+  // Terms and conditions state
+  const [termsData, setTermsData] = useState({
+    payment_terms: "",
+    delivery_terms: "",
+    warranty_terms: "",
+    price_terms: "",
+    other_terms: "",
+  });
+
+  // Selected terms IDs state
+  const [selectedTerms, setSelectedTerms] = useState({
+    selectedPaymentTerms: [] as string[],
+    selectedDeliveryTerms: [] as string[],
+    selectedWarrantyTerms: [] as string[],
+    selectedPricingTerms: [] as string[],
+    selectedOtherTerms: [] as string[],
+  });
+
+  // handleFieldChange - State'lerden sonra tanımlanmalı
+  const handleFieldChange = useCallback((field: string, value: any) => {
+    // Update the appropriate state based on field
+    if (['contact_name', 'customer_id'].includes(field)) {
+      setCustomerData(prev => ({ ...prev, [field]: value }));
+    } else if (['invoice_date', 'invoice_number', 'issue_time', 'due_date', 'invoice_type', 'invoice_profile', 'send_type', 'sales_platform', 'is_despatch', 'description', 'notes', 'banka_bilgileri'].includes(field)) {
+      setInvoiceData(prev => ({ ...prev, [field]: value }));
+    } else if (['currency', 'exchange_rate', 'vat_percentage'].includes(field)) {
+      setFinancialData(prev => ({ ...prev, [field]: value }));
+    } else if (['internet_info', 'return_invoice_info'].includes(field)) {
+      setEInvoiceData(prev => ({ ...prev, [field]: value }));
+    } else if (['payment_terms', 'delivery_terms', 'warranty_terms', 'price_terms', 'other_terms'].includes(field)) {
+      setTermsData(prev => ({ ...prev, [field]: value }));
+    }
+  }, []);
+
+  // Handle terms input change
+  const handleTermsInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setTermsData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  // Handle selected terms change
+  const handleSelectedTermsChange = useCallback((category: string, termIds: string[]) => {
+    setSelectedTerms(prev => ({ ...prev, [category]: termIds }));
+  }, []);
+
+  // Müşteri verilerini yükle - Sadece watchCustomerId değiştiğinde çalışır
   useEffect(() => {
-    if (watchCustomerId && watchCustomerId !== formData.customer_id) {
-      handleCustomerChange(watchCustomerId);
-      setFormData(prev => ({ ...prev, customer_id: watchCustomerId }));
-    }
-  }, [watchCustomerId]);
-
-  const handleCustomerChange = async (customerId: string) => {
-    setFormData({ ...formData, customer_id: customerId });
+    let isMounted = true;
     
-    // Müşteri bilgilerini çek
-    const { data: customer, error } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('id', customerId)
-      .single();
+    const loadCustomerData = async () => {
+      if (!watchCustomerId || !watchCustomerId.trim()) {
+        if (isMounted) {
+          setSelectedCustomer(null);
+          setCustomerData(prev => ({ ...prev, customer_id: "", contact_name: "" }));
+        }
+        return;
+      }
+      
+      // Önce mevcut customers listesinde ara
+      let selected = customers?.find(c => c.id === watchCustomerId);
+      
+      // Bulunamadıysa Supabase'den çek
+      if (!selected) {
+        try {
+          const { data, error } = await supabase
+            .from("customers")
+            .select("*")
+            .eq("id", watchCustomerId)
+            .single();
+          
+          if (!error && data) {
+            selected = data;
+            console.log("✅ [CreateSalesInvoice] Customer loaded:", { id: selected.id, name: selected.name });
+          } else if (error) {
+            console.error("❌ [CreateSalesInvoice] Error fetching customer:", error);
+          }
+        } catch (error) {
+          console.error("❌ [CreateSalesInvoice] Error fetching customer:", error);
+        }
+      } else {
+        console.log("✅ [CreateSalesInvoice] Customer selected:", { id: selected.id, name: selected.name });
+      }
+      
+      if (isMounted && selected) {
+        setSelectedCustomer(selected);
+        setCustomerData(prev => ({
+          ...prev,
+          customer_id: watchCustomerId,
+          contact_name: selected.name || ""
+        }));
+      }
+    };
     
-    if (!error && customer) {
-      setSelectedCustomer(customer);
-    }
-  };
+    loadCustomerData();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [watchCustomerId, customers]);
 
-  const [items, setItems] = useState<InvoiceItem[]>([
+  // Combined form data for components
+  const formData = useMemo(() => {
+    return {
+      ...customerData,
+      ...invoiceData,
+      ...financialData,
+      // Mapping for InvoiceHeaderCard
+      fatura_tarihi: invoiceData.invoice_date,
+      fatura_no: invoiceData.invoice_number,
+      vade_tarihi: invoiceData.due_date,
+      aciklama: invoiceData.description,
+      notlar: invoiceData.notes,
+      para_birimi: financialData.currency,
+      banka_bilgileri: invoiceData.banka_bilgileri || "",
+      ...eInvoiceData,
+    };
+  }, [customerData, invoiceData, financialData, eInvoiceData]);
+
+  // Line items state
+  const [items, setItems] = useState<LineItem[]>([
     {
       id: "1",
-      urun_adi: "",
-      aciklama: "",
-      miktar: 1,
-      birim: "adet",
-      birim_fiyat: 0,
-      kdv_orani: 18,
-      indirim_orani: 0,
-      satir_toplami: 0,
-      kdv_tutari: 0,
+      row_number: 1,
+      name: "",
+      description: "",
+      quantity: DEFAULT_QUANTITY,
+      unit: DEFAULT_UNIT,
+      unit_price: 0,
+      tax_rate: DEFAULT_VAT_PERCENTAGE,
+      discount_rate: 0,
+      total_price: 0,
+      currency: DEFAULT_CURRENCY
     }
   ]);
 
-  // Load order data if orderId is provided, or proposal data if proposalId is provided
-  useEffect(() => {
-    if (orderId) {
-      loadOrderData(orderId);
-    } else if (proposalId) {
-      loadProposalData(proposalId);
-    }
-  }, [orderId, proposalId]);
-
-  const loadOrderData = async (id: string) => {
+  // Load order or proposal data
+  const loadOrderData = useCallback(async (id: string) => {
+    console.log("🔵 [CreateSalesInvoice] Loading order data...", { orderId: id });
     try {
       setLoadingData(true);
       const { data: order, error } = await supabase
         .from("orders")
-        .select(`
-          *,
-          customer:customers(*),
-          items:order_items(*)
-        `)
+        .select(`*, customer:customers(*), items:order_items(*)`)
         .eq("id", id)
         .single();
 
       if (error) throw error;
 
       if (order) {
-        setOrderData(order);
-        
-        // Build aciklama from description, order_number and title
-        const aciklamaParts = [];
-        if (order.order_number) aciklamaParts.push(`Sipariş No: ${order.order_number}`);
-        if (order.title) aciklamaParts.push(order.title);
-        if (order.description) aciklamaParts.push(order.description);
-        const aciklama = aciklamaParts.length > 0 ? aciklamaParts.join(' - ') : '';
-        
-        // Convert order_date (timestamp) to Date object if it exists
-        let faturaTarihi = new Date();
-        if (order.order_date) {
-          try {
-            const date = new Date(order.order_date);
-            if (!isNaN(date.getTime())) {
-              faturaTarihi = date;
-            }
-          } catch (error) {
-            console.warn("Invalid order_date format, using current date:", error);
-          }
-        }
-        
-        // Convert expected_delivery_date to Date object if it exists
-        let vadeTarihi: Date | null = null;
-        if (order.expected_delivery_date) {
-          try {
-            const date = new Date(order.expected_delivery_date);
-            if (!isNaN(date.getTime())) {
-              vadeTarihi = date;
-            }
-          } catch (error) {
-            console.warn("Invalid expected_delivery_date format:", error);
-          }
-        }
-        
-        const orderCurrency = order.currency === 'TL' ? 'TRY' : (order.currency || "TRY");
-        setFormData(prev => ({
-          ...prev,
-          customer_id: order.customer_id || "",
-          fatura_tarihi: faturaTarihi,
-          vade_tarihi: vadeTarihi,
-          aciklama: aciklama,
-          notlar: order.notes || "",
-          para_birimi: orderCurrency,
-          exchange_rate: order.exchange_rate || (orderCurrency === 'TRY' ? 1 : 1),
-          odeme_sekli: order.payment_terms || "",
-        }));
-        
-        // Set employee_id
-        if (order.employee_id) {
-          setEmployeeId(order.employee_id);
-        }
-        
-        // Form'a da customer_id'yi set et
+        // Store source data
+        setSourceData({ type: 'order', data: order });
+
+        // Set customer
         if (order.customer_id) {
           form.setValue("customer_id", order.customer_id);
-        }
-        
-        // Load customer data
-        if (order.customer) {
           setSelectedCustomer(order.customer);
         }
 
-        // Convert order items to invoice items
+        // Set invoice data
+        const orderCurrency = order.currency === 'TL' ? 'TRY' : (order.currency || "TRY");
+        setInvoiceData(prev => ({
+          ...prev,
+          invoice_date: order.order_date ? new Date(order.order_date) : new Date(),
+          due_date: order.expected_delivery_date ? new Date(order.expected_delivery_date) : null,
+          description: [order.order_number && `Sipariş No: ${order.order_number}`, order.title, order.description].filter(Boolean).join(' - '),
+          notes: order.notes || "",
+          banka_bilgileri: "",
+        }));
+
+        setFinancialData(prev => ({
+          ...prev,
+          currency: orderCurrency,
+          exchange_rate: order.exchange_rate || 1,
+        }));
+
+        // Load terms from order if available
+        if (order.payment_terms || order.delivery_terms || order.warranty_terms || order.price_terms || order.other_terms) {
+          setTermsData({
+            payment_terms: order.payment_terms || "",
+            delivery_terms: order.delivery_terms || "",
+            warranty_terms: order.warranty_terms || "",
+            price_terms: order.price_terms || "",
+            other_terms: order.other_terms || "",
+          });
+        }
+
+        // Convert items
         if (order.items && order.items.length > 0) {
           const invoiceItems = order.items.map((item: any, index: number) => ({
             id: (index + 1).toString(),
-            urun_adi: item.name,
-            aciklama: item.description || "",
-            seller_code: item.seller_code || undefined,
-            buyer_code: item.buyer_code || undefined,
-            miktar: parseFloat(item.quantity),
-            birim: item.unit || item.birim || "adet", // Hem unit hem birim kontrolü
-            birim_fiyat: parseFloat(item.unit_price),
-            kdv_orani: parseFloat(item.tax_rate) || 18,
-            indirim_orani: parseFloat(item.discount_rate) || 0,
-            satir_toplami: parseFloat(item.total_price),
-            kdv_tutari: (parseFloat(item.total_price) * (parseFloat(item.tax_rate) || 18)) / 100,
+            row_number: index + 1,
+            name: item.name,
+            description: item.description || "",
+            quantity: parseFloat(item.quantity),
+            unit: item.unit || "adet",
+            unit_price: parseFloat(item.unit_price),
+            tax_rate: parseFloat(item.tax_rate) || DEFAULT_VAT_PERCENTAGE,
+            discount_rate: parseFloat(item.discount_rate) || 0,
+            total_price: parseFloat(item.total_price),
+            currency: orderCurrency
           }));
           setItems(invoiceItems);
         }
+        console.log("✅ [CreateSalesInvoice] Order data loaded successfully", { 
+          orderNumber: order.order_number,
+          itemsCount: order.items?.length || 0 
+        });
       }
     } catch (error) {
-      console.error("Error loading order:", error);
+      console.error("❌ [CreateSalesInvoice] Error loading order:", error);
       toast.error("Sipariş verileri yüklenirken hata oluştu");
     } finally {
       setLoadingData(false);
     }
-  };
+  }, [form]);
 
-  const loadProposalData = async (id: string) => {
+  const loadProposalData = useCallback(async (id: string) => {
+    console.log("🔵 [CreateSalesInvoice] Loading proposal data...", { proposalId: id });
     try {
       setLoadingData(true);
       const { data: proposal, error } = await supabase
         .from("proposals")
-        .select(`
-          *,
-          customer:customers(*)
-        `)
+        .select(`*, customer:customers(*)`)
         .eq("id", id)
         .single();
 
       if (error) throw error;
 
       if (proposal) {
-        setProposalData(proposal);
-        
-        // Build aciklama from description, subject, number and title
-        const aciklamaParts = [];
-        if (proposal.number) aciklamaParts.push(`Teklif No: ${proposal.number}`);
-        if (proposal.title) aciklamaParts.push(proposal.title);
-        if (proposal.subject) aciklamaParts.push(`Konu: ${proposal.subject}`);
-        if (proposal.description) aciklamaParts.push(proposal.description);
-        const aciklama = aciklamaParts.length > 0 ? aciklamaParts.join(' - ') : '';
-        
-        // Convert offer_date to Date object if it exists
-        let faturaTarihi = new Date();
-        if (proposal.offer_date) {
-          try {
-            const date = new Date(proposal.offer_date);
-            if (!isNaN(date.getTime())) {
-              faturaTarihi = date;
-            }
-          } catch (error) {
-            console.warn("Invalid offer_date format, using current date:", error);
-          }
-        }
-        
-        // Convert valid_until to Date object if it exists
-        let vadeTarihi: Date | null = null;
-        if (proposal.valid_until) {
-          try {
-            const date = new Date(proposal.valid_until);
-            if (!isNaN(date.getTime())) {
-              vadeTarihi = date;
-            }
-          } catch (error) {
-            console.warn("Invalid valid_until format:", error);
-          }
-        }
-        
-        const proposalCurrency = proposal.currency === 'TL' ? 'TRY' : (proposal.currency || "TRY");
-        setFormData(prev => ({
-          ...prev,
-          customer_id: proposal.customer_id || "",
-          fatura_tarihi: faturaTarihi,
-          vade_tarihi: vadeTarihi,
-          aciklama: aciklama,
-          notlar: proposal.notes || "",
-          para_birimi: proposalCurrency,
-          exchange_rate: proposal.exchange_rate || (proposalCurrency === 'TRY' ? 1 : 1),
-          odeme_sekli: proposal.payment_terms || "",
-        }));
-        
-        // Set employee_id
-        if (proposal.employee_id) {
-          setEmployeeId(proposal.employee_id);
-        }
-        
-        // Form'a da customer_id'yi set et
+        // Store source data
+        setSourceData({ type: 'proposal', data: proposal });
+
+        // Set customer
         if (proposal.customer_id) {
           form.setValue("customer_id", proposal.customer_id);
-        }
-
-        // Load customer data
-        if (proposal.customer) {
           setSelectedCustomer(proposal.customer);
         }
 
-        // Convert proposal items from JSONB to invoice items
-        // Parse items if it's a string (JSONB from database)
+        // Set invoice data
+        const proposalCurrency = proposal.currency === 'TL' ? 'TRY' : (proposal.currency || "TRY");
+        setInvoiceData(prev => ({
+          ...prev,
+          invoice_date: proposal.offer_date ? new Date(proposal.offer_date) : new Date(),
+          due_date: proposal.valid_until ? new Date(proposal.valid_until) : null,
+          description: [proposal.number && `Teklif No: ${proposal.number}`, proposal.title, proposal.subject, proposal.description].filter(Boolean).join(' - '),
+          notes: proposal.notes || "",
+        }));
+
+        setFinancialData(prev => ({
+          ...prev,
+          currency: proposalCurrency,
+          exchange_rate: proposal.exchange_rate || 1,
+        }));
+
+        // Load terms from proposal if available
+        if (proposal.payment_terms || proposal.delivery_terms || proposal.warranty_terms || proposal.price_terms || proposal.other_terms) {
+          setTermsData({
+            payment_terms: proposal.payment_terms || "",
+            delivery_terms: proposal.delivery_terms || "",
+            warranty_terms: proposal.warranty_terms || "",
+            price_terms: proposal.price_terms || "",
+            other_terms: proposal.other_terms || "",
+          });
+        }
+
+        // Parse items
         let parsedItems: any[] = [];
         if (proposal.items) {
-          try {
-            if (typeof proposal.items === 'string') {
-              parsedItems = JSON.parse(proposal.items);
-            } else if (Array.isArray(proposal.items)) {
-              parsedItems = proposal.items;
-            }
-          } catch (error) {
-            console.error("Error parsing proposal items:", error);
-            parsedItems = [];
+          if (typeof proposal.items === 'string') {
+            parsedItems = JSON.parse(proposal.items);
+          } else if (Array.isArray(proposal.items)) {
+            parsedItems = proposal.items;
           }
         }
-        
-        console.log("Parsed proposal items:", parsedItems);
-        
-        if (parsedItems && Array.isArray(parsedItems) && parsedItems.length > 0) {
-          const invoiceItems = parsedItems.map((item: any, index: number) => {
-            const quantity = parseFloat(item.quantity || item.miktar || 1);
-            const unitPrice = parseFloat(item.unit_price || item.unitPrice || item.birim_fiyat || 0);
-            const discountRate = parseFloat(item.discount_rate || item.discountRate || item.indirim_orani || 0);
-            const taxRate = parseFloat(item.tax_rate || item.taxRate || item.kdv_orani || 18);
-            
-            const subtotal = quantity * unitPrice;
-            const discountAmount = (subtotal * discountRate) / 100;
-            const discountedSubtotal = subtotal - discountAmount;
-            const taxAmount = (discountedSubtotal * taxRate) / 100;
 
-            return {
-              id: (index + 1).toString(),
-              urun_adi: item.name || item.urun_adi || item.product_name || "",
-              aciklama: item.description || item.aciklama || "",
-              seller_code: item.seller_code || undefined,
-              buyer_code: item.buyer_code || undefined,
-              miktar: quantity,
-              birim: item.unit || item.birim || "adet",
-              birim_fiyat: unitPrice,
-              kdv_orani: taxRate,
-              indirim_orani: discountRate,
-              satir_toplami: discountedSubtotal,
-              kdv_tutari: taxAmount,
-            };
-          });
-          console.log("Converted invoice items:", invoiceItems);
+        if (parsedItems.length > 0) {
+          const invoiceItems = parsedItems.map((item: any, index: number) => ({
+            id: (index + 1).toString(),
+            row_number: index + 1,
+            name: item.name || item.urun_adi || "",
+            description: item.description || item.aciklama || "",
+            quantity: parseFloat(item.quantity || item.miktar) || 1,
+            unit: item.unit || item.birim || "adet",
+            unit_price: parseFloat(item.unit_price || item.birim_fiyat) || 0,
+            tax_rate: parseFloat(item.tax_rate || item.kdv_orani) || DEFAULT_VAT_PERCENTAGE,
+            discount_rate: parseFloat(item.discount_rate || item.indirim_orani) || 0,
+            total_price: parseFloat(item.total_price || item.satir_toplami) || 0,
+            currency: proposalCurrency
+          }));
           setItems(invoiceItems);
-        } else {
-          console.warn("No items found in proposal or items array is empty");
-          // Keep default empty item if no items found
         }
+        console.log("✅ [CreateSalesInvoice] Proposal data loaded successfully", { 
+          proposalNumber: proposal.number,
+          itemsCount: parsedItems.length 
+        });
       }
     } catch (error) {
-      console.error("Error loading proposal:", error);
+      console.error("❌ [CreateSalesInvoice] Error loading proposal:", error);
       toast.error("Teklif verileri yüklenirken hata oluştu");
     } finally {
+      console.log("  → loadProposalData completed, setting loadingData to false");
       setLoadingData(false);
     }
-  };
+  }, [form]);
 
-  const calculateItemTotals = (item: InvoiceItem) => {
-    const subtotal = item.miktar * item.birim_fiyat;
-    const discountAmount = (subtotal * item.indirim_orani) / 100;
-    const discountedSubtotal = subtotal - discountAmount;
-    const taxAmount = (discountedSubtotal * item.kdv_orani) / 100;
-    
-    return {
-      ...item,
-      satir_toplami: discountedSubtotal,
-      kdv_tutari: taxAmount,
-    };
-  };
+  // Load data on mount
+  useEffect(() => {
+    console.log("🟣 [CreateSalesInvoice] useEffect - loadData on mount triggered", {
+      orderId,
+      proposalId,
+      timestamp: new Date().toISOString()
+    });
 
-  const updateItem = (index: number, field: keyof InvoiceItem, value: any) => {
-    const updatedItems = [...items];
-    updatedItems[index] = { ...updatedItems[index], [field]: value };
-    
-    // Recalculate totals
-    updatedItems[index] = calculateItemTotals(updatedItems[index]);
-    
-    setItems(updatedItems);
-  };
-
-  const addItem = () => {
-    const newItem: InvoiceItem = {
-      id: (items.length + 1).toString(),
-      urun_adi: "",
-      aciklama: "",
-      miktar: 1,
-      birim: "adet",
-      birim_fiyat: 0,
-      kdv_orani: 18,
-      indirim_orani: 0,
-      satir_toplami: 0,
-      kdv_tutari: 0,
-    };
-    setItems([...items, newItem]);
-  };
-
-  const removeItem = (index: number) => {
-    if (items.length > 1) {
-      setItems(items.filter((_, i) => i !== index));
+    if (orderId) {
+      console.log("  → Loading order data...");
+      loadOrderData(orderId);
+    } else if (proposalId) {
+      console.log("  → Loading proposal data...");
+      loadProposalData(proposalId);
+    } else {
+      console.log("  → No orderId or proposalId, skipping data load");
     }
-  };
+  }, [orderId, proposalId, loadOrderData, loadProposalData]);
 
-  const moveItemUp = (index: number) => {
-    if (index > 0) {
-      const newItems = [...items];
-      [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
-      setItems(newItems);
-    }
-  };
+  // Calculate totals by currency
+  const calculationsByCurrency = useMemo(() => {
+    const totals: Record<string, { gross: number; discount: number; net: number; vat: number; grand: number }> = {};
+    
+    const usedCurrencies = new Set<string>();
+    items.forEach(item => {
+      const currency = item.currency || financialData.currency;
+      usedCurrencies.add(currency);
+    });
+    
+    usedCurrencies.forEach(currency => {
+      totals[currency] = { gross: 0, discount: 0, net: 0, vat: 0, grand: 0 };
+    });
+    
+    items.forEach(item => {
+      const currency = item.currency || financialData.currency;
+      const subtotal = item.quantity * item.unit_price;
+      const discountAmount = (subtotal * (item.discount_rate || 0)) / 100;
+      const discountedSubtotal = subtotal - discountAmount;
+      const vatAmount = (discountedSubtotal * (item.tax_rate || DEFAULT_VAT_PERCENTAGE)) / 100;
+      
+      totals[currency].gross += subtotal;
+      totals[currency].discount += discountAmount;
+      totals[currency].net += discountedSubtotal;
+      totals[currency].vat += vatAmount;
+      totals[currency].grand += discountedSubtotal + vatAmount;
+    });
 
-  const moveItemDown = (index: number) => {
-    if (index < items.length - 1) {
-      const newItems = [...items];
-      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
-      setItems(newItems);
-    }
-  };
+    // Apply global discount
+    const totalGross = Object.values(totals).reduce((sum, total) => sum + total.gross, 0);
+    Object.keys(totals).forEach(currency => {
+      if (globalDiscountValue > 0 && totalGross > 0) {
+        const currencyProportion = totals[currency].gross / totalGross;
+        let globalDiscount = 0;
+        if (globalDiscountType === 'percentage') {
+          globalDiscount = (totals[currency].net * globalDiscountValue) / 100;
+        } else {
+          globalDiscount = globalDiscountValue * currencyProportion;
+        }
+        totals[currency].discount += globalDiscount;
+        totals[currency].net -= globalDiscount;
+        totals[currency].grand = totals[currency].net + totals[currency].vat;
+      }
+    });
+    
+    return totals;
+  }, [items, financialData.currency, globalDiscountValue, globalDiscountType]);
 
-  // ProductServiceCard formatına uygun handleItemChange
-  const handleItemChange = useCallback((index: number, field: string, value: any) => {
-    // Field mapping: ProductServiceCard -> InvoiceItem
-    const fieldMapping: Record<string, keyof InvoiceItem> = {
-      'name': 'urun_adi',
-      'description': 'aciklama',
-      'quantity': 'miktar',
-      'unit': 'birim',
-      'unit_price': 'birim_fiyat',
-      'tax_rate': 'kdv_orani',
-      'discount_rate': 'indirim_orani',
-    };
+  // Item handlers
+  const handleItemChange = useCallback((index: number, field: keyof LineItem, value: any) => {
+    setItems(prevItems => {
+      const updatedItems = [...prevItems];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        [field]: value,
+        total_price: field === 'quantity' || field === 'unit_price' 
+          ? (field === 'quantity' ? value : updatedItems[index].quantity) * 
+            (field === 'unit_price' ? value : updatedItems[index].unit_price)
+          : updatedItems[index].total_price
+      };
+      return updatedItems;
+    });
+  }, []);
 
-    const mappedField = fieldMapping[field] || field;
-    updateItem(index, mappedField as keyof InvoiceItem, value);
-  }, [items]);
+  const addItem = useCallback(() => {
+    setItems(prevItems => {
+      const newItem: LineItem = {
+        id: Date.now().toString(),
+        row_number: prevItems.length + 1,
+        name: "",
+        description: "",
+        quantity: DEFAULT_QUANTITY,
+        unit: DEFAULT_UNIT,
+        unit_price: 0,
+        tax_rate: DEFAULT_VAT_PERCENTAGE,
+        discount_rate: 0,
+        total_price: 0,
+        currency: financialData.currency
+      };
+      return [...prevItems, newItem];
+    });
+  }, [financialData.currency]);
 
-  // Product modal'dan ürün seçildiğinde
+  const removeItem = useCallback((index: number) => {
+    setItems(prevItems => {
+      if (prevItems.length > 1) {
+        const updatedItems = prevItems.filter((_, i) => i !== index);
+        return updatedItems.map((item, i) => ({ ...item, row_number: i + 1 }));
+      }
+      return prevItems;
+    });
+  }, []);
+
+  const moveItemUp = useCallback((index: number) => {
+    setItems(prevItems => {
+      if (index > 0) {
+        const updatedItems = [...prevItems];
+        [updatedItems[index - 1], updatedItems[index]] = [updatedItems[index], updatedItems[index - 1]];
+        return updatedItems.map((item, i) => ({ ...item, row_number: i + 1 }));
+      }
+      return prevItems;
+    });
+  }, []);
+
+  const moveItemDown = useCallback((index: number) => {
+    setItems(prevItems => {
+      if (index < prevItems.length - 1) {
+        const updatedItems = [...prevItems];
+        [updatedItems[index], updatedItems[index + 1]] = [updatedItems[index + 1], updatedItems[index]];
+        return updatedItems.map((item, i) => ({ ...item, row_number: i + 1 }));
+      }
+      return prevItems;
+    });
+  }, []);
+
   const handleProductModalSelect = (product: any, itemIndex?: number) => {
-    if (!product) return;
+    setSelectedProduct(product);
+    setEditingItemIndex(itemIndex);
+    setProductModalOpen(true);
+  };
 
-    const newItem: InvoiceItem = {
-      id: (items.length + 1).toString(),
-      urun_adi: product.name || product.product_name || "",
-      aciklama: product.description || "",
-      seller_code: product.seller_code || undefined,
-      buyer_code: product.buyer_code || undefined,
-      miktar: parseFloat(product.quantity) || 1,
-      birim: product.unit || "adet",
-      birim_fiyat: parseFloat(product.unit_price) || parseFloat(product.price) || 0,
-      kdv_orani: parseFloat(product.tax_rate) || 18,
-      indirim_orani: parseFloat(product.discount_rate) || 0,
-      satir_toplami: 0,
-      kdv_tutari: 0,
-    };
-
-    // Calculate totals
-    const calculatedItem = calculateItemTotals(newItem);
-
-    if (itemIndex !== undefined && itemIndex >= 0 && itemIndex < items.length) {
-      // Editing existing item
+  const handleAddProductToInvoice = (productData: any, itemIndex?: number) => {
+    if (itemIndex !== undefined) {
       const updatedItems = [...items];
-      updatedItems[itemIndex] = { ...calculatedItem, id: items[itemIndex].id };
+      updatedItems[itemIndex] = {
+        ...updatedItems[itemIndex],
+        name: productData.name,
+        description: productData.description,
+        quantity: productData.quantity,
+        unit: productData.unit,
+        unit_price: productData.unit_price,
+        tax_rate: productData.vat_rate || DEFAULT_VAT_PERCENTAGE,
+        discount_rate: productData.discount_rate || 0,
+        total_price: productData.total_price,
+        currency: productData.currency || financialData.currency,
+      };
       setItems(updatedItems);
     } else {
-      // Adding new item
-      setItems([...items, calculatedItem]);
+      const newItem: LineItem = {
+        id: Date.now().toString(),
+        row_number: items.length + 1,
+        name: productData.name,
+        description: productData.description,
+        quantity: productData.quantity,
+        unit: productData.unit,
+        unit_price: productData.unit_price,
+        tax_rate: productData.vat_rate || DEFAULT_VAT_PERCENTAGE,
+        discount_rate: productData.discount_rate || 0,
+        total_price: productData.total_price,
+        currency: productData.currency || financialData.currency,
+      };
+      setItems([...items, newItem]);
     }
-
+    
     setProductModalOpen(false);
-    setSelectedProduct(null);
     setEditingItemIndex(undefined);
-    setEditingItemData(null);
+    setSelectedProduct(null);
   };
 
-  // Product modal'dan ürün eklendiğinde (ProductDetailsModal için)
-  const handleAddProductToProposal = (productData: any) => {
-    handleProductModalSelect(productData, editingItemIndex);
-  };
-
-  const calculateTotals = () => {
-    // Calculate indirim tutarı (toplam indirim miktarı)
-    const indirim_tutari = items.reduce((sum, item) => {
-      const subtotal = item.miktar * item.birim_fiyat;
-      const discountAmount = (subtotal * item.indirim_orani) / 100;
-      return sum + discountAmount;
-    }, 0);
+  // Form handler for InvoiceHeaderCard
+  const handleFormDataChange = useCallback((field: string, value: any) => {
+    // Map InvoiceHeaderCard fields to our state
+    const fieldMapping: Record<string, string> = {
+      'fatura_tarihi': 'invoice_date',
+      'fatura_no': 'invoice_number',
+      'vade_tarihi': 'due_date',
+      'aciklama': 'description',
+      'notlar': 'notes',
+      'para_birimi': 'currency',
+    };
     
-    const ara_toplam = items.reduce((sum, item) => sum + item.satir_toplami, 0);
-    const kdv_tutari = items.reduce((sum, item) => sum + item.kdv_tutari, 0);
-    const toplam_tutar = ara_toplam + kdv_tutari;
+    const mappedField = fieldMapping[field] || field;
+    handleFieldChange(mappedField, value);
+  }, [handleFieldChange]);
 
-    return { ara_toplam, kdv_tutari, toplam_tutar, indirim_tutari };
-  };
-
-  // Items'ı ProductServiceCard formatına dönüştür
-  const productServiceItems = React.useMemo(() => {
-    return items.map((item, index) => ({
-      id: item.id,
-      row_number: index + 1,
-      name: item.urun_adi,
-      description: item.aciklama,
-      quantity: item.miktar,
-      unit: item.birim,
-      unit_price: item.birim_fiyat,
-      tax_rate: item.kdv_orani,
-      discount_rate: item.indirim_orani,
-      total_price: item.satir_toplami + item.kdv_tutari,
-      currency: formData.para_birimi,
-    }));
-  }, [items, formData.para_birimi]);
-
-  // Currency code'u Intl.NumberFormat için geçerli formata çevir
-  const getValidCurrencyCode = (currency: string): string => {
-    // TL -> TRY dönüşümü (Intl.NumberFormat TL'yi desteklemiyor)
-    if (currency === 'TL' || currency === 'tl') {
-      return 'TRY';
-    }
-    return currency;
-  };
-
-  // Para birimini formatla
-  const formatCurrency = (amount: number, currency: string = "TRY") => {
-    const currencyCode = getValidCurrencyCode(currency);
-    return new Intl.NumberFormat('tr-TR', { 
-      style: 'currency', 
-      currency: currencyCode 
-    }).format(amount);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log("Form submit başladı", { formData, items });
-    
-    // Detaylı validasyonlar
-    const customerId = watchCustomerId || formData.customer_id;
-    if (!customerId) {
-      console.log("Müşteri seçilmedi");
-      toast.error("❌ Lütfen müşteri seçiniz");
-      return;
-    }
-
-    // Müşteri bilgileri kontrolü
-    if (selectedCustomer) {
-      if (!selectedCustomer.tax_number) {
-        toast.error("❌ Seçili müşterinin vergi numarası eksik. Lütfen müşteri bilgilerini tamamlayın.");
+  // Save invoice
+  const handleSave = async (isDraft: boolean = false) => {
+    console.log("💾 [CreateSalesInvoice] Saving invoice...", { isDraft });
+    try {
+      // Validation
+      const customerId = watchCustomerId || customerData.customer_id;
+      
+      if (!customerId) {
+        console.log("  ❌ Validation failed: No customer selected");
+        toast.error("Müşteri seçilmelidir");
         return;
       }
+
+      const validItems = items.filter(item => item.name.trim());
+      console.log("  → Items validation:", { totalItems: items.length, validItems: validItems.length });
       
-      // E-fatura mükellefi ise alias kontrolü
-      if (selectedCustomer.is_einvoice_mukellef && !selectedCustomer.einvoice_alias_name) {
-        toast.warning("⚠️ Müşteri e-fatura mükellefi ancak alias bilgisi eksik. Fatura gönderilemeyebilir.");
+      if (validItems.length === 0) {
+        console.log("  ❌ Validation failed: No valid items");
+        toast.error("En az bir fatura kalemi eklenmelidir");
+        return;
       }
-    }
 
-    if (items.length === 0) {
-      console.log("Fatura kalemi yok");
-      toast.error("❌ En az bir fatura kalemi ekleyiniz");
-      return;
-    }
+      console.log("  → Validation passed, starting save...");
+      setSaving(true);
 
-    if (items.every(item => !item.urun_adi.trim())) {
-      console.log("Fatura kalemlerinde ürün adı yok");
-      toast.error("❌ Tüm fatura kalemlerinde ürün/hizmet adı giriniz");
-      return;
-    }
+      // Calculate totals
+      const primaryCurrency = financialData.currency;
+      const totals = calculationsByCurrency[primaryCurrency] || { gross: 0, discount: 0, net: 0, vat: 0, grand: 0 };
 
-    // Check for empty required fields in items
-    const emptyItems = items.filter(item => !item.urun_adi.trim() || item.miktar <= 0 || item.birim_fiyat <= 0);
-    if (emptyItems.length > 0) {
-      console.log("Eksik bilgili kalemler var:", emptyItems);
-      toast.error(`❌ ${emptyItems.length} kalemde eksik bilgi var. Tüm kalemlerde ürün adı, miktar ve birim fiyat giriniz`);
-      return;
-    }
-    
-    // Toplam kontrolü
-    const totals = calculateTotals();
-    if (totals.toplam_tutar <= 0) {
-      toast.error("❌ Fatura toplam tutarı sıfırdan büyük olmalıdır");
-      return;
-    }
+      // Clean JSONB fields
+      const cleanedInternetInfo = Object.keys(eInvoiceData.internet_info || {}).length > 0 ? eInvoiceData.internet_info : null;
+      const cleanedReturnInvoiceInfo = Object.keys(eInvoiceData.return_invoice_info || {}).length > 0 ? eInvoiceData.return_invoice_info : null;
 
-    try {
-      setLoading(true);
-      console.log("Loading state true yapıldı");
-      
-      const totals = calculateTotals();
-      console.log("Totals hesaplandı:", totals);
-
-      // Get current user and company ID
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log("User data:", user, "User error:", userError);
-      
-      if (userError) throw userError;
-      if (!user) throw new Error("Kullanıcı giriş yapmamış");
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-      
-      console.log("Profile data:", profile, "Profile error:", profileError);
-      
-      if (profileError) throw profileError;
-
-      // Saat formatını HH:mm:ss'e çevir (HH:mm formatından)
-      const issueTimeFormatted = formData.issue_time 
-        ? `${formData.issue_time}:00` 
-        : null;
-
-      // İnternet bilgilerini temizle (sadece dolu alanları gönder)
-      const internetInfo = formData.sales_platform === "INTERNET" && formData.internet_info
-        ? Object.fromEntries(
-            Object.entries(formData.internet_info).filter(([_, v]) => v !== null && v !== undefined && v !== "")
-          )
-        : null;
-
-      // İade fatura bilgilerini temizle (sadece dolu alanları gönder)
-      const returnInvoiceInfo = formData.invoice_type === "IADE" && formData.return_invoice_info
-        ? Object.fromEntries(
-            Object.entries(formData.return_invoice_info).filter(([_, v]) => v !== null && v !== undefined && v !== "")
-          )
-        : null;
-
-      const invoiceData = {
-        order_id: orderId || null,
-        proposal_id: proposalId || null,
+      // Prepare invoice data
+      const invoicePayload = {
         customer_id: customerId,
-        employee_id: employeeId || null,
-        fatura_no: null, // NULL olarak kaydedilecek, E-fatura gönderilirken otomatik atanacak
-        fatura_tarihi: format(formData.fatura_tarihi, "yyyy-MM-dd"),
-        issue_time: issueTimeFormatted,
-        invoice_type: formData.invoice_type || "SATIS",
-        invoice_profile: formData.invoice_profile || "TEMELFATURA",
-        send_type: formData.send_type || "ELEKTRONIK",
-        sales_platform: formData.sales_platform || "NORMAL",
-        is_despatch: formData.is_despatch || false,
-        internet_info: internetInfo || {},
-        return_invoice_info: returnInvoiceInfo || null,
-        exchange_rate: formData.exchange_rate || 1,
-        vade_tarihi: formData.vade_tarihi ? format(formData.vade_tarihi, "yyyy-MM-dd") : null,
-        aciklama: formData.aciklama,
-        notlar: formData.notlar,
-        para_birimi: formData.para_birimi,
-        ara_toplam: totals.ara_toplam,
-        kdv_tutari: totals.kdv_tutari,
-        toplam_tutar: totals.toplam_tutar,
-        odeme_sekli: formData.odeme_sekli,
-        banka_bilgileri: formData.banka_bilgileri,
-        durum: "taslak",
-        odeme_durumu: "odenmedi",
-        company_id: profile?.company_id,
+        company_id: userData?.company_id,
+        fatura_no: invoiceData.invoice_number || null,
+        fatura_tarihi: format(invoiceData.invoice_date, 'yyyy-MM-dd'),
+        issue_time: invoiceData.issue_time,
+        vade_tarihi: invoiceData.due_date ? format(invoiceData.due_date, 'yyyy-MM-dd') : null,
+        invoice_type: invoiceData.invoice_type,
+        invoice_profile: invoiceData.invoice_profile,
+        send_type: invoiceData.send_type,
+        sales_platform: invoiceData.sales_platform,
+        is_despatch: invoiceData.is_despatch,
+        internet_info: cleanedInternetInfo,
+        return_invoice_info: cleanedReturnInvoiceInfo,
+        aciklama: invoiceData.description,
+        notlar: invoiceData.notes,
+        para_birimi: primaryCurrency,
+        exchange_rate: financialData.exchange_rate,
+        ara_toplam: totals.gross,
+        indirim_tutari: totals.discount,
+        kdv_tutari: totals.vat,
+        toplam_tutar: totals.grand,
+        durum: isDraft ? 'taslak' : 'beklemede',
+        payment_terms: termsData.payment_terms || null,
+        delivery_terms: termsData.delivery_terms || null,
+        warranty_terms: termsData.warranty_terms || null,
+        price_terms: termsData.price_terms || null,
+        other_terms: termsData.other_terms || null,
+        banka_bilgileri: invoiceData.banka_bilgileri || null,
+        // Source tracking
+        order_id: sourceData.type === 'order' ? orderId : null,
+        proposal_id: sourceData.type === 'proposal' ? proposalId : null,
       };
 
-      console.log("Invoice data hazırlandı:", invoiceData);
-
-      // Create sales invoice
+      // Insert invoice
       const { data: invoice, error: invoiceError } = await supabase
-        .from("sales_invoices")
-        .insert(invoiceData)
+        .from('sales_invoices')
+        .insert(invoicePayload)
         .select()
         .single();
 
-      console.log("Invoice insert sonucu:", { invoice, invoiceError });
+      if (invoiceError) throw invoiceError;
 
-      if (invoiceError) {
-        console.error("Invoice insert hatası:", invoiceError);
-        throw invoiceError;
-      }
-
-      if (!invoice) {
-        throw new Error("Fatura oluşturulamadı");
-      }
-
-      // Create invoice items
-      const invoiceItems = items.map(item => ({
+      // Insert items
+      const invoiceItems = validItems.map(item => ({
         sales_invoice_id: invoice.id,
-        urun_adi: item.urun_adi,
-        aciklama: item.aciklama,
-        seller_code: item.seller_code || null,
-        buyer_code: item.buyer_code || null,
-        miktar: item.miktar,
-        birim: item.birim,
-        birim_fiyat: item.birim_fiyat,
-        kdv_orani: item.kdv_orani,
-        indirim_orani: item.indirim_orani,
-        satir_toplami: item.satir_toplami,
-        kdv_tutari: item.kdv_tutari,
-        para_birimi: formData.para_birimi,
-        company_id: profile?.company_id,
+        urun_adi: item.name,
+        aciklama: item.description,
+        miktar: item.quantity,
+        birim: item.unit,
+        birim_fiyat: item.unit_price,
+        kdv_orani: item.tax_rate || DEFAULT_VAT_PERCENTAGE,
+        indirim_orani: item.discount_rate || 0,
+        satir_toplami: item.quantity * item.unit_price * (1 - (item.discount_rate || 0) / 100),
+        kdv_tutari: (item.quantity * item.unit_price * (1 - (item.discount_rate || 0) / 100)) * ((item.tax_rate || DEFAULT_VAT_PERCENTAGE) / 100),
       }));
 
-      console.log("Invoice items hazırlandı:", invoiceItems);
-
       const { error: itemsError } = await supabase
-        .from("sales_invoice_items")
+        .from('sales_invoice_items')
         .insert(invoiceItems);
 
-      console.log("Invoice items insert sonucu:", { itemsError });
+      if (itemsError) throw itemsError;
 
-      if (itemsError) {
-        console.error("Invoice items insert hatası:", itemsError);
-        throw itemsError;
-      }
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['sales-invoices'] });
 
-      // Save invoice ID for e-invoice operations
-      setSavedInvoiceId(invoice.id);
-      console.log("Saved invoice ID:", invoice.id);
+      console.log("✅ [CreateSalesInvoice] Invoice saved successfully", { invoiceId: invoice.id, isDraft });
+      toast.success(isDraft ? "Fatura taslak olarak kaydedildi" : "Fatura başarıyla oluşturuldu");
+      navigate(`/sales-invoices/${invoice.id}`);
 
-      toast.success("✅ Fatura başarıyla oluşturuldu! E-fatura göndermek için aşağıdaki butonları kullanabilirsiniz.", {
-        duration: 5000,
-      });
-
-      console.log("Fatura başarıyla oluşturuldu");
-      
-      // Scroll to e-invoice section
-      setTimeout(() => {
-        const einvoiceSection = document.querySelector('#einvoice-section');
-        if (einvoiceSection) {
-          einvoiceSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 500);
-      
-      // Don't navigate immediately to allow e-invoice operations
-      // navigate("/sales-invoices");
     } catch (error) {
-      console.error("Error creating invoice:", error);
-      console.error("Error details:", {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        error
-      });
-      toast.error(`❌ Fatura oluşturulurken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`, {
-        duration: 7000,
-      });
+      console.error('❌ [CreateSalesInvoice] Error saving invoice:', error);
+      toast.error("Fatura kaydedilirken bir hata oluştu");
     } finally {
-      setLoading(false);
-      console.log("Loading state false yapıldı");
+      setSaving(false);
     }
   };
 
-  const totals = calculateTotals();
+  // Smart save
+  const handleSmartSave = () => {
+    const customerId = watchCustomerId || customerData.customer_id;
+    const isFormComplete = 
+      customerId && 
+      items.length > 0 &&
+      items.some(item => item.name.trim() && item.quantity > 0);
 
-  // E-fatura işlevleri
-  const handleSendEInvoice = async () => {
-    if (!savedInvoiceId) {
-      toast.error("❌ Önce faturayı kaydedin");
-      return;
-    }
-
-    // Check if already sending
-    if (isSending || einvoiceStatus?.status === 'sending') {
-      toast.info("⏳ E-fatura zaten gönderiliyor, lütfen bekleyin");
-      return;
-    }
-
-    // Son bir kez müşteri kontrolü yap
-    if (selectedCustomer?.is_einvoice_mukellef && !selectedCustomer?.einvoice_alias_name) {
-      const confirmSend = window.confirm(
-        "⚠️ Uyarı: Müşteri e-fatura mükellefi ancak alias bilgisi eksik. " +
-        "Fatura gönderilemeyebilir. Yine de göndermek istiyor musunuz?"
-      );
-      if (!confirmSend) return;
-    }
-
-    sendInvoice(savedInvoiceId);
-    
-    // E-fatura gönderildikten sonra durumu yenile
-    setTimeout(async () => {
-      await refreshStatus();
-      
-      const { data: updatedInvoice } = await supabase
-        .from('sales_invoices')
-        .select('fatura_no')
-        .eq('id', savedInvoiceId)
-        .single();
-      
-      if (updatedInvoice?.fatura_no) {
-        setAssignedInvoiceNumber(updatedInvoice.fatura_no);
-      }
-    }, 3000); // 3 saniye bekle
+    handleSave(!isFormComplete);
   };
 
-  // Loading sayfası
+  // Loading state
   if (loadingData) {
     return (
-      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-gray-600">
-              {orderId ? "Sipariş verileri yükleniyor..." : "Teklif verileri yükleniyor..."}
-            </p>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      {/* Enhanced Sticky Header */}
+      {/* Enhanced Sticky Header - NewProposalCreate ile aynı */}
       <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
         <div className="flex items-center justify-between p-3 pl-12">
           <div className="flex items-center gap-3">
             {/* Simple Back Button */}
             <BackButton 
-              onClick={() => navigate("/sales-invoices")}
+              fallbackPath="/sales-invoices"
               variant="ghost"
               size="sm"
             >
@@ -855,32 +825,23 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
               <FileText className="h-5 w-5 text-muted-foreground" />
               <div className="space-y-0.5">
                 <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                Yeni Satış Faturası
-              </h1>
+                  Yeni Satış Faturası
+                </h1>
                 <p className="text-xs text-muted-foreground/70">
-                  {orderId && orderData ? `Sipariş ${orderData.order_number} için fatura oluşturun` : 
-                   proposalId && proposalData ? `Teklif ${proposalData.number} için fatura oluşturun` :
-                   "Hızlı ve kolay fatura oluşturma"}
+                  Hızlı ve kolay fatura oluşturma
                 </p>
               </div>
             </div>
           </div>
-
+          
           <div className="flex items-center gap-4">
             <Button 
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                const form = document.getElementById('invoice-form') as HTMLFormElement;
-                if (form) {
-                  form.requestSubmit();
-                }
-              }}
-              disabled={loading || loadingData}
+              onClick={handleSmartSave}
+              disabled={saving || isSending}
               className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
             >
               <Save className="h-4 w-4" />
-              <span>{loading ? "Kaydediliyor..." : "Kaydet"}</span>
+              <span>{saving ? "Kaydediliyor..." : "Kaydet"}</span>
             </Button>
             
             <DropdownMenu>
@@ -894,111 +855,178 @@ const CreateSalesInvoice = ({ isCollapsed, setIsCollapsed }: CreateSalesInvoiceP
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                {savedInvoiceId && einvoiceStatus?.status !== 'sent' && (
-                  <>
-                    <DropdownMenuItem 
-                      onClick={handleSendEInvoice} 
-                      disabled={isSending || einvoiceStatus?.status === 'sending'}
-                      className="gap-2 cursor-pointer"
-                    >
-                      <Send className="h-4 w-4" />
-                      <span>E-Fatura Gönder</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem 
-                  onClick={() => toast.info("PDF indirme özelliği yakında eklenecek")} 
-                  className="gap-2 cursor-pointer"
-                >
-                  <FileDown className="h-4 w-4" />
-                  <span>PDF İndir</span>
+                <DropdownMenuLabel>Kaydetme</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleSave(true)} className="gap-2 cursor-pointer">
+                  <Save className="h-4 w-4 text-slate-500" />
+                  <span>Taslak Olarak Kaydet</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSave(false)} className="gap-2 cursor-pointer">
+                  <Save className="h-4 w-4 text-green-500" />
+                  <span>Kaydet ve Gönder</span>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuLabel>Diğer</DropdownMenuLabel>
+                <DropdownMenuItem className="gap-2 cursor-pointer" disabled>
+                  <Eye className="h-4 w-4 text-slate-500" />
+                  <span>Önizle</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 cursor-pointer" disabled>
+                  <Printer className="h-4 w-4 text-blue-500" />
+                  <span>Yazdır</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 cursor-pointer" disabled>
+                  <Send className="h-4 w-4 text-purple-500" />
+                  <span>E-posta Gönder</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-                  </div>
-                  </div>
-                </div>
-
-      {/* Main Content */}
-      <FormProvider {...form}>
-        <form id="invoice-form" onSubmit={handleSubmit} className="space-y-4">
-          {/* Customer & Invoice Information - Single Card */}
-          <InvoiceHeaderCard
-            selectedCustomer={selectedCustomer}
-            formData={formData}
-            assignedInvoiceNumber={assignedInvoiceNumber}
-            einvoiceStatus={einvoiceStatus}
-            onFieldChange={(field, value) => setFormData({ ...formData, [field]: value })}
-            form={form}
-          />
-
-          {/* Invoice Items - Full Width */}
-          <ProductServiceCard
-            items={productServiceItems}
-            onAddItem={addItem}
-            onRemoveItem={removeItem}
-            onMoveItemUp={moveItemUp}
-            onMoveItemDown={moveItemDown}
-            onItemChange={handleItemChange}
-            onProductModalSelect={(product, itemIndex) => {
-              if (itemIndex !== undefined) {
-                // Editing existing item
-                setSelectedProduct(null);
-                setEditingItemIndex(itemIndex);
-                setEditingItemData(product);
-                setProductModalOpen(true);
-              } else {
-                // Adding new item
-                handleProductModalSelect(product, itemIndex);
-              }
-            }}
-            showMoveButtons={true}
-            inputHeight="h-10"
-          />
-
-          {/* Product Details Modal */}
-          <ProductDetailsModal
-            open={productModalOpen}
-            onOpenChange={(open) => {
-              setProductModalOpen(open);
-              if (!open) {
-                setEditingItemIndex(undefined);
-                setSelectedProduct(null);
-                setEditingItemData(null);
-              }
-            }}
-            product={selectedProduct}
-            onAddToProposal={handleAddProductToProposal}
-            currency={formData.para_birimi}
-            existingData={editingItemData}
-          />
-
-          {/* Financial Summary */}
-          <InvoiceFinancialCard
-            totals={totals}
-            currency={formData.para_birimi}
-            formatCurrency={formatCurrency}
-          />
-
-          {/* Info Text */}
-          <div className="text-sm text-gray-600">
-            <Info className="inline h-4 w-4 mr-1" />
-            * ile işaretli alanlar zorunludur
           </div>
-
-          {/* E-Invoice Actions */}
-          <InvoiceEInvoiceCard
-            savedInvoiceId={savedInvoiceId}
-            einvoiceStatus={einvoiceStatus}
-            isSending={isSending}
-            onSendEInvoice={handleSendEInvoice}
-            onRefreshStatus={refreshStatus}
-            onNavigateToInvoices={() => navigate("/sales-invoices")}
-          />
-        </form>
-      </FormProvider>
         </div>
+      </div>
+
+      {/* Main Content - Her kart bağımsız Card komponenti */}
+      <div className="space-y-4">
+        {/* Source Info Banner */}
+        {sourceData.type && sourceData.data && (
+          <Alert className={sourceData.type === 'proposal' ? 'bg-blue-50 border-blue-200' : 'bg-purple-50 border-purple-200'}>
+            <div className="flex items-center gap-3">
+              {sourceData.type === 'proposal' ? (
+                <FileCheck className="h-5 w-5 text-blue-600 flex-shrink-0" />
+              ) : (
+                <ShoppingCart className="h-5 w-5 text-purple-600 flex-shrink-0" />
+              )}
+              <div className="flex-1">
+                <AlertTitle className={sourceData.type === 'proposal' ? 'text-blue-900' : 'text-purple-900'}>
+                  {sourceData.type === 'proposal' ? 'Tekliften Fatura Oluşturuluyor' : 'Siparişten Fatura Oluşturuluyor'}
+                </AlertTitle>
+                <AlertDescription className={sourceData.type === 'proposal' ? 'text-blue-700' : 'text-purple-700'}>
+                  {sourceData.type === 'proposal' ? (
+                    <>
+                      <span className="font-medium">{sourceData.data.number}</span>
+                      {sourceData.data.title && <span> - {sourceData.data.title}</span>}
+                      {sourceData.data.subject && <span className="text-sm"> ({sourceData.data.subject})</span>}
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium">{sourceData.data.order_number}</span>
+                      {sourceData.data.title && <span> - {sourceData.data.title}</span>}
+                    </>
+                  )}
+                </AlertDescription>
+              </div>
+              {sourceData.data.total_amount && (
+                <Badge
+                  variant="outline"
+                  className={sourceData.type === 'proposal'
+                    ? 'bg-white text-blue-700 border-blue-200'
+                    : 'bg-white text-purple-700 border-purple-200'
+                  }
+                >
+                  {formatCurrency(sourceData.data.total_amount, sourceData.data.currency || 'TRY')}
+                </Badge>
+              )}
+            </div>
+          </Alert>
+        )}
+
+        {/* Invoice Details - Full Width */}
+        <InvoiceHeaderCard
+          formData={formData}
+          onFieldChange={handleFormDataChange}
+          selectedCustomer={selectedCustomer}
+          form={form}
+          assignedInvoiceNumber={null}
+        />
+
+        {/* Products/Services Table - Full Width */}
+        <ProductServiceCard
+          items={items}
+          onAddItem={addItem}
+          onRemoveItem={removeItem}
+          onMoveItemUp={moveItemUp}
+          onMoveItemDown={moveItemDown}
+          onItemChange={handleItemChange}
+          onProductModalSelect={(product, itemIndex) => {
+            if (itemIndex !== undefined) {
+              setSelectedProduct(product);
+              setEditingItemIndex(itemIndex);
+              setEditingItemData(product);
+              setProductModalOpen(true);
+            } else {
+              handleProductModalSelect(product, itemIndex);
+            }
+          }}
+          showMoveButtons={true}
+          inputHeight="h-10"
+        />
+
+        {/* Financial Summary - Full Width */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            {/* Terms and Conditions Card */}
+            <TermsConditionsCard
+              paymentTerms={termsData.payment_terms}
+              deliveryTerms={termsData.delivery_terms}
+              warrantyTerms={termsData.warranty_terms}
+              priceTerms={termsData.price_terms}
+              otherTerms={termsData.other_terms}
+              onInputChange={handleTermsInputChange}
+              selectedPaymentTerms={selectedTerms.selectedPaymentTerms}
+              selectedDeliveryTerms={selectedTerms.selectedDeliveryTerms}
+              selectedWarrantyTerms={selectedTerms.selectedWarrantyTerms}
+              selectedPricingTerms={selectedTerms.selectedPricingTerms}
+              selectedOtherTerms={selectedTerms.selectedOtherTerms}
+              onSelectedTermsChange={handleSelectedTermsChange}
+              invoiceMode={true}
+              aciklama={invoiceData.description}
+              notlar={invoiceData.notes}
+              banka_bilgileri={invoiceData.banka_bilgileri}
+              onFieldChange={(field, value) => {
+                // Map field names
+                const fieldMapping: Record<string, string> = {
+                  'aciklama': 'description',
+                  'notlar': 'notes',
+                  'banka_bilgileri': 'banka_bilgileri',
+                };
+                const mappedField = fieldMapping[field] || field;
+                handleFieldChange(mappedField, value);
+              }}
+            />
+          </div>
+          
+          {/* Financial Summary */}
+          <FinancialSummaryCard
+            calculationsByCurrency={calculationsByCurrency}
+            globalDiscountType={globalDiscountType}
+            globalDiscountValue={globalDiscountValue}
+            onGlobalDiscountTypeChange={setGlobalDiscountType}
+            onGlobalDiscountValueChange={setGlobalDiscountValue}
+            showVatControl={false}
+            inputHeight="h-8"
+            selectedCurrency={financialData.currency}
+          />
+        </div>
+
+        {/* Product Details Modal */}
+        <ProductDetailsModal
+          open={productModalOpen}
+          onOpenChange={(open) => {
+            setProductModalOpen(open);
+            if (!open) {
+              setEditingItemIndex(undefined);
+              setSelectedProduct(null);
+              setEditingItemData(null);
+            }
+          }}
+          product={selectedProduct}
+          onAddToProposal={(productData) => handleAddProductToInvoice(productData, editingItemIndex)}
+          currency={financialData.currency}
+          existingData={editingItemData}
+        />
+      </div>
+    </div>
   );
 };
 

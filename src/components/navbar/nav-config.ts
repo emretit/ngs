@@ -36,7 +36,6 @@ import {
   DollarSign,
   MapPin,
   Gauge,
-  CheckSquare,
   Workflow,
   Plus,
   LayoutDashboard,
@@ -160,55 +159,17 @@ export const navItems = [
         icon: MapPin,
         label: "Harita",
       },
-      // Yönetim Modülleri
+      // Varlık Yönetimi (Cihaz, Garanti, Parça)
       {
-        path: "/service/assets",
+        path: "/service/asset-management",
         icon: Package,
-        label: "Cihaz Yönetimi",
+        label: "Varlık Yönetimi",
       },
-      {
-        path: "/service/warranties",
-        icon: CheckSquare,
-        label: "Garanti Takibi",
-      },
-      // Bakım ve Planlama
-      {
-        path: "/service/maintenance",
-        icon: Calendar,
-        label: "Bakım Takvimi",
-      },
-      // SLA ve Performans
-      {
-        path: "/service/sla",
-        icon: AlertTriangle,
-        label: "SLA Yönetimi",
-      },
+      // Performans
       {
         path: "/service/performance",
         icon: BarChart3,
         label: "Teknisyen Performansı",
-      },
-      // Maliyetler ve Envanter
-      {
-        path: "/service/costs",
-        icon: DollarSign,
-        label: "Maliyet Analizi",
-      },
-      {
-        path: "/service/parts",
-        icon: Package,
-        label: "Parça Yönetimi",
-      },
-      // Müşteri ve Raporlar
-      {
-        path: "/service/satisfaction",
-        icon: MessageSquare,
-        label: "Müşteri Memnuniyeti",
-      },
-      {
-        path: "/service/analytics",
-        icon: TrendingUp,
-        label: "Raporlar ve Analitik",
       },
     ],
   },

@@ -15,7 +15,6 @@ interface InvoiceDetailsCardProps {
     aciklama: string;
     notlar: string;
     para_birimi: string;
-    odeme_sekli: string;
     banka_bilgileri: string;
   };
   assignedInvoiceNumber: string | null;
@@ -97,15 +96,6 @@ const InvoiceDetailsCard: React.FC<InvoiceDetailsCardProps> = ({
             </Select>
           </div>
 
-          <div>
-            <Label htmlFor="odeme_sekli">Ödeme Şekli</Label>
-            <Input
-              id="odeme_sekli"
-              value={formData.odeme_sekli}
-              onChange={(e) => onFieldChange("odeme_sekli", e.target.value)}
-              placeholder="Nakit, Kredi Kartı, Havale..."
-            />
-          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

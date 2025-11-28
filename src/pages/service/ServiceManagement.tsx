@@ -8,6 +8,7 @@ import { ViewType } from "@/components/service/ServiceViewToggle";
 import ServiceKanbanBoard from "@/components/service/ServiceKanbanBoard";
 import ServiceCalendarView from "@/components/service/ServiceCalendarView";
 import ServiceGanttView from "@/components/service/ServiceGanttView";
+import { MaintenanceCalendarView } from "@/components/service/MaintenanceCalendarView";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -192,25 +193,27 @@ export default function ServiceManagement() {
           activeView={activeView}
           setActiveView={setActiveView}
         />
-        <ServiceFilterBar
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          selectedStatus={selectedStatus}
-          setSelectedStatus={setSelectedStatus}
-          selectedPriority={selectedPriority}
-          setSelectedPriority={setSelectedPriority}
-          selectedTechnician={selectedTechnician}
-          setSelectedTechnician={setSelectedTechnician}
-          technicians={technicians.map(t => ({
-            id: t.id,
-            first_name: t.first_name || '',
-            last_name: t.last_name || ''
-          }))}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
-        />
+        {activeView !== "maintenance" && (
+          <ServiceFilterBar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedStatus={selectedStatus}
+            setSelectedStatus={setSelectedStatus}
+            selectedPriority={selectedPriority}
+            setSelectedPriority={setSelectedPriority}
+            selectedTechnician={selectedTechnician}
+            setSelectedTechnician={setSelectedTechnician}
+            technicians={technicians.map(t => ({
+              id: t.id,
+              first_name: t.first_name || '',
+              last_name: t.last_name || ''
+            }))}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+          />
+        )}
 
         {activeView === "table" && (
           <ServiceBulkActions
@@ -227,6 +230,8 @@ export default function ServiceManagement() {
               <p className="text-muted-foreground">Servisler yükleniyor...</p>
             </div>
           </div>
+        ) : activeView === "maintenance" ? (
+          <MaintenanceCalendarView />
         ) : (
           <>
             {activeView === "table" && (

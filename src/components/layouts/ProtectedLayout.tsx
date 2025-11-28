@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import { Separator } from "@/components/ui/separator";
 
 const ProtectedLayout = () => {
+  const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebarCollapsed');
     return saved ? JSON.parse(saved) : true;
@@ -13,6 +14,17 @@ const ProtectedLayout = () => {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed));
   }, [isCollapsed]);
+
+  // Debug: Location changes
+  useEffect(() => {
+    console.log("🔵 [ProtectedLayout] Location changed", {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+      state: location.state,
+      timestamp: new Date().toISOString()
+    });
+  }, [location]);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -34,4 +46,4 @@ const ProtectedLayout = () => {
   );
 };
 
-export default React.memo(ProtectedLayout);
+export default ProtectedLayout;

@@ -1,11 +1,13 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BackButtonProps {
-  onClick: () => void;
-  children: React.ReactNode;
+  onClick?: () => void;
+  fallbackPath?: string;
+  children?: React.ReactNode;
   variant?: "default" | "ghost" | "outline" | "minimal";
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -14,12 +16,42 @@ interface BackButtonProps {
 
 const BackButton = ({ 
   onClick, 
-  children, 
+  fallbackPath,
+  children = "Geri", 
   variant = "default",
   size = "md",
   className,
   showIcon = true
 }: BackButtonProps) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    console.log("🔵 [BackButton] handleClick called", {
+      hasOnClick: !!onClick,
+      fallbackPath,
+      currentPath: window.location.pathname,
+      timestamp: new Date().toISOString()
+    });
+
+    try {
+      if (onClick) {
+        console.log("🔵 [BackButton] Calling onClick prop");
+        onClick();
+        console.log("✅ [BackButton] onClick completed");
+      } else if (fallbackPath) {
+        console.log("🔵 [BackButton] Navigating to fallbackPath:", fallbackPath);
+        navigate(fallbackPath);
+        console.log("✅ [BackButton] navigate(fallbackPath) called");
+      } else {
+        console.log("🔵 [BackButton] Navigating back in history");
+        navigate(-1);
+        console.log("✅ [BackButton] navigate(-1) called");
+      }
+    } catch (error) {
+      console.error("❌ [BackButton] Error in handleClick:", error);
+      console.error("❌ [BackButton] Error stack:", error instanceof Error ? error.stack : 'No stack');
+    }
+  };
   const baseClasses = "group transition-all duration-200 font-medium";
   
   const variantClasses = {
@@ -39,7 +71,7 @@ const BackButton = ({
     <Button
       variant="ghost"
       size="sm"
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         baseClasses,
         variantClasses[variant],

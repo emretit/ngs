@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, List, Calendar, BarChart3 } from "lucide-react";
+import { LayoutGrid, List, Calendar, BarChart3, Repeat } from "lucide-react";
 
-export type ViewType = "table" | "kanban" | "calendar" | "gantt";
+export type ViewType = "table" | "kanban" | "calendar" | "gantt" | "maintenance";
 
 interface ServiceViewToggleProps {
   activeView: ViewType;
@@ -50,6 +50,16 @@ const ServiceViewToggle = ({ activeView, setActiveView }: ServiceViewToggleProps
       >
         <BarChart3 className="h-4 w-4 mr-2" />
         Zaman Çizelgesi
+      </Button>
+      <Button
+        type="button"
+        variant={activeView === "maintenance" ? "default" : "ghost"}
+        size="sm"
+        className="rounded-none"
+        onClick={() => setActiveView("maintenance")}
+      >
+        <Repeat className="h-4 w-4 mr-2" />
+        Bakım Takvimi
       </Button>
     </div>
   );

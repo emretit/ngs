@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 import { formatDate } from '@/utils/dateUtils';
 import { ServiceHistory } from '@/components/service/ServiceHistory';
-import { getSLAStatusColor, getSLAStatusLabel, formatSLATimeRemaining, getSLATimeRemaining } from '@/utils/serviceSlaUtils';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 
@@ -106,9 +105,6 @@ export default function ServiceDetail() {
 
   const technician = service.employees;
   const customer = service.customers;
-  const slaTimeRemaining = service.sla_due_time
-    ? getSLATimeRemaining(new Date(service.sla_due_time))
-    : null;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -172,11 +168,6 @@ export default function ServiceDetail() {
              service.service_priority === 'high' ? 'Yüksek' :
              service.service_priority === 'medium' ? 'Orta' : 'Düşük'}
           </Badge>
-          {service.sla_status && (
-            <Badge variant="outline" className={getSLAStatusColor(service.sla_status)}>
-              {getSLAStatusLabel(service.sla_status)}
-            </Badge>
-          )}
           <Button
             variant="default"
             onClick={() => navigate(`/service/edit/${service.id}`)}
@@ -235,20 +226,6 @@ export default function ServiceDetail() {
                 </p>
               </div>
               <User className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">SLA Durumu</p>
-                <p className="text-lg font-semibold mt-1">
-                  {slaTimeRemaining ? formatSLATimeRemaining(slaTimeRemaining) : 'Belirlenmemiş'}
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
@@ -334,18 +311,6 @@ export default function ServiceDetail() {
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Tamamlanma Tarihi</p>
                     <p className="font-medium text-green-600">{formatDate(service.completion_date)}</p>
-                  </div>
-                )}
-                {service.sla_due_time && (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">SLA Bitiş</p>
-                    <p className="font-medium">{formatDate(service.sla_due_time)}</p>
-                    {slaTimeRemaining && (
-                      <Progress 
-                        value={slaTimeRemaining.isOverdue ? 0 : (slaTimeRemaining.totalMinutes / (service.sla_target_hours || 1) * 60) * 100} 
-                        className="mt-2"
-                      />
-                    )}
                   </div>
                 )}
               </CardContent>

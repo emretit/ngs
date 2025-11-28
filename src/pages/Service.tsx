@@ -7,16 +7,11 @@ import ServiceMapView from "@/components/service/ServiceMapView";
 import ResourceSchedulingView from "@/components/service/ResourceSchedulingView";
 import ServiceGanttView from "@/components/service/ServiceGanttView";
 import ServiceCalendarView from "@/components/service/ServiceCalendarView";
-import { SLAAlerter } from "@/components/service/SLAAlerter";
-import { SLADashboard } from "@/components/service/SLADashboard";
 import { MaintenanceCalendarView } from "@/components/service/MaintenanceCalendarView";
 import { ServiceTemplateLibrary } from "@/components/service/ServiceTemplateLibrary";
 import { TechnicianPerformanceDashboard } from "@/components/service/TechnicianPerformanceDashboard";
-import { ServiceCostAnalysis } from "@/components/service/ServiceCostAnalysis";
 import { ServicePartsInventoryAlert } from "@/components/service/ServicePartsInventoryAlert";
 import { ServicePartsUsageReport } from "@/components/service/ServicePartsUsageReport";
-import { CustomerSatisfactionDashboard } from "@/components/service/CustomerSatisfactionDashboard";
-import { ServiceAnalyticsDashboard } from "@/components/service/ServiceAnalyticsDashboard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,10 +26,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from '@/utils/dateUtils';
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { toast } from "@/hooks/use-toast";
-import { getSLAStatusColor, getSLAStatusLabel, formatSLATimeRemaining, getSLATimeRemaining } from '@/utils/serviceSlaUtils';
 
 interface ServicePageProps {
-  defaultView?: "list" | "kanban" | "map" | "scheduling" | "calendar" | "sla" | "maintenance" | "templates" | "performance" | "costs" | "parts" | "satisfaction" | "analytics";
+  defaultView?: "list" | "kanban" | "map" | "scheduling" | "calendar" | "maintenance" | "templates" | "performance" | "parts";
   hideHeader?: boolean;
 }
 
@@ -45,7 +39,7 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
   // Silme onayı için state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<ServiceRequest | null>(null);
-  const [activeView, setActiveView] = useState<"list" | "kanban" | "map" | "scheduling" | "calendar" | "sla" | "maintenance" | "templates" | "performance" | "costs" | "parts" | "satisfaction" | "analytics">(defaultView);
+  const [activeView, setActiveView] = useState<"list" | "kanban" | "map" | "scheduling" | "calendar" | "maintenance" | "templates" | "performance" | "parts">(defaultView);
   // URL parametresinden view'ı kontrol et
   useEffect(() => {
     const viewParam = searchParams.get('view');
@@ -60,22 +54,14 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
         setActiveView('scheduling');
       } else if (viewParam === 'calendar') {
         setActiveView('calendar');
-      } else if (viewParam === 'sla') {
-        setActiveView('sla');
       } else if (viewParam === 'maintenance') {
         setActiveView('maintenance');
       } else if (viewParam === 'templates') {
         setActiveView('templates');
       } else if (viewParam === 'performance') {
         setActiveView('performance');
-      } else if (viewParam === 'costs') {
-        setActiveView('costs');
       } else if (viewParam === 'parts') {
         setActiveView('parts');
-      } else if (viewParam === 'satisfaction') {
-        setActiveView('satisfaction');
-      } else if (viewParam === 'analytics') {
-        setActiveView('analytics');
       }
     } else {
       setActiveView(defaultView);
@@ -253,9 +239,6 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
           />
         )}
         
-        {/* SLA Alerts */}
-        <SLAAlerter />
-        
         {/* Parts Inventory Alerts */}
         <ServicePartsInventoryAlert />
         
@@ -355,9 +338,6 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
             technicians={technicians || []}
             onSelectService={handleSelectRequest}
           />
-        ) : activeView === "sla" ? (
-          /* SLA Dashboard View */
-          <SLADashboard />
         ) : activeView === "maintenance" ? (
           /* Maintenance Calendar View */
           <MaintenanceCalendarView />
@@ -367,18 +347,9 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
         ) : activeView === "performance" ? (
           /* Technician Performance Dashboard */
           <TechnicianPerformanceDashboard />
-        ) : activeView === "costs" ? (
-          /* Service Cost Analysis */
-          <ServiceCostAnalysis />
         ) : activeView === "parts" ? (
           /* Parts Usage Report */
           <ServicePartsUsageReport />
-        ) : activeView === "satisfaction" ? (
-          /* Customer Satisfaction Dashboard */
-          <CustomerSatisfactionDashboard />
-        ) : activeView === "analytics" ? (
-          /* Service Analytics Dashboard */
-          <ServiceAnalyticsDashboard />
         ) : activeView === "kanban" ? (
           /* Kanban Board View */
           <>
@@ -528,9 +499,6 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
                   ) : (
                     sortedServices.map((service) => {
                       const technician = technicians?.find(tech => tech.id === service.assigned_technician);
-                      const slaTimeRemaining = service.sla_due_time
-                        ? getSLATimeRemaining(new Date(service.sla_due_time))
-                        : null;
                       return (
                         <TableRow 
                           key={service.id} 
@@ -596,15 +564,6 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
                                  service.service_status === 'completed' ? 'Tamamlandı' :
                                  service.service_status === 'assigned' ? 'Atanmış' : 'Bilinmeyen'}
                               </Badge>
-                              {service.sla_status && (
-                                <Badge 
-                                  variant="outline"
-                                  className={`text-xs ${getSLAStatusColor(service.sla_status as any)}`}
-                                  title={slaTimeRemaining ? formatSLATimeRemaining(slaTimeRemaining) : ''}
-                                >
-                                  {getSLAStatusLabel(service.sla_status as any)}
-                                </Badge>
-                              )}
                             </div>
                           </TableCell>
                           <TableCell className="px-4 py-4">

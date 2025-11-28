@@ -36,12 +36,16 @@ export function TimePicker({
   }, [time]);
 
   // Saat ve dakika seçildiğinde onSelect'i çağır
+  // Sadece selectedHour veya selectedMinute değiştiğinde çağır (onSelect dependency'sini kaldırdık)
   React.useEffect(() => {
     if (selectedHour && selectedMinute && onSelect) {
       const formattedTime = `${selectedHour.padStart(2, '0')}:${selectedMinute.padStart(2, '0')}`;
-      onSelect(formattedTime);
+      // Sadece değer gerçekten değiştiyse çağır
+      if (formattedTime !== time) {
+        onSelect(formattedTime);
+      }
     }
-  }, [selectedHour, selectedMinute, onSelect]);
+  }, [selectedHour, selectedMinute]); // onSelect'i dependency'den çıkardık
 
   // Saat seçenekleri (00-23)
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));

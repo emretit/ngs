@@ -166,7 +166,15 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
     }
 
     // Yeni seçim önceki değeri değiştirsin, eklemesin
-    const newValue = selectedTerm.text;
+    let newValue = selectedTerm.text;
+
+    // Ödeme şartları için ödeme şekli input'unun değerini koru
+    if (category === 'payment' && currentValue.includes("Ödeme Şekli:")) {
+      const paymentMethod = currentValue.split("Ödeme Şekli:")[1]?.trim() || "";
+      if (paymentMethod) {
+        newValue = `${selectedTerm.text} - Ödeme Şekli: ${paymentMethod}`;
+      }
+    }
 
     console.log('🔍 ProposalFormTerms - handleTermSelect:', {
       category,

@@ -7,20 +7,17 @@ const ServiceEdit = React.lazy(() => import("@/pages/service/ServiceEdit"));
 const ServiceDetail = React.lazy(() => import("@/pages/service/ServiceDetail"));
 const ServiceReports = React.lazy(() => import("@/pages/service/ServiceReports"));
 const ServiceSettings = React.lazy(() => import("@/pages/service/ServiceSettings"));
-const ServiceSLAView = React.lazy(() => import("@/pages/service/ServiceSLAView"));
-const ServiceMaintenanceView = React.lazy(() => import("@/pages/service/ServiceMaintenanceView"));
 const ServicePerformanceView = React.lazy(() => import("@/pages/service/ServicePerformanceView"));
-const ServiceCostsView = React.lazy(() => import("@/pages/service/ServiceCostsView"));
 const ServicePartsView = React.lazy(() => import("@/pages/service/ServicePartsView"));
-const ServiceSatisfactionView = React.lazy(() => import("@/pages/service/ServiceSatisfactionView"));
-const ServiceAnalyticsView = React.lazy(() => import("@/pages/service/ServiceAnalyticsView"));
-const ServiceAssets = React.lazy(() => import("@/pages/service/ServiceAssets"));
-const ServiceWarranties = React.lazy(() => import("@/pages/service/ServiceWarranties"));
+const ServiceAssetManagement = React.lazy(() => import("@/pages/service/ServiceAssetManagement"));
 const ServiceDashboard = React.lazy(() => import("@/pages/service/ServiceDashboard"));
 const ServiceManagement = React.lazy(() => import("@/pages/service/ServiceManagement"));
 const ServiceMapPage = React.lazy(() => import("@/pages/service/ServiceMapPage"));
 const ServiceRedirect = React.lazy(() => import("@/pages/service/ServiceRedirect"));
 const ServiceContractsRedirect = React.lazy(() => import("@/pages/service/ServiceContractsRedirect"));
+const ServiceAssetsRedirect = React.lazy(() => import("@/pages/service/ServiceAssetsRedirect"));
+const ServiceWarrantiesRedirect = React.lazy(() => import("@/pages/service/ServiceWarrantiesRedirect"));
+const ServiceMaintenanceRedirect = React.lazy(() => import("@/pages/service/ServiceMaintenanceRedirect"));
 
 // Define service routes
 export const serviceRoutes: RouteConfig[] = [
@@ -39,21 +36,18 @@ export const serviceRoutes: RouteConfig[] = [
   { path: "/service/scheduling", component: ServiceRedirect, protected: true },
   { path: "/service/calendar", component: ServiceRedirect, protected: true },
   { path: "/service/contracts", component: ServiceContractsRedirect, protected: true },
+  { path: "/service/assets", component: ServiceAssetsRedirect, protected: true },
+  { path: "/service/warranties", component: ServiceWarrantiesRedirect, protected: true },
   
-  // Yönetim Modülleri
-  { path: "/service/assets", component: ServiceAssets, protected: true },
-  { path: "/service/warranties", component: ServiceWarranties, protected: true },
-  
-  // Bakım ve Planlama
-  { path: "/service/sla", component: ServiceSLAView, protected: true },
-  { path: "/service/maintenance", component: ServiceMaintenanceView, protected: true },
+  // Varlık Yönetimi (Cihaz, Garanti, Parça - Birleşik)
+  { path: "/service/asset-management", component: ServiceAssetManagement, protected: true },
+
+  // Bakım Takvimi (redirect to management with view=maintenance)
+  { path: "/service/maintenance", component: ServiceMaintenanceRedirect, protected: true },
   
   // Performans ve Analiz
   { path: "/service/performance", component: ServicePerformanceView, protected: true },
-  { path: "/service/costs", component: ServiceCostsView, protected: true },
   { path: "/service/parts", component: ServicePartsView, protected: true },
-  { path: "/service/satisfaction", component: ServiceSatisfactionView, protected: true },
-  { path: "/service/analytics", component: ServiceAnalyticsView, protected: true },
   
   // CRUD İşlemleri
   { path: "/service/new", component: NewServiceRequest, protected: true },

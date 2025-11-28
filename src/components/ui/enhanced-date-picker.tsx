@@ -1,7 +1,7 @@
 import * as React from "react";
-import { format, addMonths, subMonths, addYears, subYears } from "date-fns";
+import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { CalendarIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
@@ -25,41 +25,15 @@ function EnhancedCalendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
-  const [currentMonth, setCurrentMonth] = React.useState(props.month || new Date());
-  const [showMonthPicker, setShowMonthPicker] = React.useState(false);
-  const [showYearPicker, setShowYearPicker] = React.useState(false);
-
-  const handleMonthChange = (month: number, year: number, closePicker: boolean = true) => {
-    const newDate = new Date(year, month);
-    setCurrentMonth(newDate);
-    if (closePicker) {
-      setShowMonthPicker(false);
-      setShowYearPicker(false);
-    }
-    if (props.onMonthChange) {
-      props.onMonthChange(newDate);
-    }
-  };
-
-  const months = [
-    "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
-    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
-  ];
-
-  const currentYear = currentMonth.getFullYear();
-  const currentMonthIndex = currentMonth.getMonth();
-
-  // Generate year options (2020 to 2040)
-  const yearOptions = Array.from({ length: 21 }, (_, i) => 2020 + i);
-
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn("p-3 pointer-events-auto", className)}
-      month={currentMonth}
-      onMonthChange={setCurrentMonth}
       weekStartsOn={1}
       locale={tr}
+      captionLayout="dropdown"
+      fromYear={2020}
+      toYear={2040}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -95,135 +69,8 @@ function EnhancedCalendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
-        Caption: ({ displayMonth }) => (
-          <div className="relative w-full">
-            <div className="flex items-center justify-between w-full px-1 gap-2">
-              {/* Yıl Geri Butonu */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleMonthChange(displayMonth.getMonth(), displayMonth.getFullYear() - 1, true);
-                }}
-                className="h-8 w-8 p-0 opacity-60 hover:opacity-100 hover:bg-primary/10 rounded transition-all flex items-center justify-center shrink-0"
-                title="Önceki yıl"
-              >
-                <ChevronsLeft className="h-4 w-4" />
-              </button>
-
-              {/* Ay Geri Butonu */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  const newDate = subMonths(displayMonth, 1);
-                  handleMonthChange(newDate.getMonth(), newDate.getFullYear(), true);
-                }}
-                className="h-8 w-8 p-0 opacity-60 hover:opacity-100 hover:bg-primary/10 rounded transition-all flex items-center justify-center shrink-0"
-                title="Önceki ay"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-
-              {/* Ay Seçici */}
-              <button
-                onClick={() => {
-                  setShowMonthPicker(!showMonthPicker);
-                  setShowYearPicker(false);
-                }}
-                className="px-3 py-1.5 text-sm font-medium hover:bg-gray-50 rounded transition-colors"
-              >
-                {months[displayMonth.getMonth()]}
-              </button>
-
-              {/* Yıl Seçici */}
-              <button
-                onClick={() => {
-                  setShowYearPicker(!showYearPicker);
-                  setShowMonthPicker(false);
-                }}
-                className="px-3 py-1.5 text-sm font-medium hover:bg-gray-50 rounded transition-colors"
-              >
-                {displayMonth.getFullYear()}
-              </button>
-
-              {/* Ay İleri Butonu */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  const newDate = addMonths(displayMonth, 1);
-                  handleMonthChange(newDate.getMonth(), newDate.getFullYear(), true);
-                }}
-                className="h-8 w-8 p-0 opacity-60 hover:opacity-100 hover:bg-primary/10 rounded transition-all flex items-center justify-center shrink-0"
-                title="Sonraki ay"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-
-              {/* Yıl İleri Butonu */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleMonthChange(displayMonth.getMonth(), displayMonth.getFullYear() + 1, true);
-                }}
-                className="h-8 w-8 p-0 opacity-60 hover:opacity-100 hover:bg-primary/10 rounded transition-all flex items-center justify-center shrink-0"
-                title="Sonraki yıl"
-              >
-                <ChevronsRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Ay Seçim Popup */}
-            {showMonthPicker && (
-              <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border rounded-lg shadow-lg p-3">
-                <div className="grid grid-cols-3 gap-2">
-                  {months.map((month, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        handleMonthChange(index, displayMonth.getFullYear(), true);
-                      }}
-                      className={cn(
-                        "p-2.5 text-sm rounded-md transition-all font-medium",
-                        index === displayMonth.getMonth()
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-gray-700 hover:bg-gray-100 hover:scale-105"
-                      )}
-                    >
-                      {month}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Yıl Seçim Popup */}
-            {showYearPicker && (
-              <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border rounded-lg shadow-lg p-3">
-                <div className="max-h-64 overflow-y-auto">
-                  <div className="grid grid-cols-3 gap-2">
-                    {yearOptions.map((year) => (
-                      <button
-                        key={year}
-                        onClick={() => {
-                          handleMonthChange(displayMonth.getMonth(), year, true);
-                        }}
-                        className={cn(
-                          "p-2.5 text-sm rounded-md transition-all font-medium",
-                          year === displayMonth.getFullYear()
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-gray-700 hover:bg-gray-100 hover:scale-105"
-                        )}
-                      >
-                        {year}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ),
+        Chevron: ({ orientation }) => 
+          orientation === 'left' ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />,
       }}
       {...props}
     />

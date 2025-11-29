@@ -107,7 +107,7 @@ function MonthYearSelector({
           </button>
           
           {showMonthPicker && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 pointer-events-auto">
               <div className="bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl shadow-black/20 p-2 grid grid-cols-3 gap-1 min-w-[200px]">
                 {MONTHS.map((month, index) => (
                   <button
@@ -146,7 +146,7 @@ function MonthYearSelector({
           </button>
           
           {showYearPicker && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 pointer-events-auto">
               <div className="bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl shadow-black/20 p-2 max-h-[240px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
                 <div className="grid grid-cols-4 gap-1 min-w-[180px]">
                   {YEARS.map((year) => (
@@ -317,7 +317,7 @@ export function EnhancedDatePicker({
           "border-border/50",
           "shadow-2xl shadow-black/20",
           "rounded-xl",
-          "z-[100]"
+          "z-[9999] pointer-events-auto"
         )} 
         align="start"
         sideOffset={8}

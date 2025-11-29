@@ -7281,6 +7281,90 @@ export type Database = {
           },
         ]
       }
+      service_equipment: {
+        Row: {
+          brand: string | null
+          category: string | null
+          company_id: string
+          condition: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          equipment_name: string
+          id: string
+          location: string | null
+          model: string | null
+          notes: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          serial_number: string | null
+          specifications: Json | null
+          status: string
+          supplier: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          company_id: string
+          condition?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          equipment_name: string
+          id?: string
+          location?: string | null
+          model?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          specifications?: Json | null
+          status?: string
+          supplier?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          company_id?: string
+          condition?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          equipment_name?: string
+          id?: string
+          location?: string | null
+          model?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          specifications?: Json | null
+          status?: string
+          supplier?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_equipment_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_equipment_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_history: {
         Row: {
           action_type: string
@@ -7683,6 +7767,97 @@ export type Database = {
             columns: ["default_technician_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_warranties: {
+        Row: {
+          company_id: string
+          coverage_description: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          end_date: string
+          equipment_id: string
+          id: string
+          notes: string | null
+          start_date: string
+          status: string
+          support_email: string | null
+          support_phone: string | null
+          terms_conditions: string | null
+          updated_at: string
+          updated_by: string | null
+          warranty_cost: number | null
+          warranty_number: string | null
+          warranty_provider: string | null
+          warranty_type: string
+        }
+        Insert: {
+          company_id: string
+          coverage_description?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          end_date: string
+          equipment_id: string
+          id?: string
+          notes?: string | null
+          start_date: string
+          status?: string
+          support_email?: string | null
+          support_phone?: string | null
+          terms_conditions?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          warranty_cost?: number | null
+          warranty_number?: string | null
+          warranty_provider?: string | null
+          warranty_type: string
+        }
+        Update: {
+          company_id?: string
+          coverage_description?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          end_date?: string
+          equipment_id?: string
+          id?: string
+          notes?: string | null
+          start_date?: string
+          status?: string
+          support_email?: string | null
+          support_phone?: string | null
+          terms_conditions?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          warranty_cost?: number | null
+          warranty_number?: string | null
+          warranty_provider?: string | null
+          warranty_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_warranties_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_warranties_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_warranties_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "service_equipment"
             referencedColumns: ["id"]
           },
         ]

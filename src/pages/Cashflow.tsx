@@ -197,8 +197,8 @@ const Cashflow = () => {
                     <Receipt className="h-4 w-4" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-gray-900">Gelirler/Giderler</h2>
-                    <p className="text-xs text-gray-500">Gelir ve gider işlemleri</p>
+                    <h2 className="text-sm font-bold text-gray-900">Masraflar</h2>
+                    <p className="text-xs text-gray-500">Masraf işlemleri</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

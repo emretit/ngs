@@ -181,8 +181,6 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
     if (subItem.path === '/cashflow/bank-accounts' && location.pathname.startsWith('/cashflow/partner-accounts/')) return true;
     // Special case: proposal pages should match proposals nav item
     if (subItem.path === '/proposals' && location.pathname.startsWith('/proposal/')) return true;
-    // Special case: categories page should match expenses nav item (Gelirler ve Giderler)
-    if (subItem.path === '/cashflow/expenses' && location.pathname === '/cashflow/categories') return true;
     return false;
   }, [location.pathname]);
 

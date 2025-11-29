@@ -9,7 +9,6 @@ import { useProposals, useProposalsInfiniteScroll } from "@/hooks/useProposals";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import InfiniteScroll from "@/components/ui/infinite-scroll";
 import ProposalsHeader from "@/components/proposals/ProposalsHeader";
 import ProposalsFilterBar from "@/components/proposals/ProposalsFilterBar";
 import ProposalsContent from "@/components/proposals/ProposalsContent";
@@ -22,9 +21,14 @@ const Proposals = memo(() => {
   const [activeView, setActiveView] = useState<"list" | "kanban">("list");
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [selectedProposals, setSelectedProposals] = useState<Proposal[]>([]);
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const pageSize = 20;
+  // Son 1 aylık tarih filtresi - masraflardaki gibi
+  const [startDate, setStartDate] = useState<Date>(() => {
+    const today = new Date();
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+    return oneMonthAgo;
+  });
+  const [endDate, setEndDate] = useState<Date>(() => new Date());
   
   // Sıralama state'leri - veritabanı seviyesinde sıralama için
   const [sortField, setSortField] = useState<string>("offer_date");
@@ -62,31 +66,27 @@ const Proposals = memo(() => {
     dateRange: { from: null, to: null }
   });
 
-  // For list view, use infinite scroll
+  // For list view, use normal query - son 1 aylık filtre olduğu için infinite scroll gerek yok
   const {
-    data: proposals,
+    data: proposals = [],
     isLoading,
-    isLoadingMore,
-    hasNextPage,
-    error,
-    loadMore,
-    refresh,
     totalCount,
-  } = useProposalsInfiniteScroll(
-    {
-      status: selectedStatus,
-      search: searchQuery,
-      employeeId: selectedEmployee,
-      dateRange: { from: null, to: null },
-      sortField,
-      sortDirection
+    error,
+  } = useProposalsInfiniteScroll({
+    status: selectedStatus,
+    search: searchQuery,
+    employeeId: selectedEmployee,
+    dateRange: { 
+      from: startDate ? startDate.toISOString() : null, 
+      to: endDate ? endDate.toISOString() : null 
     },
-    pageSize
-  );
+    sortField,
+    sortDirection
+  });
 
   // Durum değişikliği sonrası sayfayı yenile
   const handleProposalStatusChange = () => {
-    refresh();
+    // Query otomatik olarak yenilenecek
   };
 
   if (error || kanbanError) {
@@ -178,9 +178,6 @@ const Proposals = memo(() => {
           <ProposalsContent
             proposals={(proposals as Proposal[]) || []}
             isLoading={isLoading}
-            isLoadingMore={isLoadingMore}
-            hasNextPage={hasNextPage}
-            loadMore={loadMore}
             totalCount={totalCount}
             error={error}
             onProposalSelect={handleProposalClick}

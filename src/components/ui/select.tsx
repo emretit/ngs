@@ -4,7 +4,16 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const Select = SelectPrimitive.Root
+// Select with open prop handling to work inside dialogs
+const Select = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
+>(({ children, ...props }, ref) => (
+  <SelectPrimitive.Root {...props}>
+    {children}
+  </SelectPrimitive.Root>
+))
+Select.displayName = "Select"
 
 const SelectGroup = SelectPrimitive.Group
 

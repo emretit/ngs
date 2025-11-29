@@ -25,12 +25,11 @@ import {
   TrendingUp,
   TrendingDown
 } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { useCashflowTransactions } from "@/hooks/useCashflowTransactions";
 import { useCashflowCategories } from "@/hooks/useCashflowCategories";
 import { useCashflowAnalytics } from "@/hooks/useCashflowAnalytics";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { DateDisplay } from "@/components/ui/date-display";
 
 const TransactionsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -271,7 +270,7 @@ const TransactionsList = () => {
               {filteredTransactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell>
-                    {format(new Date(transaction.date), "dd/MM/yyyy")}
+                    <DateDisplay date={transaction.date} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'}>

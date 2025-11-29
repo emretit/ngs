@@ -205,28 +205,28 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
         <div className="flex-1 overflow-y-auto scrollbar-hide pr-1 -mr-1">
           <div className="space-y-3">
           {/* Başlık ve Açıklama */}
-          <div className="space-y-2">
-            <div className="space-y-1">
+          <div className="space-y-3">
+            <div className="space-y-1.5">
               <Label htmlFor="title" className="text-sm font-medium text-gray-700">Başlık *</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Aktivite başlığını girin"
-                className="h-8"
+                className="h-10"
                 required
               />
             </div>
             
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <Label htmlFor="description" className="text-sm font-medium text-gray-700">Açıklama</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Aktivite detaylarını girin"
-                rows={2}
-                className="resize-none h-8"
+                rows={3}
+                className="resize-none min-h-[80px]"
               />
             </div>
           </div>
@@ -283,92 +283,135 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           </div>
 
           {/* Durum ve Önem */}
-          <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <Label className="text-xs font-medium text-gray-700">Durum</Label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="text-xs border-0 bg-transparent focus:ring-0 focus:outline-none font-normal"
-              >
-                <option value="todo">Yapılacak</option>
-                <option value="in_progress">Devam Ediyor</option>
-                <option value="completed">Tamamlandı</option>
-                <option value="cancelled">İptal Edildi</option>
-              </select>
+          <div className="grid grid-cols-2 gap-3 p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-100">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-gray-600">Durum</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="h-9 bg-white border-gray-200 hover:border-primary/50 transition-colors">
+                  <SelectValue placeholder="Durum seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500" />
+                      <span>Yapılacak</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="in_progress">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                      <span>Devam Ediyor</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <span>Tamamlandı</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="cancelled">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-gray-400" />
+                      <span>İptal Edildi</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is_important"
-                checked={isImportant}
-                onCheckedChange={setIsImportant}
-                className="scale-90"
-              />
-              <Label htmlFor="is_important" className="flex items-center space-x-1 cursor-pointer text-sm">
-                <Star className={`h-4 w-4 ${isImportant ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
-                <span>Önemli</span>
-              </Label>
+            <div className="flex items-end justify-end">
+              <div className={cn(
+                "flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors cursor-pointer",
+                isImportant 
+                  ? "bg-yellow-50 border-yellow-200" 
+                  : "bg-white border-gray-200 hover:border-yellow-300"
+              )}>
+                <Switch
+                  id="is_important"
+                  checked={isImportant}
+                  onCheckedChange={setIsImportant}
+                  className="scale-90"
+                />
+                <Label htmlFor="is_important" className="flex items-center gap-1.5 cursor-pointer text-sm font-medium">
+                  <Star className={cn(
+                    "h-4 w-4 transition-all duration-200",
+                    isImportant ? "text-yellow-500 fill-yellow-500 scale-110" : "text-gray-400"
+                  )} />
+                  <span className={isImportant ? "text-yellow-700" : "text-gray-600"}>Önemli</span>
+                </Label>
+              </div>
             </div>
           </div>
 
           {/* Tekrar Eden Görev */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-2">
+          <div className="space-y-3">
+            <div 
+              className={cn(
+                "flex items-center justify-between p-3 rounded-xl border transition-all duration-200",
+                isRecurring 
+                  ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200" 
+                  : "bg-gray-50 border-gray-100"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
                 <Switch
                   id="is_recurring"
                   checked={isRecurring}
                   onCheckedChange={setIsRecurring}
-                  className="scale-90"
                 />
-                <Label htmlFor="is_recurring" className="cursor-pointer text-sm font-medium">
+                <Label htmlFor="is_recurring" className="cursor-pointer text-sm font-medium text-gray-700">
                   Tekrar eden görev
                 </Label>
               </div>
+              {isRecurring && (
+                <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                  Aktif
+                </span>
+              )}
             </div>
 
             {isRecurring && (
-              <div className="p-2 bg-blue-50 rounded-lg space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
+              <div className="p-4 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-xl border border-blue-100 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-gray-600">Tekrar Türü</Label>
-                    <select
-                      value={recurrenceType}
-                      onChange={(e) => setRecurrenceType(e.target.value as any)}
-                      className="w-full px-3 py-2 text-xs border border-gray-200 rounded-md bg-white h-8"
-                    >
-                      <option value="none">Tekrarlanmaz</option>
-                      <option value="daily">Günlük</option>
-                      <option value="weekly">Haftalık</option>
-                      <option value="monthly">Aylık</option>
-                      <option value="custom">Özel Aralık</option>
-                    </select>
+                    <Select value={recurrenceType} onValueChange={(value) => setRecurrenceType(value as any)}>
+                      <SelectTrigger className="h-9 bg-white border-gray-200">
+                        <SelectValue placeholder="Tekrar türü seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Tekrarlanmaz</SelectItem>
+                        <SelectItem value="daily">Günlük</SelectItem>
+                        <SelectItem value="weekly">Haftalık</SelectItem>
+                        <SelectItem value="monthly">Aylık</SelectItem>
+                        <SelectItem value="custom">Özel Aralık</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {recurrenceType === 'custom' && (
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-gray-600">Her kaç günde</Label>
-                      <input
+                      <Input
                         type="number"
                         value={recurrenceInterval}
                         onChange={(e) => setRecurrenceInterval(parseInt(e.target.value) || 1)}
-                        min="1"
-                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded-md h-8"
+                        min={1}
+                        className="h-9 bg-white"
                       />
                     </div>
                   )}
 
                   {recurrenceType === 'monthly' && (
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-gray-600">Ayın günü</Label>
-                      <input
+                      <Input
                         type="number"
                         value={recurrenceDayOfMonth}
                         onChange={(e) => setRecurrenceDayOfMonth(parseInt(e.target.value) || 1)}
-                        min="1"
-                        max="31"
-                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded-md h-8"
+                        min={1}
+                        max={31}
+                        className="h-9 bg-white"
                       />
                     </div>
                   )}
@@ -377,42 +420,55 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
                 {recurrenceType === 'weekly' && (
                   <div className="space-y-2">
                     <Label className="text-xs font-medium text-gray-600">Haftanın günleri</Label>
-                    <div className="grid grid-cols-7 gap-1">
-                      {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
-                        <label key={day} className="flex flex-col items-center space-y-1 p-1">
-                          <input
-                            type="checkbox"
-                            checked={recurrenceDays.includes(day)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setRecurrenceDays([...recurrenceDays, day]);
-                              } else {
-                                setRecurrenceDays(recurrenceDays.filter(d => d !== day));
-                              }
-                            }}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-xs">
-                            {day === 'monday' ? 'Pzt' :
-                             day === 'tuesday' ? 'Sal' :
-                             day === 'wednesday' ? 'Çar' :
-                             day === 'thursday' ? 'Per' :
-                             day === 'friday' ? 'Cum' :
-                             day === 'saturday' ? 'Cmt' : 'Paz'}
-                          </span>
-                        </label>
+                    <div className="flex gap-1.5">
+                      {[
+                        { key: 'monday', label: 'Pzt' },
+                        { key: 'tuesday', label: 'Sal' },
+                        { key: 'wednesday', label: 'Çar' },
+                        { key: 'thursday', label: 'Per' },
+                        { key: 'friday', label: 'Cum' },
+                        { key: 'saturday', label: 'Cmt' },
+                        { key: 'sunday', label: 'Paz' }
+                      ].map(({ key, label }) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => {
+                            if (recurrenceDays.includes(key)) {
+                              setRecurrenceDays(recurrenceDays.filter(d => d !== key));
+                            } else {
+                              setRecurrenceDays([...recurrenceDays, key]);
+                            }
+                          }}
+                          className={cn(
+                            "flex-1 py-2 text-xs font-medium rounded-lg transition-all duration-200",
+                            recurrenceDays.includes(key)
+                              ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                              : "bg-white text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600"
+                          )}
+                        >
+                          {label}
+                        </button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium text-gray-600">Bitiş Tarihi (opsiyonel)</Label>
-                  <input
-                    type="date"
-                    value={recurrenceEndDate}
-                    onChange={(e) => setRecurrenceEndDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-md h-8"
+                <div className="space-y-1.5">
+                  <UnifiedDatePicker
+                    label="Bitiş Tarihi (opsiyonel)"
+                    date={recurrenceEndDate ? new Date(recurrenceEndDate + 'T00:00:00') : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        setRecurrenceEndDate(`${year}-${month}-${day}`);
+                      } else {
+                        setRecurrenceEndDate("");
+                      }
+                    }}
+                    placeholder="Bitiş tarihi seçin"
                   />
                 </div>
               </div>

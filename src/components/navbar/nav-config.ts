@@ -45,7 +45,8 @@ import {
   ArrowRightLeft,
   Factory,
   Warehouse,
-  FileSignature
+  FileSignature,
+  Tag
 } from "lucide-react";
 
 export const navItems = [
@@ -242,7 +243,12 @@ export const navItems = [
       {
         path: "/cashflow/expenses",
         icon: Receipt,
-        label: "Gelirler ve Giderler",
+        label: "Masraflar",
+      },
+      {
+        path: "/cashflow/categories",
+        icon: Tag,
+        label: "Gelir-Gider Kategorileri",
       },
       {
         path: "/cashflow/budget-management",

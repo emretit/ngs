@@ -20,8 +20,14 @@ const Opportunities = memo(() => {
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const [activeView, setActiveView] = useState<"kanban" | "list">("list");
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Son 1 aylık tarih filtresi - masraflardaki gibi
+  const [startDate, setStartDate] = useState<Date>(() => {
+    const today = new Date();
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+    return oneMonthAgo;
+  });
+  const [endDate, setEndDate] = useState<Date>(() => new Date());
   
   // Sıralama state'leri - veritabanı seviyesinde sıralama için
   const [sortField, setSortField] = useState<string>("created_at");
@@ -57,12 +63,8 @@ const Opportunities = memo(() => {
   // Use opportunities with filters
   const { 
     opportunities,
-    opportunitiesData, // Tüm fırsatlar (infinite scroll için)
+    opportunitiesData, // Tüm fırsatlar
     isLoading,
-    isLoadingMore,
-    hasNextPage,
-    loadMore,
-    refresh,
     totalCount,
     error,
     handleDragEnd,
@@ -155,7 +157,7 @@ const Opportunities = memo(() => {
   };
   // Convert grouped opportunities to flat array for list view
   const flattenedOpportunities = Object.values(groupedOpportunities).flat();
-  // Infinite scroll için tüm fırsatları kullan
+  // Tüm fırsatları kullan
   const allOpportunities = opportunitiesData || [];
   return (
     <>
@@ -214,9 +216,6 @@ const Opportunities = memo(() => {
           <OpportunitiesContent
             opportunities={(opportunitiesData as Opportunity[]) || []}
             isLoading={isLoading}
-            isLoadingMore={isLoadingMore}
-            hasNextPage={hasNextPage}
-            loadMore={loadMore}
             totalCount={totalCount}
             error={error}
             onSelectOpportunity={handleOpportunityClick}

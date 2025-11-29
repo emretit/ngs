@@ -2,9 +2,8 @@
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Proposal, ProposalStatus } from "@/types/proposal";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { Edit2, MoreHorizontal, Trash2, Printer, ShoppingCart, Receipt, Copy, FileEdit, Users, UserPlus, GitBranch } from "lucide-react";
+import { DateDisplay } from "@/components/ui/date-display";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -56,15 +55,15 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
   if (isLoading || !proposal) {
     return (
       <TableRow className="h-8">
-        <TableCell className="py-2 px-3"><div className="h-4 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
-        <TableCell className="py-2 px-3"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
-        <TableCell className="py-2 px-3"><div className="h-4 w-40 bg-gray-200 rounded animate-pulse" /></TableCell>
-        <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-        <TableCell className="py-2 px-2"><div className="h-4 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
-        <TableCell className="py-2 px-2"><div className="h-4 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
-        <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-        <TableCell className="py-2 px-2"><div className="h-4 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
-        <TableCell className="py-2 px-2"><div className="h-6 w-6 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-32 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-40 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-24 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-16 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-3 w-20 bg-gray-200 rounded animate-pulse" /></TableCell>
+        <TableCell className="py-2 px-3"><div className="h-4 w-4 bg-gray-200 rounded animate-pulse" /></TableCell>
       </TableRow>
     );
   }
@@ -95,15 +94,6 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
     return proposal.total_amount || 0;
   };
   
-  const formatDate = (date: string | null | undefined) => {
-    if (!date) return "-";
-    
-    try {
-      return format(new Date(date), "dd MMM yyyy", { locale: tr });
-    } catch {
-      return "-";
-    }
-  };
   
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -143,12 +133,12 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
   return (
     <TableRow
       key={proposal.id}
-      className="h-16 cursor-pointer transition-colors hover:bg-gray-50"
+      className="h-8 cursor-pointer transition-colors hover:bg-gray-50"
       onClick={() => onSelect(proposal)}
     >
-      <TableCell className="p-4">
+      <TableCell className="py-2 px-3">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-sm">#{proposal.number}</span>
+          <span className="font-medium text-xs">#{proposal.number}</span>
           <Badge 
             variant="outline" 
             className={`text-[10px] px-1.5 py-0 ${
@@ -162,10 +152,10 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
           </Badge>
         </div>
       </TableCell>
-      <TableCell className="p-4">
+      <TableCell className="py-2 px-3">
         {proposal.customer ? (
           <div className="flex flex-col space-y-0">
-            <span className="text-sm font-medium" title={proposal.customer.name}>
+            <span className="text-xs font-medium" title={proposal.customer.name}>
               {getShortenedCompanyName()}
             </span>
             {proposal.customer.company && (
@@ -175,44 +165,46 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
             )}
           </div>
         ) : (
-          <span className="text-muted-foreground text-sm">{proposal.customer_name || "Müşteri yok"}</span>
+          <span className="text-muted-foreground text-xs">{proposal.customer_name || "Müşteri yok"}</span>
         )}
       </TableCell>
-      <TableCell className="p-4 text-sm" title={(proposal as any).subject || ""}>
+      <TableCell className="py-2 px-3 text-xs" title={(proposal as any).subject || ""}>
         {shortenText((proposal as any).subject || "-", 30)}
       </TableCell>
-      <TableCell className="text-center p-4">
+      <TableCell className="text-center py-2 px-3">
         <ProposalStatusCell 
           status={proposal.status} 
           proposalId={proposal.id} 
           onStatusChange={onStatusChange} 
         />
       </TableCell>
-      <TableCell className="p-4">
+      <TableCell className="py-2 px-3">
         {proposal.employee ? (
           <div className="flex items-center space-x-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm">
+            <Avatar className="h-6 w-6">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">
                 {proposal.employee.first_name?.[0]}
                 {proposal.employee.last_name?.[0]}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium truncate">
+            <span className="text-xs font-medium truncate">
               {proposal.employee.first_name} {proposal.employee.last_name}
             </span>
           </div>
         ) : (
-          <span className="text-muted-foreground text-sm">-</span>
+          <span className="text-muted-foreground text-xs">-</span>
         )}
       </TableCell>
-      <TableCell className="text-center p-4 text-sm font-medium">
+      <TableCell className="text-center py-2 px-3 text-xs font-medium">
         {formatProposalAmount(getGrandTotal(), proposal.currency || 'TRY')}
       </TableCell>
-      <TableCell className="text-center p-4 text-sm">
-        {formatDate(proposal.offer_date || proposal.created_at)}
+      <TableCell className="text-center py-2 px-3 text-xs">
+        <DateDisplay date={proposal.offer_date || proposal.created_at} />
       </TableCell>
-      <TableCell className="text-center p-4 text-sm">{formatDate(proposal.valid_until)}</TableCell>
-      <TableCell className="p-4 text-center">
+      <TableCell className="text-center py-2 px-3 text-xs">
+        <DateDisplay date={proposal.valid_until} />
+      </TableCell>
+      <TableCell className="py-2 px-3 text-center">
         <div className="flex justify-center space-x-2">
           <Button
             variant="ghost"

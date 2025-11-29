@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, Building2, CheckCircle2, Users, Loader2, Phone, Clock, Calendar, AlertCircle, UserCheck, Link2, Trash2 } from "lucide-react";
+import { Mail, Building2, CheckCircle2, Users, Loader2, Phone, Clock, AlertCircle, UserCheck, Link2, Trash2 } from "lucide-react";
+import { DateDisplay } from "@/components/ui/date-display";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
@@ -385,16 +386,7 @@ export const UserListTable = ({
                       <span className="text-xs text-gray-400">-</span>
                     )}
                     {user.created_at && (
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <Calendar className="h-3 w-3 text-gray-400" />
-                        <span>
-                          {new Date(user.created_at).toLocaleDateString('tr-TR', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                        </span>
-                      </div>
+                      <DateDisplay date={user.created_at} className="text-xs" />
                     )}
                   </div>
                 </TableCell>

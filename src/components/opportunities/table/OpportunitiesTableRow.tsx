@@ -158,38 +158,38 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
 
   return (
     <TableRow 
-      className="h-16 cursor-pointer transition-colors hover:bg-gray-50"
+      className="h-8 cursor-pointer transition-colors hover:bg-gray-50"
       onClick={() => onSelectOpportunity(opportunity)}
     >
-      <TableCell className="p-4 font-medium">
+      <TableCell className="py-2 px-3 font-medium">
         <div className="flex items-center space-x-2">
           {opportunity.priority === 'high' && (
-            <Star className="h-4 w-4 text-red-500 fill-red-500" />
+            <Star className="h-3 w-3 text-red-500 fill-red-500" />
           )}
-          <span title={opportunity.title}>
+          <span className="text-xs" title={opportunity.title}>
             {shortenText(opportunity.title, 35)}
           </span>
         </div>
       </TableCell>
       
-      <TableCell className="p-4">
+      <TableCell className="py-2 px-3">
         {opportunity.customer ? (
-          <div className="flex flex-col space-y-1">
-            <span className="font-medium" title={opportunity.customer.name}>
+          <div className="flex flex-col space-y-0">
+            <span className="text-xs font-medium" title={opportunity.customer.name}>
               {shortenText(opportunity.customer.name, 30)}
             </span>
             {opportunity.customer.company && (
-              <span className="text-sm text-muted-foreground" title={opportunity.customer.company}>
+              <span className="text-xs text-muted-foreground" title={opportunity.customer.company}>
                 {shortenText(opportunity.customer.company, 25)}
               </span>
             )}
           </div>
         ) : (
-          <span className="text-muted-foreground">-</span>
+          <span className="text-xs text-muted-foreground">-</span>
         )}
       </TableCell>
       
-      <TableCell className="p-4 text-center">
+      <TableCell className="py-2 px-3 text-center">
         <OpportunityStatusCell 
           status={opportunity.status}
           opportunityId={opportunity.id}
@@ -197,10 +197,10 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
         />
       </TableCell>
       
-      <TableCell className="p-4 text-center font-medium">
+      <TableCell className="py-2 px-3 text-center font-medium">
         {opportunity.value ? (
-          <div className="flex flex-col items-center space-y-1">
-            <span>{formatCurrency(opportunity.value, opportunity.currency || 'TL')}</span>
+          <div className="flex flex-col items-center space-y-0">
+            <span className="text-xs">{formatCurrency(opportunity.value, opportunity.currency || 'TL')}</span>
             {opportunity.currency && (
               <span className="text-xs text-muted-foreground">
                 {opportunity.currency === 'TL' ? 'TL' : 
@@ -212,11 +212,11 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
             )}
           </div>
         ) : (
-          <span className="text-muted-foreground">-</span>
+          <span className="text-xs text-muted-foreground">-</span>
         )}
       </TableCell>
       
-      <TableCell className="p-4 text-center">
+      <TableCell className="py-2 px-3 text-center">
         <Badge 
           variant="outline" 
           className={getPriorityColor(opportunity.priority)}
@@ -225,34 +225,34 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
         </Badge>
       </TableCell>
       
-      <TableCell className="p-4">
+      <TableCell className="py-2 px-3">
         {opportunity.employee ? (
           <div className="flex items-center space-x-2">
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-6 w-6">
               <AvatarImage src={opportunity.employee.avatar_url} />
-              <AvatarFallback className="bg-primary/10 text-primary text-sm">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">
                 {opportunity.employee.first_name?.[0]}
                 {opportunity.employee.last_name?.[0]}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium">
+            <span className="text-xs font-medium">
               {opportunity.employee.first_name} {opportunity.employee.last_name}
             </span>
           </div>
         ) : (
-          <span className="text-muted-foreground">-</span>
+          <span className="text-xs text-muted-foreground">-</span>
         )}
       </TableCell>
       
-      <TableCell className="p-4 text-center text-sm">
+      <TableCell className="py-2 px-3 text-center text-xs">
         {formatDate(opportunity.expected_close_date)}
       </TableCell>
       
-      <TableCell className="p-4 text-center text-sm">
+      <TableCell className="py-2 px-3 text-center text-xs">
         {formatDate(opportunity.created_at)}
       </TableCell>
       
-      <TableCell className="p-4 text-center">
+      <TableCell className="py-2 px-3 text-center">
         <div className="flex justify-center space-x-2">
           {onEditOpportunity && (
             <Button

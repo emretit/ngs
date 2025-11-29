@@ -2,14 +2,10 @@ import React from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Opportunity } from "@/types/crm";
 import OpportunitiesTable from "./OpportunitiesTable";
-import InfiniteScroll from "@/components/ui/infinite-scroll";
 
 interface OpportunitiesContentProps {
   opportunities: Opportunity[];
   isLoading: boolean;
-  isLoadingMore?: boolean;
-  hasNextPage?: boolean;
-  loadMore?: () => void;
   totalCount?: number;
   error: any;
   onSelectOpportunity: (opportunity: Opportunity) => void;
@@ -27,9 +23,6 @@ interface OpportunitiesContentProps {
 const OpportunitiesContent = ({
   opportunities,
   isLoading,
-  isLoadingMore = false,
-  hasNextPage = false,
-  loadMore,
   totalCount,
   error,
   onSelectOpportunity,
@@ -75,24 +68,10 @@ const OpportunitiesContent = ({
           </div>
         </div>
         
-        {/* Infinite scroll trigger - OpportunitiesTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}
-        {!isLoading && hasNextPage && (
-          <div className="px-4">
-            <InfiniteScroll
-              hasNextPage={hasNextPage}
-              isLoadingMore={isLoadingMore}
-              onLoadMore={loadMore || (() => {})}
-              className="mt-4"
-            >
-              <div />
-            </InfiniteScroll>
-          </div>
-        )}
-        
-        {/* Tüm fırsatlar yüklendi mesajı */}
-        {!hasNextPage && opportunities.length > 0 && !isLoading && (
+        {/* Toplam fırsat sayısı */}
+        {opportunities.length > 0 && !isLoading && (
           <div className="text-center py-4 text-sm text-gray-500">
-            Tüm fırsatlar yüklendi ({totalCount || opportunities.length} fırsat)
+            {totalCount || opportunities.length} fırsat
           </div>
         )}
       </div>

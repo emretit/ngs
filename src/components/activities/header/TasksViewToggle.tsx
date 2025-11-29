@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, List, Calendar, Sun } from "lucide-react";
+import { LayoutGrid, List, Calendar, Briefcase } from "lucide-react";
 
 export type ViewType = "table" | "kanban" | "calendar" | "myday";
 
@@ -19,8 +19,8 @@ const TasksViewToggle = ({ activeView, setActiveView }: TasksViewToggleProps) =>
         className="rounded-none"
         onClick={() => setActiveView("myday")}
       >
-        <Sun className="h-4 w-4 mr-2" />
-        Bugün
+        <Briefcase className="h-4 w-4 mr-2" />
+        Aktivitelerim
       </Button>
       <Button
         type="button"

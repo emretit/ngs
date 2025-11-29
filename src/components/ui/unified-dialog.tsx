@@ -50,7 +50,7 @@ const UnifiedDialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -85,9 +85,35 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
         <DialogPrimitive.Content
           className={cn(
             "fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] bg-white rounded-xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden p-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-        maxWidthClasses[maxWidth],
-        className
+            maxWidthClasses[maxWidth],
+            className
           )}
+          onPointerDownOutside={(e) => {
+            // Portal içeriklere (dropdown, popover, select) tıklandığında dialog kapanmasın
+            const target = e.target as HTMLElement;
+            const isInsidePortal = target.closest('[data-radix-popper-content-wrapper]') || 
+                target.closest('[data-radix-select-content]') ||
+                target.closest('[role="listbox"]') ||
+                target.closest('[role="option"]') ||
+                target.closest('[role="dialog"]') ||
+                target.closest('[data-state="open"]');
+            if (isInsidePortal) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            // Portal içeriklerle etkileşimde dialog kapanmasın
+            const target = e.target as HTMLElement;
+            const isInsidePortal = target.closest('[data-radix-popper-content-wrapper]') || 
+                target.closest('[data-radix-select-content]') ||
+                target.closest('[role="listbox"]') ||
+                target.closest('[role="option"]') ||
+                target.closest('[role="dialog"]') ||
+                target.closest('[data-state="open"]');
+            if (isInsidePortal) {
+              e.preventDefault();
+            }
+          }}
         >
         {/* Header */}
         <div className={cn(

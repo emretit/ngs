@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
-import { Plus, LayoutGrid, List, Settings } from "lucide-react";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import CategorySelector from "@/components/cashflow/CategorySelector";
 import { useToast } from "@/components/ui/use-toast";
@@ -20,8 +19,9 @@ import { tr } from "date-fns/locale";
 import { generateRecurringExpenses } from "@/utils/recurringExpenseScheduler";
 import ExpensesFilterBar from "./ExpensesFilterBar";
 import ExpensesBulkActions from "./ExpensesBulkActions";
-import ExpensesSummaryCards from "./expenses/ExpensesSummaryCards";
 import ExpensesGridView from "./expenses/ExpensesGridView";
+import ExpensesListView from "./expenses/ExpensesListView";
+import ExpensesPageHeader, { ExpenseViewType } from "./ExpensesPageHeader";
 
 export interface ExpenseItem {
   id: string;
@@ -114,6 +114,10 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
   const [selectedExpenses, setSelectedExpenses] = useState<ExpenseItem[]>([]);
   const [isAllSelected, setIsAllSelected] = useState(false);
   const [subcategoriesList, setSubcategoriesList] = useState<Array<{id: string, name: string, category_id: string}>>([]);
+  
+  // View state - varsayılan olarak liste görünümü
+  const [activeView, setActiveView] = useState<ExpenseViewType>("list");
+  
   const { toast } = useToast();
 
   // Fetch functions
@@ -517,35 +521,15 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Masraflar</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {format(startDate, 'dd MMM', { locale: tr })} - {format(endDate, 'dd MMM yyyy', { locale: tr })} • {filteredExpenses.length} kayıt
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/cashflow/categories')}
-            className="gap-2"
-          >
-            <Settings className="h-4 w-4" />
-            Kategoriler
-          </Button>
-          <Button
-            onClick={() => setIsAddDialogOpen(true)}
-            className="gap-2 bg-red-600 hover:bg-red-700"
-          >
-            <Plus className="h-4 w-4" />
-            Masraf Ekle
-          </Button>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <ExpensesSummaryCards expenses={filteredExpenses} totalAmount={totalAmount} />
+      <ExpensesPageHeader
+        expenses={filteredExpenses}
+        startDate={startDate}
+        endDate={endDate}
+        onCreateExpense={() => setIsAddDialogOpen(true)}
+        onNavigateCategories={() => navigate('/cashflow/categories')}
+        activeView={activeView}
+        setActiveView={setActiveView}
+      />
 
       {/* Filter Bar */}
       <ExpensesFilterBar
@@ -565,23 +549,39 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         onEndDateChange={onEndDateChange}
       />
 
-      {/* Bulk Actions */}
+      {/* Bulk Actions & Summary */}
       <ExpensesBulkActions
         selectedExpenses={selectedExpenses}
+        allExpenses={filteredExpenses}
+        totalAmount={totalAmount}
         onClearSelection={handleClearSelection}
         onBulkAction={handleBulkAction}
       />
 
-      {/* Grid View */}
-      <ExpensesGridView
-        expenses={filteredExpenses}
-        loading={loading}
-        selectedExpenses={selectedExpenses}
-        onSelectExpense={handleSelectExpense}
-        onEditExpense={handleEditClick}
-        onDeleteExpense={handleDeleteClick}
-        getAccountName={getAccountName}
-      />
+      {/* Content View */}
+      {activeView === "list" ? (
+        <ExpensesListView
+          expenses={filteredExpenses}
+          loading={loading}
+          selectedExpenses={selectedExpenses}
+          onSelectExpense={handleSelectExpense}
+          onSelectAll={() => handleSelectAll(!isAllSelected)}
+          isAllSelected={isAllSelected}
+          onEditExpense={handleEditClick}
+          onDeleteExpense={handleDeleteClick}
+          getAccountName={getAccountName}
+        />
+      ) : (
+        <ExpensesGridView
+          expenses={filteredExpenses}
+          loading={loading}
+          selectedExpenses={selectedExpenses}
+          onSelectExpense={handleSelectExpense}
+          onEditExpense={handleEditClick}
+          onDeleteExpense={handleDeleteClick}
+          getAccountName={getAccountName}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialogComponent

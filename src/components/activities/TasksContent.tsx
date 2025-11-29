@@ -2,14 +2,10 @@ import { useState, useEffect } from "react";
 import { TasksTable } from "./table";
 import TaskDetailPanel from "./TaskDetailPanel";
 import type { Task, TaskStatus } from "@/types/task";
-import InfiniteScroll from "@/components/ui/infinite-scroll";
 
 interface TasksContentProps {
   tasks: Task[];
   isLoading: boolean;
-  isLoadingMore?: boolean;
-  hasNextPage?: boolean;
-  loadMore?: () => void;
   totalCount?: number;
   error?: Error | null;
   searchQuery: string;
@@ -28,9 +24,6 @@ interface TasksContentProps {
 const TasksContent = ({ 
   tasks,
   isLoading,
-  isLoadingMore = false,
-  hasNextPage = false,
-  loadMore,
   totalCount,
   error,
   searchQuery, 
@@ -95,24 +88,10 @@ const TasksContent = ({
           </div>
         </div>
         
-        {/* Infinite scroll trigger - TasksTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}
-        {hasNextPage && !isLoading && (
-          <div className="px-4">
-            <InfiniteScroll
-              hasNextPage={hasNextPage}
-              isLoadingMore={isLoadingMore}
-              onLoadMore={loadMore || (() => {})}
-              className="mt-4"
-            >
-              <div />
-            </InfiniteScroll>
-          </div>
-        )}
-        
-        {/* Tüm aktiviteler yüklendi mesajı */}
-        {!hasNextPage && tasks.length > 0 && !isLoading && (
+        {/* Toplam aktivite sayısı */}
+        {tasks.length > 0 && !isLoading && (
           <div className="text-center py-4 text-sm text-gray-500">
-            Tüm aktiviteler yüklendi ({totalCount || tasks.length} aktivite)
+            {totalCount || tasks.length} aktivite
           </div>
         )}
         

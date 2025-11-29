@@ -1,10 +1,10 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useKanbanTasks } from "../hooks/useKanbanTasks";
 import { useActivitiesInfiniteScroll } from "@/hooks/useActivitiesInfiniteScroll";
 import TasksContent from "../TasksContent";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, User } from "lucide-react";
+import { Briefcase, Clock, CheckCircle2, Circle } from "lucide-react";
 import type { TaskStatus } from "@/types/task";
 
 interface MyDayViewProps {
@@ -16,34 +16,22 @@ interface MyDayViewProps {
   endDate?: Date | undefined;
 }
 
+// "Aktivitelerim" (My Activities) görünümü - Sadece kullanıcıya atanmış tüm görevler
 const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus, startDate, endDate }: MyDayViewProps) => {
   const { userData, displayName, loading } = useCurrentUser();
-  
-  // Bugün için tarih filtresi
-  const todayStart = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
-  }, []);
 
-  const todayEnd = useMemo(() => {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    return today;
-  }, []);
-
-  // İstatistikler için kanban tasks kullan (bugün filtresi ile)
+  // İstatistikler için kanban tasks kullan - TARİH FİLTRESİ YOK, tüm görevler
   const { tasks: kanbanTasks, isLoading: isLoadingStats, error: statsError } = useKanbanTasks({
     searchQuery,
     selectedEmployee: selectedEmployee || userData?.employee_id || null,
     selectedType,
     selectedStatus,
     isMyDay: true,
-    startDate: todayStart,
-    endDate: todayEnd
+    // Tarih filtresi yok - tüm görevler
   });
 
-  // Liste görünümü için infinite scroll hook (bugün filtresi ile)
+  // Liste görünümü için infinite scroll hook - TARİH FİLTRESİ YOK
+  // Status sıralaması aktif: yapılacak -> devam ediyor -> tamamlandı
   const {
     data: tasks,
     isLoading: isLoadingTasks,
@@ -58,8 +46,8 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
       selectedEmployee: selectedEmployee || userData?.employee_id || null,
       selectedType,
       selectedStatus: selectedStatus || undefined,
-      startDate: todayStart,
-      endDate: todayEnd,
+      sortField: 'status', // Duruma göre sıralama
+      sortDirection: 'asc', // Yapılacak üstte, tamamlandı altta
     },
     20
   );
@@ -73,8 +61,8 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Benim Günüm
+              <Briefcase className="h-5 w-5" />
+              Aktivitelerim
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -91,7 +79,7 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
-              <User className="h-5 w-5" />
+              <Briefcase className="h-5 w-5" />
               Hata
             </CardTitle>
           </CardHeader>
@@ -109,13 +97,13 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Benim Günüm
+              <Briefcase className="h-5 w-5" />
+              Aktivitelerim
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              "Benim Günüm" özelliğini kullanabilmek için profilinizde bir çalışan eşleştirmesi yapılmalıdır.
+              "Aktivitelerim" özelliğini kullanabilmek için profilinizde bir çalışan eşleştirmesi yapılmalıdır.
             </p>
           </CardContent>
         </Card>
@@ -127,57 +115,58 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
   const completedTasks = kanbanTasks.completed?.length || 0;
   const todoTasks = kanbanTasks.todo?.length || 0;
   const inProgressTasks = kanbanTasks.in_progress?.length || 0;
+  const activeTasks = todoTasks + inProgressTasks; // Aktif görevler (tamamlanmamış)
 
   return (
     <div className="space-y-6">
-      {/* Bugün İstatistikleri */}
+      {/* Aktivitelerim İstatistikleri */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hoş geldin, {displayName}!</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-blue-800">Hoş geldin, {displayName}!</CardTitle>
+            <Briefcase className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalTasks}</div>
-            <p className="text-xs text-muted-foreground">Bugün toplam görev</p>
+            <div className="text-2xl font-bold text-blue-900">{activeTasks}</div>
+            <p className="text-xs text-blue-600">Aktif görevin var</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-red-50 to-white border-red-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Yapılacaklar</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-red-800">Yapılacaklar</CardTitle>
+            <Circle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{todoTasks}</div>
-            <p className="text-xs text-muted-foreground">Bekleyen görev</p>
+            <div className="text-2xl font-bold text-red-900">{todoTasks}</div>
+            <p className="text-xs text-red-600">Bekleyen görev</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-yellow-50 to-white border-yellow-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Devam Eden</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-yellow-800">Devam Eden</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{inProgressTasks}</div>
-            <p className="text-xs text-muted-foreground">Aktif görev</p>
+            <div className="text-2xl font-bold text-yellow-900">{inProgressTasks}</div>
+            <p className="text-xs text-yellow-600">Üzerinde çalışıyorsun</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-green-50 to-white border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tamamlanan</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-green-800">Tamamlanan</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{completedTasks}</div>
-            <p className="text-xs text-muted-foreground">Bitirilen görev</p>
+            <div className="text-2xl font-bold text-green-900">{completedTasks}</div>
+            <p className="text-xs text-green-600">Bitirilen görev</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Liste Görünümü - Bugün ile ilgili detaylar */}
+      {/* Liste Görünümü - Duruma göre gruplandırılmış */}
       <TasksContent 
         tasks={tasks}
         isLoading={isLoadingTasks}
@@ -190,8 +179,8 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
         selectedEmployee={selectedEmployee || userData?.employee_id || null}
         selectedType={selectedType}
         selectedStatus={selectedStatus}
-        startDate={todayStart}
-        endDate={todayEnd}
+        sortField="status"
+        sortDirection="asc"
       />
     </div>
   );

@@ -2,6 +2,7 @@
 export type SortField = 
   | "title" 
   | "due_date" 
+  | "created_at"
   | "priority" 
   | "status" 
   | "assignee" 

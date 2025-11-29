@@ -2,14 +2,10 @@ import React from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Proposal } from "@/types/proposal";
 import ProposalTable from "./ProposalTable";
-import InfiniteScroll from "@/components/ui/infinite-scroll";
 
 interface ProposalsContentProps {
   proposals: Proposal[];
   isLoading: boolean;
-  isLoadingMore?: boolean;
-  hasNextPage?: boolean;
-  loadMore?: () => void;
   totalCount?: number;
   error: any;
   onProposalSelect: (proposal: Proposal) => void;
@@ -25,9 +21,6 @@ interface ProposalsContentProps {
 const ProposalsContent = ({
   proposals,
   isLoading,
-  isLoadingMore = false,
-  hasNextPage = false,
-  loadMore,
   totalCount,
   error,
   onProposalSelect,
@@ -69,24 +62,10 @@ const ProposalsContent = ({
           </div>
         </div>
         
-        {/* Infinite scroll trigger - ProposalTable InfiniteScroll kullanmıyor, bu yüzden burada gösteriyoruz */}
-        {hasNextPage && !isLoading && (
-          <div className="px-4">
-            <InfiniteScroll
-              hasNextPage={hasNextPage}
-              isLoadingMore={isLoadingMore}
-              onLoadMore={loadMore || (() => {})}
-              className="mt-4"
-            >
-              <div />
-            </InfiniteScroll>
-          </div>
-        )}
-        
-        {/* Tüm teklifler yüklendi mesajı */}
-        {!hasNextPage && proposals.length > 0 && !isLoading && (
+        {/* Toplam teklif sayısı */}
+        {proposals.length > 0 && !isLoading && (
           <div className="text-center py-4 text-sm text-gray-500">
-            Tüm teklifler yüklendi ({totalCount || proposals.length} teklif)
+            {totalCount || proposals.length} teklif
           </div>
         )}
       </div>

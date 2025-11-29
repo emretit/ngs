@@ -1,11 +1,9 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import { ProposalFilters } from "@/components/proposals/types";
 import { useCurrentUser } from "./useCurrentUser";
-import { useInfiniteScroll } from "./useInfiniteScroll";
 import { parseProposalData } from "@/services/proposal/helpers/dataParser";
 
 // Helper function to map database results to Proposal type
@@ -92,107 +90,81 @@ export const useProposals = (filters?: ProposalFilters) => {
   };
 };
 
-// New infinite scroll hook for proposals
-export const useProposalsInfiniteScroll = (filters?: ProposalFilters, pageSize: number = 20) => {
+// Normal query hook for proposals - son 1 aylık filtre olduğu için infinite scroll gerek yok
+export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
   const { userData, loading: userLoading, error: userError } = useCurrentUser();
   
-  const fetchProposals = useCallback(async (page: number, pageSize: number) => {
-    // Kullanıcı verisi henüz yüklenmemişse bekle
-    if (userLoading) {
-      return { data: [], hasNextPage: false, totalCount: 0 };
-    }
-    
-    // Kullanıcının company_id'si yoksa boş sonuç döndür
-    if (!userData?.company_id) {
-      console.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
-      return { data: [], hasNextPage: false, totalCount: 0 };
-    }
-
-    let query = supabase
-      .from('proposals')
-      .select(`
-        *,
-        customer:customer_id (*),
-        employee:employee_id (*)
-      `, { count: 'exact' })
-      .eq('company_id', userData.company_id);
-    
-    // Apply filters
-    if (filters?.status && filters.status !== 'all') {
-      query = query.eq('status', filters.status);
-    }
-    
-    if (filters?.search) {
-      query = query.or(`title.ilike.%${filters.search}%,number.ilike.%${filters.search}%`);
-    }
-    
-    if (filters?.employeeId && filters.employeeId !== 'all') {
-      query = query.eq('employee_id', filters.employeeId);
-    }
-    
-    if (filters?.dateRange?.from) {
-      query = query.gte('offer_date', filters.dateRange.from);
-    }
-    
-    if (filters?.dateRange?.to) {
-      query = query.lte('offer_date', filters.dateRange.to);
-    }
-
-    // Apply pagination
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
-
-    // Apply sorting - veritabanı seviyesinde sıralama
-    const sortField = filters?.sortField || 'offer_date';
-    const sortDirection = filters?.sortDirection || 'desc';
-    const ascending = sortDirection === 'asc';
-
-    const { data, error, count } = await query
-      .order(sortField, { ascending, nullsFirst: false })
-      .range(from, to);
-
-    if (error) {
-      console.error("Error fetching proposals:", error);
-      throw error;
-    }
-
-    return {
-      data: data ? data.map(mapProposalData) : [],
-      totalCount: count || 0,
-      hasNextPage: data ? data.length === pageSize : false,
-    };
-  }, [userData?.company_id, filters?.status, filters?.search, filters?.employeeId, filters?.dateRange?.from, filters?.dateRange?.to, filters?.sortField, filters?.sortDirection]);
-
-  // Use infinite scroll hook
   const {
-    data: proposals,
+    data: proposals = [],
     isLoading,
-    isLoadingMore,
-    hasNextPage,
     error,
-    loadMore,
-    refresh,
-    totalCount,
-  } = useInfiniteScroll(
-    ["proposals-infinite", JSON.stringify(filters), userData?.company_id],
-    fetchProposals,
-    {
-      pageSize,
-      enabled: !!userData?.company_id,
-      refetchOnMount: true, // Invalidate edildiğinde refetch yap
-      staleTime: 0, // Invalidate edildiğinde hemen refetch yap
-      gcTime: 10 * 60 * 1000, // 10 minutes
-    }
-  );
+  } = useQuery({
+    queryKey: ["proposals-list", JSON.stringify(filters), userData?.company_id],
+    queryFn: async () => {
+      // Kullanıcının company_id'si yoksa boş sonuç döndür
+      if (!userData?.company_id) {
+        console.warn("Kullanıcının company_id'si bulunamadı, boş sonuç döndürülüyor");
+        return [];
+      }
+
+      let query = supabase
+        .from('proposals')
+        .select(`
+          *,
+          customer:customer_id (*),
+          employee:employee_id (*)
+        `, { count: 'exact' })
+        .eq('company_id', userData.company_id);
+      
+      // Apply filters
+      if (filters?.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+      }
+      
+      if (filters?.search) {
+        query = query.or(`title.ilike.%${filters.search}%,number.ilike.%${filters.search}%`);
+      }
+      
+      if (filters?.employeeId && filters.employeeId !== 'all') {
+        query = query.eq('employee_id', filters.employeeId);
+      }
+      
+      // Tarih filtreleri - dateRange yerine startDate ve endDate kullan
+      if (filters?.dateRange?.from) {
+        query = query.gte('offer_date', filters.dateRange.from);
+      }
+      
+      if (filters?.dateRange?.to) {
+        const endOfDay = new Date(filters.dateRange.to);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('offer_date', endOfDay.toISOString());
+      }
+
+      // Apply sorting - veritabanı seviyesinde sıralama
+      const sortField = filters?.sortField || 'offer_date';
+      const sortDirection = filters?.sortDirection || 'desc';
+      const ascending = sortDirection === 'asc';
+
+      const { data, error: queryError } = await query
+        .order(sortField, { ascending, nullsFirst: false });
+
+      if (queryError) {
+        console.error("Error fetching proposals:", queryError);
+        throw queryError;
+      }
+
+      return data ? data.map(mapProposalData) : [];
+    },
+    enabled: !!userData?.company_id,
+    refetchOnMount: true,
+    staleTime: 5 * 60 * 1000, // 5 dakika
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 
   return {
     data: proposals,
     isLoading: isLoading || userLoading,
-    isLoadingMore,
-    hasNextPage,
     error: error || userError,
-    loadMore,
-    refresh,
-    totalCount,
+    totalCount: proposals.length,
   };
 };

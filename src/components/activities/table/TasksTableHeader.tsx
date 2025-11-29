@@ -24,17 +24,19 @@ const TasksTableHeader: React.FC<TasksTableHeaderProps> = ({
       : <ChevronDown className="h-4 w-4 ml-1" />;
   };
 
-  const renderSortableHeader = (label: string, field: SortField) => (
+  const renderSortableHeader = (label: string, field: SortField, className?: string) => (
     <TableHead 
       className={cn(
         "py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-left",
-        "cursor-pointer hover:bg-slate-200"
+        "cursor-pointer hover:bg-slate-200",
+        className
       )}
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center gap-1">
         {field === 'title' && <span className="text-lg mr-2">📋</span>}
         {field === 'due_date' && <span className="text-lg mr-2">📅</span>}
+        {field === 'created_at' && <span className="text-lg mr-2">📅</span>}
         {field === 'priority' && <span className="text-lg mr-2">⭐</span>}
         {field === 'assignee' && <span className="text-lg mr-2">👤</span>}
         {field === 'related_item' && <span className="text-lg mr-2">🔗</span>}
@@ -55,11 +57,22 @@ const TasksTableHeader: React.FC<TasksTableHeaderProps> = ({
           </div>
         </TableHead>
         {renderSortableHeader("Başlık", "title")}
-        {renderSortableHeader("Tarih", "due_date")}
         {renderSortableHeader("Önem", "priority")}
         {renderSortableHeader("Sorumlu", "assignee")}
-        {renderSortableHeader("İlişkili Öğe", "related_item")}
-        {renderSortableHeader("Durum", "status")}
+        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-left">
+          <div className="flex items-center gap-1">
+            <span className="text-lg mr-2">🔗</span>
+            <span>İlişkili Öğe</span>
+          </div>
+        </TableHead>
+        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-left">
+          <div className="flex items-center gap-1">
+            <span className="text-lg mr-2">📊</span>
+            <span>Durum</span>
+          </div>
+        </TableHead>
+        {renderSortableHeader("Hedef", "due_date", "text-center")}
+        {renderSortableHeader("Oluşturulma", "created_at", "text-center")}
         <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-center">
           <div className="flex items-center justify-center gap-1">
             <span className="text-sm mr-1">⚙️</span>

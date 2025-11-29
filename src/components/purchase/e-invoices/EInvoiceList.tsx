@@ -11,7 +11,6 @@ import {
   Eye, 
   Package, 
   FileText, 
-  Calendar,
   Building,
   DollarSign,
   Loader2,
@@ -19,12 +18,11 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { tr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
 import { useToast } from '@/hooks/use-toast';
 import { useNilveraPdf } from '@/hooks/useNilveraPdf';
+import { DateDisplay } from '@/components/ui/date-display';
 
 export default function EInvoiceList() {
   // Date range filter states - Default to current month
@@ -308,20 +306,10 @@ export default function EInvoiceList() {
                       {invoice.supplierTaxNumber}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-                        {format(new Date(invoice.invoiceDate), 'dd.MM.yyyy', { locale: tr })}
-                      </div>
+                      <DateDisplay date={invoice.invoiceDate} />
                     </TableCell>
                     <TableCell>
-                      {invoice.dueDate ? (
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
-                          {format(new Date(invoice.dueDate), 'dd.MM.yyyy', { locale: tr })}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+                      <DateDisplay date={invoice.dueDate} />
                     </TableCell>
                     <TableCell className="text-right font-semibold">
                       {invoice.totalAmount.toLocaleString('tr-TR', {

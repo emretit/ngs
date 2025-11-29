@@ -19,12 +19,13 @@ import {
   PauseCircle,
   AlertCircle,
   Circle,
-  Check
+  Check,
+  StickyNote,
+  ListChecks
 } from "lucide-react";
 import { Task, TaskStatus } from "@/types/task";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { DateDisplay } from "@/components/ui/date-display";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -52,15 +53,6 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
   onToggleImportant
 }) => {
   const navigate = useNavigate();
-  const formatDate = (date: string | null | undefined) => {
-    if (!date) return "-";
-    
-    try {
-      return format(new Date(date), "dd MMM yyyy", { locale: tr });
-    } catch (error) {
-      return "-";
-    }
-  };
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
@@ -136,6 +128,13 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
   const isCompleted = task.status === "completed";
   const [isHovering, setIsHovering] = useState(false);
 
+  // Not ve alt görev bilgileri (Microsoft To Do tarzı)
+  const hasDescription = task.description && task.description.trim().length > 0;
+  const subtasks = task.subtasks || [];
+  const hasSubtasks = subtasks.length > 0;
+  const completedSubtasks = subtasks.filter(st => st.completed).length;
+  const totalSubtasks = subtasks.length;
+
   // Tamamla butonuna tıklama
   const handleToggleComplete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -146,7 +145,7 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
   return (
     <TableRow 
       className={cn(
-        "h-12 cursor-pointer transition-all duration-200",
+        "h-8 cursor-pointer transition-all duration-200",
         isCompleted 
           ? "bg-gray-50/80 hover:bg-gray-100/80" 
           : "hover:bg-gray-50"
@@ -154,7 +153,7 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
       onClick={() => onSelectTask(task)}
     >
       {/* Microsoft To Do tarzı tamamlama butonu */}
-      <TableCell className="p-1.5 w-10">
+      <TableCell className="py-2 px-2 w-10">
         <button
           onClick={handleToggleComplete}
           onMouseEnter={() => setIsHovering(true)}
@@ -178,32 +177,53 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
         </button>
       </TableCell>
 
-      <TableCell className="p-2.5 font-medium">
+      <TableCell className="py-2 px-3 font-medium">
         <div className={cn(
-          "flex items-center space-x-2 transition-all duration-200",
+          "flex flex-col transition-all duration-200",
           isCompleted && "opacity-60"
         )}>
-          {task.is_important && (
-            <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+          {/* Başlık satırı */}
+          <div className="flex items-center space-x-2">
+            {task.is_important && (
+              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+            )}
+            {task.is_recurring && (
+              <RefreshCw className="h-3 w-3 text-blue-500 flex-shrink-0" />
+            )}
+            <span className={cn(
+              "transition-all duration-200 text-xs",
+              isCompleted && "line-through text-gray-500"
+            )}>
+              {task.title}
+            </span>
+          </div>
+          
+          {/* Microsoft To Do tarzı - Not ve Alt Görev bilgisi */}
+          {(hasDescription || hasSubtasks) && (
+            <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+              {/* Alt görev sayısı */}
+              {hasSubtasks && (
+                <div className="flex items-center gap-1" title={`${completedSubtasks}/${totalSubtasks} alt görev tamamlandı`}>
+                  <ListChecks className="h-3 w-3" />
+                  <span className={cn(
+                    completedSubtasks === totalSubtasks && totalSubtasks > 0 && "text-green-600"
+                  )}>
+                    {completedSubtasks}/{totalSubtasks}
+                  </span>
+                </div>
+              )}
+              {/* Not ikonu */}
+              {hasDescription && (
+                <div className="flex items-center gap-1" title="Not var">
+                  <StickyNote className="h-3 w-3" />
+                  <span>Not</span>
+                </div>
+              )}
+            </div>
           )}
-          {task.is_recurring && (
-            <RefreshCw className="h-3.5 w-3.5 text-blue-500" />
-          )}
-          <span className={cn(
-            "transition-all duration-200 text-sm",
-            isCompleted && "line-through text-gray-500"
-          )}>
-            {task.title}
-          </span>
         </div>
       </TableCell>
-      <TableCell className={cn(
-        "p-2.5 text-muted-foreground transition-opacity duration-200 text-sm",
-        isCompleted && "opacity-60"
-      )}>
-        {formatDate(task.due_date)}
-      </TableCell>
-      <TableCell className={cn("p-2.5 transition-opacity duration-200", isCompleted && "opacity-60")}>
+      <TableCell className={cn("py-2 px-3 transition-opacity duration-200", isCompleted && "opacity-60")}>
         {task.is_important ? (
           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs py-0.5 px-1.5">
             <Star className="h-2.5 w-2.5 mr-1 fill-yellow-600" />
@@ -213,11 +233,11 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
           <span className="text-gray-400 text-xs">-</span>
         )}
       </TableCell>
-      <TableCell className={cn("p-2.5 transition-opacity duration-200 text-sm", isCompleted && "opacity-60")}>
+      <TableCell className={cn("py-2 px-3 transition-opacity duration-200 text-xs", isCompleted && "opacity-60")}>
         {task.assignee ? task.assignee.first_name + " " + task.assignee.last_name : "-"}
       </TableCell>
       <TableCell className={cn(
-        "p-2.5 text-muted-foreground transition-opacity duration-200 text-sm",
+        "py-2 px-3 text-muted-foreground transition-opacity duration-200 text-xs",
         isCompleted && "opacity-60"
       )}>
         {task.related_item_title ? (
@@ -228,15 +248,27 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
           "-"
         )}
       </TableCell>
-      <TableCell className={cn("p-2.5 transition-opacity duration-200", isCompleted && "opacity-60")}>
+      <TableCell className={cn("py-2 px-3 transition-opacity duration-200", isCompleted && "opacity-60")}>
         <div className="flex items-center space-x-1.5">
-          <span className="text-sm">{getStatusIcon(task.status)}</span>
+          <span className="text-xs">{getStatusIcon(task.status)}</span>
           <Badge variant="outline" className={cn(getStatusColor(task.status), "text-xs py-0.5 px-1.5")}>
             {getStatusLabel(task.status)}
           </Badge>
         </div>
       </TableCell>
-      <TableCell className="p-2.5 text-center">
+      <TableCell className={cn(
+        "py-2 px-3 text-muted-foreground transition-opacity duration-200 text-xs text-center",
+        isCompleted && "opacity-60"
+      )}>
+        <DateDisplay date={task.due_date} />
+      </TableCell>
+      <TableCell className={cn(
+        "py-2 px-3 text-muted-foreground transition-opacity duration-200 text-xs text-center",
+        isCompleted && "opacity-60"
+      )}>
+        <DateDisplay date={task.created_at} />
+      </TableCell>
+      <TableCell className="py-2 px-3 text-center">
         <div className="flex justify-center space-x-2">
           <Button
             variant="ghost"

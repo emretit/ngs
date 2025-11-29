@@ -13,7 +13,7 @@ import { ViewType } from "@/components/activities/header/TasksViewToggle";
 import TasksKanban from "@/components/activities/TasksKanban";
 import TasksCalendar from "@/components/activities/calendar/TasksCalendar";
 import MyDayView from "@/components/activities/myday/MyDayView";
-import { useActivitiesInfiniteScroll } from "@/hooks/useActivitiesInfiniteScroll";
+import { useActivities } from "@/hooks/useActivities";
 interface ActivitiesPageProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
@@ -24,15 +24,22 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
   const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | null>(null);
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Son 1 aylık tarih filtresi - masraflardaki gibi
+  const [startDate, setStartDate] = useState<Date>(() => {
+    const today = new Date();
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(today.getMonth() - 1);
+    return oneMonthAgo;
+  });
+  const [endDate, setEndDate] = useState<Date>(() => new Date());
   const [activeView, setActiveView] = useState<ViewType>("table");
   const [isNewActivityDialogOpen, setIsNewActivityDialogOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   
   // Sıralama state'leri - veritabanı seviyesinde sıralama için
-  const [sortField, setSortField] = useState<string>("created_at");
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  // Varsayılan olarak status'a göre sıralama: yeni ve devam edenler üstte, tamamlananlar altta
+  const [sortField, setSortField] = useState<string>("status");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const handleSort = (field: string) => {
     if (field === sortField) {
@@ -68,29 +75,22 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
     endDate
   });
 
-  // Table view için infinite scroll hook
+  // Table view için normal query hook - son 1 aylık filtre olduğu için infinite scroll gerek yok
   const {
-    data: tasks,
+    data: tasks = [],
     isLoading,
-    isLoadingMore,
-    hasNextPage,
     error,
-    loadMore,
-    refresh,
     totalCount,
-  } = useActivitiesInfiniteScroll(
-    {
-      searchQuery,
-      selectedEmployee: selectedAssignee,
-      selectedType,
-      selectedStatus: selectedStatus || undefined,
-      startDate,
-      endDate,
-      sortField,
-      sortDirection
-    },
-    20
-  );
+  } = useActivities({
+    searchQuery,
+    selectedEmployee: selectedAssignee,
+    selectedType,
+    selectedStatus: selectedStatus || undefined,
+    startDate,
+    endDate,
+    sortField,
+    sortDirection
+  });
 
   const handleAddTask = () => {
     setIsNewActivityDialogOpen(true);
@@ -156,9 +156,6 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
             <TasksContent 
               tasks={tasks}
               isLoading={isLoading}
-              isLoadingMore={isLoadingMore}
-              hasNextPage={hasNextPage}
-              loadMore={loadMore}
               totalCount={totalCount}
               error={typeof error === 'string' ? new Error(error) : error}
               searchQuery={searchQuery}

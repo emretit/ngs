@@ -120,24 +120,24 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
 
   return (
     <TableRow 
-      className="h-16 cursor-pointer transition-colors hover:bg-gray-50"
+      className="h-8 cursor-pointer transition-colors hover:bg-gray-50"
       onClick={() => onSelect(order)}
     >
-      <TableCell className="p-4 font-medium text-sm">
+      <TableCell className="py-2 px-3 font-medium text-xs">
         <div className="flex items-center space-x-2">
-          <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          <ShoppingCart className="h-3 w-3 text-muted-foreground" />
           <span>#{order.order_number}</span>
         </div>
       </TableCell>
-      <TableCell className="p-4">
+      <TableCell className="py-2 px-3">
         <div className="flex items-center space-x-2">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary/10 text-primary">
+          <Avatar className="h-6 w-6">
+            <AvatarFallback className="bg-primary/10 text-primary text-xs">
               {order.customer?.name?.substring(0, 1) || 'M'}
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-sm font-medium" title={order.customer?.name}>
+            <div className="text-xs font-medium" title={order.customer?.name}>
               {shortenText(order.customer?.name || "Müşteri yok", 30)}
             </div>
             {order.customer?.company && (
@@ -148,17 +148,17 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
           </div>
         </div>
       </TableCell>
-      <TableCell className="text-center p-4">
+      <TableCell className="text-center py-2 px-3">
         <Badge className={getStatusColor(order.status)}>
           {getStatusLabel(order.status)}
         </Badge>
       </TableCell>
-      <TableCell className="text-center p-4 text-sm font-medium">
+      <TableCell className="text-center py-2 px-3 text-xs font-medium">
         {order.total_amount != null ? formatProposalAmount(order.total_amount, order.currency || 'TRY') : '-'}
       </TableCell>
-      <TableCell className="text-center p-4 text-sm">{formatDate(order.order_date)}</TableCell>
-      <TableCell className="text-center p-4 text-sm">{formatDate(order.delivery_date)}</TableCell>
-      <TableCell className="p-4 text-center">
+      <TableCell className="text-center py-2 px-3 text-xs">{formatDate(order.order_date)}</TableCell>
+      <TableCell className="text-center py-2 px-3 text-xs">{formatDate(order.delivery_date)}</TableCell>
+      <TableCell className="py-2 px-3 text-center">
         <div className="flex items-center justify-center space-x-2">
           <Button
             variant="ghost"

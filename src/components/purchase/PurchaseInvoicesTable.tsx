@@ -12,9 +12,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Edit2, Trash2, Download, FileText, MoreHorizontal, Eye, Loader2 } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import PurchaseInvoicesTableHeader from "./table/PurchaseInvoicesTableHeader";
+import { DateDisplay } from "@/components/ui/date-display";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
@@ -355,7 +354,7 @@ const PurchaseInvoicesTable = ({
                 </div>
               </TableCell>
               <TableCell className="text-center py-2 px-3 text-xs" onClick={() => onSelectInvoice(invoice)}>
-                {format(new Date(invoice.invoiceDate), "dd MMM yyyy", { locale: tr })}
+                <DateDisplay date={invoice.invoiceDate} />
               </TableCell>
               <TableCell className="text-center py-2 px-3 text-xs font-medium" onClick={() => onSelectInvoice(invoice)}>
                 {formatCurrency(invoice.displayAmount)}

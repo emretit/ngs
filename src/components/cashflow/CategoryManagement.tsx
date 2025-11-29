@@ -1,4 +1,4 @@
-import { useState, memo, useMemo, useCallback } from "react";
+import { useState, memo, useMemo, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -352,10 +352,20 @@ interface CategoryManagementProps {
   searchQuery?: string;
   selectedType?: 'all' | 'income' | 'expense';
   selectedStatus?: string;
+  externalOpenCreateDialog?: boolean;
+  onExternalDialogOpened?: () => void;
 }
 
-const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedType = 'all', selectedStatus }: CategoryManagementProps) => {
+const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedType = 'all', selectedStatus, externalOpenCreateDialog, onExternalDialogOpened }: CategoryManagementProps) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  
+  // External dialog açma kontrolü
+  useEffect(() => {
+    if (externalOpenCreateDialog) {
+      setIsCreateOpen(true);
+      onExternalDialogOpened?.();
+    }
+  }, [externalOpenCreateDialog, onExternalDialogOpened]);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

@@ -77,8 +77,8 @@ const Proposals = memo(() => {
     search: searchQuery,
     employeeId: selectedEmployee,
     dateRange: { 
-      from: startDate ? startDate.toISOString() : null, 
-      to: endDate ? endDate.toISOString() : null 
+      from: startDate instanceof Date ? startDate : null, 
+      to: endDate instanceof Date ? endDate : null 
     },
     sortField,
     sortDirection

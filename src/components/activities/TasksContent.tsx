@@ -6,6 +6,9 @@ import type { Task, TaskStatus } from "@/types/task";
 interface TasksContentProps {
   tasks: Task[];
   isLoading: boolean;
+  isLoadingMore?: boolean;
+  hasNextPage?: boolean;
+  loadMore?: () => void;
   totalCount?: number;
   error?: Error | null;
   searchQuery: string;

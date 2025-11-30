@@ -10,13 +10,13 @@ import {
   PopoverTrigger 
 } from "@/components/ui/popover";
 import { 
-  ChevronsUpDown, 
   Search, 
   Target, 
   Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Opportunity {
   id: string;
@@ -112,97 +112,118 @@ const OpportunitySelector: React.FC<OpportunitySelectorProps> = ({
 
   if (isLoading) {
     return (
-      <div className={cn("space-y-2", className)}>
-        {showLabel && <Label className={cn("text-xs font-medium text-gray-700", error ? "text-red-500" : "")}>{label}</Label>}
+      <div className={cn("space-y-1.5", className)}>
+        {showLabel && (
+          <Label className={cn("text-xs font-medium text-gray-700", error ? "text-red-500" : "")}>
+            {label}
+          </Label>
+        )}
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          <span className="ml-2 text-sm">{loadingText}</span>
+          <Loader2 className="h-3 w-3 animate-spin text-primary" />
+          <span className="ml-2 text-xs">{loadingText}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={cn("space-y-1", className)}>
-      {showLabel && <Label className={cn("text-sm font-medium text-gray-700", error ? "text-red-500" : "")}>{label}</Label>}
-      <Popover open={open} onOpenChange={setOpen}>
+    <div className={cn("space-y-1.5", className)}>
+      {showLabel && (
+        <Label className={cn("text-xs font-medium text-gray-700", error ? "text-red-500" : "")}>
+          {label}
+        </Label>
+      )}
+      <Popover 
+        open={open} 
+        onOpenChange={(open) => {
+          setOpen(open);
+          if (!open) {
+            setSearchQuery("");
+          }
+        }}
+      >
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full h-8 text-sm justify-between",
+              "w-full justify-between mt-0.5 h-8 text-xs",
               !value && "text-muted-foreground",
               error && error.trim() && "border-red-500"
             )}
           >
-            <span className="truncate text-left flex-1">
-              {selectedOpportunity 
-                ? selectedOpportunity.title
-                : placeholder
-              }
-            </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <div className="flex items-center">
+              <Target className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
+              <span className="truncate">
+                {selectedOpportunity 
+                  ? selectedOpportunity.title
+                  : placeholder
+                }
+              </span>
+            </div>
+            <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0" align="start">
-          <div className="p-3 border-b">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+        <PopoverContent className="w-[400px] max-w-[90vw] p-0" align="start">
+          <div className="p-1.5 border-b">
+            <Input
+              placeholder={searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-8 text-xs"
+            />
           </div>
           
-          <div className="max-h-[300px] overflow-y-auto">
+          <ScrollArea className="h-[200px]">
             {filteredOpportunities.length === 0 ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
+              <div className="p-3 text-center text-muted-foreground text-xs">
                 {searchQuery 
                   ? `"${searchQuery}" ile eşleşen fırsat bulunamadı` 
                   : noResultsText}
               </div>
             ) : (
-              <div className="p-1">
+              <div className="grid gap-0.5 p-1">
                 {filteredOpportunities.map(opportunity => (
                   <div
                     key={opportunity.id}
-                    className="flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer rounded-sm"
+                    className={cn(
+                      "flex items-start py-1 px-1.5 cursor-pointer rounded-md hover:bg-muted/50",
+                      opportunity.id === value && "bg-muted"
+                    )}
                     onClick={() => handleSelectOpportunity(opportunity)}
                   >
-                    <div className="flex items-center space-x-3 flex-1 min-w-0">
-                      <Target className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">
+                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-1.5 mt-0.5">
+                      <Target className="h-2.5 w-2.5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <p className="font-medium truncate text-xs">
                           {opportunity.title}
-                        </div>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <span className={cn(
-                            "px-2 py-1 text-xs rounded-full",
-                            getStatusColor(opportunity.status)
-                          )}>
-                            {opportunity.status}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={cn(
+                          "px-1 py-0.5 text-[9px] rounded",
+                          getStatusColor(opportunity.status)
+                        )}>
+                          {opportunity.status}
+                        </span>
+                        {opportunity.value && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {opportunity.value.toLocaleString('tr-TR')} ₺
                           </span>
-                          {opportunity.value && (
-                            <span className="text-xs text-muted-foreground">
-                              {opportunity.value.toLocaleString('tr-TR')} ₺
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </ScrollArea>
         </PopoverContent>
       </Popover>
-      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   );
 };

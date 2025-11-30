@@ -187,10 +187,10 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
     : (allSuppliers ? Math.max(0, allSuppliers.length - displayCount) : 0);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       <div>
         {!hideLabel && (
-          <Label className="text-sm font-medium text-gray-700">
+          <Label className="text-xs font-medium text-gray-700">
             {label ?? "Müşteri / Tedarikçi"}
             {required && <span className="text-red-500 ml-1">*</span>}
           </Label>
@@ -209,69 +209,69 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
               variant="outline"
               role="combobox"
               aria-expanded={isOpen}
-              className="w-full justify-between mt-1 h-8"
+              className="w-full justify-between mt-0.5 h-8 text-xs"
             >
               <div className="flex items-center">
                 {partnerType === "customer" ? (
-                  <User className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                  <User className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
                 ) : (
-                  <Building2 className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                  <Building2 className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
                 )}
-                {getDisplayName()}
+                <span className="truncate">{getDisplayName()}</span>
               </div>
-              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[400px] max-w-[90vw] p-0" align="start">
-            <div className="p-2 border-b">
+            <div className="p-1.5 border-b">
               <Input
                 placeholder="Arama..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-9"
+                className="w-full h-8 text-xs"
               />
             </div>
             
             <CustomTabs defaultValue={partnerType} onValueChange={(value) => setLocalPartnerType(value as "customer" | "supplier")}>
-              <div className="px-2 pt-2 pb-1">
-                <CustomTabsList className="w-full h-9">
-                  <CustomTabsTrigger value="customer" className="flex-1 text-xs py-1.5">
-                    <User className="h-3 w-3 mr-1.5" />
+              <div className="px-1.5 pt-1.5 pb-0.5">
+                <CustomTabsList className="w-full h-8">
+                  <CustomTabsTrigger value="customer" className="flex-1 text-[11px] py-1">
+                    <User className="h-2.5 w-2.5 mr-1" />
                     Müşteriler
                   </CustomTabsTrigger>
-                  <CustomTabsTrigger value="supplier" className="flex-1 text-xs py-1.5">
-                    <Building2 className="h-3 w-3 mr-1.5" />
+                  <CustomTabsTrigger value="supplier" className="flex-1 text-[11px] py-1">
+                    <Building2 className="h-2.5 w-2.5 mr-1" />
                     Tedarikçiler
                   </CustomTabsTrigger>
                 </CustomTabsList>
               </div>
               
               <CustomTabsContent value="customer" className="p-0 mt-0 focus-visible:outline-none focus-visible:ring-0">
-                <ScrollArea className="h-[250px]">
+                <ScrollArea className="h-[200px]">
                   {isLoading ? (
-                    <div className="p-4 text-center text-muted-foreground">Yükleniyor...</div>
+                    <div className="p-3 text-center text-muted-foreground text-xs">Yükleniyor...</div>
                   ) : !filteredCustomers || filteredCustomers.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">
+                    <div className="p-3 text-center text-muted-foreground text-xs">
                       {searchQuery.trim() ? `"${searchQuery}" ile eşleşen müşteri bulunamadı` : "Müşteri bulunamadı"}
                     </div>
                   ) : (
-                    <div className="grid gap-0.5 p-1.5">
+                    <div className="grid gap-0.5 p-1">
                       {filteredCustomers?.map((customer) => (
                         <div
                           key={customer.id}
-                          className={`flex items-start p-1.5 cursor-pointer rounded-md hover:bg-muted/50 ${
+                          className={`flex items-start py-1 px-1.5 cursor-pointer rounded-md hover:bg-muted/50 ${
                             customer.id === customerId ? "bg-muted" : ""
                           }`}
                           onClick={() => handleSelectPartner(customer.id, "customer")}
                         >
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-2 mt-0.5 text-xs">
+                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-1.5 mt-0.5 text-[10px] font-medium">
                             {(customer.company || customer.name || 'M').charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center">
-                              <p className="font-medium truncate text-sm">{customer.company || customer.name || 'İsimsiz Müşteri'}</p>
+                              <p className="font-medium truncate text-xs">{customer.company || customer.name || 'İsimsiz Müşteri'}</p>
                               {customer.status && (
-                                <span className={`text-[10px] px-1 py-0.5 rounded ${
+                                <span className={`text-[9px] px-1 py-0.5 rounded ${
                                   customer.status === "aktif" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
                                 }`}>
                                   {customer.status === "aktif" ? "Aktif" : "Pasif"}
@@ -279,17 +279,17 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                               )}
                             </div>
                             {customer.company && customer.name && customer.company !== customer.name && (
-                              <p className="text-xs text-muted-foreground truncate">{customer.name}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">{customer.name}</p>
                             )}
                             {customer.email && (
                               <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
-                                <Mail className="h-2.5 w-2.5 mr-1" />
+                                <Mail className="h-2 w-2 mr-0.5" />
                                 <span className="truncate">{customer.email}</span>
                               </div>
                             )}
                             {customer.mobile_phone && (
                               <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
-                                <Phone className="h-2.5 w-2.5 mr-1" />
+                                <Phone className="h-2 w-2 mr-0.5" />
                                 <span>{customer.mobile_phone}</span>
                               </div>
                             )}
@@ -299,25 +299,25 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                     </div>
                   )}
                   {hasMoreCustomers && (
-                    <div className="p-2 border-t">
+                    <div className="p-1.5 border-t">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full"
+                        className="w-full h-8 text-xs"
                         onClick={handleLoadMore}
                       >
                         Daha Fazla Yükle ({remainingCustomers} kaldı)
                       </Button>
                     </div>
                   )}
-                  <div className="p-2 border-t">
+                  <div className="p-1.5 border-t">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full"
+                      className="w-full h-8 text-xs"
                       onClick={() => handleCreateNew("customer")}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-3 w-3 mr-1.5" />
                       Yeni Müşteri Ekle
                     </Button>
                   </div>
@@ -325,31 +325,31 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
               </CustomTabsContent>
               
               <CustomTabsContent value="supplier" className="p-0 mt-0 focus-visible:outline-none focus-visible:ring-0">
-                <ScrollArea className="h-[250px]">
+                <ScrollArea className="h-[200px]">
                   {isLoading ? (
-                    <div className="p-4 text-center text-muted-foreground">Yükleniyor...</div>
+                    <div className="p-3 text-center text-muted-foreground text-xs">Yükleniyor...</div>
                   ) : !filteredSuppliers || filteredSuppliers.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">
+                    <div className="p-3 text-center text-muted-foreground text-xs">
                       {searchQuery.trim() ? `"${searchQuery}" ile eşleşen tedarikçi bulunamadı` : "Tedarikçi bulunamadı"}
                     </div>
                   ) : (
-                    <div className="grid gap-0.5 p-1.5">
+                    <div className="grid gap-0.5 p-1">
                       {filteredSuppliers?.map((supplier) => (
                         <div
                           key={supplier.id}
-                          className={`flex items-start p-1.5 cursor-pointer rounded-md hover:bg-muted/50 ${
+                          className={`flex items-start py-1 px-1.5 cursor-pointer rounded-md hover:bg-muted/50 ${
                             supplier.id === supplierId ? "bg-muted" : ""
                           }`}
                           onClick={() => handleSelectPartner(supplier.id, "supplier")}
                         >
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-2 mt-0.5">
-                            <Building2 className="h-3 w-3" />
+                          <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-1.5 mt-0.5">
+                            <Building2 className="h-2.5 w-2.5" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center">
-                              <p className="font-medium truncate text-sm">{supplier.name}</p>
+                              <p className="font-medium truncate text-xs">{supplier.name}</p>
                               {supplier.status && (
-                                <span className={`text-[10px] px-1 py-0.5 rounded ${
+                                <span className={`text-[9px] px-1 py-0.5 rounded ${
                                   supplier.status === "aktif" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
                                 }`}>
                                   {supplier.status === "aktif" ? "Aktif" : "Pasif"}
@@ -357,17 +357,17 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                               )}
                             </div>
                             {supplier.company && (
-                              <p className="text-xs text-muted-foreground truncate">{supplier.company}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">{supplier.company}</p>
                             )}
                             {supplier.email && (
                               <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
-                                <Mail className="h-2.5 w-2.5 mr-1" />
+                                <Mail className="h-2 w-2 mr-0.5" />
                                 <span className="truncate">{supplier.email}</span>
                               </div>
                             )}
                             {supplier.mobile_phone && (
                               <div className="flex items-center text-[10px] text-muted-foreground mt-0.5">
-                                <Phone className="h-2.5 w-2.5 mr-1" />
+                                <Phone className="h-2 w-2 mr-0.5" />
                                 <span>{supplier.mobile_phone}</span>
                               </div>
                             )}
@@ -377,25 +377,25 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
                     </div>
                   )}
                   {hasMoreSuppliers && (
-                    <div className="p-2 border-t">
+                    <div className="p-1.5 border-t">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full"
+                        className="w-full h-8 text-xs"
                         onClick={handleLoadMore}
                       >
                         Daha Fazla Yükle ({remainingSuppliers} kaldı)
                       </Button>
                     </div>
                   )}
-                  <div className="p-2 border-t">
+                  <div className="p-1.5 border-t">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full"
+                      className="w-full h-8 text-xs"
                       onClick={() => handleCreateNew("supplier")}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-3 w-3 mr-1.5" />
                       Yeni Tedarikçi Ekle
                     </Button>
                   </div>

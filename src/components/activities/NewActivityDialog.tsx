@@ -15,7 +15,8 @@ import { logger } from "@/utils/logger";
 import { generateRecurringTasks, createNextTaskInstance } from "@/utils/recurringTaskScheduler";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import OpportunitySelector from "@/components/opportunities/OpportunitySelector";
-import CustomerSelector from "@/components/proposals/form/CustomerSelector";
+import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
+import { useForm, FormProvider } from "react-hook-form";
 
 interface NewActivityDialogProps {
   isOpen: boolean;
@@ -63,6 +64,14 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
   const [selectedCustomerName, setSelectedCustomerName] = useState("");
   const [selectedCompanyName, setSelectedCompanyName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Form context for ProposalPartnerSelect
+  const partnerForm = useForm({
+    defaultValues: {
+      customer_id: selectedCustomerId || "",
+      supplier_id: ""
+    }
+  });
 
 
 
@@ -180,6 +189,11 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
     setRecurrenceEndDate("");
     setRecurrenceDays([]);
     setRecurrenceDayOfMonth(1);
+    // Reset form
+    partnerForm.reset({
+      customer_id: "",
+      supplier_id: ""
+    });
   };
 
   const handleClose = () => {
@@ -187,11 +201,31 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
     onClose();
   };
 
-  const handleCustomerChange = (customerId: string, customerName: string, companyName: string) => {
-    setSelectedCustomerId(customerId);
-    setSelectedCustomerName(customerName);
-    setSelectedCompanyName(companyName);
-  };
+  // Watch form changes for customer_id and fetch customer details
+  const watchedCustomerId = partnerForm.watch("customer_id");
+  useEffect(() => {
+    if (watchedCustomerId && watchedCustomerId !== selectedCustomerId) {
+      setSelectedCustomerId(watchedCustomerId);
+      // Fetch customer details
+      const fetchCustomerDetails = async () => {
+        const { data } = await supabase
+          .from("customers")
+          .select("id, name, company")
+          .eq("id", watchedCustomerId)
+          .single();
+        
+        if (data) {
+          setSelectedCustomerName(data.name || "");
+          setSelectedCompanyName(data.company || data.name || "");
+        }
+      };
+      fetchCustomerDetails();
+    } else if (!watchedCustomerId && selectedCustomerId) {
+      setSelectedCustomerId("");
+      setSelectedCustomerName("");
+      setSelectedCompanyName("");
+    }
+  }, [watchedCustomerId]);
 
   return (
     <UnifiedDialog
@@ -257,10 +291,13 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           {/* Müşteri ve Son Tarih */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <CustomerSelector
-                value={selectedCustomerId}
-                onChange={handleCustomerChange}
-              />
+              <FormProvider {...partnerForm}>
+                <ProposalPartnerSelect 
+                  partnerType="customer" 
+                  placeholder="Müşteri seçin..."
+                  hideLabel={false}
+                />
+              </FormProvider>
             </div>
             <div className="space-y-1">
               <UnifiedDatePicker

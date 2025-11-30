@@ -61,13 +61,21 @@ export const useProposals = (filters?: ProposalFilters) => {
         query = query.eq('employee_id', filters.employeeId);
       }
       
-      // Apply date range filter if specified
+      // Apply date range filter if specified - ISO formatında tarih kullan
       if (filters?.dateRange?.from) {
-        query = query.gte('created_at', filters.dateRange.from);
+        const fromDate = filters.dateRange.from instanceof Date 
+          ? filters.dateRange.from.toISOString()
+          : new Date(filters.dateRange.from).toISOString();
+        query = query.gte('created_at', fromDate);
       }
       
       if (filters?.dateRange?.to) {
-        query = query.lte('created_at', filters.dateRange.to);
+        const toDate = filters.dateRange.to instanceof Date
+          ? filters.dateRange.to
+          : new Date(filters.dateRange.to);
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endOfDay.toISOString());
       }
       
       const { data, error } = await query;
@@ -129,13 +137,19 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
         query = query.eq('employee_id', filters.employeeId);
       }
       
-      // Tarih filtreleri - dateRange yerine startDate ve endDate kullan
+      // Tarih filtreleri - ISO formatında tarih kullan
       if (filters?.dateRange?.from) {
-        query = query.gte('offer_date', filters.dateRange.from);
+        const fromDate = filters.dateRange.from instanceof Date 
+          ? filters.dateRange.from.toISOString()
+          : new Date(filters.dateRange.from).toISOString();
+        query = query.gte('offer_date', fromDate);
       }
       
       if (filters?.dateRange?.to) {
-        const endOfDay = new Date(filters.dateRange.to);
+        const toDate = filters.dateRange.to instanceof Date
+          ? filters.dateRange.to
+          : new Date(filters.dateRange.to);
+        const endOfDay = new Date(toDate);
         endOfDay.setHours(23, 59, 59, 999);
         query = query.lte('offer_date', endOfDay.toISOString());
       }

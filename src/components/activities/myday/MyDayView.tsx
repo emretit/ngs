@@ -57,36 +57,19 @@ const MyDayView = ({ searchQuery, selectedEmployee, selectedType, selectedStatus
 
   if (loading || isLoading) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Briefcase className="h-5 w-5" />
-              Aktivitelerim
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Yükleniyor...</p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center h-[400px]">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-muted-foreground">Aktiviteler yükleniyor...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
-              <Briefcase className="h-5 w-5" />
-              Hata
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Görevler yüklenirken bir hata oluştu.</p>
-          </CardContent>
-        </Card>
+      <div className="h-96 flex items-center justify-center">
+        <div className="text-red-500">Aktiviteler yüklenirken bir hata oluştu</div>
       </div>
     );
   }

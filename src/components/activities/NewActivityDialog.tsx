@@ -320,62 +320,67 @@ const NewActivityDialog: React.FC<NewActivityDialogProps> = ({
           </div>
 
           {/* Durum ve Önem */}
-          <div className="grid grid-cols-2 gap-3 p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-100">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-gray-600">Durum</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-9 bg-white border-gray-200 hover:border-primary/50 transition-colors">
-                  <SelectValue placeholder="Durum seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todo">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-red-500" />
-                      <span>Yapılacak</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="in_progress">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                      <span>Devam Ediyor</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="completed">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
-                      <span>Tamamlandı</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="cancelled">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-gray-400" />
-                      <span>İptal Edildi</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-100">
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-gray-600">Durum</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="h-9 bg-white border-gray-200 hover:border-primary/50 transition-colors w-full">
+                      <SelectValue placeholder="Durum seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todo">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-red-500" />
+                          <span>Yapılacak</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="in_progress">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                          <span>Devam Ediyor</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="completed">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
+                          <span>Tamamlandı</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="cancelled">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-gray-400" />
+                          <span>İptal Edildi</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div></div>
+              </div>
 
-            <div className="flex items-end justify-end">
-              <div className={cn(
-                "flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors cursor-pointer",
-                isImportant 
-                  ? "bg-yellow-50 border-yellow-200" 
-                  : "bg-white border-gray-200 hover:border-yellow-300"
-              )}>
-                <Switch
-                  id="is_important"
-                  checked={isImportant}
-                  onCheckedChange={setIsImportant}
-                  className="scale-90"
-                />
-                <Label htmlFor="is_important" className="flex items-center gap-1.5 cursor-pointer text-sm font-medium">
-                  <Star className={cn(
-                    "h-4 w-4 transition-all duration-200",
-                    isImportant ? "text-yellow-500 fill-yellow-500 scale-110" : "text-gray-400"
-                  )} />
-                  <span className={isImportant ? "text-yellow-700" : "text-gray-600"}>Önemli</span>
-                </Label>
+              <div className="flex items-center">
+                <div className={cn(
+                  "flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors cursor-pointer",
+                  isImportant 
+                    ? "bg-yellow-50 border-yellow-200" 
+                    : "bg-white border-gray-200 hover:border-yellow-300"
+                )}>
+                  <Switch
+                    id="is_important"
+                    checked={isImportant}
+                    onCheckedChange={setIsImportant}
+                    className="scale-90"
+                  />
+                  <Label htmlFor="is_important" className="flex items-center gap-1.5 cursor-pointer text-sm font-medium">
+                    <Star className={cn(
+                      "h-4 w-4 transition-all duration-200",
+                      isImportant ? "text-yellow-500 fill-yellow-500 scale-110" : "text-gray-400"
+                    )} />
+                    <span className={isImportant ? "text-yellow-700" : "text-gray-600"}>Önemli</span>
+                  </Label>
+                </div>
               </div>
             </div>
           </div>

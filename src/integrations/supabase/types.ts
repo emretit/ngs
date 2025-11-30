@@ -203,9 +203,17 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          is_recurring: boolean | null
+          is_recurring_instance: boolean | null
           opportunity_id: string | null
           order_rank: string | null
+          parent_task_id: string | null
           priority: string
+          recurrence_day_of_month: number | null
+          recurrence_days: string[] | null
+          recurrence_end_date: string | null
+          recurrence_interval: number | null
+          recurrence_type: string | null
           related_item_id: string | null
           related_item_title: string | null
           related_item_type: string | null
@@ -221,9 +229,17 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_recurring?: boolean | null
+          is_recurring_instance?: boolean | null
           opportunity_id?: string | null
           order_rank?: string | null
+          parent_task_id?: string | null
           priority?: string
+          recurrence_day_of_month?: number | null
+          recurrence_days?: string[] | null
+          recurrence_end_date?: string | null
+          recurrence_interval?: number | null
+          recurrence_type?: string | null
           related_item_id?: string | null
           related_item_title?: string | null
           related_item_type?: string | null
@@ -239,9 +255,17 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_recurring?: boolean | null
+          is_recurring_instance?: boolean | null
           opportunity_id?: string | null
           order_rank?: string | null
+          parent_task_id?: string | null
           priority?: string
+          recurrence_day_of_month?: number | null
+          recurrence_days?: string[] | null
+          recurrence_end_date?: string | null
+          recurrence_interval?: number | null
+          recurrence_type?: string | null
           related_item_id?: string | null
           related_item_title?: string | null
           related_item_type?: string | null
@@ -256,6 +280,20 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activities_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activities_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "v_tasks"
             referencedColumns: ["id"]
           },
           {

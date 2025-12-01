@@ -1,5 +1,4 @@
 
-import { format } from "date-fns";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -53,16 +52,20 @@ const TaskTableRow = ({
         {task.due_date ? (
           <span 
             className={cn(
-              "text-sm",
+              "text-xs font-medium",
               task.status !== "completed" && 
               new Date(task.due_date) < new Date() && 
-              "text-red-600 font-medium"
+              "text-red-600"
             )}
           >
-            {format(new Date(task.due_date), "dd MMM yyyy")}
+            {new Date(task.due_date).toLocaleDateString('tr-TR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric'
+            })}
           </span>
         ) : (
-          <span className="text-muted-foreground">-</span>
+          <span className="text-muted-foreground text-xs font-medium">-</span>
         )}
       </TableCell>
       <TableCell className="p-4">

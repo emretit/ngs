@@ -149,15 +149,15 @@ const ProductDetailsModal = ({
     
     // Use manual rate if available and converting from selectedCurrency
     const normalizedSelected = normalizeCurrency(selectedCurrency);
-    if (manualExchangeRate !== null && fromCurrency === selectedCurrency && normalizedSelected !== "TL") {
-      const amountInTL = amount * manualExchangeRate;
-      return toCurrency === "TL" ? amountInTL : amountInTL / (exchangeRates?.[toCurrency] || 1);
+    if (manualExchangeRate !== null && fromCurrency === selectedCurrency && normalizedSelected !== "TRY") {
+      const amountInTRY = amount * manualExchangeRate;
+      return toCurrency === "TRY" ? amountInTRY : amountInTRY / (exchangeRates?.[toCurrency] || 1);
     }
-    
+
     // Use manual rate if available and converting to selectedCurrency
-    if (manualExchangeRate !== null && toCurrency === selectedCurrency && normalizedSelected !== "TL") {
-      const amountInTL = fromCurrency === "TL" ? amount : amount * (exchangeRates?.[fromCurrency] || 1);
-      return amountInTL / manualExchangeRate;
+    if (manualExchangeRate !== null && toCurrency === selectedCurrency && normalizedSelected !== "TRY") {
+      const amountInTRY = fromCurrency === "TRY" ? amount : amount * (exchangeRates?.[fromCurrency] || 1);
+      return amountInTRY / manualExchangeRate;
     }
     
     // Fallback to normal conversion
@@ -221,7 +221,7 @@ const ProductDetailsModal = ({
   };
 
   const showStockWarning = product && quantity > product.stock_quantity;
-  // TRY ve TL'yi aynı kabul et - areCurrenciesEqual kullan
+  // TRY currency comparison - areCurrenciesEqual kullan
   const showCurrencyWarning = product && !areCurrenciesEqual(product.currency, selectedCurrency);
 
   // Don't render if neither product nor existingData is provided
@@ -368,7 +368,7 @@ const ProductDetailsModal = ({
                     <SelectContent position="popper" className="bg-background border z-[100]">
                       {currencyOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.value === "TRY" ? "TL" : option.value}
+                          {option.value}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -423,7 +423,7 @@ const ProductDetailsModal = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="percentage">%</SelectItem>
-                    <SelectItem value="amount">{selectedCurrency === "TRY" ? "TL" : selectedCurrency}</SelectItem>
+                    <SelectItem value="amount">{selectedCurrency}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -480,7 +480,7 @@ const ProductDetailsModal = ({
                 </Button>
               )}
             </div>
-            {normalizeCurrency(selectedCurrency) !== "TL" && (
+            {normalizeCurrency(selectedCurrency) !== "TRY" && (
               <div className="text-xs text-muted-foreground mb-1.5 pb-1.5 border-b border-gray-300 text-center">
                 1 {selectedCurrency} = {currentExchangeRate.toFixed(4)} ₺
               </div>
@@ -490,11 +490,11 @@ const ProductDetailsModal = ({
                 <span>Ara Toplam:</span>
                 <div className="flex items-center">
                   <span className="w-24 text-center">{formatCurrency(subtotal, selectedCurrency)}</span>
-                  {normalizeCurrency(selectedCurrency) !== "TL" && (
+                  {normalizeCurrency(selectedCurrency) !== "TRY" && (
                     <>
                       <span className="w-px h-4 bg-gray-300 mx-2"></span>
                       <span className="w-24 text-center text-muted-foreground text-[10px]">
-                        {formatCurrency(convertAmountWithManualRate(subtotal, selectedCurrency, "TL"), "TL")}
+                        {formatCurrency(convertAmountWithManualRate(subtotal, selectedCurrency, "TRY"), "TRY")}
                       </span>
                     </>
                   )}
@@ -504,7 +504,7 @@ const ProductDetailsModal = ({
                 <span>İndirim:</span>
                 <div className="flex items-center">
                   <span className="w-24 text-center text-red-600">-{formatCurrency(discountAmount, selectedCurrency)}</span>
-                  {normalizeCurrency(selectedCurrency) !== "TL" && (
+                  {normalizeCurrency(selectedCurrency) !== "TRY" && (
                     <>
                       <span className="w-px h-4 bg-gray-300 mx-2"></span>
                       <span className="w-24 text-center text-muted-foreground text-[10px]">
@@ -518,7 +518,7 @@ const ProductDetailsModal = ({
                 <span>Net Toplam:</span>
                 <div className="flex items-center">
                   <span className="w-24 text-center">{formatCurrency(netAmount, selectedCurrency)}</span>
-                  {normalizeCurrency(selectedCurrency) !== "TL" && (
+                  {normalizeCurrency(selectedCurrency) !== "TRY" && (
                     <>
                       <span className="w-px h-4 bg-gray-300 mx-2"></span>
                       <span className="w-24 text-center text-muted-foreground text-[10px]">
@@ -532,7 +532,7 @@ const ProductDetailsModal = ({
                 <span>KDV:</span>
                 <div className="flex items-center">
                   <span className="w-24 text-center text-green-600">+{formatCurrency(vatAmount, selectedCurrency)}</span>
-                  {normalizeCurrency(selectedCurrency) !== "TL" && (
+                  {normalizeCurrency(selectedCurrency) !== "TRY" && (
                     <>
                       <span className="w-px h-4 bg-gray-300 mx-2"></span>
                       <span className="w-24 text-center text-muted-foreground text-[10px]">
@@ -549,7 +549,7 @@ const ProductDetailsModal = ({
                 <span className="w-24 text-center text-blue-600">
                   {formatCurrency(total, selectedCurrency)}
                 </span>
-                {normalizeCurrency(selectedCurrency) !== "TL" && (
+                {normalizeCurrency(selectedCurrency) !== "TRY" && (
                   <>
                     <span className="w-px h-4 bg-gray-300 mx-2"></span>
                     <span className="w-24 text-center text-muted-foreground text-[10px] font-normal">

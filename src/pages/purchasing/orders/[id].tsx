@@ -289,9 +289,9 @@ export default function PurchaseOrderDetail() {
                 <div className="text-lg font-semibold">
                   Genel Toplam: {formatCurrency(grandTotal, po.currency)}
                 </div>
-                {po.currency !== 'TL' && (
+                {po.currency !== 'TRY' && po.currency !== 'TL' && (
                   <div className="text-sm text-muted-foreground">
-                    TL Karşılığı (Kur: {po.exchange_rate}): {formatCurrency(tryTotal)}
+                    TRY Karşılığı (Kur: {po.exchange_rate}): {formatCurrency(tryTotal)}
                   </div>
                 )}
                 {needsApproval && po.status === 'draft' && (

@@ -3,13 +3,13 @@ import { ExchangeRates, CurrencyOption } from "../types/currencyTypes";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Normalizes currency code: TRY and TL are treated as the same (returns TL for display)
+ * Normalizes currency code: TRY is the standard code
  * @param currency The currency code to normalize
- * @returns Normalized currency code (TL for TRY/TL, otherwise unchanged)
+ * @returns Normalized currency code (TRY for TRY/TL, otherwise unchanged)
  */
 export const normalizeCurrency = (currency: string | null | undefined): string => {
-  if (!currency) return 'TL';
-  return currency === 'TRY' ? 'TL' : currency;
+  if (!currency) return 'TRY';
+  return currency === 'TL' ? 'TRY' : currency;
 };
 
 /**
@@ -25,11 +25,11 @@ export const areCurrenciesEqual = (currency1: string | null | undefined, currenc
 };
 
 // Format a currency value for display
-export const formatCurrencyValue = (amount: number, currency: string = "TL"): string => {
+export const formatCurrencyValue = (amount: number, currency: string = "TRY"): string => {
   // Ensure currency is not empty to avoid Intl.NumberFormat errors
-  if (!currency) currency = "TL";
+  if (!currency) currency = "TRY";
   
-  // Intl.NumberFormat için geçerli currency code kullan (TL -> TRY)
+  // Intl.NumberFormat için geçerli currency code kullan (TRY -> TRY)
   const currencyCode = currency === 'TL' ? 'TRY' : currency;
   const formatter = new Intl.NumberFormat('tr-TR', {
     style: 'currency',
@@ -38,9 +38,7 @@ export const formatCurrencyValue = (amount: number, currency: string = "TL"): st
     maximumFractionDigits: 2
   });
   
-  const formatted = formatter.format(amount);
-  // TRY yerine TL göster
-  return formatted.replace('TRY', 'TL');
+  return formatter.format(amount);
 };
 
 // This function is deprecated - use useExchangeRates hook from dashboard instead
@@ -48,7 +46,7 @@ export const fetchTCMBExchangeRates = async (): Promise<ExchangeRates> => {
   console.warn("fetchTCMBExchangeRates is deprecated. Use useExchangeRates hook from dashboard instead.");
   // Return fallback rates as last resort
   return {
-    TL: 1,
+    TRY: 1,
     USD: 32.5,
     EUR: 35.2,
     GBP: 41.3
@@ -69,14 +67,14 @@ export const convertCurrency = (
   // If currencies are the same, no conversion needed
   if (normalizedFrom === normalizedTo) return amount;
   
-  // Handle TL as the base currency 
-  if (normalizedFrom === "TL") {
+  // Handle TRY as the base currency 
+  if (normalizedFrom === "TRY") {
     return amount / (rates[normalizedTo] || 1);
   }
   
-  // Convert from source currency to TL first, then to target currency
-  const amountInTL = amount * (rates[normalizedFrom] || 1);
-  return normalizedTo === "TL" ? amountInTL : amountInTL / (rates[normalizedTo] || 1);
+  // Convert from source currency to TRY first, then to target currency
+  const amountInTRY = amount * (rates[normalizedFrom] || 1);
+  return normalizedTo === "TRY" ? amountInTRY : amountInTRY / (rates[normalizedTo] || 1);
 };
 
 // Format a price with a specified number of decimal places
@@ -87,31 +85,35 @@ export const formatPrice = (price: number, decimals: number = 2): string => {
 // Add currency symbol to a formatted price
 export const addCurrencySymbol = (price: string, currency: string): string => {
   const symbols: Record<string, string> = {
-    TL: '₺',
+    TRY: '₺',
+    TL: '₺', // Backward compatibility
     USD: '$',
     EUR: '€',
     GBP: '£'
   };
   
-  return `${symbols[currency] || currency} ${price}`;
+  const normalizedCurrency = currency === 'TL' ? 'TRY' : currency;
+  return `${symbols[normalizedCurrency] || symbols[currency] || currency} ${price}`;
 };
 
 // Get currency symbol for a given currency code
 export const getCurrencySymbol = (currency: string): string => {
   const symbols: Record<string, string> = {
-    TL: '₺',
+    TRY: '₺',
+    TL: '₺', // Backward compatibility
     USD: '$',
     EUR: '€',
     GBP: '£'
   };
   
-  return symbols[currency] || currency;
+  const normalizedCurrency = currency === 'TL' ? 'TRY' : currency;
+  return symbols[normalizedCurrency] || symbols[currency] || currency;
 };
 
 // Get currency options for dropdowns
 export const getCurrencyOptions = (): CurrencyOption[] => {
   return [
-    { value: "TL", label: "₺ TL", symbol: "₺" },
+    { value: "TRY", label: "₺ TRY", symbol: "₺" },
     { value: "USD", label: "$ USD", symbol: "$" },
     { value: "EUR", label: "€ EUR", symbol: "€" },
     { value: "GBP", label: "£ GBP", symbol: "£" }
@@ -122,7 +124,7 @@ export const getCurrencyOptions = (): CurrencyOption[] => {
 export const getCurrentExchangeRates = (): ExchangeRates => {
   // Default rates (these will be replaced by API values when available)
   return {
-    TL: 1,
+    TRY: 1,
     USD: 32.5,
     EUR: 35.2,
     GBP: 41.3
@@ -131,20 +133,23 @@ export const getCurrentExchangeRates = (): ExchangeRates => {
 
 // Format exchange rate display
 export const formatExchangeRate = (fromCurrency: string, toCurrency: string, rate: number): string => {
-  const displayToCurrency = toCurrency === 'TL' ? 'TL' : toCurrency;
-  return `1 ${fromCurrency} = ${rate.toFixed(2)} ${displayToCurrency}`;
+  const normalizedToCurrency = toCurrency === 'TL' ? 'TRY' : toCurrency;
+  return `1 ${fromCurrency} = ${rate.toFixed(2)} ${normalizedToCurrency}`;
 };
 
 // Calculate exchange rate between two currencies
 export const calculateExchangeRate = (fromCurrency: string, toCurrency: string, rates: ExchangeRates): number => {
-  if (fromCurrency === toCurrency) return 1;
+  const normalizedFrom = fromCurrency === 'TL' ? 'TRY' : fromCurrency;
+  const normalizedTo = toCurrency === 'TL' ? 'TRY' : toCurrency;
   
-  if (fromCurrency === 'TL') {
-    return 1 / (rates[toCurrency] || 1);
+  if (normalizedFrom === normalizedTo) return 1;
+  
+  if (normalizedFrom === 'TRY') {
+    return 1 / (rates[normalizedTo] || 1);
   }
   
-  if (toCurrency === 'TL') {
-    return rates[fromCurrency] || 1;
+  if (normalizedTo === 'TRY') {
+    return rates[normalizedFrom] || 1;
   }
   
   // Cross-currency rate

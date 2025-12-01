@@ -179,23 +179,9 @@ const PurchaseInvoicesTable = ({
     });
   };
 
-  // Debug için console.log ekle
-  console.log('🔍 PurchaseInvoicesTable - invoices:', invoices);
-  console.log('🔍 PurchaseInvoicesTable - incomingInvoices:', incomingInvoices);
-  console.log('🔍 PurchaseInvoicesTable - earchiveInvoices:', earchiveInvoices);
-  
   // Tüm faturaları birleştir ve filtrele
   const allInvoices = [
     ...filterInvoices(invoices, 'purchase').map(invoice => {
-      // Debug için supplier bilgisini logla
-      console.log('🔍 Invoice supplier debug:', {
-        invoice_id: invoice.id,
-        invoice_number: invoice.invoice_number,
-        supplier: invoice.supplier,
-        supplier_name: invoice.supplier?.name,
-        supplier_company: invoice.supplier?.company
-      });
-
       return {
         ...invoice,
         sourceType: 'purchase',
@@ -262,9 +248,6 @@ const PurchaseInvoicesTable = ({
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
     return 0;
   });
-  
-  // Debug için allInvoices'ı da logla
-  console.log('🔍 PurchaseInvoicesTable - allInvoices:', allInvoices);
 
   // Tüm faturaları seç/kaldır
   const handleSelectAll = () => {

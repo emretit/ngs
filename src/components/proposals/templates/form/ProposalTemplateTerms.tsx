@@ -47,7 +47,7 @@ const TERMS_CATEGORIES = {
     bgColor: "bg-green-50",
     options: [
       { id: "pricing_vat_excluded", label: "KDV Hariç", text: "Belirtilen fiyatlar KDV hariçtir." },
-      { id: "pricing_currency_tl", label: "TL Cinsinden", text: "Tüm fiyatlar Türk Lirası (TL) cinsindendir." },
+      { id: "pricing_currency_try", label: "TRY Cinsinden", text: "Tüm fiyatlar Türk Lirası (TRY) cinsindendir." },
       { id: "pricing_usd_rate", label: "USD Kuru", text: "Teklifimiz USD cinsinden GARANTİ Bankası Döviz Satış Kuruna göre hazırlanmıştır." },
       { id: "pricing_validity", label: "Geçerlilik", text: "Bu teklif 30 gün süreyle geçerlidir." }
     ]

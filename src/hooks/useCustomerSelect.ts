@@ -35,7 +35,6 @@ export const useCustomerSelect = () => {
   const { data: customersData, ...customerQuery } = useQuery({
     queryKey: ["customers-select"],
     queryFn: async () => {
-      console.log("Fetching customers for select component");
       const { data, error, count } = await supabase
         .from("customers")
         .select("id, name, company, email, mobile_phone, office_phone, address, representative", { count: 'exact' })
@@ -47,7 +46,6 @@ export const useCustomerSelect = () => {
         throw error;
       }
       
-      console.log("Customers data:", data);
       // Add searchable text to each customer
       const customersWithSearch = data?.map(customer => ({
         ...customer,

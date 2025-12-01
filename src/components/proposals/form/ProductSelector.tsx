@@ -263,7 +263,7 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
                       <div className="flex items-center justify-between gap-2 text-[10px]">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-primary">
-                            {formatCurrency(product.price, product.currency === 'TRY' ? 'TL' : (product.currency || 'TL'))}
+                            {formatCurrency(product.price, product.currency || 'TRY')}
                           </span>
                           <span className="text-muted-foreground">
                             Stok: {product.stock_quantity} {product.unit}

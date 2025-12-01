@@ -326,7 +326,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fiyat (TL) *</FormLabel>
+                    <FormLabel>Fiyat (TRY) *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

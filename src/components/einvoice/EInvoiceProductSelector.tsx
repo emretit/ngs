@@ -227,7 +227,7 @@ const EInvoiceProductSelector = ({
                       {/* Fiyat */}
                       <div className="flex flex-col gap-0.5 text-xs">
                         <span className="font-semibold text-primary">
-                          {formatCurrency(product.price, product.currency === 'TRY' ? 'TL' : (product.currency || 'TL'))}
+                          {formatCurrency(product.price, product.currency === 'TL' ? 'TRY' : (product.currency || 'TRY'))}
                         </span>
                       </div>
 

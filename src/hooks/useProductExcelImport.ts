@@ -123,7 +123,7 @@ export const useProductExcelImport = (onSuccess?: () => void) => {
     }
     
     // currency zorunlu ama default değeri var
-    if (row.currency && (typeof row.currency !== 'string' || !['TL', 'TRY', 'USD', 'EUR', 'GBP'].includes(row.currency.toUpperCase()))) {
+    if (row.currency && (typeof row.currency !== 'string' || !['TRY', 'TL', 'USD', 'EUR', 'GBP'].includes(row.currency.toUpperCase()))) {
       errors.push('Geçerli bir para birimi giriniz (TRY, USD, EUR, GBP)');
     }
     

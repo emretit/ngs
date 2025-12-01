@@ -19,7 +19,7 @@ import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 
 // Constants
 const DEFAULT_VAT_PERCENTAGE = 20;
-const DEFAULT_CURRENCY = "TL";
+const DEFAULT_CURRENCY = "TRY";
 const DEFAULT_EXCHANGE_RATE = 1;
 const DEFAULT_QUANTITY = 1;
 const DEFAULT_UNIT = "adet";
@@ -191,7 +191,7 @@ const NewOrderCreate = () => {
     // First, collect all currencies used in items (even if values are 0)
     const usedCurrencies = new Set<string>();
     items.forEach(item => {
-      const currency = item.currency || 'TL';
+      const currency = item.currency || 'TRY';
       usedCurrencies.add(currency);
     });
 
@@ -202,7 +202,7 @@ const NewOrderCreate = () => {
 
     // Calculate gross totals
     items.forEach(item => {
-      const currency = item.currency || 'TL';
+      const currency = item.currency || 'TRY';
       totals[currency].gross += item.quantity * item.unit_price;
     });
 
@@ -476,7 +476,7 @@ const NewOrderCreate = () => {
       const currencyTotals = Object.entries(calculationsByCurrency);
       const [detectedCurrency] = currencyTotals.length > 0
         ? currencyTotals.reduce((max, current) => current[1].grand > max[1].grand ? current : max)
-        : ['TL', { grand: 0 }];
+        : ['TRY', { grand: 0 }];
 
       // Use detected currency or fallback to form currency
       const primaryCurrency = detectedCurrency || formData.currency;

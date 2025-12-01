@@ -341,7 +341,7 @@ export default function EInvoiceProcessModal({
         due_date: invoice.dueDate || invoice.invoiceDate,
         total_amount: invoice.totalAmount,
         paid_amount: invoice.paidAmount || 0,
-        currency: invoice.currency || 'TL',
+        currency: invoice.currency || 'TRY',
         tax_amount: invoice.taxAmount || 0,
         status: 'pending',
         subtotal: invoice.totalAmount - (invoice.taxAmount || 0),
@@ -418,7 +418,7 @@ export default function EInvoiceProcessModal({
                 <div>
                   <p className="text-sm text-muted-foreground">Toplam Tutar</p>
                   <p className="font-medium text-lg">
-                    {formatCurrency(invoice?.totalAmount || 0, invoice?.currency || 'TL')}
+                    {formatCurrency(invoice?.totalAmount || 0, invoice?.currency || 'TRY')}
                   </p>
                 </div>
               </div>
@@ -523,25 +523,16 @@ export default function EInvoiceProcessModal({
                         {item.quantity} {item.unit}
                       </TableCell>
                       <TableCell className="text-right">
-                        {item.unitPrice.toLocaleString('tr-TR', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })} TL
+                        {formatCurrency(item.unitPrice, invoice?.currency || 'TRY')}
                       </TableCell>
                       <TableCell className="text-center">
                         %{item.vatRate.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {item.vatAmount.toLocaleString('tr-TR', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })} TL
+                        {formatCurrency(item.vatAmount, invoice?.currency || 'TRY')}
                       </TableCell>
                       <TableCell className="text-right font-semibold">
-                        {item.totalAmount.toLocaleString('tr-TR', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })} TL
+                        {formatCurrency(item.totalAmount, invoice?.currency || 'TRY')}
                       </TableCell>
                       <TableCell>
                         {item.isMatched ? (
@@ -603,28 +594,19 @@ export default function EInvoiceProcessModal({
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Mal Hizmet Toplam Tutarı</p>
                 <p className="text-lg font-semibold">
-                  {invoiceItems.reduce((sum, item) => sum + (item.totalAmount - item.vatAmount), 0).toLocaleString('tr-TR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })} TL
+                  {formatCurrency(invoiceItems.reduce((sum, item) => sum + (item.totalAmount - item.vatAmount), 0), invoice?.currency || 'TRY')}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Toplam KDV</p>
                 <p className="text-lg font-semibold">
-                  {invoiceItems.reduce((sum, item) => sum + item.vatAmount, 0).toLocaleString('tr-TR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })} TL
+                  {formatCurrency(invoiceItems.reduce((sum, item) => sum + item.vatAmount, 0), invoice?.currency || 'TRY')}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Genel Toplam</p>
                 <p className="text-xl font-bold text-orange-600">
-                  {invoiceItems.reduce((sum, item) => sum + item.totalAmount, 0).toLocaleString('tr-TR', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })} TL
+                  {formatCurrency(invoiceItems.reduce((sum, item) => sum + item.totalAmount, 0), invoice?.currency || 'TRY')}
                 </p>
               </div>
             </div>

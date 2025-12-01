@@ -201,7 +201,7 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
                       <SelectContent>
                         {currencyOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
-                            {option.symbol} {option.value === "TRY" ? "TL" : option.value}
+                            {option.symbol} {option.value}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -209,7 +209,7 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
                     {item.original_currency && item.original_currency !== (item.currency || selectedCurrency) && (
                       <div className="mt-1">
                         <Badge variant="outline" className="text-xs py-0 px-1">
-                          Orijinal: {item.original_currency === "TRY" ? "TL" : item.original_currency}
+                          Orijinal: {item.original_currency}
                         </Badge>
                       </div>
                     )}

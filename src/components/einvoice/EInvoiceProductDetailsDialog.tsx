@@ -428,10 +428,10 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
                 setCustomPrice={setPrice}
                 discountRate={discountRate}
                 setDiscountRate={setDiscountRate}
-                selectedCurrency={selectedProduct?.currency || 'TL'}
+                selectedCurrency={selectedProduct?.currency || 'TRY'}
                 handleCurrencyChange={() => {}}
                 convertedPrice={price || selectedProduct?.price || 0}
-                originalCurrency={selectedProduct?.currency || 'TL'}
+                originalCurrency={selectedProduct?.currency || 'TRY'}
                 formatCurrency={formatCurrency}
               />
               
@@ -502,8 +502,8 @@ const EInvoiceProductDetailsDialog: React.FC<EInvoiceProductDetailsDialogProps> 
                 taxRate={taxRate}
                 calculatedTotal={calculatedTotal}
                 setCalculatedTotal={setCalculatedTotal}
-                originalCurrency={selectedProduct?.currency || 'TL'}
-                currentCurrency={selectedProduct?.currency || 'TL'}
+                originalCurrency={selectedProduct?.currency || 'TRY'}
+                currentCurrency={selectedProduct?.currency || 'TRY'}
                 formatCurrency={formatCurrency}
               />
           </div>

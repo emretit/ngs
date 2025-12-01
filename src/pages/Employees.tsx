@@ -106,7 +106,7 @@ const Employees = () => {
     if (!amount) return "₺0";
     return new Intl.NumberFormat('tr-TR', { 
       style: 'currency', 
-      currency: 'TL',
+      currency: 'TRY',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(amount);

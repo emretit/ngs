@@ -188,7 +188,7 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
-      currency: 'TL',
+      currency: 'TRY',
       minimumFractionDigits: 2
     }).format(amount);
   };
@@ -320,7 +320,7 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Para Birimi:</span>
-                  <span className="text-xs font-medium">{invoice.currency === 'TL' ? 'TL' : invoice.currency || 'TL'}</span>
+                  <span className="text-xs font-medium">{invoice.currency === 'TL' ? 'TRY' : (invoice.currency || 'TRY')}</span>
                 </div>
                 <Separator className="my-2" />
                 <div className="flex justify-between items-center">

@@ -333,7 +333,7 @@ const CreateSalesInvoice = () => {
         }
 
         // Set invoice data
-        const orderCurrency = order.currency === 'TL' ? 'TRY' : (order.currency || "TRY");
+        const orderCurrency = order.currency === 'TRY' ? 'TRY' : (order.currency || "TRY");
         setInvoiceData(prev => ({
           ...prev,
           invoice_date: order.order_date ? new Date(order.order_date) : new Date(),
@@ -413,7 +413,7 @@ const CreateSalesInvoice = () => {
         }
 
         // Set invoice data
-        const proposalCurrency = proposal.currency === 'TL' ? 'TRY' : (proposal.currency || "TRY");
+        const proposalCurrency = proposal.currency === 'TRY' ? 'TRY' : (proposal.currency || "TRY");
         setInvoiceData(prev => ({
           ...prev,
           invoice_date: proposal.offer_date ? new Date(proposal.offer_date) : new Date(),

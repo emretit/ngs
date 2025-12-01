@@ -36,7 +36,7 @@ export interface BudgetFiltersState {
   company: string;
   department: string;
   project: string;
-  currency: "TL" | "USD" | "EUR";
+  currency: "TRY" | "USD" | "EUR";
 }
 
 const BudgetManagement = () => {
@@ -48,7 +48,7 @@ const BudgetManagement = () => {
     company: "all",
     department: "all",
     project: "all",
-    currency: "TL",
+    currency: "TRY",
   });
 
   const [activeTab, setActiveTab] = useState("variance");

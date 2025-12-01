@@ -27,9 +27,6 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
     deleteInvoiceMutation,
   } = usePurchaseInvoices();
 
-  // Ana faturaları öncelikli olarak göster
-  console.log('🔍 PurchaseInvoices - ana faturalar yüklendi:', invoices?.length || 0);
-
   // Sadece gerekli olan veri kaynaklarını yükle
   const { incomingInvoices, isLoading: isLoadingIncoming, refetch: refetchIncoming } = useIncomingInvoices(undefined, false); // Başlangıçta kapalı
   const { earchiveInvoices, isLoading: isLoadingEarchive, refetch: refetchEarchive } = useEarchiveInvoices(false); // Başlangıçta kapalı

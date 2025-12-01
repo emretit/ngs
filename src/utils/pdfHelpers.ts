@@ -14,7 +14,7 @@ export const formatMoney = (amount: number | null | undefined, currency = '₺')
     maximumFractionDigits: 2,
   }).format(amount);
   
-  // Use TL symbol or currency code for better PDF compatibility
+  // Use TRY symbol or currency code for better PDF compatibility
   const symbol = currency === 'TRY' ? '₺' : currency;
   return `${formatted} ${symbol}`;
 };

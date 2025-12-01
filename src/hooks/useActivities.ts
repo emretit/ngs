@@ -173,7 +173,9 @@ export const useActivities = (filters: UseActivitiesFilters = {}) => {
         data = allData;
       } else {
         // Diğer alanlar için normal sıralama
-        const result = await query.order(sortField, { ascending });
+        // assignee için assignee_id kullan (assignee bir kolon değil, foreign key ilişkisi)
+        const orderField = sortField === 'assignee' ? 'assignee_id' : sortField;
+        const result = await query.order(orderField, { ascending });
 
         data = result.data || [];
         queryError = result.error;

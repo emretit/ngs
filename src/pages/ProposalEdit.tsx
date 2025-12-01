@@ -138,9 +138,9 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     prepared_by: "",
     notes: "",
     subject: "", // Teklif konusu
-    
+
     // Financial settings
-    currency: "TL",
+    currency: "TRY",
     exchange_rate: undefined as number | undefined, // Döviz kuru
     discount_percentage: 0,
     vat_percentage: 20,
@@ -205,7 +205,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         prepared_by: initialPreparedBy,
         notes: proposal.notes || "",
         subject: (proposal as any).subject || "", // Teklif konusu
-        currency: proposal.currency || "TL",
+        currency: proposal.currency || "TRY",
         exchange_rate: (proposal as any).exchange_rate || undefined, // Döviz kuru
         discount_percentage: 0,
         vat_percentage: 20,
@@ -250,7 +250,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           unit: "adet",
           unit_price: 0,
           total_price: 0,
-          currency: proposal.currency || "TL"
+          currency: proposal.currency || "TRY"
         }]);
       }
     }
@@ -283,7 +283,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     // First, collect all currencies used in items
     const usedCurrencies = new Set<string>();
     items.forEach(item => {
-      const currency = item.currency || 'TL';
+      const currency = item.currency || 'TRY';
       usedCurrencies.add(currency);
     });
     
@@ -291,10 +291,11 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
     usedCurrencies.forEach(currency => {
       totals[currency] = { gross: 0, discount: 0, net: 0, vat: 0, grand: 0 };
     });
-    
+
+
     // Calculate gross totals
     items.forEach(item => {
-      const currency = item.currency || 'TL';
+      const currency = item.currency || 'TRY';
       totals[currency].gross += item.quantity * item.unit_price;
     });
     
@@ -337,9 +338,9 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   
   // Auto-detect primary currency from items (use the currency with highest total)
   const currencyTotals = Object.entries(calculationsByCurrency);
-  const [detectedCurrency] = currencyTotals.length > 0 
+  const [detectedCurrency] = currencyTotals.length > 0
     ? currencyTotals.reduce((max, current) => current[1].grand > max[1].grand ? current : max)
-    : ['TL', { grand: 0 }];
+    : ['TRY', { grand: 0 }];
   
   // Use detected currency or fallback to form currency
   const primaryCurrency = detectedCurrency || formData.currency;

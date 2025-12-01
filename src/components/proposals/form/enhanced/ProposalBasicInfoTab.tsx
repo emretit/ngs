@@ -39,7 +39,7 @@ const ProposalBasicInfoTab: React.FC<ProposalBasicInfoTabProps> = ({
   const validUntilDate = formData.valid_until ? new Date(formData.valid_until) : undefined;
 
   const currencyOptions = [
-    { value: "TRY", label: "₺ TL" },
+    { value: "TRY", label: "₺ TRY" },
     { value: "USD", label: "$ USD" },
     { value: "EUR", label: "€ EUR" },
     { value: "GBP", label: "£ GBP" }
@@ -257,7 +257,7 @@ const ProposalBasicInfoTab: React.FC<ProposalBasicInfoTabProps> = ({
               {/* Exchange Rate */}
               {formData.currency && formData.currency !== "TRY" && (
                 <div className="space-y-2">
-                  <Label htmlFor="exchange_rate">Döviz Kuru (TL)</Label>
+                  <Label htmlFor="exchange_rate">Döviz Kuru (TRY)</Label>
                   <Input
                     id="exchange_rate"
                     name="exchange_rate"
@@ -269,7 +269,7 @@ const ProposalBasicInfoTab: React.FC<ProposalBasicInfoTabProps> = ({
                     placeholder="Örn: 32.50"
                   />
                   <p className="text-xs text-muted-foreground">
-                    1 {formData.currency === "TRY" ? "TL" : formData.currency} = {formData.exchange_rate || "1"} TL
+                    1 {formData.currency} = {formData.exchange_rate || "1"} TRY
                   </p>
                 </div>
               )}

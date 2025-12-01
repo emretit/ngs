@@ -24,10 +24,12 @@ import TermsConditionsCard from "@/components/proposals/cards/TermsConditionsCar
 import FinancialSummaryCard from "@/components/proposals/cards/FinancialSummaryCard";
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentCompany } from "@/hooks/useCurrentCompany";
+import { useNumberGenerator } from "@/hooks/useNumberGenerator";
 
 // Constants
 const DEFAULT_VAT_PERCENTAGE = 20;
-const DEFAULT_CURRENCY = "TL";
+const DEFAULT_CURRENCY = "TRY";
 const DEFAULT_EXCHANGE_RATE = 1;
 const DEFAULT_QUANTITY = 1;
 const DEFAULT_UNIT = "adet";
@@ -93,6 +95,8 @@ const NewProposalCreate = () => {
   const { userData } = useCurrentUser();
   const navigate = useNavigate();
   const { createProposal } = useProposalCreation();
+  const { generateProposalNumber, loading: numberLoading } = useNumberGenerator();
+  const { companyId, isLoading: companyLoading } = useCurrentCompany();
   const [saving, setSaving] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -119,7 +123,7 @@ const NewProposalCreate = () => {
   const [proposalData, setProposalData] = useState<ProposalData>({
     subject: "",
     offer_date: new Date(),
-    offer_number: `TKF-${Date.now().toString().slice(-6)}`,
+    offer_number: "", // Component mount olduğunda otomatik oluşturulacak
     revision_number: 0, // Yeni teklif R0 olarak başlar
     validity_date: undefined,
     prepared_by: "",
@@ -155,6 +159,44 @@ const NewProposalCreate = () => {
   useEffect(() => {
     loadTemplates();
   }, []);
+
+  // Generate proposal number when component mounts and companyId is ready
+  useEffect(() => {
+    // companyId yüklenene kadar bekle
+    if (companyLoading || !companyId) {
+      return;
+    }
+
+    // Eğer numara zaten varsa, tekrar üretme
+    if (proposalData.offer_number && proposalData.offer_number !== '' && proposalData.offer_number !== 'TKF') {
+      return;
+    }
+
+    const loadProposalNumber = async () => {
+      try {
+        const number = await generateProposalNumber();
+        if (number && number !== 'TKF') {
+          setProposalData(prev => ({ ...prev, offer_number: number }));
+        } else {
+          // Fallback to timestamp-based number if generation fails or returns invalid value
+          setProposalData(prev => ({ 
+            ...prev, 
+            offer_number: `TKF-${Date.now().toString().slice(-6)}` 
+          }));
+        }
+      } catch (error) {
+        console.error('Error generating proposal number:', error);
+        // Fallback to timestamp-based number if generation fails
+        setProposalData(prev => ({ 
+          ...prev, 
+          offer_number: `TKF-${Date.now().toString().slice(-6)}` 
+        }));
+      }
+    };
+    
+    loadProposalNumber();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, companyLoading]);
 
   const loadTemplates = async () => {
     try {
@@ -268,7 +310,7 @@ const NewProposalCreate = () => {
     // First, collect all currencies used in items (even if values are 0)
     const usedCurrencies = new Set<string>();
     items.forEach(item => {
-      const currency = item.currency || 'TL';
+      const currency = item.currency || 'TRY';
       usedCurrencies.add(currency);
     });
     
@@ -279,7 +321,7 @@ const NewProposalCreate = () => {
     
     // Calculate gross totals
     items.forEach(item => {
-      const currency = item.currency || 'TL';
+      const currency = item.currency || 'TRY';
       totals[currency].gross += item.quantity * item.unit_price;
     });
     
@@ -551,7 +593,7 @@ const NewProposalCreate = () => {
       const currencyTotals = Object.entries(calculationsByCurrency);
       const [detectedCurrency] = currencyTotals.length > 0 
         ? currencyTotals.reduce((max, current) => current[1].grand > max[1].grand ? current : max)
-        : ['TL', { grand: 0 }];
+        : ['TRY', { grand: 0 }];
       
       // Use detected currency or fallback to form currency
       const primaryCurrency = detectedCurrency || formData.currency;

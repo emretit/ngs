@@ -43,10 +43,9 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
 
   // Get currency icon based on selected currency
   const getCurrencyIcon = (currency: string, size: "large" | "small" = "large"): React.ReactNode => {
-    const normalizedCurrency = currency === "TRY" ? "TL" : currency;
     const sizeClass = size === "large" ? "text-lg" : "text-sm";
-    switch (normalizedCurrency) {
-      case "TL":
+    switch (currency) {
+      case "TRY":
         return <span className={`text-emerald-600 font-bold ${sizeClass}`}>₺</span>;
       case "USD":
         return <span className={`text-emerald-600 font-bold ${sizeClass}`}>$</span>;
@@ -61,7 +60,7 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
 
   // Get primary currency (first one or selected)
   const primaryCurrency = selectedCurrency || currencies[0] || "TRY";
-  const displayCurrency = primaryCurrency === "TRY" ? "TL" : primaryCurrency;
+  const displayCurrency = primaryCurrency;
 
   return (
     <Card className="lg:col-span-1 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
@@ -91,7 +90,7 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                     <div className="flex items-center">
                       {getCurrencyIcon(currency, "small")}
                     </div>
-                    <span>{currency === "TRY" ? "TL" : currency} Toplamları</span>
+                    <span>{currency} Toplamları</span>
                   </div>
                 )}
 

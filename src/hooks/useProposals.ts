@@ -1,5 +1,6 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import { ProposalFilters } from "@/components/proposals/types";
@@ -27,6 +28,7 @@ const mapProposalData = (item: any): Proposal => {
 // Original useProposals hook for backward compatibility
 export const useProposals = (filters?: ProposalFilters) => {
   const { userData, loading: userLoading } = useCurrentUser();
+  const queryClient = useQueryClient();
   
   const { data, isLoading, error } = useQuery({
     queryKey: ["proposals", filters, userData?.company_id],
@@ -91,6 +93,34 @@ export const useProposals = (filters?: ProposalFilters) => {
     enabled: !!userData?.company_id, // Sadece company_id varsa query'yi çalıştır
   });
 
+  // Realtime subscription - proposals tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    if (!userData?.company_id) return;
+
+    const channel = supabase
+      .channel('proposals-kanban-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'proposals',
+          filter: `company_id=eq.${userData.company_id}`,
+        },
+        () => {
+          // Proposals tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
+          queryClient.invalidateQueries({ queryKey: ["proposals"] });
+          queryClient.invalidateQueries({ queryKey: ["proposals-list"] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription when component unmounts or company_id changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.company_id, queryClient]);
+
   return { 
     data, 
     isLoading: isLoading || userLoading, // User loading durumunu da dahil et
@@ -101,6 +131,7 @@ export const useProposals = (filters?: ProposalFilters) => {
 // Normal query hook for proposals - son 1 aylık filtre olduğu için infinite scroll gerek yok
 export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
   const { userData, loading: userLoading, error: userError } = useCurrentUser();
+  const queryClient = useQueryClient();
   
   const {
     data: proposals = [],
@@ -137,30 +168,45 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
         query = query.eq('employee_id', filters.employeeId);
       }
       
-      // Tarih filtreleri - ISO formatında tarih kullan
+      // Tarih filtreleri - offer_date kullan (null olanlar created_at ile güncellendi)
       if (filters?.dateRange?.from) {
         const fromDate = filters.dateRange.from instanceof Date 
-          ? filters.dateRange.from.toISOString()
-          : new Date(filters.dateRange.from).toISOString();
-        query = query.gte('offer_date', fromDate);
+          ? filters.dateRange.from
+          : new Date(filters.dateRange.from);
+        // Tarih formatını YYYY-MM-DD olarak kullan (date tipi için)
+        const fromDateStr = fromDate.toISOString().split('T')[0];
+        query = query.gte('offer_date', fromDateStr);
       }
       
       if (filters?.dateRange?.to) {
         const toDate = filters.dateRange.to instanceof Date
           ? filters.dateRange.to
           : new Date(filters.dateRange.to);
-        const endOfDay = new Date(toDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        query = query.lte('offer_date', endOfDay.toISOString());
+        // Tarih formatını YYYY-MM-DD olarak kullan (date tipi için)
+        const toDateStr = toDate.toISOString().split('T')[0];
+        query = query.lte('offer_date', toDateStr);
       }
 
       // Apply sorting - veritabanı seviyesinde sıralama
+      // Not: employee_name ve customer_name gibi join edilen alanlar için
+      // veritabanı seviyesinde sıralama yapılamaz, client-side sıralama yapılmalı
       const sortField = filters?.sortField || 'offer_date';
       const sortDirection = filters?.sortDirection || 'desc';
       const ascending = sortDirection === 'asc';
 
-      const { data, error: queryError } = await query
-        .order(sortField, { ascending, nullsFirst: false });
+      // Sadece veritabanı kolonları için sıralama yap
+      // employee_name ve customer_name gibi join edilen alanlar için sıralama yapma
+      const dbSortableFields = ['number', 'status', 'total_amount', 'offer_date', 'valid_until', 'created_at', 'updated_at', 'employee_id', 'customer_id'];
+      
+      let finalQuery = query;
+      if (dbSortableFields.includes(sortField)) {
+        finalQuery = query.order(sortField, { ascending, nullsFirst: false });
+      } else {
+        // Varsayılan sıralama (offer_date)
+        finalQuery = query.order('offer_date', { ascending: false, nullsFirst: false });
+      }
+
+      const { data, error: queryError } = await finalQuery;
 
       if (queryError) {
         console.error("Error fetching proposals:", queryError);
@@ -174,6 +220,34 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
     staleTime: 5 * 60 * 1000, // 5 dakika
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
+
+  // Realtime subscription - proposals tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    if (!userData?.company_id) return;
+
+    const channel = supabase
+      .channel('proposals-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'proposals',
+          filter: `company_id=eq.${userData.company_id}`,
+        },
+        () => {
+          // Proposals tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
+          queryClient.invalidateQueries({ queryKey: ["proposals-list"] });
+          queryClient.invalidateQueries({ queryKey: ["proposals"] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription when component unmounts or company_id changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.company_id, queryClient]);
 
   return {
     data: proposals,

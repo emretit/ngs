@@ -432,10 +432,13 @@ const ProposalTable = ({
   });
 
   // Eğer dışarıdan sıralama geçilmişse (veritabanı seviyesinde sıralama), 
-  // client-side sıralama YAPMA çünkü veriler zaten sıralı geliyor.
-  // Aksi halde fallback olarak client-side sıralama yap.
-  const sortedProposals = externalOnSort 
-    ? filteredProposals // Veritabanından sıralı geliyor, tekrar sıralama
+  // ama employee_name veya customer_name gibi join edilen alanlar için
+  // veritabanı seviyesinde sıralama yapılamaz, client-side sıralama yapılmalı
+  const joinFields = ['employee_name', 'customer_name'];
+  const needsClientSideSort = joinFields.includes(sortField);
+  
+  const sortedProposals = (externalOnSort && !needsClientSideSort)
+    ? filteredProposals // Veritabanından sıralı geliyor, tekrar sıralama yapma
     : useSortedProposals(filteredProposals, sortField, sortDirection);
 
   return (<>

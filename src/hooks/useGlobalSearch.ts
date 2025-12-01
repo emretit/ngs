@@ -312,7 +312,7 @@ export const useGlobalSearch = (query: string) => {
         ...salesInvoiceResults.map((result) => ({
           id: result.item.id,
           title: result.item.fatura_no || `Fatura #${result.item.id.substring(0, 8)}`,
-          subtitle: result.item.customer?.name || (result.item.toplam_tutar ? `${result.item.toplam_tutar} TL` : "Satış Faturası"),
+          subtitle: result.item.customer?.name || (result.item.toplam_tutar ? `${result.item.toplam_tutar} TRY` : "Satış Faturası"),
           category: "Satış Faturası" as const,
           url: `/sales-invoices/${result.item.id}`,
         }))
@@ -330,7 +330,7 @@ export const useGlobalSearch = (query: string) => {
         ...purchaseInvoiceResults.map((result) => ({
           id: result.item.id,
           title: result.item.invoice_number || `Fatura #${result.item.id.substring(0, 8)}`,
-          subtitle: result.item.supplier?.name || (result.item.total_amount ? `${result.item.total_amount} TL` : "Satın Alma Faturası"),
+          subtitle: result.item.supplier?.name || (result.item.total_amount ? `${result.item.total_amount} TRY` : "Satın Alma Faturası"),
           category: "Satın Alma Faturası" as const,
           url: `/purchase-invoices`,
         }))

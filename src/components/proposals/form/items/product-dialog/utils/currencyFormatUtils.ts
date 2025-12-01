@@ -7,8 +7,9 @@ export function getCurrencyName(code: string) {
     EUR: "Euro",
     GBP: "İngiliz Sterlini"
   };
-  // TRY veya TL için "Türk Lirası" döndür
-  return currencies[code] || currencies[code === "TRY" ? "TL" : code] || code;
+  // TRY için "Türk Lirası" döndür
+  const normalizedCode = code === "TL" ? "TRY" : code;
+  return currencies[normalizedCode] || currencies[code] || code;
 }
 
 export function getCurrencySymbol(code: string) {
@@ -19,6 +20,7 @@ export function getCurrencySymbol(code: string) {
     EUR: "€",
     GBP: "£"
   };
-  // TRY veya TL için "₺" döndür
-  return symbols[code] || symbols[code === "TRY" ? "TL" : code] || code;
+  // TRY için "₺" döndür
+  const normalizedCode = code === "TL" ? "TRY" : code;
+  return symbols[normalizedCode] || symbols[code] || code;
 }

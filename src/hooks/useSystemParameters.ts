@@ -205,7 +205,7 @@ export const useSystemParameters = () => {
     }
   };
 
-  const getParameterValue = (key: string, defaultValue?: any) => {
+  const getParameterValue = useCallback((key: string, defaultValue?: any) => {
     const parameter = parameters.find(p => p.parameter_key === key);
     if (!parameter || parameter.parameter_value === null) {
       return defaultValue;
@@ -232,7 +232,7 @@ export const useSystemParameters = () => {
       default:
         return parameter.parameter_value;
     }
-  };
+  }, [parameters]);
 
   const getParametersByCategory = (category: string) => {
     return parameters.filter(p => p.category === category);

@@ -84,7 +84,12 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
       const sortDirection = filters.sortDirection || 'desc';
       const ascending = sortDirection === 'asc';
       
-      query = query.order(sortField, { ascending });
+      // employee ve customer için foreign key kolonlarını kullan (bunlar kolon değil, foreign key ilişkileri)
+      const orderField = sortField === 'employee' ? 'employee_id' 
+                       : sortField === 'customer' ? 'customer_id' 
+                       : sortField;
+      
+      query = query.order(orderField, { ascending });
 
       const { data, error: queryError } = await query;
 

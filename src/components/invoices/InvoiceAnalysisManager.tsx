@@ -537,7 +537,7 @@ const InvoiceAnalysisManager = () => {
                 />
               </LineChart>
             </ResponsiveContainer>
-            <p className="text-xs text-gray-500 text-center mt-2">* Tutarlar bin TL cinsinden gösterilmektedir</p>
+            <p className="text-xs text-gray-500 text-center mt-2">* Tutarlar bin TRY cinsinden gösterilmektedir</p>
           </CardContent>
         </Card>
       </div>

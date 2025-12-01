@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CalendarIcon, MoreHorizontal, Edit, Trash2, FileText, User, Calendar, Target } from "lucide-react";
-import { format } from "date-fns";
 import { Opportunity } from "@/types/crm";
 import { formatCurrency } from "@/utils/formatters";
 
@@ -63,7 +62,7 @@ const OpportunityCard = ({
                 <h3 className="font-medium text-gray-900 line-clamp-2 text-sm flex-1 mr-2">{shortenText(opportunity.title, 30)}</h3>
                 <div className="flex items-center gap-2">
                   <Badge className="flex-shrink-0 text-xs" variant="outline">
-                    {formatCurrency(opportunity.value, opportunity.currency || 'TL')}
+                    {formatCurrency(opportunity.value, opportunity.currency || 'TRY')}
                   </Badge>
                   
                   {/* 3 Nokta Menü */}
@@ -129,9 +128,13 @@ const OpportunityCard = ({
               )}
               
                              {opportunity.expected_close_date && (
-                 <div className="flex items-center mt-2 text-xs text-gray-500">
+                 <div className="flex items-center mt-2 text-xs font-medium text-gray-500">
                    <CalendarIcon className="h-3 w-3 mr-1" />
-                   <span>{format(new Date(opportunity.expected_close_date), 'dd MMM yyyy')}</span>
+                   <span>{new Date(opportunity.expected_close_date).toLocaleDateString('tr-TR', {
+                     day: '2-digit',
+                     month: '2-digit',
+                     year: 'numeric'
+                   })}</span>
                  </div>
                )}
               

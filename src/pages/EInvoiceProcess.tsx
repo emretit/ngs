@@ -353,7 +353,7 @@ export default function EInvoiceProcess() {
         supplier_tax_number: supplierTaxNumber,
         invoice_date: apiInvoiceDetails?.IssueDate || apiInvoiceDetails?.issueDate || apiInvoiceDetails?.InvoiceDate || new Date().toISOString(),
         due_date: apiInvoiceDetails?.dueDate || apiInvoiceDetails?.DueDate || null,
-        currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TL',
+        currency: apiInvoiceDetails?.CurrencyCode || apiInvoiceDetails?.currency || 'TRY',
         subtotal: subtotal,
         tax_total: taxTotal,
         total_amount: totalAmount,

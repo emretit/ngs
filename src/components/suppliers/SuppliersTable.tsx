@@ -153,11 +153,11 @@ const SuppliersTable = ({
     setSupplierToDelete(null);
   };
 
-  const formatMoney = (amount: number, currency: string = 'TL') => {
+  const formatMoney = (amount: number, currency: string = 'TRY') => {
     if (!amount && amount !== 0) return `${getCurrencySymbol(currency)}0`;
     
-    // Intl.NumberFormat için geçerli currency code kullan (TL -> TRY)
-    const currencyCode = currency === 'TL' ? 'TRY' : currency;
+    // Convert TL to TRY directly
+    const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: currencyCode,
@@ -168,12 +168,14 @@ const SuppliersTable = ({
 
   const getCurrencySymbol = (currency: string) => {
     const symbols: Record<string, string> = {
-      'TL': '₺',
+      'TRY': '₺',
+      'TL': '₺', // Backward compatibility
       'USD': '$',
       'EUR': '€',
       'GBP': '£'
     };
-    return symbols[currency] || currency;
+    const normalizedCurrency = currency === 'TL' ? 'TRY' : currency;
+    return symbols[normalizedCurrency] || symbols[currency] || currency;
   };
 
   if (isLoading && suppliers.length === 0) {

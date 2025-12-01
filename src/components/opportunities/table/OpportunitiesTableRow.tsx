@@ -14,8 +14,6 @@ import {
   Calendar
 } from "lucide-react";
 import { Opportunity } from "@/types/crm";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { OpportunityStatusCell } from "./OpportunityStatusCell";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
@@ -100,18 +98,24 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
     if (!date) return "-";
     
     try {
-      return format(new Date(date), "dd MMM yyyy", { locale: tr });
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return "-";
+      return dateObj.toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
     } catch (error) {
       return "-";
     }
   };
 
-  const formatCurrency = (amount: number, currency: string = "TL") => {
-    // Intl.NumberFormat için geçerli currency code kullan (TL -> TRY)
-    const currencyCode = currency === 'TL' ? 'TRY' : currency;
-    return new Intl.NumberFormat('tr-TR', { 
-      style: 'currency', 
-      currency: currencyCode 
+  const formatCurrency = (amount: number, currency: string = "TRY") => {
+    // Convert TL to TRY directly
+    const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: currencyCode
     }).format(amount);
   };
 
@@ -199,18 +203,7 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
       
       <TableCell className="py-2 px-3 text-center font-medium">
         {opportunity.value ? (
-          <div className="flex flex-col items-center space-y-0">
-            <span className="text-xs">{formatCurrency(opportunity.value, opportunity.currency || 'TL')}</span>
-            {opportunity.currency && (
-              <span className="text-xs text-muted-foreground">
-                {opportunity.currency === 'TL' ? 'TL' : 
-                 opportunity.currency === 'USD' ? '$' : 
-                 opportunity.currency === 'EUR' ? '€' : 
-                 opportunity.currency === 'GBP' ? '£' : 
-                 opportunity.currency}
-              </span>
-            )}
-          </div>
+          <span className="text-xs font-medium">{formatCurrency(opportunity.value, opportunity.currency || 'TRY')}</span>
         ) : (
           <span className="text-xs text-muted-foreground">-</span>
         )}
@@ -244,11 +237,11 @@ const OpportunitiesTableRow: React.FC<OpportunitiesTableRowProps> = ({
         )}
       </TableCell>
       
-      <TableCell className="py-2 px-3 text-center text-xs">
+      <TableCell className="py-2 px-3 text-center text-xs font-medium">
         {formatDate(opportunity.expected_close_date)}
       </TableCell>
       
-      <TableCell className="py-2 px-3 text-center text-xs">
+      <TableCell className="py-2 px-3 text-center text-xs font-medium">
         {formatDate(opportunity.created_at)}
       </TableCell>
       

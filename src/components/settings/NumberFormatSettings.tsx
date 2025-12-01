@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSystemParameters } from '@/hooks/useSystemParameters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Save, RefreshCw, Info, AlertTriangle, CheckCircle, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { validateFormat, sanitizeFormat, resetSequence } from '@/utils/numberFormat';
@@ -21,7 +22,21 @@ const NUMBER_FORMAT_TYPES = [
     key: 'invoice_number_format',
     label: 'Fatura Numarası Formatı',
     defaultValue: 'FAT-{YYYY}-{0001}',
-    description: 'Satış faturaları için kullanılacak numara formatı'
+    description: 'Genel satış faturaları için kullanılacak numara formatı'
+  },
+  {
+    key: 'einvoice_number_format',
+    label: 'E-Fatura Seri Kodu',
+    defaultValue: 'FAT',
+    description: 'E-fatura için Nilvera seri kodu (3 karakter, sadece harf/rakam)',
+    isNilveraSeries: true
+  },
+  {
+    key: 'earchive_invoice_number_format',
+    label: 'E-Arşiv Seri Kodu',
+    defaultValue: 'EAR',
+    description: 'E-arşiv için Nilvera seri kodu (3 karakter, sadece harf/rakam)',
+    isNilveraSeries: true
   },
   {
     key: 'service_number_format',
@@ -53,22 +68,40 @@ export const NumberFormatSettings: React.FC = () => {
   const { getParameterValue, updateParameter, createParameter, parameters, loading: paramsLoading, error: paramsError } = useSystemParameters();
   const { companyId } = useCurrentCompany();
   
-  const [formats, setFormats] = useState<Array<typeof NUMBER_FORMAT_TYPES[0] & { currentValue: string; originalValue: string }>>([]);
+  type FormatType = typeof NUMBER_FORMAT_TYPES[0] & { currentValue: string; originalValue: string };
+  const [formats, setFormats] = useState<FormatType[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const [lastSaved, setLastSaved] = useState<Record<string, string>>({});
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Parametreler yüklendikten sonra format state'ini güncelle
   React.useEffect(() => {
-    if (!paramsLoading && parameters.length > 0) {
-      setFormats(
-        NUMBER_FORMAT_TYPES.map(type => ({
-          ...type,
-          currentValue: getParameterValue(type.key, type.defaultValue) as string,
-          originalValue: getParameterValue(type.key, type.defaultValue) as string,
-        }))
-      );
-    }
+    if (paramsLoading) return;
+    
+    const newFormats = NUMBER_FORMAT_TYPES.map(type => ({
+      ...type,
+      currentValue: getParameterValue(type.key, type.defaultValue) as string,
+      originalValue: getParameterValue(type.key, type.defaultValue) as string,
+    }));
+    
+    // Sadece değişiklik varsa güncelle (sonsuz döngüyü önlemek için)
+    setFormats(prevFormats => {
+      // İlk yükleme veya format sayısı değiştiyse güncelle
+      if (prevFormats.length === 0 || prevFormats.length !== newFormats.length) {
+        return newFormats;
+      }
+      
+      // Değerler değiştiyse güncelle
+      const hasChanges = prevFormats.some((prev, index) => {
+        const next = newFormats[index];
+        return !next || 
+          prev.currentValue !== next.currentValue || 
+          prev.originalValue !== next.originalValue;
+      });
+      
+      return hasChanges ? newFormats : prevFormats;
+    });
   }, [parameters, paramsLoading, getParameterValue]);
 
   // Loading state kontrolü
@@ -93,19 +126,88 @@ export const NumberFormatSettings: React.FC = () => {
     );
   }
 
-  const handleFormatChange = (key: string, value: string) => {
-    const sanitizedValue = sanitizeFormat(value);
+  const handleFormatChange = (key: string, value: string, cursorPosition?: number) => {
+    const format = formats.find(f => f.key === key);
+    const isNilveraSeries = format?.isNilveraSeries || false;
+    
+    // Cursor pozisyonunu kaydet
+    const input = inputRefs.current[key];
+    if (input && cursorPosition === undefined) {
+      cursorPosition = input.selectionStart || 0;
+    }
+    
+    let sanitizedValue: string;
+    const oldValue = format?.currentValue || '';
+    
+    // E-fatura seri kodu için özel işlem
+    if (isNilveraSeries) {
+      // Sadece büyük harfe çevir, boşlukları kaldır, özel karakterleri temizle
+      sanitizedValue = value
+        .trim()
+        .replace(/\s+/g, '')
+        .replace(/[^A-Z0-9]/g, '')
+        .toUpperCase()
+        .substring(0, 3); // Maksimum 3 karakter
+    } else {
+      sanitizedValue = sanitizeFormat(value);
+    }
 
     // Validasyon yap
-    const validation = validateFormat(sanitizedValue);
+    const validation = isNilveraSeries 
+      ? validateNilveraSeries(sanitizedValue)
+      : validateFormat(sanitizedValue);
+    
     setValidationErrors(prev => ({
       ...prev,
       [key]: validation.errors
     }));
 
+    // Cursor pozisyonunu hesapla (değer değişikliğine göre ayarla)
+    let newCursorPosition = cursorPosition;
+    if (cursorPosition !== undefined && oldValue !== sanitizedValue) {
+      // Eğer değer kısaldıysa, cursor pozisyonunu ayarla
+      if (sanitizedValue.length < oldValue.length) {
+        // Silinen karakter sayısını hesapla
+        const deletedChars = oldValue.length - sanitizedValue.length;
+        newCursorPosition = Math.max(0, cursorPosition - deletedChars);
+      } else {
+        // Eğer değer uzadıysa veya aynıysa, cursor pozisyonunu koru
+        newCursorPosition = Math.min(cursorPosition, sanitizedValue.length);
+      }
+    }
+
     setFormats(prev => prev.map(format =>
       format.key === key ? { ...format, currentValue: sanitizedValue } : format
     ));
+
+    // Cursor pozisyonunu geri yükle
+    if (newCursorPosition !== undefined && input) {
+      setTimeout(() => {
+        input.setSelectionRange(newCursorPosition, newCursorPosition);
+      }, 0);
+    }
+  };
+  
+  // Nilvera seri kodu validasyonu (3 karakter, sadece harf/rakam)
+  const validateNilveraSeries = (value: string): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    
+    if (!value || value.trim().length === 0) {
+      errors.push('Seri kodu boş olamaz');
+    }
+    
+    if (value.length !== 3) {
+      errors.push('Seri kodu tam olarak 3 karakter olmalıdır (Nilvera gereksinimi)');
+    }
+    
+    if (!/^[A-Z0-9]{3}$/.test(value)) {
+      errors.push('Seri kodu sadece büyük harf ve rakam içerebilir');
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   };
 
   const handleSave = async (key: string) => {
@@ -113,7 +215,10 @@ export const NumberFormatSettings: React.FC = () => {
     if (!format) return;
 
     // Validasyon kontrolü
-    const validation = validateFormat(format.currentValue);
+    const validation = format.isNilveraSeries
+      ? validateNilveraSeries(format.currentValue)
+      : validateFormat(format.currentValue);
+    
     if (!validation.isValid) {
       toast.error(`Format geçerli değil: ${validation.errors.join(', ')}`);
       return;
@@ -183,7 +288,12 @@ export const NumberFormatSettings: React.FC = () => {
     }
   };
 
-  const generatePreview = (format: string) => {
+  const generatePreview = (format: string, isNilveraSeries?: boolean) => {
+    // E-fatura seri kodu için sadece seriyi göster
+    if (isNilveraSeries) {
+      return format || 'FAT';
+    }
+    
     return format
       .replace('{YYYY}', '2025')
       .replace('{YY}', '25')
@@ -200,106 +310,132 @@ export const NumberFormatSettings: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        {formats.map((format) => (
-          <div key={format.key} className="p-2.5 border rounded-md bg-white">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium truncate">{format.label}</span>
-                    {getValidationStatus(format.key) === 'success' && lastSaved[format.key] && (
-                      <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0" />
-                    )}
-                    {getValidationStatus(format.key) === 'error' && (
-                      <AlertTriangle className="h-3 w-3 text-red-600 flex-shrink-0" />
+      <div className="border rounded-lg bg-white overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50/50">
+              <TableHead className="w-[250px]">Format Adı</TableHead>
+              <TableHead className="w-[300px]">Format Değeri</TableHead>
+              <TableHead className="w-[200px]">Önizleme</TableHead>
+              <TableHead className="w-[250px]">İşlemler</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {formats.map((format) => (
+              <TableRow key={format.key} className="hover:bg-gray-50/50">
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{format.label}</span>
+                      {getValidationStatus(format.key) === 'success' && lastSaved[format.key] && (
+                        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      )}
+                      {getValidationStatus(format.key) === 'error' && (
+                        <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{format.description}</p>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {format.isNilveraSeries && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs px-2 py-0">
+                          Nilvera Entegrasyonu
+                        </Badge>
+                      )}
+                      {hasChanges(format) && (
+                        <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-xs px-2 py-0">
+                          Değişiklik
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-2">
+                    <Input
+                      ref={(el) => {
+                        inputRefs.current[format.key] = el;
+                      }}
+                      id={format.key}
+                      value={format.currentValue}
+                      onChange={(e) => {
+                        const input = e.target as HTMLInputElement;
+                        handleFormatChange(format.key, input.value, input.selectionStart || 0);
+                      }}
+                      placeholder={format.defaultValue}
+                      className={`font-mono ${
+                        validationErrors[format.key]?.length > 0
+                          ? 'border-red-500 focus:border-red-500'
+                          : hasChanges(format)
+                          ? 'border-orange-500 focus:border-orange-500'
+                          : ''
+                      }`}
+                      maxLength={format.isNilveraSeries ? 3 : undefined}
+                    />
+                    {validationErrors[format.key]?.length > 0 && (
+                      <div className="space-y-0.5">
+                        {validationErrors[format.key].map((error, index) => (
+                          <p key={index} className="text-xs text-red-600 flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            {error}
+                          </p>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{format.description}</p>
-                </div>
-                {hasChanges(format) && (
-                  <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-[9px] px-1.5 py-0 ml-1">
-                    Değişiklik
-                  </Badge>
-                )}
-              </div>
-              <div>
-                <Label htmlFor={format.key} className="text-[10px] mb-1 block">Format</Label>
-                <Input
-                  id={format.key}
-                  value={format.currentValue}
-                  onChange={(e) => handleFormatChange(format.key, e.target.value)}
-                  placeholder={format.defaultValue}
-                  className={`font-mono h-8 text-xs ${
-                    validationErrors[format.key]?.length > 0
-                      ? 'border-red-500 focus:border-red-500'
-                      : hasChanges(format)
-                      ? 'border-orange-500 focus:border-orange-500'
-                      : ''
-                  }`}
-                />
-                {validationErrors[format.key]?.length > 0 && (
-                  <div className="mt-1">
-                    {validationErrors[format.key].map((error, index) => (
-                      <p key={index} className="text-[9px] text-red-600 flex items-center gap-1">
-                        <AlertTriangle className="h-2.5 w-2.5" />
-                        {error}
+                </TableCell>
+                <TableCell>
+                  <div className="p-2 bg-muted rounded-md border">
+                    <div className="font-mono text-sm">
+                      {generatePreview(format.currentValue, format.isNilveraSeries)}
+                    </div>
+                    {format.isNilveraSeries && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Nilvera otomatik numara üretecek
                       </p>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
-
-              <div>
-                <Label className="text-[10px] mb-1 block">Önizleme</Label>
-                <div className="p-1.5 bg-muted rounded-md">
-                  <div className="font-mono text-[10px]">
-                    {generatePreview(format.currentValue)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center gap-1.5 pt-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleResetSequence(format.key)}
-                  className="text-orange-600 hover:text-orange-700 h-7 text-[10px] px-2"
-                >
-                  <RotateCcw className="h-3 w-3 mr-0.5" />
-                  Sıfırla
-                </Button>
-
-                <div className="flex gap-1.5">
-                  {hasChanges(format) && (
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {hasChanges(format) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleFormatChange(format.key, format.originalValue)}
+                        className="h-8"
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Geri Al
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={() => handleSave(format.key)}
+                      disabled={saving === format.key || !hasChanges(format)}
+                      className="h-8"
+                    >
+                      {saving === format.key ? (
+                        <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="h-3 w-3 mr-1" />
+                      )}
+                      Kaydet
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleFormatChange(format.key, format.originalValue)}
-                      className="h-7 text-[10px] px-2"
+                      onClick={() => handleResetSequence(format.key)}
+                      className="text-orange-600 hover:text-orange-700 h-8"
                     >
-                      <RefreshCw className="h-3 w-3 mr-0.5" />
-                      Geri Al
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Sıfırla
                     </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={() => handleSave(format.key)}
-                    disabled={saving === format.key || !hasChanges(format)}
-                    className="h-7 text-[10px] px-2"
-                  >
-                    {saving === format.key ? (
-                      <RefreshCw className="h-3 w-3 mr-0.5 animate-spin" />
-                    ) : (
-                      <Save className="h-3 w-3 mr-0.5" />
-                    )}
-                    Kaydet
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-md p-2.5">
@@ -311,6 +447,8 @@ export const NumberFormatSettings: React.FC = () => {
               <li>• Format değişiklikleri sadece yeni kayıtlar için geçerlidir.</li>
               <li>• Mevcut kayıtların numaraları değişmez.</li>
               <li>• Sıralı numaralar otomatik olarak artar.</li>
+              <li>• <strong>E-Fatura Seri Kodu:</strong> Nilvera ile entegre olduğu için sadece 3 karakter seri belirlenir. Numara Nilvera tarafından otomatik üretilir.</li>
+              <li>• <strong>E-Arşiv Seri Kodu:</strong> Nilvera ile entegre olduğu için sadece 3 karakter seri belirlenir. Numara Nilvera tarafından otomatik üretilir.</li>
             </ul>
           </div>
         </div>

@@ -181,7 +181,7 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
                 <div className="pt-2 border-t border-gray-100">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-600">Toplam Tutar</span>
-                    <span className="text-sm font-bold text-green-600">{formatCurrency(totalSalesAmount, 'TL')}</span>
+                    <span className="text-sm font-bold text-green-600">{formatCurrency(totalSalesAmount, 'TRY')}</span>
                   </div>
                 </div>
               </div>
@@ -276,7 +276,7 @@ const InvoiceManagement = ({ isCollapsed, setIsCollapsed }: InvoiceManagementPro
                 <div className="pt-2 border-t border-gray-100">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-600">Toplam Tutar</span>
-                    <span className="text-sm font-bold text-purple-600">{formatCurrency(totalIncomingAmount, 'TL')}</span>
+                    <span className="text-sm font-bold text-purple-600">{formatCurrency(totalIncomingAmount, 'TRY')}</span>
                   </div>
                 </div>
               </div>

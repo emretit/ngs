@@ -3,7 +3,6 @@ import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Proposal, ProposalStatus } from "@/types/proposal";
 import { Edit2, MoreHorizontal, Trash2, Printer, ShoppingCart, Receipt, Copy, FileEdit, Users, UserPlus, GitBranch } from "lucide-react";
-import { DateDisplay } from "@/components/ui/date-display";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +11,6 @@ import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 
 import { useProposalCalculations } from "@/hooks/proposals/useProposalCalculations";
-import { formatProposalAmount } from "@/services/workflow/proposalWorkflow";
 import { toast } from "sonner";
 import { PdfExportService } from "@/services/pdf/pdfExportService";
 
@@ -93,7 +91,15 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
   const getGrandTotal = () => {
     return proposal.total_amount || 0;
   };
-  
+
+  const formatCurrency = (amount: number, currency: string = "TRY") => {
+    // Convert TL to TRY directly
+    const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: currencyCode
+    }).format(amount);
+  };
   
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -196,13 +202,33 @@ export const ProposalTableRow: React.FC<ProposalTableRowProps> = ({
         )}
       </TableCell>
       <TableCell className="text-center py-2 px-3 text-xs font-medium">
-        {formatProposalAmount(getGrandTotal(), proposal.currency || 'TRY')}
+        {formatCurrency(getGrandTotal(), proposal.currency || 'TRY')}
       </TableCell>
-      <TableCell className="text-center py-2 px-3 text-xs">
-        <DateDisplay date={proposal.offer_date || proposal.created_at} />
+      <TableCell className="text-center py-2 px-3 text-xs font-medium">
+        {(() => {
+          const dateValue = proposal.offer_date || proposal.created_at;
+          if (!dateValue) return <span className="text-muted-foreground">-</span>;
+          const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+          if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+          return dateObj.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        })()}
       </TableCell>
-      <TableCell className="text-center py-2 px-3 text-xs">
-        <DateDisplay date={proposal.valid_until} />
+      <TableCell className="text-center py-2 px-3 text-xs font-medium">
+        {(() => {
+          const dateValue = proposal.valid_until;
+          if (!dateValue) return <span className="text-muted-foreground">-</span>;
+          const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+          if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+          return dateObj.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        })()}
       </TableCell>
       <TableCell className="py-2 px-3 text-center">
         <div className="flex justify-center space-x-2">

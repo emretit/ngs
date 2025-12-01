@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 
 // Constants
 const DEFAULT_VAT_PERCENTAGE = 20;
-const DEFAULT_CURRENCY = "TL";
+const DEFAULT_CURRENCY = "TRY";
 const DEFAULT_EXCHANGE_RATE = 1;
 const DEFAULT_QUANTITY = 1;
 const DEFAULT_UNIT = "adet";
@@ -331,7 +331,7 @@ const ProposalToOrderCreate = () => {
     // First, collect all currencies used in items (even if values are 0)
     const usedCurrencies = new Set<string>();
     items.forEach(item => {
-      const currency = item.currency || 'TL';
+      const currency = item.currency || 'TRY';
       usedCurrencies.add(currency);
     });
 
@@ -342,7 +342,7 @@ const ProposalToOrderCreate = () => {
 
     // Calculate gross totals
     items.forEach(item => {
-      const currency = item.currency || 'TL';
+      const currency = item.currency || 'TRY';
       totals[currency].gross += item.quantity * item.unit_price;
     });
 
@@ -584,7 +584,7 @@ const ProposalToOrderCreate = () => {
       const currencyTotals = Object.entries(calculationsByCurrency);
       const [detectedCurrency] = currencyTotals.length > 0
         ? currencyTotals.reduce((max, current) => current[1].grand > max[1].grand ? current : max)
-        : ['TL', { grand: 0 }];
+        : ['TRY', { grand: 0 }];
 
       // Use detected currency or fallback to form currency
       const primaryCurrency = detectedCurrency || formData.currency;
@@ -833,7 +833,7 @@ const ProposalToOrderCreate = () => {
                   <>
                     <div className="h-4 w-px bg-blue-300" />
                     <div className="font-medium text-blue-900">
-                      {formatCurrency(proposal.total_amount, proposal.currency || 'TL')}
+                      {formatCurrency(proposal.total_amount, proposal.currency || 'TRY')}
                     </div>
                   </>
                 )}

@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { Task, TaskStatus } from "@/types/task";
 import { Badge } from "@/components/ui/badge";
-import { DateDisplay } from "@/components/ui/date-display";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -257,16 +256,36 @@ const TasksTableRow: React.FC<TasksTableRowProps> = ({
         </div>
       </TableCell>
       <TableCell className={cn(
-        "py-2 px-3 text-muted-foreground transition-opacity duration-200 text-xs text-center",
+        "py-2 px-3 transition-opacity duration-200 text-xs font-medium text-center",
         isCompleted && "opacity-60"
       )}>
-        <DateDisplay date={task.due_date} />
+        {(() => {
+          const dateValue = task.due_date;
+          if (!dateValue) return <span className="text-muted-foreground">-</span>;
+          const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+          if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+          return dateObj.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        })()}
       </TableCell>
       <TableCell className={cn(
-        "py-2 px-3 text-muted-foreground transition-opacity duration-200 text-xs text-center",
+        "py-2 px-3 transition-opacity duration-200 text-xs font-medium text-center",
         isCompleted && "opacity-60"
       )}>
-        <DateDisplay date={task.created_at} />
+        {(() => {
+          const dateValue = task.created_at;
+          if (!dateValue) return <span className="text-muted-foreground">-</span>;
+          const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+          if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+          return dateObj.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        })()}
       </TableCell>
       <TableCell className="py-2 px-3 text-center">
         <div className="flex justify-center space-x-2">

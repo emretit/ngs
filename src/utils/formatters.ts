@@ -40,10 +40,9 @@ export const capitalizeFirstLetter = (string: string): string => {
 export const formatCurrency = (amount: number, currency = 'TRY'): string => {
   // Handle NaN, undefined, null, or invalid numbers
   const validAmount = isNaN(amount) || !isFinite(amount) ? 0 : amount;
-  // Intl.NumberFormat için geçerli currency code kullan
-  const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
-  return new Intl.NumberFormat('tr-TR', { 
-    style: 'currency', 
+  const currencyCode = normalizeCurrency(currency);
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
     currency: currencyCode,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2

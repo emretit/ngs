@@ -165,7 +165,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
                 <SelectValue placeholder="Para birimi" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="TRY">₺ TL</SelectItem>
+                <SelectItem value="TRY">₺ TRY</SelectItem>
                 <SelectItem value="USD">$ USD</SelectItem>
                 <SelectItem value="EUR">€ EUR</SelectItem>
                 <SelectItem value="GBP">£ GBP</SelectItem>
@@ -188,7 +188,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
                 {currentRate && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <ArrowRightLeft className="h-3 w-3" />
-                    <span>Güncel: {currentRate.toFixed(4)} TL</span>
+                    <span>Güncel: {currentRate.toFixed(4)} TRY</span>
                   </div>
                 )}
               </div>
@@ -205,7 +205,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
                     className="h-8 text-sm pr-20"
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                    1 {formData.currency} = ? TL
+                    1 {formData.currency} = ? TRY
                   </div>
                 </div>
                 {currentRate && (

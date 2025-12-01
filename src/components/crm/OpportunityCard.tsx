@@ -4,7 +4,6 @@ import { Draggable } from "@hello-pangea/dnd";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, User } from "lucide-react";
-import { format } from "date-fns";
 import { Opportunity, opportunityStatusColors, opportunityStatusLabels } from "@/types/crm";
 import { formatCurrency } from "@/utils/formatters";
 
@@ -56,11 +55,15 @@ const OpportunityCard = ({ opportunity, index, onClick, isSelected = false }: Op
                 <p className="text-sm text-gray-500 mt-2 line-clamp-2">{shortenText(opportunity.description, 40)}</p>
               )}
               
-              <div className="flex items-center mt-3 text-xs text-gray-500">
+              <div className="flex items-center mt-3 text-xs font-medium text-gray-500">
                 {opportunity.expected_close_date && (
                   <div className="flex items-center mr-3">
                     <CalendarIcon className="h-3 w-3 mr-1" />
-                    <span>{format(new Date(opportunity.expected_close_date), 'dd MMM yyyy')}</span>
+                    <span>{new Date(opportunity.expected_close_date).toLocaleDateString('tr-TR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })}</span>
                   </div>
                 )}
                 

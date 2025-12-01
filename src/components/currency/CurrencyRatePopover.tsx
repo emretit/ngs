@@ -56,7 +56,7 @@ export function CurrencyRatePopover({
           variant="outline" 
           className={`h-10 px-3 ${triggerClassName}`}
         >
-          {selectedCurrency === 'TL' ? 'TL' : selectedCurrency}
+          {selectedCurrency === 'TL' ? 'TRY' : selectedCurrency}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[240px] p-0" align="start">
@@ -84,8 +84,8 @@ export function CurrencyRatePopover({
                 className="justify-between h-8"
                 onClick={() => onCurrencyChange(option.value)}
               >
-                <span>{option.symbol} {option.value === 'TL' ? 'TL' : option.value}</span>
-                {option.value !== "TL" && <span className="text-xs opacity-70">{formatRate(option.value)}</span>}
+                <span>{option.symbol} {option.value === 'TL' ? 'TRY' : option.value}</span>
+                {option.value !== "TRY" && option.value !== "TL" && <span className="text-xs opacity-70">{formatRate(option.value)}</span>}
               </Button>
             ))}
           </div>

@@ -129,7 +129,7 @@ const FinancingManagement = ({ isCollapsed, setIsCollapsed }: FinancingManagemen
             </div>
 
             <div>
-              <Label htmlFor="amount">Tutar (TL)</Label>
+              <Label htmlFor="amount">Tutar (TRY)</Label>
               <Input
                 id="amount"
                 type="number"

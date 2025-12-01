@@ -114,13 +114,13 @@ const BudgetFilters = ({ filters, onFiltersChange }: BudgetFiltersProps) => {
         <label className="text-xs font-medium text-muted-foreground">Para Birimi</label>
         <Select
           value={filters.currency}
-          onValueChange={(value) => handleFilterChange("currency", value as "TL" | "USD" | "EUR")}
+          onValueChange={(value) => handleFilterChange("currency", value as "TRY" | "USD" | "EUR")}
         >
           <SelectTrigger className="h-9 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="TL">TL</SelectItem>
+            <SelectItem value="TRY">TRY</SelectItem>
             <SelectItem value="USD">USD</SelectItem>
             <SelectItem value="EUR">EUR</SelectItem>
           </SelectContent>

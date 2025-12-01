@@ -288,9 +288,19 @@ export function EnhancedDatePicker({
 }: DatePickerProps) {
   const isButtonDisabled = typeof disabled === 'boolean' ? disabled : false;
   const calendarDisabled = typeof disabled === 'function' ? disabled : undefined;
+  const [open, setOpen] = React.useState(false);
+  
+  // Gün seçildiğinde dialog'u kapat, ay/yıl seçiminde kapatma
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    onSelect?.(selectedDate);
+    // Sadece gün seçildiğinde (date değeri geldiğinde) dialog'u kapat
+    if (selectedDate) {
+      setOpen(false);
+    }
+  };
   
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -325,7 +335,7 @@ export function EnhancedDatePicker({
         <EnhancedCalendar
           mode="single"
           selected={date}
-          onSelect={onSelect}
+          onSelect={handleDateSelect}
           disabled={calendarDisabled}
           initialFocus
         />

@@ -105,16 +105,15 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
     }
   };
 
-  const formatCurrency = (amount: number, currency: string = 'TL') => {
-    // Intl.NumberFormat için geçerli currency code kullan (TL -> TRY)
+  const formatCurrency = (amount: number, currency: string = 'TRY') => {
+    // Intl.NumberFormat için geçerli currency code kullan (TRY -> TRY)
     const currencyCode = currency === 'TL' ? 'TRY' : currency;
     const formatted = new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: currencyCode,
       minimumFractionDigits: 2
     }).format(amount);
-    // TRY yerine TL göster
-    return formatted.replace('TRY', 'TL');
+    return formatted;
   };
 
 
@@ -237,7 +236,7 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Para Birimi:</span>
-                  <span className="text-xs font-medium">{invoice.para_birimi === 'TL' ? 'TL' : invoice.para_birimi || 'TL'}</span>
+                  <span className="text-xs font-medium">{invoice.para_birimi === 'TL' ? 'TRY' : (invoice.para_birimi || 'TRY')}</span>
                 </div>
                 <Separator className="my-2" />
                 <div className="flex justify-between items-center">

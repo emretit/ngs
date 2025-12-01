@@ -119,9 +119,6 @@ export const TasksTable = ({
     }
   };
   
-  // Status sıralaması aktifse gruplandırılmış görünüm kullan
-  const isStatusSorting = sortField === 'status';
-
   // Gruplandırılmış görünüm için satır render'ı
   const renderGroupedRows = () => {
     return STATUS_GROUPS.map(({ status, label, icon: Icon, color, bgColor }) => {
@@ -186,21 +183,10 @@ export const TasksTable = ({
       <TableBody>
         {sortedTasks.length === 0 ? (
           <TasksTableEmpty />
-        ) : isStatusSorting ? (
-          // Gruplandırılmış görünüm (Microsoft To Do tarzı)
-          renderGroupedRows()
         ) : (
-          // Normal liste görünümü
-          sortedTasks.map((task) => (
-            <TasksTableRow 
-              key={task.id} 
-              task={task} 
-              onSelectTask={onSelectTask}
-              onStatusChange={updateTaskStatus}
-              onDeleteTask={deleteTask}
-              onToggleImportant={toggleTaskImportant}
-            />
-          ))
+          // Her zaman gruplandırılmış görünüm (Microsoft To Do tarzı)
+          // Sıralama yapıldığında gruplar içindeki task'lar sıralanır
+          renderGroupedRows()
         )}
       </TableBody>
     </Table>

@@ -1,8 +1,6 @@
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Order, OrderStatus } from "@/types/orders";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { 
   Edit, 
   MoreHorizontal, 
@@ -17,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { formatProposalAmount } from "@/services/workflow/proposalWorkflow";
 
 interface OrdersTableRowProps {
   order: Order;
@@ -84,14 +81,6 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
     return text.substring(0, maxLength - 3) + "...";
   };
 
-  const formatDate = (date: string | null | undefined) => {
-    if (!date) return "-";
-    try {
-      return format(new Date(date), "dd MMM yyyy", { locale: tr });
-    } catch {
-      return "-";
-    }
-  };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -154,10 +143,44 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
         </Badge>
       </TableCell>
       <TableCell className="text-center py-2 px-3 text-xs font-medium">
-        {order.total_amount != null ? formatProposalAmount(order.total_amount, order.currency || 'TRY') : '-'}
+        {order.total_amount != null ? (() => {
+          const formatCurrency = (amount: number, currency: string = "TRY") => {
+            // Convert TL to TRY directly
+            const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
+            return new Intl.NumberFormat('tr-TR', {
+              style: 'currency',
+              currency: currencyCode
+            }).format(amount);
+          };
+          return formatCurrency(order.total_amount, order.currency || 'TRY');
+        })() : <span className="text-muted-foreground">-</span>}
       </TableCell>
-      <TableCell className="text-center py-2 px-3 text-xs">{formatDate(order.order_date)}</TableCell>
-      <TableCell className="text-center py-2 px-3 text-xs">{formatDate(order.delivery_date)}</TableCell>
+      <TableCell className="text-center py-2 px-3 text-xs font-medium">
+        {(() => {
+          const dateValue = order.order_date;
+          if (!dateValue) return <span className="text-muted-foreground">-</span>;
+          const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+          if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+          return dateObj.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        })()}
+      </TableCell>
+      <TableCell className="text-center py-2 px-3 text-xs font-medium">
+        {(() => {
+          const dateValue = order.delivery_date;
+          if (!dateValue) return <span className="text-muted-foreground">-</span>;
+          const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+          if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+          return dateObj.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+        })()}
+      </TableCell>
       <TableCell className="py-2 px-3 text-center">
         <div className="flex items-center justify-center space-x-2">
           <Button

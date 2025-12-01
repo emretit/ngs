@@ -307,7 +307,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                 price: mapping.parsedProduct.unit_price,
                 tax_rate: mapping.parsedProduct.tax_rate || 18,
                 unit: mapping.parsedProduct.unit || 'Adet',
-                currency: invoice.currency || 'TL',
+                currency: invoice.currency || 'TRY',
                 category_type: 'product',
                 product_type: 'physical',
                 status: 'active',
@@ -601,7 +601,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                                         <p className="text-xs text-green-600">
                                           {existingProducts.find(p => p.id === mapping.selectedProductId)?.sku &&
                                             `SKU: ${existingProducts.find(p => p.id === mapping.selectedProductId)?.sku} • `}
-                                          {existingProducts.find(p => p.id === mapping.selectedProductId)?.price.toLocaleString('tr-TR')} TL
+                                          {formatCurrency(existingProducts.find(p => p.id === mapping.selectedProductId)?.price || 0, 'TRY')}
                                           {mapping.selectedWarehouseId && (
                                             <span className="ml-2">• Depo seçildi</span>
                                           )}
@@ -670,7 +670,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                               {mapping.parsedProduct.quantity}
                             </td>
                             <td className="p-3 text-right text-sm font-medium">
-                              {formatCurrency(mapping.parsedProduct.unit_price, invoice?.currency || 'TL')}
+                              {formatCurrency(mapping.parsedProduct.unit_price, invoice?.currency || 'TRY')}
                             </td>
                             <td className="p-3 text-right text-sm">
                               {mapping.parsedProduct.line_total.toLocaleString('tr-TR', {
@@ -707,7 +707,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                         </div>
                         <div className="flex justify-between">
                           <span>İndirim:</span>
-                          <span>0,00 TL</span>
+                          <span>₺0,00</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Net Toplam:</span>
@@ -717,7 +717,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
                         </div>
                         <div className="flex justify-between">
                           <span>KDV (%0):</span>
-                          <span>0,00 TL</span>
+                          <span>₺0,00</span>
                         </div>
                         <div className="flex justify-between border-t pt-2 font-bold">
                           <span>TOPLAM:</span>

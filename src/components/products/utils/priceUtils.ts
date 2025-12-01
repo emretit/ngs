@@ -1,7 +1,7 @@
 export const formatPrice = (value: number | null, currency: string) => {
   if (value === null) return "0,00";
-  // Intl.NumberFormat için geçerli currency code kullan
-  const currencyCode = currency || 'TRY';
+  // Convert TL to TRY directly
+  const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
   return new Intl.NumberFormat('tr-TR', { 
     style: 'currency', 
     currency: currencyCode
@@ -18,8 +18,8 @@ export const calculateDiscount = (originalPrice: number, discountedPrice: number
 };
 
 export const formatCurrency = (value: number, currency: string = "TRY") => {
-  // Intl.NumberFormat için geçerli currency code kullan
-  const currencyCode = currency || 'TRY';
+  // Convert TL to TRY directly
+  const currencyCode = currency === 'TL' ? 'TRY' : (currency || 'TRY');
   return new Intl.NumberFormat('tr-TR', { 
     style: 'currency', 
     currency: currencyCode

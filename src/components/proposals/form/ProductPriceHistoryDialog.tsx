@@ -85,7 +85,7 @@ const ProductPriceHistoryDialog: React.FC<ProductPriceHistoryDialogProps> = ({
                     date: proposal.created_at,
                     unit_price: Number(item.unit_price) || 0,
                     quantity: Number(item.quantity) || 0,
-                    currency: item.currency || "TL",
+                    currency: item.currency || "TRY",
                     total: Number(item.total_price) || (Number(item.unit_price) || 0) * (Number(item.quantity) || 0),
                     customer_name: proposal.customer?.name,
                   });

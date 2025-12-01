@@ -7,9 +7,12 @@ export const useCurrencyFormatter = () => {
     // Ensure currency is not empty to avoid Intl.NumberFormat errors
     if (!currency) currency = "TRY";
     
+    // Convert TL to TRY directly
+    const currencyCode = currency === 'TL' ? 'TRY' : currency;
+    
     const formatter = new Intl.NumberFormat('tr-TR', {
       style: 'currency',
-      currency: currency,
+      currency: currencyCode,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });

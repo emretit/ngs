@@ -64,9 +64,8 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
   if (!proposal) return null;
 
   const formatMoney = (amount: number) => {
-    // TL'yi TRY'ye çevir (ISO 4217 standardı)
-    const currency = proposal.currency === "TL" ? "TRY" : (proposal.currency || "TRY");
-    
+    const currency = proposal.currency || "TRY";
+
     return new Intl.NumberFormat("tr-TR", {
       style: "currency",
       currency: currency,
@@ -195,7 +194,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
               <p className="text-xs text-muted-foreground">Para Birimi</p>
               <p className="font-medium">{proposal.currency || "TRY"}</p>
             </div>
-            {(proposal as any).exchange_rate && (proposal.currency !== "TRY" && proposal.currency !== "TL") && (
+            {(proposal as any).exchange_rate && proposal.currency !== "TRY" && (
               <div className="space-y-1 col-span-2">
                 <p className="text-xs text-muted-foreground">Döviz Kuru</p>
                 <p className="font-medium">

@@ -211,8 +211,8 @@ serve(async (req) => {
                   </a>
                   
                   <div class="security-note">
-                    <strong>🔒 Güvenlik Notu:</strong> Bu link kısa süreliğine geçerlidir. 
-                    Güvenliğiniz için link sadece bir kez kullanılabilir.
+                    <strong>⏰ Önemli:</strong> Bu davet linki 1 saat boyunca geçerlidir. 
+                    Link süresi dolduysa, lütfen yöneticinizden yeni bir davet linki isteyin.
                   </div>
                 </div>
                 
@@ -239,6 +239,7 @@ serve(async (req) => {
       );
     } else {
       // New user: send invite link
+      console.log('📧 Generating invite link for new user:', email);
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: 'invite',
         email,
@@ -254,7 +255,13 @@ serve(async (req) => {
       });
 
       if (linkError || !linkData?.properties?.action_link) {
-        console.error('Invite link error:', linkError);
+        console.error('❌ Invite link generation failed:', {
+          error: linkError,
+          code: linkError?.code,
+          message: linkError?.message,
+          email: email,
+          timestamp: new Date().toISOString()
+        });
         
         // Check if it's an email_exists error
         if (linkError && linkError.code === 'email_exists') {
@@ -268,10 +275,15 @@ serve(async (req) => {
         }
         
         return new Response(
-          JSON.stringify({ error: 'Davet bağlantısı oluşturulamadı' }),
+          JSON.stringify({ 
+            error: 'Davet bağlantısı oluşturulamadı', 
+            details: linkError?.message || 'Bilinmeyen hata' 
+          }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+
+      console.log('✅ Invite link generated successfully for:', email);
 
       const inviteUrl = linkData.properties.action_link;
 
@@ -407,8 +419,8 @@ serve(async (req) => {
                   </a>
                   
                   <div class="security-note">
-                    <strong>🔒 Güvenlik Notu:</strong> Bu link kısa süreliğine geçerlidir. 
-                    Güvenliğiniz için link sadece bir kez kullanılabilir.
+                    <strong>⏰ Önemli:</strong> Bu davet linki 1 saat boyunca geçerlidir. 
+                    Link süresi dolduysa, lütfen yöneticinizden yeni bir davet linki isteyin.
                   </div>
                 </div>
                 

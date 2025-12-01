@@ -2,7 +2,10 @@ import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { TechnicianSidebar } from "./TechnicianSidebar";
 import { TimelineGrid } from "./TimelineGrid";
-import { DispatchTechnician, Technician, ViewMode } from "./types";
+import { TechnicianDetailPanel } from "./TechnicianDetailPanel";
+import { UnassignedServicesBacklog } from "./UnassignedServicesBacklog";
+import { useDispatchDragDrop } from "./hooks/useDispatchDragDrop";
+import { DispatchTechnician, Technician, ViewMode, DraggedService } from "./types";
 import { ServiceRequest } from "@/hooks/useServiceRequests";
 import { startOfDay, endOfDay, isWithinInterval, startOfWeek, endOfWeek } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -30,6 +33,9 @@ export const ServiceDispatchBoard = ({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string | null>(null);
+
+  // Drag & Drop hook
+  const { draggedService, isDragging, handleDragStart, handleDragEnd, handleDrop } = useDispatchDragDrop();
 
   // Teknisyenlere günlük ve haftalık servis sayılarını ekle
   const dispatchTechnicians = useMemo<DispatchTechnician[]>(() => {
@@ -99,6 +105,30 @@ export const ServiceDispatchBoard = ({
       (s) => !s.assigned_technician && s.service_status !== 'completed' && s.service_status !== 'cancelled'
     );
   }, [serviceRequests]);
+
+  // Drag start handler
+  const handleServiceDragStart = (service: ServiceRequest) => {
+    const dragData: DraggedService = {
+      service,
+      type: 'unassigned',
+    };
+    handleDragStart(dragData);
+  };
+
+  // Drop handler - teknisyene servis ata
+  const handleServiceDrop = async (serviceId: string, technicianId: string, startTime: Date) => {
+    // Bitiş zamanını hesapla (varsayılan 2 saat)
+    const endTime = new Date(startTime);
+    endTime.setHours(endTime.getHours() + 2);
+
+    // Parent callback'i çağır
+    await onUpdateAssignment(
+      serviceId,
+      technicianId,
+      startTime,
+      endTime
+    );
+  };
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
@@ -178,70 +208,28 @@ export const ServiceDispatchBoard = ({
             services={serviceRequests}
             selectedDate={selectedDate}
             onSelectService={onSelectService}
+            onDropService={(technicianId, time) => {
+              handleDrop(technicianId, time, handleServiceDrop);
+            }}
           />
         </div>
 
         {/* Sağ: Detay Paneli */}
-        <Card className="w-80 p-4">
-          {selectedTechnician ? (
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <span className="text-2xl font-bold text-primary">
-                    {selectedTechnician.first_name[0]}
-                    {selectedTechnician.last_name[0]}
-                  </span>
-                </div>
-                <h3 className="font-semibold text-lg">
-                  {selectedTechnician.first_name} {selectedTechnician.last_name}
-                </h3>
-                {selectedTechnician.position && (
-                  <p className="text-sm text-muted-foreground">
-                    {selectedTechnician.position}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2 border-t pt-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Bugün:</span>
-                  <span className="font-medium">
-                    {selectedTechnician.todayServiceCount} servis
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Bu Hafta:</span>
-                  <span className="font-medium">
-                    {selectedTechnician.weekServiceCount} servis
-                  </span>
-                </div>
-              </div>
-
-              <Button className="w-full" size="sm">
-                Servis Ata
-              </Button>
-            </div>
-          ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground text-center">
-              <p className="text-sm">
-                Detayları görmek için bir teknisyen seçin
-              </p>
-            </div>
-          )}
-        </Card>
+        <TechnicianDetailPanel
+          technician={selectedTechnician}
+          services={serviceRequests}
+          selectedDate={selectedDate}
+          onSelectService={onSelectService}
+        />
       </div>
 
-      {/* Alt: Atanmamış Servisler (Placeholder) */}
+      {/* Alt: Atanmamış Servisler */}
       {unassignedServices.length > 0 && (
-        <Card className="mt-4 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <h3 className="font-semibold">Atanmamış Servisler</h3>
-            <Badge variant="secondary">{unassignedServices.length}</Badge>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Backlog bileşeni bir sonraki adımda eklenecek
-          </div>
-        </Card>
+        <UnassignedServicesBacklog
+          services={unassignedServices}
+          onSelectService={onSelectService}
+          onDragStart={handleServiceDragStart}
+        />
       )}
     </div>
   );

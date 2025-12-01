@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrentCompany } from '@/hooks/useCurrentCompany';
 
 export interface ParameterCategory {
   key: string;
@@ -95,13 +96,13 @@ export const useSystemParameters = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { companyId } = useCurrentCompany();
 
   const fetchParameters = useCallback(async (category?: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      const companyId = user?.user_metadata?.company_id;
       if (!companyId) {
         setParameters([]);
         setLoading(false);
@@ -132,7 +133,7 @@ export const useSystemParameters = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [companyId]);
 
   const createParameter = async (data: CreateParameterData) => {
     try {
@@ -140,7 +141,7 @@ export const useSystemParameters = () => {
         .from('system_parameters')
         .insert({
           ...data,
-          company_id: user?.user_metadata?.company_id,
+          company_id: companyId,
           created_by: user?.id,
           updated_by: user?.id,
         })
@@ -238,10 +239,10 @@ export const useSystemParameters = () => {
   };
 
   useEffect(() => {
-    if (user) {
+    if (companyId) {
       fetchParameters();
     }
-  }, [user, fetchParameters]);
+  }, [companyId, fetchParameters]);
 
   // Parametreleri JSON olarak export etme
   const exportParameters = (selectedCategories?: string[]): string => {
@@ -286,7 +287,7 @@ export const useSystemParameters = () => {
             description: param.description,
             is_editable: param.is_editable !== false,
             validation_rules: param.validation_rules || {},
-            company_id: user?.user_metadata?.company_id,
+            company_id: companyId,
             updated_by: user?.id,
           }, {
             onConflict: 'company_id,parameter_key'
@@ -307,14 +308,14 @@ export const useSystemParameters = () => {
       const { error: deleteError } = await supabase
         .from('system_parameters')
         .delete()
-        .eq('company_id', user?.user_metadata?.company_id)
+        .eq('company_id', companyId)
         .eq('is_editable', true);
 
       if (deleteError) throw deleteError;
 
       // Varsayılan parametreleri yeniden oluştur
       await supabase.rpc('initialize_default_parameters', {
-        target_company_id: user?.user_metadata?.company_id
+        target_company_id: companyId
       });
 
       await fetchParameters(); // Listeyi yenile

@@ -78,7 +78,7 @@ const InventoryDashboard = ({ isCollapsed, setIsCollapsed }: InventoryDashboardP
         // Products count and stock value
         supabase
           .from('products')
-          .select('stock_quantity, unit_price', { count: 'exact', head: false })
+          .select('stock_quantity, price', { count: 'exact', head: false })
           .eq('company_id', userData.company_id)
           .eq('is_active', true),
         
@@ -109,7 +109,7 @@ const InventoryDashboard = ({ isCollapsed, setIsCollapsed }: InventoryDashboardP
       const products = productsResult.data || [];
       const totalStockValue = products.reduce((sum, p) => {
         const quantity = p.stock_quantity || 0;
-        const price = p.unit_price || 0;
+        const price = p.price || 0;
         return sum + (quantity * price);
       }, 0);
 

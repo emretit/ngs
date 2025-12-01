@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 
@@ -8,6 +9,7 @@ interface MobileMenuProps {
 }
 
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
@@ -75,17 +77,20 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 
           {/* CTA Buttons */}
           <div className="space-y-3">
-            <a href="/signup" onClick={onClose} className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
+            <Link 
+              to="/signup" 
+              onClick={onClose} 
+              className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
               <span>{t('landing.mobile.freeStart')}</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-            </a>
+            </Link>
             <button 
               onClick={() => {
                 onClose();
-                // Navigate to login
-                window.location.href = '/signin';
+                navigate('/signin');
               }}
               className="w-full flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl transition-all duration-200 font-medium"
             >

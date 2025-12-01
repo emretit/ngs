@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Edit2, MoreHorizontal, Printer, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
@@ -35,6 +36,8 @@ const InventoryTransactionsTableRow = ({
   onPrint,
   isSelected = false
 }: InventoryTransactionsTableRowProps) => {
+  const navigate = useNavigate();
+  
   const getTypeBadge = () => {
     switch (transaction.transaction_type) {
       case 'giris':
@@ -147,7 +150,7 @@ const InventoryTransactionsTableRow = ({
             onClick={(e) => {
               e.stopPropagation();
               if (transaction.warehouse_id) {
-                window.location.href = `/inventory/warehouses/${transaction.warehouse_id}`;
+                navigate(`/inventory/warehouses/${transaction.warehouse_id}`);
               }
             }}
           >

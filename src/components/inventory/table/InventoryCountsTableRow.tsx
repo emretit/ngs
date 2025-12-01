@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -40,6 +41,8 @@ const InventoryCountsTableRow = ({
   onCancel,
   onPrint,
 }: InventoryCountsTableRowProps) => {
+  const navigate = useNavigate();
+  
   const getStatusBadge = () => {
     switch (transaction.status) {
       case 'pending':
@@ -83,7 +86,7 @@ const InventoryCountsTableRow = ({
             onClick={(e) => {
               e.stopPropagation();
               if (transaction.warehouse_id) {
-                window.location.href = `/inventory/warehouses/${transaction.warehouse_id}`;
+                navigate(`/inventory/warehouses/${transaction.warehouse_id}`);
               }
             }}
           >

@@ -1,4 +1,5 @@
 import { useState, memo } from "react";
+import { useNavigate } from "react-router-dom";
 import { DropResult } from "@hello-pangea/dnd";
 import { Opportunity, OpportunityStatus } from "@/types/crm";
 import { useOpportunities } from "@/hooks/useOpportunities";
@@ -13,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 const Opportunities = memo(() => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedOpportunities, setSelectedOpportunities] = useState<Opportunity[]>([]);
   const [filterKeyword, setFilterKeyword] = useState("");
@@ -148,7 +150,7 @@ const Opportunities = memo(() => {
   };
   const handleConvertToProposal = (opportunity: Opportunity) => {
     // Teklif sayfasına yönlendir
-    window.location.href = `/proposals/new?opportunityId=${opportunity.id}`;
+    navigate(`/proposals/new?opportunityId=${opportunity.id}`);
   };
   const handlePlanMeeting = (opportunity: Opportunity) => {
     // Yeni aktivite ekranına geçiş

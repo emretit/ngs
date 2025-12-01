@@ -71,7 +71,13 @@ const InviteSetup = () => {
         });
         if (sessionError) {
           console.error('Session setup error:', sessionError);
-          setError("Davet bağlantısı geçersiz veya süresi dolmuş.");
+          
+          // Provide more detailed error based on error type
+          if (sessionError.message?.includes('expired') || sessionError.message?.includes('invalid')) {
+            setError("Davet linkinizin süresi dolmuş. Lütfen yöneticinizden yeni bir davet linki isteyin. (Link geçerlilik süresi: 1 saat)");
+          } else {
+            setError("Davet bağlantısı geçersiz veya süresi dolmuş. Lütfen yöneticinizle iletişime geçin.");
+          }
           setLoading(false);
           return;
         }
@@ -267,6 +273,14 @@ const InviteSetup = () => {
         </Card>
         {/* Security Info */}
         <div className="text-center space-y-4">
+          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg p-3">
+            <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">
+              ⏰ Davet linki 1 saat geçerlidir
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+              Link süresi dolduysa yöneticinizden yeni bir davet linki isteyebilirsiniz
+            </p>
+          </div>
           <p className="text-xs text-muted-foreground">
             Bu bağlantı güvenli ve şifrelenmiş bir bağlantıdır
           </p>

@@ -31,7 +31,7 @@ export function useInfiniteScroll<T>(
     enabled = true,
     refetchOnWindowFocus = false,
     refetchOnMount = false, // Cache'den veri varsa mount'ta refetch yapma
-    staleTime = 0, // Invalidate edildiğinde hemen refetch yap
+    staleTime = 2 * 60 * 1000, // 2 minutes cache for infinite scroll
     gcTime = 10 * 60 * 1000, // 10 minutes
   } = options;
 
@@ -53,7 +53,7 @@ export function useInfiniteScroll<T>(
     enabled,
     refetchOnWindowFocus,
     refetchOnMount: true, // Invalidate edildiğinde refetch yap
-    staleTime: 0, // Invalidate edildiğinde hemen refetch yap
+    staleTime, // Use configured staleTime (2 minutes)
     gcTime,
     placeholderData: (previousData) => previousData, // Önceki veriyi göster (smooth transition)
   });

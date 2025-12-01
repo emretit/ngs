@@ -1,41 +1,48 @@
-
-import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import type { Department } from "./types";
+import { useEffect } from "react";
 
 export const useEmployeeDepartments = () => {
-  const [departments, setDepartments] = useState<Department[]>([]);
   const { toast } = useToast();
   const { userData } = useCurrentUser();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (!userData?.company_id) return;
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments', userData?.company_id],
+    queryFn: async () => {
+      if (!userData?.company_id) {
+        return [];
+      }
 
-    const fetchDepartments = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('departments')
-          .select('*')
-          .eq('company_id', userData.company_id) as { data: Department[] | null; error: Error | null };
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, name, description, created_at')
+        .eq('company_id', userData.company_id)
+        .order('name', { ascending: true });
 
-        if (error) {
-          throw error;
-        }
-
-        setDepartments(data || []);
-      } catch (error) {
+      if (error) {
         console.error('Error fetching departments:', error);
         toast({
           title: "Error",
           description: "Failed to load departments",
           variant: "destructive",
         });
+        throw error;
       }
-    };
 
-    fetchDepartments();
+      return (data || []) as Department[];
+    },
+    enabled: !!userData?.company_id,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  // Realtime subscription for department changes
+  useEffect(() => {
+    if (!userData?.company_id) return;
 
     const channel = supabase
       .channel('departments-changes')
@@ -47,12 +54,9 @@ export const useEmployeeDepartments = () => {
           table: 'departments',
           filter: `company_id=eq.${userData.company_id}`
         },
-        async () => {
-          const { data } = await supabase
-            .from('departments')
-            .select('*')
-            .eq('company_id', userData.company_id) as { data: Department[] | null };
-          setDepartments(data || []);
+        () => {
+          // Invalidate and refetch departments when changes occur
+          queryClient.invalidateQueries({ queryKey: ['departments', userData.company_id] });
         }
       )
       .subscribe();
@@ -60,7 +64,7 @@ export const useEmployeeDepartments = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [toast, userData?.company_id]);
+  }, [userData?.company_id, queryClient]);
 
   return departments;
 };

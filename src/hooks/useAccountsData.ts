@@ -185,7 +185,7 @@ export function usePartnerAccounts() {
 
       const { data, error } = await supabase
         .from('partner_accounts')
-        .select('*')
+        .select('id, partner_name, partner_type, account_type, current_balance, initial_capital, profit_share, ownership_percentage, currency, is_active, created_at, updated_at')
         .eq('company_id', companyId)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
@@ -212,28 +212,28 @@ export function useAllAccounts() {
       const [bankResult, creditResult, cashResult, partnerResult] = await Promise.all([
         supabase
           .from('bank_accounts')
-          .select('*')
+          .select('id, account_name, bank_name, account_type, currency, current_balance, available_balance, is_active')
           .eq('company_id', companyId)
           .eq('is_active', true)
           .order('bank_name', { ascending: true }),
         
         supabase
           .from('credit_cards')
-          .select('*')
+          .select('id, card_name, card_number, card_type, bank_name, current_balance, credit_limit, available_limit, currency, status, expiry_date')
           .eq('company_id', companyId)
           .eq('status', 'active')
           .order('card_name', { ascending: true }),
         
         supabase
           .from('cash_accounts')
-          .select('*')
+          .select('id, name, description, current_balance, currency, is_active, created_at')
           .eq('company_id', companyId)
           .eq('is_active', true)
           .order('name', { ascending: true }),
         
         supabase
           .from('partner_accounts')
-          .select('*')
+          .select('id, partner_name, partner_type, account_type, current_balance, initial_capital, profit_share, ownership_percentage, currency, is_active, created_at, updated_at')
           .eq('company_id', companyId)
           .eq('is_active', true)
           .order('partner_name', { ascending: true })

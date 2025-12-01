@@ -46,7 +46,8 @@ import {
   Factory,
   Warehouse,
   FileSignature,
-  Tag
+  Tag,
+  Cog
 } from "lucide-react";
 
 export const navItems = [
@@ -351,6 +352,11 @@ export const navItems = [
         path: "/system",
         icon: Wrench,
         label: "Sistem Ayarları",
+      },
+      {
+        path: "/system-parameters",
+        icon: Cog,
+        label: "Sistem Parametreleri",
       },
       {
         path: "/pdf-templates",

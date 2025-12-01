@@ -53,16 +53,23 @@ export const NumberFormatSettings: React.FC = () => {
   const { getParameterValue, updateParameter, createParameter, parameters, loading: paramsLoading, error: paramsError } = useSystemParameters();
   const { companyId } = useCurrentCompany();
   
-  const [formats, setFormats] = useState(() =>
-    NUMBER_FORMAT_TYPES.map(type => ({
-      ...type,
-      currentValue: getParameterValue(type.key, type.defaultValue) as string,
-      originalValue: getParameterValue(type.key, type.defaultValue) as string,
-    }))
-  );
+  const [formats, setFormats] = useState<Array<typeof NUMBER_FORMAT_TYPES[0] & { currentValue: string; originalValue: string }>>([]);
   const [saving, setSaving] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const [lastSaved, setLastSaved] = useState<Record<string, string>>({});
+
+  // Parametreler yüklendikten sonra format state'ini güncelle
+  React.useEffect(() => {
+    if (!paramsLoading && parameters.length > 0) {
+      setFormats(
+        NUMBER_FORMAT_TYPES.map(type => ({
+          ...type,
+          currentValue: getParameterValue(type.key, type.defaultValue) as string,
+          originalValue: getParameterValue(type.key, type.defaultValue) as string,
+        }))
+      );
+    }
+  }, [parameters, paramsLoading, getParameterValue]);
 
   // Loading state kontrolü
   if (paramsLoading) {

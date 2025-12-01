@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { CalendarEvent, DEFAULT_EVENT_FILTERS } from '@/components/calendar/types';
 import { useCalendarData } from '@/hooks/useCalendarData';
 import { useCalendarEvents } from '@/hooks/useCalendarEvents';
@@ -17,8 +17,38 @@ const GeneralCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<ViewType>('month');
 
-  // Fetch all calendar data
-  const calendarData = useCalendarData();
+  // Calculate date range based on current view
+  const dateRange = useMemo(() => {
+    const date = new Date(currentDate);
+    let start: Date, end: Date;
+    
+    if (view === 'month') {
+      start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+      end = new Date(date.getFullYear(), date.getMonth() + 2, 0);
+    } else if (view === 'week') {
+      start = new Date(date);
+      start.setDate(date.getDate() - 14);
+      end = new Date(date);
+      end.setDate(date.getDate() + 14);
+    } else if (view === 'day') {
+      start = new Date(date);
+      start.setDate(date.getDate() - 7);
+      end = new Date(date);
+      end.setDate(date.getDate() + 7);
+    } else {
+      start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+      end = new Date(date.getFullYear(), date.getMonth() + 2, 0);
+    }
+    
+    return { start, end };
+  }, [currentDate, view]);
+
+  // Fetch calendar data with date range
+  const calendarData = useCalendarData({
+    startDate: dateRange.start,
+    endDate: dateRange.end,
+    enabled: true,
+  });
 
   // Convert data to calendar events
   const calendarEvents = useCalendarEvents({

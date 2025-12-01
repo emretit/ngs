@@ -1,20 +1,12 @@
-
-import { useState, useEffect } from "react";
-import { Progress } from "@/components/ui/progress";
-import { BarChart3 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 interface OpportunityCount {
   status: string;
   count: number;
   label: string;
   color: string;
-}
-
-interface OpportunityStatusCount {
-  status: string;
-  count: number;
 }
 
 const statusLabels: Record<string, string> = {
@@ -38,51 +30,42 @@ const statusColors: Record<string, string> = {
 };
 
 const OpportunitiesSummary = () => {
-  const [opportunityStats, setOpportunityStats] = useState<OpportunityCount[]>([]);
-  const [totalOpportunities, setTotalOpportunities] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { userData } = useCurrentUser();
   
-  useEffect(() => {
-    const fetchOpportunityStats = async () => {
-      try {
-        setLoading(true);
-        
-        // Get all opportunities
-        const { data: opportunities, error } = await supabase
-          .from('opportunities')
-          .select('status');
-        
-        if (error) throw error;
-        
-        const totalCount = opportunities?.length || 0;
-        
-        if (opportunities) {
-          // Count opportunities by status
-          const statusCounts: Record<string, number> = {};
-          opportunities.forEach(opportunity => {
-            statusCounts[opportunity.status] = (statusCounts[opportunity.status] || 0) + 1;
-          });
-          
-          const formattedData: OpportunityCount[] = Object.entries(statusCounts).map(([status, count]) => ({
-            status,
-            count,
-            label: statusLabels[status] || status,
-            color: statusColors[status] || "bg-gray-500"
-          }));
-          
-          setOpportunityStats(formattedData);
-          setTotalOpportunities(totalCount);
-        }
-      } catch (error) {
-        console.error('Error fetching opportunity stats:', error);
-        toast.error('Fırsat bilgileri yüklenemedi');
-      } finally {
-        setLoading(false);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['opportunity-stats', userData?.company_id],
+    queryFn: async () => {
+      if (!userData?.company_id) {
+        return { stats: [], total: 0 };
       }
-    };
-    
-    fetchOpportunityStats();
-  }, []);
+      
+      const { data: opportunities, error } = await supabase
+        .from('opportunities')
+        .select('status')
+        .eq('company_id', userData.company_id);
+      
+      if (error) throw error;
+      
+      const totalCount = opportunities?.length || 0;
+      
+      // Count opportunities by status
+      const statusCounts: Record<string, number> = {};
+      opportunities?.forEach(opportunity => {
+        statusCounts[opportunity.status] = (statusCounts[opportunity.status] || 0) + 1;
+      });
+      
+      const formattedData: OpportunityCount[] = Object.entries(statusCounts).map(([status, count]) => ({
+        status,
+        count,
+        label: statusLabels[status] || status,
+        color: statusColors[status] || "bg-gray-500"
+      }));
+      
+      return { stats: formattedData, total: totalCount };
+    },
+    enabled: !!userData?.company_id,
+    staleTime: 5 * 60 * 1000, // 5 dakika
+  });
   
   if (loading) {
     return (
@@ -96,9 +79,8 @@ const OpportunitiesSummary = () => {
     );
   }
   
-  // Veri yoksa da kartları göster
-  
-  const topStats = opportunityStats.slice(0, 3);
+  const opportunityStats = data?.stats || [];
+  const totalOpportunities = data?.total || 0;
   const wonCount = opportunityStats.find(s => s.status === 'won')?.count || 0;
   const totalValue = totalOpportunities * 1000;
 

@@ -143,7 +143,7 @@ export function useCashAccountDetail(accountId: string | undefined) {
 
       const { data, error } = await supabase
         .from('cash_accounts')
-        .select('*')
+        .select('id, name, description, current_balance, currency, is_active, location, responsible_person, created_at, updated_at')
         .eq('id', accountId)
         .eq('company_id', companyId)
         .single();
@@ -233,7 +233,7 @@ export function useBankAccountDetail(accountId: string | undefined) {
 
       const { data, error } = await supabase
         .from('bank_accounts')
-        .select('*')
+        .select('id, account_name, bank_name, branch_name, account_type, account_number, iban, swift_code, currency, current_balance, available_balance, credit_limit, interest_rate, is_active, start_date, end_date, notes, created_at, updated_at')
         .eq('id', accountId)
         .single();
 

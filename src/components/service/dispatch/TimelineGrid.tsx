@@ -11,7 +11,7 @@ interface TimelineGridProps {
   services: ServiceRequest[];
   selectedDate: Date;
   onSelectService: (service: ServiceRequest) => void;
-  onDropService?: (serviceId: string, technicianId: string, time: Date) => void;
+  onDropService?: (technicianId: string, time: Date) => void;
 }
 
 export const TimelineGrid = ({
@@ -80,20 +80,13 @@ export const TimelineGrid = ({
                   ))}
                 </div>
 
-                {/* Servisler */}
+              {/* Servisler */}
                 <TimelineRow
                   technician={technician}
                   services={services}
                   selectedDate={selectedDate}
                   onSelectService={onSelectService}
-                  onDropService={
-                    onDropService
-                      ? (techId, time) => {
-                          // Drop handler - şimdilik placeholder
-                          console.log("Drop:", techId, time);
-                        }
-                      : undefined
-                  }
+                  onDropService={onDropService}
                 />
               </div>
             </div>

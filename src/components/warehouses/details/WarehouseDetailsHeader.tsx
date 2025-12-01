@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Copy, Edit, Warehouse as WarehouseIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ interface WarehouseDetailsHeaderProps {
 }
 
 const WarehouseDetailsHeader = ({ warehouse, id, onEdit, onUpdate }: WarehouseDetailsHeaderProps) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const duplicateWarehouseMutation = useMutation({
@@ -43,7 +44,7 @@ const WarehouseDetailsHeader = ({ warehouse, id, onEdit, onUpdate }: WarehouseDe
       await queryClient.invalidateQueries({ queryKey: ["warehouses"] });
       toast.success("Depo başarıyla kopyalandı");
       if (newWarehouse) {
-        window.location.href = `/inventory/warehouses/${newWarehouse.id}`;
+        navigate(`/inventory/warehouses/${newWarehouse.id}`);
       }
     },
     onError: () => {

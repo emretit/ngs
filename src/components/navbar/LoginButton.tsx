@@ -48,7 +48,7 @@ const LoginButton = () => {
     }
     clearAuthTokens();
     setUser(null);
-    window.location.replace("/signin");
+    navigate("/signin", { replace: true });
   };
 
   if (user) {

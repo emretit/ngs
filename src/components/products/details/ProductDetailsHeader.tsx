@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Copy, Edit, Package2, TrendingUp } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,6 +16,7 @@ interface ProductDetailsHeaderProps {
 }
 
 const ProductDetailsHeader = ({ product, id, onEdit, onUpdate }: ProductDetailsHeaderProps) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const duplicateProductMutation = useMutation({
@@ -46,7 +47,7 @@ const ProductDetailsHeader = ({ product, id, onEdit, onUpdate }: ProductDetailsH
       await queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Ürün başarıyla kopyalandı");
       if (newProduct) {
-        window.location.href = `/product-details/${newProduct.id}`;
+        navigate(`/product-details/${newProduct.id}`);
       }
     },
     onError: () => {

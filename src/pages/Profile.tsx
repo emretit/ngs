@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { User, Camera, Save, Building, Mail, Phone, Briefcase } from "lucide-rea
 import { useCompanies } from "@/hooks/useCompanies";
 
 const Profile = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { userData, displayName, userInitials, loading: userLoading } = useCurrentUser();
   const { company } = useCompanies();
@@ -149,9 +151,6 @@ const Profile = () => {
 
       toast.success("Profil bilgileri güncellendi");
       setIsEditing(false);
-      
-      // Sayfayı yenile
-      window.location.reload();
     } catch (error: any) {
       console.error("Profile update error:", error);
       toast.error(error.message || "Profil güncellenirken bir hata oluştu");
@@ -376,7 +375,7 @@ const Profile = () => {
                       .maybeSingle();
                     
                     if (employee?.id) {
-                      window.location.href = `/employees/${employee.id}`;
+                      navigate(`/employees/${employee.id}`);
                     } else {
                       toast.error("Çalışan profili bulunamadı");
                     }

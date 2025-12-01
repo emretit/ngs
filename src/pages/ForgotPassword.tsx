@@ -3,12 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { ErrorDisplay } from "@/components/auth/ErrorDisplay";
 import { Home } from "lucide-react";
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,17 +31,10 @@ const ForgotPassword = () => {
     });
     if (error) {
       setError(error.message);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: error.message,
-      });
+      toast.error(error.message, { duration: 1000 });
     } else {
       setEmailSent(true);
-      toast({
-        title: "Başarılı",
-        description: "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.",
-      });
+      toast.success("Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.", { duration: 1000 });
     }
     setLoading(false);
   };

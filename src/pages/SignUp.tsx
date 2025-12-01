@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { ErrorDisplay } from "@/components/auth/ErrorDisplay";
 import { ArrowRight, Mail, Lock, User, Building, Eye, EyeOff, Home } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
@@ -10,7 +10,6 @@ import { parseAuthParamsFromUrl } from "@/utils/authHelpers";
 import { supabase } from "@/integrations/supabase/client";
 const SignUp = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { signUp, signInWithPassword, signOut, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,11 +60,7 @@ const SignUp = () => {
       // Sign out immediately after successful signup to prevent auto-login
       await signOut();
       // Successful registration - redirect to sign in
-      toast({
-        title: "Kayıt Başarılı",
-        description: "E-posta adresinizi kontrol edin ve hesabınızı onaylayın.",
-        duration: 1000
-      });
+      toast.success("E-posta adresinizi kontrol edin ve hesabınızı onaylayın.", { duration: 1000 });
       navigate("/signin");
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -85,12 +80,7 @@ const SignUp = () => {
         errorMessage = msg;
       }
       setError(errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Kayıt Hatası",
-        description: errorMessage,
-        duration: 1000
-      });
+      toast.error(errorMessage, { duration: 1000 });
     } finally {
       setLoading(false);
     }

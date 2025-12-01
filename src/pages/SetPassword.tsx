@@ -4,12 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Eye, EyeOff, Lock, Mail, Home, AlertCircle } from "lucide-react";
 
 const SetPassword = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -105,10 +104,7 @@ const SetPassword = () => {
 
       console.log('Password successfully updated');
       
-      toast({
-        title: "Şifre Başarıyla Belirlendi",
-        description: "Şifreniz kaydedildi. Dashboard'a yönlendiriliyorsunuz.",
-      });
+      toast.success("Şifreniz kaydedildi. Dashboard'a yönlendiriliyorsunuz.", { duration: 1000 });
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {
@@ -118,11 +114,7 @@ const SetPassword = () => {
     } catch (error: any) {
       console.error('Password setup error:', error);
       setError(error.message || "Bir hata oluştu. Lütfen tekrar deneyin.");
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: error.message || "Şifre belirleme sırasında bir hata oluştu.",
-      });
+      toast.error(error.message || "Şifre belirleme sırasında bir hata oluştu.", { duration: 1000 });
     } finally {
       setLoading(false);
     }

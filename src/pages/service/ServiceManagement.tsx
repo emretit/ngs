@@ -8,6 +8,7 @@ import { ViewType } from "@/components/service/ServiceViewToggle";
 import ServiceKanbanBoard from "@/components/service/ServiceKanbanBoard";
 import ServiceCalendarView from "@/components/service/ServiceCalendarView";
 import ServiceGanttView from "@/components/service/ServiceGanttView";
+import { ServiceDispatchBoard } from "@/components/service/dispatch/ServiceDispatchBoard";
 import { MaintenanceCalendarView } from "@/components/service/MaintenanceCalendarView";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -289,7 +290,7 @@ export default function ServiceManagement() {
               />
             )}
             {activeView === "gantt" && (
-              <ServiceGanttView
+              <ServiceDispatchBoard
                 serviceRequests={serviceRequests}
                 technicians={technicians}
                 onSelectService={handleSelectService}

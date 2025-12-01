@@ -1,5 +1,4 @@
 import React from "react";
-import { useToast } from "@/components/ui/use-toast";
 import { Opportunity } from "@/types/crm";
 import OpportunitiesTable from "./OpportunitiesTable";
 
@@ -36,8 +35,6 @@ const OpportunitiesContent = ({
   sortDirection,
   onSort
 }: OpportunitiesContentProps) => {
-  const { toast } = useToast();
-
   if (error) {
     return (
       <div className="h-full flex items-center justify-center">

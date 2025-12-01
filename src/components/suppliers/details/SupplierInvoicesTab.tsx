@@ -19,7 +19,6 @@ import {
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
 
 interface SupplierInvoicesTabProps {
   supplierId: string;
@@ -48,7 +47,6 @@ interface SalesInvoice {
 
 const SupplierInvoicesTab = ({ supplierId, supplierName }: SupplierInvoicesTabProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'purchase' | 'sales'>('purchase');
 
   // Alış faturalarını çek

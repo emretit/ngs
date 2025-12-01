@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Opportunity, OpportunityStatus, OpportunitiesState } from "@/types/crm";
 import { DropResult } from "@hello-pangea/dnd";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useCurrentUser } from "./useCurrentUser";
 
 interface UseOpportunitiesFilters {
@@ -19,7 +19,6 @@ interface UseOpportunitiesFilters {
 }
 
 export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
@@ -181,18 +180,11 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      toast({
-        title: "Fırsat güncellendi",
-        description: "Fırsat durumu başarıyla güncellendi",
-      });
+      toast.success("Fırsat durumu başarıyla güncellendi", { duration: 1000 });
     },
     onError: (error) => {
       console.error("Error updating opportunity:", error);
-      toast({
-        title: "Hata",
-        description: "Fırsat güncellenirken bir hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Fırsat güncellenirken bir hata oluştu", { duration: 1000 });
     },
   });
 
@@ -227,20 +219,12 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
 
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
       
-      toast({
-        title: "Durum güncellendi",
-        description: `Fırsat durumu başarıyla güncellendi.`,
-        className: "bg-green-50 border-green-200",
-      });
+      toast.success("Fırsat durumu başarıyla güncellendi.", { duration: 1000 });
       
       return Promise.resolve();
     } catch (error) {
       console.error("Error updating opportunity status:", error);
-      toast({
-        title: "Hata",
-        description: "Fırsat durumu güncellenirken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast.error("Fırsat durumu güncellenirken bir hata oluştu.", { duration: 1000 });
       throw error;
     }
   };
@@ -271,19 +255,12 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      toast({
-        title: "Fırsat güncellendi",
-        description: "Fırsat başarıyla güncellendi",
-      });
+      toast.success("Fırsat başarıyla güncellendi", { duration: 1000 });
 
       return true;
     } catch (error) {
       console.error("Error updating opportunity:", error);
-      toast({
-        title: "Hata",
-        description: "Fırsat güncellenirken bir hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Fırsat güncellenirken bir hata oluştu", { duration: 1000 });
       return false;
     }
   };

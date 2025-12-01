@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Supplier } from "@/types/supplier";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +46,6 @@ const SuppliersTable = ({
   sortDirection: externalSortDirection,
   onSort: externalOnSort
 }: SuppliersTableProps) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // Fallback için internal state (eğer dışarıdan prop geçilmezse)
@@ -95,18 +94,10 @@ const SuppliersTable = ({
       // await updateSupplierStatus(supplierId, newStatus);
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       
-      toast({
-        title: "Durum güncellendi",
-        description: "Tedarikçi durumu başarıyla güncellendi.",
-        className: "bg-green-50 border-green-200",
-      });
+      toast.success("Tedarikçi durumu başarıyla güncellendi.", { duration: 1000 });
     } catch (error) {
       console.error('Error updating supplier status:', error);
-      toast({
-        title: "Hata",
-        description: "Tedarikçi durumu güncellenirken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast.error("Tedarikçi durumu güncellenirken bir hata oluştu.", { duration: 1000 });
     }
   };
 
@@ -129,18 +120,10 @@ const SuppliersTable = ({
 
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       
-      toast({
-        title: "Tedarikçi silindi",
-        description: "Tedarikçi başarıyla silindi.",
-        className: "bg-green-50 border-green-200",
-      });
+      toast.success("Tedarikçi başarıyla silindi.", { duration: 1000 });
     } catch (error) {
       console.error('Error deleting supplier:', error);
-      toast({
-        title: "Hata",
-        description: error instanceof Error ? error.message : "Tedarikçi silinirken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Tedarikçi silinirken bir hata oluştu.", { duration: 1000 });
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);

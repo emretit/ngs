@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { DropResult } from "@hello-pangea/dnd";
 import { Opportunity, OpportunityStatus } from "@/types/crm";
 import { useOpportunities } from "@/hooks/useOpportunities";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import OpportunityKanbanBoard from "@/components/opportunities/OpportunityKanbanBoard";
 import OpportunitiesHeader from "@/components/opportunities/OpportunitiesHeader";
 import OpportunityFilterBar from "@/components/opportunities/OpportunityFilterBar";
@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 const Opportunities = memo(() => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [selectedOpportunities, setSelectedOpportunities] = useState<Opportunity[]>([]);
   const [filterKeyword, setFilterKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState<OpportunityStatus | "all">("all");

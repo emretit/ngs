@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Supplier } from "@/types/supplier";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatPhoneNumber } from "@/utils/phoneFormatter";
 import { formatCurrency } from "@/utils/formatters";
 
@@ -24,7 +24,6 @@ export const ContactHeader = ({ supplier, id, onEdit, onUpdate }: ContactHeaderP
   const [statusValue, setStatusValue] = useState(supplier.status);
   const [typeValue, setTypeValue] = useState(supplier.type);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -66,16 +65,9 @@ export const ContactHeader = ({ supplier, id, onEdit, onUpdate }: ContactHeaderP
         onUpdate(data);
       }
 
-      toast({
-        title: "Başarılı",
-        description: "Güncelleme başarılı",
-      });
+      toast.success("Güncelleme başarılı", { duration: 1000 });
     } catch (error) {
-      toast({
-        title: "Hata",
-        description: "Güncelleme sırasında hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Güncelleme sırasında hata oluştu", { duration: 1000 });
     } finally {
       setIsLoading(false);
     }

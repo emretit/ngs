@@ -1,5 +1,4 @@
 import React from "react";
-import { useToast } from "@/components/ui/use-toast";
 import { Proposal } from "@/types/proposal";
 import ProposalTable from "./ProposalTable";
 
@@ -32,8 +31,6 @@ const ProposalsContent = ({
   sortDirection,
   onSort
 }: ProposalsContentProps) => {
-  const { toast } = useToast();
-
   if (error) {
     return (
       <div className="h-full flex items-center justify-center">

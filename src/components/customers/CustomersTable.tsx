@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Customer } from "@/types/customer";
 import CustomersTableHeader from "./table/CustomersTableHeader";
@@ -40,7 +40,6 @@ const CustomersTable = ({
   sortDirection: externalSortDirection,
   onSort: externalOnSort
 }: CustomersTableProps) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // Fallback için internal state (eğer dışarıdan prop geçilmezse)
@@ -89,18 +88,10 @@ const CustomersTable = ({
       // await updateCustomerStatus(customerId, newStatus);
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       
-      toast({
-        title: "Durum güncellendi",
-        description: "Müşteri durumu başarıyla güncellendi.",
-        className: "bg-green-50 border-green-200",
-      });
+      toast.success("Müşteri durumu başarıyla güncellendi.", { duration: 1000 });
     } catch (error) {
       console.error('Error updating customer status:', error);
-      toast({
-        title: "Hata",
-        description: "Müşteri durumu güncellenirken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast.error("Müşteri durumu güncellenirken bir hata oluştu.", { duration: 1000 });
     }
   };
 
@@ -118,18 +109,10 @@ const CustomersTable = ({
       // await deleteCustomer(customerToDelete.id);
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       
-      toast({
-        title: "Müşteri silindi",
-        description: "Müşteri başarıyla silindi.",
-        className: "bg-green-50 border-green-200",
-      });
+      toast.success("Müşteri başarıyla silindi.", { duration: 1000 });
     } catch (error) {
       console.error('Error deleting customer:', error);
-      toast({
-        title: "Hata",
-        description: "Müşteri silinirken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast.error("Müşteri silinirken bir hata oluştu.", { duration: 1000 });
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);

@@ -1,5 +1,4 @@
 import React from "react";
-import { useToast } from "@/components/ui/use-toast";
 import { Supplier } from "@/types/supplier";
 import SuppliersTable from "./SuppliersTable";
 import InfiniteScroll from "@/components/ui/infinite-scroll";
@@ -43,8 +42,6 @@ const SuppliersContent = ({
   sortDirection,
   onSort
 }: SuppliersContentProps) => {
-  const { toast } = useToast();
-
   if (error) {
     return (
       <div className="h-full flex items-center justify-center">

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const paymentSchema = z.object({
@@ -34,7 +34,6 @@ interface PaymentDialogProps {
 }
 
 export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType }: PaymentDialogProps) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
@@ -215,19 +214,12 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
       queryClient.invalidateQueries({ queryKey: ["supplier-payments", supplier.id] });
       queryClient.invalidateQueries({ queryKey: ["supplier-payment-stats", supplier.id] });
 
-      toast({
-        title: "Ödeme başarıyla oluşturuldu",
-        description: "Ödeme kaydedildi ve bakiyeler güncellendi.",
-      });
+      toast.success("Ödeme kaydedildi ve bakiyeler güncellendi.", { duration: 1000 });
 
       onOpenChange(false);
     } catch (error) {
       console.error("Payment error:", error);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Ödeme oluşturulurken bir hata oluştu.",
-      });
+      toast.error("Ödeme oluşturulurken bir hata oluştu.", { duration: 1000 });
     }
   }
 

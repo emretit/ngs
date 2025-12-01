@@ -1,12 +1,11 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthContext";
 
 export const useLogout = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { signOut } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -19,10 +18,7 @@ export const useLogout = () => {
       // Treat any signOut error as non-fatal, continue with cleanup
       console.warn('Logout warning:', error);
     } finally {
-      toast({
-        title: "Başarılı",
-        description: "Başarıyla çıkış yapıldı.",
-      });
+      toast.success("Başarıyla çıkış yapıldı.", { duration: 1000 });
       navigate("/signin", { replace: true });
       setIsLoggingOut(false);
     }

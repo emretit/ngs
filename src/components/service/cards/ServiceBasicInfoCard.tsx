@@ -116,7 +116,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
               value={formData.service_title}
               onChange={(e) => handleInputChange('service_title', e.target.value)}
               placeholder="Örn: Klima bakımı, Elektrik arızası..."
-              className="h-10 text-sm"
+              className="h-8 text-xs"
               required
             />
           </div>
@@ -130,7 +130,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
               value={formData.slip_number}
               onChange={(e) => handleInputChange('slip_number', e.target.value)}
               placeholder="Fiş numarası (opsiyonel)"
-              className="h-10 text-sm"
+              className="h-8 text-xs"
             />
           </div>
         </div>
@@ -144,7 +144,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
               value={formData.service_type}
               onValueChange={(value) => handleInputChange('service_type', value)}
             >
-              <SelectTrigger className="h-10 text-sm">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Servis türü seçin..." />
               </SelectTrigger>
               <SelectContent>
@@ -168,7 +168,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
               value={formData.service_status}
               onValueChange={(value) => handleInputChange('service_status', value)}
             >
-              <SelectTrigger className="h-10 text-sm">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Durum seçin..." />
               </SelectTrigger>
               <SelectContent>
@@ -222,8 +222,8 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
             value={formData.service_request_description}
             onChange={(e) => handleInputChange('service_request_description', e.target.value)}
             placeholder="Servisin detaylarını, yapılması gereken işlemleri ve özel notları açıklayın..."
-            rows={4}
-            className="resize-none text-sm min-h-[100px]"
+            rows={3}
+            className="resize-none text-xs"
             required
           />
         </div>
@@ -243,7 +243,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
               }
             }}
             placeholder="Adres aramak için en az 3 karakter girin..."
-            className="h-10 text-sm"
+            className="h-8 text-xs"
           />
           
           {/* Autocomplete Dropdown */}
@@ -284,7 +284,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
               value={formData.service_priority}
               onValueChange={(value) => handleInputChange('service_priority', value as any)}
             >
-              <SelectTrigger className={`h-10 text-sm ${priorityConfig[formData.service_priority].color} border font-medium`}>
+              <SelectTrigger className={`h-8 text-xs ${priorityConfig[formData.service_priority].color} border font-medium`}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -309,7 +309,7 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
               value={formData.assigned_technician || "unassigned"}
               onValueChange={(value) => handleInputChange('assigned_technician', value === 'unassigned' ? null : value)}
             >
-              <SelectTrigger className="h-10 text-sm">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Teknisyen seçin (opsiyonel)" />
               </SelectTrigger>
               <SelectContent>

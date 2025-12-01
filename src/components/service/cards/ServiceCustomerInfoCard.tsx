@@ -101,7 +101,7 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
                 variant="outline"
                 role="combobox"
                 aria-expanded={partnerPopoverOpen}
-                className="w-full h-10 text-sm justify-between"
+                className="w-full h-8 text-xs justify-between"
               >
                 <div className="flex items-center">
                   {formData.customer_id ? (
@@ -119,12 +119,12 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] max-w-[90vw] p-0" align="start">
-              <div className="p-4 border-b">
+              <div className="p-1.5 border-b">
                 <Input
                   placeholder="Arama..."
                   value={partnerSearchQuery}
                   onChange={(e) => setPartnerSearchQuery(e.target.value)}
-                  className="w-full"
+                  className="w-full h-8 text-xs"
                 />
               </div>
               
@@ -307,7 +307,7 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
                 value={formData.contact_phone}
                 onChange={(e) => handleInputChange('contact_phone', e.target.value)}
                 placeholder="0(555) 123 45 67"
-                className="h-10 text-sm"
+                className="h-8 text-xs"
               />
             </div>
 
@@ -320,7 +320,7 @@ const ServiceCustomerInfoCard: React.FC<ServiceCustomerInfoCardProps> = ({
                 value={formData.contact_email}
                 onChange={(e) => handleInputChange('contact_email', e.target.value)}
                 placeholder="email@ornek.com"
-                className="h-10 text-sm"
+                className="h-8 text-xs"
               />
             </div>
           </div>

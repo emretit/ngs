@@ -319,7 +319,7 @@ export function useCreditCardDetail(cardId: string | undefined) {
 
       const { data, error } = await supabase
         .from('credit_cards')
-        .select('*')
+        .select('id, card_name, card_number, card_type, bank_name, current_balance, credit_limit, available_limit, status, expiry_date, currency, notes, payment_due_date, minimum_payment, last_payment_date, is_active, created_at, updated_at')
         .eq('id', cardId)
         .single();
 
@@ -414,7 +414,7 @@ export function usePartnerAccountDetail(accountId: string | undefined) {
       // Company ID kontrolünü kaldırdık - account ID zaten unique
       const { data, error } = await supabase
         .from('partner_accounts')
-        .select('*')
+        .select('id, partner_name, partner_type, account_type, current_balance, initial_capital, profit_share, ownership_percentage, currency, is_active, location, responsible_person, notes, start_date, end_date, created_at, updated_at')
         .eq('id', accountId)
         .single();
 

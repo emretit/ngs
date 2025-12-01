@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { TechnicianSidebar } from "./TechnicianSidebar";
+import { TimelineGrid } from "./TimelineGrid";
 import { DispatchTechnician, Technician, ViewMode } from "./types";
 import { ServiceRequest } from "@/hooks/useServiceRequests";
 import { startOfDay, endOfDay, isWithinInterval, startOfWeek, endOfWeek } from "date-fns";
@@ -170,18 +171,15 @@ export const ServiceDispatchBoard = ({
           onSelectTechnician={setSelectedTechnicianId}
         />
 
-        {/* Orta: Timeline Grid (Placeholder) */}
-        <Card className="flex-1 p-6">
-          <div className="h-full flex items-center justify-center text-muted-foreground">
-            <div className="text-center space-y-2">
-              <Calendar className="h-12 w-12 mx-auto opacity-50" />
-              <p className="text-lg font-medium">Zaman Çizelgesi</p>
-              <p className="text-sm">
-                Timeline grid bileşeni bir sonraki adımda eklenecek
-              </p>
-            </div>
-          </div>
-        </Card>
+        {/* Orta: Timeline Grid */}
+        <div className="flex-1 min-w-0">
+          <TimelineGrid
+            technicians={dispatchTechnicians}
+            services={serviceRequests}
+            selectedDate={selectedDate}
+            onSelectService={onSelectService}
+          />
+        </div>
 
         {/* Sağ: Detay Paneli */}
         <Card className="w-80 p-4">

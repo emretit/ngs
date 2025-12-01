@@ -59,19 +59,37 @@ export const InviteUserDialog = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if it's a FunctionsHttpError with response body
+        if (error.message) {
+          throw new Error(error.message);
+        }
+        throw error;
+      }
+      
+      // Check if response contains an error
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+      
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['users-management'] });
-      toast.success("Şifre belirleme maili gönderildi");
+      
+      // Show appropriate success message
+      const message = data?.message || "Şifre belirleme maili gönderildi";
+      toast.success(message);
+      
       setNewUserEmail("");
       setSelectedRole("Admin");
       setIsOpen(false);
     },
     onError: (error: any) => {
-      toast.error("Davet gönderilirken bir hata oluştu: " + error.message);
+      console.error('Invite error:', error);
+      const message = error.message || "Davet gönderilirken bir hata oluştu";
+      toast.error(message);
     },
   });
 

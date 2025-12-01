@@ -8692,6 +8692,65 @@ export type Database = {
           },
         ]
       }
+      system_parameters: {
+        Row: {
+          category: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_editable: boolean | null
+          is_system_parameter: boolean | null
+          parameter_key: string
+          parameter_type: string | null
+          parameter_value: string | null
+          updated_at: string
+          updated_by: string | null
+          validation_rules: Json | null
+        }
+        Insert: {
+          category?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_editable?: boolean | null
+          is_system_parameter?: boolean | null
+          parameter_key: string
+          parameter_type?: string | null
+          parameter_value?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          validation_rules?: Json | null
+        }
+        Update: {
+          category?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_editable?: boolean | null
+          is_system_parameter?: boolean | null
+          parameter_key?: string
+          parameter_type?: string | null
+          parameter_value?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_parameters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       turkey_address_sync: {
         Row: {
           created_at: string
@@ -11060,6 +11119,10 @@ export type Database = {
               error: true
             } & "Could not choose the best candidate function between: public.has_role(required_role => text), public.has_role(required_role => user_role). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
           }
+      initialize_default_parameters: {
+        Args: { target_company_id: string }
+        Returns: undefined
+      }
       is_super_admin: { Args: { user_id_param: string }; Returns: boolean }
       log_exchange_rate_schedule: { Args: never; Returns: undefined }
       longtransactionsenabled: { Args: never; Returns: boolean }

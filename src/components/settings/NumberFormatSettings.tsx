@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Save, RefreshCw, Info, AlertTriangle, CheckCircle, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { validateFormat, sanitizeFormat, resetSequence } from '@/utils/numberFormat';
-import { useAuth } from '@/hooks/useAuth';
+import { useCurrentCompany } from '@/hooks/useCurrentCompany';
 
 const NUMBER_FORMAT_TYPES = [
   {
@@ -51,7 +51,7 @@ const NUMBER_FORMAT_TYPES = [
 
 export const NumberFormatSettings: React.FC = () => {
   const { getParameterValue, updateParameter, createParameter, parameters, loading: paramsLoading, error: paramsError } = useSystemParameters();
-  const { user } = useAuth();
+  const { companyId } = useCurrentCompany();
   
   const [formats, setFormats] = useState(() =>
     NUMBER_FORMAT_TYPES.map(type => ({
@@ -168,7 +168,7 @@ export const NumberFormatSettings: React.FC = () => {
     if (!confirm(`${sequenceKey} için sıralı numarayı sıfırlamak istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) return;
 
     try {
-      await resetSequence(sequenceKey, user?.user_metadata?.company_id, 1);
+      await resetSequence(sequenceKey, companyId, 1);
       toast.success('Sıralı numara başarıyla sıfırlandı');
     } catch (error) {
       console.error('Error resetting sequence:', error);

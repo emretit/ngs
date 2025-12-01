@@ -7,6 +7,7 @@ const UsersSettings = React.lazy(() => import("@/pages/settings/UsersSettings"))
 const RolesSettings = React.lazy(() => import("@/pages/settings/RolesSettings"));
 const NilveraSettingsPage = React.lazy(() => import("@/pages/settings/NilveraSettings"));
 const SystemSettingsPage = React.lazy(() => import("@/pages/settings/SystemSettings"));
+const SystemParametersPage = React.lazy(() => import("@/pages/settings/SystemParameters"));
 const PdfTemplates = React.lazy(() => import("@/pages/PdfTemplates"));
 const PdfTemplateEditor = React.lazy(() => import("@/pages/templates/PdfTemplateEditor"));
 const ServiceTemplateEdit = React.lazy(() => import("@/pages/service/ServiceTemplateEdit"));
@@ -22,6 +23,7 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/subscription", component: Subscription, protected: true },
   { path: "/nilvera", component: NilveraSettingsPage, protected: true },
   { path: "/system", component: SystemSettingsPage, protected: true },
+  { path: "/system-parameters", component: SystemParametersPage, protected: true },
   { path: "/pdf-templates", component: PdfTemplates, protected: true },
   { path: "/audit-logs", component: AuditLogs, protected: true },
   { path: "/notifications", component: NotificationSettings, protected: true },

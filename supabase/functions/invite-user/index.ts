@@ -255,6 +255,18 @@ serve(async (req) => {
 
       if (linkError || !linkData?.properties?.action_link) {
         console.error('Invite link error:', linkError);
+        
+        // Check if it's an email_exists error
+        if (linkError && linkError.code === 'email_exists') {
+          return new Response(
+            JSON.stringify({ 
+              error: 'Bu e-posta adresi zaten kayıtlı',
+              code: 'email_exists'
+            }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
         return new Response(
           JSON.stringify({ error: 'Davet bağlantısı oluşturulamadı' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

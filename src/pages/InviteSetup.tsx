@@ -20,9 +20,10 @@ const InviteSetup = () => {
   const [sessionReady, setSessionReady] = useState(false);
   const [searchParams] = useSearchParams();
   useEffect(() => {
-    // Parse URL hash parameters directly
+    // Parse URL hash parameters for invite tokens (SetPassword.tsx ile aynı mantık)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get("access_token");
+    const refreshToken = hashParams.get("refresh_token");
     const type = hashParams.get("type");
     const emailParam = hashParams.get("email") || searchParams.get('email');
     
@@ -34,62 +35,45 @@ const InviteSetup = () => {
       searchParams: window.location.search 
     });
     
-    // Accept invite if we have access_token, regardless of type
+    // Check if we have access token from invite link
     if (accessToken) {
-      setInviteToken(accessToken);
-      if (emailParam) {
+      // Manuel session oluştur (SetPassword.tsx'teki gibi)
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || ''
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error('Session setup error:', error);
+          setError("Bağlantı geçersiz veya süresi dolmuş. Yöneticinizden yeni bir davet linki isteyin.");
+          return;
+        }
+        
+        console.log('Session successfully created:', data.session?.user?.email);
+        
+        // Session başarıyla oluşturuldu
+        setSessionReady(true);
+        setInviteToken(accessToken);
+        
+        // Email'i ayarla
+        if (data.session?.user?.email) {
+          setEmail(data.session.user.email);
+        } else if (emailParam) {
+          setEmail(emailParam);
+        }
+        
+        // URL hash'ini temizle
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      });
+    } else {
+      // If no access token and no email, redirect to signup
+      if (!emailParam) {
+        console.log('No access token or email found, redirecting to signup');
+        navigate("/signup");
+      } else {
         setEmail(emailParam);
       }
-      console.log('Invite token set successfully');
-    } else {
-      // If no access token, redirect to signup
-      console.log('No access token found, redirecting to signup');
-      navigate("/signup");
     }
   }, [navigate, searchParams]);
-
-  // Session detection with onAuthStateChange
-  useEffect(() => {
-    console.log('Setting up auth state listener...');
-    
-    // Önce mevcut session'ı kontrol et
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        console.log('Existing session found:', session.user?.email);
-        setSessionReady(true);
-      }
-    });
-
-    // Auth state değişikliklerini dinle
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
-      
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        if (session) {
-          console.log('Session established via auth state change');
-          setSessionReady(true);
-          
-          // URL hash'ini temizle (sayfa yenilendiğinde tekrar işlem yapılmasını engelle)
-          if (window.location.hash) {
-            window.history.replaceState(null, '', window.location.pathname);
-          }
-        }
-      }
-    });
-
-    // Timeout - 10 saniye içinde session oluşmazsa hata göster
-    const timeout = setTimeout(() => {
-      if (!sessionReady && inviteToken) {
-        console.error('Session timeout - no session after 10 seconds');
-        setError("Davet linki işlenirken zaman aşımı oluştu. Lütfen sayfayı yenileyin veya yöneticinizden yeni bir davet linki isteyin.");
-      }
-    }, 10000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
-  }, [inviteToken, sessionReady]);
   const handlePasswordSetup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -109,29 +93,13 @@ const InviteSetup = () => {
       
       // Session'ın hazır olup olmadığını kontrol et
       if (!sessionReady) {
-        console.error('Session not ready yet');
-        
-        // Hash'te token var ama session yok - Supabase işleyememiş olabilir
-        if (inviteToken) {
-          setError("Davet linki işleniyor, lütfen birkaç saniye bekleyin ve tekrar deneyin.");
-        } else {
-          setError("Geçersiz davet linki. Lütfen yöneticinizden yeni bir davet linki isteyin.");
-        }
-        setLoading(false);
-        return;
-      }
-
-      // Session'ı al
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        console.error('No session found despite sessionReady=true');
-        setError("Oturum bulunamadı. Lütfen sayfayı yenileyin veya yöneticinizden yeni bir davet linki isteyin.");
+        console.error('Session not ready - no session created from invite link');
+        setError("Davet linki geçersiz veya süresi dolmuş. Lütfen yöneticinizden yeni bir davet linki isteyin.");
         setLoading(false);
         return;
       }
       
-      console.log('Session confirmed, proceeding with user update');
+      console.log('Session ready, proceeding with user update');
       // Kullanıcının şifresini ve profilini güncelle
       console.log('Updating user password and profile...');
       const { error: updateError } = await supabase.auth.updateUser({

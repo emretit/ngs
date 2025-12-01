@@ -60,28 +60,33 @@ const InviteSetup = () => {
     }
     try {
       console.log('Starting invite setup process...');
+      
       // Önce mevcut session'ı kontrol et
       const { data: { session: existingSession } } = await supabase.auth.getSession();
+      
       if (!existingSession) {
-        console.log('No existing session, setting session with access token:', inviteToken);
-        // Session yoksa, access token ile session kur
-        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-          access_token: inviteToken!,
-          refresh_token: ''
+        console.log('No existing session, verifying OTP token:', inviteToken?.substring(0, 20) + '...');
+        
+        // Invite token'ını verifyOtp ile doğrula (setSession değil!)
+        const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: inviteToken!,
+          type: 'invite'
         });
-        if (sessionError) {
-          console.error('Session setup error:', sessionError);
+        
+        if (verifyError) {
+          console.error('OTP verification error:', verifyError);
           
           // Provide more detailed error based on error type
-          if (sessionError.message?.includes('expired') || sessionError.message?.includes('invalid')) {
-            setError("Davet linkinizin süresi dolmuş. Lütfen yöneticinizden yeni bir davet linki isteyin. (Link geçerlilik süresi: 1 saat)");
+          if (verifyError.message?.includes('expired') || verifyError.message?.includes('invalid') || verifyError.message?.includes('Token')) {
+            setError("Davet linkinizin süresi dolmuş veya geçersiz. Lütfen yöneticinizden yeni bir davet linki isteyin. (Link geçerlilik süresi: 1 saat)");
           } else {
-            setError("Davet bağlantısı geçersiz veya süresi dolmuş. Lütfen yöneticinizle iletişime geçin.");
+            setError(`Davet bağlantısı doğrulanamadı: ${verifyError.message}`);
           }
           setLoading(false);
           return;
         }
-        console.log('Session successfully set:', sessionData.session?.user?.email);
+        
+        console.log('OTP verified successfully, user:', verifyData.user?.email);
       } else {
         console.log('Existing session found:', existingSession.user?.email);
       }

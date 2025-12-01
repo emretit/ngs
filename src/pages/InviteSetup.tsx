@@ -61,34 +61,31 @@ const InviteSetup = () => {
     try {
       console.log('Starting invite setup process...');
       
-      // Önce mevcut session'ı kontrol et
-      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      // Supabase invite link'i otomatik olarak verify eder ve session oluşturur
+      // Biz sadece session'ın oluşmasını beklemeliyiz
+      let session = null;
+      let attempts = 0;
+      const maxAttempts = 10;
       
-      if (!existingSession) {
-        console.log('No existing session, verifying OTP token:', inviteToken?.substring(0, 20) + '...');
-        
-        // Invite token'ını verifyOtp ile doğrula (setSession değil!)
-        const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: inviteToken!,
-          type: 'invite'
-        });
-        
-        if (verifyError) {
-          console.error('OTP verification error:', verifyError);
-          
-          // Provide more detailed error based on error type
-          if (verifyError.message?.includes('expired') || verifyError.message?.includes('invalid') || verifyError.message?.includes('Token')) {
-            setError("Davet linkinizin süresi dolmuş veya geçersiz. Lütfen yöneticinizden yeni bir davet linki isteyin. (Link geçerlilik süresi: 1 saat)");
-          } else {
-            setError(`Davet bağlantısı doğrulanamadı: ${verifyError.message}`);
-          }
-          setLoading(false);
-          return;
+      // Session oluşana kadar kontrol et (max 5 saniye)
+      while (!session && attempts < maxAttempts) {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession) {
+          session = currentSession;
+          console.log('Session found:', session.user?.email);
+          break;
         }
-        
-        console.log('OTP verified successfully, user:', verifyData.user?.email);
-      } else {
-        console.log('Existing session found:', existingSession.user?.email);
+        attempts++;
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      if (!session) {
+        console.error('No session found after invite link');
+        setError("Davet linkinizin süresi dolmuş veya geçersiz. Lütfen yöneticinizden yeni bir davet linki isteyin. (Link geçerlilik süresi: 1 saat)");
+        setLoading(false);
+        return;
       }
       // Kullanıcının şifresini ve profilini güncelle
       console.log('Updating user password and profile...');

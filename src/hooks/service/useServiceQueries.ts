@@ -66,8 +66,7 @@ export const useServiceQueries = (): ServiceQueriesResult => {
       }));
     },
     enabled: !!userData?.company_id,
-    refetchOnWindowFocus: true,
-    staleTime: 60000,
+    staleTime: 5 * 60 * 1000, // 5 dakika
   });
 
   // Get a single service request

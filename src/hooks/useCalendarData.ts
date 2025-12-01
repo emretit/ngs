@@ -1,606 +1,323 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
-import { handleSupabaseError } from '@/utils/supabaseErrorHandler';
+import { useMemo } from 'react';
 
-export const useCalendarData = () => {
+interface CalendarDataOptions {
+  startDate?: Date;
+  endDate?: Date;
+  enabled?: boolean;
+}
+
+export const useCalendarData = (options: CalendarDataOptions = {}) => {
   const { userData } = useCurrentUser();
   const { getClient } = useAuth();
+  
+  // Default olarak mevcut ay + önceki/sonraki ay
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    const start = options.startDate || new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = options.endDate || new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    return { start: start.toISOString(), end: end.toISOString() };
+  }, [options.startDate, options.endDate]);
 
-  // Fetch Activities
-  const { data: activities = [], isLoading: isLoadingActivities } = useQuery({
-    queryKey: ["calendar-activities", userData?.company_id],
+  // Ana aktiviteler ve eventler - yüksek öncelikli
+  const { data: coreData, isLoading: isLoadingCore } = useQuery({
+    queryKey: ["calendar-core-data", userData?.company_id, dateRange.start, dateRange.end],
     queryFn: async () => {
-      if (!userData?.company_id) return [];
+      if (!userData?.company_id) return { activities: [], opportunities: [], events: [] };
       const client = getClient();
-      const { data, error } = await client
-        .from("activities")
-        .select(`
-          *,
-          assignee:assignee_id(
-            id,
-            first_name,
-            last_name
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .not("due_date", "is", null)
-        .order("due_date", { ascending: true });
+      
+      const [activitiesRes, opportunitiesRes, eventsRes] = await Promise.all([
+        client
+          .from("activities")
+          .select(`*, assignee:assignee_id(id, first_name, last_name)`)
+          .eq("company_id", userData.company_id)
+          .not("due_date", "is", null)
+          .gte("due_date", dateRange.start)
+          .lte("due_date", dateRange.end),
+        client
+          .from("opportunities")
+          .select(`*, customer:customers(id, name, company)`)
+          .eq("company_id", userData.company_id)
+          .not("expected_close_date", "is", null)
+          .gte("expected_close_date", dateRange.start)
+          .lte("expected_close_date", dateRange.end),
+        client
+          .from("events")
+          .select("id, company_id, title, description, start_time, end_time, event_type, category, assigned_to, created_at, updated_at")
+          .eq("company_id", userData.company_id)
+          .not("start_time", "is", null)
+          .gte("start_time", dateRange.start)
+          .lte("start_time", dateRange.end)
+      ]);
 
-      if (error) throw error;
-      return data || [];
+      return {
+        activities: activitiesRes.data || [],
+        opportunities: opportunitiesRes.data || [],
+        events: eventsRes.data || [],
+      };
     },
-    enabled: !!userData?.company_id
+    enabled: !!userData?.company_id && (options.enabled !== false),
+    staleTime: 3 * 60 * 1000, // 3 dakika
   });
 
-  // Fetch Orders
-  const { data: orders = [], isLoading: isLoadingOrders } = useQuery({
-    queryKey: ["calendar-orders", userData?.company_id],
+  // CRM verileri - orta öncelikli
+  const { data: crmData, isLoading: isLoadingCRM } = useQuery({
+    queryKey: ["calendar-crm-data", userData?.company_id, dateRange.start, dateRange.end],
     queryFn: async () => {
-      if (!userData?.company_id) return [];
+      if (!userData?.company_id) return { proposals: [], orders: [], deliveries: [] };
       const client = getClient();
-      const { data, error } = await client
-        .from("orders")
-        .select(`
-          *,
-          customer:customers(
-            id,
-            name,
-            company
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .order("order_date", { ascending: true });
+      
+      const [proposalsRes, ordersRes, deliveriesRes] = await Promise.all([
+        client
+          .from("proposals")
+          .select(`*, customer:customers(id, name, company)`)
+          .eq("company_id", userData.company_id)
+          .gte("offer_date", dateRange.start)
+          .lte("offer_date", dateRange.end),
+        client
+          .from("orders")
+          .select(`*, customer:customers(id, name, company)`)
+          .eq("company_id", userData.company_id)
+          .gte("order_date", dateRange.start)
+          .lte("order_date", dateRange.end),
+        client
+          .from("deliveries")
+          .select(`*, customer:customers(id, name, company)`)
+          .eq("company_id", userData.company_id)
+          .gte("planned_delivery_date", dateRange.start)
+          .lte("planned_delivery_date", dateRange.end)
+      ]);
 
-      if (error) throw error;
-      return data || [];
+      return {
+        proposals: proposalsRes.data || [],
+        orders: ordersRes.data || [],
+        deliveries: deliveriesRes.data || [],
+      };
     },
-    enabled: !!userData?.company_id
+    enabled: !!userData?.company_id && (options.enabled !== false),
+    staleTime: 5 * 60 * 1000, // 5 dakika
   });
 
-  // Fetch Deliveries
-  const { data: deliveries = [], isLoading: isLoadingDeliveries } = useQuery({
-    queryKey: ["calendar-deliveries", userData?.company_id],
+  // Finansal veriler - düşük öncelikli, isteğe bağlı
+  const { data: financialData, isLoading: isLoadingFinancial } = useQuery({
+    queryKey: ["calendar-financial-data", userData?.company_id, dateRange.start, dateRange.end],
     queryFn: async () => {
-      if (!userData?.company_id) return [];
+      if (!userData?.company_id) return { payments: [], expenses: [], checks: [], salesInvoices: [], purchaseInvoices: [] };
       const client = getClient();
-      const { data, error } = await client
-        .from("deliveries")
-        .select(`
-          *,
-          customer:customers(
-            id,
-            name,
-            company
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .order("planned_delivery_date", { ascending: true });
+      
+      const [paymentsRes, expensesRes, checksRes, salesInvoicesRes, purchaseInvoicesRes] = await Promise.all([
+        client
+          .from("payments")
+          .select("id, company_id, amount, currency, payment_date, payment_type, description, customer_id, supplier_id, account_id, created_at, updated_at")
+          .eq("company_id", userData.company_id)
+          .not("payment_date", "is", null)
+          .gte("payment_date", dateRange.start)
+          .lte("payment_date", dateRange.end),
+        client
+          .from("expenses")
+          .select("id, company_id, amount, type, date, category_id, description, payment_account_type, payment_account_id, created_at, updated_at")
+          .eq("company_id", userData.company_id)
+          .not("date", "is", null)
+          .gte("date", dateRange.start)
+          .lte("date", dateRange.end),
+        client
+          .from("checks")
+          .select("id, company_id, amount, due_date, issue_date, check_number, bank, status, notes, issuer_supplier_id, payee_supplier_id, created_at, updated_at")
+          .eq("company_id", userData.company_id)
+          .not("due_date", "is", null)
+          .gte("due_date", dateRange.start)
+          .lte("due_date", dateRange.end),
+        client
+          .from("sales_invoices")
+          .select(`*, customer:customers(id, name, company)`)
+          .eq("company_id", userData.company_id)
+          .gte("fatura_tarihi", dateRange.start)
+          .lte("fatura_tarihi", dateRange.end),
+        client
+          .from("purchase_invoices")
+          .select(`*, supplier:suppliers(id, name, company)`)
+          .eq("company_id", userData.company_id)
+          .gte("invoice_date", dateRange.start)
+          .lte("invoice_date", dateRange.end)
+      ]);
 
-      if (error) throw error;
-      return data || [];
+      return {
+        payments: paymentsRes.data || [],
+        expenses: expensesRes.data || [],
+        checks: checksRes.data || [],
+        salesInvoices: salesInvoicesRes.data || [],
+        purchaseInvoices: purchaseInvoicesRes.data || [],
+      };
     },
-    enabled: !!userData?.company_id
+    enabled: !!userData?.company_id && (options.enabled !== false),
+    staleTime: 10 * 60 * 1000, // 10 dakika - daha az güncellenir
   });
 
-  // Fetch Proposals
-  const { data: proposals = [], isLoading: isLoadingProposals } = useQuery({
-    queryKey: ["calendar-proposals", userData?.company_id],
+  // Operasyonel veriler - lazy load
+  const { data: operationalData, isLoading: isLoadingOperational } = useQuery({
+    queryKey: ["calendar-operational-data", userData?.company_id, dateRange.start, dateRange.end],
     queryFn: async () => {
-      if (!userData?.company_id) return [];
+      if (!userData?.company_id) return { 
+        workOrders: [], serviceRequests: [], purchaseOrders: [], 
+        employeeLeaves: [], grns: [], rfqs: [], purchaseRequests: [],
+        inventoryTransactions: []
+      };
       const client = getClient();
-      const { data, error } = await client
-        .from("proposals")
-        .select(`
-          *,
-          customer:customers(
-            id,
-            name,
-            company
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .order("offer_date", { ascending: true });
+      
+      const [workOrdersRes, serviceRequestsRes, purchaseOrdersRes, employeeLeavesRes, 
+             grnsRes, rfqsRes, purchaseRequestsRes, inventoryTransactionsRes] = await Promise.all([
+        client
+          .from("work_orders")
+          .select("id, company_id, title, description, scheduled_start, scheduled_end, status, priority, assigned_to, customer_id, sla_due, created_at, updated_at")
+          .eq("company_id", userData.company_id)
+          .gte("scheduled_start", dateRange.start)
+          .lte("scheduled_start", dateRange.end),
+        client
+          .from("service_requests")
+          .select(`*, customer:customers(id, name, company)`)
+          .eq("company_id", userData.company_id)
+          .gte("service_due_date", dateRange.start)
+          .lte("service_due_date", dateRange.end),
+        client
+          .from("purchase_orders")
+          .select(`*, supplier:suppliers(id, name, company)`)
+          .eq("company_id", userData.company_id)
+          .gte("order_date", dateRange.start)
+          .lte("order_date", dateRange.end),
+        client
+          .from("employee_leaves")
+          .select(`*, employee:employees(id, first_name, last_name)`)
+          .eq("company_id", userData.company_id)
+          .gte("start_date", dateRange.start)
+          .lte("start_date", dateRange.end),
+        client
+          .from("grns")
+          .select(`*, po:purchase_orders(id, order_number)`)
+          .eq("company_id", userData.company_id)
+          .not("received_date", "is", null)
+          .gte("received_date", dateRange.start)
+          .lte("received_date", dateRange.end),
+        client
+          .from("rfqs")
+          .select("*")
+          .eq("company_id", userData.company_id)
+          .not("due_date", "is", null)
+          .gte("due_date", dateRange.start)
+          .lte("due_date", dateRange.end),
+        client
+          .from("purchase_requests")
+          .select("*")
+          .eq("company_id", userData.company_id)
+          .gte("requested_date", dateRange.start)
+          .lte("requested_date", dateRange.end),
+        client
+          .from("inventory_transactions")
+          .select("*")
+          .eq("company_id", userData.company_id)
+          .not("transaction_date", "is", null)
+          .gte("transaction_date", dateRange.start)
+          .lte("transaction_date", dateRange.end)
+      ]);
 
-      if (error) throw error;
-      return data || [];
+      return {
+        workOrders: workOrdersRes.data || [],
+        serviceRequests: serviceRequestsRes.data || [],
+        purchaseOrders: purchaseOrdersRes.data || [],
+        employeeLeaves: employeeLeavesRes.data || [],
+        grns: grnsRes.data || [],
+        rfqs: rfqsRes.data || [],
+        purchaseRequests: purchaseRequestsRes.data || [],
+        inventoryTransactions: inventoryTransactionsRes.data || [],
+      };
     },
-    enabled: !!userData?.company_id
+    enabled: !!userData?.company_id && (options.enabled !== false),
+    staleTime: 10 * 60 * 1000, // 10 dakika
   });
 
-  // Fetch Sales Invoices
-  const { data: salesInvoices = [], isLoading: isLoadingSalesInvoices } = useQuery({
-    queryKey: ["calendar-sales-invoices", userData?.company_id],
+  // Araç verileri - çok düşük öncelikli
+  const { data: vehicleData, isLoading: isLoadingVehicle } = useQuery({
+    queryKey: ["calendar-vehicle-data", userData?.company_id, dateRange.start, dateRange.end],
     queryFn: async () => {
-      if (!userData?.company_id) return [];
+      if (!userData?.company_id) return { 
+        vehicleMaintenance: [], vehicleDocuments: [], vehicleIncidents: [] 
+      };
       const client = getClient();
-      const { data, error } = await client
-        .from("sales_invoices")
-        .select(`
-          *,
-          customer:customers(
-            id,
-            name,
-            company
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .order("fatura_tarihi", { ascending: true });
+      
+      const [maintenanceRes, documentsRes, incidentsRes] = await Promise.all([
+        client
+          .from("vehicle_maintenance")
+          .select(`*, vehicle:vehicles(id, plate_number, brand, model)`)
+          .eq("company_id", userData.company_id)
+          .not("maintenance_date", "is", null)
+          .gte("maintenance_date", dateRange.start)
+          .lte("maintenance_date", dateRange.end),
+        client
+          .from("vehicle_documents")
+          .select(`*, vehicle:vehicles(id, plate_number, brand, model)`)
+          .eq("company_id", userData.company_id)
+          .not("expiry_date", "is", null)
+          .gte("expiry_date", dateRange.start)
+          .lte("expiry_date", dateRange.end),
+        client
+          .from("vehicle_incidents")
+          .select(`*, vehicle:vehicles(id, plate_number, brand, model)`)
+          .eq("company_id", userData.company_id)
+          .not("incident_date", "is", null)
+          .gte("incident_date", dateRange.start)
+          .lte("incident_date", dateRange.end)
+      ]);
 
-      if (error) throw error;
-      return data || [];
+      return {
+        vehicleMaintenance: maintenanceRes.data || [],
+        vehicleDocuments: documentsRes.data || [],
+        vehicleIncidents: incidentsRes.data || [],
+      };
     },
-    enabled: !!userData?.company_id
+    enabled: !!userData?.company_id && (options.enabled !== false),
+    staleTime: 15 * 60 * 1000, // 15 dakika
   });
 
-  // Fetch Purchase Invoices
-  const { data: purchaseInvoices = [], isLoading: isLoadingPurchaseInvoices } = useQuery({
-    queryKey: ["calendar-purchase-invoices", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("purchase_invoices")
-        .select(`
-          *,
-          supplier:suppliers(
-            id,
-            name,
-            company
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .order("invoice_date", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Work Orders
-  const { data: workOrders = [], isLoading: isLoadingWorkOrders } = useQuery({
-    queryKey: ["calendar-work-orders", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("work_orders")
-        .select("id, company_id, title, description, scheduled_start, scheduled_end, status, priority, assigned_to, customer_id, sla_due, created_at, updated_at")
-        .eq("company_id", userData.company_id)
-        .order("scheduled_start", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'İş emirleri yükleme', table: 'work_orders' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Service Requests
-  const { data: serviceRequests = [], isLoading: isLoadingServiceRequests } = useQuery({
-    queryKey: ["calendar-service-requests", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("service_requests")
-        .select(`
-          *,
-          customer:customers(
-            id,
-            name,
-            company
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .order("service_due_date", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'Hizmet talepleri yükleme', table: 'service_requests' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Opportunities
-  const { data: opportunities = [], isLoading: isLoadingOpportunities } = useQuery({
-    queryKey: ["calendar-opportunities", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("opportunities")
-        .select(`
-          *,
-          customer:customers(
-            id,
-            name,
-            company
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .not("expected_close_date", "is", null)
-        .order("expected_close_date", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Payments
-  const { data: payments = [], isLoading: isLoadingPayments } = useQuery({
-    queryKey: ["calendar-payments", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("payments")
-        .select("id, company_id, amount, currency, payment_date, payment_type, description, customer_id, supplier_id, account_id, created_at, updated_at")
-        .eq("company_id", userData.company_id)
-        .not("payment_date", "is", null)
-        .order("payment_date", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'Ödemeler yükleme', table: 'payments' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Expenses
-  const { data: expenses = [], isLoading: isLoadingExpenses } = useQuery({
-    queryKey: ["calendar-expenses", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("expenses")
-        .select("id, company_id, amount, type, date, category_id, description, payment_account_type, payment_account_id, created_at, updated_at")
-        .eq("company_id", userData.company_id)
-        .not("date", "is", null)
-        .order("date", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'Giderler yükleme', table: 'expenses' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Checks
-  const { data: checks = [], isLoading: isLoadingChecks } = useQuery({
-    queryKey: ["calendar-checks", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("checks")
-        .select("id, company_id, amount, due_date, issue_date, check_number, bank, status, notes, issuer_supplier_id, payee_supplier_id, created_at, updated_at")
-        .eq("company_id", userData.company_id)
-        .not("due_date", "is", null)
-        .order("due_date", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'Çekler yükleme', table: 'checks' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Purchase Orders
-  const { data: purchaseOrders = [], isLoading: isLoadingPurchaseOrders } = useQuery({
-    queryKey: ["calendar-purchase-orders", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("purchase_orders")
-        .select(`
-          *,
-          supplier:suppliers(
-            id,
-            name,
-            company
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .order("order_date", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Employee Leaves
-  const { data: employeeLeaves = [], isLoading: isLoadingEmployeeLeaves } = useQuery({
-    queryKey: ["calendar-employee-leaves", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("employee_leaves")
-        .select(`
-          *,
-          employee:employees(
-            id,
-            first_name,
-            last_name
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .order("start_date", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Vehicle Maintenance
-  const { data: vehicleMaintenance = [], isLoading: isLoadingVehicleMaintenance } = useQuery({
-    queryKey: ["calendar-vehicle-maintenance", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("vehicle_maintenance")
-        .select(`
-          *,
-          vehicle:vehicles(
-            id,
-            plate_number,
-            brand,
-            model
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .not("maintenance_date", "is", null)
-        .order("maintenance_date", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Vehicle Documents
-  const { data: vehicleDocuments = [], isLoading: isLoadingVehicleDocuments } = useQuery({
-    queryKey: ["calendar-vehicle-documents", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("vehicle_documents")
-        .select(`
-          *,
-          vehicle:vehicles(
-            id,
-            plate_number,
-            brand,
-            model
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .not("expiry_date", "is", null)
-        .order("expiry_date", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Vehicle Incidents
-  const { data: vehicleIncidents = [], isLoading: isLoadingVehicleIncidents } = useQuery({
-    queryKey: ["calendar-vehicle-incidents", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("vehicle_incidents")
-        .select(`
-          *,
-          vehicle:vehicles(
-            id,
-            plate_number,
-            brand,
-            model
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .not("incident_date", "is", null)
-        .order("incident_date", { ascending: true });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Events
-  const { data: events = [], isLoading: isLoadingEvents } = useQuery({
-    queryKey: ["calendar-events", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("events")
-        .select("id, company_id, title, description, start_time, end_time, event_type, category, assigned_to, created_at, updated_at")
-        .eq("company_id", userData.company_id)
-        .not("start_time", "is", null)
-        .order("start_time", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'Etkinlikler yükleme', table: 'events' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch GRNs
-  const { data: grns = [], isLoading: isLoadingGRNs } = useQuery({
-    queryKey: ["calendar-grns", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("grns")
-        .select(`
-          *,
-          po:purchase_orders(
-            id,
-            order_number
-          )
-        `)
-        .eq("company_id", userData.company_id)
-        .not("received_date", "is", null)
-        .order("received_date", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'Mal kabul fişleri yükleme', table: 'grns' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch RFQs
-  const { data: rfqs = [], isLoading: isLoadingRFQs } = useQuery({
-    queryKey: ["calendar-rfqs", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("rfqs")
-        .select("*")
-        .eq("company_id", userData.company_id)
-        .not("due_date", "is", null)
-        .order("due_date", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'Teklif talepleri yükleme', table: 'rfqs' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Purchase Requests
-  const { data: purchaseRequests = [], isLoading: isLoadingPurchaseRequests } = useQuery({
-    queryKey: ["calendar-purchase-requests", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("purchase_requests")
-        .select("*")
-        .eq("company_id", userData.company_id)
-        .order("requested_date", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'Satın alma talepleri yükleme', table: 'purchase_requests' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Vendor Invoices
-  const { data: vendorInvoices = [], isLoading: isLoadingVendorInvoices } = useQuery({
-    queryKey: ["calendar-vendor-invoices", userData?.company_id],
-    queryFn: async () => {
-      // Tablo mevcut değil, boş array döndür
-      return [];
-    },
-    enabled: false // Tablo mevcut değil, devre dışı
-  });
-
-  // Fetch Inventory Transactions
-  const { data: inventoryTransactions = [], isLoading: isLoadingInventoryTransactions } = useQuery({
-    queryKey: ["calendar-inventory-transactions", userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const client = getClient();
-      const { data, error } = await client
-        .from("inventory_transactions")
-        .select("*")
-        .eq("company_id", userData.company_id)
-        .not("transaction_date", "is", null)
-        .order("transaction_date", { ascending: true });
-
-      if (error) {
-        handleSupabaseError(error, { operation: 'Stok hareketleri yükleme', table: 'inventory_transactions' });
-        throw error;
-      }
-      return data || [];
-    },
-    enabled: !!userData?.company_id
-  });
-
-  // Fetch Service Slips
-  const { data: serviceSlips = [], isLoading: isLoadingServiceSlips } = useQuery({
-    queryKey: ["calendar-service-slips", userData?.company_id],
-    queryFn: async () => {
-      // Tablo mevcut değil, boş array döndür
-      return [];
-    },
-    enabled: false // Tablo mevcut değil, devre dışı
-  });
-
-  const isLoading = 
-    isLoadingActivities || isLoadingOrders || isLoadingDeliveries ||
-    isLoadingProposals || isLoadingSalesInvoices || isLoadingPurchaseInvoices ||
-    isLoadingWorkOrders || isLoadingServiceRequests || isLoadingOpportunities ||
-    isLoadingPayments || isLoadingExpenses || isLoadingChecks || isLoadingPurchaseOrders ||
-    isLoadingEmployeeLeaves || isLoadingVehicleMaintenance || isLoadingVehicleDocuments ||
-    isLoadingVehicleIncidents || isLoadingEvents || isLoadingGRNs || isLoadingRFQs ||
-    isLoadingPurchaseRequests || isLoadingVendorInvoices || isLoadingInventoryTransactions ||
-    isLoadingServiceSlips;
+  const isLoading = isLoadingCore || isLoadingCRM || isLoadingFinancial || isLoadingOperational || isLoadingVehicle;
 
   return {
-    activities,
-    orders,
-    deliveries,
-    proposals,
-    salesInvoices,
-    purchaseInvoices,
-    workOrders,
-    serviceRequests,
-    opportunities,
-    payments,
-    expenses,
-    checks,
-    purchaseOrders,
-    employeeLeaves,
-    vehicleMaintenance,
-    vehicleDocuments,
-    vehicleIncidents,
-    events,
-    grns,
-    rfqs,
-    purchaseRequests,
-    vendorInvoices,
-    inventoryTransactions,
-    serviceSlips,
+    // Core data
+    activities: coreData?.activities || [],
+    opportunities: coreData?.opportunities || [],
+    events: coreData?.events || [],
+    
+    // CRM data
+    proposals: crmData?.proposals || [],
+    orders: crmData?.orders || [],
+    deliveries: crmData?.deliveries || [],
+    
+    // Financial data
+    payments: financialData?.payments || [],
+    expenses: financialData?.expenses || [],
+    checks: financialData?.checks || [],
+    salesInvoices: financialData?.salesInvoices || [],
+    purchaseInvoices: financialData?.purchaseInvoices || [],
+    
+    // Operational data
+    workOrders: operationalData?.workOrders || [],
+    serviceRequests: operationalData?.serviceRequests || [],
+    purchaseOrders: operationalData?.purchaseOrders || [],
+    employeeLeaves: operationalData?.employeeLeaves || [],
+    grns: operationalData?.grns || [],
+    rfqs: operationalData?.rfqs || [],
+    purchaseRequests: operationalData?.purchaseRequests || [],
+    inventoryTransactions: operationalData?.inventoryTransactions || [],
+    
+    // Vehicle data
+    vehicleMaintenance: vehicleData?.vehicleMaintenance || [],
+    vehicleDocuments: vehicleData?.vehicleDocuments || [],
+    vehicleIncidents: vehicleData?.vehicleIncidents || [],
+    
+    // Deprecated/unused
+    vendorInvoices: [],
+    serviceSlips: [],
+    
     isLoading,
   };
 };
-

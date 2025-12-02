@@ -223,3 +223,5 @@ Eğer LocationIQ yetersiz gelirse:
 
 
 
+
+

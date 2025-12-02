@@ -5,7 +5,7 @@ import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
 import GlobalSearchBar from "@/components/dashboard/GlobalSearchBar";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import { AIInsightsPanel } from "@/components/dashboard/AIInsightsPanel";
+import { AIAgentPanel } from "@/components/dashboard/AIAgentPanel";
 import { Target, Users, LayoutGrid, FileText, Activity, Calendar, CheckCircle, DollarSign, ChevronRight } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useNavigate } from "react-router-dom";
@@ -36,9 +36,9 @@ const Dashboard = () => {
         <GlobalSearchBar />
       </div>
 
-      {/* AI Insights Panel - Ayrı kart olarak */}
+      {/* AI Agent Panel - Netlify Style */}
       <div className="mt-2 sm:mt-4">
-        <AIInsightsPanel />
+        <AIAgentPanel />
       </div>
 
       {/* Main Content Container */}

@@ -703,7 +703,7 @@
   transform: scale(0.95);
 }
 
-/* Sonner Toast Colors */
+/* Sonner Toast Colors - İkonlar her zaman görünsün */
 [data-sonner-toast][data-type="success"] {
   background-color: #f0fdf4 !important;
   border-color: #22c55e !important;
@@ -712,6 +712,20 @@
 
 [data-sonner-toast][data-type="success"] [data-icon] {
   color: #22c55e !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  background-color: #22c55e !important;
+  border-radius: 50% !important;
+  padding: 4px !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] svg {
+  color: white !important;
+  width: 12px !important;
+  height: 12px !important;
 }
 
 [data-sonner-toast][data-type="error"] {
@@ -722,6 +736,20 @@
 
 [data-sonner-toast][data-type="error"] [data-icon] {
   color: #ef4444 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  background-color: #ef4444 !important;
+  border-radius: 50% !important;
+  padding: 4px !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] svg {
+  color: white !important;
+  width: 12px !important;
+  height: 12px !important;
 }
 
 [data-sonner-toast][data-type="warning"] {
@@ -732,6 +760,20 @@
 
 [data-sonner-toast][data-type="warning"] [data-icon] {
   color: #eab308 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  background-color: #eab308 !important;
+  border-radius: 50% !important;
+  padding: 4px !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-icon] svg {
+  color: white !important;
+  width: 12px !important;
+  height: 12px !important;
 }
 
 [data-sonner-toast][data-type="info"] {
@@ -742,6 +784,27 @@
 
 [data-sonner-toast][data-type="info"] [data-icon] {
   color: #3b82f6 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  background-color: #3b82f6 !important;
+  border-radius: 50% !important;
+  padding: 4px !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-icon] svg {
+  color: white !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Tüm toast'larda ikon göster */
+[data-sonner-toast] [data-icon] {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 

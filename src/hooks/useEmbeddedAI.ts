@@ -1,10 +1,18 @@
 import { useState, useCallback } from 'react';
-import { analyzeSupabaseData, analyzeMultipleTables, getModelStatus, DataAnalysisResult } from '@/services/embeddedAIService';
+import { analyzeSupabaseData, analyzeMultipleTables, DataAnalysisResult } from '@/services/embeddedAIService';
+import { checkGroqStatus } from '@/services/groqService';
 
 export const useEmbeddedAI = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modelStatus, setModelStatus] = useState(getModelStatus());
+  const [modelStatus, setModelStatus] = useState({ loaded: false, loading: true });
+
+  // Check model status on mount
+  const checkStatus = useCallback(async () => {
+    const status = await checkGroqStatus();
+    setModelStatus({ loaded: status.configured, loading: false });
+    return { loaded: status.configured, loading: false, message: status.message };
+  }, []);
 
   const analyzeTable = useCallback(async (
     tableName: string,
@@ -17,7 +25,6 @@ export const useEmbeddedAI = () => {
     try {
       setLoading(true);
       setError(null);
-      setModelStatus(getModelStatus());
       
       const result = await analyzeSupabaseData(tableName, query);
       return result;
@@ -26,7 +33,6 @@ export const useEmbeddedAI = () => {
       return null;
     } finally {
       setLoading(false);
-      setModelStatus(getModelStatus());
     }
   }, []);
 
@@ -36,7 +42,6 @@ export const useEmbeddedAI = () => {
     try {
       setLoading(true);
       setError(null);
-      setModelStatus(getModelStatus());
       
       const results = await analyzeMultipleTables(tables);
       return results;
@@ -45,16 +50,15 @@ export const useEmbeddedAI = () => {
       return {};
     } finally {
       setLoading(false);
-      setModelStatus(getModelStatus());
     }
   }, []);
 
   return {
     analyzeTable,
     analyzeTables,
+    checkStatus,
     loading,
     error,
     modelStatus
   };
 };
-

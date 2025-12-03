@@ -50,7 +50,7 @@ const UnifiedDialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     onClick={onOverlayClick}
@@ -80,7 +80,7 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   };
 
   return (
-    <DialogPrimitive.Root open={isOpen} onOpenChange={handleOpenChange} modal={false}>
+    <DialogPrimitive.Root open={isOpen} onOpenChange={handleOpenChange} modal={true}>
       <DialogPrimitive.Portal>
         <UnifiedDialogOverlay onOverlayClick={() => handleOpenChange(false)} />
         <DialogPrimitive.Content

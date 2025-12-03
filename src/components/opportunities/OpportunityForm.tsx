@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
-import CustomerSelector from "@/components/proposals/form/CustomerSelector";
+import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
+import { useForm, FormProvider } from "react-hook-form";
 
 interface OpportunityFormProps {
   isOpen: boolean;
@@ -40,6 +41,14 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
     opportunity_type: "general",
     expected_close_date: "",
     description: ""
+  });
+
+  // Form context for ProposalPartnerSelect
+  const partnerForm = useForm({
+    defaultValues: {
+      customer_id: formData.customer_id || "",
+      supplier_id: ""
+    }
   });
 
   const [opportunityTypes, setOpportunityTypes] = useState<Array<{id: number, name: string, display_name: string}>>([]);
@@ -78,9 +87,20 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
     setFormData(prev => ({ ...prev, employee_id: value }));
   };
 
-  const handleCustomerChange = (customerId: string, customerName: string, companyName: string) => {
-    setFormData(prev => ({ ...prev, customer_id: customerId }));
-  };
+  // Watch form changes for customer_id and sync with formData
+  const watchedCustomerId = partnerForm.watch("customer_id");
+  useEffect(() => {
+    if (watchedCustomerId !== formData.customer_id) {
+      setFormData(prev => ({ ...prev, customer_id: watchedCustomerId || "" }));
+    }
+  }, [watchedCustomerId]);
+
+  // Sync formData.customer_id changes to partnerForm
+  useEffect(() => {
+    if (formData.customer_id !== partnerForm.getValues("customer_id")) {
+      partnerForm.setValue("customer_id", formData.customer_id || "");
+    }
+  }, [formData.customer_id]);
 
   // Fırsat tipi yönetimi
   const handleAddType = async () => {
@@ -227,6 +247,11 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
         expected_close_date: "",
         description: ""
       });
+      // Reset partner form
+      partnerForm.reset({
+        customer_id: "",
+        supplier_id: ""
+      });
       onClose();
     } catch (error) {
       console.error("Error creating opportunity:", error);
@@ -278,15 +303,17 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
 
           {/* Müşteri ve Sorumlu Kişi */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <CustomerSelector
-                value={formData.customer_id}
-                onChange={handleCustomerChange}
-                error=""
-              />
+            <div className="space-y-1.5">
+              <FormProvider {...partnerForm}>
+                <ProposalPartnerSelect 
+                  partnerType="customer" 
+                  placeholder="Müşteri seçin..."
+                  hideLabel={false}
+                />
+              </FormProvider>
             </div>
             
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <EmployeeSelector
                 value={formData.employee_id}
                 onChange={handleEmployeeChange}

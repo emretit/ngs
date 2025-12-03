@@ -188,14 +188,13 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
 
   return (
     <div className="space-y-1.5">
-      <div>
-        {!hideLabel && (
-          <Label className="text-xs font-medium text-gray-700">
-            {label ?? "Müşteri / Tedarikçi"}
-            {required && <span className="text-red-500 ml-1">*</span>}
-          </Label>
-        )}
-        <Popover 
+      {!hideLabel && (
+        <Label className="text-xs font-medium text-gray-700">
+          {label ?? "Müşteri / Tedarikçi"}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </Label>
+      )}
+      <Popover 
           open={isOpen} 
           onOpenChange={(open) => {
             setIsOpen(open);
@@ -404,8 +403,6 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
             </CustomTabs>
           </PopoverContent>
         </Popover>
-      </div>
-
     </div>
   );
 };

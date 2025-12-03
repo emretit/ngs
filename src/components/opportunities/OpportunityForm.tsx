@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,6 @@ interface OpportunityFormProps {
 }
 
 const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -103,17 +102,10 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
         setNewTypeName("");
         // Yeni eklenen tipi otomatik olarak seç
         setFormData(prev => ({ ...prev, opportunity_type: data.name }));
-        toast({
-          title: "Başarılı",
-          description: "Fırsat tipi eklendi ve seçildi",
-        });
+        toast.success("Fırsat tipi eklendi ve seçildi");
       }
     } catch (error) {
-      toast({
-        title: "Hata",
-        description: "Fırsat tipi eklenirken hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Fırsat tipi eklenirken hata oluştu");
     } finally {
       setIsAddingType(false);
     }

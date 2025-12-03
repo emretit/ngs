@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 
@@ -61,10 +61,7 @@ const TransferModal = ({
       description: prev.description,
       transferDate: prev.transferDate
     }));
-    toast({
-      title: "Değiştirildi",
-      description: "Kaynak ve hedef hesaplar yer değiştirildi"
-    });
+    toast.info("Kaynak ve hedef hesaplar yer değiştirildi");
   };
 
   // Tüm hesapları yükle
@@ -144,11 +141,7 @@ const TransferModal = ({
         setToAccounts(allAccounts);
       } catch (error) {
         console.error('Error loading accounts:', error);
-        toast({
-          title: "Hata",
-          description: "Hesaplar yüklenirken hata oluştu",
-          variant: "destructive"
-        });
+        toast.error("Hesaplar yüklenirken hata oluştu");
       }
     };
 
@@ -183,20 +176,12 @@ const TransferModal = ({
     e.preventDefault();
 
     if (!formData.fromAccountId || !formData.toAccountId) {
-      toast({
-        title: "Hata",
-        description: "Kaynak ve hedef hesap seçimi zorunludur",
-        variant: "destructive"
-      });
+      toast.error("Kaynak ve hedef hesap seçimi zorunludur");
       return;
     }
 
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      toast({
-        title: "Hata",
-        description: "Geçerli bir tutar giriniz",
-        variant: "destructive"
-      });
+      toast.error("Geçerli bir tutar giriniz");
       return;
     }
 
@@ -265,10 +250,7 @@ const TransferModal = ({
 
       if (toError) throw toError;
 
-      toast({
-        title: "Başarılı",
-        description: "Transfer işlemi tamamlandı"
-      });
+      toast.success("Transfer işlemi tamamlandı");
 
       onSuccess();
       onClose();
@@ -282,11 +264,7 @@ const TransferModal = ({
       });
     } catch (error) {
       console.error('Error creating transfer:', error);
-      toast({
-        title: "Hata",
-        description: "Transfer işlemi sırasında hata oluştu",
-        variant: "destructive"
-      });
+      toast.error("Transfer işlemi sırasında hata oluştu");
     } finally {
       setIsLoading(false);
     }

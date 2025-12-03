@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export interface OpexCategory {
   id: string;
@@ -21,7 +21,6 @@ export const useOpexCategories = () => {
   const [categories, setCategories] = useState<OpexCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const fetchOpexCategories = async () => {
     try {
@@ -75,11 +74,7 @@ export const useOpexCategories = () => {
     } catch (err: any) {
       console.error('fetchOpexCategories error:', err);
       setError(err.message);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "OPEX kategorileri alınırken hata oluştu: " + err.message,
-      });
+      toast.error("OPEX kategorileri alınırken hata oluştu: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -116,19 +111,12 @@ export const useOpexCategories = () => {
       }
 
       await fetchOpexCategories();
-      toast({
-        title: "Başarılı",
-        description: "Kategori başarıyla oluşturuldu.",
-      });
+      toast.success("Kategori başarıyla oluşturuldu.");
 
       return categoryData;
     } catch (err: any) {
       console.error('createCategory error:', err);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Kategori oluşturulurken hata oluştu: " + err.message,
-      });
+      toast.error("Kategori oluşturulurken hata oluştu: " + err.message);
       throw err;
     }
   };
@@ -167,17 +155,10 @@ export const useOpexCategories = () => {
       }
 
       await fetchOpexCategories();
-      toast({
-        title: "Başarılı",
-        description: "Kategori başarıyla güncellendi.",
-      });
+      toast.success("Kategori başarıyla güncellendi.");
     } catch (err: any) {
       console.error('updateCategory error:', err);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Kategori güncellenirken hata oluştu: " + err.message,
-      });
+      toast.error("Kategori güncellenirken hata oluştu: " + err.message);
       throw err;
     }
   };
@@ -201,17 +182,10 @@ export const useOpexCategories = () => {
       if (categoryError) throw categoryError;
 
       await fetchOpexCategories();
-      toast({
-        title: "Başarılı",
-        description: "Kategori başarıyla silindi.",
-      });
+      toast.success("Kategori başarıyla silindi.");
     } catch (err: any) {
       console.error('deleteCategory error:', err);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Kategori silinirken hata oluştu: " + err.message,
-      });
+      toast.error("Kategori silinirken hata oluştu: " + err.message);
       throw err;
     }
   };

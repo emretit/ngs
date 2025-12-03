@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SupplierFormData } from "@/types/supplier";
 import SupplierFormHeader from "@/components/suppliers/SupplierFormHeader";
 import SupplierFormContent from "@/components/suppliers/SupplierFormContent";
 const SupplierNew = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState<SupplierFormData>({
@@ -130,19 +129,12 @@ const SupplierNew = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast({
-        title: "Başarılı",
-        description: "Tedarikçi başarıyla eklendi.",
-      });
+      toast.success("Tedarikçi başarıyla eklendi.");
       navigate('/suppliers');
     },
     onError: (error) => {
       console.error('Form submission error:', error);
-      toast({
-        title: "Hata",
-        description: "Tedarikçi eklenirken bir hata oluştu. Lütfen tekrar deneyin.",
-        variant: "destructive",
-      });
+      toast.error("Tedarikçi eklenirken bir hata oluştu. Lütfen tekrar deneyin.");
     },
   });
   const handleSubmit = async (e: React.FormEvent) => {

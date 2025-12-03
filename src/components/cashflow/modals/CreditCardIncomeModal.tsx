@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CreditCardIncomeModalProps {
@@ -81,20 +81,12 @@ const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, c
     e.preventDefault();
     
     if (!formData.amount || formData.amount <= 0) {
-      toast({
-        title: "Hata",
-        description: "Geçerli bir tutar giriniz",
-        variant: "destructive"
-      });
+      toast.error("Geçerli bir tutar giriniz");
       return;
     }
 
     if (!formData.description.trim()) {
-      toast({
-        title: "Hata",
-        description: "Açıklama alanı zorunludur",
-        variant: "destructive"
-      });
+      toast.error("Açıklama alanı zorunludur");
       return;
     }
 
@@ -137,10 +129,7 @@ const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, c
 
       if (balanceError) throw balanceError;
 
-      toast({
-        title: "Başarılı",
-        description: "Ödeme işlemi eklendi"
-      });
+      toast.success("Ödeme işlemi eklendi");
 
       // Formu sıfırla
       setFormData({
@@ -154,11 +143,7 @@ const CreditCardIncomeModal = ({ isOpen, onClose, onSuccess, cardId, cardName, c
       onSuccess();
     } catch (error) {
       console.error('Error adding income:', error);
-      toast({
-        title: "Hata",
-        description: "Ödeme işlemi eklenirken bir hata oluştu",
-        variant: "destructive"
-      });
+      toast.error("Ödeme işlemi eklenirken bir hata oluştu");
     } finally {
       setIsLoading(false);
     }

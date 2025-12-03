@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthContext";
 
 interface InvoiceAnalysisData {
@@ -37,7 +37,6 @@ export const useInvoiceAnalysis = (year?: number) => {
   const [data, setData] = useState<InvoiceAnalysisData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
   const { user } = useAuth();
 
   // Fetch invoice analysis data
@@ -71,11 +70,7 @@ export const useInvoiceAnalysis = (year?: number) => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errorMessage,
-      });
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -85,11 +80,7 @@ export const useInvoiceAnalysis = (year?: number) => {
   const upsertInvoiceAnalysis = async (input: InvoiceAnalysisInput) => {
     try {
       if (!user?.id) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Kullanıcı girişi gerekli",
-        });
+        toast.error("Kullanıcı girişi gerekli");
         return false;
       }
       
@@ -119,11 +110,7 @@ export const useInvoiceAnalysis = (year?: number) => {
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errorMessage,
-      });
+      toast.error(errorMessage);
       return false;
     }
   };
@@ -146,11 +133,7 @@ export const useInvoiceAnalysis = (year?: number) => {
   const deleteInvoiceAnalysis = async (year: number, month: number) => {
     try {
       if (!user?.id) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Kullanıcı girişi gerekli",
-        });
+        toast.error("Kullanıcı girişi gerekli");
         return false;
       }
       
@@ -169,11 +152,7 @@ export const useInvoiceAnalysis = (year?: number) => {
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: errorMessage,
-      });
+      toast.error(errorMessage);
       return false;
     }
   };

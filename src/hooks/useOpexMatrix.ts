@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export interface OpexMatrixItem {
   id: string;
@@ -26,7 +26,6 @@ export const useOpexMatrix = () => {
   const [data, setData] = useState<OpexMatrixItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const fetchOpexMatrix = async (year?: number) => {
     try {
@@ -51,11 +50,7 @@ export const useOpexMatrix = () => {
     } catch (err: any) {
       console.error('fetchOpexMatrix error:', err);
       setError(err.message);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "OPEX matrix verileri alınırken hata oluştu: " + err.message,
-      });
+      toast.error("OPEX matrix verileri alınırken hata oluştu: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -119,19 +114,12 @@ export const useOpexMatrix = () => {
         }
       });
 
-      toast({
-        title: "Başarılı",
-        description: "OPEX verisi güncellendi.",
-      });
+      toast.success("OPEX verisi güncellendi.");
 
       return data;
     } catch (err: any) {
       console.error('upsertOpexMatrix error:', err);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "OPEX verisi güncellenirken hata oluştu: " + err.message,
-      });
+      toast.error("OPEX verisi güncellenirken hata oluştu: " + err.message);
       throw err;
     }
   };
@@ -147,17 +135,10 @@ export const useOpexMatrix = () => {
 
       setData(prev => prev.filter(item => item.id !== id));
 
-      toast({
-        title: "Başarılı",
-        description: "OPEX verisi silindi.",
-      });
+      toast.success("OPEX verisi silindi.");
     } catch (err: any) {
       console.error('deleteOpexMatrix error:', err);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "OPEX verisi silinirken hata oluştu: " + err.message,
-      });
+      toast.error("OPEX verisi silinirken hata oluştu: " + err.message);
       throw err;
     }
   };

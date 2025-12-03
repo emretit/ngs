@@ -6,14 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Calculator } from "lucide-react";
 import { useInvoiceAnalysis } from "@/hooks/useInvoiceAnalysis";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 const InvoiceAnalysisTable = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [matrixData, setMatrixData] = useState<Record<string, Record<number, number>>>({});
   const [loading, setLoading] = useState(false);
   const { data, upsertInvoiceAnalysis, getDataForMonth, loading: dataLoading } = useInvoiceAnalysis(selectedYear);
-  const { toast } = useToast();
 
   // Auto-save timeout
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
@@ -161,17 +160,10 @@ const InvoiceAnalysisTable = () => {
       
       await Promise.all(savePromises);
       
-      toast({
-        title: "Başarılı",
-        description: "Tüm veriler kaydedildi.",
-      });
+      toast.success("Tüm veriler kaydedildi.");
     } catch (error) {
       console.error('Error saving data:', error);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Veriler kaydedilirken bir hata oluştu.",
-      });
+      toast.error("Veriler kaydedilirken bir hata oluştu.");
     } finally {
       setLoading(false);
     }

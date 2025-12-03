@@ -12,7 +12,7 @@ import { getRecurrenceDescription } from '@/utils/serviceRecurrenceUtils';
 import { formatDate } from '@/utils/dateUtils';
 import { RefreshCw, Calendar as CalendarIcon, Repeat } from 'lucide-react';
 import { ServiceRecurrenceService } from '@/services/serviceRecurrenceService';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const localizer = dateFnsLocalizer({
@@ -149,17 +149,10 @@ export const MaintenanceCalendarView: React.FC = () => {
     setRefreshing(true);
     try {
       const count = await ServiceRecurrenceService.generateInstances();
-      toast({
-        title: 'Başarılı',
-        description: `${count} yeni servis örneği oluşturuldu.`,
-      });
+      toast.success(`${count} yeni servis örneği oluşturuldu.`);
       refetch();
     } catch (error: any) {
-      toast({
-        title: 'Hata',
-        description: error.message || 'Servis örnekleri oluşturulurken bir hata oluştu.',
-        variant: 'destructive',
-      });
+      toast.error(error.message || 'Servis örnekleri oluşturulurken bir hata oluştu.');
     } finally {
       setRefreshing(false);
     }

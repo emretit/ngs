@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export interface CashflowCategory {
   id: string;
@@ -21,7 +21,6 @@ export const useCashflowCategories = () => {
   const [categories, setCategories] = useState<CashflowCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const fetchCategories = async () => {
     try {
@@ -52,11 +51,7 @@ export const useCashflowCategories = () => {
       setCategories((data || []) as CashflowCategory[]);
     } catch (err: any) {
       setError(err.message);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch categories: " + err.message,
-      });
+      toast.error("Failed to fetch categories: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -90,18 +85,11 @@ export const useCashflowCategories = () => {
       if (error) throw error;
       
       setCategories(prev => [...prev, newCategory as CashflowCategory].sort((a, b) => a.name.localeCompare(b.name)));
-      toast({
-        title: "Başarılı",
-        description: "Kategori başarıyla oluşturuldu",
-      });
+      toast.success("Kategori başarıyla oluşturuldu");
       
       return newCategory;
     } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Kategori oluşturulurken hata oluştu: " + err.message,
-      });
+      toast.error("Kategori oluşturulurken hata oluştu: " + err.message);
       throw err;
     }
   };
@@ -118,18 +106,11 @@ export const useCashflowCategories = () => {
       if (error) throw error;
       
       setCategories(prev => prev.map(c => c.id === id ? updatedCategory as CashflowCategory : c).sort((a, b) => a.name.localeCompare(b.name)));
-      toast({
-        title: "Başarılı",
-        description: "Kategori başarıyla güncellendi",
-      });
+      toast.success("Kategori başarıyla güncellendi");
       
       return updatedCategory;
     } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Kategori güncellenirken hata oluştu: " + err.message,
-      });
+      toast.error("Kategori güncellenirken hata oluştu: " + err.message);
       throw err;
     }
   };
@@ -141,11 +122,7 @@ export const useCashflowCategories = () => {
       
       if (category?.is_default) {
         const errorMessage = "Bu varsayılan kategori silinemez. Sistem tarafından otomatik oluşturulan kategoriler korunmalıdır.";
-        toast({
-          variant: "destructive",
-          title: "Hata",
-          description: errorMessage,
-        });
+        toast.error(errorMessage);
         throw new Error(errorMessage);
       }
 
@@ -160,11 +137,7 @@ export const useCashflowCategories = () => {
 
       if (expensesData && expensesData.length > 0) {
         const errorMessage = "Bu kategori kullanılıyor ve silinemez. Lütfen önce bu kategoriyi kullanan işlemleri başka bir kategoriye taşıyın.";
-        toast({
-          variant: "destructive",
-          title: "Hata",
-          description: errorMessage,
-        });
+        toast.error(errorMessage);
         throw new Error(errorMessage);
       }
 
@@ -176,16 +149,9 @@ export const useCashflowCategories = () => {
       if (error) throw error;
       
       setCategories(prev => prev.filter(c => c.id !== id));
-      toast({
-        title: "Başarılı",
-        description: "Kategori başarıyla silindi",
-      });
+      toast.success("Kategori başarıyla silindi");
     } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: err.message || "Kategori silinirken hata oluştu: " + err.message,
-      });
+      toast.error(err.message || "Kategori silinirken hata oluştu: " + err.message);
       throw err;
     }
   };

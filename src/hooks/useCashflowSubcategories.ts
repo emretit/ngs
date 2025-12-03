@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export interface CashflowSubcategory {
   id: string;
@@ -15,7 +15,6 @@ export const useCashflowSubcategories = (categoryId?: string) => {
   const [subcategories, setSubcategories] = useState<CashflowSubcategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const fetchSubcategories = async (catId?: string) => {
     try {
@@ -51,11 +50,7 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       setSubcategories((data || []) as CashflowSubcategory[]);
     } catch (err: any) {
       setError(err.message);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Alt kategoriler alınırken hata oluştu: " + err.message,
-      });
+      toast.error("Alt kategoriler alınırken hata oluştu: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -84,18 +79,11 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       if (error) throw error;
       
       setSubcategories(prev => [...prev, newSubcategory as CashflowSubcategory].sort((a, b) => a.name.localeCompare(b.name)));
-      toast({
-        title: "Başarılı",
-        description: "Alt kategori başarıyla oluşturuldu",
-      });
+      toast.success("Alt kategori başarıyla oluşturuldu");
       
       return newSubcategory;
     } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Alt kategori oluşturulurken hata oluştu: " + err.message,
-      });
+      toast.error("Alt kategori oluşturulurken hata oluştu: " + err.message);
       throw err;
     }
   };
@@ -112,18 +100,11 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       if (error) throw error;
       
       setSubcategories(prev => prev.map(s => s.id === id ? updatedSubcategory as CashflowSubcategory : s).sort((a, b) => a.name.localeCompare(b.name)));
-      toast({
-        title: "Başarılı",
-        description: "Alt kategori başarıyla güncellendi",
-      });
+      toast.success("Alt kategori başarıyla güncellendi");
       
       return updatedSubcategory;
     } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Alt kategori güncellenirken hata oluştu: " + err.message,
-      });
+      toast.error("Alt kategori güncellenirken hata oluştu: " + err.message);
       throw err;
     }
   };
@@ -138,16 +119,9 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       if (error) throw error;
       
       setSubcategories(prev => prev.filter(s => s.id !== id));
-      toast({
-        title: "Başarılı",
-        description: "Alt kategori başarıyla silindi",
-      });
+      toast.success("Alt kategori başarıyla silindi");
     } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Alt kategori silinirken hata oluştu: " + err.message,
-      });
+      toast.error("Alt kategori silinirken hata oluştu: " + err.message);
       throw err;
     }
   };

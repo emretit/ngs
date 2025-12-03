@@ -36,7 +36,7 @@ import {
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { formatUnit } from '@/utils/unitConstants';
 import { formatCurrency } from '@/utils/formatters';
 interface EInvoiceItem {
@@ -207,7 +207,6 @@ const MemoizedTableRow = React.memo(({
 export default function EInvoiceProcess() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [invoice, setInvoice] = useState<EInvoiceDetails | null>(null);
   const [matchingItems, setMatchingItems] = useState<ProductMatchingItem[]>([]);
@@ -408,11 +407,7 @@ export default function EInvoiceProcess() {
     if (invoiceId) {
       loadInvoiceDetails().catch((error) => {
         console.error('❌ Error loading invoice details:', error);
-        toast({
-          title: "Hata",
-          description: error.message || "Fatura detayları yüklenirken bir hata oluştu",
-          variant: "destructive",
-        });
+        toast.error(error.message || "Fatura detayları yüklenirken bir hata oluştu");
         // Hata durumunda geri dön
         navigate('/e-invoice');
       });
@@ -497,10 +492,7 @@ export default function EInvoiceProcess() {
     // Reset form state
     setCurrentItemIndex(-1);
     setIsProductFormOpen(false);
-    toast({
-      title: "Başarılı",
-      description: "Ürün oluşturuldu ve eşleştirildi",
-    });
+    toast.success("Ürün oluşturuldu ve eşleştirildi");
   };
   const handleRemoveMatch = useCallback((itemIndex: number) => {
     setMatchingItems(prev => {
@@ -570,28 +562,17 @@ export default function EInvoiceProcess() {
       // Yeni tedarikçiyi seç
       setSelectedSupplierId(newSupplier.id);
       setSupplierMatchStatus('found');
-      toast({
-        title: "Başarılı",
-        description: `Tedarikçi "${supplierData.name}" detaylı bilgilerle oluşturuldu ve seçildi`,
-      });
+      toast.success(`Tedarikçi "${supplierData.name}" detaylı bilgilerle oluşturuldu ve seçildi`);
     } catch (error: any) {
       console.error('❌ Error creating supplier:', error);
-      toast({
-        title: "Hata",
-        description: error.message || "Tedarikçi oluşturulurken hata oluştu",
-        variant: "destructive"
-      });
+      toast.error(error.message || "Tedarikçi oluşturulurken hata oluştu");
     } finally {
       setIsCreatingSupplier(false);
     }
   };
   const handleCreatePurchaseInvoice = async () => {
     if (!invoice || !selectedSupplierId || matchingItems.length === 0) {
-      toast({
-        title: "Hata",
-        description: "Lütfen tüm gerekli alanları doldurun",
-        variant: "destructive"
-      });
+      toast.error("Lütfen tüm gerekli alanları doldurun");
       return;
     }
     setIsCreating(true);
@@ -932,18 +913,11 @@ export default function EInvoiceProcess() {
       await queryClient.invalidateQueries({ queryKey: ['purchaseInvoices'] });
       await queryClient.invalidateQueries({ queryKey: ['purchase-invoices-infinite'] });
       
-      toast({
-        title: "Başarılı",
-        description: `Alış faturası başarıyla oluşturuldu. ${newProductItems.length} yeni ürün eklendi.${defaultWarehouseId ? ' Stok hareketi oluşturuldu.' : ''}`,
-      });
+      toast.success(`Alış faturası başarıyla oluşturuldu. ${newProductItems.length} yeni ürün eklendi.${defaultWarehouseId ? ' Stok hareketi oluşturuldu.' : ''}`);
       navigate('/e-invoice');
     } catch (error: any) {
       console.error('❌ Error creating purchase invoice:', error);
-      toast({
-        title: "Hata",
-        description: error.message || "Alış faturası oluşturulurken hata oluştu",
-        variant: "destructive"
-      });
+      toast.error(error.message || "Alış faturası oluşturulurken hata oluştu");
     } finally {
       setIsCreating(false);
     }

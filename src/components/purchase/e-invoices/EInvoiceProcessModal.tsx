@@ -24,7 +24,7 @@ import {
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/formatters';
 
 interface InvoiceItem {
@@ -63,7 +63,6 @@ export default function EInvoiceProcessModal({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Load invoice details and products when modal opens
@@ -145,11 +144,7 @@ export default function EInvoiceProcessModal({
       }
     } catch (error: any) {
       console.error('❌ Error loading invoice details:', error);
-      toast({
-        title: "Hata",
-        description: error.message || "Fatura detayları yüklenirken hata oluştu",
-        variant: "destructive"
-      });
+      toast.error(error.message || "Fatura detayları yüklenirken hata oluştu");
     } finally {
       setIsLoading(false);
     }
@@ -239,17 +234,10 @@ export default function EInvoiceProcessModal({
       if (data && !error) {
         setProducts(prev => [...prev, data]);
         matchItemToProduct(item.id, data.id);
-        toast({
-          title: "Ürün Oluşturuldu",
-          description: `${data.name} ürünü başarıyla oluşturuldu ve eşleştirildi`
-        });
+        toast.success(`${data.name} ürünü başarıyla oluşturuldu ve eşleştirildi`);
       }
     } catch (error: any) {
-      toast({
-        title: "Hata",
-        description: "Ürün oluşturulurken hata oluştu",
-        variant: "destructive"
-      });
+      toast.error("Ürün oluşturulurken hata oluştu");
     }
   };
 
@@ -264,11 +252,7 @@ export default function EInvoiceProcessModal({
 
   const handleSaveAndSendAnswer = async () => {
     if (!allItemsMatched) {
-      toast({
-        title: "Eksik Eşleştirme",
-        description: "Tüm kalemler eşleştirilmeden 'ALINDI' yanıtı gönderilemez",
-        variant: "destructive"
-      });
+      toast.error("Tüm kalemler eşleştirilmeden 'ALINDI' yanıtı gönderilemez");
       return;
     }
 
@@ -283,18 +267,11 @@ export default function EInvoiceProcessModal({
       // İşlenmiş e-fatura ID'leri query'sini invalidate et
       await queryClient.invalidateQueries({ queryKey: ['processed-einvoice-ids'] });
       
-      toast({
-        title: "İşlem Tamamlandı",
-        description: "Fatura işlendi ve 'ALINDI' yanıtı gönderildi"
-      });
+      toast.success("Fatura işlendi ve 'ALINDI' yanıtı gönderildi");
       
       onProcessComplete();
     } catch (error: any) {
-      toast({
-        title: "Hata",
-        description: error.message || "İşlem sırasında hata oluştu",
-        variant: "destructive"
-      });
+      toast.error(error.message || "İşlem sırasında hata oluştu");
     } finally {
       setIsSaving(false);
     }

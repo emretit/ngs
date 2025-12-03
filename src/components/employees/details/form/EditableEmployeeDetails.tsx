@@ -4,7 +4,6 @@ import { Employee } from "@/types/employee";
 import { useEditableEmployeeForm } from "@/hooks/useEditableEmployeeForm";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { FormFields } from "./FormFields";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -23,10 +22,6 @@ export const EditableEmployeeDetails = ({
   const { isEditing, isSaving, handleEdit, handleCancel, handleSave } = useEditableEmployeeForm({
     employee,
     onSuccess: () => {
-      useToast().toast({
-        title: "Başarılı",
-        description: "Çalışan bilgileri başarıyla güncellendi"
-      });
       onSuccess();
     }
   });

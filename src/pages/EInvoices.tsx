@@ -4,7 +4,7 @@ import EInvoiceHeader from "@/components/einvoice/EInvoiceHeader";
 import EInvoiceFilterBar from "@/components/einvoice/EInvoiceFilterBar";
 import EInvoiceContent from "@/components/einvoice/EInvoiceContent";
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 interface EInvoicesProps {
@@ -13,7 +13,6 @@ interface EInvoicesProps {
 }
 const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   // Date range filter states - Default to current month
   const getCurrentMonthRange = () => {
     const now = new Date();
@@ -75,10 +74,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const handleRefresh = () => {
     refetch();
     refetchProcessedIds(); // İşlenmiş faturalar listesini de yenile
-    toast({
-      title: "Yenilendi",
-      description: "E-fatura listesi güncellendi"
-    });
+    toast.info("E-fatura listesi güncellendi");
   };
   const handleFilter = () => {
     // React Query otomatik olarak date filters değişikliğini algılar

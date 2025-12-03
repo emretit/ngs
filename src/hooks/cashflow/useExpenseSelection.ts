@@ -1,12 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ExpenseItem } from '@/components/cashflow/ExpensesManager';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export function useExpenseSelection(filteredExpenses: ExpenseItem[], onRefetch: () => void) {
   const [selectedExpenses, setSelectedExpenses] = useState<ExpenseItem[]>([]);
   const [isAllSelected, setIsAllSelected] = useState(false);
-  const { toast } = useToast();
 
   const handleSelectExpense = useCallback((expense: ExpenseItem) => {
     setSelectedExpenses(prev => {
@@ -48,27 +47,17 @@ export function useExpenseSelection(filteredExpenses: ExpenseItem[], onRefetch: 
 
           if (error) throw error;
 
-          toast({
-            title: "Başarılı",
-            description: `${selectedExpenses.length} işlem başarıyla silindi`
-          });
+          toast.success(`${selectedExpenses.length} işlem başarıyla silindi`);
 
           setSelectedExpenses([]);
           setIsAllSelected(false);
           onRefetch();
         } catch (error: any) {
-          toast({
-            title: "Hata",
-            description: "İşlemler silinirken bir hata oluştu",
-            variant: "destructive"
-          });
+          toast.error("İşlemler silinirken bir hata oluştu");
         }
         break;
       case 'export':
-        toast({
-          title: "Bilgi",
-          description: "Excel export özelliği yakında eklenecek"
-        });
+        toast.info("Excel export özelliği yakında eklenecek");
         break;
       default:
         break;

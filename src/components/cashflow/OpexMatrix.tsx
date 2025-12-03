@@ -7,7 +7,7 @@ import { ChevronRight, ChevronDown, Download, Users, Calculator } from "lucide-r
 import { useOpexMatrix } from "@/hooks/useOpexMatrix";
 import { useOpexCategories, OpexCategory } from "@/hooks/useOpexCategories";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface EmployeeSalaryData {
@@ -39,7 +39,6 @@ const OpexMatrix = () => {
   const [loading, setLoading] = useState(false);
   const { data: opexData, loading: opexLoading } = useOpexMatrix();
   const { categories: opexCategories, loading: categoriesLoading } = useOpexCategories();
-  const { toast } = useToast();
 
   // Fetch personnel data for auto-population
   const fetchPersonnelData = useCallback(async () => {
@@ -124,11 +123,7 @@ const OpexMatrix = () => {
       setPersonnelData(personnelDataArray);
     } catch (error) {
       console.error('Error fetching personnel data:', error);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Personel verileri yüklenirken hata oluştu",
-      });
+      toast.error("Personel verileri yüklenirken hata oluştu");
     } finally {
       setLoading(false);
     }

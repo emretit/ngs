@@ -17,7 +17,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/formatters';
 import ProductSelector from '@/components/proposals/form/ProductSelector';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
@@ -67,7 +67,6 @@ interface ProductMappingProps {
 export default function ProductMapping({ isCollapsed = false, setIsCollapsed = () => {} }: ProductMappingProps) {
   const { invoiceId } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [parsedProducts, setParsedProducts] = useState<ParsedProduct[]>([]);
   const [existingProducts, setExistingProducts] = useState<ExistingProduct[]>([]);
@@ -132,22 +131,14 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       return productsWithStock;
     } catch (error) {
       console.error('❌ Mevcut ürünler yüklenemedi:', error);
-      toast({
-        title: "❌ Hata",
-        description: "Mevcut ürünler yüklenemedi",
-        variant: "destructive",
-      });
+      toast.error("Mevcut ürünler yüklenemedi");
       return [];
     }
   };
   // Fatura ve ürün verilerini yükle
   const loadInvoiceData = async () => {
     if (!invoiceId) {
-      toast({
-        title: "❌ Hata",
-        description: "Fatura ID bulunamadı",
-        variant: "destructive",
-      });
+      toast.error("Fatura ID bulunamadı");
       navigate('/orders/purchase');
       return;
     }
@@ -205,16 +196,9 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
         setProductMappings(mappings);
         console.log('✅ Eşleştirme önerileri oluşturuldu:', mappings.length);
         if (products.length === 0) {
-          toast({
-            title: "⚠️ Uyarı",
-            description: "Faturada ürün bilgisi bulunamadı",
-            variant: "destructive",
-          });
+          toast.warning("Faturada ürün bilgisi bulunamadı");
         } else {
-          toast({
-            title: "✅ Başarılı",
-            description: `${products.length} ürün başarıyla parse edildi`,
-          });
+          toast.success(`${products.length} ürün başarıyla parse edildi`);
         }
       } else {
         console.error('❌ XML Parse başarısız:', data);
@@ -222,11 +206,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       }
     } catch (error: any) {
       console.error('❌ Veri yükleme hatası:', error);
-      toast({
-        title: "❌ Hata",
-        description: error.message || "Veriler yüklenirken hata oluştu",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Veriler yüklenirken hata oluştu");
     } finally {
       setIsLoading(false);
     }
@@ -396,10 +376,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       const createdCount = results.filter(r => r.type === 'created').length;
       const updatedCount = results.filter(r => r.type === 'updated').length;
       const errorCount = results.filter(r => r.type === 'error').length;
-      toast({
-        title: "✅ Eşleştirme Tamamlandı",
-        description: `${createdCount} ürün oluşturuldu, ${updatedCount} ürün güncellendi${errorCount > 0 ? `, ${errorCount} hata` : ''}`,
-      });
+      toast.success(`${createdCount} ürün oluşturuldu, ${updatedCount} ürün güncellendi${errorCount > 0 ? `, ${errorCount} hata` : ''}`);
       // Başarılı ise geri dön
       if (errorCount === 0) {
         setTimeout(() => {
@@ -408,11 +385,7 @@ export default function ProductMapping({ isCollapsed = false, setIsCollapsed = (
       }
     } catch (error: any) {
       console.error('❌ Kaydetme hatası:', error);
-      toast({
-        title: "❌ Hata",
-        description: error.message || "Eşleştirmeler kaydedilirken hata oluştu",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Eşleştirmeler kaydedilirken hata oluştu");
     } finally {
       setIsSaving(false);
     }

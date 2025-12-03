@@ -1,5 +1,4 @@
 import React from "react";
-import { useToast } from "@/components/ui/use-toast";
 import PurchaseRequestTable from "./PurchaseRequestTable";
 import InfiniteScroll from "@/components/ui/infinite-scroll";
 
@@ -38,7 +37,6 @@ const PurchaseRequestsContent = ({
   sortDirection,
   onSort
 }: PurchaseRequestsContentProps) => {
-  const { toast } = useToast();
 
   if (error) {
     return (

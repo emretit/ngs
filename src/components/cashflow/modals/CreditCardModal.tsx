@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CreditCardModalProps {
@@ -61,11 +61,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) =
     e.preventDefault();
     
     if (!formData.card_name.trim() || !formData.bank_name.trim()) {
-      toast({
-        title: "Hata",
-        description: "Kart adı ve banka adı zorunludur",
-        variant: "destructive"
-      });
+      toast.error("Kart adı ve banka adı zorunludur");
       return;
     }
 
@@ -102,10 +98,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) =
 
       if (error) throw error;
 
-      toast({
-        title: "Başarılı",
-        description: "Kredi kartı oluşturuldu"
-      });
+      toast.success("Kredi kartı oluşturuldu");
 
       onSuccess();
       onClose();
@@ -121,11 +114,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) =
       });
     } catch (error) {
       console.error('Error creating credit card:', error);
-      toast({
-        title: "Hata",
-        description: "Kredi kartı oluşturulurken hata oluştu",
-        variant: "destructive"
-      });
+      toast.error("Kredi kartı oluşturulurken hata oluştu");
     } finally {
       setIsLoading(false);
     }

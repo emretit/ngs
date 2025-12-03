@@ -15,7 +15,7 @@ import {
   FileText,
   Save
 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function ServiceSettings() {
@@ -45,10 +45,7 @@ export default function ServiceSettings() {
 
   const handleSave = () => {
     // Save settings logic
-    toast({
-      title: 'Başarılı',
-      description: 'Ayarlar kaydedildi',
-    });
+    toast.success('Ayarlar kaydedildi');
   };
 
   return (

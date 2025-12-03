@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, Package, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,7 +46,6 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
   onProductCreated,
   initialData
 }) => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -177,11 +176,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
 
   const onSubmit = async (data: FormData) => {
     if (!userProfile?.company_id) {
-      toast({
-        title: "Hata",
-        description: "Kullanıcı bilgileri yüklenemedi. Lütfen sayfayı yenileyin.",
-        variant: "destructive",
-      });
+      toast.error("Kullanıcı bilgileri yüklenemedi. Lütfen sayfayı yenileyin.");
       return;
     }
 
@@ -215,21 +210,14 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
       // Invalidate products query so dropdown refreshes
       await queryClient.invalidateQueries({ queryKey: ["products"] });
 
-      toast({
-        title: "Başarılı", 
-        description: "Ürün başarıyla oluşturuldu",
-      });
+      toast.success("Ürün başarıyla oluşturuldu");
 
       onProductCreated(newProduct);
       onClose();
       form.reset();
     } catch (error: any) {
       console.error("❌ Error creating product:", error);
-      toast({
-        title: "Hata",
-        description: error.message || "Ürün oluşturulurken hata oluştu",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Ürün oluşturulurken hata oluştu");
     } finally {
       setIsSaving(false);
     }

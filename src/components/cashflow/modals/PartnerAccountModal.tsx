@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PartnerAccountModalProps {
@@ -81,20 +81,12 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
     e.preventDefault();
     
     if (!formData.partner_name.trim()) {
-      toast({
-        title: "Hata",
-        description: "Ortak adı zorunludur",
-        variant: "destructive"
-      });
+      toast.error("Ortak adı zorunludur");
       return;
     }
 
     if (formData.ownership_percentage && (parseFloat(formData.ownership_percentage) < 0 || parseFloat(formData.ownership_percentage) > 100)) {
-      toast({
-        title: "Hata",
-        description: "Hisse yüzdesi 0-100 arasında olmalıdır",
-        variant: "destructive"
-      });
+      toast.error("Hisse yüzdesi 0-100 arasında olmalıdır");
       return;
     }
 
@@ -129,7 +121,7 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
           .eq('id', accountId);
 
         if (error) throw error;
-        toast({ title: 'Güncellendi', description: 'Ortak hesabı güncellendi' });
+        toast.success('Ortak hesabı güncellendi');
       } else {
         const { error } = await supabase
           .from('partner_accounts')
@@ -144,7 +136,7 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
           });
 
         if (error) throw error;
-        toast({ title: 'Başarılı', description: 'Ortak hesabı oluşturuldu' });
+        toast.success('Ortak hesabı oluşturuldu');
       }
 
       onSuccess();
@@ -159,11 +151,7 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
       });
     } catch (error) {
       console.error('Error creating partner account:', error);
-      toast({
-        title: "Hata",
-        description: "Ortak hesabı oluşturulurken hata oluştu",
-        variant: "destructive"
-      });
+      toast.error("Ortak hesabı oluşturulurken hata oluştu");
     } finally {
       setIsLoading(false);
     }

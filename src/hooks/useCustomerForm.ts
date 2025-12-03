@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomerFormData } from "@/types/customer";
@@ -9,7 +9,6 @@ import { CustomerFormData } from "@/types/customer";
 export const useCustomerForm = (einvoiceMukellefData?: any) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<CustomerFormData>({
@@ -249,14 +248,10 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
 
   useEffect(() => {
     if (customerError) {
-      toast({
-        title: "Hata",
-        description: "Müşteri bilgileri yüklenemedi. Lütfen tekrar deneyin.",
-        variant: "destructive",
-      });
+      toast.error("Müşteri bilgileri yüklenemedi. Lütfen tekrar deneyin.");
       navigate('/customers');
     }
-  }, [customerError, navigate, toast]);
+  }, [customerError, navigate]);
 
   const mutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {
@@ -415,20 +410,13 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         queryClient.invalidateQueries({ queryKey: ['customer', id] });
       }
 
-      toast({
-        title: id ? "Müşteri güncellendi" : "Müşteri eklendi",
-        description: id ? "Müşteri bilgileri başarıyla güncellendi." : "Yeni müşteri başarıyla eklendi.",
-      });
+      toast.success(id ? "Müşteri bilgileri başarıyla güncellendi." : "Yeni müşteri başarıyla eklendi.");
 
       navigate('/customers');
     },
     onError: (error) => {
       console.error('Mutation error:', error);
-      toast({
-        title: "Hata",
-        description: error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.");
     },
   });
 

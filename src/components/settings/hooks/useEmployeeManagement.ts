@@ -1,13 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Employee } from "@/types/employee";
 import { logger } from "@/utils/logger";
 import { handleError, handleSuccess } from "@/utils/errorHandler";
 import { useEmployeeData } from "@/components/employees/hooks/useEmployeeData";
 
 export const useEmployeeManagement = () => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // Use existing employee data hook
@@ -34,10 +33,7 @@ export const useEmployeeManagement = () => {
     onSuccess: (data) => {
       handleSuccess('Employee created successfully', 'createEmployee', data);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast({
-        title: "Başarılı",
-        description: "Çalışan oluşturuldu",
-      });
+      toast.success("Çalışan oluşturuldu");
     },
     onError: (error: any) => {
       handleError(error, {
@@ -69,10 +65,7 @@ export const useEmployeeManagement = () => {
     onSuccess: (data) => {
       handleSuccess('Employee updated successfully', 'updateEmployee', data);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast({
-        title: "Başarılı",
-        description: "Çalışan güncellendi",
-      });
+      toast.success("Çalışan güncellendi");
     },
     onError: (error: any) => {
       handleError(error, {
@@ -135,10 +128,7 @@ export const useEmployeeManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       
-      toast({
-        title: "Başarılı",
-        description: variables.deleteUser ? "Çalışan ve kullanıcı silindi" : "Çalışan silindi",
-      });
+      toast.success(variables.deleteUser ? "Çalışan ve kullanıcı silindi" : "Çalışan silindi");
     },
     onError: (error: any) => {
       handleError(error, {

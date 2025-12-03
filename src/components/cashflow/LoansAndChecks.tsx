@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, FileText, Download, CreditCard } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
@@ -56,7 +56,6 @@ export function LoansAndChecks() {
   const [checkStatus, setCheckStatus] = useState("odenecek");
   
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   // Fetch loans
   const { data: loans = [] } = useQuery({
@@ -122,10 +121,10 @@ export function LoansAndChecks() {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       setLoanDialog(false);
       setEditingLoan(null);
-      toast({ title: "Başarılı", description: "Kredi kaydedildi" });
+      toast.success("Kredi kaydedildi");
     },
     onError: (error) => {
-      toast({ title: "Hata", description: error.message, variant: "destructive" });
+      toast.error(error.message);
     },
   });
 
@@ -163,10 +162,10 @@ export function LoansAndChecks() {
       queryClient.invalidateQueries({ queryKey: ["checks"] });
       setCheckDialog(false);
       setEditingCheck(null);
-      toast({ title: "Başarılı", description: "Çek kaydedildi" });
+      toast.success("Çek kaydedildi");
     },
     onError: (error) => {
-      toast({ title: "Hata", description: error.message, variant: "destructive" });
+      toast.error(error.message);
     },
   });
 
@@ -178,7 +177,7 @@ export function LoansAndChecks() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
-      toast({ title: "Başarılı", description: "Kredi silindi" });
+      toast.success("Kredi silindi");
     },
   });
 
@@ -189,7 +188,7 @@ export function LoansAndChecks() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["checks"] });
-      toast({ title: "Başarılı", description: "Çek silindi" });
+      toast.success("Çek silindi");
     },
   });
 

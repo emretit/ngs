@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PartnerIncomeModalProps {
@@ -127,20 +127,12 @@ const PartnerIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName
     e.preventDefault();
     
     if (!formData.amount || formData.amount <= 0) {
-      toast({
-        title: "Hata",
-        description: "Geçerli bir tutar giriniz",
-        variant: "destructive"
-      });
+      toast.error("Geçerli bir tutar giriniz");
       return;
     }
 
     if (!formData.description.trim()) {
-      toast({
-        title: "Hata",
-        description: "Açıklama alanı zorunludur",
-        variant: "destructive"
-      });
+      toast.error("Açıklama alanı zorunludur");
       return;
     }
 
@@ -183,10 +175,7 @@ const PartnerIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName
 
       if (balanceError) throw balanceError;
 
-      toast({
-        title: "Başarılı",
-        description: "Gelir işlemi eklendi"
-      });
+      toast.success("Gelir işlemi eklendi");
 
       // Formu sıfırla
       setFormData({
@@ -200,11 +189,7 @@ const PartnerIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName
       onSuccess();
     } catch (error) {
       console.error('Error adding income:', error);
-      toast({
-        title: "Hata",
-        description: "Gelir işlemi eklenirken bir hata oluştu",
-        variant: "destructive"
-      });
+      toast.error("Gelir işlemi eklenirken bir hata oluştu");
     } finally {
       setIsLoading(false);
     }

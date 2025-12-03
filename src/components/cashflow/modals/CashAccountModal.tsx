@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CashAccountModalProps {
@@ -41,11 +41,7 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps)
     e.preventDefault();
     
     if (!formData.name.trim()) {
-      toast({
-        title: "Hata",
-        description: "Hesap adı zorunludur",
-        variant: "destructive"
-      });
+      toast.error("Hesap adı zorunludur");
       return;
     }
 
@@ -78,10 +74,7 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps)
 
       if (error) throw error;
 
-      toast({
-        title: "Başarılı",
-        description: "Nakit kasa hesabı oluşturuldu"
-      });
+      toast.success("Nakit kasa hesabı oluşturuldu");
 
       onSuccess();
       onClose();
@@ -93,11 +86,7 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps)
       });
     } catch (error) {
       console.error('Error creating cash account:', error);
-      toast({
-        title: "Hata",
-        description: "Nakit kasa hesabı oluşturulurken hata oluştu",
-        variant: "destructive"
-      });
+      toast.error("Nakit kasa hesabı oluşturulurken hata oluştu");
     } finally {
       setIsLoading(false);
     }

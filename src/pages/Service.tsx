@@ -25,7 +25,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from '@/utils/dateUtils';
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface ServicePageProps {
   defaultView?: "list" | "kanban" | "map" | "scheduling" | "calendar" | "maintenance" | "templates" | "performance" | "parts";
@@ -91,18 +91,11 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] });
-      toast({
-        title: "Başarılı",
-        description: "Servis durumu güncellendi.",
-      });
+      toast.success("Servis durumu güncellendi.");
     },
     onError: (error) => {
       console.error('Durum güncelleme hatası:', error);
-      toast({
-        title: "Hata",
-        description: "Servis durumu güncellenirken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast.error("Servis durumu güncellenirken bir hata oluştu.");
     }
   });
 

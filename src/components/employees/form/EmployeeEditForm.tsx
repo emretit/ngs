@@ -10,7 +10,6 @@ import { SalarySection } from "./sections/SalarySection";
 import { DocumentUploadSection, DocumentFile } from "./sections/DocumentUploadSection";
 import { RoleSection } from "./sections/RoleSection";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 
 interface EmployeeEditFormProps {

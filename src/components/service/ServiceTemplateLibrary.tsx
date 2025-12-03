@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ServiceTemplateService, ServiceTemplate } from '@/services/serviceTemplateService';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Search, Plus, FileText, TrendingUp, Edit, Trash2, Copy } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,17 +32,10 @@ export const ServiceTemplateLibrary: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-templates'] });
-      toast({
-        title: 'Başarılı',
-        description: 'Şablon silindi.',
-      });
+      toast.success('Şablon silindi.');
     },
     onError: (error: any) => {
-      toast({
-        title: 'Hata',
-        description: error.message || 'Şablon silinirken bir hata oluştu.',
-        variant: 'destructive',
-      });
+      toast.error(error.message || 'Şablon silinirken bir hata oluştu.');
     },
   });
 
@@ -53,18 +46,11 @@ export const ServiceTemplateLibrary: React.FC = () => {
     },
     onSuccess: (service) => {
       queryClient.invalidateQueries({ queryKey: ['service-requests'] });
-      toast({
-        title: 'Başarılı',
-        description: 'Servis şablondan oluşturuldu.',
-      });
+      toast.success('Servis şablondan oluşturuldu.');
       navigate(`/service/edit/${service.id}`);
     },
     onError: (error: any) => {
-      toast({
-        title: 'Hata',
-        description: error.message || 'Servis oluşturulurken bir hata oluştu.',
-        variant: 'destructive',
-      });
+      toast.error(error.message || 'Servis oluşturulurken bir hata oluştu.');
     },
   });
 

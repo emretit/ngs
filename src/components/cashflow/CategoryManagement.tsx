@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Edit, Trash2, TrendingUp, TrendingDown, Tag, MoreHorizontal, Search, Filter, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
 import { useCashflowCategories, CreateCategoryData } from "@/hooks/useCashflowCategories";
 import { useCashflowSubcategories } from "@/hooks/useCashflowSubcategories";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface CategoryFormData {
   name: string;
@@ -377,7 +377,6 @@ const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedT
   const { categories, loading, createCategory, updateCategory, deleteCategory, getCategoriesByType, refetch } = useCashflowCategories();
   // Tüm alt kategorileri tek seferde yükle (categoryId olmadan)
   const { subcategories: allSubcategories, loading: subcategoriesLoading, createSubcategory, updateSubcategory, deleteSubcategory, refetch: refetchSubcategories } = useCashflowSubcategories();
-  const { toast } = useToast();
 
   const {
     register,
@@ -452,12 +451,7 @@ const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedT
       
       // Eğer hata mesajı varsa ve toast gösterilmemişse burada göster
       if (error?.message) {
-        toast({
-          variant: "destructive",
-          title: "Hata",
-          description: error.message,
-          duration: 2000,
-        });
+        toast.error(error.message);
       }
     } finally {
       setIsDeleting(false);

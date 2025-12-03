@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useNilveraPdf } from '@/hooks/useNilveraPdf';
 import { DateDisplay } from '@/components/ui/date-display';
 
@@ -43,7 +43,6 @@ export default function EInvoiceList() {
   const [endDate, setEndDate] = useState(currentMonth.end);
   
   const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ startDate, endDate });
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { downloadAndOpenPdf } = useNilveraPdf();
   
@@ -131,10 +130,7 @@ export default function EInvoiceList() {
 
   const handleRefresh = () => {
     refetch();
-    toast({
-      title: "Yenilendi",
-      description: "E-fatura listesi güncellendi"
-    });
+    toast.success("E-fatura listesi güncellendi");
   };
 
   return (

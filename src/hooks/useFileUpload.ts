@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 export const useFileUpload = () => {
   const [uploading, setUploading] = useState(false);
-  const { toast } = useToast();
 
   const uploadFile = async (file: File, folder: string = ""): Promise<string | null> => {
     if (!file) return null;
@@ -33,18 +32,11 @@ export const useFileUpload = () => {
         .from('cashflow-attachments')
         .getPublicUrl(data.path);
 
-      toast({
-        title: "Success",
-        description: "File uploaded successfully",
-      });
+      toast.success("File uploaded successfully");
 
       return publicUrl;
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Upload Error",
-        description: error.message,
-      });
+      toast.error(error.message || "Upload Error");
       return null;
     } finally {
       setUploading(false);
@@ -63,18 +55,11 @@ export const useFileUpload = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "File deleted successfully",
-      });
+      toast.success("File deleted successfully");
 
       return true;
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Delete Error",
-        description: error.message,
-      });
+      toast.error(error.message || "Delete Error");
       return false;
     }
   };

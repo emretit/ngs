@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SupplierFormData } from "@/types/supplier";
@@ -8,7 +8,6 @@ import { SupplierFormData } from "@/types/supplier";
 export const useSupplierForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState<SupplierFormData>({
@@ -269,14 +268,10 @@ export const useSupplierForm = () => {
 
   useEffect(() => {
     if (supplierError) {
-      toast({
-        title: "Hata",
-        description: "Tedarikçi bilgileri yüklenemedi. Lütfen tekrar deneyin.",
-        variant: "destructive",
-      });
+      toast.error("Tedarikçi bilgileri yüklenemedi. Lütfen tekrar deneyin.");
       navigate('/suppliers');
     }
-  }, [supplierError, navigate, toast]);
+  }, [supplierError, navigate]);
 
   const mutation = useMutation({
     mutationFn: async (data: SupplierFormData) => {
@@ -424,19 +419,12 @@ export const useSupplierForm = () => {
       if (id) {
         queryClient.invalidateQueries({ queryKey: ['supplier', id] });
       }
-      toast({
-        title: id ? "Tedarikçi güncellendi" : "Tedarikçi eklendi",
-        description: id ? "Tedarikçi bilgileri başarıyla güncellendi." : "Yeni tedarikçi başarıyla eklendi.",
-      });
+      toast.success(id ? "Tedarikçi bilgileri başarıyla güncellendi." : "Yeni tedarikçi başarıyla eklendi.");
       navigate('/suppliers');
     },
     onError: (error) => {
       console.error('Mutation error:', error);
-      toast({
-        title: "Hata",
-        description: error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Bir hata oluştu. Lütfen tekrar deneyin.");
     },
   });
 

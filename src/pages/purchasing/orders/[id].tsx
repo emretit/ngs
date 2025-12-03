@@ -27,7 +27,7 @@ import {
   PurchaseOrderItem,
 } from "@/hooks/usePurchaseOrders";
 import { format } from "date-fns";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
 
 const getStatusBadge = (status: string) => {
@@ -117,10 +117,7 @@ export default function PurchaseOrderDetail() {
   }, [requestApproval, po.id]);
 
   const handleSendToVendor = useCallback(() => {
-    toast({
-      title: "PDF Gönderiliyor",
-      description: "Sipariş PDF'i tedarikçiye email ile gönderilecek.",
-    });
+    toast.info("Sipariş PDF'i tedarikçiye email ile gönderilecek.");
   }, []);
 
   const approvalThreshold = 50000;

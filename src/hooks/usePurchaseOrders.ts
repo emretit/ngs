@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useInfiniteScroll } from './useInfiniteScroll';
 import { useCurrentUser } from './useCurrentUser';
 import { useCallback } from 'react';
@@ -260,17 +260,10 @@ export const useCreatePurchaseOrder = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
-      toast({
-        title: "Başarılı",
-        description: "Satın alma siparişi oluşturuldu.",
-      });
+      toast.success("Satın alma siparişi oluşturuldu.");
     },
     onError: (error: Error) => {
-      toast({
-        title: "Hata",
-        description: error.message || "Sipariş oluşturulurken bir hata oluştu.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Sipariş oluşturulurken bir hata oluştu.");
     },
   });
 };
@@ -346,10 +339,7 @@ export const useUpdatePurchaseOrder = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
       queryClient.invalidateQueries({ queryKey: ['purchase-order'] });
-      toast({
-        title: "Başarılı",
-        description: "Sipariş güncellendi.",
-      });
+      toast.success("Sipariş güncellendi.");
     },
   });
 };
@@ -390,10 +380,7 @@ export const useRequestPOApproval = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
       queryClient.invalidateQueries({ queryKey: ['purchase-order'] });
-      toast({
-        title: "Başarılı",
-        description: "Onay talebi gönderildi.",
-      });
+      toast.success("Onay talebi gönderildi.");
     },
   });
 };
@@ -414,10 +401,7 @@ export const useUpdatePOStatus = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
       queryClient.invalidateQueries({ queryKey: ['purchase-order'] });
-      toast({
-        title: "Başarılı",
-        description: "Durum güncellendi.",
-      });
+      toast.success("Durum güncellendi.");
     },
   });
 };

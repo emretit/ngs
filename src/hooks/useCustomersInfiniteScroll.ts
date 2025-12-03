@@ -12,6 +12,16 @@ interface UseCustomersFilters {
 
 export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) => {
   const fetchCustomers = async (page: number, pageSize: number) => {
+    // Önce kullanıcının company_id'sini al
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", user?.id)
+      .single();
+
+    const companyId = profile?.company_id;
+    
     let query = supabase
       .from("customers")
       .select(`
@@ -23,6 +33,18 @@ export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) =>
           position
         )
       `, { count: 'exact' });
+
+    // Company_id filtresi - sadece kullanıcının şirketinin müşterilerini göster
+    if (companyId) {
+      query = query.eq("company_id", companyId);
+    } else {
+      // Eğer company_id yoksa boş sonuç döndür (güvenlik için)
+      return {
+        data: [] as Customer[],
+        totalCount: 0,
+        hasNextPage: false
+      };
+    }
 
     // Apply filters
     if (filters.search) {

@@ -27,7 +27,7 @@ import {
 } from "@/hooks/useVendorInvoices";
 import ThreeWayMatchWidget from "@/components/purchasing/ThreeWayMatchWidget";
 import { format } from "date-fns";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
 
 const getStatusBadge = (status: string) => {
@@ -76,10 +76,7 @@ export default function VendorInvoiceDetail() {
       await updateStatus.mutateAsync({ id: invoice.id, status: newStatus });
       
       if (newStatus === 'posted') {
-        toast({
-          title: "Başarılı",
-          description: "Fatura muhasebeleşti. AP borcu oluşturuldu.",
-        });
+        toast.success("Fatura muhasebeleşti. AP borcu oluşturuldu.");
       }
     } catch (error) {
       console.error('Status update error:', error);
@@ -87,10 +84,7 @@ export default function VendorInvoiceDetail() {
   };
 
   const handleEInvoiceImport = () => {
-    toast({
-      title: "Yakında",
-      description: "E-Fatura import özelliği yakında eklenecek.",
-    });
+    toast.info("E-Fatura import özelliği yakında eklenecek.");
   };
 
   const canApprove = invoice.status === 'matched';

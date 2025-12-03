@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CashIncomeModalProps {
@@ -81,29 +81,17 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
     e.preventDefault();
     
     if (!formData.amount || formData.amount <= 0) {
-      toast({
-        title: "Hata",
-        description: "Geçerli bir tutar giriniz",
-        variant: "destructive"
-      });
+      toast.error("Geçerli bir tutar giriniz");
       return;
     }
 
     if (!formData.description.trim()) {
-      toast({
-        title: "Hata",
-        description: "Açıklama zorunludur",
-        variant: "destructive"
-      });
+      toast.error("Açıklama zorunludur");
       return;
     }
 
     if (!formData.transaction_date) {
-      toast({
-        title: "Hata",
-        description: "Tarih seçiniz",
-        variant: "destructive"
-      });
+      toast.error("Tarih seçiniz");
       return;
     }
 
@@ -148,10 +136,7 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
 
       if (balanceError) throw balanceError;
 
-      toast({
-        title: "Başarılı",
-        description: "Gelir işlemi eklendi"
-      });
+      toast.success("Gelir işlemi eklendi");
 
       onSuccess();
       onClose();
@@ -164,11 +149,7 @@ const CashIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName, c
       });
     } catch (error) {
       console.error('Error adding income:', error);
-      toast({
-        title: "Hata",
-        description: "Gelir işlemi eklenirken hata oluştu",
-        variant: "destructive"
-      });
+      toast.error("Gelir işlemi eklenirken hata oluştu");
     } finally {
       setIsLoading(false);
     }

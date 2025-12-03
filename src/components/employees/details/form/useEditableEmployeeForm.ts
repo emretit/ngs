@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Employee } from "@/types/employee";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface UseEditableEmployeeFormProps {
@@ -13,7 +13,6 @@ interface UseEditableEmployeeFormProps {
 export const useEditableEmployeeForm = ({ employee, onSuccess }: UseEditableEmployeeFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const handleEdit = () => {
@@ -45,20 +44,13 @@ export const useEditableEmployeeForm = ({ employee, onSuccess }: UseEditableEmpl
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['employee', employee.id] });
 
-      toast({
-        title: "Başarılı",
-        description: "Çalışan bilgileri başarıyla güncellendi",
-      });
+      toast.success("Çalışan bilgileri başarıyla güncellendi");
 
       setIsEditing(false);
       onSuccess?.();
     } catch (error) {
       console.error('Çalışan güncellenirken hata:', error);
-      toast({
-        variant: "destructive",
-        title: "Hata",
-        description: "Çalışan bilgileri güncellenirken bir hata oluştu",
-      });
+      toast.error("Çalışan bilgileri güncellenirken bir hata oluştu");
     } finally {
       setIsSaving(false);
     }

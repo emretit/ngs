@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface BankAccountModalProps {
@@ -51,11 +51,7 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
     e.preventDefault();
     
     if (!formData.account_name.trim() || !formData.bank_name.trim()) {
-      toast({
-        title: "Hata",
-        description: "Hesap adı ve banka adı zorunludur",
-        variant: "destructive"
-      });
+      toast.error("Hesap adı ve banka adı zorunludur");
       return;
     }
 
@@ -93,10 +89,7 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
 
       if (error) throw error;
 
-      toast({
-        title: "Başarılı",
-        description: "Banka hesabı oluşturuldu"
-      });
+      toast.success("Banka hesabı oluşturuldu");
 
       onSuccess();
       onClose();
@@ -113,11 +106,7 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
       });
     } catch (error) {
       console.error('Error creating bank account:', error);
-      toast({
-        title: "Hata",
-        description: "Banka hesabı oluşturulurken hata oluştu",
-        variant: "destructive"
-      });
+      toast.error("Banka hesabı oluşturulurken hata oluştu");
     } finally {
       setIsLoading(false);
     }

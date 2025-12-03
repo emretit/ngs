@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Employee } from "@/types/employee";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface EmployeeHeaderProps {
   employee: Employee;
@@ -20,7 +20,6 @@ export const EmployeeHeader = ({ employee, id, onEdit, onUpdate }: EmployeeHeade
   const [statusValue, setStatusValue] = useState(employee.status);
   const [positionValue, setPositionValue] = useState(employee.position);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -49,16 +48,9 @@ export const EmployeeHeader = ({ employee, id, onEdit, onUpdate }: EmployeeHeade
         onUpdate(data);
       }
 
-      toast({
-        title: "Başarılı",
-        description: "Güncelleme başarılı",
-      });
+      toast.success("Güncelleme başarılı");
     } catch (error) {
-      toast({
-        title: "Hata",
-        description: "Güncelleme sırasında hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Güncelleme sırasında hata oluştu");
     } finally {
       setIsLoading(false);
     }

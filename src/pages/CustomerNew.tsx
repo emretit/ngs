@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CustomerFormData } from "@/types/customer";
 import CustomerFormHeader from "@/components/customers/CustomerFormHeader";
@@ -9,7 +9,6 @@ import CustomerFormContent from "@/components/customers/CustomerFormContent";
 import { useEinvoiceMukellefCheck } from "@/hooks/useEinvoiceMukellefCheck";
 const CustomerNew = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { result: einvoiceResult } = useEinvoiceMukellefCheck();
   const [formData, setFormData] = useState<CustomerFormData>({
@@ -112,19 +111,12 @@ const CustomerNew = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      toast({
-        title: "Başarılı",
-        description: "Müşteri başarıyla eklendi.",
-      });
+      toast.success("Müşteri başarıyla eklendi.");
       navigate('/customers');
     },
     onError: (error) => {
       console.error('Form submission error:', error);
-      toast({
-        title: "Hata",
-        description: "Müşteri eklenirken bir hata oluştu. Lütfen tekrar deneyin.",
-        variant: "destructive",
-      });
+      toast.error("Müşteri eklenirken bir hata oluştu. Lütfen tekrar deneyin.");
     },
   });
   const handleSubmit = async (e: React.FormEvent) => {

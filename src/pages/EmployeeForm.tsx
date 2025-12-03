@@ -4,14 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { EmployeeEditForm } from "@/components/employees/form/EmployeeEditForm";
 import { Employee } from "@/types/employee";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import BackButton from "@/components/ui/back-button";
 import { Pencil, Save } from "lucide-react";
 
 const EmployeeForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const { data: employee, isLoading, refetch } = useQuery({
     queryKey: ["employee", id],
@@ -28,11 +27,7 @@ const EmployeeForm = () => {
     },
     meta: {
       onError: (error: Error) => {
-        toast({
-          variant: "destructive",
-          title: "Hata",
-          description: error.message || "Çalışan detayları yüklenirken hata oluştu",
-        });
+        toast.error(error.message || "Çalışan detayları yüklenirken hata oluştu");
         navigate("/employees");
       },
     },

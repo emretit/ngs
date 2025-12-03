@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import EmployeeSelector from "@/components/proposals/form/EmployeeSelector";
 import CategorySelector from "@/components/cashflow/CategorySelector";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
@@ -118,7 +118,6 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
   // View state - varsayılan olarak liste görünümü
   const [activeView, setActiveView] = useState<ExpenseViewType>("list");
   
-  const { toast } = useToast();
 
   // Fetch functions
   const fetchEmployees = useCallback(async () => {
@@ -188,7 +187,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       setExpenses(data || []);
     } catch (error) {
       console.error('Error fetching expenses:', error);
-      toast({ title: "Hata", description: "Masraflar yüklenirken bir hata oluştu", variant: "destructive" });
+      toast.error("Masraflar yüklenirken bir hata oluştu");
     } finally {
       setLoading(false);
     }
@@ -226,11 +225,11 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
 
   const handleAddExpense = async () => {
     if (!selectedCategory || !amount || !date) {
-      toast({ title: "Eksik Bilgi", description: "Lütfen tüm gerekli alanları doldurun", variant: "destructive" });
+      toast.error("Lütfen tüm gerekli alanları doldurun");
       return;
     }
     if (expenseType === 'employee' && !selectedEmployee) {
-      toast({ title: "Eksik Bilgi", description: "Çalışan masrafı için çalışan seçimi zorunludur", variant: "destructive" });
+      toast.error("Çalışan masrafı için çalışan seçimi zorunludur");
       return;
     }
 
@@ -314,13 +313,13 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         }
       }
 
-      toast({ title: "Başarılı", description: "Masraf başarıyla eklendi" });
+      toast.success("Masraf başarıyla eklendi");
       setIsAddDialogOpen(false);
       resetForm();
       fetchExpenses();
     } catch (error) {
       console.error('Error adding expense:', error);
-      toast({ title: "Hata", description: "Masraf eklenirken bir hata oluştu", variant: "destructive" });
+      toast.error("Masraf eklenirken bir hata oluştu");
     }
   };
 
@@ -385,7 +384,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
 
   const handleUpdateExpense = async () => {
     if (!editingExpense || !editAmount || parseFloat(editAmount) <= 0) {
-      toast({ title: "Hata", description: "Lütfen geçerli bir tutar girin", variant: "destructive" });
+      toast.error("Lütfen geçerli bir tutar girin");
       return;
     }
 
@@ -419,13 +418,13 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
 
       if (error) throw error;
 
-      toast({ title: "Başarılı", description: "Masraf başarıyla güncellendi" });
+      toast.success("Masraf başarıyla güncellendi");
       setIsEditSheetOpen(false);
       setEditingExpense(null);
       fetchExpenses();
     } catch (error) {
       console.error('Error updating expense:', error);
-      toast({ title: "Hata", description: "Masraf güncellenirken bir hata oluştu", variant: "destructive" });
+      toast.error("Masraf güncellenirken bir hata oluştu");
     } finally {
       setIsUpdating(false);
     }
@@ -437,11 +436,11 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
     try {
       const { error } = await supabase.from('expenses').delete().eq('id', expenseToDelete.id);
       if (error) throw error;
-      toast({ title: "Başarılı", description: "Masraf başarıyla silindi" });
+      toast.success("Masraf başarıyla silindi");
       fetchExpenses();
     } catch (error) {
       console.error('Error deleting expense:', error);
-      toast({ title: "Hata", description: "Masraf silinirken bir hata oluştu", variant: "destructive" });
+      toast.error("Masraf silinirken bir hata oluştu");
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -493,12 +492,12 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       try {
         const { error } = await supabase.from('expenses').delete().in('id', selectedExpenses.map(e => e.id));
         if (error) throw error;
-        toast({ title: "Başarılı", description: `${selectedExpenses.length} işlem başarıyla silindi` });
+        toast.success(`${selectedExpenses.length} işlem başarıyla silindi`);
         setSelectedExpenses([]);
         setIsAllSelected(false);
         fetchExpenses();
       } catch (error) {
-        toast({ title: "Hata", description: "İşlemler silinirken bir hata oluştu", variant: "destructive" });
+        toast.error("İşlemler silinirken bir hata oluştu");
       }
     }
   }, [selectedExpenses, toast, fetchExpenses]);

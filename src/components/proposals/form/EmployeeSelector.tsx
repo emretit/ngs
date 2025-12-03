@@ -167,7 +167,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] max-w-[90vw] p-0" align="start">
+        <PopoverContent className="w-[400px] max-w-[90vw] p-0 z-[9999] pointer-events-auto" align="start">
           <div className="p-1.5 border-b">
             <Input
               placeholder={searchPlaceholder}

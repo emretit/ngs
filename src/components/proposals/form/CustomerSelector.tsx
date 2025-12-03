@@ -105,7 +105,7 @@ const CustomerSelector: React.FC<CustomerSelectorProps> = ({ value, onChange, er
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0" align="start">
+        <PopoverContent className="w-[400px] p-0 z-[9999] pointer-events-auto" align="start">
           <div className="p-3 border-b">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

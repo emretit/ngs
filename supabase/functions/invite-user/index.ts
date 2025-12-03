@@ -285,6 +285,56 @@ serve(async (req) => {
 
       console.log('✅ Invite link generated successfully for:', email);
 
+      // ===== KRITIK: Davet sonrası profiles ve user_roles kaydı oluştur =====
+      const userId = linkData.user?.id;
+      
+      if (userId && inviting_company_id) {
+        console.log('📝 Creating profiles and user_roles for invited user:', userId);
+        
+        // 1. Profiles kaydı oluştur
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            email: email,
+            full_name: null, // Kullanıcı InviteSetup'ta dolduracak
+            company_id: inviting_company_id,
+            company_name: companyName,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, { 
+            onConflict: 'id',
+            ignoreDuplicates: false 
+          });
+        
+        if (profileError) {
+          console.error('⚠️ Profile creation error (non-blocking):', profileError);
+        } else {
+          console.log('✅ Profile created for:', email);
+        }
+        
+        // 2. User roles kaydı oluştur
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .upsert({
+            user_id: userId,
+            role: userRole,
+            company_id: inviting_company_id,
+            created_at: new Date().toISOString()
+          }, { 
+            onConflict: 'user_id,role,company_id',
+            ignoreDuplicates: false 
+          });
+        
+        if (roleError) {
+          console.error('⚠️ User role creation error (non-blocking):', roleError);
+        } else {
+          console.log('✅ User role created for:', email, 'role:', userRole);
+        }
+      }
+      // ===== KRITIK BÖLÜM SONU =====
+
       const inviteUrl = linkData.properties.action_link;
 
       await resend.emails.send({

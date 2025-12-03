@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Employee {
   id: string;
@@ -167,17 +166,23 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
             <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] max-w-[90vw] p-0 z-[9999] pointer-events-auto" align="start">
+        <PopoverContent 
+          className="w-[400px] max-w-[90vw] p-0 z-[9999] pointer-events-auto" 
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <div className="p-1.5 border-b">
             <Input
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-8 text-xs"
+              autoFocus
             />
           </div>
           
-          <ScrollArea className="h-[200px]">
+          <div className="h-[200px] overflow-y-auto">
             {filteredEmployees.length === 0 ? (
               <div className="p-3 text-center text-muted-foreground text-xs">
                 {searchQuery 
@@ -230,7 +235,7 @@ const EmployeeSelector: React.FC<EmployeeSelectorProps> = ({
                 ))}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </PopoverContent>
       </Popover>
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}

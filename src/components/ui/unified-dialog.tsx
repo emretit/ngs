@@ -88,17 +88,20 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
             maxWidthClasses[maxWidth],
             className
           )}
+          onOpenAutoFocus={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => {
             // Portal içeriklere (dropdown, popover, select) tıklandığında dialog kapanmasın
             const target = e.target as HTMLElement;
             const isInsidePortal = target.closest('[data-radix-popper-content-wrapper]') || 
                 target.closest('[data-radix-select-content]') ||
+                target.closest('[data-radix-popover-content]') ||
                 target.closest('[role="listbox"]') ||
                 target.closest('[role="option"]') ||
                 target.closest('[role="dialog"]') ||
                 target.closest('[data-state="open"]');
             if (isInsidePortal) {
               e.preventDefault();
+              e.stopPropagation();
             }
           }}
           onInteractOutside={(e) => {
@@ -106,12 +109,14 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
             const target = e.target as HTMLElement;
             const isInsidePortal = target.closest('[data-radix-popper-content-wrapper]') || 
                 target.closest('[data-radix-select-content]') ||
+                target.closest('[data-radix-popover-content]') ||
                 target.closest('[role="listbox"]') ||
                 target.closest('[role="option"]') ||
                 target.closest('[role="dialog"]') ||
                 target.closest('[data-state="open"]');
             if (isInsidePortal) {
               e.preventDefault();
+              e.stopPropagation();
             }
           }}
         >

@@ -114,27 +114,44 @@ const InviteSetup = () => {
 
       // Get current user to check for employee_id in metadata
       const { data: { user } } = await supabase.auth.getUser();
-      const employeeId = user?.user_metadata?.employee_id;
       
-      if (employeeId && user?.id) {
-        console.log('Linking user to employee:', employeeId);
-        try {
-          // Update employee with user_id
-          await supabase
-            .from('employees')
-            .update({ user_id: user.id })
-            .eq('id', employeeId);
-          
-          // Update profile with employee_id
-          await supabase
-            .from('profiles')
-            .update({ employee_id: employeeId })
-            .eq('id', user.id);
-          
-          console.log('User-Employee link established');
-        } catch (linkError) {
-          console.error('Error linking user to employee:', linkError);
-          // Don't throw - user is already created
+      if (user?.id) {
+        // Update profiles table with full_name
+        console.log('Updating profiles table with full_name:', fullName.trim());
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ full_name: fullName.trim() })
+          .eq('id', user.id);
+        
+        if (profileError) {
+          console.error('Error updating profile full_name:', profileError);
+        } else {
+          console.log('Profile full_name updated successfully');
+        }
+        
+        // Check for employee_id in metadata
+        const employeeId = user?.user_metadata?.employee_id;
+        
+        if (employeeId) {
+          console.log('Linking user to employee:', employeeId);
+          try {
+            // Update employee with user_id
+            await supabase
+              .from('employees')
+              .update({ user_id: user.id })
+              .eq('id', employeeId);
+            
+            // Update profile with employee_id
+            await supabase
+              .from('profiles')
+              .update({ employee_id: employeeId })
+              .eq('id', user.id);
+            
+            console.log('User-Employee link established');
+          } catch (linkError) {
+            console.error('Error linking user to employee:', linkError);
+            // Don't throw - user is already created
+          }
         }
       }
       toast.success("Şifreniz başarıyla oluşturuldu. Dashboard'a yönlendiriliyorsunuz.", { duration: 1000 });

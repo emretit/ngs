@@ -85,7 +85,7 @@ const CompanyBasicInfo = ({ formData, setFormData }: CompanyBasicInfoProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="tax_number" className="text-xs font-medium text-gray-700">
-              Vergi No / TC Kimlik *
+              Vergi No / TC Kimlik
             </Label>
             <div className="relative">
               <Input

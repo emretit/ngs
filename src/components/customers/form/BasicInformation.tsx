@@ -78,7 +78,7 @@ const BasicInformation = ({ formData, setFormData }: BasicInformationProps) => {
           <div className="space-y-2">
             <Label htmlFor="tax_number" className="text-sm font-medium text-muted-foreground flex items-center gap-1">
               <FileText className="w-3 h-3 text-amber-500" />
-              <span>Vergi No / TC Kimlik *</span>
+              <span>Vergi No / TC Kimlik</span>
             </Label>
             <div className="relative">
               <Input
@@ -231,11 +231,10 @@ const BasicInformation = ({ formData, setFormData }: BasicInformationProps) => {
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                 <User className="w-3 h-3 text-primary" />
-                <span>Yetkili Kişi *</span>
+                <span>Yetkili Kişi</span>
               </Label>
               <Input
                 id="name"
-                required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Yetkili kişi adı giriniz"

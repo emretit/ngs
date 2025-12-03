@@ -303,17 +303,10 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
                 }
 
                 queryClient.invalidateQueries({ queryKey: ['service-requests'] });
-                toast({
-                  title: "Başarılı",
-                  description: "Servis teknisyene atandı ve bildirim gönderildi.",
-                });
+                toast.success("Servis teknisyene atandı ve bildirim gönderildi.");
               } catch (error: any) {
                 console.error('Servis atama hatası:', error);
-                toast({
-                  title: "Hata",
-                  description: error.message || "Servis ataması güncellenirken bir hata oluştu.",
-                  variant: "destructive",
-                });
+                toast.error(error.message || "Servis ataması güncellenirken bir hata oluştu.");
               }
             }}
           />

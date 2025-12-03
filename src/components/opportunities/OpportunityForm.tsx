@@ -113,11 +113,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
 
   const handleEditType = async (id: number, newDisplayName: string) => {
     if (!newDisplayName.trim()) {
-      toast({
-        title: "Hata",
-        description: "Fırsat tipi adı boş olamaz",
-        variant: "destructive",
-      });
+      toast.error("Fırsat tipi adı boş olamaz");
       return;
     }
 
@@ -134,20 +130,13 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
           )
         );
         setEditingType(null);
-        toast({
-          title: "Başarılı",
-          description: "Fırsat tipi güncellendi",
-        });
+        toast.success("Fırsat tipi güncellendi");
       } else {
         throw error;
       }
     } catch (error) {
       console.error('Error updating opportunity type:', error);
-      toast({
-        title: "Hata",
-        description: "Fırsat tipi güncellenirken hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Fırsat tipi güncellenirken hata oluştu");
     }
   };
 
@@ -160,20 +149,13 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       
       if (!error) {
         setOpportunityTypes(prev => prev.filter(type => type.id !== id));
-        toast({
-          title: "Başarılı",
-          description: "Fırsat tipi silindi",
-        });
+        toast.success("Fırsat tipi silindi");
       } else {
         throw error;
       }
     } catch (error) {
       console.error('Error deleting opportunity type:', error);
-      toast({
-        title: "Hata",
-        description: "Fırsat tipi silinirken hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Fırsat tipi silinirken hata oluştu");
     }
   };
 
@@ -200,11 +182,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
     e.preventDefault();
     
     if (!formData.title.trim()) {
-      toast({
-        title: "Hata",
-        description: "Fırsat başlığı gereklidir",
-        variant: "destructive",
-      });
+      toast.error("Fırsat başlığı gereklidir");
       return;
     }
 
@@ -234,10 +212,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       // Refresh opportunities data
       queryClient.invalidateQueries({ queryKey: ["opportunities"] });
       
-      toast({
-        title: "Başarılı",
-        description: "Yeni fırsat başarıyla oluşturuldu",
-      });
+      toast.success("Yeni fırsat başarıyla oluşturuldu");
 
       // Reset form and close
       setFormData({
@@ -255,11 +230,7 @@ const OpportunityForm: React.FC<OpportunityFormProps> = ({ isOpen, onClose }) =>
       onClose();
     } catch (error) {
       console.error("Error creating opportunity:", error);
-      toast({
-        title: "Hata",
-        description: "Fırsat oluşturulurken bir hata oluştu",
-        variant: "destructive",
-      });
+      toast.error("Fırsat oluşturulurken bir hata oluştu");
     } finally {
       setIsSubmitting(false);
     }

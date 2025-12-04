@@ -134,7 +134,7 @@ export const ServiceDispatchBoard = ({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)]">
+    <div className="flex flex-col h-[calc(100vh-12rem)] bg-background rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Header: Tarih, Görünüm, Arama */}
       <TimelineHeader
         selectedDate={selectedDate}

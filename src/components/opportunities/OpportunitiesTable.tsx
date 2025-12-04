@@ -17,6 +17,7 @@ interface OpportunitiesTableProps {
   onEditOpportunity?: (opportunity: Opportunity) => void;
   onDeleteOpportunity?: (opportunity: Opportunity) => void;
   onConvertToProposal?: (opportunity: Opportunity) => void;
+  onStatusChange?: (opportunityId: string, status: string) => void;
   searchQuery?: string;
   statusFilter?: string;
   priorityFilter?: string;
@@ -32,6 +33,7 @@ const OpportunitiesTable = ({
   onEditOpportunity,
   onDeleteOpportunity,
   onConvertToProposal,
+  onStatusChange: externalOnStatusChange,
   searchQuery = "",
   statusFilter = "all",
   priorityFilter = null,
@@ -47,7 +49,10 @@ const OpportunitiesTable = ({
   const sortField = (externalSortField as OpportunitySortField) ?? internalSortField;
   const sortDirection = (externalSortDirection as OpportunitySortDirection) ?? internalSortDirection;
   
-  const { updateOpportunityStatus } = useOpportunityStatusUpdate();
+  const { updateOpportunityStatus: hookUpdateStatus } = useOpportunityStatusUpdate();
+  
+  // Dışarıdan onStatusChange prop'u geçilmişse onu kullan, yoksa hook'u kullan
+  const handleStatusChange = externalOnStatusChange || hookUpdateStatus;
 
   const handleSort = (field: OpportunitySortField) => {
     // Eğer dışarıdan onSort prop'u geçilmişse onu kullan (veritabanı seviyesinde sıralama)
@@ -107,7 +112,7 @@ const OpportunitiesTable = ({
               onEditOpportunity={onEditOpportunity}
               onDeleteOpportunity={onDeleteOpportunity}
               onConvertToProposal={onConvertToProposal}
-              onStatusChange={updateOpportunityStatus}
+              onStatusChange={handleStatusChange}
             />
           ))
         )}

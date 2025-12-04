@@ -11,6 +11,7 @@ interface OpportunitiesContentProps {
   onEditOpportunity?: (opportunity: Opportunity) => void;
   onDeleteOpportunity?: (opportunity: Opportunity) => void;
   onConvertToProposal?: (opportunity: Opportunity) => void;
+  onStatusChange?: (opportunityId: string, status: string) => void;
   searchQuery?: string;
   statusFilter?: string;
   priorityFilter?: string;
@@ -28,6 +29,7 @@ const OpportunitiesContent = ({
   onEditOpportunity,
   onDeleteOpportunity,
   onConvertToProposal,
+  onStatusChange,
   searchQuery,
   statusFilter,
   priorityFilter,
@@ -55,6 +57,7 @@ const OpportunitiesContent = ({
             onEditOpportunity={onEditOpportunity}
             onDeleteOpportunity={onDeleteOpportunity}
             onConvertToProposal={onConvertToProposal}
+            onStatusChange={onStatusChange}
             searchQuery={searchQuery}
             statusFilter={statusFilter}
             priorityFilter={priorityFilter}

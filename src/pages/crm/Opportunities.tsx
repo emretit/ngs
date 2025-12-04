@@ -10,11 +10,12 @@ import OpportunityFilterBar from "@/components/opportunities/OpportunityFilterBa
 import { OpportunityDetailSheet } from "@/components/crm/OpportunityDetailSheet";
 import OpportunityBulkActions from "@/components/opportunities/OpportunityBulkActions";
 import OpportunitiesContent from "@/components/opportunities/OpportunitiesContent";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 const Opportunities = memo(() => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedOpportunities, setSelectedOpportunities] = useState<Opportunity[]>([]);
   const [filterKeyword, setFilterKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState<OpportunityStatus | "all">("all");
@@ -133,9 +134,69 @@ const Opportunities = memo(() => {
 
     setIsDeleting(true);
     try {
-      // TODO: Implement delete functionality
-    } catch (error) {
+      // Önce fırsatın başka kayıtlarda kullanılıp kullanılmadığını kontrol et
+      const { data: proposals } = await supabase
+        .from('proposals')
+        .select('id')
+        .eq('opportunity_id', opportunityToDelete.id)
+        .limit(1);
+
+      if (proposals && proposals.length > 0) {
+        setIsDeleting(false);
+        setIsDeleteDialogOpen(false);
+        toast.error('Bu fırsat tekliflerde kullanıldığı için silinemez', { duration: 2000 });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('opportunities')
+        .delete()
+        .eq('id', opportunityToDelete.id);
+
+      if (error) {
+        console.error('Delete error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          status: (error as any)?.status
+        });
+        
+        const httpStatus = (error as any)?.status;
+        const isConflictError = 
+          httpStatus === 409 || 
+          error.code === '23503' || 
+          error.code === 'PGRST204' ||
+          error.message?.includes('foreign key') ||
+          error.message?.includes('violates foreign key constraint') ||
+          error.message?.includes('still referenced') ||
+          error.message?.includes('permission denied') ||
+          error.message?.includes('new row violates row-level security');
+
+        setIsDeleting(false);
+        setIsDeleteDialogOpen(false);
+        if (isConflictError) {
+          toast.error('Bu fırsat başka kayıtlarda kullanıldığı için silinemez (teklif, aktivite vb.)', { duration: 2000 });
+        } else {
+          toast.error(`Silme hatası: ${error.message || 'Bilinmeyen hata'}`, { duration: 2000 });
+        }
+        return;
+      }
+
+      // Toast mesajını göster
+      toast.success("Fırsat başarıyla silindi", { duration: 2000 });
+      
+      // Query'leri invalidate et
+      await queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      
+      // Seçili fırsatı temizle
+      if (selectedOpportunity?.id === opportunityToDelete.id) {
+        setSelectedOpportunity(null);
+        setIsDetailOpen(false);
+      }
+    } catch (error: any) {
       console.error('Error deleting opportunity:', error);
+      toast.error(`Fırsat silinirken bir hata oluştu: ${error?.message || 'Bilinmeyen hata'}`, { duration: 2000 });
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -223,6 +284,7 @@ const Opportunities = memo(() => {
             onEditOpportunity={handleEditOpportunity}
             onDeleteOpportunity={handleDeleteOpportunityClick}
             onConvertToProposal={handleConvertToProposal}
+            onStatusChange={handleUpdateOpportunityStatus}
             searchQuery={filterKeyword}
             statusFilter={statusFilter}
             priorityFilter={priorityFilter}

@@ -63,12 +63,14 @@ export const useProposals = (filters?: ProposalFilters) => {
         query = query.eq('employee_id', filters.employeeId);
       }
       
-      // Apply date range filter if specified - ISO formatında tarih kullan
+      // Apply date range filter if specified - created_at kullan (teklifin oluşturulma tarihine göre filtrele)
+      // offer_date gelecekte olabilir, bu yüzden created_at kullanıyoruz
       if (filters?.dateRange?.from) {
         const fromDate = filters.dateRange.from instanceof Date 
-          ? filters.dateRange.from.toISOString()
-          : new Date(filters.dateRange.from).toISOString();
-        query = query.gte('created_at', fromDate);
+          ? filters.dateRange.from
+          : new Date(filters.dateRange.from);
+        const fromDateISO = fromDate.toISOString();
+        query = query.gte('created_at', fromDateISO);
       }
       
       if (filters?.dateRange?.to) {
@@ -168,23 +170,23 @@ export const useProposalsInfiniteScroll = (filters?: ProposalFilters) => {
         query = query.eq('employee_id', filters.employeeId);
       }
       
-      // Tarih filtreleri - offer_date kullan (null olanlar created_at ile güncellendi)
+      // Tarih filtreleri - created_at kullan (teklifin oluşturulma tarihine göre filtrele)
+      // offer_date gelecekte olabilir, bu yüzden created_at kullanıyoruz
       if (filters?.dateRange?.from) {
         const fromDate = filters.dateRange.from instanceof Date 
           ? filters.dateRange.from
           : new Date(filters.dateRange.from);
-        // Tarih formatını YYYY-MM-DD olarak kullan (date tipi için)
-        const fromDateStr = fromDate.toISOString().split('T')[0];
-        query = query.gte('offer_date', fromDateStr);
+        const fromDateISO = fromDate.toISOString();
+        query = query.gte('created_at', fromDateISO);
       }
       
       if (filters?.dateRange?.to) {
         const toDate = filters.dateRange.to instanceof Date
           ? filters.dateRange.to
           : new Date(filters.dateRange.to);
-        // Tarih formatını YYYY-MM-DD olarak kullan (date tipi için)
-        const toDateStr = toDate.toISOString().split('T')[0];
-        query = query.lte('offer_date', toDateStr);
+        const endOfDay = new Date(toDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endOfDay.toISOString());
       }
 
       // Apply sorting - veritabanı seviyesinde sıralama

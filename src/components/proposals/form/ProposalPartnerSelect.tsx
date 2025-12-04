@@ -221,13 +221,19 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
               <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[400px] max-w-[90vw] p-0" align="start">
+          <PopoverContent 
+            className="w-[400px] max-w-[90vw] p-0 z-[9999] pointer-events-auto" 
+            align="start"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
             <div className="p-1.5 border-b">
               <Input
                 placeholder="Arama..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-8 text-xs"
+                autoComplete="off"
               />
             </div>
             

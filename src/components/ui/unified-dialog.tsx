@@ -80,17 +80,35 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   };
 
   return (
-    <DialogPrimitive.Root open={isOpen} onOpenChange={handleOpenChange} modal={true}>
+    <DialogPrimitive.Root open={isOpen} onOpenChange={handleOpenChange} modal={false}>
       <DialogPrimitive.Portal>
         <UnifiedDialogOverlay onOverlayClick={() => handleOpenChange(false)} />
         <DialogPrimitive.Content
           className={cn(
-            "fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] bg-white rounded-xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden p-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+            "fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] bg-white rounded-xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden p-0 pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
             maxWidthClasses[maxWidth],
             className
           )}
           onOpenAutoFocus={(e) => e.preventDefault()}
           onEscapeKeyDown={() => handleOpenChange(false)}
+          onPointerDownOutside={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('[data-radix-popper-content-wrapper]') || 
+                target.closest('[data-radix-popover-content]') ||
+                target.closest('[data-radix-select-content]')) {
+              e.preventDefault();
+            } else {
+              handleOpenChange(false);
+            }
+          }}
+          onInteractOutside={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('[data-radix-popper-content-wrapper]') || 
+                target.closest('[data-radix-popover-content]') ||
+                target.closest('[data-radix-select-content]')) {
+              e.preventDefault();
+            }
+          }}
         >
         {/* Header */}
         <div className={cn(

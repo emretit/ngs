@@ -159,7 +159,7 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps)
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
           <UnifiedDialogActionButton
-            onClick={handleSubmit}
+            onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)}
             disabled={isLoading}
             loading={isLoading}
             variant="primary"

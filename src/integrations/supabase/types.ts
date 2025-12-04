@@ -1492,6 +1492,47 @@ export type Database = {
           },
         ]
       }
+      custom_account_types: {
+        Row: {
+          color: string | null
+          company_id: string
+          created_at: string | null
+          display_name: string
+          icon: string | null
+          id: string
+          type_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          company_id: string
+          created_at?: string | null
+          display_name: string
+          icon?: string | null
+          id?: string
+          type_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          company_id?: string
+          created_at?: string | null
+          display_name?: string
+          icon?: string | null
+          id?: string
+          type_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_account_types_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_terms: {
         Row: {
           category: string
@@ -2919,6 +2960,7 @@ export type Database = {
           id: string
           id_ssn: string | null
           income_tax_amount: number | null
+          is_technical: boolean | null
           last_name: string
           manual_employer_sgk_cost: number | null
           marital_status:
@@ -2991,6 +3033,7 @@ export type Database = {
           id?: string
           id_ssn?: string | null
           income_tax_amount?: number | null
+          is_technical?: boolean | null
           last_name: string
           manual_employer_sgk_cost?: number | null
           marital_status?:
@@ -3063,6 +3106,7 @@ export type Database = {
           id?: string
           id_ssn?: string | null
           income_tax_amount?: number | null
+          is_technical?: boolean | null
           last_name?: string
           manual_employer_sgk_cost?: number | null
           marital_status?:

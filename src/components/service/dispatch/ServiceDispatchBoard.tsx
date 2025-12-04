@@ -1,16 +1,13 @@
 import { useState, useMemo } from "react";
-import { Card } from "@/components/ui/card";
-import { TechnicianSidebar } from "./TechnicianSidebar";
-import { TimelineGrid } from "./TimelineGrid";
-import { TechnicianDetailPanel } from "./TechnicianDetailPanel";
-import { UnassignedServicesBacklog } from "./UnassignedServicesBacklog";
+import { UnassignedServicesPanel } from "./UnassignedServicesPanel";
+import { FSMTimelineGrid } from "./FSMTimelineGrid";
+import { TimelineHeader } from "./TimelineHeader";
+import { ServiceDetailModal } from "./ServiceDetailModal";
 import { useDispatchDragDrop } from "./hooks/useDispatchDragDrop";
 import { DispatchTechnician, Technician, ViewMode, DraggedService } from "./types";
 import { ServiceRequest } from "@/hooks/useServiceRequests";
 import { startOfDay, endOfDay, isWithinInterval, startOfWeek, endOfWeek } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Calendar, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 interface ServiceDispatchBoardProps {
   serviceRequests: ServiceRequest[];
@@ -30,9 +27,12 @@ export const ServiceDispatchBoard = ({
   onSelectService,
   onUpdateAssignment,
 }: ServiceDispatchBoardProps) => {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("day");
-  const [selectedTechnicianId, setSelectedTechnicianId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedService, setSelectedService] = useState<ServiceRequest | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Drag & Drop hook
   const { draggedService, isDragging, handleDragStart, handleDragEnd, handleDrop } = useDispatchDragDrop();
@@ -62,7 +62,7 @@ export const ServiceDispatchBoard = ({
         return isWithinInterval(issueDate, { start: weekStart, end: weekEnd });
       });
 
-      // Durum hesaplama - basit mantık
+      // Durum hesaplama
       let status: DispatchTechnician['status'] = 'available';
       if (todayServices.length >= 3) status = 'busy';
       if (tech.status === 'pasif') status = 'offline';
@@ -75,12 +75,6 @@ export const ServiceDispatchBoard = ({
       };
     });
   }, [technicians, serviceRequests]);
-
-  // Seçilen teknisyen
-  const selectedTechnician = useMemo(() => {
-    if (!selectedTechnicianId) return null;
-    return dispatchTechnicians.find((t) => t.id === selectedTechnicianId) || null;
-  }, [selectedTechnicianId, dispatchTechnicians]);
 
   // Tarih navigasyonu
   const handlePreviousDay = () => {
@@ -117,11 +111,9 @@ export const ServiceDispatchBoard = ({
 
   // Drop handler - teknisyene servis ata
   const handleServiceDrop = async (serviceId: string, technicianId: string, startTime: Date) => {
-    // Bitiş zamanını hesapla (varsayılan 2 saat)
     const endTime = new Date(startTime);
     endTime.setHours(endTime.getHours() + 2);
 
-    // Parent callback'i çağır
     await onUpdateAssignment(
       serviceId,
       technicianId,
@@ -130,107 +122,67 @@ export const ServiceDispatchBoard = ({
     );
   };
 
+  // Servis seçimi - modal aç
+  const handleSelectService = (service: ServiceRequest) => {
+    setSelectedService(service);
+    setIsModalOpen(true);
+  };
+
+  // Harita sayfasına git
+  const handleMapClick = () => {
+    navigate("/service/map");
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
-      {/* Toolbar */}
-      <Card className="p-4 mb-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          {/* Sol: Tarih Navigasyonu */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handlePreviousDay}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleToday}>
-              Bugün
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleNextDay}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-2 ml-4">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">
-                {selectedDate.toLocaleDateString("tr-TR", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </span>
-            </div>
-          </div>
+      {/* Header: Tarih, Görünüm, Arama */}
+      <TimelineHeader
+        selectedDate={selectedDate}
+        viewMode={viewMode}
+        technicianCount={dispatchTechnicians.length}
+        unassignedCount={unassignedServices.length}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onPreviousDay={handlePreviousDay}
+        onNextDay={handleNextDay}
+        onToday={handleToday}
+        onViewModeChange={setViewMode}
+        onMapClick={handleMapClick}
+      />
 
-          {/* Orta: Görünüm Modu */}
-          <div className="flex items-center gap-1 border rounded-md p-1">
-            <Button
-              variant={viewMode === "day" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("day")}
-            >
-              Gün
-            </Button>
-            <Button
-              variant={viewMode === "week" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("week")}
-            >
-              Hafta
-            </Button>
-          </div>
-
-          {/* Sağ: İstatistikler */}
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary">
-              {dispatchTechnicians.length} Teknisyen
-            </Badge>
-            <Badge variant="outline">
-              {unassignedServices.length} Atanmamış
-            </Badge>
-            <Button variant="outline" size="sm">
-              <MapPin className="h-4 w-4 mr-2" />
-              Harita
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Ana Layout: 3 Kolon */}
-      <div className="flex-1 flex gap-4 min-h-0">
-        {/* Sol: Teknisyen Listesi */}
-        <TechnicianSidebar
-          technicians={dispatchTechnicians}
-          selectedTechnicianId={selectedTechnicianId}
-          onSelectTechnician={setSelectedTechnicianId}
+      {/* Ana Layout: 2 Kolon (Atanmamış + Timeline) */}
+      <div className="flex-1 flex min-h-0">
+        {/* Sol: Atanmamış Servisler Paneli */}
+        <UnassignedServicesPanel
+          services={unassignedServices}
+          onSelectService={handleSelectService}
+          onDragStart={handleServiceDragStart}
         />
 
-        {/* Orta: Timeline Grid */}
+        {/* Sağ: FSM Timeline Grid */}
         <div className="flex-1 min-w-0">
-          <TimelineGrid
+          <FSMTimelineGrid
             technicians={dispatchTechnicians}
             services={serviceRequests}
             selectedDate={selectedDate}
-            onSelectService={onSelectService}
+            searchTerm={searchTerm}
+            onSelectService={handleSelectService}
             onDropService={(technicianId, time) => {
               handleDrop(technicianId, time, handleServiceDrop);
             }}
           />
         </div>
-
-        {/* Sağ: Detay Paneli */}
-        <TechnicianDetailPanel
-          technician={selectedTechnician}
-          services={serviceRequests}
-          selectedDate={selectedDate}
-          onSelectService={onSelectService}
-        />
       </div>
 
-      {/* Alt: Atanmamış Servisler */}
-      {unassignedServices.length > 0 && (
-        <UnassignedServicesBacklog
-          services={unassignedServices}
-          onSelectService={onSelectService}
-          onDragStart={handleServiceDragStart}
-        />
-      )}
+      {/* Servis Detay Modal */}
+      <ServiceDetailModal
+        service={selectedService}
+        open={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedService(null);
+        }}
+      />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 
-import React, { Suspense } from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { PublicRoute, ProtectedRoute } from "./RouteGuards";
 import { AdminRouteGuard } from "./AdminRouteGuard";
@@ -7,14 +7,20 @@ import { appRoutes } from "./appRoutes";
 import ProtectedLayout from "@/components/layouts/ProtectedLayout";
 import AdminLayout from "@/components/layouts/AdminLayout";
 
+// Lazy load skeleton for better UX
+const PageSkeleton = lazy(() => import("@/components/ui/PageSkeleton"));
+
+// Simple fallback for initial load
+const MinimalFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
+
 export const AppRoutes: React.FC = () => {
   return (
     <Router>
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      }>
+      <Suspense fallback={<MinimalFallback />}>
         <Routes>
           {/* Admin routes with admin layout */}
           <Route element={<AdminRouteGuard><AdminLayout /></AdminRouteGuard>}>

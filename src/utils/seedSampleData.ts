@@ -64,6 +64,7 @@ export const seedTasks = async () => {
           phone: '5321234567',
           position: 'Teknik Destek',
           department: 'Teknik',
+          is_technical: true,
           hire_date: '2021-06-22',
           status: 'aktif' as const
         }

@@ -30,7 +30,7 @@ export default function ServiceManagement() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
-  // Teknisyenleri getir - sadece Teknik departmanındaki aktif çalışanlar
+  // Teknisyenleri getir - sadece teknik personel olan aktif çalışanlar
   const { data: technicians = [] } = useQuery({
     queryKey: ["technicians-for-filter"],
     queryFn: async () => {
@@ -38,7 +38,7 @@ export default function ServiceManagement() {
         .from("employees")
         .select("id, first_name, last_name, position, department, status, user_id")
         .eq("status", "aktif")
-        .eq("department", "Teknik");
+        .eq("is_technical", true);
       if (error) throw error;
       return data || [];
     },

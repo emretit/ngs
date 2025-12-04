@@ -19,11 +19,11 @@ export const useTechnicians = () => {
       try {
         setIsLoading(true);
         
-        // Fetch employees that are in the technical department or have "technician" in their position
+        // Fetch employees that are technical staff
         const { data, error } = await supabase
           .from('employees')
           .select('id, first_name, last_name, department, position, avatar_url')
-          .or('department.ilike.%teknik%, position.ilike.%teknisyen%')
+          .eq('is_technical', true)
           .order('first_name');
         
         if (error) throw error;

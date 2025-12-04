@@ -10,6 +10,7 @@ export interface Employee {
   phone: string | null;
   position: string;
   department: string;
+  is_technical?: boolean | null;
   hire_date: string;
   status: EmployeeStatus;
   avatar_url: string | null;
@@ -75,6 +76,7 @@ export interface EmployeeFormData {
   email: string;
   position: string;
   department: string;
+  is_technical?: boolean | null;
   hire_date: string;
   status: EmployeeStatus;
   phone: string;

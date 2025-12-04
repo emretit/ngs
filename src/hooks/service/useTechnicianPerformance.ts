@@ -52,7 +52,7 @@ export function useTechnicianPerformance(startDate?: Date, endDate?: Date) {
         .from('employees')
         .select('id, first_name, last_name')
         .eq('company_id', userData.company_id)
-        .eq('department', 'Teknik')
+        .eq('is_technical', true)
         .eq('status', 'aktif');
 
       if (techError) throw techError;

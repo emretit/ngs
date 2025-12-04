@@ -27,6 +27,7 @@ const formSchema = z.object({
   phone: z.string().optional(),
   position: z.string().min(2, "Pozisyon gereklidir"),
   department: z.string().min(2, "Departman gereklidir"),
+  is_technical: z.boolean().optional().default(false),
   hire_date: z.string().min(1, "İşe başlama tarihi gereklidir"),
   status: z.enum(["aktif", "pasif"]).default("aktif"),
   
@@ -98,6 +99,7 @@ const SimpleEmployeeForm = () => {
       phone: "",
       position: "",
       department: "",
+      is_technical: false,
       hire_date: new Date().toISOString().split("T")[0],
       status: "aktif",
       date_of_birth: "",

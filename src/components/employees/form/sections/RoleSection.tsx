@@ -27,9 +27,8 @@ export const RoleSection = ({ control, userId, employeeId, onUserLinkChange }: R
   const { userData } = useCurrentUser();
   
   // Watch fields
-  const department = useWatch({ control, name: "department" });
   const email = useWatch({ control, name: "email" });
-  const isTechnical = department === "Teknik";
+  const isTechnical = useWatch({ control, name: "is_technical" }) || false;
   const selectedRoles = useWatch({ control, name: "user_roles" }) || [];
 
   // User check hook
@@ -149,7 +148,7 @@ export const RoleSection = ({ control, userId, employeeId, onUserLinkChange }: R
         {/* Teknik Personel Toggle */}
         <FormField
           control={control}
-          name="department"
+          name="is_technical"
           render={({ field }) => (
             <FormItem>
               <div className="flex items-center justify-between p-2 rounded-lg border border-gray-200/50 hover:bg-gray-50/50 transition-colors">
@@ -168,16 +167,8 @@ export const RoleSection = ({ control, userId, employeeId, onUserLinkChange }: R
                 </div>
                 <FormControl>
                   <Switch
-                    checked={isTechnical}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        field.onChange("Teknik");
-                      } else {
-                        if (field.value === "Teknik") {
-                          field.onChange("");
-                        }
-                      }
-                    }}
+                    checked={field.value || false}
+                    onCheckedChange={field.onChange}
                   />
                 </FormControl>
           </div>

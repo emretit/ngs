@@ -114,7 +114,7 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
         .from('employees')
         .select('*')
         .eq('company_id', userData.company_id)
-        .eq('department', 'Teknik')
+        .eq('is_technical', true)
         .eq('status', 'aktif');
       if (error) throw error;
       return data;

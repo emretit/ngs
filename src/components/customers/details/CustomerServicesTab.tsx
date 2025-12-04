@@ -77,7 +77,7 @@ export const CustomerServicesTab = ({ customer }: CustomerServicesTabProps) => {
       const { data, error } = await supabase
         .from('employees')
         .select('id, first_name, last_name')
-        .eq('department', 'Teknik')
+        .eq('is_technical', true)
         .eq('status', 'aktif');
       
       if (error) throw error;

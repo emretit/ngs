@@ -95,7 +95,7 @@ const NewServiceRequest = () => {
         .from("employees")
         .select("id, first_name, last_name")
         .eq("status", "aktif")
-        .eq("department", "Teknik")
+        .eq("is_technical", true)
         .order("first_name");
       if (error) throw error;
       return data || [];

@@ -13,6 +13,7 @@ const employeeFormSchema = z.object({
   // İstihdam Bilgileri
   position: z.string().min(1, "Pozisyon zorunludur"),
   department: z.string().min(1, "Departman zorunludur"),
+  is_technical: z.boolean().optional().default(false),
   hire_date: z.string().min(1, "İşe başlama tarihi zorunludur"),
   status: z.enum(["aktif", "pasif"]),
   
@@ -60,6 +61,7 @@ export const useEmployeeForm = (employee?: Employee) => {
     phone: employee.phone || "",
     position: employee.position || "",
     department: employee.department || "",
+    is_technical: employee.is_technical || false,
     hire_date: employee.hire_date || "",
     status: employee.status || "aktif",
     date_of_birth: employee.date_of_birth || "",
@@ -92,6 +94,7 @@ export const useEmployeeForm = (employee?: Employee) => {
     phone: "",
     position: "",
     department: "",
+    is_technical: false,
     hire_date: "",
     status: "aktif",
     date_of_birth: "",

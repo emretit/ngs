@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
+import { prefetchRoute } from "@/utils/routePrefetch";
 
 interface NavLinkProps {
   to: string;
@@ -20,9 +21,15 @@ const NavLink = ({
   isCollapsed,
   isSubItem = false 
 }: NavLinkProps) => {
+  // Prefetch route on hover
+  const handleMouseEnter = useCallback(() => {
+    prefetchRoute(to);
+  }, [to]);
+
   return (
     <Link
       to={to}
+      onMouseEnter={handleMouseEnter}
       className={cn(
         "flex items-center transition-all duration-200 rounded-lg group",
         isCollapsed ? "justify-center px-2 h-8" : "px-2 space-x-2",

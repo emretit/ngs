@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback, startTransition } from "react";
+import React, { useState, useEffect, useRef, useCallback, startTransition } from "react";
+import { prefetchRoute, prefetchRoutes } from "@/utils/routePrefetch";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -210,6 +211,13 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
           {/* Parent item */}
           <div
             onClick={() => handleParentClick(item)}
+            onMouseEnter={() => {
+              // Prefetch parent and all children on hover
+              prefetchRoute(item.path);
+              if (item.items) {
+                prefetchRoutes(item.items.map((sub: any) => sub.path));
+              }
+            }}
             className={cn(
               "flex items-center justify-between transition-all duration-200 rounded-lg group cursor-pointer",
               isCollapsed ? "justify-center px-2 h-8" : "px-2 h-8",

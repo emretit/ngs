@@ -50,7 +50,7 @@ const TaskBasicInfo = ({ register, errors, watch, setValue }: TaskBasicInfoProps
           <SelectTrigger>
             <SelectValue placeholder="Tür seçin" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="z-[9999]">
             <SelectItem value="general">Genel</SelectItem>
             <SelectItem value="call">Arama</SelectItem>
             <SelectItem value="meeting">Toplantı</SelectItem>
@@ -72,7 +72,7 @@ const TaskBasicInfo = ({ register, errors, watch, setValue }: TaskBasicInfoProps
           <SelectTrigger>
             <SelectValue placeholder="Durum seçin" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="z-[9999]">
             <SelectItem value="todo">Yapılacak</SelectItem>
             <SelectItem value="in_progress">Devam Ediyor</SelectItem>
             <SelectItem value="completed">Tamamlandı</SelectItem>

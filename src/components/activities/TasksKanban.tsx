@@ -190,8 +190,12 @@ export const TasksKanban = ({
         </Droppable>
       </DragDropContext>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} modal={false}>
+        <DialogContent 
+          className="sm:max-w-[600px]"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <TaskForm task={selectedTask || undefined} onClose={handleDialogClose} />
         </DialogContent>
       </Dialog>

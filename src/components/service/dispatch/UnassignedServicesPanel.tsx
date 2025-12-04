@@ -4,12 +4,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { ServiceRequest } from "@/hooks/useServiceRequests";
 import {
-  AlertCircle,
   Calendar,
   MapPin,
   Search,
   GripVertical,
   Package,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -23,32 +23,28 @@ interface UnassignedServicesPanelProps {
 
 const priorityConfig = {
   urgent: {
-    bg: "bg-red-50 dark:bg-red-900/10",
-    border: "border-l-4 border-l-red-500",
-    text: "text-red-700 dark:text-red-400",
-    badge: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+    border: "border-l-destructive",
+    badge: "bg-destructive/10 text-destructive border-destructive/20",
     label: "Acil",
+    dot: "bg-destructive",
   },
   high: {
-    bg: "bg-orange-50 dark:bg-orange-900/10",
-    border: "border-l-4 border-l-orange-500",
-    text: "text-orange-700 dark:text-orange-400",
-    badge: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+    border: "border-l-warning",
+    badge: "bg-warning/10 text-warning border-warning/20",
     label: "Yüksek",
+    dot: "bg-warning",
   },
   medium: {
-    bg: "bg-yellow-50 dark:bg-yellow-900/10",
-    border: "border-l-4 border-l-yellow-500",
-    text: "text-yellow-700 dark:text-yellow-400",
-    badge: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+    border: "border-l-primary",
+    badge: "bg-primary/10 text-primary border-primary/20",
     label: "Orta",
+    dot: "bg-primary",
   },
   low: {
-    bg: "bg-green-50 dark:bg-green-900/10",
-    border: "border-l-4 border-l-green-500",
-    text: "text-green-700 dark:text-green-400",
-    badge: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    border: "border-l-success",
+    badge: "bg-success/10 text-success border-success/20",
     label: "Düşük",
+    dot: "bg-success",
   },
 };
 
@@ -80,15 +76,22 @@ export const UnassignedServicesPanel = ({
   });
 
   return (
-    <div className="w-72 border-r bg-card flex flex-col h-full">
+    <div className="w-72 border-r border-border bg-card flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b space-y-3">
-        <div className="flex items-center justify-between">
+      <div className="p-4 border-b border-border bg-gradient-to-b from-muted/50 to-transparent">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Atanmamış</h3>
+            <div className="p-1.5 rounded-md bg-primary/10">
+              <Package className="h-4 w-4 text-primary" />
+            </div>
+            <h3 className="font-semibold text-foreground">Atanmamış</h3>
           </div>
-          <Badge variant="secondary">{services.length}</Badge>
+          <Badge 
+            variant="secondary" 
+            className="bg-primary/10 text-primary border-0 font-bold"
+          >
+            {services.length}
+          </Badge>
         </div>
         
         {/* Search */}
@@ -98,7 +101,7 @@ export const UnassignedServicesPanel = ({
             placeholder="Servis ara..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-9"
+            className="pl-9 h-9 bg-background border-border focus:border-primary focus:ring-primary/20"
           />
         </div>
       </div>
@@ -121,39 +124,42 @@ export const UnassignedServicesPanel = ({
                 onDragStart={() => onDragStart?.(service)}
                 onClick={() => onSelectService(service)}
                 className={cn(
-                  "p-3 rounded-lg border cursor-grab active:cursor-grabbing",
-                  "hover:shadow-md transition-all hover:scale-[1.02]",
-                  config.bg,
+                  "p-3 rounded-lg border border-border bg-card cursor-grab active:cursor-grabbing",
+                  "hover:shadow-md hover:border-primary/30 transition-all hover:scale-[1.01]",
+                  "border-l-4",
                   config.border
                 )}
               >
                 {/* Drag Handle + Header */}
                 <div className="flex items-start gap-2 mb-2">
-                  <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <GripVertical className="h-4 w-4 text-muted-foreground/50 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate">
+                    <h4 className="font-medium text-sm text-foreground truncate">
                       {service.service_title || "İsimsiz Servis"}
                     </h4>
                     <p className="text-xs text-muted-foreground">
                       #{service.service_number}
                     </p>
                   </div>
-                  <Badge className={cn("text-[10px] px-1.5 py-0", config.badge)}>
-                    {config.label}
-                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <div className={cn("w-2 h-2 rounded-full", config.dot)} />
+                    <span className={cn("text-[10px] font-medium", config.badge.split(' ')[1])}>
+                      {config.label}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Customer */}
                 {customerData?.name && (
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5 pl-6">
-                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                    <MapPin className="h-3 w-3 flex-shrink-0 text-primary/60" />
                     <span className="truncate">{customerData.name}</span>
                   </div>
                 )}
 
                 {/* Date */}
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-6">
-                  <Calendar className="h-3 w-3 flex-shrink-0" />
+                  <Clock className="h-3 w-3 flex-shrink-0 text-primary/60" />
                   <span>{issueDate}</span>
                 </div>
               </div>
@@ -161,16 +167,22 @@ export const UnassignedServicesPanel = ({
           })}
 
           {filteredServices.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-12 text-muted-foreground">
               {searchTerm ? (
                 <>
-                  <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Sonuç bulunamadı</p>
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                    <Search className="h-6 w-6 opacity-50" />
+                  </div>
+                  <p className="text-sm font-medium">Sonuç bulunamadı</p>
+                  <p className="text-xs mt-1">Farklı bir arama deneyin</p>
                 </>
               ) : (
                 <>
-                  <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Atanmamış servis yok</p>
+                  <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
+                    <Package className="h-6 w-6 text-success" />
+                  </div>
+                  <p className="text-sm font-medium">Harika!</p>
+                  <p className="text-xs mt-1">Tüm servisler atandı</p>
                 </>
               )}
             </div>
@@ -179,8 +191,9 @@ export const UnassignedServicesPanel = ({
       </ScrollArea>
 
       {/* Footer Hint */}
-      <div className="p-3 border-t bg-muted/30">
-        <p className="text-xs text-muted-foreground text-center">
+      <div className="p-3 border-t border-border bg-muted/30">
+        <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
+          <GripVertical className="h-3 w-3" />
           Timeline'a sürükleyip bırakın
         </p>
       </div>

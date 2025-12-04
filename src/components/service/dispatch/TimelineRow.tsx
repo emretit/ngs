@@ -5,6 +5,7 @@ import { DispatchTechnician } from "./types";
 import { cn } from "@/lib/utils";
 import { useTimelineCalculations } from "./hooks/useTimelineCalculations";
 import { isSameDay, parseISO } from "date-fns";
+import { Calendar } from "lucide-react";
 
 interface TimelineRowProps {
   technician: DispatchTechnician;
@@ -82,8 +83,8 @@ export const TimelineRow = ({
     <div
       ref={rowRef}
       className={cn(
-        "relative h-20 border-b hover:bg-accent/5 transition-colors",
-        isDragOver && "bg-accent/10 border-primary"
+        "relative h-full min-h-[80px] transition-colors",
+        isDragOver && "bg-primary/10 ring-2 ring-primary ring-inset"
       )}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
@@ -100,8 +101,8 @@ export const TimelineRow = ({
               service={service}
               style={{
                 left: `${position.left}px`,
-                width: `${position.width}px`,
-                top: `${rowIndex * 20 + 2}px`,
+                width: `${Math.max(position.width, 100)}px`,
+                top: `${rowIndex * 24 + 4}px`,
               }}
               onClick={() => onSelectService(service)}
             />
@@ -111,8 +112,11 @@ export const TimelineRow = ({
 
       {/* Boş durum */}
       {technicianServices.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
-          Servis yok
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="flex items-center gap-2 text-muted-foreground/40 text-xs">
+            <Calendar className="h-4 w-4" />
+            <span>Bugün servis yok</span>
+          </div>
         </div>
       )}
     </div>

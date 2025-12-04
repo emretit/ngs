@@ -98,7 +98,7 @@ const TaskRecurrence = ({ watch, setValue }: TaskRecurrenceProps) => {
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Sıklık seçin" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="z-[9999]">
                 <SelectItem value="daily">Günlük</SelectItem>
                 <SelectItem value="weekly">Haftalık</SelectItem>
                 <SelectItem value="monthly">Aylık</SelectItem>

@@ -37,7 +37,7 @@ const TaskRelatedItem = ({ watch, setValue }: TaskRelatedItemProps) => {
           <SelectTrigger>
             <SelectValue placeholder="İlişkili öğe türü seçin" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="z-[9999]">
             <SelectItem value="none">İlişkili öğe yok</SelectItem>
             <SelectItem value="customer">Müşteri</SelectItem>
             <SelectItem value="opportunity">Fırsat</SelectItem>

@@ -69,7 +69,13 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const { hasModuleAccess, isLoading: permissionsLoading } = usePermissions();
   const { isSuperAdmin, isLoading: superAdminLoading } = useSuperAdmin();
   
+  // Optimistic UI: pendingPath for instant active state
+  const [pendingPath, setPendingPath] = useState<string | null>(null);
   
+  // Clear pendingPath when location changes (component loaded)
+  useEffect(() => {
+    setPendingPath(null);
+  }, [location.pathname]);
   
   // Load expanded menus from localStorage - but start with empty set for first load
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(() => {
@@ -128,14 +134,10 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   }, []);
 
   const handleParentClick = useCallback((item: any) => {
+    // Set pending path immediately for instant visual feedback
+    setPendingPath(item.path);
+    
     if (item.hasDropdown && item.items) {
-      const isOnParentPage = location.pathname === item.path;
-      const isOnRelatedChildPage = item.items?.some((subItem: any) => 
-        location.pathname === subItem.path || 
-        (subItem.path !== '/' && location.pathname.startsWith(subItem.path + '/')) ||
-        // Special case: categories page is a child of expenses
-        (subItem.path === '/cashflow/expenses' && location.pathname === '/cashflow/categories')
-      );
       const isAlreadyExpanded = expandedMenus.has(item.path);
       
       // Always navigate to parent page first
@@ -161,7 +163,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
       // For regular nav items without dropdown, just navigate
       navigate(item.path);
     }
-  }, [location.pathname, navigate, expandedMenus]);
+  }, [navigate, expandedMenus]);
 
   // Handle click for dropdown toggle button
   const handleToggleClick = useCallback((item: any, e: React.MouseEvent) => {
@@ -201,7 +203,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
     
     if (item.hasDropdown && item.items) {
       const isExpanded = expandedMenus.has(item.path);
-      const isActive = location.pathname === item.path;
+      const isActive = location.pathname === item.path || pendingPath === item.path;
       const hasActiveChild = item.items.some((subItem: any) => 
         getSubItemActiveState(subItem, item)
       );
@@ -264,23 +266,25 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
       );
     } else {
       // Regular nav item
+      const isItemActive = location.pathname === item.path || 
+        (item.path !== '/' && location.pathname.startsWith(item.path + '/')) ||
+        // Special case: product-form pages should match products nav item
+        (item.path === '/products' && location.pathname.startsWith('/product-form'));
+      const isPending = pendingPath === item.path && !isItemActive;
+      
       return (
         <NavLink
           key={item.path}
           to={item.path}
           icon={item.icon}
           label={item.label}
-          isActive={
-            location.pathname === item.path || 
-            (item.path !== '/' && location.pathname.startsWith(item.path + '/')) ||
-            // Special case: product-form pages should match products nav item
-            (item.path === '/products' && location.pathname.startsWith('/product-form'))
-          }
+          isActive={isItemActive}
+          isPending={isPending}
           isCollapsed={isCollapsed}
         />
       );
     }
-  }, [expandedMenus, location.pathname, isCollapsed, handleParentClick, handleToggleClick, getSubItemActiveState]);
+  }, [expandedMenus, location.pathname, isCollapsed, handleParentClick, handleToggleClick, getSubItemActiveState, pendingPath]);
 
   return (
     <div className={cn(

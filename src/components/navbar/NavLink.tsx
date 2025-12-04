@@ -11,6 +11,7 @@ interface NavLinkProps {
   isActive: boolean;
   isCollapsed: boolean;
   isSubItem?: boolean;
+  isPending?: boolean;
 }
 
 const NavLink = ({ 
@@ -19,7 +20,8 @@ const NavLink = ({
   label, 
   isActive, 
   isCollapsed,
-  isSubItem = false 
+  isSubItem = false,
+  isPending = false
 }: NavLinkProps) => {
   // Prefetch route on hover
   const handleMouseEnter = useCallback(() => {
@@ -34,7 +36,7 @@ const NavLink = ({
         "flex items-center transition-all duration-200 rounded-lg group",
         isCollapsed ? "justify-center px-2 h-8" : "px-2 space-x-2",
         isSubItem ? "h-6 text-xs" : "h-8",
-        isActive 
+        (isActive || isPending)
           ? isSubItem 
             ? "bg-primary/20 text-primary font-medium border-l-2 border-primary" 
             : "bg-primary/15 text-primary font-semibold shadow-sm"

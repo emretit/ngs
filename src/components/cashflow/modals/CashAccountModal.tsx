@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,75 +92,83 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps)
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Yeni Nakit Kasa Hesabı</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Yeni Nakit Kasa Hesabı"
+      maxWidth="md"
+      headerColor="green"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+            Hesap Adı <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => handleInputChange('name', e.target.value)}
+            placeholder="Örn: Ana Kasa, Şube Kasa"
+            required
+            className="h-9"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description" className="text-sm font-medium text-gray-700">Açıklama</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            placeholder="Hesap hakkında açıklama"
+            rows={3}
+            className="resize-none"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Hesap Adı *</Label>
+            <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
+            <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TRY">TRY</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="GBP">GBP</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="initial_balance" className="text-sm font-medium text-gray-700">Başlangıç Bakiyesi</Label>
             <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Örn: Ana Kasa, Şube Kasa"
-              required
+              id="initial_balance"
+              type="number"
+              step="0.01"
+              value={formData.initial_balance}
+              onChange={(e) => handleInputChange('initial_balance', parseFloat(e.target.value) || 0)}
+              placeholder="0.00"
+              className="h-9"
             />
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Açıklama</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Hesap hakkında açıklama"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="currency">Para Birimi</Label>
-              <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TRY">TRY</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="initial_balance">Başlangıç Bakiyesi</Label>
-              <Input
-                id="initial_balance"
-                type="number"
-                step="0.01"
-                value={formData.initial_balance}
-                onChange={(e) => handleInputChange('initial_balance', parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              İptal
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Oluşturuluyor..." : "Oluştur"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
+          <UnifiedDialogActionButton
+            onClick={handleSubmit}
+            disabled={isLoading}
+            loading={isLoading}
+            variant="primary"
+          >
+            Oluştur
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
   );
 };
 

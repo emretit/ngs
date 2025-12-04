@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +19,7 @@ interface CreditCardFormData {
   card_number: string;
   card_type: string;
   expiry_date: string;
+  expiry_date_date?: Date;
   credit_limit: string;
   currency: string;
   notes: string;
@@ -108,6 +108,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) =
         card_number: "",
         card_type: "credit",
         expiry_date: "",
+        expiry_date_date: undefined,
         credit_limit: "",
         currency: "TRY",
         notes: ""
@@ -121,126 +122,145 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) =
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Yeni Kredi Kartı</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="card_name">Kart Adı *</Label>
-              <Input
-                id="card_name"
-                value={formData.card_name}
-                onChange={(e) => handleInputChange('card_name', e.target.value)}
-                placeholder="Örn: İş Bankası Kredi Kartı"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bank_name">Banka Adı *</Label>
-              <Input
-                id="bank_name"
-                value={formData.bank_name}
-                onChange={(e) => handleInputChange('bank_name', e.target.value)}
-                placeholder="Örn: Türkiye İş Bankası"
-                required
-              />
-            </div>
-          </div>
-
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Yeni Kredi Kartı"
+      maxWidth="md"
+      headerColor="purple"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="card_number">Kart Numarası</Label>
+            <Label htmlFor="card_name" className="text-sm font-medium text-gray-700">
+              Kart Adı <span className="text-red-500">*</span>
+            </Label>
             <Input
-              id="card_number"
-              value={formData.card_number}
-              onChange={(e) => handleCardNumberChange(e.target.value)}
-              placeholder="1234-5678-9012-3456"
-              maxLength={19}
+              id="card_name"
+              value={formData.card_name}
+              onChange={(e) => handleInputChange('card_name', e.target.value)}
+              placeholder="Örn: İş Bankası Kredi Kartı"
+              required
+              className="h-9"
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="card_type">Kart Türü</Label>
-              <Select value={formData.card_type} onValueChange={(value) => handleInputChange('card_type', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="credit">Kredi Kartı</SelectItem>
-                  <SelectItem value="debit">Banka Kartı</SelectItem>
-                  <SelectItem value="corporate">Kurumsal Kart</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="expiry_date">Son Kullanma Tarihi</Label>
-              <Input
-                id="expiry_date"
-                type="month"
-                value={formData.expiry_date}
-                onChange={(e) => handleInputChange('expiry_date', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="credit_limit">Kredi Limiti</Label>
-              <Input
-                id="credit_limit"
-                type="number"
-                value={formData.credit_limit}
-                onChange={(e) => handleInputChange('credit_limit', e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="currency">Para Birimi</Label>
-              <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TRY">TRY</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notlar</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder="Kart hakkında notlar"
-              rows={3}
+            <Label htmlFor="bank_name" className="text-sm font-medium text-gray-700">
+              Banka Adı <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="bank_name"
+              value={formData.bank_name}
+              onChange={(e) => handleInputChange('bank_name', e.target.value)}
+              placeholder="Örn: Türkiye İş Bankası"
+              required
+              className="h-9"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="card_number" className="text-sm font-medium text-gray-700">Kart Numarası</Label>
+          <Input
+            id="card_number"
+            value={formData.card_number}
+            onChange={(e) => handleCardNumberChange(e.target.value)}
+            placeholder="1234-5678-9012-3456"
+            maxLength={19}
+            className="h-9"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="card_type" className="text-sm font-medium text-gray-700">Kart Türü</Label>
+            <Select value={formData.card_type} onValueChange={(value) => handleInputChange('card_type', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="credit">Kredi Kartı</SelectItem>
+                <SelectItem value="debit">Banka Kartı</SelectItem>
+                <SelectItem value="corporate">Kurumsal Kart</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <UnifiedDatePicker
+            label="Son Kullanma Tarihi"
+            date={formData.expiry_date_date}
+            onSelect={(date) => {
+              if (date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                handleInputChange('expiry_date', `${year}-${month}`);
+                setFormData(prev => ({ ...prev, expiry_date_date: date }));
+              } else {
+                handleInputChange('expiry_date', '');
+                setFormData(prev => ({ ...prev, expiry_date_date: undefined }));
+              }
+            }}
+            placeholder="Son kullanma tarihi seçin"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="credit_limit" className="text-sm font-medium text-gray-700">Kredi Limiti</Label>
+            <Input
+              id="credit_limit"
+              type="number"
+              value={formData.credit_limit}
+              onChange={(e) => handleInputChange('credit_limit', e.target.value)}
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              className="h-9"
             />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              İptal
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Oluşturuluyor..." : "Oluştur"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <div className="space-y-2">
+            <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
+            <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TRY">TRY</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="GBP">GBP</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Notlar</Label>
+          <Textarea
+            id="notes"
+            value={formData.notes}
+            onChange={(e) => handleInputChange('notes', e.target.value)}
+            placeholder="Kart hakkında notlar"
+            rows={3}
+            className="resize-none"
+          />
+        </div>
+
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
+          <UnifiedDialogActionButton
+            onClick={handleSubmit}
+            disabled={isLoading}
+            loading={isLoading}
+            variant="primary"
+          >
+            Oluştur
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
   );
 };
 

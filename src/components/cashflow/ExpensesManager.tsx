@@ -1,5 +1,6 @@
 import React, { useState, useEffect, memo, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,11 +18,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { generateRecurringExpenses } from "@/utils/recurringExpenseScheduler";
+import { useExpenses } from "@/hooks/useExpenses";
 import ExpensesFilterBar from "./ExpensesFilterBar";
 import ExpensesBulkActions from "./ExpensesBulkActions";
-import ExpensesGridView from "./expenses/ExpensesGridView";
 import ExpensesListView from "./expenses/ExpensesListView";
-import ExpensesPageHeader, { ExpenseViewType } from "./ExpensesPageHeader";
+import ExpensesPageHeader from "./ExpensesPageHeader";
 
 export interface ExpenseItem {
   id: string;
@@ -56,8 +57,10 @@ interface ExpensesManagerProps {
 
 const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDateChange, onEndDateChange, onTotalAmountChange }: ExpensesManagerProps) => {
   const navigate = useNavigate();
-  const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+  
+  // React Query ile expenses verilerini al
+  const { data: expenses = [], isLoading: loading, error: expensesError } = useExpenses({ startDate, endDate });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCategoryOption, setSelectedCategoryOption] = useState("");
@@ -115,8 +118,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
   const [isAllSelected, setIsAllSelected] = useState(false);
   const [subcategoriesList, setSubcategoriesList] = useState<Array<{id: string, name: string, category_id: string}>>([]);
   
-  // View state - varsayılan olarak liste görünümü
-  const [activeView, setActiveView] = useState<ExpenseViewType>("list");
+  // View state - sadece liste görünümü kullanılıyor
   
 
   // Fetch functions
@@ -172,26 +174,13 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
     }
   }, []);
 
-  const fetchExpenses = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('expenses')
-        .select(`*, category:cashflow_categories(id, name), employee:employees(first_name, last_name, department)`)
-        .eq('type', 'expense')
-        .not('company_id', 'is', null)
-        .gte('date', format(startDate, 'yyyy-MM-dd'))
-        .lte('date', format(endDate, 'yyyy-MM-dd'))
-        .order('date', { ascending: false });
-      if (error) throw error;
-      setExpenses(data || []);
-    } catch (error) {
-      console.error('Error fetching expenses:', error);
+  // Expenses hatası varsa göster
+  useEffect(() => {
+    if (expensesError) {
+      console.error('Error fetching expenses:', expensesError);
       toast.error("Masraflar yüklenirken bir hata oluştu");
-    } finally {
-      setLoading(false);
     }
-  }, [startDate, endDate, toast]);
+  }, [expensesError]);
 
   const handleCategoryOptionChange = useCallback((option: string) => {
     setSelectedCategoryOption(option);
@@ -214,7 +203,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
     fetchCategories();
     fetchSubcategoriesAll();
     fetchPaymentAccounts();
-    fetchExpenses();
+    // fetchExpenses artık React Query ile otomatik yönetiliyor
   }, [startDate, endDate]);
 
   useEffect(() => {
@@ -316,7 +305,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       toast.success("Masraf başarıyla eklendi");
       setIsAddDialogOpen(false);
       resetForm();
-      fetchExpenses();
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
     } catch (error) {
       console.error('Error adding expense:', error);
       toast.error("Masraf eklenirken bir hata oluştu");
@@ -421,7 +410,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       toast.success("Masraf başarıyla güncellendi");
       setIsEditSheetOpen(false);
       setEditingExpense(null);
-      fetchExpenses();
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
     } catch (error) {
       console.error('Error updating expense:', error);
       toast.error("Masraf güncellenirken bir hata oluştu");
@@ -437,7 +426,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
       const { error } = await supabase.from('expenses').delete().eq('id', expenseToDelete.id);
       if (error) throw error;
       toast.success("Masraf başarıyla silindi");
-      fetchExpenses();
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
     } catch (error) {
       console.error('Error deleting expense:', error);
       toast.error("Masraf silinirken bir hata oluştu");
@@ -495,12 +484,12 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         toast.success(`${selectedExpenses.length} işlem başarıyla silindi`);
         setSelectedExpenses([]);
         setIsAllSelected(false);
-        fetchExpenses();
+        queryClient.invalidateQueries({ queryKey: ["expenses"] });
       } catch (error) {
         toast.error("İşlemler silinirken bir hata oluştu");
       }
     }
-  }, [selectedExpenses, toast, fetchExpenses]);
+  }, [selectedExpenses, toast, queryClient]);
 
   useEffect(() => {
     setIsAllSelected(filteredExpenses.length > 0 && selectedExpenses.length === filteredExpenses.length);
@@ -526,8 +515,6 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         endDate={endDate}
         onCreateExpense={() => setIsAddDialogOpen(true)}
         onNavigateCategories={() => navigate('/cashflow/categories')}
-        activeView={activeView}
-        setActiveView={setActiveView}
       />
 
       {/* Filter Bar */}
@@ -557,30 +544,18 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         onBulkAction={handleBulkAction}
       />
 
-      {/* Content View */}
-      {activeView === "list" ? (
-        <ExpensesListView
-          expenses={filteredExpenses}
-          loading={loading}
-          selectedExpenses={selectedExpenses}
-          onSelectExpense={handleSelectExpense}
-          onSelectAll={() => handleSelectAll(!isAllSelected)}
-          isAllSelected={isAllSelected}
-          onEditExpense={handleEditClick}
+      {/* Content View - Sadece Liste Görünümü */}
+      <ExpensesListView
+        expenses={filteredExpenses}
+        loading={loading}
+        selectedExpenses={selectedExpenses}
+        onSelectExpense={handleSelectExpense}
+        onSelectAll={() => handleSelectAll(!isAllSelected)}
+        isAllSelected={isAllSelected}
+        onEditExpense={handleEditClick}
           onDeleteExpense={handleDeleteClick}
           getAccountName={getAccountName}
         />
-      ) : (
-        <ExpensesGridView
-          expenses={filteredExpenses}
-          loading={loading}
-          selectedExpenses={selectedExpenses}
-          onSelectExpense={handleSelectExpense}
-          onEditExpense={handleEditClick}
-          onDeleteExpense={handleDeleteClick}
-          getAccountName={getAccountName}
-        />
-      )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialogComponent

@@ -43,21 +43,8 @@ const ExpensesListView = memo(({
     );
   }
 
-  if (expenses.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="p-4 bg-gray-100 rounded-full mb-4">
-          <FileText className="h-12 w-12 text-gray-400" />
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Bu dönem için masraf kaydı bulunamadı
-        </h3>
-        <p className="text-gray-600 max-w-sm">
-          Yeni masraf eklemek için yukarıdaki "Masraf Ekle" butonunu kullanabilirsiniz.
-        </p>
-      </div>
-    );
-  }
+  // Boş durumda bile header gösterilsin
+  const hasExpenses = expenses.length > 0;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -81,41 +68,82 @@ const ExpensesListView = memo(({
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gray-50 border-b">
-            <TableHead className="w-[40px] h-12 px-4">
+          <TableRow className="bg-slate-100 border-b border-slate-200">
+            <TableHead className="w-[40px] py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
               <Checkbox
                 checked={isAllSelected}
                 onCheckedChange={onSelectAll}
               />
             </TableHead>
-            <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-              📅 Tarih
+            <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+              <div className="flex items-center gap-1">
+                <span className="text-lg mr-2">📅</span>
+                <span>Tarih</span>
+              </div>
             </TableHead>
-            <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-              📁 Kategori
+            <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+              <div className="flex items-center gap-1">
+                <span className="text-lg mr-2">📁</span>
+                <span>Kategori</span>
+              </div>
             </TableHead>
-            <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-              📝 Açıklama
+            <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+              <div className="flex items-center gap-1">
+                <span className="text-lg mr-2">📝</span>
+                <span>Açıklama</span>
+              </div>
             </TableHead>
-            <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-              👤 Tür
+            <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+              <div className="flex items-center gap-1">
+                <span className="text-lg mr-2">👤</span>
+                <span>Tür</span>
+              </div>
             </TableHead>
-            <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-              💳 Ödeme
+            <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+              <div className="flex items-center gap-1">
+                <span className="text-lg mr-2">💳</span>
+                <span>Ödeme</span>
+              </div>
             </TableHead>
-            <TableHead className="h-12 px-4 text-right align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-              💰 Tutar
+            <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">
+              <div className="flex items-center gap-1 justify-end">
+                <span className="text-lg mr-2">💰</span>
+                <span>Tutar</span>
+              </div>
             </TableHead>
-            <TableHead className="h-12 px-4 text-left align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-              📊 Durum
+            <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">
+              <div className="flex items-center gap-1">
+                <span className="text-lg mr-2">📊</span>
+                <span>Durum</span>
+              </div>
             </TableHead>
-            <TableHead className="h-12 px-4 text-center align-middle font-bold text-foreground/80 whitespace-nowrap text-sm tracking-wide">
-              ⚙️ İşlemler
+            <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
+              <div className="flex items-center gap-1 justify-center">
+                <span className="text-lg mr-2">⚙️</span>
+                <span>İşlemler</span>
+              </div>
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {expenses.map((expense) => {
+          {!hasExpenses ? (
+            <TableRow>
+              <TableCell colSpan={9} className="px-4 py-16 text-center">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="p-4 bg-gray-100 rounded-full mb-4">
+                    <FileText className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Bu dönem için masraf kaydı bulunamadı
+                  </h3>
+                  <p className="text-gray-600 max-w-sm">
+                    Yeni masraf eklemek için yukarıdaki "Masraf Ekle" butonunu kullanabilirsiniz.
+                  </p>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : (
+            expenses.map((expense) => {
             const isSelected = selectedExpenses.some(e => e.id === expense.id);
             const isCompany = expense.expense_type === 'company';
             const isPaid = expense.is_paid;
@@ -255,7 +283,8 @@ const ExpensesListView = memo(({
                 </TableCell>
               </TableRow>
             );
-          })}
+          })
+          )}
         </TableBody>
       </Table>
     </div>

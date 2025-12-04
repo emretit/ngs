@@ -41,7 +41,6 @@ interface PartnerAccount {
   id: string;
   partner_name: string;
   partner_type: string;
-  account_type: string;
   current_balance: number;
   initial_capital: number;
   profit_share: number;
@@ -185,10 +184,10 @@ export function usePartnerAccounts() {
 
       const { data, error } = await supabase
         .from('partner_accounts')
-        .select('id, partner_name, partner_type, account_type, current_balance, initial_capital, profit_share, ownership_percentage, currency, is_active, created_at, updated_at')
+        .select('id, partner_name, partner_type, current_balance, initial_capital, profit_share, ownership_percentage, currency, is_active, created_at, updated_at')
         .eq('company_id', companyId)
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .order('partner_name', { ascending: true });
 
       if (error) throw error;
       return (data as unknown as PartnerAccount[]) || [];
@@ -233,7 +232,7 @@ export function useAllAccounts() {
         
         supabase
           .from('partner_accounts')
-          .select('id, partner_name, partner_type, account_type, current_balance, initial_capital, profit_share, ownership_percentage, currency, is_active, created_at, updated_at')
+          .select('id, partner_name, partner_type, current_balance, initial_capital, profit_share, ownership_percentage, currency, is_active, created_at, updated_at')
           .eq('company_id', companyId)
           .eq('is_active', true)
           .order('partner_name', { ascending: true })

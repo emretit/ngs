@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +21,7 @@ interface PartnerAccountFormData {
   initial_capital: string;
   currency: string;
   investment_date: string;
+  investment_date_date?: Date;
 }
 
 const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', accountId }: PartnerAccountModalProps) => {
@@ -51,6 +50,7 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
 
         if (error) throw error;
         if (data) {
+          const investmentDate = data.investment_date ? new Date(data.investment_date) : undefined;
           setFormData({
             partner_name: data.partner_name || "",
             partner_type: data.partner_type || 'ortak',
@@ -58,6 +58,7 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
             initial_capital: data.initial_capital != null ? String(data.initial_capital) : "",
             currency: data.currency || 'TRY',
             investment_date: data.investment_date || "",
+            investment_date_date: investmentDate,
           });
         }
       } catch (e) {
@@ -75,7 +76,6 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
       [field]: value
     }));
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,7 +147,8 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
         ownership_percentage: "",
         initial_capital: "",
         currency: "TRY",
-        investment_date: ""
+        investment_date: "",
+        investment_date_date: undefined
       });
     } catch (error) {
       console.error('Error creating partner account:', error);
@@ -158,108 +159,123 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>{mode === 'edit' ? 'Ortak Hesabı Düzenle' : 'Yeni Ortak Hesabı'}</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="partner_name">Ortak Adı *</Label>
-              <Input
-                id="partner_name"
-                value={formData.partner_name}
-                onChange={(e) => handleInputChange('partner_name', e.target.value)}
-                placeholder="Ortak adı veya şirket adı"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="partner_type">Ortak Türü</Label>
-              <Select value={formData.partner_type} onValueChange={(value) => handleInputChange('partner_type', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ortak">Ortak</SelectItem>
-                  <SelectItem value="hisse_sahibi">Hisse Sahibi</SelectItem>
-                  <SelectItem value="yatirimci">Yatırımcı</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === 'edit' ? 'Ortak Hesabı Düzenle' : 'Yeni Ortak Hesabı'}
+      maxWidth="md"
+      headerColor="yellow"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="partner_name" className="text-sm font-medium text-gray-700">
+              Ortak Adı <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="partner_name"
+              value={formData.partner_name}
+              onChange={(e) => handleInputChange('partner_name', e.target.value)}
+              placeholder="Ortak adı veya şirket adı"
+              required
+              className="h-9"
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="ownership_percentage">Hisse Yüzdesi (%)</Label>
-              <Input
-                id="ownership_percentage"
-                type="number"
-                value={formData.ownership_percentage}
-                onChange={(e) => handleInputChange('ownership_percentage', e.target.value)}
-                placeholder="0.00"
-                min="0"
-                max="100"
-                step="0.01"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="partner_type" className="text-sm font-medium text-gray-700">Ortak Türü</Label>
+            <Select value={formData.partner_type} onValueChange={(value) => handleInputChange('partner_type', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ortak">Ortak</SelectItem>
+                <SelectItem value="hisse_sahibi">Hisse Sahibi</SelectItem>
+                <SelectItem value="yatirimci">Yatırımcı</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="initial_capital">Başlangıç Sermayesi</Label>
-              <Input
-                id="initial_capital"
-                type="number"
-                value={formData.initial_capital}
-                onChange={(e) => handleInputChange('initial_capital', e.target.value)}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-              />
-            </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="ownership_percentage" className="text-sm font-medium text-gray-700">Hisse Yüzdesi (%)</Label>
+            <Input
+              id="ownership_percentage"
+              type="number"
+              value={formData.ownership_percentage}
+              onChange={(e) => handleInputChange('ownership_percentage', e.target.value)}
+              placeholder="0.00"
+              min="0"
+              max="100"
+              step="0.01"
+              className="h-9"
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="currency">Para Birimi</Label>
-              <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TRY">TRY</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="initial_capital" className="text-sm font-medium text-gray-700">Başlangıç Sermayesi</Label>
+            <Input
+              id="initial_capital"
+              type="number"
+              value={formData.initial_capital}
+              onChange={(e) => handleInputChange('initial_capital', e.target.value)}
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              className="h-9"
+            />
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="investment_date">Yatırım Tarihi</Label>
-              <Input
-                id="investment_date"
-                type="date"
-                value={formData.investment_date}
-                onChange={(e) => handleInputChange('investment_date', e.target.value)}
-              />
-            </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
+            <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TRY">TRY</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="GBP">GBP</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
+          <UnifiedDatePicker
+            label="Yatırım Tarihi"
+            date={formData.investment_date_date}
+            onSelect={(date) => {
+              if (date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                handleInputChange('investment_date', `${year}-${month}-${day}`);
+                setFormData(prev => ({ ...prev, investment_date_date: date }));
+              } else {
+                handleInputChange('investment_date', '');
+                setFormData(prev => ({ ...prev, investment_date_date: undefined }));
+              }
+            }}
+            placeholder="Yatırım tarihi seçin"
+          />
+        </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              İptal
-            </Button>
-            <Button type="submit" disabled={isLoading || isPrefilling}>
-              {isLoading ? (mode === 'edit' ? 'Güncelleniyor...' : 'Oluşturuluyor...') : (mode === 'edit' ? 'Kaydet' : 'Oluştur')}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading || isPrefilling} />
+          <UnifiedDialogActionButton
+            onClick={handleSubmit}
+            disabled={isLoading || isPrefilling}
+            loading={isLoading}
+            variant="primary"
+          >
+            {mode === 'edit' ? 'Kaydet' : 'Oluştur'}
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
   );
 };
 

@@ -328,7 +328,7 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
                 {account.partner_name}
               </h1>
               <p className="text-xs text-muted-foreground/70">
-                {getAccountTypeLabel(account.account_type)} • {account.is_active ? "Aktif" : "Pasif"}
+                {getAccountTypeLabel(account.partner_type)} • {account.is_active ? "Aktif" : "Pasif"}
               </p>
             </div>
           </div>
@@ -490,7 +490,7 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">Hesap Türü</label>
-                    <p className="text-sm">{getAccountTypeLabel(account.account_type)}</p>
+                    <p className="text-sm">{getAccountTypeLabel(account.partner_type)}</p>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">Para Birimi</label>

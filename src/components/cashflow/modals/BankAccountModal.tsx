@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,136 +112,150 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Yeni Banka Hesabı</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="account_name">Hesap Adı *</Label>
-              <Input
-                id="account_name"
-                value={formData.account_name}
-                onChange={(e) => handleInputChange('account_name', e.target.value)}
-                placeholder="Örn: Ana Hesap"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bank_name">Banka Adı *</Label>
-              <Input
-                id="bank_name"
-                value={formData.bank_name}
-                onChange={(e) => handleInputChange('bank_name', e.target.value)}
-                placeholder="Örn: Türkiye İş Bankası"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="branch_name">Şube Adı</Label>
-              <Input
-                id="branch_name"
-                value={formData.branch_name}
-                onChange={(e) => handleInputChange('branch_name', e.target.value)}
-                placeholder="Şube adı"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="account_number">Hesap Numarası</Label>
-              <Input
-                id="account_number"
-                value={formData.account_number}
-                onChange={(e) => handleInputChange('account_number', e.target.value)}
-                placeholder="Hesap numarası"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="iban">IBAN</Label>
-              <Input
-                id="iban"
-                value={formData.iban}
-                onChange={(e) => handleInputChange('iban', e.target.value)}
-                placeholder="TR00 0000 0000 0000 0000 0000 00"
-                maxLength={34}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="swift_code">SWIFT Kodu</Label>
-              <Input
-                id="swift_code"
-                value={formData.swift_code}
-                onChange={(e) => handleInputChange('swift_code', e.target.value)}
-                placeholder="SWIFT kodu"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="account_type">Hesap Türü</Label>
-              <Select value={formData.account_type} onValueChange={(value) => handleInputChange('account_type', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vadesiz">Vadesiz</SelectItem>
-                  <SelectItem value="vadeli">Vadeli</SelectItem>
-                  <SelectItem value="kredi">Kredi</SelectItem>
-                  <SelectItem value="pos">POS</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="currency">Para Birimi</Label>
-              <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TRY">TRY</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
+    <UnifiedDialog
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Yeni Banka Hesabı"
+      maxWidth="lg"
+      headerColor="blue"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="notes">Notlar</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder="Hesap hakkında notlar"
-              rows={3}
+            <Label htmlFor="account_name" className="text-sm font-medium text-gray-700">
+              Hesap Adı <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="account_name"
+              value={formData.account_name}
+              onChange={(e) => handleInputChange('account_name', e.target.value)}
+              placeholder="Örn: Ana Hesap"
+              required
+              className="h-9"
             />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-              İptal
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Oluşturuluyor..." : "Oluştur"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <div className="space-y-2">
+            <Label htmlFor="bank_name" className="text-sm font-medium text-gray-700">
+              Banka Adı <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="bank_name"
+              value={formData.bank_name}
+              onChange={(e) => handleInputChange('bank_name', e.target.value)}
+              placeholder="Örn: Türkiye İş Bankası"
+              required
+              className="h-9"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="branch_name" className="text-sm font-medium text-gray-700">Şube Adı</Label>
+            <Input
+              id="branch_name"
+              value={formData.branch_name}
+              onChange={(e) => handleInputChange('branch_name', e.target.value)}
+              placeholder="Şube adı"
+              className="h-9"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="account_number" className="text-sm font-medium text-gray-700">Hesap Numarası</Label>
+            <Input
+              id="account_number"
+              value={formData.account_number}
+              onChange={(e) => handleInputChange('account_number', e.target.value)}
+              placeholder="Hesap numarası"
+              className="h-9"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="iban" className="text-sm font-medium text-gray-700">IBAN</Label>
+            <Input
+              id="iban"
+              value={formData.iban}
+              onChange={(e) => handleInputChange('iban', e.target.value)}
+              placeholder="TR00 0000 0000 0000 0000 0000 00"
+              maxLength={34}
+              className="h-9"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="swift_code" className="text-sm font-medium text-gray-700">SWIFT Kodu</Label>
+            <Input
+              id="swift_code"
+              value={formData.swift_code}
+              onChange={(e) => handleInputChange('swift_code', e.target.value)}
+              placeholder="SWIFT kodu"
+              className="h-9"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="account_type" className="text-sm font-medium text-gray-700">Hesap Türü</Label>
+            <Select value={formData.account_type} onValueChange={(value) => handleInputChange('account_type', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="vadesiz">Vadesiz</SelectItem>
+                <SelectItem value="vadeli">Vadeli</SelectItem>
+                <SelectItem value="kredi">Kredi</SelectItem>
+                <SelectItem value="pos">POS</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
+            <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TRY">TRY</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="EUR">EUR</SelectItem>
+                <SelectItem value="GBP">GBP</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Notlar</Label>
+          <Textarea
+            id="notes"
+            value={formData.notes}
+            onChange={(e) => handleInputChange('notes', e.target.value)}
+            placeholder="Hesap hakkında notlar"
+            rows={3}
+            className="resize-none"
+          />
+        </div>
+
+        <UnifiedDialogFooter>
+          <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
+          <UnifiedDialogActionButton
+            onClick={handleSubmit}
+            disabled={isLoading}
+            loading={isLoading}
+            variant="primary"
+          >
+            Oluştur
+          </UnifiedDialogActionButton>
+        </UnifiedDialogFooter>
+      </form>
+    </UnifiedDialog>
   );
 };
 

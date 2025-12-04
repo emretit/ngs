@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, CheckCircle2, Clock, Building2, User, Receipt, LayoutGrid, List } from "lucide-react";
+import { Plus, Settings, CheckCircle2, Clock, Building2, User, Receipt } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import type { ExpenseItem } from "./ExpensesManager";
@@ -13,8 +13,6 @@ interface ExpensesPageHeaderProps {
   endDate: Date;
   onCreateExpense: () => void;
   onNavigateCategories?: () => void;
-  activeView: ExpenseViewType;
-  setActiveView: (view: ExpenseViewType) => void;
 }
 
 const ExpensesPageHeader = ({
@@ -22,9 +20,7 @@ const ExpensesPageHeader = ({
   startDate,
   endDate,
   onCreateExpense,
-  onNavigateCategories,
-  activeView,
-  setActiveView
+  onNavigateCategories
 }: ExpensesPageHeaderProps) => {
   // Masrafları durumlarına göre grupla
   const paidExpenses = expenses.filter(e => e.is_paid);
@@ -112,26 +108,6 @@ const ExpensesPageHeader = ({
       
       {/* Sağ taraf - Butonlar */}
       <div className="flex items-center gap-2">
-        {/* View Toggle */}
-        <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-          <Button
-            variant={activeView === "list" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveView("list")}
-            className={`h-7 px-2 ${activeView === "list" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={activeView === "grid" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setActiveView("grid")}
-            className={`h-7 px-2 ${activeView === "grid" ? "bg-white shadow-sm" : "hover:bg-gray-200"}`}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-        </div>
-        
         {onNavigateCategories && (
           <Button
             variant="outline"

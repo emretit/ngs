@@ -47,7 +47,6 @@ interface PartnerAccount {
   id: string;
   partner_name: string;
   partner_type: string;
-  account_type: string;
   current_balance: number;
   initial_capital: number;
   profit_share: number;
@@ -414,7 +413,7 @@ export function usePartnerAccountDetail(accountId: string | undefined) {
       // Company ID kontrolünü kaldırdık - account ID zaten unique
       const { data, error } = await supabase
         .from('partner_accounts')
-        .select('id, partner_name, partner_type, account_type, current_balance, initial_capital, profit_share, ownership_percentage, currency, is_active, location, responsible_person, notes, start_date, end_date, created_at, updated_at')
+        .select('id, partner_name, partner_type, current_balance, initial_capital, profit_share, ownership_percentage, currency, is_active, investment_date, created_at, updated_at')
         .eq('id', accountId)
         .single();
 

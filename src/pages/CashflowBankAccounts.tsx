@@ -2,6 +2,10 @@ import BankAccountsSimple from "@/components/cashflow/BankAccountsSimple";
 import CashAccounts from "@/components/cashflow/CashAccounts";
 import CreditCards from "@/components/cashflow/CreditCards";
 import PartnerAccounts from "@/components/cashflow/PartnerAccounts";
+import CashAccountModal from "@/components/cashflow/modals/CashAccountModal";
+import BankAccountModal from "@/components/cashflow/modals/BankAccountModal";
+import CreditCardModal from "@/components/cashflow/modals/CreditCardModal";
+import PartnerAccountModal from "@/components/cashflow/modals/PartnerAccountModal";
 import { Building, Eye, EyeOff, Wallet, CreditCard, Users, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
@@ -14,7 +18,7 @@ interface CashflowBankAccountsProps {
   setIsCollapsed?: (collapsed: boolean) => void;
 }
 const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccountsProps) => {
-  const [showBalances, setShowBalances] = useState(false);
+  const [showBalances, setShowBalances] = useState(true);
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
@@ -73,7 +77,7 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
         </div>
         
         {/* Content Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white rounded-2xl shadow-md border border-gray-100 p-5">
               <div className="flex items-center justify-between mb-4">
@@ -130,10 +134,10 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
   return (
     <div className="space-y-4">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
           {/* Sol taraf - Başlık */}
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg text-white shadow-lg">
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg">
               <Building className="h-5 w-5" />
             </div>
             <div className="space-y-0.5">
@@ -145,10 +149,11 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
               </p>
             </div>
           </div>
-          {/* Orta - Hesap Türü Kartları */}
+          
+          {/* Orta - Hesap Türleri ve Toplam */}
           <div className="flex flex-wrap gap-1.5 justify-center flex-1 items-center">
             {/* Toplam hesap sayısı */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 text-white border border-emerald-600 shadow-sm">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-gradient-to-r from-blue-600 to-blue-700 text-white border border-blue-600 shadow-sm">
               <span className="font-bold">Toplam</span>
               <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">
                 {(allAccounts?.cashAccounts?.length || 0) + 
@@ -157,29 +162,30 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                  (allAccounts?.partnerAccounts?.length || 0)}
               </span>
             </div>
+            
             {/* Hesap türü kartları */}
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-green-100 text-green-800 border-gray-200">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-green-100 text-green-800 border-green-200">
               <Wallet className="h-3 w-3" />
               <span className="font-medium">Nakit Kasa</span>
               <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
                 {allAccounts?.cashAccounts?.length || 0}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-blue-100 text-blue-800 border-gray-200">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-blue-100 text-blue-800 border-blue-200">
               <Building className="h-3 w-3" />
               <span className="font-medium">Banka</span>
               <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
                 {allAccounts?.bankAccounts?.length || 0}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-purple-100 text-purple-800 border-gray-200">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-purple-100 text-purple-800 border-purple-200">
               <CreditCard className="h-3 w-3" />
               <span className="font-medium">Kredi Kartı</span>
               <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
                 {allAccounts?.creditCards?.length || 0}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-orange-100 text-orange-800 border-gray-200">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm bg-orange-100 text-orange-800 border-orange-200">
               <Users className="h-3 w-3" />
               <span className="font-medium">Ortaklar</span>
               <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
@@ -200,37 +206,48 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
             </Button>
           </div>
         </div>
-        {/* Content Section - Responsive Grid Layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Content Section - Responsive Grid Layout - 2 Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Nakit Kasa Hesapları */}
-          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-green-200">
-            <div className="p-5">
+          <div className="group bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 hover:border-green-300">
+            <div className="p-4">
+              {/* Header Section */}
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg text-white shadow-md group-hover:scale-105 transition-transform duration-300">
                     <Wallet className="h-4 w-4" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div>
-                      <h2 className="text-sm font-bold text-gray-900">Nakit Kasa</h2>
-                      <p className="text-xs text-gray-500">Kasa işlemleri</p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h2 className="text-sm font-semibold text-gray-900">Nakit Kasa</h2>
+                      <Button 
+                        size="sm" 
+                        className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
+                        onClick={() => setIsCashModalOpen(true)}
+                      >
+                        <Plus className="h-3 w-3" />
+                        Yeni
+                      </Button>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                      {showBalances ? formatCurrency((allAccounts?.cashAccounts || []).reduce((s, a:any) => s + (a.current_balance || 0), 0), "TRY") : "••••••"}
-                    </span>
+                    <div className="flex items-center gap-4 text-xs">
+                      <div>
+                        <span className="text-gray-500">Toplam Bakiye: </span>
+                        <span className="font-bold text-green-700">
+                          {showBalances ? formatCurrency((allAccounts?.cashAccounts || []).reduce((s, a:any) => s + (a.current_balance || 0), 0), "TRY") : "••••••"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Hesap: </span>
+                        <span className="font-bold text-gray-900">
+                          {allAccounts?.cashAccounts?.length || 0}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    size="sm" 
-                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7"
-                    onClick={() => setIsCashModalOpen(true)}
-                  >
-                    <Plus className="h-3 w-3" />
-                    Yeni
-                  </Button>
-                </div>
               </div>
+
+              {/* Accounts List */}
               <MemoizedCashAccounts 
                 showBalances={showBalances} 
                 accounts={allAccounts?.cashAccounts || []}
@@ -239,34 +256,45 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
             </div>
           </div>
           {/* Banka Hesapları */}
-          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-blue-200">
-            <div className="p-5">
+          <div className="group bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 hover:border-blue-300">
+            <div className="p-4">
+              {/* Header Section */}
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg text-white shadow-md group-hover:scale-105 transition-transform duration-300">
                     <Building className="h-4 w-4" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div>
-                      <h2 className="text-sm font-bold text-gray-900">Banka Hesapları</h2>
-                      <p className="text-xs text-gray-500">Banka işlemleri</p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h2 className="text-sm font-semibold text-gray-900">Banka Hesapları</h2>
+                      <Button 
+                        size="sm" 
+                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
+                        onClick={() => setIsBankModalOpen(true)}
+                      >
+                        <Plus className="h-3 w-3" />
+                        Yeni
+                      </Button>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                      {showBalances ? formatCurrency((allAccounts?.bankAccounts || []).reduce((s, a:any) => s + ((a.currency === 'TRY' ? (a.current_balance || 0) : 0)), 0), "TRY") : "••••••"}
-                    </span>
+                    <div className="flex items-center gap-4 text-xs">
+                      <div>
+                        <span className="text-gray-500">Toplam Bakiye: </span>
+                        <span className="font-bold text-blue-700">
+                          {showBalances ? formatCurrency((allAccounts?.bankAccounts || []).reduce((s, a:any) => s + ((a.currency === 'TRY' ? (a.current_balance || 0) : 0)), 0), "TRY") : "••••••"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Hesap: </span>
+                        <span className="font-bold text-gray-900">
+                          {allAccounts?.bankAccounts?.length || 0}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    size="sm" 
-                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 h-7"
-                    onClick={() => setIsBankModalOpen(true)}
-                  >
-                    <Plus className="h-3 w-3" />
-                    Yeni
-                  </Button>
-                </div>
               </div>
+
+              {/* Accounts List */}
               <MemoizedBankAccounts 
                 showBalances={showBalances} 
                 accounts={allAccounts?.bankAccounts || []}
@@ -275,34 +303,51 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
             </div>
           </div>
           {/* Kredi Kartları */}
-          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200">
-            <div className="p-5">
+          <div className="group bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 hover:border-purple-300">
+            <div className="p-4">
+              {/* Header Section */}
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg text-white shadow-md group-hover:scale-105 transition-transform duration-300">
                     <CreditCard className="h-4 w-4" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div>
-                      <h2 className="text-sm font-bold text-gray-900">Kredi Kartları</h2>
-                      <p className="text-xs text-gray-500">Kart limitleri</p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h2 className="text-sm font-semibold text-gray-900">Kredi Kartları</h2>
+                      <Button 
+                        size="sm" 
+                        className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
+                        onClick={() => setIsCreditModalOpen(true)}
+                      >
+                        <Plus className="h-3 w-3" />
+                        Yeni
+                      </Button>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
-                      {showBalances ? formatCurrency((allAccounts?.creditCards || []).reduce((s, a:any) => s + (a.available_limit || 0), 0), "TRY") : "••••••"}
-                    </span>
+                    <div className="flex items-center gap-4 text-xs">
+                      <div>
+                        <span className="text-gray-500">Toplam Limit: </span>
+                        <span className="font-bold text-purple-700">
+                          {showBalances ? formatCurrency((allAccounts?.creditCards || []).reduce((s, a:any) => s + (a.credit_limit || 0), 0), "TRY") : "••••••"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Kullanılabilir: </span>
+                        <span className="font-bold text-green-600">
+                          {showBalances ? formatCurrency((allAccounts?.creditCards || []).reduce((s, a:any) => s + (a.available_limit || 0), 0), "TRY") : "••••••"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Kart: </span>
+                        <span className="font-bold text-gray-900">
+                          {allAccounts?.creditCards?.length || 0}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    size="sm" 
-                    className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7"
-                    onClick={() => setIsCreditModalOpen(true)}
-                  >
-                    <Plus className="h-3 w-3" />
-                    Yeni
-                  </Button>
-                </div>
               </div>
+
+              {/* Cards List */}
               <MemoizedCreditCards 
                 showBalances={showBalances} 
                 accounts={allAccounts?.creditCards || []}
@@ -311,34 +356,51 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
             </div>
           </div>
           {/* Şirket Ortakları Hesabı */}
-          <div className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-orange-200">
-            <div className="p-5">
+          <div className="group bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 hover:border-orange-300">
+            <div className="p-4">
+              {/* Header Section */}
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl text-white shadow-md group-hover:scale-105 transition-transform duration-300">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="p-2 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg text-white shadow-md group-hover:scale-105 transition-transform duration-300">
                     <Users className="h-4 w-4" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div>
-                      <h2 className="text-sm font-bold text-gray-900">Şirket Ortakları</h2>
-                      <p className="text-xs text-gray-500">Ortak hesapları</p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h2 className="text-sm font-semibold text-gray-900">Şirket Ortakları</h2>
+                      <Button 
+                        size="sm" 
+                        className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
+                        onClick={() => setIsPartnerModalOpen(true)}
+                      >
+                        <Plus className="h-3 w-3" />
+                        Yeni
+                      </Button>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-100">
-                      {showBalances ? formatCurrency((allAccounts?.partnerAccounts || []).reduce((s, a:any) => s + (a.current_balance || 0), 0), "TRY") : "••••••"}
-                    </span>
+                    <div className="flex items-center gap-4 text-xs">
+                      <div>
+                        <span className="text-gray-500">Toplam Bakiye: </span>
+                        <span className="font-bold text-orange-700">
+                          {showBalances ? formatCurrency((allAccounts?.partnerAccounts || []).reduce((s, a:any) => s + (a.current_balance || 0), 0), "TRY") : "••••••"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Sermaye: </span>
+                        <span className="font-bold text-orange-600">
+                          {showBalances ? formatCurrency((allAccounts?.partnerAccounts || []).reduce((s, a:any) => s + (a.initial_capital || 0), 0), "TRY") : "••••••"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Ortak: </span>
+                        <span className="font-bold text-gray-900">
+                          {allAccounts?.partnerAccounts?.length || 0}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    size="sm" 
-                    className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 h-7"
-                    onClick={() => setIsPartnerModalOpen(true)}
-                  >
-                    <Plus className="h-3 w-3" />
-                    Yeni
-                  </Button>
-                </div>
               </div>
+
+              {/* Partners List */}
               <MemoizedPartnerAccounts 
                 showBalances={showBalances} 
                 accounts={allAccounts?.partnerAccounts || []}
@@ -347,6 +409,47 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
             </div>
           </div>
         </div>
+
+        {/* Modals */}
+        <CashAccountModal
+          isOpen={isCashModalOpen}
+          onClose={() => setIsCashModalOpen(false)}
+          onSuccess={() => {
+            setIsCashModalOpen(false);
+            queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
+            queryClient.invalidateQueries({ queryKey: ['cash-accounts'] });
+          }}
+        />
+
+        <BankAccountModal
+          isOpen={isBankModalOpen}
+          onClose={() => setIsBankModalOpen(false)}
+          onSuccess={() => {
+            setIsBankModalOpen(false);
+            queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
+            queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+          }}
+        />
+
+        <CreditCardModal
+          isOpen={isCreditModalOpen}
+          onClose={() => setIsCreditModalOpen(false)}
+          onSuccess={() => {
+            setIsCreditModalOpen(false);
+            queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
+            queryClient.invalidateQueries({ queryKey: ['credit-cards'] });
+          }}
+        />
+
+        <PartnerAccountModal
+          isOpen={isPartnerModalOpen}
+          onClose={() => setIsPartnerModalOpen(false)}
+          onSuccess={() => {
+            setIsPartnerModalOpen(false);
+            queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
+            queryClient.invalidateQueries({ queryKey: ['partner-accounts'] });
+          }}
+        />
       </div>
   );
 };

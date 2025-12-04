@@ -266,7 +266,7 @@ const PartnerAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', acco
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading || isPrefilling} />
           <UnifiedDialogActionButton
-            onClick={handleSubmit}
+            onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)}
             disabled={isLoading || isPrefilling}
             loading={isLoading}
             variant="primary"

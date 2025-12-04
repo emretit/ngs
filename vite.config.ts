@@ -99,7 +99,6 @@ export default defineConfig(({ mode }) => ({
             '@dnd-kit/sortable',
             '@dnd-kit/utilities',
             '@hello-pangea/dnd',
-            'react-beautiful-dnd',
           ],
           
           // Calendar components

@@ -43,22 +43,21 @@ const dotColorClasses = {
   gray: "bg-gray-500"
 };
 
-const UnifiedDialogOverlay = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay> & { onOverlayClick?: () => void }
->(({ className, onOverlayClick, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    forceMount
-    className={cn(
-      "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
-    )}
-    onClick={onOverlayClick}
-    {...props}
-  />
-));
-UnifiedDialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+// Custom overlay component that works with modal={false}
+const UnifiedDialogOverlay: React.FC<{ 
+  isOpen: boolean;
+  onOverlayClick?: () => void;
+}> = ({ isOpen, onOverlayClick }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div
+      className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in-0"
+      onClick={onOverlayClick}
+      style={{ pointerEvents: 'auto' }}
+    />
+  );
+};
 
 export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   isOpen,
@@ -83,7 +82,10 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
   return (
     <DialogPrimitive.Root open={isOpen} onOpenChange={handleOpenChange} modal={false}>
       <DialogPrimitive.Portal>
-        <UnifiedDialogOverlay onOverlayClick={() => handleOpenChange(false)} />
+        <UnifiedDialogOverlay 
+          isOpen={isOpen}
+          onOverlayClick={() => handleOpenChange(false)} 
+        />
         <DialogPrimitive.Content
           className={cn(
             "fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] bg-white rounded-xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden p-0 pointer-events-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",

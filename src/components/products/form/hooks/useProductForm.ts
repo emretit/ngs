@@ -37,6 +37,9 @@ export const useProductForm = () => {
       supplier_id: "",
       company_id: "",
       // Ek bilgiler - yeni kolonlar
+      purchase_price: 0,
+      price_includes_vat: false,
+      purchase_price_includes_vat: false,
       max_stock_level: null,
       weight: null,
       dimensions: null,
@@ -148,13 +151,16 @@ export const useProductForm = () => {
             supplier_id: data.supplier_id || "",
             company_id: data.company_id || "",
             vat_included: data.vat_included ?? null,
-            // Veritabanında olmayan kolonlar için default değerler
-            max_stock_level: null,
-            weight: null,
-            dimensions: null,
-            warranty_period: null,
-            tags: null,
-            attachments: [],
+            // Yeni eklenen alanlar - veritabanından oku
+            purchase_price: data.purchase_price ?? 0,
+            price_includes_vat: data.price_includes_vat ?? false,
+            purchase_price_includes_vat: data.purchase_price_includes_vat ?? false,
+            max_stock_level: data.max_stock_level ?? null,
+            weight: data.weight ?? null,
+            dimensions: data.dimensions ?? null,
+            warranty_period: data.warranty_period ?? null,
+            tags: Array.isArray(data.tags) ? data.tags.join(", ") : (data.tags ?? null),
+            attachments: data.attachments ?? [],
           });
         }
       } catch (error) {

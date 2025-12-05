@@ -30,7 +30,7 @@ interface TechnicianDetailPanelProps {
 }
 
 const statusColors = {
-  pending: "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
+  new: "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
   assigned: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
   in_progress: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
   completed: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
@@ -187,7 +187,7 @@ export const TechnicianDetailPanel = ({
                     ? format(parseISO(service.issue_date), "HH:mm", { locale: tr })
                     : "N/A";
                   const priority = service.service_priority as keyof typeof priorityColors;
-                  const status = (service.service_status || 'pending') as keyof typeof statusColors;
+                  const status = (service.service_status || 'new') as keyof typeof statusColors;
 
                   return (
                     <button

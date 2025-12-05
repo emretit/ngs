@@ -33,6 +33,12 @@ export const useSortedServices = (
           isNullA = !a.created_at;
           isNullB = !b.created_at;
           break;
+        case "service_due_date":
+          valueA = a.service_due_date ? new Date(a.service_due_date).getTime() : null;
+          valueB = b.service_due_date ? new Date(b.service_due_date).getTime() : null;
+          isNullA = !a.service_due_date;
+          isNullB = !b.service_due_date;
+          break;
         case "service_status":
           valueA = a.service_status || '';
           valueB = b.service_status || '';
@@ -78,6 +84,7 @@ export const useSortedServices = (
     });
   }, [services, sortField, sortDirection]);
 };
+
 
 
 

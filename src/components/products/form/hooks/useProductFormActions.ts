@@ -88,6 +88,16 @@ export const useProductFormActions = (
           supplier_id: preparedData.supplier_id,
           company_id: preparedData.company_id,
           vat_included: preparedData.vat_included ?? null,
+          // Yeni eklenen alanlar
+          purchase_price: preparedData.purchase_price ?? 0,
+          price_includes_vat: preparedData.price_includes_vat ?? false,
+          purchase_price_includes_vat: preparedData.purchase_price_includes_vat ?? false,
+          max_stock_level: preparedData.max_stock_level ?? null,
+          weight: preparedData.weight ?? null,
+          dimensions: preparedData.dimensions ?? null,
+          warranty_period: preparedData.warranty_period ?? null,
+          tags: preparedData.tags ?? null,
+          attachments: preparedData.attachments ?? [],
           updated_at: new Date().toISOString()
         };
 
@@ -159,6 +169,16 @@ export const useProductFormActions = (
           supplier_id: preparedData.supplier_id,
           company_id: preparedData.company_id,
           vat_included: preparedData.vat_included ?? null,
+          // Yeni eklenen alanlar
+          purchase_price: preparedData.purchase_price ?? 0,
+          price_includes_vat: preparedData.price_includes_vat ?? false,
+          purchase_price_includes_vat: preparedData.purchase_price_includes_vat ?? false,
+          max_stock_level: preparedData.max_stock_level ?? null,
+          weight: preparedData.weight ?? null,
+          dimensions: preparedData.dimensions ?? null,
+          warranty_period: preparedData.warranty_period ?? null,
+          tags: preparedData.tags ?? null,
+          attachments: preparedData.attachments ?? [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };

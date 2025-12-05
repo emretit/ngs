@@ -13,6 +13,7 @@ interface TimelineRowProps {
   selectedDate: Date;
   onSelectService: (service: ServiceRequest) => void;
   onDropService?: (technicianId: string, time: Date) => void;
+  onDragStartService?: (service: ServiceRequest) => void;
   isDragOver?: boolean;
 }
 
@@ -22,6 +23,7 @@ export const TimelineRow = ({
   selectedDate,
   onSelectService,
   onDropService,
+  onDragStartService,
   isDragOver,
 }: TimelineRowProps) => {
   const rowRef = useRef<HTMLDivElement>(null);
@@ -44,12 +46,16 @@ export const TimelineRow = ({
   }, []);
 
   // Bu teknisyene atanmış ve seçilen tarihteki servisleri filtrele
+  // service_due_date kullanıyoruz (zaman çizelgesinde gösterilecek tarih)
   const technicianServices = services.filter((s) => {
     if (s.assigned_technician !== technician.id) return false;
-    if (!s.issue_date) return false;
     
-    const issueDate = parseISO(s.issue_date);
-    return isSameDay(issueDate, selectedDate);
+    // Önce service_due_date, yoksa issue_date kullan
+    const dateToCheck = s.service_due_date || s.issue_date;
+    if (!dateToCheck) return false;
+    
+    const serviceDate = parseISO(dateToCheck);
+    return isSameDay(serviceDate, selectedDate);
   });
 
   // Servisleri çakışmaya göre satırlara böl
@@ -64,12 +70,12 @@ export const TimelineRow = ({
     const x = e.clientX - rect.left;
     const percentage = x / rect.width;
     
-    // 08:00 - 20:00 arası (12 saat = 720 dakika)
-    const totalMinutes = 12 * 60;
+    // 00:00 - 24:00 arası (24 saat = 1440 dakika)
+    const totalMinutes = 24 * 60;
     const minutesFromStart = percentage * totalMinutes;
     
     const dropTime = new Date(selectedDate);
-    dropTime.setHours(8 + Math.floor(minutesFromStart / 60));
+    dropTime.setHours(Math.floor(minutesFromStart / 60));
     dropTime.setMinutes(Math.floor(minutesFromStart % 60));
     
     onDropService(technician.id, dropTime);
@@ -95,18 +101,19 @@ export const TimelineRow = ({
           const position = calculateServicePosition(service, rowWidth);
           if (!position) return null;
 
-          return (
-            <ServiceBlock
-              key={service.id}
-              service={service}
-              style={{
-                left: `${position.left}px`,
-                width: `${Math.max(position.width, 100)}px`,
-                top: `${rowIndex * 24 + 4}px`,
-              }}
-              onClick={() => onSelectService(service)}
-            />
-          );
+            return (
+              <ServiceBlock
+                key={service.id}
+                service={service}
+                style={{
+                  left: `${position.left}px`,
+                  width: `${Math.max(position.width, 100)}px`,
+                  top: `${rowIndex * 24 + 4}px`,
+                }}
+                onClick={() => onSelectService(service)}
+                onDragStart={() => onDragStartService?.(service)}
+              />
+            );
         })
       )}
 

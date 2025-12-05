@@ -19,7 +19,8 @@ import {
   MoreHorizontal,
   Eye,
   Pencil,
-  Trash2
+  Trash2,
+  Star
 } from "lucide-react";
 import type { ServiceRequest } from "@/hooks/service/types";
 import ServicesTableHeader, { SortField, SortDirection } from "./ServicesTableHeader";
@@ -165,7 +166,13 @@ const ServicesTable = ({
   const formatDate = (date: string | null | undefined) => {
     if (!date) return "-";
     try {
-      return format(new Date(date), "dd MMM yyyy", { locale: tr });
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return "-";
+      return dateObj.toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
     } catch {
       return "-";
     }
@@ -222,11 +229,11 @@ const ServicesTable = ({
           return (
             <TableRow 
               key={service.id} 
-              className={`hover:bg-muted/50 ${isSelected ? 'bg-blue-50' : ''}`}
+              className={`h-8 cursor-pointer transition-colors hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
             >
               {onToggleServiceSelection && (
                 <TableCell 
-                  className="px-4 py-4"
+                  className="py-2 px-3"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Checkbox
@@ -237,106 +244,130 @@ const ServicesTable = ({
                 </TableCell>
               )}
               <TableCell 
-                className="px-4 py-4 cursor-pointer"
+                className="py-2 px-3 cursor-pointer"
                 onClick={() => onSelectService(service)}
               >
-                <div className="text-sm font-mono text-muted-foreground">
+                <div className="text-xs font-mono text-muted-foreground">
                   {service.service_number || 'SR-' + service.id.slice(-6).toUpperCase()}
                 </div>
               </TableCell>
               <TableCell 
-                className="px-4 py-4 cursor-pointer"
+                className="py-2 px-3 cursor-pointer font-medium"
                 onClick={() => onSelectService(service)}
               >
-                <div className="space-y-1">
-                  <p className="font-medium text-foreground">{service.service_title}</p>
-                  {service.service_request_description && (
-                    <p className="text-sm text-muted-foreground line-clamp-1">
-                      {service.service_request_description}
-                    </p>
+                <div className="flex items-center space-x-2">
+                  {service.service_priority === 'high' && (
+                    <Star className="h-3 w-3 text-red-500 fill-red-500" />
                   )}
+                  <span className="text-xs" title={service.service_title}>
+                    {service.service_title}
+                  </span>
                 </div>
               </TableCell>
               <TableCell 
-                className="px-4 py-4 cursor-pointer"
+                className="py-2 px-3 cursor-pointer"
                 onClick={() => onSelectService(service)}
               >
-                <div className="text-sm">
+                <div className="text-xs">
                   {customerName}
                 </div>
               </TableCell>
               <TableCell 
-                className="px-4 py-4 cursor-pointer"
+                className="py-2 px-3 cursor-pointer"
                 onClick={() => onSelectService(service)}
               >
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  {service.service_location || 'Belirtilmemiş'}
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  {service.service_location || '-'}
                 </div>
               </TableCell>
               <TableCell 
-                className="px-4 py-4 cursor-pointer"
+                className="py-2 px-3 cursor-pointer text-center"
                 onClick={() => onSelectService(service)}
               >
                 {getStatusBadge(service.service_status)}
               </TableCell>
               <TableCell 
-                className="px-4 py-4 cursor-pointer"
+                className="py-2 px-3 cursor-pointer text-center"
                 onClick={() => onSelectService(service)}
               >
                 {getPriorityBadge(service.service_priority)}
               </TableCell>
               <TableCell 
-                className="px-4 py-4 cursor-pointer"
+                className="py-2 px-3 cursor-pointer"
                 onClick={() => onSelectService(service)}
               >
-                <div className="flex items-center gap-1 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-1 text-xs">
+                  <User className="h-3 w-3 text-muted-foreground" />
                   {getTechnicianName(service.assigned_technician)}
                 </div>
               </TableCell>
               <TableCell 
-                className="px-4 py-4 cursor-pointer"
+                className="py-2 px-3 cursor-pointer text-center text-xs font-medium"
                 onClick={() => onSelectService(service)}
               >
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  {formatDate(service.created_at)}
-                </div>
+                {formatDate(service.service_due_date)}
               </TableCell>
-              <TableCell className="px-4 py-4 text-center">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
+              <TableCell 
+                className="py-2 px-3 cursor-pointer text-center text-xs font-medium"
+                onClick={() => onSelectService(service)}
+              >
+                {formatDate(service.created_at)}
+              </TableCell>
+              <TableCell className="py-2 px-2">
+                <div className="flex justify-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/service/edit/${service.id}`);
+                    }}
+                    className="h-8 w-8"
+                    title="Düzenle"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  {onDeleteService && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteService(service);
+                      }}
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      title="Sil"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem 
-                      onClick={() => navigate(`/service/detail/${service.id}`)}
-                      className="gap-2 cursor-pointer"
-                    >
-                      <Eye className="h-4 w-4" />
-                      <span>Detay Görüntüle</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => navigate(`/service/edit/${service.id}`)}
-                      className="gap-2 cursor-pointer"
-                    >
-                      <Pencil className="h-4 w-4" />
-                      <span>Düzenle</span>
-                    </DropdownMenuItem>
-                    {onDeleteService && (
-                      <DropdownMenuItem 
-                        onClick={() => onDeleteService(service)}
-                        className="gap-2 cursor-pointer text-red-600 focus:text-red-600"
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-8 w-8"
+                        title="Daha Fazla"
                       >
-                        <Trash2 className="h-4 w-4" />
-                        <span>Sil</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/service/detail/${service.id}`);
+                        }}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span>Detay Görüntüle</span>
                       </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           );

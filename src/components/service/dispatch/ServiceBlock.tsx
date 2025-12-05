@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ServiceRequest } from "@/hooks/useServiceRequests";
-import { Clock, AlertCircle } from "lucide-react";
+import { Clock, AlertCircle, User, Hash } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -8,13 +8,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInMinutes } from "date-fns";
 
 interface ServiceBlockProps {
   service: ServiceRequest;
   style: React.CSSProperties;
   onClick: () => void;
   isDragging?: boolean;
+  onDragStart?: () => void;
 }
 
 const priorityConfig = {
@@ -53,17 +54,40 @@ export const ServiceBlock = ({
   style,
   onClick,
   isDragging,
+  onDragStart,
 }: ServiceBlockProps) => {
   const priority = (service.service_priority || "medium") as keyof typeof priorityConfig;
   const config = priorityConfig[priority];
   const customerData = service.customer_data as any;
 
-  const issueTime = service.issue_date
-    ? format(parseISO(service.issue_date), "HH:mm")
-    : "N/A";
+  // Zaman hesaplamaları
   const dueTime = service.service_due_date
     ? format(parseISO(service.service_due_date), "HH:mm")
-    : "N/A";
+    : null;
+  
+  const issueTime = service.issue_date
+    ? format(parseISO(service.issue_date), "HH:mm")
+    : null;
+
+  // Süre hesaplama (dakika cinsinden)
+  const duration = service.service_due_date && service.issue_date
+    ? differenceInMinutes(parseISO(service.service_due_date), parseISO(service.issue_date))
+    : service.estimated_duration || 120; // Varsayılan 2 saat
+
+  const durationHours = Math.floor(duration / 60);
+  const durationMinutes = duration % 60;
+  const durationText = durationHours > 0 
+    ? `${durationHours}s ${durationMinutes > 0 ? durationMinutes + "d" : ""}`.trim()
+    : `${durationMinutes}d`;
+
+  // Durum etiketi
+  const statusLabels: Record<string, string> = {
+    new: "Yeni",
+    in_progress: "Devam Ediyor",
+    completed: "Tamamlandı",
+    cancelled: "İptal",
+  };
+  const statusLabel = statusLabels[service.service_status] || service.service_status;
 
   return (
     <TooltipProvider>
@@ -71,7 +95,7 @@ export const ServiceBlock = ({
         <TooltipTrigger asChild>
           <div
             className={cn(
-              "absolute h-[70px] rounded-lg border cursor-pointer transition-all",
+              "absolute h-[70px] rounded-lg border cursor-grab transition-all",
               "shadow-md hover:shadow-lg hover:scale-[1.02] hover:z-20",
               config.bg,
               config.border,
@@ -81,11 +105,15 @@ export const ServiceBlock = ({
             style={style}
             onClick={onClick}
             draggable
+            onDragStart={(e) => {
+              e.stopPropagation();
+              onDragStart?.();
+            }}
           >
-            <div className="p-2 h-full flex flex-col justify-between overflow-hidden">
-              {/* Header */}
-              <div className="flex items-start justify-between gap-1">
-                <p className="font-semibold text-xs truncate flex-1 drop-shadow-sm">
+            <div className="p-2.5 h-full flex flex-col justify-center overflow-hidden">
+              {/* Servis Başlığı */}
+              <div className="flex items-start justify-between gap-1.5 mb-2">
+                <p className="font-semibold text-xs truncate drop-shadow-sm leading-tight flex-1">
                   {service.service_title || "İsimsiz Servis"}
                 </p>
                 {service.service_priority === "urgent" && (
@@ -93,18 +121,13 @@ export const ServiceBlock = ({
                 )}
               </div>
               
-              {/* Footer */}
-              <div className="flex items-center justify-between text-[10px] opacity-90">
-                <span className="flex items-center gap-1 font-medium bg-black/10 rounded px-1.5 py-0.5">
-                  <Clock className="h-2.5 w-2.5" />
-                  {issueTime} - {dueTime}
-                </span>
-                {customerData?.name && (
-                  <span className="truncate ml-1 max-w-[80px] text-[9px] opacity-80">
-                    {customerData.name}
-                  </span>
-                )}
-              </div>
+              {/* Firma Adı */}
+              {customerData?.name && (
+                <div className="flex items-center gap-1.5 text-[10px] opacity-95">
+                  <User className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate font-medium">{customerData.name}</span>
+                </div>
+              )}
             </div>
           </div>
         </TooltipTrigger>
@@ -113,45 +136,89 @@ export const ServiceBlock = ({
           side="top" 
           className="max-w-xs bg-card border-border shadow-xl p-3"
         >
-          <div className="space-y-2">
+          <div className="space-y-2.5">
+            {/* Başlık ve Servis No */}
             <div>
-              <p className="font-semibold text-foreground">{service.service_title}</p>
-              <p className="text-xs text-muted-foreground">
-                #{service.service_number}
-              </p>
+              <p className="font-semibold text-foreground text-sm">{service.service_title || "İsimsiz Servis"}</p>
+              {service.service_number && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Hash className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {service.service_number}
+                  </span>
+                </div>
+              )}
             </div>
             
+            {/* Müşteri */}
             {customerData?.name && (
-              <p className="text-sm text-foreground font-medium">
-                {customerData.name}
-              </p>
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <p className="text-sm text-foreground font-medium">
+                  {customerData.name}
+                </p>
+              </div>
             )}
 
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>
-                {issueTime} - {dueTime}
-              </span>
+            {/* Zaman Bilgileri */}
+            <div className="space-y-1">
+              {dueTime && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>
+                    Hedef: <span className="font-medium text-foreground">{dueTime}</span>
+                    {durationText && (
+                      <span className="ml-1">({durationText})</span>
+                    )}
+                  </span>
+                </div>
+              )}
+              {issueTime && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground pl-5">
+                  <span>
+                    Oluşturulma: <span className="font-medium text-foreground">{issueTime}</span>
+                  </span>
+                </div>
+              )}
             </div>
 
+            {/* Açıklama */}
             {service.service_request_description && (
-              <p className="text-xs text-muted-foreground line-clamp-2">
-                {service.service_request_description}
-              </p>
+              <div className="pt-1 border-t border-border">
+                <p className="text-xs text-muted-foreground line-clamp-3">
+                  {service.service_request_description}
+                </p>
+              </div>
             )}
 
-            <Badge 
-              variant="outline" 
-              className={cn(
-                "text-xs border",
-                priority === "urgent" && "border-destructive/30 text-destructive bg-destructive/10",
-                priority === "high" && "border-warning/30 text-warning bg-warning/10",
-                priority === "medium" && "border-primary/30 text-primary bg-primary/10",
-                priority === "low" && "border-success/30 text-success bg-success/10"
+            {/* Durum ve Öncelik */}
+            <div className="flex items-center gap-2 pt-1">
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "text-xs border",
+                  priority === "urgent" && "border-destructive/30 text-destructive bg-destructive/10",
+                  priority === "high" && "border-warning/30 text-warning bg-warning/10",
+                  priority === "medium" && "border-primary/30 text-primary bg-primary/10",
+                  priority === "low" && "border-success/30 text-success bg-success/10"
+                )}
+              >
+                {config.label}
+              </Badge>
+              {service.service_status && service.service_status !== 'new' && (
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "text-xs border-0",
+                    service.service_status === 'in_progress' && "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
+                    service.service_status === 'completed' && "bg-green-500/10 text-green-600 dark:text-green-400",
+                    service.service_status === 'cancelled' && "bg-gray-500/10 text-gray-600 dark:text-gray-400"
+                  )}
+                >
+                  {statusLabel}
+                </Badge>
               )}
-            >
-              {config.label}
-            </Badge>
+            </div>
           </div>
         </TooltipContent>
       </Tooltip>

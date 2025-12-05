@@ -26,11 +26,22 @@ export const useDispatchDragDrop = () => {
     }
   }, [draggedService, handleDragEnd]);
 
+  // Unassign drop handler - servisi atanmamışlara geri taşı
+  const handleUnassignDrop = useCallback((
+    onUnassignComplete: (serviceId: string) => void
+  ) => {
+    if (draggedService && draggedService.type === 'assigned') {
+      onUnassignComplete(draggedService.service.id);
+      handleDragEnd();
+    }
+  }, [draggedService, handleDragEnd]);
+
   return {
     draggedService,
     isDragging,
     handleDragStart,
     handleDragEnd,
     handleDrop,
+    handleUnassignDrop,
   };
 };

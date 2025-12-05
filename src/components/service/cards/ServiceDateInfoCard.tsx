@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Calendar } from "lucide-react";
+import { format } from "date-fns";
 
 interface ServiceDateInfoCardProps {
   formData: {
@@ -18,6 +20,62 @@ const ServiceDateInfoCard: React.FC<ServiceDateInfoCardProps> = ({
   handleInputChange,
   errors = {}
 }) => {
+  // service_due_date'den saat bilgisini çıkar (HH:mm formatında)
+  const dueDateTime = useMemo(() => {
+    if (!formData.service_due_date) return "";
+    return format(formData.service_due_date, "HH:mm");
+  }, [formData.service_due_date]);
+
+  // Tarih ve saati birleştir
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) {
+      handleInputChange('service_due_date', null);
+      return;
+    }
+
+    // Eğer mevcut service_due_date'de saat bilgisi varsa koru, yoksa sadece tarih kaydet (00:00:00)
+    if (formData.service_due_date && dueDateTime) {
+      // Mevcut saat bilgisini koru
+      const [hours, minutes] = dueDateTime.split(":");
+      const newDate = new Date(date);
+      newDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+      handleInputChange('service_due_date', newDate);
+    } else {
+      // Sadece tarih kaydet, saat 00:00:00
+      const newDate = new Date(date);
+      newDate.setHours(0, 0, 0, 0);
+      handleInputChange('service_due_date', newDate);
+    }
+  };
+
+  const handleTimeSelect = (time: string) => {
+    if (!time) {
+      // Saat seçimi temizlendi, sadece tarih bilgisini koru
+      if (formData.service_due_date) {
+        const dateOnly = new Date(formData.service_due_date);
+        dateOnly.setHours(0, 0, 0, 0);
+        handleInputChange('service_due_date', dateOnly);
+      }
+      return;
+    }
+
+    if (!formData.service_due_date) {
+      // Eğer tarih yoksa, bugünün tarihini kullan
+      const today = new Date();
+      const [hours, minutes] = time.split(":");
+      today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+      handleInputChange('service_due_date', today);
+      return;
+    }
+
+    // Mevcut tarihi koru, sadece saati güncelle
+    const [hours, minutes] = time.split(":");
+    const newDate = new Date(formData.service_due_date);
+    newDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    
+    handleInputChange('service_due_date', newDate);
+  };
+
   return (
     <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
       <CardHeader className="pb-2 pt-2.5">
@@ -42,16 +100,25 @@ const ServiceDateInfoCard: React.FC<ServiceDateInfoCardProps> = ({
             />
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
               Hedef Teslim Tarihi <span className="text-gray-500 font-normal">(İsteğe bağlı)</span>
             </Label>
-            <DatePicker
-              date={formData.service_due_date}
-              onSelect={(date) => handleInputChange('service_due_date', date)}
-              placeholder="Hedef tarih seçin"
-              className="h-10 text-sm w-full"
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <DatePicker
+                date={formData.service_due_date}
+                onSelect={handleDateSelect}
+                placeholder="Tarih seçin"
+                className="h-10 text-sm"
+              />
+              <TimePicker
+                time={dueDateTime}
+                onSelect={handleTimeSelect}
+                placeholder="Saat (opsiyonel)"
+                className="h-10"
+                disabled={!formData.service_due_date}
+              />
+            </div>
           </div>
         </div>
       </CardContent>

@@ -10,6 +10,7 @@ import {
   GripVertical,
   Package,
   Clock,
+  Undo2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -19,6 +20,8 @@ interface UnassignedServicesPanelProps {
   services: ServiceRequest[];
   onSelectService: (service: ServiceRequest) => void;
   onDragStart?: (service: ServiceRequest) => void;
+  onDropUnassign?: () => void;
+  isDraggingAssigned?: boolean;
 }
 
 const priorityConfig = {
@@ -52,8 +55,31 @@ export const UnassignedServicesPanel = ({
   services,
   onSelectService,
   onDragStart,
+  onDropUnassign,
+  isDraggingAssigned = false,
 }: UnassignedServicesPanelProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (isDraggingAssigned) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (isDraggingAssigned && onDropUnassign) {
+      onDropUnassign();
+    }
+  };
 
   // Servisleri önceliğe göre sırala (acil önce)
   const sortedServices = [...services].sort((a, b) => {
@@ -76,19 +102,40 @@ export const UnassignedServicesPanel = ({
   });
 
   return (
-    <div className="w-72 border-r border-border bg-card flex flex-col h-full">
+    <div 
+      className={cn(
+        "w-full h-full border-l border-border bg-card flex flex-col transition-all duration-200",
+        isDragOver && "bg-primary/5 ring-2 ring-primary ring-inset"
+      )}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drop Zone Indicator */}
+      {isDraggingAssigned && (
+        <div className={cn(
+          "absolute inset-0 z-10 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary rounded-lg transition-opacity",
+          isDragOver ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}>
+          <div className="flex flex-col items-center gap-2 text-primary">
+            <Undo2 className="h-8 w-8" />
+            <span className="text-sm font-medium">Atamayı Kaldır</span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="p-4 border-b border-border bg-gradient-to-b from-muted/50 to-transparent">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-primary/10">
-              <Package className="h-4 w-4 text-primary" />
+      <div className="p-2.5 border-b border-border bg-gradient-to-b from-muted/50 to-transparent">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <div className="p-1 rounded-md bg-primary/10">
+              <Package className="h-3 w-3 text-primary" />
             </div>
-            <h3 className="font-semibold text-foreground">Atanmamış</h3>
+            <h3 className="font-semibold text-xs text-foreground">Atanmamış</h3>
           </div>
           <Badge 
             variant="secondary" 
-            className="bg-primary/10 text-primary border-0 font-bold"
+            className="bg-primary/10 text-primary border-0 font-bold text-[10px] px-1.5 py-0 h-5"
           >
             {services.length}
           </Badge>
@@ -96,26 +143,27 @@ export const UnassignedServicesPanel = ({
         
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Servis ara..."
+            placeholder="Ara..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-9 bg-background border-border focus:border-primary focus:ring-primary/20"
+            className="pl-8 h-8 text-xs bg-background border-border focus:border-primary focus:ring-primary/20"
           />
         </div>
       </div>
 
       {/* Service List */}
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-2">
+        <div className="p-2 space-y-1.5">
           {filteredServices.map((service) => {
             const priority = (service.service_priority || "medium") as keyof typeof priorityConfig;
             const config = priorityConfig[priority];
             const customerData = service.customer_data as any;
-            const issueDate = service.issue_date
-              ? format(parseISO(service.issue_date), "d MMM HH:mm", { locale: tr })
-              : "Tarih yok";
+            const serviceDate = service.service_due_date || service.issue_date;
+            const issueDate = serviceDate
+              ? format(parseISO(serviceDate), "d MMM HH:mm", { locale: tr })
+              : null;
 
             return (
               <div
@@ -124,65 +172,75 @@ export const UnassignedServicesPanel = ({
                 onDragStart={() => onDragStart?.(service)}
                 onClick={() => onSelectService(service)}
                 className={cn(
-                  "p-3 rounded-lg border border-border bg-card cursor-grab active:cursor-grabbing",
-                  "hover:shadow-md hover:border-primary/30 transition-all hover:scale-[1.01]",
-                  "border-l-4",
+                  "py-2 px-2.5 rounded-lg border border-border bg-card cursor-grab active:cursor-grabbing",
+                  "hover:shadow-sm hover:border-primary/30 transition-all",
+                  "border-l-2",
                   config.border
                 )}
               >
-                {/* Drag Handle + Header */}
-                <div className="flex items-start gap-2 mb-2">
-                  <GripVertical className="h-4 w-4 text-muted-foreground/50 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm text-foreground truncate">
-                      {service.service_title || "İsimsiz Servis"}
-                    </h4>
-                    <p className="text-xs text-muted-foreground">
-                      #{service.service_number}
-                    </p>
+                {/* Top Row: Title + Priority Badge */}
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div className="flex items-start gap-1.5 flex-1 min-w-0">
+                    <GripVertical className="h-3 w-3 text-muted-foreground/30 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-xs text-foreground leading-tight mb-0.5 line-clamp-2">
+                        {service.service_title || "İsimsiz Servis"}
+                      </h4>
+                      <p className="text-[10px] text-muted-foreground font-mono">
+                        #{service.service_number || service.id.slice(-6).toUpperCase()}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className={cn("w-2 h-2 rounded-full", config.dot)} />
-                    <span className={cn("text-[10px] font-medium", config.badge.split(' ')[1])}>
-                      {config.label}
-                    </span>
-                  </div>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-[9px] px-1.5 py-0 h-4 border-0 font-medium flex-shrink-0",
+                      config.badge
+                    )}
+                  >
+                    {config.label}
+                  </Badge>
                 </div>
 
-                {/* Customer */}
-                {customerData?.name && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5 pl-6">
-                    <MapPin className="h-3 w-3 flex-shrink-0 text-primary/60" />
-                    <span className="truncate">{customerData.name}</span>
-                  </div>
-                )}
-
-                {/* Date */}
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-6">
-                  <Clock className="h-3 w-3 flex-shrink-0 text-primary/60" />
-                  <span>{issueDate}</span>
+                {/* Bottom Row: Customer + Date */}
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-4.5">
+                  {customerData?.name ? (
+                    <div className="flex items-center gap-1 truncate flex-1 min-w-0">
+                      <MapPin className="h-3 w-3 flex-shrink-0 text-muted-foreground/60" />
+                      <span className="truncate">{customerData.name}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground/40">Müşteri yok</span>
+                  )}
+                  
+                  {issueDate && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Clock className="h-3 w-3 text-muted-foreground/60" />
+                      <span>{issueDate}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
 
           {filteredServices.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-8 text-muted-foreground">
               {searchTerm ? (
                 <>
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                    <Search className="h-6 w-6 opacity-50" />
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto mb-2">
+                    <Search className="h-5 w-5 opacity-50" />
                   </div>
-                  <p className="text-sm font-medium">Sonuç bulunamadı</p>
-                  <p className="text-xs mt-1">Farklı bir arama deneyin</p>
+                  <p className="text-xs font-medium">Sonuç bulunamadı</p>
+                  <p className="text-[10px] mt-0.5">Farklı bir arama deneyin</p>
                 </>
               ) : (
                 <>
-                  <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
-                    <Package className="h-6 w-6 text-success" />
+                  <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-2">
+                    <Package className="h-5 w-5 text-success" />
                   </div>
-                  <p className="text-sm font-medium">Harika!</p>
-                  <p className="text-xs mt-1">Tüm servisler atandı</p>
+                  <p className="text-xs font-medium">Harika!</p>
+                  <p className="text-[10px] mt-0.5">Tüm servisler atandı</p>
                 </>
               )}
             </div>
@@ -191,9 +249,9 @@ export const UnassignedServicesPanel = ({
       </ScrollArea>
 
       {/* Footer Hint */}
-      <div className="p-3 border-t border-border bg-muted/30">
-        <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
-          <GripVertical className="h-3 w-3" />
+      <div className="p-2 border-t border-border bg-muted/30">
+        <p className="text-[10px] text-muted-foreground text-center flex items-center justify-center gap-1">
+          <GripVertical className="h-2.5 w-2.5" />
           Timeline'a sürükleyip bırakın
         </p>
       </div>

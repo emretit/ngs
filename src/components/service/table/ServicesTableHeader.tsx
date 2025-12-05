@@ -4,7 +4,7 @@ import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export type SortField = "service_number" | "service_title" | "created_at" | "service_status" | "service_priority" | "assigned_technician";
+export type SortField = "service_number" | "service_title" | "created_at" | "service_due_date" | "service_status" | "service_priority" | "assigned_technician";
 export type SortDirection = "asc" | "desc";
 
 interface ServicesTableHeaderProps {
@@ -32,11 +32,12 @@ const ServicesTableHeader: React.FC<ServicesTableHeaderProps> = ({
       : <ChevronDown className="h-4 w-4 ml-1" />;
   };
 
-  const renderSortableHeader = (label: string, field: SortField, icon?: string) => (
+  const renderSortableHeader = (label: string, field: SortField, icon?: string, className?: string) => (
     <TableHead 
       className={cn(
-        "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left",
-        handleSort && "cursor-pointer hover:bg-slate-200"
+        "py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide",
+        handleSort && "cursor-pointer hover:bg-slate-200",
+        className || "text-left"
       )}
       onClick={() => handleSort && handleSort(field)}
     >
@@ -78,10 +79,11 @@ const ServicesTableHeader: React.FC<ServicesTableHeaderProps> = ({
             <span>Konum</span>
           </div>
         </TableHead>
-        {renderSortableHeader("Durum", "service_status", "📊")}
-        {renderSortableHeader("Öncelik", "service_priority", "⭐")}
+        {renderSortableHeader("Durum", "service_status", "📊", "text-center")}
+        {renderSortableHeader("Öncelik", "service_priority", "⭐", "text-center")}
         {renderSortableHeader("Teknisyen", "assigned_technician", "🔧")}
-        {renderSortableHeader("Tarih", "created_at", "📅")}
+        {renderSortableHeader("Servis Tarihi", "service_due_date", "📅", "text-center")}
+        {renderSortableHeader("Oluşturulma", "created_at", "📅", "text-center")}
         <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">
           <div className="flex items-center justify-center gap-1">
             <span className="text-lg mr-2">⚙️</span>

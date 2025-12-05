@@ -1,13 +1,15 @@
 import { useState, useMemo } from "react";
 import { UnassignedServicesPanel } from "./UnassignedServicesPanel";
 import { FSMTimelineGrid } from "./FSMTimelineGrid";
+import { WeeklyTimelineGrid } from "./WeeklyTimelineGrid";
 import { TimelineHeader } from "./TimelineHeader";
 import { ServiceDetailModal } from "./ServiceDetailModal";
 import { useDispatchDragDrop } from "./hooks/useDispatchDragDrop";
 import { DispatchTechnician, Technician, ViewMode, DraggedService } from "./types";
 import { ServiceRequest } from "@/hooks/useServiceRequests";
-import { startOfDay, endOfDay, isWithinInterval, startOfWeek, endOfWeek } from "date-fns";
+import { startOfDay, endOfDay, isWithinInterval, startOfWeek, endOfWeek, parseISO, isSameDay } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
 interface ServiceDispatchBoardProps {
   serviceRequests: ServiceRequest[];
@@ -35,15 +37,14 @@ export const ServiceDispatchBoard = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Drag & Drop hook
-  const { draggedService, isDragging, handleDragStart, handleDragEnd, handleDrop } = useDispatchDragDrop();
+  const { draggedService, isDragging, handleDragStart, handleDragEnd, handleDrop, handleUnassignDrop } = useDispatchDragDrop();
 
   // Teknisyenlere günlük ve haftalık servis sayılarını ekle
   const dispatchTechnicians = useMemo<DispatchTechnician[]>(() => {
-    const today = new Date();
-    const dayStart = startOfDay(today);
-    const dayEnd = endOfDay(today);
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+    const dayStart = startOfDay(selectedDate);
+    const dayEnd = endOfDay(selectedDate);
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
 
     return technicians.map((tech) => {
       const techServices = serviceRequests.filter(
@@ -51,15 +52,18 @@ export const ServiceDispatchBoard = ({
       );
 
       const todayServices = techServices.filter((s) => {
-        if (!s.issue_date) return false;
-        const issueDate = new Date(s.issue_date);
-        return isWithinInterval(issueDate, { start: dayStart, end: dayEnd });
+        // Önce service_due_date, yoksa issue_date kullan
+        const dateToCheck = s.service_due_date || s.issue_date;
+        if (!dateToCheck) return false;
+        const serviceDate = parseISO(dateToCheck);
+        return isSameDay(serviceDate, selectedDate);
       });
 
       const weekServices = techServices.filter((s) => {
-        if (!s.issue_date) return false;
-        const issueDate = new Date(s.issue_date);
-        return isWithinInterval(issueDate, { start: weekStart, end: weekEnd });
+        const dateToCheck = s.service_due_date || s.issue_date;
+        if (!dateToCheck) return false;
+        const serviceDate = parseISO(dateToCheck);
+        return isWithinInterval(serviceDate, { start: weekStart, end: weekEnd });
       });
 
       // Durum hesaplama
@@ -74,7 +78,7 @@ export const ServiceDispatchBoard = ({
         status,
       };
     });
-  }, [technicians, serviceRequests]);
+  }, [technicians, serviceRequests, selectedDate]);
 
   // Tarih navigasyonu
   const handlePreviousDay = () => {
@@ -100,11 +104,20 @@ export const ServiceDispatchBoard = ({
     );
   }, [serviceRequests]);
 
-  // Drag start handler
+  // Drag start handler - atanmamış servis
   const handleServiceDragStart = (service: ServiceRequest) => {
     const dragData: DraggedService = {
       service,
       type: 'unassigned',
+    };
+    handleDragStart(dragData);
+  };
+
+  // Drag start handler - atanmış servis (timeline'dan)
+  const handleAssignedServiceDragStart = (service: ServiceRequest) => {
+    const dragData: DraggedService = {
+      service,
+      type: 'assigned',
     };
     handleDragStart(dragData);
   };
@@ -119,6 +132,17 @@ export const ServiceDispatchBoard = ({
       technicianId,
       startTime,
       endTime
+    );
+  };
+
+  // Unassign handler - servisi atanmamışlara geri taşı
+  const handleServiceUnassign = async (serviceId: string) => {
+    // technicianId'yi boş string olarak geçirerek atamayı kaldır
+    await onUpdateAssignment(
+      serviceId,
+      '', // boş string = atama kaldır
+      new Date(),
+      new Date()
     );
   };
 
@@ -150,29 +174,50 @@ export const ServiceDispatchBoard = ({
         onMapClick={handleMapClick}
       />
 
-      {/* Ana Layout: 2 Kolon (Atanmamış + Timeline) */}
-      <div className="flex-1 flex min-h-0">
-        {/* Sol: Atanmamış Servisler Paneli */}
-        <UnassignedServicesPanel
-          services={unassignedServices}
-          onSelectService={handleSelectService}
-          onDragStart={handleServiceDragStart}
-        />
+      {/* Ana Layout: 2 Kolon (Timeline + Atanmamış) - Resizable */}
+      <PanelGroup direction="horizontal" className="flex-1 min-h-0">
+        {/* Sol: Timeline Grid (Günlük veya Haftalık) */}
+        <Panel defaultSize={75} minSize={40} className="min-w-0">
+          {viewMode === "day" ? (
+            <FSMTimelineGrid
+              technicians={dispatchTechnicians}
+              services={serviceRequests}
+              selectedDate={selectedDate}
+              searchTerm={searchTerm}
+              onSelectService={handleSelectService}
+              onDropService={(technicianId, time) => {
+                handleDrop(technicianId, time, handleServiceDrop);
+              }}
+              onDragStartService={handleAssignedServiceDragStart}
+            />
+          ) : (
+            <WeeklyTimelineGrid
+              technicians={dispatchTechnicians}
+              services={serviceRequests}
+              selectedDate={selectedDate}
+              searchTerm={searchTerm}
+              onSelectService={handleSelectService}
+            />
+          )}
+        </Panel>
 
-        {/* Sağ: FSM Timeline Grid */}
-        <div className="flex-1 min-w-0">
-          <FSMTimelineGrid
-            technicians={dispatchTechnicians}
-            services={serviceRequests}
-            selectedDate={selectedDate}
-            searchTerm={searchTerm}
+        {/* Resizable Handle */}
+        <PanelResizeHandle className="w-1 bg-border hover:bg-primary/50 transition-colors relative group">
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-border group-hover:bg-primary transition-colors" />
+          <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-1 cursor-col-resize" />
+        </PanelResizeHandle>
+
+        {/* Sağ: Atanmamış Servisler Paneli */}
+        <Panel defaultSize={25} minSize={20} maxSize={50} className="min-w-0">
+          <UnassignedServicesPanel
+            services={unassignedServices}
             onSelectService={handleSelectService}
-            onDropService={(technicianId, time) => {
-              handleDrop(technicianId, time, handleServiceDrop);
-            }}
+            onDragStart={handleServiceDragStart}
+            onDropUnassign={() => handleUnassignDrop(handleServiceUnassign)}
+            isDraggingAssigned={isDragging && draggedService?.type === 'assigned'}
           />
-        </div>
-      </div>
+        </Panel>
+      </PanelGroup>
 
       {/* Servis Detay Modal */}
       <ServiceDetailModal

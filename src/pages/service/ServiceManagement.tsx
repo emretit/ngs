@@ -307,6 +307,25 @@ export default function ServiceManagement() {
                       throw new Error('Servis bulunamadı');
                     }
 
+                    // Eğer technicianId boş ise, atamayı kaldır
+                    if (!technicianId || technicianId.trim() === '') {
+                      const { error } = await supabase
+                        .from('service_requests')
+                        .update({
+                          assigned_technician: null,
+                          service_status: 'new'
+                        })
+                        .eq('id', serviceId);
+
+                      if (error) {
+                        throw error;
+                      }
+
+                      queryClient.invalidateQueries({ queryKey: ['service-requests'] });
+                      toast.success("Servis ataması kaldırıldı.");
+                      return;
+                    }
+
                     // Teknisyenin user_id'sini bul
                     const { data: technician, error: techError } = await supabase
                       .from('employees')

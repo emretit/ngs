@@ -54,8 +54,8 @@ const priorityConfig = {
 };
 
 const statusConfig = {
-  pending: { 
-    label: "Bekliyor", 
+  new: { 
+    label: "Yeni", 
     className: "bg-muted text-muted-foreground",
     icon: Clock
   },
@@ -91,7 +91,7 @@ export const ServiceDetailModal = ({
   if (!service) return null;
 
   const priority = (service.service_priority || "medium") as keyof typeof priorityConfig;
-  const status = (service.service_status || "pending") as keyof typeof statusConfig;
+  const status = (service.service_status || "new") as keyof typeof statusConfig;
   const customerData = service.customer_data as any;
 
   const issueDate = service.issue_date

@@ -121,11 +121,12 @@ serve(async (req) => {
                 font-weight: bold;
                 letter-spacing: 2px;
                 margin-bottom: 10px;
+                color: #8B0000;
               }
               .header-subtitle {
                 font-size: 16px;
                 margin: 0;
-                opacity: 0.9;
+                color: #8B0000;
               }
               .content {
                 padding: 40px 30px;
@@ -211,7 +212,7 @@ serve(async (req) => {
                   </a>
                   
                   <div class="security-note">
-                    <strong>⏰ Önemli:</strong> Bu davet linki 1 saat boyunca geçerlidir. 
+                    <strong>🔒 Güvenlik Notu:</strong> Bu davet linki 1 saat boyunca geçerlidir. 
                     Link süresi dolduysa, lütfen yöneticinizden yeni bir davet linki isteyin.
                   </div>
                 </div>
@@ -379,11 +380,12 @@ serve(async (req) => {
                 font-weight: bold;
                 letter-spacing: 2px;
                 margin-bottom: 10px;
+                color: #8B0000;
               }
               .header-subtitle {
                 font-size: 16px;
                 margin: 0;
-                opacity: 0.9;
+                color: #8B0000;
               }
               .content {
                 padding: 40px 30px;
@@ -469,7 +471,7 @@ serve(async (req) => {
                   </a>
                   
                   <div class="security-note">
-                    <strong>⏰ Önemli:</strong> Bu davet linki 1 saat boyunca geçerlidir. 
+                    <strong>🔒 Güvenlik Notu:</strong> Bu davet linki 1 saat boyunca geçerlidir. 
                     Link süresi dolduysa, lütfen yöneticinizden yeni bir davet linki isteyin.
                   </div>
                 </div>

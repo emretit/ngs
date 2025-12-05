@@ -60,7 +60,7 @@ const SignUp = () => {
       // Sign out immediately after successful signup to prevent auto-login
       await signOut();
       // Successful registration - redirect to sign in
-      toast.success("E-posta adresinizi kontrol edin ve hesabınızı onaylayın.", { duration: 1000 });
+      toast.success("E-posta adresinizi kontrol edin ve hesabınızı onaylayın.", { duration: 5000 });
       navigate("/signin");
     } catch (error: any) {
       console.error("Signup error:", error);

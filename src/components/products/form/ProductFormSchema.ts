@@ -23,7 +23,16 @@ export const productSchema = z.object({
     (val) => val || "active",
     z.string().refine(val => ["active", "inactive", "discontinued"].includes(val), "Geçersiz durum")
   ),
-  image_url: z.string().url("Geçersiz URL formatı").nullable().optional(),
+  image_url: z.string().nullable().optional().transform(val => {
+    if (!val || val.trim() === "") return null;
+    // URL validasyonu sadece değer varsa yapılır
+    try {
+      new URL(val);
+      return val;
+    } catch {
+      throw new Error("Geçersiz URL formatı");
+    }
+  }),
   category_id: z.string().nullable().optional().transform(val => {
     if (!val || val === "") return null;
     // UUID validasyonu sadece değer varsa yapılır
@@ -42,7 +51,15 @@ export const productSchema = z.object({
     }
     return val;
   }),
-  company_id: z.string().uuid("Geçersiz şirket ID").optional(),
+  company_id: z.string().nullable().optional().transform(val => {
+    if (!val || val.trim() === "") return null;
+    // UUID validasyonu sadece değer varsa yapılır
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(val)) {
+      throw new Error("Geçersiz şirket ID formatı");
+    }
+    return val;
+  }),
   purchase_price: z.coerce.number().min(0, "Alış fiyatı 0'dan küçük olamaz").nullable().optional(),
   price_includes_vat: z.boolean().optional().default(false),
   purchase_price_includes_vat: z.boolean().optional().default(false),

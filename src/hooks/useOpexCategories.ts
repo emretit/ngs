@@ -27,8 +27,20 @@ export const useOpexCategories = () => {
       setLoading(true);
       setError(null);
 
-      // Use NGS İLETİŞİM company ID directly
-      const ngsCompanyId = '5a9c24d2-876e-4eb6-aea5-19328bc38a3a';
+      // Get current user's company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
+      }
+
+      // Get user's company_id from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      const companyId = profile?.company_id;
 
       // Fetch both default categories (company_id = null) and company-specific categories
       const { data: categoriesData, error: categoriesError } = await supabase

@@ -84,6 +84,18 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
         form.setValue("unit", "piece");
       }
 
+      // company_id form validasyonundan önce null yap (onSubmit'te zaten alınacak)
+      const currentCompanyId = form.getValues("company_id");
+      if (!currentCompanyId || currentCompanyId.trim() === "") {
+        form.setValue("company_id", null, { shouldValidate: false });
+      }
+
+      // image_url boş string ise null yap
+      const currentImageUrl = form.getValues("image_url");
+      if (currentImageUrl === "" || (typeof currentImageUrl === "string" && currentImageUrl.trim() === "")) {
+        form.setValue("image_url", null, { shouldValidate: false });
+      }
+
       console.log("🔵 Form validasyonu başlatılıyor...");
       const isValid = await form.trigger();
       console.log("🔵 Form validasyonu sonucu:", isValid);

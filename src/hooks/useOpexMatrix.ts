@@ -78,7 +78,10 @@ export const useOpexMatrix = () => {
         .eq('id', user.id)
         .single();
 
-      const companyId = profile?.company_id || '5a9c24d2-876e-4eb6-aea5-19328bc38a3a'; // NGS İLETİŞİM fallback
+      const companyId = profile?.company_id;
+      if (!companyId) {
+        throw new Error('Kullanıcının şirket bilgisi bulunamadı');
+      }
 
       const { data, error } = await supabase
         .from('opex_matrix')

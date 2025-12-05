@@ -146,7 +146,7 @@ export const useProductForm = () => {
             image_url: data.image_url || null,
             category_id: data.category_id || "",
             supplier_id: data.supplier_id || "",
-            company_id: data.company_id || "5a9c24d2-876e-4eb6-aea5-19328bc38a3a",
+            company_id: data.company_id || "",
             vat_included: data.vat_included ?? null,
             // Veritabanında olmayan kolonlar için default değerler
             max_stock_level: null,

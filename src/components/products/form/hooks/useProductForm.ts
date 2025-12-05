@@ -35,7 +35,7 @@ export const useProductForm = () => {
       image_url: null,
       category_id: "",
       supplier_id: "",
-      company_id: "5a9c24d2-876e-4eb6-aea5-19328bc38a3a",
+      company_id: "",
       // Ek bilgiler - yeni kolonlar
       max_stock_level: null,
       weight: null,

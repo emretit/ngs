@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError, showWarning } from "@/utils/toastUtils";
 import { ProductFormSchema } from "../ProductFormSchema";
@@ -14,6 +14,24 @@ export const useProductFormActions = (
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // Get current user's company_id
+  const { data: userProfile } = useQuery({
+    queryKey: ["user_profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return profile;
+    },
+  });
+
   const onSubmit = async (values: ProductFormSchema, addAnother = false) => {
     console.log("🟣 useProductFormActions.onSubmit başladı");
     console.log("🟣 isEditing:", isEditing, "productId:", productId);
@@ -21,6 +39,14 @@ export const useProductFormActions = (
 
     setIsSubmitting(true);
     try {
+        // Get company_id from user profile
+        const companyId = userProfile?.company_id;
+        
+        if (!companyId) {
+          showError("Şirket bilgisi bulunamadı. Lütfen giriş yaptığınızdan emin olun.");
+          throw new Error("Company ID not found");
+        }
+
         // Prepare data by ensuring null values for empty strings in UUID fields
         const preparedData = {
           ...values,
@@ -29,8 +55,8 @@ export const useProductFormActions = (
           supplier_id: values.supplier_id && values.supplier_id.trim() !== "" && values.supplier_id !== "none" ? values.supplier_id : null,
           // Make sure stock_threshold is explicitly included
           stock_threshold: values.stock_threshold !== undefined ? values.stock_threshold : values.min_stock_level,
-          // Ensure company_id is included
-            company_id: values.company_id || "5a9c24d2-876e-4eb6-aea5-19328bc38a3a"
+          // Use the actual company_id from user profile
+          company_id: companyId
         };
 
         console.log("🟣 Hazırlanan data (preparedData):", preparedData);
@@ -252,11 +278,20 @@ export const useProductFormActions = (
       if (fetchError) throw fetchError;
       
       if (product) {
+        // Get company_id from user profile
+        const companyId = userProfile?.company_id;
+        
+        if (!companyId) {
+          showError("Şirket bilgisi bulunamadı. Lütfen giriş yaptığınızdan emin olun.");
+          throw new Error("Company ID not found");
+        }
+
         const newProduct = {
           ...product,
           name: `${product.name} (Kopya)`,
           sku: product.sku ? `${product.sku}-copy` : null,
           barcode: null,
+          company_id: companyId, // Ensure company_id is set correctly
         };
         
         delete newProduct.id;

@@ -48,13 +48,32 @@ const UnifiedDialogOverlay = React.forwardRef<
   HTMLDivElement,
   { isOpen: boolean; onOverlayClick?: () => void }
 >(({ isOpen, onOverlayClick }, ref) => {
+  const [canClose, setCanClose] = React.useState(false);
+  
+  // Dialog açıldıktan kısa bir süre sonra kapatmaya izin ver
+  // Bu, popover kapanırken oluşan click event'lerini engeller
+  React.useEffect(() => {
+    if (isOpen) {
+      setCanClose(false);
+      const timer = setTimeout(() => setCanClose(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+  
   if (!isOpen) return null;
+  
+  const handleClick = (e: React.MouseEvent) => {
+    // Sadece doğrudan overlay'e tıklandığında ve canClose true ise kapat
+    if (e.target === e.currentTarget && canClose && onOverlayClick) {
+      onOverlayClick();
+    }
+  };
   
   return (
     <div
       ref={ref}
       className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in-0"
-      onClick={onOverlayClick}
+      onClick={handleClick}
       style={{ pointerEvents: 'auto' }}
     />
   );
@@ -98,22 +117,13 @@ export const UnifiedDialog: React.FC<UnifiedDialogProps> = ({
           onOpenAutoFocus={(e) => e.preventDefault()}
           onEscapeKeyDown={() => handleOpenChange(false)}
           onPointerDownOutside={(e) => {
-            const target = e.target as HTMLElement;
-            if (target.closest('[data-radix-popper-content-wrapper]') || 
-                target.closest('[data-radix-popover-content]') ||
-                target.closest('[data-radix-select-content]')) {
-              e.preventDefault();
-            } else {
-              handleOpenChange(false);
-            }
+            // modal={false} olduğu için dış tıklamaları tamamen engelle
+            // Overlay zaten kapatma işlemini yönetiyor
+            e.preventDefault();
           }}
           onInteractOutside={(e) => {
-            const target = e.target as HTMLElement;
-            if (target.closest('[data-radix-popper-content-wrapper]') || 
-                target.closest('[data-radix-popover-content]') ||
-                target.closest('[data-radix-select-content]')) {
-              e.preventDefault();
-            }
+            // modal={false} olduğu için dış etkileşimleri tamamen engelle
+            e.preventDefault();
           }}
         >
         {/* Header */}

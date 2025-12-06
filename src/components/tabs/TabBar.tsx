@@ -28,8 +28,9 @@ export default function TabBar() {
     removeTab(tabId);
   };
 
-  if (tabs.length <= 1) {
-    return null; // Don't show tab bar if only dashboard is open
+  // Always show tab bar when there are tabs
+  if (tabs.length === 0) {
+    return null;
   }
 
   return (

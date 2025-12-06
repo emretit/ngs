@@ -22,6 +22,7 @@ export type ServiceRequest = Database['public']['Tables']['service_requests']['R
   service_number?: string;
   service_type?: string;
   issue_date?: string;
+  estimated_duration?: number; // dakika cinsinden tahmini süre
 };
 
 export type ServiceRequestFormData = Database['public']['Tables']['service_requests']['Insert'] & {

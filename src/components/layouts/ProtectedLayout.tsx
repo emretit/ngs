@@ -1,9 +1,12 @@
 import React, { useState, useEffect, Suspense } from "react";
-import { Outlet, useNavigation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import TopBar from "@/components/TopBar";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TabProvider } from "@/components/tabs/TabContext";
+import TabBar from "@/components/tabs/TabBar";
+import TabNavigationHandler from "@/components/tabs/TabNavigationHandler";
 
 // Inline skeleton for faster render
 const ContentSkeleton = () => (
@@ -41,24 +44,28 @@ const ProtectedLayout = () => {
   }, [isCollapsed]);
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-      
-      <div 
-        className={`flex-1 transition-all duration-300 ease-in-out overflow-auto ${
-          isCollapsed ? "ml-[60px]" : "ml-0 md:ml-56"
-        }`}
-      >
-        <TopBar />
-        <Separator />
+    <TabProvider>
+      <TabNavigationHandler />
+      <div className="flex h-screen bg-gray-50">
+        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
         
-        <main className="p-3 sm:p-4 md:p-6">
-          <Suspense fallback={<ContentSkeleton />}>
-            <Outlet />
-          </Suspense>
-        </main>
+        <div 
+          className={`flex-1 transition-all duration-300 ease-in-out overflow-auto ${
+            isCollapsed ? "ml-[60px]" : "ml-0 md:ml-56"
+          }`}
+        >
+          <TopBar />
+          <TabBar />
+          <Separator />
+          
+          <main className="p-3 sm:p-4 md:p-6">
+            <Suspense fallback={<ContentSkeleton />}>
+              <Outlet />
+            </Suspense>
+          </main>
+        </div>
       </div>
-    </div>
+    </TabProvider>
   );
 };
 

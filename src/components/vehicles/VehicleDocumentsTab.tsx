@@ -47,7 +47,7 @@ export default function VehicleDocumentsTab() {
     return diffDays <= 30 && diffDays > 0;
   };
 
-  if (isLoading && (!documents || documents.length === 0)) {
+  if (isLoading && (!documents || (documents as any[]).length === 0)) {
     return <VehicleDocumentsTabSkeleton />;
   }
 

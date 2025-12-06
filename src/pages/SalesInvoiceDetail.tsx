@@ -210,7 +210,8 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
 
   const handleDownloadPdf = async () => {
     if (invoice?.nilvera_invoice_id) {
-      await downloadAndOpenPdf(invoice.nilvera_invoice_id);
+      const invoiceType = invoice.einvoice_profile === 'EARSIVFATURA' ? 'e-arşiv' : 'e-fatura';
+      await downloadAndOpenPdf(invoice.nilvera_invoice_id, invoiceType);
     } else {
       window.print();
     }

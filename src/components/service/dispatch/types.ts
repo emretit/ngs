@@ -26,7 +26,7 @@ export interface TimelineService {
 
 export interface DraggedService {
   service: ServiceRequest;
-  type: 'unassigned' | 'timeline';
+  type: 'unassigned' | 'timeline' | 'assigned';
 }
 
 export type ViewMode = 'day' | 'week';

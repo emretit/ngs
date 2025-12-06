@@ -71,7 +71,7 @@ export default function VehicleContractsTab() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  if (isLoading && (!contracts || contracts.length === 0)) {
+  if (isLoading && (!contracts || (contracts as any[]).length === 0)) {
     return <VehicleContractsTabSkeleton />;
   }
 

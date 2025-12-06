@@ -22,6 +22,7 @@ export type ServiceRequest = Database['public']['Tables']['service_requests']['R
   assigned_technician_id: string | null;
   technician_notes: string | null;
   scheduled_date: string | null;
+  estimated_duration?: number; // dakika cinsinden tahmini süre
 };
 
 // Form data type with mapped properties

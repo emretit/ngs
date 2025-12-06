@@ -72,7 +72,7 @@ function getTitleForPath(path: string): string {
 
 export function useTabNavigation() {
   const location = useLocation();
-  const { addTab, getTabByPath } = useTabs();
+  const { addTab, tabs } = useTabs();
 
   useEffect(() => {
     const path = location.pathname;
@@ -82,16 +82,10 @@ export function useTabNavigation() {
       return;
     }
     
-    // Check if tab already exists
-    const existingTab = getTabByPath(path);
-    if (existingTab) {
-      return;
-    }
-    
     // Get title for the path
     const title = getTitleForPath(path);
     
-    // Add the tab
+    // Always add/activate tab for current path
     addTab(path, title);
-  }, [location.pathname, addTab, getTabByPath]);
+  }, [location.pathname, addTab]);
 }

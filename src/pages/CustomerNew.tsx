@@ -54,6 +54,7 @@ const CustomerNew = () => {
     payment_terms: "",
     apartment_number: "",
     unit_number: "",
+    is_einvoice_mukellef: false,
   });
   const mutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {
@@ -77,8 +78,15 @@ const CustomerNew = () => {
         account_number: data.account_number || null,
         tax_number: data.type === 'kurumsal' ? data.tax_number || null : null,
         tax_office: data.type === 'kurumsal' ? data.tax_office || null : null,
-        is_einvoice_mukellef: einvoiceResult?.isEinvoiceMukellef || false,
-        einvoice_alias_name: einvoiceResult?.data?.aliasName || null,
+        city: data.city || null,
+        district: data.district || null,
+        apartment_number: data.apartment_number || null,
+        unit_number: data.unit_number || null,
+        // Form data'dan gelen değeri öncelikli kullan (mukellefInfo bulunduğunda true olur)
+        // Yoksa einvoiceResult'dan al, yoksa false
+        is_einvoice_mukellef: data.is_einvoice_mukellef ?? einvoiceResult?.isEinvoiceMukellef ?? false,
+        // Formdan gelen değeri öncelikli kullan, yoksa einvoiceResult'dan al
+        einvoice_alias_name: data.einvoice_alias_name || einvoiceResult?.data?.aliasName || null,
         trade_registry_number: data.trade_registry_number || null,
         mersis_number: data.mersis_number || null,
         establishment_date: data.establishment_date || null,

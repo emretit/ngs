@@ -2,11 +2,11 @@
  * LocationIQ API Service
  * Provides address autocomplete and geocoding functionality
  * 
- * Note: API key should be configured via Supabase Secrets for production use.
- * For development, you can set LOCATIONIQ_API_KEY directly here.
+ * Note: API key should be configured via environment variable VITE_LOCATIONIQ_API_KEY
+ * For production, set it in your deployment platform (Vercel, Netlify, etc.)
  */
 
-const LOCATIONIQ_API_KEY = ''; // Configure via Supabase Secrets in production
+const LOCATIONIQ_API_KEY = import.meta.env.VITE_LOCATIONIQ_API_KEY || '';
 const BASE_URL = 'https://api.locationiq.com/v1';
 
 export interface LocationIQAutocompleteResult {
@@ -212,6 +212,7 @@ class LocationIQService {
 }
 
 export const locationiqService = new LocationIQService();
+
 
 
 

@@ -258,7 +258,11 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
 
   // Track changes
   const handleFieldChange = useCallback((field: string, value: any) => {
-    console.log('🔍 ProposalEdit - handleFieldChange:', { field, value });
+    // Skip undefined values to prevent unnecessary updates
+    if (value === undefined) {
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [field]: value

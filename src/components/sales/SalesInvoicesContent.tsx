@@ -14,6 +14,7 @@ interface SalesInvoicesContentProps {
   selectedInvoices?: any[];
   setSelectedInvoices?: (invoices: any[]) => void;
   onSendInvoice?: (salesInvoiceId: string) => void;
+  onDeleteInvoice?: (invoiceId: string) => void;
   searchQuery?: string;
   documentTypeFilter?: string;
 }
@@ -30,6 +31,7 @@ const SalesInvoicesContent = ({
   selectedInvoices = [],
   setSelectedInvoices,
   onSendInvoice,
+  onDeleteInvoice,
   searchQuery,
   documentTypeFilter
 }: SalesInvoicesContentProps) => {
@@ -53,6 +55,7 @@ const SalesInvoicesContent = ({
           selectedInvoices={selectedInvoices}
           setSelectedInvoices={setSelectedInvoices}
           onSendInvoice={onSendInvoice}
+          onDeleteInvoice={onDeleteInvoice}
           searchQuery={searchQuery}
           documentTypeFilter={documentTypeFilter}
         />

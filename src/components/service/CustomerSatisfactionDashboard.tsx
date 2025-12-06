@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useCustomerSatisfaction, useRecentRatings } from '@/hooks/service/useCustomerSatisfaction';
 import { 
   Star, 
@@ -28,9 +29,18 @@ export const CustomerSatisfactionDashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-64 w-full" />
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -359,6 +369,7 @@ export const CustomerSatisfactionDashboard: React.FC = () => {
     </div>
   );
 };
+
 
 
 

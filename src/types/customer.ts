@@ -98,4 +98,5 @@ export interface CustomerFormData {
   second_country: string;
   second_postal_code: string;
   payment_terms: string;
+  is_einvoice_mukellef?: boolean; // E-fatura mükellefi durumu (formda gösterilmez, otomatik set edilir)
 }

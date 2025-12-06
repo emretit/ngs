@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import type { ServiceRequest } from "@/hooks/service/types";
 import ServicesTableHeader, { SortField, SortDirection } from "./ServicesTableHeader";
+import ServicesTableSkeleton from "./ServicesTableSkeleton";
 import { useSortedServices } from "./useSortedServices";
 
 interface ServicesTableProps {
@@ -178,15 +179,8 @@ const ServicesTable = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[400px]">
-        <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-muted-foreground">Servisler yükleniyor...</p>
-        </div>
-      </div>
-    );
+  if (isLoading && services.length === 0) {
+    return <ServicesTableSkeleton hasSelection={!!onToggleServiceSelection} />;
   }
 
   if (filteredServices.length === 0) {

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSupplierPortalActivities } from '@/hooks/useSupplierPortal';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
@@ -45,9 +46,17 @@ export default function SupplierPortalActivityLog({ supplierId }: SupplierPortal
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="py-8 text-center text-slate-500">
-            <div className="w-6 h-6 border-2 border-slate-300 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            Yükleniyor...
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

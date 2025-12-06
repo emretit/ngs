@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -111,6 +112,9 @@ const ServiceLocationMapModal: React.FC<ServiceLocationMapModalProps> = ({
             <MapPin className="h-5 w-5" />
             {service.service_title}
           </DialogTitle>
+          <DialogDescription>
+            Servis lokasyonu harita üzerinde gösteriliyor
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 min-h-0 flex flex-col space-y-4">
@@ -239,6 +243,7 @@ const ServiceLocationMapModal: React.FC<ServiceLocationMapModalProps> = ({
 };
 
 export default ServiceLocationMapModal;
+
 
 
 

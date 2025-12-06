@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -13,10 +14,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit2, Trash2, Download, FileText, MoreHorizontal } from "lucide-react";
+import { Edit2, Trash2, Download, FileText, MoreHorizontal, Copy, Eye } from "lucide-react";
 import EInvoiceStatusBadge from "./EInvoiceStatusBadge";
 import SalesInvoicesTableHeader from "./table/SalesInvoicesTableHeader";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { useNilveraPdf } from "@/hooks/useNilveraPdf";
 
 interface SalesInvoicesTableProps {
   invoices: any[];
@@ -26,6 +29,7 @@ interface SalesInvoicesTableProps {
   selectedInvoices?: any[];
   setSelectedInvoices?: (invoices: any[]) => void;
   onSendInvoice?: (salesInvoiceId: string) => void;
+  onDeleteInvoice?: (invoiceId: string) => void;
   searchQuery?: string;
   documentTypeFilter?: string;
 }
@@ -38,12 +42,20 @@ const SalesInvoicesTable = ({
   selectedInvoices = [],
   setSelectedInvoices,
   onSendInvoice,
+  onDeleteInvoice,
   searchQuery,
   documentTypeFilter
 }: SalesInvoicesTableProps) => {
+  const navigate = useNavigate();
+  const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
+  
   // Sorting state
   const [sortField, setSortField] = useState<string>('tarih');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<any>(null);
 
   // Columns definition
   const columns = [
@@ -164,6 +176,32 @@ const SalesInvoicesTable = ({
     }
   };
 
+  // Silme işlemi
+  const handleDeleteClick = (invoice: any) => {
+    setInvoiceToDelete(invoice);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (invoiceToDelete && onDeleteInvoice) {
+      onDeleteInvoice(invoiceToDelete.id);
+    }
+    setDeleteDialogOpen(false);
+    setInvoiceToDelete(null);
+  };
+
+  // PDF indirme
+  const handleDownloadPdf = async (invoice: any) => {
+    if (invoice.nilvera_invoice_id) {
+      await downloadAndOpenPdf(invoice.nilvera_invoice_id);
+    }
+  };
+
+  // Fatura kopyalama
+  const handleCopyInvoice = (invoice: any) => {
+    navigate(`/sales-invoices/new?copyFrom=${invoice.id}`);
+  };
+
   if (isLoading) {
     return (
       <Table>
@@ -275,7 +313,7 @@ const SalesInvoicesTable = ({
                 />
               </TableCell>
               <TableCell className="py-2 px-3 text-center">
-                <div className="flex justify-center space-x-2">
+                <div className="flex justify-center space-x-1">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -283,10 +321,10 @@ const SalesInvoicesTable = ({
                       e.stopPropagation();
                       onSelectInvoice(invoice);
                     }}
-                    className="h-8 w-8"
-                    title="Düzenle"
+                    className="h-7 w-7"
+                    title="Görüntüle / Düzenle"
                   >
-                    <Edit2 className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   </Button>
                   
                   <Button
@@ -294,10 +332,11 @@ const SalesInvoicesTable = ({
                     size="icon"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // TODO: onDelete eklenmeli
+                      handleDeleteClick(invoice);
                     }}
-                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
                     title="Sil"
+                    disabled={invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted'}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -308,14 +347,39 @@ const SalesInvoicesTable = ({
                         variant="ghost" 
                         size="icon"
                         onClick={(e) => e.stopPropagation()}
-                        className="h-8 w-8"
+                        className="h-7 w-7"
                         title="Daha Fazla"
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {/* Dropdown içeriği eklenecek */}
+                      <DropdownMenuItem onClick={() => onSelectInvoice(invoice)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        Görüntüle
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleCopyInvoice(invoice)}>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Kopyala
+                      </DropdownMenuItem>
+                      {invoice.nilvera_invoice_id && (
+                        <DropdownMenuItem 
+                          onClick={() => handleDownloadPdf(invoice)}
+                          disabled={isDownloading}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          PDF İndir
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => handleDeleteClick(invoice)}
+                        className="text-red-600 focus:text-red-600"
+                        disabled={invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted'}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Sil
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -324,6 +388,18 @@ const SalesInvoicesTable = ({
           ))
         )}
       </TableBody>
+
+      {/* Silme Onay Dialogu */}
+      <ConfirmationDialogComponent
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Faturayı Sil"
+        description={`"${invoiceToDelete?.fatura_no || 'Bu fatura'}" numaralı faturayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        onConfirm={handleConfirmDelete}
+        variant="destructive"
+      />
     </Table>
   );
 };

@@ -15,7 +15,7 @@ import { ServicePartsUsageReport } from "@/components/service/ServicePartsUsageR
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -625,6 +625,9 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
                 <Trash2 className="h-5 w-5" />
                 Servis Talebini Sil
               </DialogTitle>
+              <DialogDescription>
+                Bu işlem geri alınamaz. Servis talebi kalıcı olarak silinecektir.
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <p className="text-sm text-gray-600 mb-2">

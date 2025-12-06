@@ -5,14 +5,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Edit, Download, FileText, Calendar, User, Building2, Receipt, DollarSign, Tag, RefreshCw } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Edit, 
+  Download, 
+  FileText, 
+  Calendar, 
+  User, 
+  Building2, 
+  Receipt, 
+  DollarSign, 
+  Tag, 
+  RefreshCw,
+  Send,
+  Loader2,
+  Copy,
+  Trash2,
+  Package,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Eye
+} from "lucide-react";
 import { useSalesInvoices } from "@/hooks/useSalesInvoices";
 import { useInvoiceTags } from "@/hooks/useInvoiceTags";
+import { useEInvoice } from "@/hooks/useEInvoice";
+import { useNilveraPdf } from "@/hooks/useNilveraPdf";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatUnit } from "@/utils/unitConstants";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { toast } from "sonner";
+import EInvoiceStatusBadge from "@/components/sales/EInvoiceStatusBadge";
 
 interface SalesInvoiceDetailProps {
   isCollapsed?: boolean;
@@ -44,11 +70,15 @@ interface InvoiceItem {
 const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { fetchInvoiceById } = useSalesInvoices();
+  const { fetchInvoiceById, deleteInvoiceMutation } = useSalesInvoices();
+  const { sendInvoice, isSending } = useEInvoice();
+  const { downloadAndOpenPdf, isDownloading } = useNilveraPdf();
+  
   const [invoice, setInvoice] = useState<any>(null);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Sadece Nilvera'ya gönderilmiş faturalar için etiketleri yükle
   const { tags, isLoading: tagsLoading, refreshTags, isRefreshing } = useInvoiceTags(
@@ -106,7 +136,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
   };
 
   const formatCurrency = (amount: number, currency: string = 'TRY') => {
-    // Intl.NumberFormat için geçerli currency code kullan (TRY -> TRY)
     const currencyCode = currency === 'TL' ? 'TRY' : currency;
     const formatted = new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -115,7 +144,6 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
     }).format(amount);
     return formatted;
   };
-
 
   const getDocumentTypeBadge = (type: any) => {
     switch (type) {
@@ -136,407 +164,576 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
     }
   };
 
+  const getEInvoiceStatusBadge = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs"><Clock className="h-3 w-3 mr-1" />Taslak</Badge>;
+      case 'sending':
+        return <Badge variant="outline" className="border-blue-400 text-blue-600 bg-blue-50 text-xs"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Gönderiliyor</Badge>;
+      case 'sent':
+        return <Badge variant="outline" className="border-green-400 text-green-600 bg-green-50 text-xs"><CheckCircle2 className="h-3 w-3 mr-1" />Gönderildi</Badge>;
+      case 'delivered':
+        return <Badge variant="outline" className="border-emerald-400 text-emerald-600 bg-emerald-50 text-xs"><CheckCircle2 className="h-3 w-3 mr-1" />Teslim Edildi</Badge>;
+      case 'accepted':
+        return <Badge variant="outline" className="border-teal-400 text-teal-600 bg-teal-50 text-xs"><CheckCircle2 className="h-3 w-3 mr-1" />Kabul Edildi</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs"><AlertCircle className="h-3 w-3 mr-1" />Reddedildi</Badge>;
+      case 'error':
+        return <Badge variant="outline" className="border-red-400 text-red-600 bg-red-50 text-xs"><AlertCircle className="h-3 w-3 mr-1" />Hata</Badge>;
+      default:
+        return <Badge variant="outline" className="text-xs">{status}</Badge>;
+    }
+  };
+
+  const handleDelete = () => {
+    if (invoice?.einvoice_status === 'sent' || invoice?.einvoice_status === 'delivered' || invoice?.einvoice_status === 'accepted') {
+      toast.error("Gönderilmiş faturalar silinemez");
+      return;
+    }
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteInvoiceMutation.mutate(id!, {
+      onSuccess: () => {
+        navigate('/sales-invoices');
+      }
+    });
+    setDeleteDialogOpen(false);
+  };
+
+  const handleSendEInvoice = () => {
+    if (id) {
+      sendInvoice(id);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (invoice?.nilvera_invoice_id) {
+      await downloadAndOpenPdf(invoice.nilvera_invoice_id);
+    } else {
+      window.print();
+    }
+  };
+
   if (loading) {
     return (
-      <div className="space-y-4 p-4">
-        <Skeleton className="h-10 w-32" />
-        <Skeleton className="h-64 w-full" />
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+              <p className="text-gray-600">Fatura detayları yükleniyor...</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!invoice) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
-        <div className="p-4 rounded-full bg-gray-100 mb-4">
-          <FileText className="h-12 w-12 text-gray-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Fatura bulunamadı</h3>
-        <p className="text-sm text-gray-500 mb-6">Aradığınız fatura mevcut değil veya silinmiş olabilir.</p>
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/sales-invoices')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Faturalara Dön
-        </Button>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Fatura Bulunamadı</h3>
+              <p className="text-gray-600 mb-4">Aradığınız fatura mevcut değil veya silinmiş olabilir.</p>
+              <Button onClick={() => navigate('/sales-invoices')} variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Faturalara Dön
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 p-4">
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <Button
-          variant="outline"
-          onClick={() => navigate('/sales-invoices')}
-          className="shadow-sm"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Geri
-        </Button>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/sales-invoices/edit/${id}`)}
-            className="shadow-sm"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Düzenle
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (invoice.nilvera_invoice_id) {
-                console.log('PDF indiriliyor...');
-              } else {
-                window.print();
-              }
-            }}
-            className="shadow-sm"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            PDF İndir
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Column - Invoice Info */}
-        <div className="lg:col-span-1">
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b p-3">
-              <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <FileText className="h-4 w-4 text-blue-600" />
-                Fatura & Müşteri Bilgileri
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-4">
-              {/* Fatura Bilgileri */}
-              <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Fatura No:</span>
-                  <span className="font-semibold text-xs">{invoice.fatura_no || 'Henüz atanmadı'}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Tarih:</span>
-                  <span className="text-xs">{format(new Date(invoice.fatura_tarihi), 'dd.MM.yyyy', { locale: tr })}</span>
-                </div>
-                {invoice.vade_tarihi && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Vade:</span>
-                    <span className="text-xs">{format(new Date(invoice.vade_tarihi), 'dd.MM.yyyy', { locale: tr })}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Kalem:</span>
-                  <span className="font-medium text-xs">{invoiceItems.length}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Para Birimi:</span>
-                  <span className="text-xs font-medium">{invoice.para_birimi === 'TL' ? 'TRY' : (invoice.para_birimi || 'TRY')}</span>
-                </div>
-                <Separator className="my-2" />
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-xs">Ara Toplam:</span>
-                  <span className="font-medium text-xs">{formatCurrency(invoice.ara_toplam || 0, invoice.para_birimi)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-xs">KDV:</span>
-                  <span className="font-medium text-xs">{formatCurrency(invoice.kdv_tutari || 0, invoice.para_birimi)}</span>
-                </div>
-                <div className="flex justify-between items-center pt-1 border-t">
-                  <span className="text-gray-700 font-medium text-xs">Toplam:</span>
-                  <span className="text-base font-bold text-primary">
-                    {formatCurrency(invoice.toplam_tutar || 0, invoice.para_birimi)}
-                  </span>
-                </div>
-                <Separator className="my-2" />
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-xs">Belge Tipi:</span>
-                  {getDocumentTypeBadge(invoice.document_type)}
-                </div>
-                {invoice.durum && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-xs">Durum:</span>
-                    <Badge variant="outline" className="bg-gray-100 text-xs">{invoice.durum}</Badge>
-                  </div>
-                )}
+    <>
+      <div className="space-y-6">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
+            {/* Sol taraf - Başlık */}
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate('/sales-invoices')}
+                className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-50/50 hover:text-blue-700 hover:border-blue-200 transition-all duration-200 hover:shadow-sm"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="font-medium">Satış Faturaları</span>
+              </Button>
+              
+              <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white shadow-lg">
+                <FileText className="h-5 w-5" />
               </div>
-
-              <Separator />
-
-              {/* Müşteri Bilgileri */}
-              <div className="p-2.5 rounded-lg text-xs bg-gray-50 border border-gray-200">
-                <div className="mb-2">
-                  <div className="font-semibold text-gray-900 text-sm mb-0.5">
-                    {invoice.customer?.name || 'Bilinmiyor'}
-                  </div>
-                  {invoice.customer?.company && (
-                    <div className="text-gray-600 text-xs">
-                      {invoice.customer.company}
-                    </div>
-                  )}
-                  {invoice.customer?.tax_number && (
-                    <div className="text-gray-500 text-xs mt-0.5">
-                      VKN: {invoice.customer.tax_number}
-                    </div>
-                  )}
-                </div>
+              <div className="space-y-0.5">
+                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  Satış Faturası
+                </h1>
+                <p className="text-xs text-muted-foreground/70">
+                  {invoice.fatura_no || 'Henüz atanmadı'} • {invoice.customer?.company || invoice.customer?.name || 'Müşteri'}
+                </p>
               </div>
-
-              {invoice.aciklama && (
-                <>
-                  <Separator />
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 mb-1">Açıklama</div>
-                    <div className="text-xs text-gray-700">{invoice.aciklama}</div>
-                  </div>
-                </>
-              )}
-
-              {invoice.notlar && (
-                <>
-                  <Separator />
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 mb-1">Notlar</div>
-                    <div className="text-xs text-gray-700 whitespace-pre-wrap">{invoice.notlar}</div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+            
+            {/* Sağ taraf - İstatistikler ve Butonlar */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <Badge variant="outline" className="px-3 py-1">
+                <Package className="h-3 w-3 mr-1" />
+                {invoiceItems.length} Kalem
+              </Badge>
+              <Badge variant="outline" className="px-3 py-1">
+                <DollarSign className="h-3 w-3 mr-1" />
+                {formatCurrency(invoice.toplam_tutar || 0, invoice.para_birimi)}
+              </Badge>
+              {getDocumentTypeBadge(invoice.document_type)}
+              
+              <div className="flex items-center gap-2 ml-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/sales-invoices/edit/${id}`)}
+                  className="shadow-sm"
+                  disabled={invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted'}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Düzenle
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadPdf}
+                  disabled={isDownloading}
+                  className="shadow-sm"
+                >
+                  {isDownloading ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-1" />
+                  )}
+                  PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/sales-invoices/new?copyFrom=${id}`)}
+                  className="shadow-sm"
+                >
+                  <Copy className="h-4 w-4 mr-1" />
+                  Kopyala
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="shadow-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                  disabled={invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted'}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Sil
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Right Column - Invoice Items */}
-        <div className="lg:col-span-3 space-y-4">
-          {/* Fatura Kalemleri */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100/50 border-b p-3">
-              <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <FileText className="h-4 w-4 text-orange-600" />
-                Fatura Kalemleri
-                <Badge variant="outline" className="ml-2 text-xs">{invoiceItems.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              {itemsLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              ) : invoiceItems.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="font-medium">Fatura kalemleri bulunamadı</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-gray-200">
-                        <TableHead className="w-12 font-semibold text-xs">#</TableHead>
-                        <TableHead className="font-semibold text-xs">Ürün</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">Miktar</TableHead>
-                        <TableHead className="text-center font-semibold text-xs">Birim</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">Birim Fiyat</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">İndirim</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">KDV</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">Toplam</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {invoiceItems.map((item, index) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
-                          <TableCell className="font-medium text-xs">
-                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600">
-                              {item.sira_no || index + 1}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="max-w-48">
-                              <p className="font-medium text-gray-900 truncate text-sm mb-1">
-                                {item.urun_adi}
-                              </p>
-                              <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                                {item.product?.sku && (
-                                  <span className="px-2 py-0.5 bg-gray-100 rounded">SKU: {item.product.sku}</span>
-                                )}
-                                {item.aciklama && (
-                                  <span className="text-gray-500">{item.aciklama}</span>
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="font-mono text-sm font-semibold text-gray-700">
-                              {item.miktar.toFixed(2)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="text-xs font-medium text-gray-600">
-                              {formatUnit(item.birim)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right text-sm font-medium">
-                            {formatCurrency(item.birim_fiyat, item.para_birimi || invoice.para_birimi)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {item.indirim_orani && item.indirim_orani > 0 ? (
-                              <span className="text-red-600 text-xs">{item.indirim_orani}%</span>
-                            ) : (
-                              <span className="text-gray-400 text-xs">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right text-xs">{item.kdv_orani}%</TableCell>
-                          <TableCell className="text-right font-semibold text-gray-900">
-                            {formatCurrency(item.satir_toplami, item.para_birimi || invoice.para_birimi)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      <TableRow className="bg-gray-50 font-bold border-t-2 border-gray-300">
-                        <TableCell colSpan={7} className="text-right text-sm">
-                          Genel Toplam
-                        </TableCell>
-                        <TableCell className="text-right text-base">
-                          {formatCurrency(invoiceItems.reduce((sum, item) => sum + (item.satir_toplami || 0), 0), invoice.para_birimi)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* E-Fatura Bilgileri */}
-          {(invoice.einvoice_status || invoice.nilvera_invoice_id) && (
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-cyan-50 to-cyan-100/50 border-b p-3">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Column - Invoice Info */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Fatura & Müşteri Bilgileri */}
+            <Card className="border-2 border-gray-300 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b-2 border-gray-300 p-3">
                 <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-cyan-600" />
-                  E-Fatura Bilgileri
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  Fatura & Müşteri Bilgileri
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500 text-xs">Durum:</span>
-                    <p className="mt-0.5 text-xs font-medium">{invoice.einvoice_status || 'Bilinmiyor'}</p>
+              <CardContent className="p-4 space-y-4">
+                {/* Fatura Bilgileri */}
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Fatura No:</span>
+                    <span className={`font-semibold text-xs ${invoice.fatura_no ? 'text-blue-600' : 'text-gray-400'}`}>
+                      {invoice.fatura_no || 'Henüz atanmadı'}
+                    </span>
                   </div>
-                  {invoice.nilvera_invoice_id && (
-                    <div>
-                      <span className="text-gray-500 text-xs">Nilvera ID:</span>
-                      <p className="mt-0.5 font-mono text-xs">{invoice.nilvera_invoice_id}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Tarih:</span>
+                    <span className="text-xs">{format(new Date(invoice.fatura_tarihi), 'dd.MM.yyyy', { locale: tr })}</span>
+                  </div>
+                  {invoice.vade_tarihi && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">Vade:</span>
+                      <span className="text-xs">{format(new Date(invoice.vade_tarihi), 'dd.MM.yyyy', { locale: tr })}</span>
                     </div>
                   )}
-                  {invoice.einvoice_sent_at && (
-                    <div>
-                      <span className="text-gray-500 text-xs">Gönderilme Tarihi:</span>
-                      <p className="mt-0.5 text-xs font-medium">{format(new Date(invoice.einvoice_sent_at), "dd.MM.yyyy HH:mm", { locale: tr })}</p>
-                    </div>
-                  )}
-                  {invoice.einvoice_error_message && (
-                    <div className="md:col-span-2">
-                      <span className="text-gray-500 text-xs">Hata Mesajı:</span>
-                      <p className="text-red-600 text-xs mt-1 p-2 bg-red-50 rounded">{invoice.einvoice_error_message}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Kalem:</span>
+                    <span className="font-medium text-xs">{invoiceItems.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Para Birimi:</span>
+                    <span className="text-xs font-medium">{invoice.para_birimi === 'TL' ? 'TRY' : (invoice.para_birimi || 'TRY')}</span>
+                  </div>
+                  <Separator className="my-2" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 text-xs">Ara Toplam:</span>
+                    <span className="font-medium text-xs">{formatCurrency(invoice.ara_toplam || 0, invoice.para_birimi)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 text-xs">KDV:</span>
+                    <span className="font-medium text-xs">{formatCurrency(invoice.kdv_tutari || 0, invoice.para_birimi)}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1 border-t">
+                    <span className="text-gray-700 font-medium text-xs">Toplam:</span>
+                    <span className="text-base font-bold text-primary">
+                      {formatCurrency(invoice.toplam_tutar || 0, invoice.para_birimi)}
+                    </span>
+                  </div>
+                  <Separator className="my-2" />
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 text-xs">Belge Tipi:</span>
+                    {getDocumentTypeBadge(invoice.document_type)}
+                  </div>
+                  {invoice.durum && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 text-xs">Durum:</span>
+                      <Badge variant="outline" className="bg-gray-100 text-xs">{invoice.durum}</Badge>
                     </div>
                   )}
                 </div>
+
+                <Separator />
+
+                {/* Müşteri Bilgileri */}
+                <div className="p-2.5 rounded-lg text-xs bg-green-50 border border-green-200">
+                  <div className="mb-2">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Building2 className="h-3 w-3 text-green-600" />
+                      <span className="text-green-700 font-medium text-xs">Müşteri Bilgileri</span>
+                    </div>
+                    <div className="font-semibold text-gray-900 text-sm mb-0.5">
+                      {invoice.customer?.name || 'Bilinmiyor'}
+                    </div>
+                    {invoice.customer?.company && (
+                      <div className="text-gray-600 text-xs">
+                        {invoice.customer.company}
+                      </div>
+                    )}
+                    {invoice.customer?.tax_number && (
+                      <div className="text-gray-500 text-xs mt-0.5">
+                        VKN: {invoice.customer.tax_number}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {invoice.aciklama && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-xs font-medium text-gray-500 mb-1">Açıklama</div>
+                      <div className="text-xs text-gray-700">{invoice.aciklama}</div>
+                    </div>
+                  </>
+                )}
+
+                {invoice.notlar && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-xs font-medium text-gray-500 mb-1">Notlar</div>
+                      <div className="text-xs text-gray-700 whitespace-pre-wrap">{invoice.notlar}</div>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
-          )}
 
-          {/* Fatura Etiketleri */}
-          {invoice.nilvera_invoice_id && invoice.einvoice_status && invoice.einvoice_status !== 'draft' ? (
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-pink-50 to-pink-100/50 border-b p-3">
+            {/* E-Fatura Durumu */}
+            <Card className="border-2 border-gray-300 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-cyan-50 to-cyan-100/50 border-b-2 border-gray-300 p-3">
+                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <Send className="h-4 w-4 text-cyan-600" />
+                  E-Fatura Durumu
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-xs">Durum:</span>
+                  {invoice.einvoice_status ? (
+                    getEInvoiceStatusBadge(invoice.einvoice_status)
+                  ) : (
+                    <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 text-xs">
+                      <Clock className="h-3 w-3 mr-1" />Gönderilmedi
+                    </Badge>
+                  )}
+                </div>
+                
+                {invoice.nilvera_invoice_id && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 text-xs">Nilvera ID:</span>
+                    <span className="font-mono text-xs text-gray-700">{invoice.nilvera_invoice_id.substring(0, 12)}...</span>
+                  </div>
+                )}
+                
+                {invoice.einvoice_sent_at && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 text-xs">Gönderilme:</span>
+                    <span className="text-xs">{format(new Date(invoice.einvoice_sent_at), "dd.MM.yyyy HH:mm", { locale: tr })}</span>
+                  </div>
+                )}
+                
+                {invoice.einvoice_error_message && (
+                  <div className="p-2 bg-red-50 rounded-lg border border-red-200">
+                    <div className="flex items-center gap-1 text-red-600 text-xs font-medium mb-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Hata
+                    </div>
+                    <p className="text-red-600 text-xs">{invoice.einvoice_error_message}</p>
+                  </div>
+                )}
+
+                {/* E-Fatura Gönder Butonu */}
+                {(!invoice.einvoice_status || invoice.einvoice_status === 'draft' || invoice.einvoice_status === 'error') && (
+                  <Button
+                    onClick={handleSendEInvoice}
+                    disabled={isSending}
+                    size="sm"
+                    className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Gönderiliyor...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        E-Fatura Gönder
+                      </>
+                    )}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Invoice Items */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Fatura Kalemleri */}
+            <Card className="border-2 border-gray-300 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100/50 border-b-2 border-gray-300 p-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Package className="h-4 w-4 text-orange-600" />
+                    Fatura Kalemleri
+                  </CardTitle>
+                  <Badge variant="outline" className="px-3 py-1">
+                    {invoiceItems.length} Kalem
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {itemsLoading ? (
+                  <div className="p-4 space-y-2">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : invoiceItems.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="font-medium">Fatura kalemleri bulunamadı</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <div className="max-h-[50vh] overflow-y-auto">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                          <TableRow className="border-gray-200">
+                            <TableHead className="w-12 font-semibold text-xs">#</TableHead>
+                            <TableHead className="min-w-48 font-semibold text-xs">Ürün</TableHead>
+                            <TableHead className="text-right font-semibold text-xs">Miktar</TableHead>
+                            <TableHead className="text-center font-semibold text-xs">Birim</TableHead>
+                            <TableHead className="text-right font-semibold text-xs">Birim Fiyat</TableHead>
+                            <TableHead className="text-right font-semibold text-xs">İndirim</TableHead>
+                            <TableHead className="text-right font-semibold text-xs">KDV</TableHead>
+                            <TableHead className="text-right font-semibold text-xs">Toplam</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {invoiceItems.map((item, index) => (
+                            <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
+                              <TableCell className="font-medium text-xs">
+                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600">
+                                  {item.sira_no || index + 1}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="max-w-48">
+                                  <p className="font-medium text-gray-900 truncate text-sm mb-1">
+                                    {item.urun_adi}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                                    {item.product?.sku && (
+                                      <span className="px-2 py-0.5 bg-gray-100 rounded">SKU: {item.product.sku}</span>
+                                    )}
+                                    {item.aciklama && (
+                                      <span className="text-gray-500">{item.aciklama}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="font-mono text-sm font-semibold text-gray-700">
+                                  {item.miktar.toFixed(2)}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <div className="text-xs font-medium text-gray-600">
+                                  {formatUnit(item.birim)}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right text-sm font-medium">
+                                {formatCurrency(item.birim_fiyat, item.para_birimi || invoice.para_birimi)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {item.indirim_orani && item.indirim_orani > 0 ? (
+                                  <span className="text-red-600 text-xs">{item.indirim_orani}%</span>
+                                ) : (
+                                  <span className="text-gray-400 text-xs">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right text-xs">{item.kdv_orani}%</TableCell>
+                              <TableCell className="text-right font-semibold text-gray-900">
+                                {formatCurrency(item.satir_toplami, item.para_birimi || invoice.para_birimi)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          <TableRow className="bg-gray-50 font-bold border-t-2 border-gray-300">
+                            <TableCell colSpan={7} className="text-right text-sm">
+                              Genel Toplam
+                            </TableCell>
+                            <TableCell className="text-right text-base">
+                              {formatCurrency(invoiceItems.reduce((sum, item) => sum + (item.satir_toplami || 0), 0), invoice.para_birimi)}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Fatura Etiketleri */}
+            {invoice.nilvera_invoice_id && invoice.einvoice_status && invoice.einvoice_status !== 'draft' ? (
+              <Card className="border-2 border-gray-300 shadow-sm">
+                <CardHeader className="bg-gradient-to-r from-pink-50 to-pink-100/50 border-b-2 border-gray-300 p-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-pink-600" />
+                      Fatura Etiketleri
+                    </CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refreshTags()}
+                      disabled={isRefreshing}
+                      className="shadow-sm h-7 text-xs"
+                    >
+                      <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      Yenile
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  {tagsLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-3/4" />
+                    </div>
+                  ) : tags.length > 0 ? (
+                    <div className="space-y-2">
+                      {tags.map((tag, index) => (
+                        <div key={tag.UUID || index} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                          {tag.Color && (
+                            <div 
+                              className="w-3 h-3 rounded-full border-2 border-gray-300"
+                              style={{ backgroundColor: tag.Color }}
+                            />
+                          )}
+                          <div className="flex-1">
+                            <p className="font-medium text-xs">{tag.Name || 'İsimsiz Etiket'}</p>
+                            {tag.Description && (
+                              <p className="text-xs text-gray-500 mt-0.5">{tag.Description}</p>
+                            )}
+                          </div>
+                          {tag.UUID && (
+                            <Badge variant="outline" className="text-xs">
+                              {tag.UUID.substring(0, 8)}...
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Tag className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="font-medium text-sm">Bu fatura için etiket bulunamadı</p>
+                      <p className="text-xs mt-1">Etiketler Nilvera sisteminde oluşturulduktan sonra burada görünecektir</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-2 border-gray-300 shadow-sm">
+                <CardHeader className="bg-gradient-to-r from-pink-50 to-pink-100/50 border-b-2 border-gray-300 p-3">
                   <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                     <Tag className="h-4 w-4 text-pink-600" />
                     Fatura Etiketleri
                   </CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => refreshTags()}
-                    disabled={isRefreshing}
-                    className="shadow-sm h-7 text-xs"
-                  >
-                    <RefreshCw className={`h-3 w-3 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    Yenile
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4">
-                {tagsLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-3/4" />
-                  </div>
-                ) : tags.length > 0 ? (
-                  <div className="space-y-2">
-                    {tags.map((tag, index) => (
-                      <div key={tag.UUID || index} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                        {tag.Color && (
-                          <div 
-                            className="w-3 h-3 rounded-full border-2 border-gray-300"
-                            style={{ backgroundColor: tag.Color }}
-                          />
-                        )}
-                        <div className="flex-1">
-                          <p className="font-medium text-xs">{tag.Name || 'İsimsiz Etiket'}</p>
-                          {tag.Description && (
-                            <p className="text-xs text-gray-500 mt-0.5">{tag.Description}</p>
-                          )}
-                        </div>
-                        {tag.UUID && (
-                          <Badge variant="outline" className="text-xs">
-                            {tag.UUID.substring(0, 8)}...
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
+                </CardHeader>
+                <CardContent className="p-4">
                   <div className="text-center py-8 text-gray-500">
                     <Tag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="font-medium text-sm">Bu fatura için etiket bulunamadı</p>
-                    <p className="text-xs mt-1">Etiketler Nilvera sisteminde oluşturulduktan sonra burada görünecektir</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-pink-50 to-pink-100/50 border-b p-3">
-                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-pink-600" />
-                  Fatura Etiketleri
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="text-center py-8 text-gray-500">
-                  <Tag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="font-medium text-sm">Etiketler henüz mevcut değil</p>
-                  <p className="text-xs mt-1">
-                    Fatura etiketleri, fatura Nilvera'ya e-fatura olarak gönderildikten sonra görünecektir.
-                  </p>
-                  {invoice.einvoice_status === 'draft' && (
-                    <p className="text-xs mt-2 text-blue-600">
-                      Faturayı e-fatura olarak göndermek için "E-Fatura Gönder" butonunu kullanın.
+                    <p className="font-medium text-sm">Etiketler henüz mevcut değil</p>
+                    <p className="text-xs mt-1">
+                      Fatura etiketleri, fatura Nilvera'ya e-fatura olarak gönderildikten sonra görünecektir.
                     </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    {(!invoice.einvoice_status || invoice.einvoice_status === 'draft') && (
+                      <p className="text-xs mt-2 text-blue-600">
+                        Faturayı e-fatura olarak göndermek için sol paneldeki "E-Fatura Gönder" butonunu kullanın.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Silme Onay Dialogu */}
+      <ConfirmationDialogComponent
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Faturayı Sil"
+        description={`"${invoice?.fatura_no || 'Bu fatura'}" numaralı faturayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        onConfirm={handleConfirmDelete}
+        variant="destructive"
+      />
+    </>
   );
 };
 

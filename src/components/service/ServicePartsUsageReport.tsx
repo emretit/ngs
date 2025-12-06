@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { ServicePartsInventoryService } from '@/services/servicePartsInventoryService';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -31,9 +32,19 @@ export const ServicePartsUsageReport: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-64 w-full" />
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Skeleton key={index} className="h-12 w-full" />
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -125,6 +136,7 @@ export const ServicePartsUsageReport: React.FC = () => {
     </div>
   );
 };
+
 
 
 

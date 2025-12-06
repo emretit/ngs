@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -129,6 +130,9 @@ export const QuickPreviewModal: React.FC<QuickPreviewModalProps> = ({
                   {getTypeLabel(template.type)}
                 </Badge>
               </div>
+              <DialogDescription className="mt-2">
+                Şablon önizlemesi
+              </DialogDescription>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />

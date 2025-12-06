@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/utils/formatters";
 import { formatDate } from "@/utils/dateUtils";
+import ProductTabSkeleton from "./ProductTabSkeleton";
 
 interface ProductSuppliersTabProps {
   product: Product;
@@ -73,14 +74,7 @@ export const ProductSuppliersTab = ({ product }: ProductSuppliersTabProps) => {
   const isLoading = isLoadingSupplier || isLoadingOrders;
 
   if (isLoading) {
-    return (
-      <Card className="p-8">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-t-blue-600 border-blue-200 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Tedarikçi bilgileri yükleniyor...</p>
-        </div>
-      </Card>
-    );
+    return <ProductTabSkeleton columns={6} title="Tedarikçiler" />;
   }
 
   return (

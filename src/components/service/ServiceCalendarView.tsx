@@ -17,7 +17,7 @@ import {
 import { ServiceRequest } from "@/hooks/useServiceRequests";
 import { formatDate } from "@/utils/dateUtils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useNavigate } from "react-router-dom";
 
@@ -326,6 +326,9 @@ const ServiceCalendarView = ({
               <AlertCircle className="h-5 w-5" />
               Servis Detayları
             </DialogTitle>
+            <DialogDescription>
+              Servis talebi detaylarını görüntüleyin
+            </DialogDescription>
           </DialogHeader>
           {selectedEvent && (
             <div className="space-y-4">

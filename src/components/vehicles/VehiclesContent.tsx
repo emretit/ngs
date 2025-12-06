@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Car, Gauge, Calendar, AlertCircle, Fuel, Wrench, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Vehicle } from "@/types/vehicle";
+import VehiclesContentSkeleton from "./VehiclesContentSkeleton";
 
 interface VehiclesContentProps {
   vehicles: Vehicle[];
@@ -60,15 +61,8 @@ const VehiclesContent = ({
     return matchesSearch && matchesStatus && matchesFuelType;
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[400px]">
-        <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-muted-foreground">Araçlar yükleniyor...</p>
-        </div>
-      </div>
-    );
+  if (isLoading && vehicles.length === 0) {
+    return <VehiclesContentSkeleton view={activeView} />;
   }
 
   if (filteredVehicles.length === 0) {

@@ -41,6 +41,9 @@ const CompanyBasicInfo = ({ formData, setFormData }: CompanyBasicInfoProps) => {
         company: prevFormData.company || mukellefInfo.companyName || prevFormData.company,
         tax_office: prevFormData.tax_office || mukellefInfo.taxOffice || prevFormData.tax_office,
         address: prevFormData.address || mukellefInfo.address || prevFormData.address,
+        // E-fatura mükellefi bilgileri - mukellefInfo bulunduysa müşteri e-fatura mükellefi
+        einvoice_alias_name: prevFormData.einvoice_alias_name || mukellefInfo.aliasName || prevFormData.einvoice_alias_name,
+        is_einvoice_mukellef: true, // mukellefInfo bulunduysa müşteri e-fatura mükellefi
       }));
     }
   }, [mukellefInfo, setFormData]);

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -271,7 +271,56 @@ export const useSalesInvoices = () => {
   const { data: invoices, isLoading, error, refetch } = useQuery({
     queryKey: ['salesInvoices', filters],
     queryFn: fetchInvoices,
+    refetchOnWindowFocus: true, // Pencere odaklandığında yenile
+    refetchOnMount: true, // Component mount olduğunda yenile
+    staleTime: 30 * 1000, // 30 saniye boyunca fresh kabul et
   });
+
+  // Supabase Realtime subscription - veritabanı değişikliklerinde tabloyu otomatik yenile
+  useEffect(() => {
+    // Get current user's company_id for filtering
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      // Subscribe to sales_invoices table changes
+      const channel = supabase
+        .channel('sales_invoices_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // INSERT, UPDATE, DELETE
+            schema: 'public',
+            table: 'sales_invoices',
+            filter: `company_id=eq.${profile.company_id}`
+          },
+          (payload) => {
+            console.log('🔄 Sales invoice changed:', payload.eventType, payload.new || payload.old);
+            // Invalidate queries to refetch data
+            queryClient.invalidateQueries({ queryKey: ['salesInvoices'] });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanup = setupRealtimeSubscription();
+
+    return () => {
+      cleanup.then(cleanupFn => cleanupFn?.());
+    };
+  }, [queryClient]);
 
   const createInvoiceMutation = useMutation({
     mutationFn: ({ invoice, items }: { invoice: Partial<SalesInvoice>, items: Partial<SalesInvoiceItem>[] }) => 

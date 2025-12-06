@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -121,9 +122,9 @@ export const ServiceDetailModal = ({
               <DialogTitle className="text-xl font-semibold text-foreground truncate">
                 {service.service_title || "İsimsiz Servis"}
               </DialogTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+              <DialogDescription className="mt-1">
                 #{service.service_number}
-              </p>
+              </DialogDescription>
             </div>
           </div>
           

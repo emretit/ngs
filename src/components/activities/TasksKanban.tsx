@@ -6,6 +6,7 @@ import { useKanbanTasks } from "./hooks/useKanbanTasks";
 import { useTaskMutations } from "./hooks/useTaskMutations";
 import KanbanColumn from "./KanbanColumn";
 import TaskForm from "./TaskForm";
+import TasksKanbanSkeleton from "./TasksKanbanSkeleton";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ListTodo, Clock, CheckCircle2, Hourglass } from "lucide-react";
 import ColumnHeader from "../opportunities/ColumnHeader";
@@ -110,11 +111,7 @@ export const TasksKanban = ({
   };
 
   if (isLoading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-gray-500">Görevler yükleniyor...</div>
-      </div>
-    );
+    return <TasksKanbanSkeleton />;
   }
 
   if (error) {

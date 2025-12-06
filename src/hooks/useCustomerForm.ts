@@ -54,6 +54,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
     second_country: "",
     second_postal_code: "",
     payment_terms: "",
+    is_einvoice_mukellef: false,
   });
 
   const { data: customer, isLoading: isLoadingCustomer, error: customerError } = useQuery({
@@ -233,6 +234,7 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           second_country: customer.second_country ?? "",
           second_postal_code: customer.second_postal_code ?? "",
           payment_terms: customer.payment_terms ?? "",
+          is_einvoice_mukellef: customer.is_einvoice_mukellef ?? false,
         };
         
         console.log('📝 New form data created:', newFormData);
@@ -327,8 +329,11 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         second_postal_code: data.second_postal_code || null,
         payment_terms: data.payment_terms || null,
         // E-fatura mükellefi bilgileri
-        is_einvoice_mukellef: einvoiceMukellefData?.isEinvoiceMukellef || false,
-        einvoice_alias_name: einvoiceMukellefData?.data?.aliasName || null,
+        // Form data'dan gelen değeri öncelikli kullan (mukellefInfo bulunduğunda true olur)
+        // Yoksa einvoiceMukellefData'dan al, yoksa false
+        is_einvoice_mukellef: data.is_einvoice_mukellef ?? einvoiceMukellefData?.isEinvoiceMukellef ?? false,
+        // Formdan gelen değeri öncelikli kullan, yoksa einvoiceMukellefData'dan al
+        einvoice_alias_name: data.einvoice_alias_name || einvoiceMukellefData?.data?.aliasName || null,
         einvoice_company_name: einvoiceMukellefData?.data?.companyName || null,
         einvoice_tax_office: einvoiceMukellefData?.data?.taxOffice || null,
         einvoice_address: einvoiceMukellefData?.data?.address || null,

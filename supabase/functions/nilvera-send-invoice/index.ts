@@ -217,6 +217,19 @@ serve(async (req) => {
         throw new Error('Şirket vergi numarası bulunamadı. Lütfen şirket bilgilerini tamamlayın.');
       }
 
+      // Validate that customer and company tax numbers are different
+      if (salesInvoice.customers?.tax_number === salesInvoice.companies?.tax_number) {
+        console.error('❌ Customer and company tax numbers are the same:', salesInvoice.customers?.tax_number);
+        throw new Error('Müşteri ve şirket vergi numaraları aynı olamaz. Bir şirket kendisine fatura gönderemez.');
+      }
+
+      // Log VKN information for debugging
+      console.log('🔍 VKN Validation:', {
+        company_tax_number: salesInvoice.companies?.tax_number,
+        customer_tax_number: salesInvoice.customers?.tax_number,
+        are_different: salesInvoice.customers?.tax_number !== salesInvoice.companies?.tax_number
+      });
+
       // Get invoice series from nilvera_auth table
       // Each company has its own invoice series configured in the portal
       const invoiceSerieOrNumber = nilveraAuth.invoice_series || 'NGS';
@@ -434,6 +447,15 @@ serve(async (req) => {
 
       // Log the full invoice data for debugging
       console.log('📄 Full invoice data being sent:', JSON.stringify(nilveraInvoiceData, null, 2));
+      
+      // Log VKN information before sending
+      console.log('🔍 VKN Information before sending:', {
+        company_tax_number: nilveraInvoiceData.EInvoice.CompanyInfo.TaxNumber,
+        customer_tax_number: nilveraInvoiceData.EInvoice.CustomerInfo.TaxNumber,
+        company_name: nilveraInvoiceData.EInvoice.CompanyInfo.Name,
+        customer_name: nilveraInvoiceData.EInvoice.CustomerInfo.Name,
+        are_different: nilveraInvoiceData.EInvoice.CompanyInfo.TaxNumber !== nilveraInvoiceData.EInvoice.CustomerInfo.TaxNumber
+      });
 
       // Send to Nilvera API - using Model endpoint for standard format
       const nilveraApiUrl = nilveraAuth.test_mode 
@@ -457,7 +479,35 @@ serve(async (req) => {
         const errorText = await nilveraResponse.text();
         console.error('❌ Nilvera API error:', errorText);
         console.error('❌ Request data that caused error:', JSON.stringify(nilveraInvoiceData, null, 2));
-        throw new Error(`Nilvera API error: ${nilveraResponse.status} - ${errorText}`);
+        console.error('❌ VKN Information in error:', {
+          company_tax_number: nilveraInvoiceData.EInvoice.CompanyInfo.TaxNumber,
+          customer_tax_number: nilveraInvoiceData.EInvoice.CustomerInfo.TaxNumber,
+          company_name: nilveraInvoiceData.EInvoice.CompanyInfo.Name,
+          customer_name: nilveraInvoiceData.EInvoice.CustomerInfo.Name
+        });
+        
+        // Parse error message for better user feedback
+        let errorMessage = `Nilvera API error: ${nilveraResponse.status}`;
+        try {
+          const errorJson = JSON.parse(errorText);
+          if (errorJson.Message) {
+            errorMessage = errorJson.Message;
+          }
+          if (errorJson.Errors && errorJson.Errors.length > 0) {
+            const firstError = errorJson.Errors[0];
+            if (firstError.Description) {
+              errorMessage = firstError.Description;
+            }
+            if (firstError.Detail) {
+              errorMessage += ` - ${firstError.Detail}`;
+            }
+          }
+        } catch (e) {
+          // If parsing fails, use the raw error text
+          errorMessage = errorText;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const nilveraResult = await nilveraResponse.json();
@@ -465,18 +515,34 @@ serve(async (req) => {
 
       // 3. SUCCESS FLOW - Update sales_invoices table with 'sent' status
       console.log('📝 Updating invoice status to sent...');
+      console.log('📋 Nilvera result keys:', Object.keys(nilveraResult));
+      console.log('📋 Nilvera result:', JSON.stringify(nilveraResult, null, 2));
+      
+      // Nilvera API returns UUID (capital) or uuid (lowercase)
+      const nilveraInvoiceId = nilveraResult.UUID || nilveraResult.uuid || nilveraResult.id;
+      const nilveraTransferId = nilveraResult.TransferId || nilveraResult.transferId;
+      const nilveraInvoiceNumber = nilveraResult.InvoiceNumber || nilveraResult.invoiceNumber || nilveraResult.invoice_number;
+      
+      console.log('📋 Extracted values:', {
+        nilveraInvoiceId,
+        nilveraTransferId,
+        nilveraInvoiceNumber
+      });
+      
       const { error: trackingError } = await supabase
         .from('sales_invoices')
         .update({
-          nilvera_invoice_id: nilveraResult.id || nilveraResult.uuid,
-          nilvera_transfer_id: nilveraResult.transferId,
+          nilvera_invoice_id: nilveraInvoiceId,
+          nilvera_transfer_id: nilveraTransferId,
           einvoice_status: 'sent',
-          einvoice_transfer_state: nilveraResult.transferState || 0,
-          einvoice_invoice_state: nilveraResult.invoiceState || 0,
+          einvoice_transfer_state: nilveraResult.TransferState || nilveraResult.transferState || 0,
+          einvoice_invoice_state: nilveraResult.InvoiceState || nilveraResult.invoiceState || 0,
           einvoice_sent_at: new Date().toISOString(),
           einvoice_nilvera_response: nilveraResult,
           einvoice_error_message: null,
-          einvoice_error_code: null
+          einvoice_error_code: null,
+          // Update fatura_no here as well
+          fatura_no: nilveraInvoiceNumber || null
         })
         .eq('id', salesInvoiceId)
         .eq('company_id', profile.company_id);
@@ -488,18 +554,11 @@ serve(async (req) => {
         console.log('✅ Invoice status updated to sent');
       }
 
-      // Update sales invoice status and fatura_no if provided by Nilvera
+      // Update sales invoice status (fatura_no already updated above)
       const updateData: any = { 
         durum: 'gonderildi',
         xml_data: nilveraResult
       };
-
-      // If Nilvera returned an invoice number, update it
-      if (nilveraResult.invoiceNumber || nilveraResult.invoice_number) {
-        const assignedInvoiceNumber = nilveraResult.invoiceNumber || nilveraResult.invoice_number;
-        updateData.fatura_no = assignedInvoiceNumber;
-        console.log('📝 Updating fatura_no with Nilvera assigned number:', assignedInvoiceNumber);
-      }
 
       const { error: updateError } = await supabase
         .from('sales_invoices')

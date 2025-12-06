@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Plus, FileText, Calendar, AlertTriangle, Download } from "lucide-react";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useVehicleDocuments, useExpiringDocuments } from "@/hooks/useVehicleDocuments";
+import VehicleDocumentsTabSkeleton from "./VehicleDocumentsTabSkeleton";
 
 export default function VehicleDocumentsTab() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,8 +47,8 @@ export default function VehicleDocumentsTab() {
     return diffDays <= 30 && diffDays > 0;
   };
 
-  if (isLoading) {
-    return <div className="flex justify-center p-8">Yükleniyor...</div>;
+  if (isLoading && (!documents || documents.length === 0)) {
+    return <VehicleDocumentsTabSkeleton />;
   }
 
   return (

@@ -1,38 +1,100 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Trash2, Download, Mail, FileSpreadsheet, Send, CheckCircle } from "lucide-react";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { toast } from "sonner";
 
 interface SalesInvoicesBulkActionsProps {
   selectedInvoices: any[];
   onClearSelection: () => void;
+  onBulkDelete?: (invoiceIds: string[]) => void;
+  onBulkSendEInvoice?: (invoiceIds: string[]) => void;
 }
 
-const SalesInvoicesBulkActions = ({ selectedInvoices, onClearSelection }: SalesInvoicesBulkActionsProps) => {
+const SalesInvoicesBulkActions = ({ 
+  selectedInvoices, 
+  onClearSelection,
+  onBulkDelete,
+  onBulkSendEInvoice 
+}: SalesInvoicesBulkActionsProps) => {
   const hasSelection = selectedInvoices.length > 0;
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [eInvoiceDialogOpen, setEInvoiceDialogOpen] = useState(false);
 
   const handleBulkExport = () => {
     // Excel export işlemi
+    toast.info("Excel dışa aktarma özelliği yakında eklenecek");
     console.log("Exporting selected invoices:", selectedInvoices);
   };
 
   const handleBulkEmail = () => {
     // Toplu e-posta gönderimi
+    toast.info("Toplu e-posta gönderimi yakında eklenecek");
     console.log("Sending bulk email for invoices:", selectedInvoices);
   };
 
   const handleBulkEInvoice = () => {
-    // Toplu e-fatura gönderimi
-    console.log("Sending bulk e-invoices:", selectedInvoices);
+    // Gönderilmemiş faturaları filtrele
+    const eligibleInvoices = selectedInvoices.filter(inv => 
+      !inv.einvoice_status || 
+      inv.einvoice_status === 'draft' || 
+      inv.einvoice_status === 'error'
+    );
+    
+    if (eligibleInvoices.length === 0) {
+      toast.warning("Seçilen faturalar zaten gönderilmiş");
+      return;
+    }
+    
+    setEInvoiceDialogOpen(true);
+  };
+
+  const handleConfirmBulkEInvoice = () => {
+    const eligibleInvoices = selectedInvoices.filter(inv => 
+      !inv.einvoice_status || 
+      inv.einvoice_status === 'draft' || 
+      inv.einvoice_status === 'error'
+    );
+    
+    if (onBulkSendEInvoice) {
+      onBulkSendEInvoice(eligibleInvoices.map(inv => inv.id));
+      toast.success(`${eligibleInvoices.length} fatura gönderiliyor...`);
+    }
+    setEInvoiceDialogOpen(false);
   };
 
   const handleBulkMarkAsPaid = () => {
     // Toplu ödendi olarak işaretle
+    toast.info("Toplu ödeme işaretleme yakında eklenecek");
     console.log("Marking invoices as paid:", selectedInvoices);
   };
 
   const handleBulkDelete = () => {
-    // Toplu silme işlemi
-    console.log("Deleting invoices:", selectedInvoices);
+    // Gönderilmiş faturaları kontrol et
+    const sentInvoices = selectedInvoices.filter(inv => 
+      inv.einvoice_status === 'sent' || 
+      inv.einvoice_status === 'delivered' || 
+      inv.einvoice_status === 'accepted'
+    );
+    
+    if (sentInvoices.length > 0) {
+      toast.error(`${sentInvoices.length} fatura gönderilmiş olduğu için silinemez`);
+      return;
+    }
+    
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (onBulkDelete) {
+      const deletableInvoices = selectedInvoices.filter(inv => 
+        inv.einvoice_status !== 'sent' && 
+        inv.einvoice_status !== 'delivered' && 
+        inv.einvoice_status !== 'accepted'
+      );
+      onBulkDelete(deletableInvoices.map(inv => inv.id));
+    }
+    setDeleteDialogOpen(false);
   };
 
   return (
@@ -113,6 +175,30 @@ const SalesInvoicesBulkActions = ({ selectedInvoices, onClearSelection }: SalesI
           )}
         </div>
       </div>
+
+      {/* Toplu Silme Onay Dialogu */}
+      <ConfirmationDialogComponent
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Faturaları Sil"
+        description={`${selectedInvoices.length} faturayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        onConfirm={handleConfirmDelete}
+        variant="destructive"
+      />
+
+      {/* Toplu E-Fatura Gönderim Onay Dialogu */}
+      <ConfirmationDialogComponent
+        open={eInvoiceDialogOpen}
+        onOpenChange={setEInvoiceDialogOpen}
+        title="Toplu E-Fatura Gönder"
+        description={`${selectedInvoices.filter(inv => !inv.einvoice_status || inv.einvoice_status === 'draft' || inv.einvoice_status === 'error').length} faturayı e-fatura olarak göndermek istediğinizden emin misiniz?`}
+        confirmText="Gönder"
+        cancelText="İptal"
+        onConfirm={handleConfirmBulkEInvoice}
+        variant="default"
+      />
     </>
   );
 };

@@ -54,7 +54,9 @@ export const useEInvoice = () => {
       
       if (data?.success) {
         toast.success("E-fatura başarıyla gönderildi");
+        // E-fatura durumunu ve satış faturaları listesini yenile
         queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
+        queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
         
         // Force refresh of EInvoiceStatus components
         // Dispatch a custom event that EInvoiceStatusBadge can listen to
@@ -63,11 +65,15 @@ export const useEInvoice = () => {
         }));
       } else if (data?.status === 'sending') {
         toast.info("Fatura şu anda gönderiliyor. Lütfen birkaç dakika bekleyin.");
+        // Gönderim başladığında da listeyi yenile
+        queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       } else {
         toast.error(data?.error || data?.message || "E-fatura gönderimi başarısız");
+        // Hata durumunda da listeyi yenile
+        queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       }
     },
-    onError: (error: any) => {
+    onError: (error: any, salesInvoiceId) => {
       console.error("E-fatura gönderim hatası:", error);
       
       // Edge function'dan gelen detaylı hata mesajını göster
@@ -85,6 +91,12 @@ export const useEInvoice = () => {
       }
       
       toast.error(errorMessage);
+      
+      // Hata durumunda da listeyi yenile (durum güncellemesi için)
+      queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
+      if (salesInvoiceId) {
+        queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
+      }
     },
   });
 
@@ -304,7 +316,7 @@ export const getStatusDisplay = (status?: string) => {
     case 'sending':
       return { text: 'Gönderiliyor', color: 'blue' };
     case 'sent':
-      return { text: 'Gönderildi', color: 'yellow' };
+      return { text: 'GİB\'e Gönderilmeyi Bekliyor', color: 'yellow' };
     case 'delivered':
       return { text: 'Teslim Edildi', color: 'orange' };
     case 'accepted':

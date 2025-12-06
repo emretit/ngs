@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Search, Plus } from "lucide-react";
 import { PdfTemplate } from "@/types/pdf-template";
 import { PdfTemplatesList } from "./PdfTemplatesList";
@@ -42,10 +43,23 @@ const PdfTemplatesContent = ({
 }: PdfTemplatesContentProps) => {
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-white rounded-xl border border-gray-200 shadow-sm">
-        <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-muted-foreground">Şablonlar yükleniyor...</p>
+      <div className="h-full flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Card key={index} className="border-dashed">
+                <CardContent className="p-6">
+                  <Skeleton className="h-6 w-32 mb-4" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-3/4 mb-4" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-20" />
+                    <Skeleton className="h-8 w-20" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );

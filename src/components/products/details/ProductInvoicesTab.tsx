@@ -7,6 +7,7 @@ import { Receipt, ExternalLink } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/utils/dateUtils";
+import ProductTabSkeleton from "./ProductTabSkeleton";
 
 interface ProductInvoicesTabProps {
   productId: string;
@@ -53,14 +54,7 @@ export const ProductInvoicesTab = ({ productId }: ProductInvoicesTabProps) => {
   });
 
   if (isLoading) {
-    return (
-      <Card className="p-8">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-t-blue-600 border-blue-200 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Faturalar yükleniyor...</p>
-        </div>
-      </Card>
-    );
+    return <ProductTabSkeleton columns={8} title="Faturalar" />;
   }
 
   if (!invoices || invoices.length === 0) {

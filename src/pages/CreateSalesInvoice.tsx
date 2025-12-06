@@ -729,7 +729,7 @@ const CreateSalesInvoice = () => {
         indirim_tutari: totals.discount,
         kdv_tutari: totals.vat,
         toplam_tutar: totals.grand,
-        durum: isDraft ? 'taslak' : 'beklemede',
+        durum: 'taslak', // Fatura oluşturulduğunda her zaman taslak, gönderildiğinde 'gonderildi' olacak
         payment_terms: termsData.payment_terms || null,
         delivery_terms: termsData.delivery_terms || null,
         warranty_terms: termsData.warranty_terms || null,
@@ -753,6 +753,7 @@ const CreateSalesInvoice = () => {
       // Insert items
       const invoiceItems = validItems.map(item => ({
         sales_invoice_id: invoice.id,
+        company_id: userData?.company_id, // RLS policy için gerekli
         urun_adi: item.name,
         aciklama: item.description,
         miktar: item.quantity,

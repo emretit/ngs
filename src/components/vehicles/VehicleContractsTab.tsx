@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useVehicleContracts, useContractStats, useContractAlerts } from "@/hooks/useVehicleContracts";
 import { VehicleContract, ContractType, ContractStatus } from "@/types/vehicle-contract";
+import VehicleContractsTabSkeleton from "./VehicleContractsTabSkeleton";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 
@@ -70,15 +71,8 @@ export default function VehicleContractsTab() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center p-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Yükleniyor...</p>
-        </div>
-      </div>
-    );
+  if (isLoading && (!contracts || contracts.length === 0)) {
+    return <VehicleContractsTabSkeleton />;
   }
 
   return (

@@ -7,6 +7,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuth } from '@/hooks/useAuth';
 import type { Task, TaskStatus } from '@/types/task';
 import TaskDetailPanel from '../TaskDetailPanel';
+import TasksCalendarSkeleton from './TasksCalendarSkeleton';
 import { formatDate } from '@/utils/dateUtils';
 
 interface TasksCalendarProps {
@@ -160,11 +161,7 @@ const TasksCalendar = ({
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <TasksCalendarSkeleton />;
   }
 
   return (

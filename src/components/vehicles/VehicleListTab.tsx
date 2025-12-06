@@ -5,6 +5,7 @@ import { useVehicles, useVehicleStats } from "@/hooks/useVehicles";
 import VehiclesHeader from "./VehiclesHeader";
 import VehiclesFilterBar from "./VehiclesFilterBar";
 import VehiclesContent from "./VehiclesContent";
+import VehiclesContentSkeleton from "./VehiclesContentSkeleton";
 
 export default function VehicleListTab() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,13 +28,27 @@ export default function VehicleListTab() {
     setSelectedVehicle(null);
   };
 
-  if (isLoading) {
+  if (isLoading && vehicles.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[400px]">
-        <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-muted-foreground">Araçlar yükleniyor...</p>
-        </div>
+      <div className="space-y-2">
+        <VehiclesHeader 
+          activeView={activeView} 
+          setActiveView={setActiveView}
+          stats={stats}
+        />
+        <VehiclesFilterBar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          selectedFuelType={selectedFuelType}
+          setSelectedFuelType={setSelectedFuelType}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+        />
+        <VehiclesContentSkeleton view={activeView} />
       </div>
     );
   }

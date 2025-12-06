@@ -5585,6 +5585,7 @@ export type Database = {
       }
       products: {
         Row: {
+          attachments: Json | null
           barcode: string | null
           category_id: string | null
           category_type: string
@@ -5592,25 +5593,34 @@ export type Database = {
           created_at: string | null
           currency: string
           description: string | null
+          dimensions: string | null
           discount_rate: number | null
           id: string
           image_url: string | null
           is_active: boolean
+          max_stock_level: number | null
           min_stock_level: number
           name: string
           price: number
+          price_includes_vat: boolean | null
           product_type: string
+          purchase_price: number | null
+          purchase_price_includes_vat: boolean | null
           sku: string | null
           status: string
           stock_quantity: number | null
           stock_threshold: number | null
           supplier_id: string | null
+          tags: string[] | null
           tax_rate: number
           unit: string
           updated_at: string | null
           vat_included: boolean | null
+          warranty_period: number | null
+          weight: number | null
         }
         Insert: {
+          attachments?: Json | null
           barcode?: string | null
           category_id?: string | null
           category_type?: string
@@ -5618,25 +5628,34 @@ export type Database = {
           created_at?: string | null
           currency?: string
           description?: string | null
+          dimensions?: string | null
           discount_rate?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          max_stock_level?: number | null
           min_stock_level?: number
           name: string
           price?: number
+          price_includes_vat?: boolean | null
           product_type?: string
+          purchase_price?: number | null
+          purchase_price_includes_vat?: boolean | null
           sku?: string | null
           status?: string
           stock_quantity?: number | null
           stock_threshold?: number | null
           supplier_id?: string | null
+          tags?: string[] | null
           tax_rate?: number
           unit?: string
           updated_at?: string | null
           vat_included?: boolean | null
+          warranty_period?: number | null
+          weight?: number | null
         }
         Update: {
+          attachments?: Json | null
           barcode?: string | null
           category_id?: string | null
           category_type?: string
@@ -5644,23 +5663,31 @@ export type Database = {
           created_at?: string | null
           currency?: string
           description?: string | null
+          dimensions?: string | null
           discount_rate?: number | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          max_stock_level?: number | null
           min_stock_level?: number
           name?: string
           price?: number
+          price_includes_vat?: boolean | null
           product_type?: string
+          purchase_price?: number | null
+          purchase_price_includes_vat?: boolean | null
           sku?: string | null
           status?: string
           stock_quantity?: number | null
           stock_threshold?: number | null
           supplier_id?: string | null
+          tags?: string[] | null
           tax_rate?: number
           unit?: string
           updated_at?: string | null
           vat_included?: boolean | null
+          warranty_period?: number | null
+          weight?: number | null
         }
         Relationships: [
           {
@@ -10843,10 +10870,6 @@ export type Database = {
           rec_type: string
         }
         Returns: string
-      }
-      calculate_sla_target_hours: {
-        Args: { priority: string }
-        Returns: number
       }
       check_po_approvals_completed: {
         Args: { p_order_id: string }

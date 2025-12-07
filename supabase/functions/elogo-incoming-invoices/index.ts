@@ -200,8 +200,9 @@ serve(async (req) => {
 
         // Save to database (einvoices table)
         try {
-          // Check if einvoices table has company_id column
-          const invoiceData: any = {
+          // Only include columns that exist in the einvoices table
+          // Note: invoice_type and invoice_profile columns don't exist yet
+          const invoiceData = {
             id: invoice.id,
             invoice_number: invoice.invoiceNumber,
             supplier_name: invoice.supplierName,
@@ -214,26 +215,14 @@ serve(async (req) => {
             remaining_amount: invoice.totalAmount,
             currency: invoice.currency,
             tax_amount: invoice.taxAmount,
-            xml_data: invoice.xmlData,
+            xml_data: {
+              ...invoice.xmlData,
+              // Store invoice_type and invoice_profile in xml_data for now
+              invoiceType: invoice.invoiceType,
+              invoiceProfile: invoice.invoiceProfile,
+            },
+            company_id: profile.company_id,
           };
-
-          // Add optional fields if they exist in the table
-          // These might not exist in all migrations
-          if (invoice.invoiceType) {
-            invoiceData.invoice_type = invoice.invoiceType;
-          }
-          if (invoice.invoiceProfile) {
-            invoiceData.invoice_profile = invoice.invoiceProfile;
-          }
-          
-          // Try to add company_id if column exists
-          // Note: einvoices table might not have company_id in older migrations
-          // We'll try to add it, and if it fails, we'll continue without it
-          try {
-            invoiceData.company_id = profile.company_id;
-          } catch {
-            // Column might not exist
-          }
 
           const { error: dbError } = await supabase
             .from('einvoices')

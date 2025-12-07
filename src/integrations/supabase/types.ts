@@ -2701,6 +2701,53 @@ export type Database = {
           },
         ]
       }
+      elogo_auth: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          password: string
+          test_mode: boolean | null
+          updated_at: string | null
+          user_id: string | null
+          username: string
+          webservice_url: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          password: string
+          test_mode?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          username: string
+          webservice_url?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          password?: string
+          test_mode?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string
+          webservice_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elogo_auth_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_auth: {
         Row: {
           company_id: string | null
@@ -3884,6 +3931,38 @@ export type Database = {
             foreignKeyName: "hr_budget_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integrator_settings: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          selected_integrator: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          selected_integrator?: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          selected_integrator?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrator_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },

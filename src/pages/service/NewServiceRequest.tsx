@@ -37,6 +37,8 @@ interface ServiceRequestFormData {
   supplier_id: string | null;
   service_due_date: Date | null;
   service_reported_date: Date;
+  service_start_date: Date | null;
+  service_end_date: Date | null;
   contact_person: string;
   contact_phone: string;
   contact_email: string;
@@ -115,6 +117,8 @@ const NewServiceRequest = () => {
     supplier_id: null,
     service_due_date: null,
     service_reported_date: new Date(),
+    service_start_date: null,
+    service_end_date: null,
     contact_person: '',
     contact_phone: '',
     contact_email: '',
@@ -428,6 +432,8 @@ const NewServiceRequest = () => {
           supplier_id: data.supplier_id,
           service_due_date: data.service_due_date?.toISOString(),
           service_reported_date: data.service_reported_date.toISOString(),
+          service_start_date: data.service_start_date?.toISOString(),
+          service_end_date: data.service_end_date?.toISOString(),
           contact_person: data.contact_person,
           contact_phone: data.contact_phone,
           contact_email: data.contact_email,

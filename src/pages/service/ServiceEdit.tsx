@@ -38,6 +38,8 @@ interface ServiceRequestFormData {
   supplier_id: string | null;
   service_due_date: Date | null;
   service_reported_date: Date;
+  service_start_date: Date | null;
+  service_end_date: Date | null;
   contact_person: string;
   contact_phone: string;
   contact_email: string;
@@ -167,6 +169,8 @@ const ServiceEdit = () => {
     supplier_id: null,
     service_due_date: null,
     service_reported_date: new Date(),
+    service_start_date: null,
+    service_end_date: null,
     contact_person: '',
     contact_phone: '',
     contact_email: '',
@@ -314,6 +318,8 @@ const ServiceEdit = () => {
         supplier_id: serviceRequest.supplier_id || null,
         service_due_date: serviceRequest.service_due_date ? new Date(serviceRequest.service_due_date) : null,
         service_reported_date: serviceRequest.service_reported_date ? new Date(serviceRequest.service_reported_date) : new Date(),
+        service_start_date: serviceRequest.service_start_date ? new Date(serviceRequest.service_start_date) : null,
+        service_end_date: serviceRequest.service_end_date ? new Date(serviceRequest.service_end_date) : null,
         contact_person: serviceRequest.contact_person || '',
         contact_phone: serviceRequest.contact_phone || '',
         contact_email: serviceRequest.contact_email || '',
@@ -673,6 +679,8 @@ const ServiceEdit = () => {
           supplier_id: data.supplier_id,
           service_due_date: data.service_due_date?.toISOString(),
           service_reported_date: data.service_reported_date.toISOString(),
+          service_start_date: data.service_start_date?.toISOString(),
+          service_end_date: data.service_end_date?.toISOString(),
           contact_person: data.contact_person,
           contact_phone: data.contact_phone,
           contact_email: data.contact_email,

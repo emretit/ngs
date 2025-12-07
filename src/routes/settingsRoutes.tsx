@@ -27,10 +27,11 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/system", component: SystemSettingsPage, protected: true },
   { path: "/system-parameters", component: SystemParametersPage, protected: true },
   { path: "/pdf-templates", component: PdfTemplates, protected: true },
-  { path: "/audit-logs", component: AuditLogs, protected: true },
-  { path: "/notifications", component: NotificationSettings, protected: true },
-  { path: "/pdf-templates/new", component: PdfTemplateEditor, protected: true },
-  { path: "/pdf-templates/edit/:templateId", component: PdfTemplateEditor, protected: true },
+  // Service template routes MUST come before general pdf-templates routes (more specific first)
   { path: "/pdf-templates/service/new", component: ServiceTemplateEditor, protected: true },
   { path: "/pdf-templates/service/edit/:id", component: ServiceTemplateEditor, protected: true },
+  { path: "/pdf-templates/new", component: PdfTemplateEditor, protected: true },
+  { path: "/pdf-templates/edit/:templateId", component: PdfTemplateEditor, protected: true },
+  { path: "/audit-logs", component: AuditLogs, protected: true },
+  { path: "/notifications", component: NotificationSettings, protected: true },
 ];

@@ -11,7 +11,7 @@ const SystemSettingsPage = React.lazy(() => import("@/pages/settings/SystemSetti
 const SystemParametersPage = React.lazy(() => import("@/pages/settings/SystemParameters"));
 const PdfTemplates = React.lazy(() => import("@/pages/PdfTemplates"));
 const PdfTemplateEditor = React.lazy(() => import("@/pages/templates/PdfTemplateEditor"));
-const ServiceTemplateEdit = React.lazy(() => import("@/pages/service/ServiceTemplateEdit"));
+const ServiceTemplateEditor = React.lazy(() => import("@/pages/templates/ServiceTemplateEditor"));
 const NotificationSettings = React.lazy(() => import("@/pages/NotificationSettings"));
 const Subscription = React.lazy(() => import("@/pages/settings/Subscription"));
 const AuditLogs = React.lazy(() => import("@/pages/admin/AuditLogs"));
@@ -31,6 +31,6 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/notifications", component: NotificationSettings, protected: true },
   { path: "/pdf-templates/new", component: PdfTemplateEditor, protected: true },
   { path: "/pdf-templates/edit/:templateId", component: PdfTemplateEditor, protected: true },
-  { path: "/pdf-templates/service/new", component: ServiceTemplateEdit, protected: true },
-  { path: "/pdf-templates/service/edit/:id", component: ServiceTemplateEdit, protected: true },
+  { path: "/pdf-templates/service/new", component: ServiceTemplateEditor, protected: true },
+  { path: "/pdf-templates/service/edit/:id", component: ServiceTemplateEditor, protected: true },
 ];

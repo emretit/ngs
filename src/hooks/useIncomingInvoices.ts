@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toastUtils";
+import { IntegratorService } from "@/services/integratorService";
 
 export interface IncomingInvoice {
   id: string;
@@ -34,28 +34,17 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
       const startDate = dateFilters?.startDate ? `${dateFilters.startDate}T00:00:00.000Z` : '2025-08-01T00:00:00.000Z';
       const endDate = dateFilters?.endDate ? `${dateFilters.endDate}T23:59:59.999Z` : '2025-09-01T23:59:59.999Z';
       
-      const { data, error } = await supabase.functions.invoke('nilvera-incoming-invoices', {
-        body: { 
-          filters: {
-            startDate,
-            endDate
-          }
-        }
+      // Use IntegratorService which automatically routes to correct integrator
+      const result = await IntegratorService.getIncomingInvoices({
+        startDate,
+        endDate
       });
 
-      if (error) {
-        throw new Error(error.message || 'Gelen faturalar alınamadı');
+      if (!result.success) {
+        throw new Error(result.error || 'Gelen faturalar alınamadı');
       }
 
-      if (!data) {
-        throw new Error('Function response is empty');
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Gelen faturalar alınamadı');
-      }
-
-      return data.invoices || [];
+      return result.invoices || [];
       
     } catch (error: any) {
       console.error('Error fetching incoming invoices:', error);

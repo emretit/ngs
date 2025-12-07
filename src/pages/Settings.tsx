@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Settings2, Users, UserCheck, Zap, Wrench, FileText, CreditCard, ClipboardList } from "lucide-react";
 interface SettingsProps {
@@ -7,10 +6,6 @@ interface SettingsProps {
 }
 const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
   const navigate = useNavigate();
-  useEffect(() => {
-    // Varsayılan olarak kullanıcılar sayfasına yönlendir
-    navigate("/users", { replace: true });
-  }, [navigate]);
   return (
     <div className="space-y-6">
         {/* Header */}
@@ -122,21 +117,21 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                 </div>
               </div>
-              {/* Nilvera E-Fatura */}
+              {/* Entegratör Ayarları */}
               <div 
-                onClick={() => navigate("/nilvera")}
-                className="p-6 rounded-xl border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                onClick={() => navigate("/integrator")}
+                className="p-6 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
+                  <div className="p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-white shadow-lg group-hover:shadow-xl transition-shadow">
                     <Zap className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                      Nilvera E-Fatura
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                      E-Fatura Entegratörü
                     </h3>
                     <p className="text-sm text-gray-600">
-                      E-fatura entegrasyonu ayarları
+                      Nilvera ve e-Logo entegrasyonu
                     </p>
                   </div>
                 </div>

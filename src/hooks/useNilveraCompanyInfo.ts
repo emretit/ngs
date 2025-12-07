@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { IntegratorService } from '@/services/integratorService';
 
 interface CompanyInfoData {
   name: string;
@@ -127,7 +128,7 @@ export const useNilveraCompanyInfo = () => {
     }
   }, []);
 
-  // Mükellef sorgulama (vergi numarasına göre)
+  // Mükellef sorgulama (vergi numarasına göre) - IntegratorService kullanarak
   const searchMukellef = useCallback(async (taxNumber: string): Promise<MukellefCheckResult> => {
     if (!taxNumber || taxNumber.length < 10) {
       const result = {
@@ -144,39 +145,25 @@ export const useNilveraCompanyInfo = () => {
     setMukellefInfo(null);
 
     try {
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        throw new Error('Kullanıcı oturumu bulunamadı');
+      // Use IntegratorService which automatically routes to correct integrator
+      const result = await IntegratorService.checkMukellef(taxNumber);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Mükellef sorgulama işlemi başarısız');
       }
 
-      // Call Nilvera edge function
-      const { data, error } = await supabase.functions.invoke('nilvera-company-info', {
-        body: {
-          action: 'search_mukellef',
-          taxNumber: taxNumber
-        }
-      });
-
-      if (error) {
-        console.error('Mükellef sorgulama hatası:', error);
-        throw new Error(error.message || 'Mükellef sorgulaması yapılamadı');
+      if (result.data) {
+        setMukellefInfo(result.data as MukellefData);
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Mükellef sorgulama işlemi başarısız');
-      }
-
-      if (data.data) {
-        setMukellefInfo(data.data);
-      }
+      // Determine if mukellef based on response
+      const isEinvoiceMukellef = result.data?.aliasName ? true : false;
 
       return {
         success: true,
-        isEinvoiceMukellef: data.isEinvoiceMukellef,
-        data: data.data,
-        message: data.message
+        isEinvoiceMukellef,
+        data: result.data as MukellefData,
+        message: result.message
       };
 
     } catch (error) {

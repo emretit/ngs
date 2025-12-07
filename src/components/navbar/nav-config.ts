@@ -344,9 +344,14 @@ export const navItems = [
         label: "Abonelik & Faturalama",
       },
       {
-        path: "/nilvera",
+        path: "/settings/roles",
+        icon: UserCheck,
+        label: "Roller & İzinler",
+      },
+      {
+        path: "/integrator",
         icon: Zap,
-        label: "Nilvera E-Fatura",
+        label: "E-Fatura Entegratörü",
       },
       {
         path: "/system",

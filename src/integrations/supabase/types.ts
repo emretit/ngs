@@ -7708,6 +7708,7 @@ export type Database = {
           created_by: string | null
           customer_data: Json | null
           customer_id: string | null
+          customer_signature: string | null
           equipment_data: Json | null
           equipment_id: string | null
           id: string
@@ -7756,6 +7757,7 @@ export type Database = {
           created_by?: string | null
           customer_data?: Json | null
           customer_id?: string | null
+          customer_signature?: string | null
           equipment_data?: Json | null
           equipment_id?: string | null
           id?: string
@@ -7804,6 +7806,7 @@ export type Database = {
           created_by?: string | null
           customer_data?: Json | null
           customer_id?: string | null
+          customer_signature?: string | null
           equipment_data?: Json | null
           equipment_id?: string | null
           id?: string

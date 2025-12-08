@@ -10,7 +10,8 @@ import HeaderUserInfo from "@/components/HeaderUserInfo";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import GlobalSearchDialog from "@/components/GlobalSearchDialog";
-import { Calendar, Search, Command } from "lucide-react";
+import CompanySwitcher from "@/components/CompanySwitcher";
+import { Calendar, Search, Command, Building } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import {
@@ -18,6 +19,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 export const TopBar = () => {
@@ -26,6 +28,7 @@ export const TopBar = () => {
   const { handleLogout } = useLogout();
   const { userData, displayName, userInitials } = useCurrentUser();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false);
   
   const handleProfileClick = () => {
     navigate("/profile");
@@ -50,6 +53,7 @@ export const TopBar = () => {
   return (
     <>
       <GlobalSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+      <CompanySwitcher open={companySwitcherOpen} onOpenChange={setCompanySwitcherOpen} />
       
       <div className="h-14 border-b bg-card/95 backdrop-blur-sm flex items-center justify-between px-4 sm:px-6">
         {/* Left side - User and Company info */}
@@ -112,6 +116,12 @@ export const TopBar = () => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={handleProfileClick}>Profilim</DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/settings")}>Ayarlar</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setCompanySwitcherOpen(true)}>
+                <Building className="h-4 w-4 mr-2" />
+                Şirket Değiştir
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-600" onSelect={handleLogout}>Çıkış Yap</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

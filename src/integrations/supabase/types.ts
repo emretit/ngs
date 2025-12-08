@@ -7726,6 +7726,7 @@ export type Database = {
           recurrence_type: string | null
           service_details: Json | null
           service_due_date: string | null
+          service_end_date: string | null
           service_location: string | null
           service_number: string | null
           service_priority:
@@ -7734,6 +7735,7 @@ export type Database = {
           service_reported_date: string | null
           service_request_description: string | null
           service_result: string | null
+          service_start_date: string | null
           service_status: Database["public"]["Enums"]["service_status"] | null
           service_title: string
           service_type: string | null
@@ -7775,6 +7777,7 @@ export type Database = {
           recurrence_type?: string | null
           service_details?: Json | null
           service_due_date?: string | null
+          service_end_date?: string | null
           service_location?: string | null
           service_number?: string | null
           service_priority?:
@@ -7783,6 +7786,7 @@ export type Database = {
           service_reported_date?: string | null
           service_request_description?: string | null
           service_result?: string | null
+          service_start_date?: string | null
           service_status?: Database["public"]["Enums"]["service_status"] | null
           service_title: string
           service_type?: string | null
@@ -7824,6 +7828,7 @@ export type Database = {
           recurrence_type?: string | null
           service_details?: Json | null
           service_due_date?: string | null
+          service_end_date?: string | null
           service_location?: string | null
           service_number?: string | null
           service_priority?:
@@ -7832,6 +7837,7 @@ export type Database = {
           service_reported_date?: string | null
           service_request_description?: string | null
           service_result?: string | null
+          service_start_date?: string | null
           service_status?: Database["public"]["Enums"]["service_status"] | null
           service_title?: string
           service_type?: string | null
@@ -9015,6 +9021,44 @@ export type Database = {
             columns: ["district_id"]
             isOneToOne: false
             referencedRelation: "turkey_districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_companies: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          is_owner: boolean | null
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          is_owner?: boolean | null
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_owner?: boolean | null
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_companies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]

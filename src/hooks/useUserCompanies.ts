@@ -58,7 +58,19 @@ export const useSwitchCompany = () => {
   
   return useMutation({
     mutationFn: async (companyId: string) => {
-      if (!user?.id) throw new Error('User not authenticated');
+      if (!user?.id) throw new Error('Kullanıcı kimlik doğrulaması yapılmadı');
+      
+      // Önce kullanıcının bu firmaya ait olup olmadığını kontrol et
+      const { data: userCompany, error: checkError } = await supabase
+        .from('user_companies')
+        .select('id, company_id')
+        .eq('user_id', user.id)
+        .eq('company_id', companyId)
+        .single();
+
+      if (checkError || !userCompany) {
+        throw new Error('Bu firmaya erişim yetkiniz bulunmamaktadır');
+      }
       
       // Update the user's profile with the new company_id
       const { error } = await supabase
@@ -66,7 +78,10 @@ export const useSwitchCompany = () => {
         .update({ company_id: companyId })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Firma değiştirme hatası:', error);
+        throw new Error(error.message || 'Firma değiştirilemedi');
+      }
       
       // Clear user data cache
       sessionStorage.removeItem(`user_data_${user.id}`);
@@ -92,19 +107,30 @@ export const useCreateUserCompany = () => {
   
   return useMutation({
     mutationFn: async (companyName: string) => {
-      if (!user?.id) throw new Error('User not authenticated');
+      if (!user?.id) throw new Error('Kullanıcı kimlik doğrulaması yapılmadı');
+      
+      if (!companyName || !companyName.trim()) {
+        throw new Error('Şirket adı gereklidir');
+      }
       
       // Create the new company
       const { data: company, error: companyError } = await supabase
         .from('companies')
         .insert([{ 
-          name: companyName,
+          name: companyName.trim(),
           is_active: true
         }])
         .select()
         .single();
 
-      if (companyError) throw companyError;
+      if (companyError) {
+        console.error('Şirket oluşturma hatası:', companyError);
+        throw new Error(companyError.message || 'Şirket oluşturulamadı');
+      }
+      
+      if (!company?.id) {
+        throw new Error('Şirket oluşturuldu ancak ID alınamadı');
+      }
       
       // Add user to the company as owner
       const { error: userCompanyError } = await supabase
@@ -116,7 +142,12 @@ export const useCreateUserCompany = () => {
           is_owner: true
         }]);
 
-      if (userCompanyError) throw userCompanyError;
+      if (userCompanyError) {
+        console.error('Kullanıcı-şirket ilişkisi oluşturma hatası:', userCompanyError);
+        // Şirketi silmeyi dene (rollback)
+        await supabase.from('companies').delete().eq('id', company.id);
+        throw new Error(userCompanyError.message || 'Kullanıcı-şirket ilişkisi oluşturulamadı');
+      }
       
       // Update user's profile to the new company
       const { error: profileError } = await supabase
@@ -124,7 +155,13 @@ export const useCreateUserCompany = () => {
         .update({ company_id: company.id })
         .eq('id', user.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profil güncelleme hatası:', profileError);
+        // Şirketi ve user_companies kaydını silmeyi dene (rollback)
+        await supabase.from('user_companies').delete().eq('company_id', company.id).eq('user_id', user.id);
+        await supabase.from('companies').delete().eq('id', company.id);
+        throw new Error(profileError.message || 'Profil güncellenemedi');
+      }
       
       // Clear user data cache
       sessionStorage.removeItem(`user_data_${user.id}`);

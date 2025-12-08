@@ -2,17 +2,20 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Users, 
   Wrench, 
-  FileText,
   TrendingUp,
   Settings,
   BarChart3,
   Plus,
+  Clock,
+  CheckCircle,
+  AlertCircle,
   DollarSign,
+  Target,
+  Zap,
+  Users,
+  MapPin,
+  FileText,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +25,9 @@ import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { useState } from 'react';
 import StatusBadge from '@/components/common/StatusBadge';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const MONTHS = [
   { value: "all", label: "Tüm Aylar" },
@@ -41,6 +47,7 @@ const MONTHS = [
 
 export default function ServiceDashboard() {
   const navigate = useNavigate();
+  const { userData } = useCurrentUser();
   const currentYear = new Date().getFullYear();
   const currentMonthNum = new Date().getMonth() + 1;
   const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -57,13 +64,33 @@ export default function ServiceDashboard() {
 
   const { data: serviceRequests, isLoading } = useServiceRequests();
 
+  // Teknisyenleri getir
+  const { data: technicians } = useQuery({
+    queryKey: ['technicians', userData?.company_id],
+    queryFn: async () => {
+      if (!userData?.company_id) {
+        return [];
+      }
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('company_id', userData.company_id)
+        .eq('is_technical', true)
+        .eq('status', 'aktif');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userData?.company_id,
+  });
+
   // İstatistikleri hesapla - memoized
   const stats = useMemo(() => {
     const totalServices = serviceRequests?.length || 0;
     const completedServices = serviceRequests?.filter(s => s.service_status === 'completed').length || 0;
     const inProgressServices = serviceRequests?.filter(s => s.service_status === 'in_progress').length || 0;
-    const newServices = serviceRequests?.filter(s => s.service_status === 'new').length || 0;
+    const newServices = serviceRequests?.filter(s => s.service_status === 'new' || s.service_status === 'assigned').length || 0;
     const cancelledServices = serviceRequests?.filter(s => s.service_status === 'cancelled').length || 0;
+    const onHoldServices = serviceRequests?.filter(s => s.service_status === 'on_hold').length || 0;
     
     // Bu hafta tamamlanan servisler
     const thisWeekCompleted = serviceRequests?.filter(s => {
@@ -86,17 +113,65 @@ export default function ServiceDashboard() {
     // Tamamlama oranı
     const completionRate = totalServices > 0 ? ((completedServices / totalServices) * 100).toFixed(1) : '0';
 
+    // Ortalama tamamlama süresi (saat)
+    const completedWithDates = serviceRequests?.filter(
+      (s) => s.service_status === 'completed' && s.issue_date && s.completion_date
+    ) || [];
+    const totalCompletionHours = completedWithDates.reduce((sum, s) => {
+      const start = new Date(s.issue_date!);
+      const end = new Date(s.completion_date!);
+      return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    }, 0);
+    const averageCompletionTime = completedWithDates.length > 0
+      ? (totalCompletionHours / completedWithDates.length).toFixed(1)
+      : '0';
+
+    // Toplam gelir ve maliyet
+    const totalRevenue = serviceRequests?.reduce((sum, s) => sum + (parseFloat(s.total_cost || '0')), 0) || 0;
+    const totalCost = serviceRequests?.reduce((sum, s) => sum + (parseFloat(s.service_cost || '0')), 0) || 0;
+    const profit = totalRevenue - totalCost;
+    const profitMargin = totalRevenue > 0 ? ((profit / totalRevenue) * 100).toFixed(1) : '0';
+
+    // Öncelik dağılımı
+    const urgentCount = serviceRequests?.filter(s => s.service_priority === 'urgent').length || 0;
+    const highCount = serviceRequests?.filter(s => s.service_priority === 'high').length || 0;
+    const mediumCount = serviceRequests?.filter(s => s.service_priority === 'medium').length || 0;
+    const lowCount = serviceRequests?.filter(s => s.service_priority === 'low').length || 0;
+
+    // Atanmış servisler
+    const assignedServices = serviceRequests?.filter(s => s.assigned_technician).length || 0;
+    const unassignedServices = totalServices - assignedServices;
+
+    // Teknisyen başına ortalama servis
+    const avgServicesPerTechnician = technicians && technicians.length > 0 
+      ? (assignedServices / technicians.length).toFixed(1)
+      : '0';
+
     return {
       total: totalServices,
       completed: completedServices,
       inProgress: inProgressServices,
       new: newServices,
       cancelled: cancelledServices,
+      onHold: onHoldServices,
       thisWeekCompleted,
       thisMonthCompleted,
       completionRate,
+      averageCompletionTime,
+      totalRevenue,
+      totalCost,
+      profit,
+      profitMargin,
+      urgentCount,
+      highCount,
+      mediumCount,
+      lowCount,
+      assignedServices,
+      unassignedServices,
+      avgServicesPerTechnician,
+      techniciansCount: technicians?.length || 0,
     };
-  }, [serviceRequests]);
+  }, [serviceRequests, technicians]);
 
   // Recent services
   const recentServices = useMemo(() => {
@@ -116,7 +191,7 @@ export default function ServiceDashboard() {
 
   return (
     <>
-      {/* Clean Header Section - Satın alma dashboard'u gibi */}
+      {/* Clean Header Section */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="flex items-center gap-3">
@@ -125,7 +200,7 @@ export default function ServiceDashboard() {
             </div>
             <div className="space-y-0.5">
               <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                Servis Yönetimi
+                Servis Yönetimi Dashboard
               </h1>
               <p className="text-xs text-muted-foreground/70">
                 Tüm servis işlemlerinizi takip edin ve yönetin
@@ -166,9 +241,223 @@ export default function ServiceDashboard() {
       </div>
 
       <div className="space-y-6">
-        {/* Ana Servis Kartları - Satın alma dashboard'u gibi */}
+        {/* Ana İstatistik Kartları - İlk Satır */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
+          {/* Toplam Servis */}
+          <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <FileText className="h-4 w-4 text-blue-500" />
+                Toplam Servis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <CheckCircle className="h-3 w-3 text-green-500" />
+                <span>{stats.completed} tamamlanan</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tamamlanan */}
+          <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Tamamlanan
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-600">{stats.completed}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <TrendingUp className="h-3 w-3 text-green-500" />
+                <span>%{stats.completionRate} oran</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Devam Eden */}
+          <Card className="border-l-4 border-l-yellow-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4 text-yellow-500" />
+                Devam Eden
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-yellow-600">{stats.inProgress}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3 text-yellow-500" />
+                <span>İşlemde olan</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bekleyen */}
+          <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-orange-500" />
+                Bekleyen
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-orange-600">{stats.new}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <AlertCircle className="h-3 w-3 text-orange-500" />
+                <span>Onay bekleyen</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* İkinci Satır İstatistikler */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Ortalama Tamamlama Süresi */}
+          <Card className="border-l-4 border-l-purple-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4 text-purple-500" />
+                Ort. Tamamlama
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-600">{stats.averageCompletionTime}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3 text-purple-500" />
+                <span>saat</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Toplam Gelir */}
+          <Card className="border-l-4 border-l-emerald-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-emerald-500" />
+                Toplam Gelir
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-emerald-600">
+                {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0 }).format(stats.totalRevenue)}
+              </div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <TrendingUp className="h-3 w-3 text-emerald-500" />
+                <span>Kar marjı: %{stats.profitMargin}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bu Hafta */}
+          <Card className="border-l-4 border-l-cyan-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-cyan-500" />
+                Bu Hafta
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-cyan-600">{stats.thisWeekCompleted}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <CheckCircle className="h-3 w-3 text-cyan-500" />
+                <span>Tamamlanan servis</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bu Ay */}
+          <Card className="border-l-4 border-l-indigo-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-indigo-500" />
+                Bu Ay
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-indigo-600">{stats.thisMonthCompleted}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <TrendingUp className="h-3 w-3 text-indigo-500" />
+                <span>Tamamlanan servis</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Üçüncü Satır İstatistikler */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Atanmış Servisler */}
+          <Card className="border-l-4 border-l-teal-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Users className="h-4 w-4 text-teal-500" />
+                Atanmış
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-teal-600">{stats.assignedServices}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <Users className="h-3 w-3 text-teal-500" />
+                <span>{stats.unassignedServices} atanmamış</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Aktif Teknisyenler */}
+          <Card className="border-l-4 border-l-pink-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Users className="h-4 w-4 text-pink-500" />
+                Aktif Teknisyen
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-pink-600">{stats.techniciansCount}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <Target className="h-3 w-3 text-pink-500" />
+                <span>Ort: {stats.avgServicesPerTechnician} servis</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Acil Servisler */}
+          <Card className="border-l-4 border-l-red-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Zap className="h-4 w-4 text-red-500" />
+                Acil Servisler
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-600">{stats.urgentCount}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <AlertCircle className="h-3 w-3 text-red-500" />
+                <span>{stats.highCount} yüksek öncelik</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Beklemede */}
+          <Card className="border-l-4 border-l-amber-500 hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4 text-amber-500" />
+                Beklemede
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-amber-600">{stats.onHold}</div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3 text-amber-500" />
+                <span>On hold durumunda</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Ana Aksiyon Kartları */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Servis Yönetimi Card */}
           <div
             className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-blue-200 cursor-pointer"
@@ -202,8 +491,6 @@ export default function ServiceDashboard() {
               <div className="mb-3">
                 <span className="text-xs font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded">{dateLabel}</span>
               </div>
-
-              {/* Summary Content */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-600">Toplam Servis</span>
@@ -256,8 +543,6 @@ export default function ServiceDashboard() {
               <div className="mb-3">
                 <span className="text-xs font-normal text-green-600 bg-green-50 px-2 py-1 rounded">{dateLabel}</span>
               </div>
-
-              {/* Summary Content */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-600">Bekleyen</span>
@@ -280,7 +565,7 @@ export default function ServiceDashboard() {
           {/* Analitik Card */}
           <div
             className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-orange-200 cursor-pointer"
-            onClick={() => navigate("/service/analytics")}
+            onClick={() => navigate("/service/performance")}
           >
             <div className="p-5">
               <div className="flex items-center justify-between mb-2">
@@ -299,7 +584,7 @@ export default function ServiceDashboard() {
                     className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 h-7"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate("/service/analytics");
+                      navigate("/service/performance");
                     }}
                   >
                     <Plus className="h-3 w-3" />
@@ -310,8 +595,6 @@ export default function ServiceDashboard() {
               <div className="mb-3">
                 <span className="text-xs font-normal text-orange-600 bg-orange-50 px-2 py-1 rounded">{dateLabel}</span>
               </div>
-
-              {/* Summary Content */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-600">Toplam Servis</span>
@@ -330,77 +613,52 @@ export default function ServiceDashboard() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* İstatistik Kartları - Modernize edilmiş */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Services */}
-          <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <FileText className="h-4 w-4 text-blue-500" />
-                Toplam Servis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <CheckCircle className="h-3 w-3 text-green-500" />
-                <span>{stats.completed} tamamlanan</span>
+          {/* Harita Card */}
+          <div
+            className="group bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 hover:border-purple-200 cursor-pointer"
+            onClick={() => navigate("/service/map")}
+          >
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-gray-900">Harita Görünümü</h2>
+                    <p className="text-xs text-gray-500">Servis lokasyonları</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/service/map");
+                    }}
+                  >
+                    <MapPin className="h-3 w-3" />
+                    Aç
+                  </Button>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Completed Services */}
-          <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                Tamamlanan
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">{stats.completed}</div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 text-green-500" />
-                <span>%{stats.completionRate} oran</span>
+              <div className="mb-3">
+                <span className="text-xs font-normal text-purple-600 bg-purple-50 px-2 py-1 rounded">{dateLabel}</span>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* In Progress Services */}
-          <Card className="border-l-4 border-l-yellow-500 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Clock className="h-4 w-4 text-yellow-500" />
-                Devam Eden
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-yellow-600">{stats.inProgress}</div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3 text-yellow-500" />
-                <span>İşlemde olan</span>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Aktif Servisler</span>
+                  <span className="text-sm font-bold text-gray-900">{stats.inProgress + stats.new}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Toplam</span>
+                  <span className="text-sm font-bold text-purple-600">{stats.total}</span>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* New Services */}
-          <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-orange-500" />
-                Bekleyen
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">{stats.new}</div>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <AlertCircle className="h-3 w-3 text-orange-500" />
-                <span>Onay bekleyen</span>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {/* Recent Activity */}
@@ -408,10 +666,22 @@ export default function ServiceDashboard() {
           {/* Recent Services */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Wrench className="h-5 w-5 text-blue-500" />
-                Son Servisler
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Wrench className="h-5 w-5 text-blue-500" />
+                  Son Servisler
+                </CardTitle>
+                {recentServices.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => navigate("/service/management")}
+                  >
+                    Tümünü Gör
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {recentServices.length === 0 ? (
@@ -477,6 +747,32 @@ export default function ServiceDashboard() {
                     </div>
                   </div>
                   <div className="text-2xl font-bold text-blue-600">{stats.thisMonthCompleted}</div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Target className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">Tamamlama Oranı</div>
+                      <div className="text-xs text-muted-foreground">Genel başarı oranı</div>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-purple-600">%{stats.completionRate}</div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-lg bg-orange-50 hover:bg-orange-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <Clock className="h-4 w-4 text-orange-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">Ortalama Süre</div>
+                      <div className="text-xs text-muted-foreground">Tamamlama süresi</div>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-orange-600">{stats.averageCompletionTime}s</div>
                 </div>
               </div>
             </CardContent>

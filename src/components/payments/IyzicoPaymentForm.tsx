@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CreditCard, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface PaymentFormData {
   cardHolderName: string;
@@ -43,6 +44,7 @@ export function IyzicoPaymentForm({
   onSuccess,
   onError 
 }: IyzicoPaymentFormProps) {
+  const { t } = useTranslation();
   const [isProcessing, setIsProcessing] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<PaymentFormData>();
 
@@ -210,56 +212,56 @@ export function IyzicoPaymentForm({
 
           {/* Alıcı Bilgileri */}
           <div className="space-y-4 p-4 border rounded-lg">
-            <h3 className="font-semibold text-sm">Alıcı Bilgileri</h3>
+            <h3 className="font-semibold text-sm">{t("forms.buyerInfo")}</h3>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="buyerName">Ad</Label>
+                <Label htmlFor="buyerName">{t("forms.buyerName")}</Label>
                 <Input
                   id="buyerName"
-                  {...register("buyerName", { required: "Ad gerekli" })}
+                  {...register("buyerName", { required: t("validation.nameRequired") })}
                 />
               </div>
               <div>
-                <Label htmlFor="buyerSurname">Soyad</Label>
+                <Label htmlFor="buyerSurname">{t("forms.buyerSurname")}</Label>
                 <Input
                   id="buyerSurname"
-                  {...register("buyerSurname", { required: "Soyad gerekli" })}
+                  {...register("buyerSurname", { required: t("validation.surnameRequired") })}
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="buyerEmail">E-posta</Label>
+              <Label htmlFor="buyerEmail">{t("forms.buyerEmail")}</Label>
               <Input
                 id="buyerEmail"
                 type="email"
-                {...register("buyerEmail", { required: "E-posta gerekli" })}
+                {...register("buyerEmail", { required: t("validation.emailRequired") })}
               />
             </div>
 
             <div>
-              <Label htmlFor="identityNumber">TC Kimlik No</Label>
+              <Label htmlFor="identityNumber">{t("forms.identityNumber")}</Label>
               <Input
                 id="identityNumber"
-                {...register("identityNumber", { required: "TC Kimlik No gerekli" })}
+                {...register("identityNumber", { required: t("validation.identityNumberRequired") })}
                 maxLength={11}
               />
             </div>
 
             <div>
-              <Label htmlFor="address">Adres</Label>
+              <Label htmlFor="address">{t("common.address")}</Label>
               <Input
                 id="address"
-                {...register("address", { required: "Adres gerekli" })}
+                {...register("address", { required: t("validation.addressRequired") })}
               />
             </div>
 
             <div>
-              <Label htmlFor="city">Şehir</Label>
+              <Label htmlFor="city">{t("common.city")}</Label>
               <Input
                 id="city"
-                {...register("city", { required: "Şehir gerekli" })}
+                {...register("city", { required: t("validation.cityRequired") })}
               />
             </div>
           </div>
@@ -269,11 +271,11 @@ export function IyzicoPaymentForm({
             className="w-full" 
             disabled={isProcessing}
           >
-            {isProcessing ? "İşleminiz Gerçekleştiriliyor..." : `${amount.toFixed(2)} TRY Öde`}
+            {isProcessing ? t("forms.paymentProcessing") : `${amount.toFixed(2)} ${t("forms.payAmount")}`}
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            Ödeme işleminiz iyzico güvencesi altında gerçekleştirilmektedir.
+            {t("forms.paymentSecure")}
           </p>
         </form>
       </CardContent>

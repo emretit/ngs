@@ -24,49 +24,22 @@ const DEFAULT_TAB: Tab = {
   id: 'dashboard',
   path: '/dashboard',
   title: 'Gösterge Paneli',
-  closable: false,
+  closable: true,
 };
 
 export function TabProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   
-  const [tabs, setTabs] = useState<Tab[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Ensure dashboard tab always exists
-        if (!parsed.find((t: Tab) => t.path === '/dashboard')) {
-          return [DEFAULT_TAB, ...parsed];
-        }
-        return parsed;
-      }
-    } catch (e) {
-      console.error('Error loading tabs from localStorage:', e);
-    }
-    return [DEFAULT_TAB];
-  });
+  // Initialize with only dashboard tab - no localStorage persistence
+  const [tabs, setTabs] = useState<Tab[]>([DEFAULT_TAB]);
 
-  const [activeTabId, setActiveTabId] = useState<string | null>(() => {
-    try {
-      const saved = localStorage.getItem(`${STORAGE_KEY}-active`);
-      return saved || 'dashboard';
-    } catch {
-      return 'dashboard';
-    }
-  });
+  const [activeTabId, setActiveTabId] = useState<string | null>('dashboard');
 
-  // Persist tabs to localStorage
+  // Clear localStorage on mount to ensure clean state on page refresh
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tabs));
-  }, [tabs]);
-
-  // Persist active tab
-  useEffect(() => {
-    if (activeTabId) {
-      localStorage.setItem(`${STORAGE_KEY}-active`, activeTabId);
-    }
-  }, [activeTabId]);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(`${STORAGE_KEY}-active`);
+  }, []);
 
   const getTabByPath = useCallback((path: string) => {
     return tabs.find(tab => tab.path === path);
@@ -86,7 +59,7 @@ export function TabProvider({ children }: { children: ReactNode }) {
         id: `tab-${Date.now()}`,
         path,
         title,
-        closable: path !== '/dashboard' && closable,
+        closable,
       };
 
       setActiveTabId(newTab.id);
@@ -102,12 +75,19 @@ export function TabProvider({ children }: { children: ReactNode }) {
       const tabIndex = prevTabs.findIndex(tab => tab.id === id);
       const newTabs = prevTabs.filter(tab => tab.id !== id);
 
-      // If removing active tab, navigate to adjacent tab
-      if (activeTabId === id && newTabs.length > 0) {
-        const newActiveIndex = Math.min(tabIndex, newTabs.length - 1);
-        const newActiveTab = newTabs[newActiveIndex];
-        setActiveTabId(newActiveTab.id);
-        navigate(newActiveTab.path);
+      // If removing active tab, navigate to adjacent tab or dashboard
+      if (activeTabId === id) {
+        if (newTabs.length > 0) {
+          const newActiveIndex = Math.min(tabIndex, newTabs.length - 1);
+          const newActiveTab = newTabs[newActiveIndex];
+          setActiveTabId(newActiveTab.id);
+          navigate(newActiveTab.path);
+        } else {
+          // If no tabs left, navigate to dashboard and create default tab
+          navigate('/dashboard');
+          setActiveTabId('dashboard');
+          return [DEFAULT_TAB];
+        }
       }
 
       return newTabs;

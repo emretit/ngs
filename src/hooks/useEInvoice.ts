@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 export interface EInvoiceStatusTracking {
   id: string;
@@ -21,6 +22,7 @@ export interface EInvoiceStatusTracking {
 }
 
 export const useEInvoice = () => {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
 
   // Direkt fatura gönderme
@@ -53,7 +55,7 @@ export const useEInvoice = () => {
       console.log("🎯 Data message:", data?.message);
       
       if (data?.success) {
-        toast.success("E-fatura başarıyla gönderildi");
+        toast.success(t('toast.eInvoiceSent'));
         // E-fatura durumunu ve satış faturaları listesini yenile
         queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
@@ -64,11 +66,11 @@ export const useEInvoice = () => {
           detail: { salesInvoiceId, status: data.status }
         }));
       } else if (data?.status === 'sending') {
-        toast.info("Fatura şu anda gönderiliyor. Lütfen birkaç dakika bekleyin.");
+        toast.info(t('toast.eInvoiceSending'));
         // Gönderim başladığında da listeyi yenile
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       } else {
-        toast.error(data?.error || data?.message || "E-fatura gönderimi başarısız");
+        toast.error(data?.error || data?.message || t('toast.eInvoiceSendError'));
         // Hata durumunda da listeyi yenile
         queryClient.invalidateQueries({ queryKey: ["salesInvoices"] });
       }
@@ -114,15 +116,15 @@ export const useEInvoice = () => {
     },
     onSuccess: (success, salesInvoiceId) => {
       if (success) {
-        toast.success("Durum kontrolü tamamlandı");
+        toast.success(t('toast.statusCheckCompleted'));
         queryClient.invalidateQueries({ queryKey: ["einvoice-status", salesInvoiceId] });
       } else {
-        toast.error("Durum kontrolü başarısız");
+        toast.error(t('toast.statusCheckFailed'));
       }
     },
     onError: (error) => {
       console.error("Durum kontrolü hatası:", error);
-      toast.error("Durum kontrolü sırasında hata oluştu");
+      toast.error(t('toast.statusCheckError'));
     },
   });
 
@@ -141,16 +143,16 @@ export const useEInvoice = () => {
     },
     onSuccess: (data) => {
       if (data?.success && data?.isEinvoiceMukellef) {
-        toast.success("Müşteri alias bilgileri güncellendi");
+        toast.success(t('toast.customerAliasUpdated'));
       } else if (data?.success && !data?.isEinvoiceMukellef) {
-        toast.info("Bu müşteri e-fatura mükellefi değil");
+        toast.info(t('toast.customerNotEInvoice'));
       } else {
-        toast.error(data?.error || "Müşteri bilgileri güncellenemedi");
+        toast.error(data?.error || t('toast.customerUpdateError'));
       }
     },
     onError: (error) => {
       console.error("Müşteri alias güncelleme hatası:", error);
-      toast.error("Müşteri bilgileri güncellenirken hata oluştu");
+      toast.error(t('toast.customerUpdateFailed'));
     },
   });
 

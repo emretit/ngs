@@ -187,7 +187,7 @@ interface Role {
 
 type RolePermissions = Record<string, Record<string, boolean>>;
 
-export const RoleManagementPanel = ({ users }: RoleManagementPanelProps) => {
+export const RoleManagementPanel = ({ users = [] }: RoleManagementPanelProps) => {
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
   

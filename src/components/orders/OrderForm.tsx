@@ -9,6 +9,7 @@ import { CreateOrderData } from "@/types/orders";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Save, Send } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import OrderCustomerInfo from "./OrderCustomerInfo";
 import OrderItemsTable from "./OrderItemsTable";
 import OrderSummary from "./OrderSummary";
@@ -19,6 +20,7 @@ interface OrderFormProps {
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createOrderMutation } = useOrders();
@@ -216,12 +218,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold mb-4">
-          {proposalId ? "Tekliften Sipariş Oluştur" : "Yeni Sipariş Oluştur"}
+          {proposalId ? t("forms.createFromProposal") : t("forms.createNewOrder")}
         </h2>
         
         {!proposalId && (
           <div className="bg-yellow-50 text-yellow-800 p-3 rounded-md mb-4">
-            Not: Direkt sipariş oluşturuyorsunuz. Tekliften sipariş oluşturmak için önce teklif detay sayfasından "Siparişe Çevir" butonunu kullanabilirsiniz.
+            {t("forms.note")}
           </div>
         )}
       </div>
@@ -245,14 +247,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ proposalId }) => {
           disabled={loading}
         >
           <Save className="h-4 w-4 mr-2" />
-          {loading ? "Kaydediliyor..." : "Taslak Olarak Kaydet"}
+          {loading ? t("common.saving") : t("forms.saveAsDraft")}
         </Button>
         <Button 
           onClick={handleCreateOrder}
           disabled={loading}
         >
           <Send className="h-4 w-4 mr-2" />
-          {loading ? "Oluşturuluyor..." : "Siparişi Oluştur"}
+          {loading ? t("common.creating") : t("forms.createOrder")}
         </Button>
       </div>
     </div>

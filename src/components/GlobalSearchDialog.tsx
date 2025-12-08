@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useTranslation } from "react-i18next";
 
 interface GlobalSearchDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface GlobalSearchDialogProps {
 }
 
 const GlobalSearchDialog = ({ open, onOpenChange }: GlobalSearchDialogProps) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -97,7 +99,7 @@ const GlobalSearchDialog = ({ open, onOpenChange }: GlobalSearchDialogProps) => 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden">
         <DialogHeader className="sr-only">
-          <DialogTitle>Hızlı Arama</DialogTitle>
+          <DialogTitle>{t("forms.quickSearch")}</DialogTitle>
         </DialogHeader>
         
         {/* Search Input */}
@@ -109,7 +111,7 @@ const GlobalSearchDialog = ({ open, onOpenChange }: GlobalSearchDialogProps) => 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Müşteri, teklif, çalışan, ürün veya fırsat ara..."
+            placeholder={t("forms.searchPlaceholder")}
             className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base placeholder:text-muted-foreground/60"
             autoComplete="off"
           />
@@ -238,9 +240,9 @@ const GlobalSearchDialog = ({ open, onOpenChange }: GlobalSearchDialogProps) => 
             <div className="w-16 h-16 mb-4 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center">
               <Search className="h-8 w-8 text-primary/60" />
             </div>
-            <p className="text-sm font-medium text-foreground">Hızlı Arama</p>
+            <p className="text-sm font-medium text-foreground">{t("forms.quickSearch")}</p>
             <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-              Müşteriler, teklifler, çalışanlar, ürünler ve fırsatlar arasında anında arama yapın
+              {t("forms.quickSearchDescription")}
             </p>
             <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground/70">
               <span className="flex items-center gap-1">

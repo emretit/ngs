@@ -1,5 +1,16 @@
 import { format, startOfWeek as dateFnsStartOfWeek, isSameDay as dateFnsIsSameDay, addDays } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { tr, enUS } from 'date-fns/locale';
+
+/**
+ * Get locale based on current language
+ */
+const getLocale = () => {
+  if (typeof window !== 'undefined') {
+    const lang = localStorage.getItem('i18nextLng') || 'tr';
+    return lang === 'en' ? enUS : tr;
+  }
+  return tr;
+};
 
 /**
  * Format a date with the given format string
@@ -10,7 +21,7 @@ import { tr } from 'date-fns/locale';
 export const formatDate = (date: Date | string | null | undefined, formatStr: string = 'dd.MM.yyyy'): string => {
   if (!date) return '';
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return format(dateObj, formatStr, { locale: tr });
+  return format(dateObj, formatStr, { locale: getLocale() });
 };
 
 /**
@@ -19,7 +30,7 @@ export const formatDate = (date: Date | string | null | undefined, formatStr: st
  * @returns Date at the start of the week
  */
 export const startOfWeek = (date: Date): Date => {
-  return dateFnsStartOfWeek(date, { weekStartsOn: 1, locale: tr });
+  return dateFnsStartOfWeek(date, { weekStartsOn: 1, locale: getLocale() });
 };
 
 /**
@@ -51,7 +62,7 @@ export const addDaysToDate = (date: Date, amount: number): Date => {
 export const formatTime = (date: Date | string | null | undefined, formatStr: string = 'HH:mm'): string => {
   if (!date) return '';
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return format(dateObj, formatStr, { locale: tr });
+  return format(dateObj, formatStr, { locale: getLocale() });
 };
 
 /**

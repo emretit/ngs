@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuoteData, PdfTemplate, PdfExportOptions, TemplateSchema } from '@/types/pdf-template';
 import PdfRenderer from '@/components/pdf/PdfRenderer';
 import { validatePdfData } from '@/utils/pdfHelpers';
+import { ServicePdfData, ServicePdfTemplate, ServiceTemplateSchema } from '@/types/service-template';
+import ServicePdfRenderer from '@/components/pdf/ServicePdfRenderer';
+import type { ServiceRequest } from '@/hooks/service/types';
 
 export class PdfExportService {
   /**
@@ -861,6 +864,322 @@ export class PdfExportService {
     } catch (error) {
       console.error('Error in getCompanySettings:', error);
       return {};
+    }
+  }
+
+  /**
+   * Transform service request to ServicePdfData format
+   */
+  static async transformServiceForPdf(service: ServiceRequest): Promise<ServicePdfData> {
+    try {
+      // Get customer data
+      let customer: ServicePdfData['customer'] | undefined;
+      if (service.customer_id) {
+        const { data: customerData } = await supabase
+          .from('customers')
+          .select('name, company, email, mobile_phone, address')
+          .eq('id', service.customer_id)
+          .single();
+
+        if (customerData) {
+          customer = {
+            name: customerData.name || '',
+            company: customerData.company || undefined,
+            email: customerData.email || undefined,
+            phone: customerData.mobile_phone || undefined,
+            address: customerData.address || undefined,
+          };
+        }
+      }
+
+      // Get technician data
+      let technician: ServicePdfData['technician'] | undefined;
+      if (service.assigned_technician) {
+        const { data: technicianData } = await supabase
+          .from('employees')
+          .select('first_name, last_name, email, mobile_phone')
+          .eq('id', service.assigned_technician)
+          .single();
+
+        if (technicianData) {
+          technician = {
+            name: `${technicianData.first_name || ''} ${technicianData.last_name || ''}`.trim(),
+            email: technicianData.email || undefined,
+            phone: technicianData.mobile_phone || undefined,
+          };
+        }
+      }
+
+      // Get company settings
+      const companySettings = await this.getCompanySettings();
+      const company: ServicePdfData['company'] = {
+        name: companySettings.company_name || '',
+        address: companySettings.company_address || '',
+        phone: companySettings.company_phone || '',
+        email: companySettings.company_email || '',
+        website: companySettings.company_website || undefined,
+        logo_url: companySettings.company_logo_url || undefined,
+        tax_number: companySettings.company_tax_number || undefined,
+      };
+
+      // Get parts from service_details if available
+      const serviceDetails = service.service_details as any;
+      const parts = serviceDetails?.parts_list || serviceDetails?.parts || [];
+
+      // Get instructions from service_details if available
+      const instructions = serviceDetails?.instructions || [];
+
+      return {
+        id: service.id,
+        serviceNumber: service.service_number || `SR-${service.id.slice(-6).toUpperCase()}`,
+        serviceTitle: service.service_title || '',
+        serviceDescription: service.service_request_description || undefined,
+        serviceType: service.service_type || undefined,
+        priority: (service.service_priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium',
+        status: service.service_status || '',
+        estimatedDuration: service.estimated_duration || undefined,
+        location: service.service_location || undefined,
+        reportedDate: service.issue_date || service.created_at || undefined,
+        dueDate: service.service_due_date || undefined,
+        completedDate: service.completion_date || undefined,
+        customer,
+        technician,
+        company,
+        parts: parts.map((part: any, index: number) => ({
+          id: part.id || `part-${index}`,
+          name: part.name || part.part_name || '',
+          quantity: Number(part.quantity) || 1,
+          unit: part.unit || 'adet',
+          unitPrice: Number(part.unit_price) || 0,
+          total: Number(part.total) || (Number(part.quantity || 1) * Number(part.unit_price || 0)),
+        })),
+        instructions: Array.isArray(instructions) ? instructions : [],
+        notes: serviceDetails?.notes || service.notes || undefined,
+        createdAt: service.created_at || new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Error transforming service for PDF:', error);
+      throw new Error('Servis verisi PDF formatına dönüştürülemedi: ' + (error as Error).message);
+    }
+  }
+
+  /**
+   * Get service PDF templates
+   * Note: service_templates table doesn't have schema_json, so we use default schema
+   */
+  static async getServiceTemplates(): Promise<ServicePdfTemplate[]> {
+    const companyId = await this.getCurrentCompanyId();
+    
+    // Check if there's a service_pdf_templates table first
+    let query = supabase
+      .from('service_pdf_templates')
+      .select('*')
+      .eq('is_active', true);
+
+    if (companyId) {
+      query = query.eq('company_id', companyId);
+    } else {
+      query = query.is('company_id', null);
+    }
+
+    let { data, error } = await query.order('name');
+
+    // If service_pdf_templates doesn't exist, try service_templates and use default schema
+    if (error && error.code === '42P01') {
+      // Table doesn't exist, use service_templates with default schema
+      let fallbackQuery = supabase
+        .from('service_templates')
+        .select('*')
+        .eq('is_active', true);
+
+      if (companyId) {
+        fallbackQuery = fallbackQuery.eq('company_id', companyId);
+      } else {
+        fallbackQuery = fallbackQuery.is('company_id', null);
+      }
+
+      const { data: fallbackData, error: fallbackError } = await fallbackQuery.order('name');
+
+      if (fallbackError) {
+        console.error('Error fetching service templates:', fallbackError);
+        throw new Error('Servis şablonları yüklenirken hata oluştu: ' + fallbackError.message);
+      }
+
+      // Import default schema
+      const { defaultServiceTemplateSchema } = await import('@/types/service-template');
+      
+      // Transform to ServicePdfTemplate format with default schema
+      return (fallbackData || []).map((template: any) => ({
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        schema_json: defaultServiceTemplateSchema, // Use default schema
+        is_active: template.is_active || true,
+        company_id: template.company_id || '',
+        created_by: template.created_by,
+        created_at: template.created_at || new Date().toISOString(),
+        updated_at: template.updated_at || new Date().toISOString(),
+      })) as ServicePdfTemplate[];
+    }
+
+    if (error) {
+      console.error('Error fetching service templates:', error);
+      throw new Error('Servis şablonları yüklenirken hata oluştu: ' + error.message);
+    }
+
+    // Transform to ServicePdfTemplate format
+    return (data || []).map((template: any) => ({
+      id: template.id,
+      name: template.name,
+      description: template.description,
+      schema_json: template.schema_json || {},
+      is_active: template.is_active,
+      company_id: template.company_id,
+      created_by: template.created_by,
+      created_at: template.created_at,
+      updated_at: template.updated_at,
+    })) as ServicePdfTemplate[];
+  }
+
+  /**
+   * Generate service PDF
+   */
+  static async generateServicePdf(
+    serviceData: ServicePdfData,
+    options?: { templateId?: string; template?: ServicePdfTemplate }
+  ) {
+    try {
+      let activeTemplate: ServicePdfTemplate | null = null;
+
+      if (options?.template) {
+        activeTemplate = options.template;
+      } else if (options?.templateId) {
+        const { data, error } = await supabase
+          .from('service_templates')
+          .select('*')
+          .eq('id', options.templateId)
+          .single();
+
+        if (error) {
+          throw new Error('Şablon bulunamadı: ' + error.message);
+        }
+
+        activeTemplate = {
+          id: data.id,
+          name: data.name,
+          description: data.description,
+          schema_json: data.schema_json || {},
+          is_active: data.is_active,
+          company_id: data.company_id,
+          created_by: data.created_by,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+        };
+      } else {
+        // Get default template
+        const templates = await this.getServiceTemplates();
+        activeTemplate = templates[0] || null;
+
+        if (!activeTemplate) {
+          throw new Error('Servis şablonu bulunamadı');
+        }
+      }
+
+      if (!activeTemplate) {
+        throw new Error('Servis şablonu bulunamadı');
+      }
+
+      // Parse schema if it's a string
+      let schema = activeTemplate.schema_json;
+      if (typeof schema === 'string') {
+        try {
+          schema = JSON.parse(schema);
+        } catch (parseError) {
+          throw new Error('Şablon şeması geçersiz JSON formatında');
+        }
+      }
+
+      // Generate PDF using ServicePdfRenderer
+      const pdfElement = (
+        <ServicePdfRenderer
+          data={serviceData}
+          schema={schema as ServiceTemplateSchema}
+        />
+      );
+
+      const blob = await pdf(pdfElement).toBlob();
+      return blob;
+    } catch (error) {
+      console.error('Error generating service PDF:', error);
+      throw new Error('Servis PDF oluşturulamadı: ' + (error as Error).message);
+    }
+  }
+
+  /**
+   * Open service PDF in new tab
+   */
+  static async openServicePdfInNewTab(
+    serviceData: ServicePdfData,
+    options: { templateId?: string; filename?: string } = {}
+  ) {
+    try {
+      const blob = await this.generateServicePdf(serviceData, { templateId: options.templateId });
+      
+      const url = URL.createObjectURL(blob);
+      const newWindow = window.open(url, '_blank');
+      
+      if (!newWindow) {
+        // Fallback to download if popup blocked
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = options.filename || `servis-${serviceData.serviceNumber}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (error) {
+      console.error('Error opening service PDF:', error);
+      throw new Error('Servis PDF açılırken hata oluştu: ' + (error as Error).message);
+    }
+  }
+
+  /**
+   * Transform service slip to ServicePdfData format
+   */
+  static async transformServiceSlipForPdf(service: ServiceRequest): Promise<ServicePdfData> {
+    try {
+      // Get service slip data
+      const serviceData = await this.transformServiceForPdf(service);
+      
+      // Add slip-specific data
+      const serviceDetails = service.service_details as any;
+      if (service.slip_number) {
+        serviceData.serviceNumber = service.slip_number;
+      }
+
+      // Add completion date if available
+      if (service.completion_date) {
+        serviceData.completedDate = service.completion_date;
+      }
+
+      // Add technician signature info if available
+      if (service.technician_signature) {
+        // Signature data can be added to notes or a separate field
+        if (serviceData.notes) {
+          serviceData.notes += '\n\nTeknisyen İmzası: Onaylandı';
+        } else {
+          serviceData.notes = 'Teknisyen İmzası: Onaylandı';
+        }
+      }
+
+      return serviceData;
+    } catch (error) {
+      console.error('Error transforming service slip for PDF:', error);
+      throw new Error('Servis fişi PDF formatına dönüştürülemedi: ' + (error as Error).message);
     }
   }
 

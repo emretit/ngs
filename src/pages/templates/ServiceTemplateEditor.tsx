@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,13 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { PDFViewer } from '@react-pdf/renderer';
-import { Save, FileText, Loader2 } from 'lucide-react';
+import { Save, FileText, Loader2, Eye, MoreHorizontal, Download, Send } from 'lucide-react';
 import BackButton from '@/components/ui/back-button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ServiceTemplateService, ServiceTemplate, CreateServiceTemplateData } from '@/services/serviceTemplateService';
@@ -47,12 +47,15 @@ type ServiceTemplateFormData = z.infer<typeof serviceTemplateFormSchema>;
 export default function ServiceTemplateEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { userData } = useCurrentUser();
   const queryClient = useQueryClient();
   const isNew = !id || id === 'new';
 
   const [pdfSchema, setPdfSchema] = useState<ServiceTemplateSchema>(defaultServiceTemplateSchema);
   const [previewData, setPreviewData] = useState<ServicePdfData>(sampleServicePdfData);
+  const [templateName, setTemplateName] = useState('');
+  const companyInfoLoadedRef = useRef(false);
 
   const form = useForm<ServiceTemplateFormData>({
     resolver: zodResolver(serviceTemplateFormSchema),
@@ -97,36 +100,55 @@ export default function ServiceTemplateEditor() {
   });
 
   // Load company info on mount
-  useEffect(() => {
-    const loadCompanyInfo = async () => {
-      try {
-        const companySettings = await PdfExportService.getCompanySettings();
-        if (companySettings) {
-          const settings = companySettings as any;
-          setPdfSchema(prev => ({
-            ...prev,
-            header: {
-              ...prev.header,
-              companyName: settings.company_name || '',
-              companyAddress: settings.company_address || '',
-              companyPhone: settings.company_phone || '',
-              companyEmail: settings.company_email || '',
-              companyWebsite: settings.company_website || '',
-              companyTaxNumber: settings.company_tax_number || '',
-              ...(settings.company_logo_url ? { logoUrl: settings.company_logo_url } : {}),
-            },
-          }));
+  const loadCompanyInfo = async (showToast = false) => {
+    if (companyInfoLoadedRef.current && showToast) {
+      return;
+    }
+    
+    try {
+      const companySettings = await PdfExportService.getCompanySettings();
+      if (companySettings) {
+        const settings = companySettings as any;
+        setPdfSchema(prev => ({
+          ...prev,
+          header: {
+            ...prev.header,
+            companyName: settings.company_name || '',
+            companyAddress: settings.company_address || '',
+            companyPhone: settings.company_phone || '',
+            companyEmail: settings.company_email || '',
+            companyWebsite: settings.company_website || '',
+            companyTaxNumber: settings.company_tax_number || '',
+            ...(settings.company_logo_url ? { logoUrl: settings.company_logo_url } : {}),
+          },
+        }));
+        
+        if (showToast && !companyInfoLoadedRef.current) {
+          companyInfoLoadedRef.current = true;
+          toast.success('Şirket bilgileri sistem ayarlarından yüklendi');
         }
-      } catch (error) {
-        console.error('Error loading company info:', error);
       }
-    };
-    loadCompanyInfo();
-  }, []);
+    } catch (error) {
+      console.error('Error loading company info:', error);
+      if (showToast) {
+        toast.error('Şirket bilgileri yüklenirken hata oluştu');
+      }
+    }
+  };
 
-  // Load form data for editing
   useEffect(() => {
-    if (existingTemplate) {
+    const isNewTemplatePage = location.pathname === '/pdf-templates/service/new' || id === 'new';
+    
+    if (isNewTemplatePage) {
+      setTemplateName('Yeni Servis Şablonu');
+      companyInfoLoadedRef.current = false;
+      const initializeNewTemplate = async () => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await loadCompanyInfo(true);
+      };
+      initializeNewTemplate();
+    } else if (existingTemplate) {
+      setTemplateName(existingTemplate.name || '');
       form.reset({
         name: existingTemplate.name || '',
         description: existingTemplate.description || '',
@@ -139,7 +161,6 @@ export default function ServiceTemplateEditor() {
         default_technician_id: existingTemplate.default_technician_id || '',
       });
 
-      // Update preview data with template values
       setPreviewData(prev => ({
         ...prev,
         serviceTitle: existingTemplate.service_title || prev.serviceTitle,
@@ -150,7 +171,7 @@ export default function ServiceTemplateEditor() {
         location: existingTemplate.default_location || prev.location,
       }));
     }
-  }, [existingTemplate, form]);
+  }, [id, existingTemplate, form, location.pathname]);
 
   // Watch form changes and update preview
   const watchedValues = form.watch();
@@ -184,10 +205,10 @@ export default function ServiceTemplateEditor() {
       };
       return ServiceTemplateService.createTemplate(userData.company_id, userData.id, templateData);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['service-templates'] });
       toast.success('Servis şablonu başarıyla oluşturuldu');
-      navigate('/pdf-templates');
+      navigate(`/pdf-templates/service/edit/${data.id}`);
     },
     onError: (error: any) => {
       toast.error(error.message || 'Şablon oluşturulurken bir hata oluştu');
@@ -245,10 +266,30 @@ export default function ServiceTemplateEditor() {
     });
   };
 
+  const handleDownloadPdf = async () => {
+    if (!previewData) return;
+    
+    try {
+      const blob = await PdfExportService.generateServicePdf(previewData, { template: { id: '', name: '', schema_json: pdfSchema, is_active: true, company_id: '', created_at: '', updated_at: '' } as any });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `servis-fisi-${previewData.serviceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('PDF başarıyla indirildi');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('PDF indirilirken hata oluştu');
+    }
+  };
+
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-background rounded-md border shadow-sm mb-2">
+    <div className="space-y-2">
+      {/* Enhanced Sticky Header */}
+      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
         <div className="flex items-center justify-between p-3 pl-12">
           <div className="flex items-center gap-3">
             <BackButton 
@@ -256,14 +297,14 @@ export default function ServiceTemplateEditor() {
               variant="ghost"
               size="sm"
             >
-              Şablonlar
+              PDF Şablonları
             </BackButton>
             
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-muted-foreground" />
               <div className="space-y-0.5">
-                <h1 className="text-xl font-semibold tracking-tight">
-                  {isNew ? 'Yeni Servis Şablonu' : 'Servis Şablonu Düzenle'}
+                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                  {isNew ? 'Yeni Servis Şablonu' : 'Servis Şablonu Editörü'}
                 </h1>
                 <p className="text-xs text-muted-foreground/70">
                   {isNew ? 'Yeni bir servis şablonu oluşturun' : `${existingTemplate?.name || 'Şablon'} düzenleniyor`}
@@ -272,320 +313,759 @@ export default function ServiceTemplateEditor() {
             </div>
           </div>
           
-          <Button 
-            onClick={form.handleSubmit(onSubmit)}
-            disabled={isLoading}
-            className="gap-2"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={form.handleSubmit(onSubmit, (errors) => {
+                console.error('Form validation errors:', errors);
+                toast.error('Lütfen form alanlarını kontrol edin');
+              })}
+              disabled={isLoading}
+              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+            >
               <Save className="h-4 w-4" />
-            )}
-            <span>{isLoading ? "Kaydediliyor..." : "Kaydet"}</span>
-          </Button>
+              <span>{isLoading ? "Kaydediliyor..." : "Kaydet"}</span>
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="font-medium">İşlemler</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={handleDownloadPdf} className="gap-2 cursor-pointer" disabled={!previewData}>
+                  <Download className="h-4 w-4" />
+                  <span>PDF İndir</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => toast.info("E-posta gönderimi özelliği yakında eklenecek")} className="gap-2 cursor-pointer">
+                  <Send className="h-4 w-4" />
+                  <span>E-posta Gönder</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
-      {/* Main Content - Resizable Panels */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1 rounded-lg border">
-        {/* Left Panel - Form */}
-        <ResizablePanel defaultSize={40} minSize={30} maxSize={60}>
-          <div className="h-full overflow-y-auto p-4 space-y-4">
-            {/* Template Info */}
-            <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm">Şablon Bilgileri</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-xs">Şablon Adı *</Label>
-                  <Input
-                    id="name"
-                    {...form.register('name')}
-                    placeholder="Örn: Bakım Şablonu"
-                    className="h-8 text-sm"
-                  />
-                  {form.formState.errors.name && (
-                    <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description" className="text-xs">Açıklama</Label>
-                  <Textarea
-                    id="description"
-                    {...form.register('description')}
-                    placeholder="Şablon hakkında açıklama"
-                    rows={2}
-                    className="text-sm"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Service Details */}
-            <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm">Servis Detayları</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="service_title" className="text-xs">Servis Başlığı *</Label>
-                  <Input
-                    id="service_title"
-                    {...form.register('service_title')}
-                    placeholder="Örn: Yıllık Bakım"
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="service_request_description" className="text-xs">Servis Açıklaması</Label>
-                  <Textarea
-                    id="service_request_description"
-                    {...form.register('service_request_description')}
-                    placeholder="Servis talebi detayları"
-                    rows={3}
-                    className="text-sm"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Servis Tipi</Label>
-                    <Input
-                      {...form.register('service_type')}
-                      placeholder="Örn: Bakım"
-                      className="h-8 text-sm"
-                    />
+      {/* Top Panel - Genel Ayarlar */}
+      <div className="bg-background px-4 py-2 rounded-md border border-gray-200">
+        <div className="flex items-center gap-6">
+          <div className="flex-1">
+            <Accordion type="single" collapsible defaultValue="general" className="w-full">
+              <AccordionItem value="general" className="border-0">
+                <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 px-3 py-1.5 rounded-lg border border-gray-200 font-semibold text-xs text-gray-800 h-auto">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs">🎨</span>
+                    <span>Genel Ayarlar</span>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Öncelik</Label>
-                    <Select
-                      value={form.watch('service_priority')}
-                      onValueChange={(value) => form.setValue('service_priority', value as any)}
-                    >
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Seçin" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Düşük</SelectItem>
-                        <SelectItem value="medium">Orta</SelectItem>
-                        <SelectItem value="high">Yüksek</SelectItem>
-                        <SelectItem value="urgent">Acil</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Tahmini Süre (dk)</Label>
-                    <Input
-                      type="number"
-                      {...form.register('estimated_duration', { valueAsNumber: true })}
-                      placeholder="60"
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Varsayılan Konum</Label>
-                    <Input
-                      {...form.register('default_location')}
-                      placeholder="Konum"
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Varsayılan Teknisyen</Label>
-                  <Select
-                    value={form.watch('default_technician_id') || undefined}
-                    onValueChange={(value) => form.setValue('default_technician_id', value || undefined)}
-                  >
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue placeholder="Teknisyen seçin (opsiyonel)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {technicians?.map((tech) => (
-                        <SelectItem key={tech.id} value={tech.id}>
-                          {tech.first_name} {tech.last_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* PDF Settings */}
-            <Accordion type="multiple" defaultValue={['header', 'serviceInfo']} className="space-y-2">
-              {/* Header Settings */}
-              <AccordionItem value="header" className="border rounded-lg">
-                <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
-                  Başlık Ayarları
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Logo Göster</Label>
-                    <Switch
-                      checked={pdfSchema.header.showLogo}
-                      onCheckedChange={(checked) => updatePdfSchema('header.showLogo', checked)}
-                    />
-                  </div>
-                  {pdfSchema.header.showLogo && (
-                    <LogoUploadField
-                      logoUrl={pdfSchema.header.logoUrl}
-                      onLogoChange={(url) => updatePdfSchema('header.logoUrl', url)}
-                    />
-                  )}
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Başlık Göster</Label>
-                    <Switch
-                      checked={pdfSchema.header.showTitle}
-                      onCheckedChange={(checked) => updatePdfSchema('header.showTitle', checked)}
-                    />
-                  </div>
-                  {pdfSchema.header.showTitle && (
-                    <div className="space-y-2">
-                      <Label className="text-xs">Başlık Metni</Label>
+                <AccordionContent className="pt-2 px-0 pb-0">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    {/* Şablon Adı */}
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="template-name" className="text-xs text-gray-600 whitespace-nowrap">Şablon Adı:</Label>
                       <Input
-                        value={pdfSchema.header.title}
-                        onChange={(e) => updatePdfSchema('header.title', e.target.value)}
-                        className="h-8 text-sm"
+                        id="template-name"
+                        type="text"
+                        value={templateName}
+                        onChange={(e) => setTemplateName(e.target.value)}
+                        placeholder="Şablon adı"
+                        className="h-7 w-40 text-xs"
                       />
                     </div>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Şirket Bilgisi Göster</Label>
-                    <Switch
-                      checked={pdfSchema.header.showCompanyInfo}
-                      onCheckedChange={(checked) => updatePdfSchema('header.showCompanyInfo', checked)}
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
 
-              {/* Service Info Settings */}
-              <AccordionItem value="serviceInfo" className="border rounded-lg">
-                <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
-                  Servis Bilgileri Görünümü
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Öncelik Göster</Label>
-                    <Switch
-                      checked={pdfSchema.serviceInfo.showPriority}
-                      onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showPriority', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Tahmini Süre Göster</Label>
-                    <Switch
-                      checked={pdfSchema.serviceInfo.showEstimatedDuration}
-                      onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showEstimatedDuration', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Teknisyen Göster</Label>
-                    <Switch
-                      checked={pdfSchema.serviceInfo.showTechnician}
-                      onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showTechnician', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Konum Göster</Label>
-                    <Switch
-                      checked={pdfSchema.serviceInfo.showLocation}
-                      onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showLocation', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Servis Tipi Göster</Label>
-                    <Switch
-                      checked={pdfSchema.serviceInfo.showServiceType}
-                      onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showServiceType', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Tarihler Göster</Label>
-                    <Switch
-                      checked={pdfSchema.serviceInfo.showDates}
-                      onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showDates', checked)}
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                    {/* Font Family */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Font:</Label>
+                      <Select
+                        value={pdfSchema.page.fontFamily || 'Roboto'}
+                        onValueChange={(value) => updatePdfSchema('page.fontFamily', value)}
+                      >
+                        <SelectTrigger className="h-7 w-40 text-xs">
+                          <SelectValue placeholder="Font seçin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Roboto">Roboto</SelectItem>
+                          <SelectItem value="Open Sans">Open Sans</SelectItem>
+                          <SelectItem value="Lato">Lato</SelectItem>
+                          <SelectItem value="Montserrat">Montserrat</SelectItem>
+                          <SelectItem value="Inter">Inter</SelectItem>
+                          <SelectItem value="Poppins">Poppins</SelectItem>
+                          <SelectItem value="Helvetica">Helvetica</SelectItem>
+                          <SelectItem value="Times-Roman">Times Roman</SelectItem>
+                          <SelectItem value="Courier">Courier</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              {/* Parts Table Settings */}
-              <AccordionItem value="partsTable" className="border rounded-lg">
-                <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
-                  Parça Tablosu
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Parça Tablosu Göster</Label>
-                    <Switch
-                      checked={pdfSchema.partsTable.show}
-                      onCheckedChange={(checked) => updatePdfSchema('partsTable.show', checked)}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Sıra Numarası Göster</Label>
-                    <Switch
-                      checked={pdfSchema.partsTable.showRowNumber}
-                      onCheckedChange={(checked) => updatePdfSchema('partsTable.showRowNumber', checked)}
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                    {/* Font Size */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Font Boyutu:</Label>
+                      <Input
+                        type="number"
+                        value={pdfSchema.page.fontSize || 12}
+                        onChange={(e) => updatePdfSchema('page.fontSize', Number(e.target.value))}
+                        min="8"
+                        max="20"
+                        placeholder="12"
+                        className="h-7 w-14 text-center text-xs"
+                      />
+                    </div>
 
-              {/* Instructions Settings */}
-              <AccordionItem value="instructions" className="border rounded-lg">
-                <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
-                  Yapılacak İşlemler
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">İşlemler Göster</Label>
-                    <Switch
-                      checked={pdfSchema.instructions.show}
-                      onCheckedChange={(checked) => updatePdfSchema('instructions.show', checked)}
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                    {/* Font Weight */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Kalınlık:</Label>
+                      <Select
+                        value={pdfSchema.page.fontWeight || 'normal'}
+                        onValueChange={(value) => updatePdfSchema('page.fontWeight', value)}
+                      >
+                        <SelectTrigger className="h-7 w-24 text-xs">
+                          <SelectValue placeholder="Kalınlık" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="normal">Normal</SelectItem>
+                          <SelectItem value="bold">Kalın</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              {/* Footer Settings */}
-              <AccordionItem value="footer" className="border rounded-lg">
-                <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
-                  Alt Bilgi
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-3">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Alt Bilgi Metni</Label>
-                    <Textarea
-                      value={pdfSchema.notes.footer || ''}
-                      onChange={(e) => updatePdfSchema('notes.footer', e.target.value)}
-                      rows={2}
-                      className="text-sm"
-                    />
+                    {/* Font Color */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Font Rengi:</Label>
+                      <div className="flex items-center gap-1">
+                        {[
+                          { name: 'Siyah', value: '#000000' },
+                          { name: 'Koyu Gri', value: '#374151' },
+                          { name: 'Gri', value: '#6B7280' },
+                          { name: 'Mavi', value: '#3B82F6' },
+                          { name: 'Kırmızı', value: '#EF4444' },
+                          { name: 'Yeşil', value: '#10B981' },
+                        ].map((color) => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            onClick={() => updatePdfSchema('page.fontColor', color.value)}
+                            className={`h-6 w-6 rounded-full border hover:ring-2 hover:ring-blue-400 transition-all ${
+                              pdfSchema.page.fontColor === color.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'
+                            }`}
+                            style={{ backgroundColor: color.value }}
+                            title={color.name}
+                          />
+                        ))}
+                      </div>
+                      <Input
+                        type="color"
+                        value={pdfSchema.page.fontColor || '#000000'}
+                        onChange={(e) => updatePdfSchema('page.fontColor', e.target.value)}
+                        className="h-7 w-12"
+                        title="Özel Renk"
+                      />
+                    </div>
+
+                    {/* Background Color */}
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-gray-600 whitespace-nowrap">Arka Plan:</Label>
+                      <div className="flex items-center gap-1">
+                        {[
+                          { name: 'Beyaz', value: '#FFFFFF', preview: 'bg-white' },
+                          { name: 'Açık Gri', value: '#F9FAFB', preview: 'bg-gray-50' },
+                          { name: 'Gri', value: '#F3F4F6', preview: 'bg-gray-100' },
+                          { name: 'Açık Mavi', value: '#EFF6FF', preview: 'bg-blue-50' },
+                          { name: 'Açık Yeşil', value: '#F0FDF4', preview: 'bg-green-50' },
+                        ].map((bg) => (
+                          <button
+                            key={bg.value}
+                            type="button"
+                            onClick={() => updatePdfSchema('page.backgroundColor', bg.value)}
+                            className={`${bg.preview} border rounded p-1 h-6 w-6 hover:ring-2 hover:ring-blue-400 transition-all ${
+                              pdfSchema.page.backgroundColor === bg.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'
+                            }`}
+                            title={bg.name}
+                          />
+                        ))}
+                      </div>
+                      <Input
+                        type="color"
+                        value={pdfSchema.page.backgroundColor || '#FFFFFF'}
+                        onChange={(e) => updatePdfSchema('page.backgroundColor', e.target.value)}
+                        className="h-7 w-12"
+                        title="Özel Renk"
+                      />
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-16rem)] rounded-md border border-gray-200 overflow-hidden">
+        {/* Settings Panel */}
+        <ResizablePanel defaultSize={28} minSize={22} className="min-w-0 flex flex-col">
+          <div className="h-full flex flex-col bg-gradient-to-b from-background via-background/98 to-muted/20 border-r border-border/20 min-h-0 overflow-hidden">
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-2 min-h-0 space-y-2">
+              
+              {/* Şablon Bilgileri */}
+              <Accordion type="single" collapsible defaultValue="templateInfo">
+                <AccordionItem value="templateInfo" className="border border-gray-200 rounded-lg">
+                  <AccordionTrigger className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">📋</span>
+                      <span>Şablon Bilgileri</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-2 pt-1.5 px-2 pb-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="name" className="text-xs text-gray-600">Şablon Adı *</Label>
+                      <Input
+                        id="name"
+                        {...form.register('name')}
+                        placeholder="Örn: Bakım Şablonu"
+                        className="h-7 text-xs"
+                      />
+                      {form.formState.errors.name && (
+                        <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="description" className="text-xs text-gray-600">Açıklama</Label>
+                      <Textarea
+                        id="description"
+                        {...form.register('description')}
+                        placeholder="Şablon hakkında açıklama"
+                        rows={2}
+                        className="text-xs"
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Servis Detayları */}
+              <Accordion type="single" collapsible defaultValue="serviceDetails">
+                <AccordionItem value="serviceDetails" className="border border-gray-200 rounded-lg">
+                  <AccordionTrigger className="bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">🔧</span>
+                      <span>Servis Detayları</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-2 pt-1.5 px-2 pb-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="service_title" className="text-xs text-gray-600">Servis Başlığı *</Label>
+                      <Input
+                        id="service_title"
+                        {...form.register('service_title')}
+                        placeholder="Örn: Yıllık Bakım"
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="service_request_description" className="text-xs text-gray-600">Servis Açıklaması</Label>
+                      <Textarea
+                        id="service_request_description"
+                        {...form.register('service_request_description')}
+                        placeholder="Servis talebi detayları"
+                        rows={2}
+                        className="text-xs"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-gray-600">Servis Tipi</Label>
+                        <Input
+                          {...form.register('service_type')}
+                          placeholder="Örn: Bakım"
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-gray-600">Öncelik</Label>
+                        <Select
+                          value={form.watch('service_priority')}
+                          onValueChange={(value) => form.setValue('service_priority', value as any)}
+                        >
+                          <SelectTrigger className="h-7 text-xs">
+                            <SelectValue placeholder="Seçin" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Düşük</SelectItem>
+                            <SelectItem value="medium">Orta</SelectItem>
+                            <SelectItem value="high">Yüksek</SelectItem>
+                            <SelectItem value="urgent">Acil</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-gray-600">Tahmini Süre (dk)</Label>
+                        <Input
+                          type="number"
+                          {...form.register('estimated_duration', { valueAsNumber: true })}
+                          placeholder="60"
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-gray-600">Varsayılan Konum</Label>
+                        <Input
+                          {...form.register('default_location')}
+                          placeholder="Konum"
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-gray-600">Varsayılan Teknisyen</Label>
+                      <Select
+                        value={form.watch('default_technician_id') || undefined}
+                        onValueChange={(value) => form.setValue('default_technician_id', value || undefined)}
+                      >
+                        <SelectTrigger className="h-7 text-xs">
+                          <SelectValue placeholder="Teknisyen seçin (opsiyonel)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {technicians?.map((tech) => (
+                            <SelectItem key={tech.id} value={tech.id}>
+                              {tech.first_name} {tech.last_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Header Settings */}
+              <Accordion type="single" collapsible defaultValue="header">
+                <AccordionItem value="header" className="border border-gray-200 rounded-lg">
+                  <AccordionTrigger className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">📄</span>
+                      <span>Başlık Ayarları</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-2 pt-1.5 px-2 pb-2">
+                    {/* Title and Logo Settings - Side by Side */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+                      {/* Title Settings */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">T</span>
+                            <Label className="text-xs font-semibold text-gray-800">Başlık</Label>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              id="show-title"
+                              checked={pdfSchema.header.showTitle ?? true}
+                              onCheckedChange={(checked) => updatePdfSchema('header.showTitle', checked)}
+                              className="scale-[0.65]"
+                            />
+                            <Label htmlFor="show-title" className="text-xs text-gray-600">Göster</Label>
+                          </div>
+                        </div>
+                        {pdfSchema.header.showTitle && (
+                          <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-1.5">
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">Başlık Metni</Label>
+                              <Input 
+                                value={pdfSchema.header.title || ''}
+                                onChange={(e) => updatePdfSchema('header.title', e.target.value)}
+                                className="h-7 text-xs placeholder:text-gray-400 placeholder:italic" 
+                                placeholder="Başlık metnini girin"
+                              />
+                            </div>
+                            <div className="pt-1 border-t border-gray-200 flex items-center gap-2">
+                              <Label className="text-xs text-gray-600 min-w-fit">Font</Label>
+                              <Input
+                                type="number"
+                                value={pdfSchema.header.titleFontSize || 18}
+                                onChange={(e) => updatePdfSchema('header.titleFontSize', Number(e.target.value))}
+                                min="8"
+                                max="30"
+                                placeholder="18"
+                                className="h-7 w-14 text-center text-xs"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Logo Settings */}
+                      <LogoUploadField
+                        logoUrl={pdfSchema.header.logoUrl}
+                        onLogoChange={(url) => updatePdfSchema('header.logoUrl', url || undefined)}
+                        logoPosition={pdfSchema.header.logoPosition || 'left'}
+                        onPositionChange={(value) => updatePdfSchema('header.logoPosition', value)}
+                        logoSize={pdfSchema.header.logoSize || 80}
+                        onSizeChange={(value) => updatePdfSchema('header.logoSize', value)}
+                        showLogo={pdfSchema.header.showLogo}
+                        onShowLogoChange={(value) => updatePdfSchema('header.showLogo', value)}
+                      />
+                    </div>
+                    
+                    {/* Company Info Settings */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs">🏢</span>
+                          <Label className="text-xs font-semibold text-gray-800">Şirket Bilgileri</Label>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Switch
+                            id="show-company-info"
+                            checked={pdfSchema.header.showCompanyInfo}
+                            onCheckedChange={(checked) => updatePdfSchema('header.showCompanyInfo', checked)}
+                            className="scale-75"
+                          />
+                          <Label htmlFor="show-company-info" className="text-xs text-gray-600">Göster</Label>
+                        </div>
+                      </div>
+
+                      {pdfSchema.header.showCompanyInfo && (
+                        <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-1.5">
+                          <div className="p-1 bg-blue-50/80 border border-blue-200/50 rounded text-xs text-blue-700 flex items-center gap-1">
+                            <span>💡</span>
+                            <span>Sistem Ayarları'ndan otomatik yüklenir</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">Şirket Adı</Label>
+                              <Input 
+                                value={pdfSchema.header.companyName || ''}
+                                onChange={(e) => updatePdfSchema('header.companyName', e.target.value)}
+                                placeholder="Şirket adı" 
+                                className="h-7 text-xs placeholder:text-gray-400 placeholder:italic" 
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">Font</Label>
+                              <Input
+                                type="number"
+                                value={pdfSchema.header.companyInfoFontSize || 10}
+                                onChange={(e) => updatePdfSchema('header.companyInfoFontSize', Number(e.target.value))}
+                                min="8"
+                                max="15"
+                                placeholder="10"
+                                className="h-7 w-14 text-center text-xs"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-0.5 block">Adres</Label>
+                            <Input 
+                              value={pdfSchema.header.companyAddress || ''}
+                              onChange={(e) => updatePdfSchema('header.companyAddress', e.target.value)}
+                              placeholder="Şirket adresi" 
+                              className="h-7 text-xs placeholder:text-gray-400 placeholder:italic" 
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">Telefon</Label>
+                              <Input 
+                                value={pdfSchema.header.companyPhone || ''}
+                                onChange={(e) => updatePdfSchema('header.companyPhone', e.target.value)}
+                                placeholder="Telefon" 
+                                className="h-7 text-xs placeholder:text-gray-400 placeholder:italic" 
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">E-posta</Label>
+                              <Input 
+                                value={pdfSchema.header.companyEmail || ''}
+                                onChange={(e) => updatePdfSchema('header.companyEmail', e.target.value)}
+                                placeholder="E-posta" 
+                                className="h-7 text-xs placeholder:text-gray-400 placeholder:italic" 
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">Website</Label>
+                              <Input 
+                                value={pdfSchema.header.companyWebsite || ''}
+                                onChange={(e) => updatePdfSchema('header.companyWebsite', e.target.value)}
+                                placeholder="Website" 
+                                className="h-7 text-xs placeholder:text-gray-400 placeholder:italic" 
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-gray-600 mb-0.5 block">Diğer</Label>
+                              <Input 
+                                value={pdfSchema.header.companyTaxNumber || ''}
+                                onChange={(e) => updatePdfSchema('header.companyTaxNumber', e.target.value)}
+                                placeholder="İstediğiniz metni yazın" 
+                                className="h-7 text-xs placeholder:text-gray-400 placeholder:italic" 
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Service Info Settings */}
+              <Accordion type="single" collapsible defaultValue="serviceInfo">
+                <AccordionItem value="serviceInfo" className="border border-gray-200 rounded-lg">
+                  <AccordionTrigger className="bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">🔧</span>
+                      <span>Servis Bilgileri Görünümü</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-2 pb-2 pt-1.5">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="border rounded-md p-1.5 bg-purple-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">1</span>
+                            <Label className="text-xs font-medium text-gray-700">Öncelik</Label>
+                          </div>
+                          <Switch
+                            id="show-priority"
+                            checked={pdfSchema.serviceInfo.showPriority}
+                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showPriority', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border rounded-md p-1.5 bg-blue-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">2</span>
+                            <Label className="text-xs font-medium text-gray-700">Tahmini Süre</Label>
+                          </div>
+                          <Switch
+                            id="show-estimated-duration"
+                            checked={pdfSchema.serviceInfo.showEstimatedDuration}
+                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showEstimatedDuration', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border rounded-md p-1.5 bg-green-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">3</span>
+                            <Label className="text-xs font-medium text-gray-700">Teknisyen</Label>
+                          </div>
+                          <Switch
+                            id="show-technician"
+                            checked={pdfSchema.serviceInfo.showTechnician}
+                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showTechnician', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border rounded-md p-1.5 bg-orange-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">4</span>
+                            <Label className="text-xs font-medium text-gray-700">Konum</Label>
+                          </div>
+                          <Switch
+                            id="show-location"
+                            checked={pdfSchema.serviceInfo.showLocation}
+                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showLocation', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border rounded-md p-1.5 bg-yellow-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">5</span>
+                            <Label className="text-xs font-medium text-gray-700">Servis Tipi</Label>
+                          </div>
+                          <Switch
+                            id="show-service-type"
+                            checked={pdfSchema.serviceInfo.showServiceType}
+                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showServiceType', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border rounded-md p-1.5 bg-pink-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">6</span>
+                            <Label className="text-xs font-medium text-gray-700">Tarihler</Label>
+                          </div>
+                          <Switch
+                            id="show-dates"
+                            checked={pdfSchema.serviceInfo.showDates}
+                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showDates', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Parts Table Settings */}
+              <Accordion type="single" collapsible defaultValue="partsTable">
+                <AccordionItem value="partsTable" className="border border-gray-200 rounded-lg">
+                  <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">📦</span>
+                      <span>Parça Tablosu</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-2 pb-2 pt-1.5">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="border rounded-md p-1.5 bg-orange-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">1</span>
+                            <Label className="text-xs font-medium text-gray-700">Parça Tablosu</Label>
+                          </div>
+                          <Switch
+                            id="show-parts-table"
+                            checked={pdfSchema.partsTable.show}
+                            onCheckedChange={(checked) => updatePdfSchema('partsTable.show', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border rounded-md p-1.5 bg-amber-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">2</span>
+                            <Label className="text-xs font-medium text-gray-700">Sıra Numarası</Label>
+                          </div>
+                          <Switch
+                            id="show-row-number"
+                            checked={pdfSchema.partsTable.showRowNumber}
+                            onCheckedChange={(checked) => updatePdfSchema('partsTable.showRowNumber', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Instructions Settings */}
+              <Accordion type="single" collapsible defaultValue="instructions">
+                <AccordionItem value="instructions" className="border border-gray-200 rounded-lg">
+                  <AccordionTrigger className="bg-gradient-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">📋</span>
+                      <span>Yapılacak İşlemler</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-2 pb-2 pt-1.5">
+                    <div className="border rounded-md p-1.5 bg-teal-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs">1</span>
+                          <Label className="text-xs font-medium text-gray-700">İşlemler Göster</Label>
+                        </div>
+                        <Switch
+                          id="show-instructions"
+                          checked={pdfSchema.instructions.show}
+                          onCheckedChange={(checked) => updatePdfSchema('instructions.show', checked)}
+                          className="scale-[0.65]"
+                        />
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Notes Settings */}
+              <Accordion type="single" collapsible defaultValue="notes">
+                <AccordionItem value="notes" className="border border-gray-200 rounded-lg">
+                  <AccordionTrigger className="bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">📝</span>
+                      <span>Alt Bilgi</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-2 pb-2 pt-1.5 space-y-1.5">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <Label className="text-xs font-semibold text-gray-800">Alt Bilgi Metni</Label>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 mb-2 pb-2 border-b border-gray-200">
+                        <div className="flex items-center gap-1.5">
+                          <Label className="text-xs text-gray-600">Font:</Label>
+                          <Input
+                            type="number"
+                            value={pdfSchema.notes.footerFontSize || 10}
+                            onChange={(e) => updatePdfSchema('notes.footerFontSize', Number(e.target.value))}
+                            min="6"
+                            max="14"
+                            placeholder="10"
+                            className="h-6 w-14 text-center text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <Textarea
+                        value={pdfSchema.notes.footer || ''}
+                        onChange={(e) => updatePdfSchema('notes.footer', e.target.value)}
+                        rows={3}
+                        className="text-xs"
+                        placeholder="Alt bilgi metnini buraya yazın."
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+            </div>
+          </div>
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
-        {/* Right Panel - PDF Preview */}
-        <ResizablePanel defaultSize={60} minSize={40}>
-          <div className="h-full bg-muted/30 p-4">
-            <div className="h-full rounded-lg overflow-hidden border bg-background shadow-inner">
-              <PDFViewer
-                style={{ width: '100%', height: '100%', border: 'none' }}
-                showToolbar={true}
-              >
-                <ServicePdfRenderer data={previewData} schema={pdfSchema} />
-              </PDFViewer>
+        {/* PDF Preview */}
+        <ResizablePanel defaultSize={72} minSize={60} className="min-w-0">
+          <div className="h-full flex flex-col">
+            <div className="pb-2 px-4 pt-2 border-b sticky top-0 bg-background z-10">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Eye className="h-4 w-4" />
+                PDF Önizleme
+              </div>
+            </div>
+            <div className="flex-1 w-full">
+              {previewData && pdfSchema ? (
+                <PDFViewer className="w-full h-full border-0">
+                  <ServicePdfRenderer data={previewData} schema={pdfSchema} />
+                </PDFViewer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  PDF önizlemesi yükleniyor...
+                </div>
+              )}
             </div>
           </div>
         </ResizablePanel>

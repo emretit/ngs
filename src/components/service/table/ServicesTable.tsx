@@ -1,12 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
 import { 
   Clock, 
   CheckCircle, 
@@ -14,18 +12,23 @@ import {
   XCircle, 
   MapPin,
   User,
-  Calendar,
   Circle,
   MoreHorizontal,
   Eye,
   Pencil,
   Trash2,
-  Star
+  Star,
+  Printer,
+  Receipt
 } from "lucide-react";
 import type { ServiceRequest } from "@/hooks/service/types";
 import ServicesTableHeader, { SortField, SortDirection } from "./ServicesTableHeader";
 import ServicesTableSkeleton from "./ServicesTableSkeleton";
 import { useSortedServices } from "./useSortedServices";
+import { PdfExportService } from "@/services/pdf/pdfExportService";
+import { toast } from "sonner";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import type { ServicePdfTemplate } from "@/types/service-template";
 
 interface ServicesTableProps {
   services: ServiceRequest[];
@@ -57,8 +60,30 @@ const ServicesTable = ({
   onDeleteService
 }: ServicesTableProps) => {
   const navigate = useNavigate();
+  const { userData } = useCurrentUser();
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [serviceTemplates, setServiceTemplates] = useState<ServicePdfTemplate[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  // Servis şablonlarını yükle
+  useEffect(() => {
+    const loadTemplates = async () => {
+      if (!userData?.company_id) return;
+      
+      setIsLoadingTemplates(true);
+      try {
+        const templates = await PdfExportService.getServiceTemplates();
+        setServiceTemplates(templates);
+      } catch (error) {
+        console.error('Error loading service templates:', error);
+      } finally {
+        setIsLoadingTemplates(false);
+      }
+    };
+
+    loadTemplates();
+  }, [userData?.company_id]);
 
   // Teknisyen ismini bul
   const getTechnicianName = (technicianId: string | null | undefined) => {
@@ -202,6 +227,22 @@ const ServicesTable = ({
   };
 
   const allSelected = sortedServices.length > 0 && sortedServices.every(s => isServiceSelected(s.id));
+
+  // Servis fişi yazdırma işlemi
+  const handleServiceSlipPrint = async (e: React.MouseEvent, service: ServiceRequest, templateId?: string) => {
+    e.stopPropagation();
+    try {
+      const serviceSlipData = await PdfExportService.transformServiceSlipForPdf(service);
+      await PdfExportService.openServicePdfInNewTab(serviceSlipData, { 
+        templateId,
+        filename: `servis-fisi-${serviceSlipData.serviceNumber}.pdf`
+      });
+      toast.success("Servis fişi PDF'i yeni sekmede açıldı");
+    } catch (error) {
+      console.error('Servis fişi PDF oluşturma hatası:', error);
+      toast.error("Servis fişi PDF'i oluşturulurken hata oluştu: " + (error as Error).message);
+    }
+  };
 
   return (
     <Table>
@@ -348,7 +389,7 @@ const ServicesTable = ({
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuItem 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -359,6 +400,35 @@ const ServicesTable = ({
                         <Eye className="h-4 w-4" />
                         <span>Detay Görüntüle</span>
                       </DropdownMenuItem>
+                      
+                      <DropdownMenuSeparator />
+                      
+                      {/* Yazdırma İşlemleri */}
+                      <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <Receipt className="h-4 w-4 mr-2 text-green-500" />
+                          <span>Servis Fişi Yazdır</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="w-48">
+                          {serviceTemplates && serviceTemplates.length > 0 ? (
+                            serviceTemplates.map((template) => (
+                              <DropdownMenuItem
+                                key={template.id}
+                                onClick={(e) => handleServiceSlipPrint(e, service, template.id)}
+                                className="cursor-pointer"
+                              >
+                                <Receipt className="h-4 w-4 mr-2 text-green-500" />
+                                <span>{template.name || 'PDF Yazdır'}</span>
+                              </DropdownMenuItem>
+                            ))
+                          ) : (
+                            <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                              Şablon bulunamadı
+                            </div>
+                          )}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

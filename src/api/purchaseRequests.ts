@@ -37,7 +37,8 @@ export const fetchPurchaseRequests = async (filters: {
   const { data, error } = await query;
   
   if (error) {
-    toast.error("Satın alma talepleri yüklenirken hata oluştu");
+    const i18n = (await import('@/i18n/config')).default;
+    toast.error(i18n.t('toast.purchaseRequestLoadError'));
     throw error;
   }
   
@@ -52,7 +53,8 @@ export const fetchPurchaseRequestById = async (id: string): Promise<PurchaseRequ
     .single();
 
   if (error) {
-    toast.error("Satın alma talebi yüklenirken hata oluştu");
+    const i18n = (await import('@/i18n/config')).default;
+    toast.error(i18n.t('toast.purchaseRequestLoadError'));
     throw error;
   }
 
@@ -66,7 +68,8 @@ export const fetchPurchaseRequestItems = async (requestId: string): Promise<Purc
     .eq("request_id", requestId);
 
   if (error) {
-    toast.error("Talep öğeleri yüklenirken hata oluştu");
+    const i18n = (await import('@/i18n/config')).default;
+    toast.error(i18n.t('toast.purchaseRequestItemLoadError'));
     throw error;
   }
 
@@ -85,7 +88,8 @@ export const createPurchaseRequest = async (requestData: PurchaseRequestFormData
   // Get current user from Supabase - Updated to use the correct method
   const { data, error: userError } = await supabase.auth.getUser();
   if (userError || !data.user) {
-    toast.error("Kullanıcı kimliği alınamadı");
+    const i18n = (await import('@/i18n/config')).default;
+    toast.error(i18n.t('toast.userIdNotFound'));
     throw new Error("User not authenticated");
   }
   
@@ -99,7 +103,8 @@ export const createPurchaseRequest = async (requestData: PurchaseRequestFormData
     .single();
 
   if (requestError) {
-    toast.error("Satın alma talebi oluşturulurken hata oluştu");
+    const i18n = (await import('@/i18n/config')).default;
+    toast.error(i18n.t('toast.purchaseRequestCreateError'));
     throw requestError;
   }
 
@@ -115,11 +120,13 @@ export const createPurchaseRequest = async (requestData: PurchaseRequestFormData
     .insert(itemsWithRequestId);
 
   if (itemsError) {
-    toast.error("Talep öğeleri eklenirken hata oluştu");
+    const i18n = (await import('@/i18n/config')).default;
+    toast.error(i18n.t('toast.purchaseRequestItemAddError'));
     throw itemsError;
   }
 
-  toast.success("Satın alma talebi başarıyla oluşturuldu");
+  const i18n = (await import('@/i18n/config')).default;
+  toast.success(i18n.t('toast.purchaseRequestCreated'));
   return request;
 };
 
@@ -133,7 +140,8 @@ export const updatePurchaseRequest = async ({ id, data }: { id: string, data: Pa
     .eq("id", id);
 
   if (requestError) {
-    toast.error("Satın alma talebi güncellenirken hata oluştu");
+    const i18n = (await import('@/i18n/config')).default;
+    toast.error(i18n.t('toast.purchaseRequestUpdateError'));
     throw requestError;
   }
 
@@ -146,7 +154,8 @@ export const updatePurchaseRequest = async ({ id, data }: { id: string, data: Pa
       .eq("request_id", id);
 
     if (deleteError) {
-      toast.error("Mevcut talep öğeleri silinirken hata oluştu");
+      const i18n = (await import('@/i18n/config')).default;
+      toast.error(i18n.t('toast.purchaseRequestItemAddError'));
       throw deleteError;
     }
 
@@ -162,12 +171,14 @@ export const updatePurchaseRequest = async ({ id, data }: { id: string, data: Pa
       .insert(itemsWithRequestId);
 
     if (itemsError) {
-      toast.error("Talep öğeleri eklenirken hata oluştu");
+      const i18n = (await import('@/i18n/config')).default;
+      toast.error(i18n.t('toast.purchaseRequestItemAddError'));
       throw itemsError;
     }
   }
 
-  toast.success("Satın alma talebi başarıyla güncellendi");
+  const i18n = (await import('@/i18n/config')).default;
+  toast.success(i18n.t('toast.purchaseRequestUpdated'));
   return { id };
 };
 
@@ -194,11 +205,13 @@ export const updateRequestStatus = async ({
     .eq("id", id);
 
   if (error) {
-    toast.error("Satın alma talebi durumu güncellenirken hata oluştu");
+    const i18n = (await import('@/i18n/config')).default;
+    toast.error(i18n.t('toast.purchaseRequestStatusError'));
     throw error;
   }
 
-  toast.success("Talep durumu başarıyla güncellendi");
+  const i18n = (await import('@/i18n/config')).default;
+  toast.success(i18n.t('toast.purchaseRequestStatusUpdated'));
   return { id };
 };
 
@@ -210,10 +223,12 @@ export const deletePurchaseRequest = async (id: string) => {
     .eq("id", id);
 
   if (error) {
-    toast.error("Satın alma talebi silinirken hata oluştu");
+    const i18n = (await import('@/i18n/config')).default;
+    toast.error(i18n.t('toast.purchaseRequestDeleteError'));
     throw error;
   }
 
-  toast.success("Satın alma talebi başarıyla silindi");
+  const i18n = (await import('@/i18n/config')).default;
+  toast.success(i18n.t('toast.purchaseRequestDeleted'));
   return { id };
 };

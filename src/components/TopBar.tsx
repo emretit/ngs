@@ -6,27 +6,36 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 import { useLogout } from "@/components/navbar/useLogout";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useTranslation } from 'react-i18next';
 import HeaderUserInfo from "@/components/HeaderUserInfo";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import GlobalSearchDialog from "@/components/GlobalSearchDialog";
 import CompanySwitcher from "@/components/CompanySwitcher";
-import { Calendar, Search, Command, Building } from "lucide-react";
+import { Calendar, Search, Command, Building, User, Settings, LogOut, Globe } from "lucide-react";
 import { format } from "date-fns";
-import { tr } from "date-fns/locale";
+import { tr, enUS } from "date-fns/locale";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
+
+const languages = [
+  { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+];
 
 export const TopBar = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { handleLogout } = useLogout();
   const { userData, displayName, userInitials } = useCurrentUser();
+  const { i18n, t } = useTranslation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false);
   
@@ -34,8 +43,15 @@ export const TopBar = () => {
     navigate("/profile");
   };
 
-  const currentDate = format(new Date(), "dd MMM", { locale: tr });
-  const currentDay = format(new Date(), "EEEE", { locale: tr });
+  const changeLanguage = (langCode: string) => {
+    i18n.changeLanguage(langCode).then(() => {
+      // Dil değişikliğinden sonra sayfayı yenile
+      window.location.reload();
+    });
+  };
+
+  const currentDate = format(new Date(), "dd MMM", { locale: i18n.language === 'en' ? enUS : tr });
+  const currentDay = format(new Date(), "EEEE", { locale: i18n.language === 'en' ? enUS : tr });
 
   // Keyboard shortcut for search (Cmd/Ctrl + K)
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -97,7 +113,6 @@ export const TopBar = () => {
           </Button>
           
           <NotificationCenter />
-          <LanguageSwitcher />
           <Separator orientation="vertical" className="h-6 hidden sm:block" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -114,15 +129,43 @@ export const TopBar = () => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={handleProfileClick}>Profilim</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/settings")}>Ayarlar</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleProfileClick}>
+                <User className="h-4 w-4 mr-2" />
+                {t("userMenu.myProfile")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/settings")}>
+                <Settings className="h-4 w-4 mr-2" />
+                {t("userMenu.settings")}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setCompanySwitcherOpen(true)}>
                 <Building className="h-4 w-4 mr-2" />
-                Şirket Değiştir
+                {t("userMenu.changeCompany")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600" onSelect={handleLogout}>Çıkış Yap</DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Globe className="h-4 w-4 mr-2" />
+                  {t("userMenu.language")}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {languages.map((language) => (
+                    <DropdownMenuItem
+                      key={language.code}
+                      onClick={() => changeLanguage(language.code)}
+                      className={i18n.language === language.code ? 'bg-primary/10' : ''}
+                    >
+                      <span className="mr-2">{language.flag}</span>
+                      {language.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-red-600" onSelect={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                {t("userMenu.logout")}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

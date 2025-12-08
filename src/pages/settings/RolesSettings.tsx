@@ -113,7 +113,7 @@ const RolesSettings = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/users")}
+            onClick={() => navigate("/settings/users")}
             className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary hover:border-primary/20 transition-all duration-200 hover:shadow-sm"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -142,7 +142,13 @@ const RolesSettings = () => {
           </div>
         </div>
         <div className="p-4">
-          <RoleManagementPanel users={users} />
+          {users && users.length > 0 ? (
+            <RoleManagementPanel users={users} />
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Kullanıcı bulunamadı
+            </div>
+          )}
         </div>
       </Card>
     </div>

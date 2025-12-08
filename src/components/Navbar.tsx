@@ -56,6 +56,7 @@ import NavLink from "./navbar/NavLink";
 import { navItems } from "./navbar/nav-config";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
+import { useTranslation } from "react-i18next";
 
 interface NavbarProps {
   isCollapsed: boolean;
@@ -68,6 +69,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
   const navRef = useRef<HTMLElement>(null);
   const { hasModuleAccess, isLoading: permissionsLoading } = usePermissions();
   const { isSuperAdmin, isLoading: superAdminLoading } = useSuperAdmin();
+  const { t } = useTranslation();
   
   // Optimistic UI: pendingPath for instant active state
   const [pendingPath, setPendingPath] = useState<string | null>(null);
@@ -230,7 +232,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
           >
             <div className="flex items-center space-x-2">
               <item.icon className="h-3.5 w-3.5 flex-shrink-0" />
-              {!isCollapsed && <span className="text-xs font-medium">{item.label}</span>}
+              {!isCollapsed && <span className="text-xs font-medium">{item.translationKey ? t(item.translationKey) : item.label}</span>}
             </div>
             {!isCollapsed && (
               <div
@@ -254,7 +256,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
                   key={subItem.path}
                   to={subItem.path}
                   icon={subItem.icon}
-                  label={subItem.label}
+                  label={subItem.translationKey ? t(subItem.translationKey) : subItem.label}
                   isActive={getSubItemActiveState(subItem, item)}
                   isCollapsed={false}
                   isSubItem={true}
@@ -277,14 +279,14 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
           key={item.path}
           to={item.path}
           icon={item.icon}
-          label={item.label}
+          label={item.translationKey ? t(item.translationKey) : item.label}
           isActive={isItemActive}
           isPending={isPending}
           isCollapsed={isCollapsed}
         />
       );
     }
-  }, [expandedMenus, location.pathname, isCollapsed, handleParentClick, handleToggleClick, getSubItemActiveState, pendingPath]);
+  }, [expandedMenus, location.pathname, isCollapsed, handleParentClick, handleToggleClick, getSubItemActiveState, pendingPath, t]);
 
   return (
     <div className={cn(
@@ -307,7 +309,7 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
             <NavLink
               to="/admin"
               icon={Shield}
-              label="Admin Panel"
+              label={t("nav.adminPanel")}
               isActive={location.pathname.startsWith('/admin')}
               isCollapsed={isCollapsed}
             />

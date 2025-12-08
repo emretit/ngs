@@ -405,7 +405,7 @@ export const UserManagementNew = () => {
           <Button
             variant="outline"
             className="flex items-center gap-2 border-2 border-primary/50 hover:bg-primary hover:text-white transition-all duration-300"
-            onClick={() => navigate("/roles")}
+            onClick={() => navigate("/settings/roles")}
           >
             <Shield className="h-4 w-4" />
             <span>Roller</span>

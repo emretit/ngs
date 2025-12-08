@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface NewTaskFormProps {
   relatedItemId?: string;
@@ -28,6 +29,7 @@ const NewTaskForm = ({
   onSuccess, 
   onCancel 
 }: NewTaskFormProps) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -72,11 +74,11 @@ const NewTaskForm = ({
 
       if (error) throw error;
       
-      toast.success('Aktivite başarıyla oluşturuldu');
+      toast.success(t("forms.activityCreated"));
       onSuccess();
     } catch (error) {
       console.error('Error creating task:', error);
-      toast.error('Aktivite oluşturulurken bir hata oluştu');
+      toast.error(t("forms.activityCreateError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -86,11 +88,11 @@ const NewTaskForm = ({
     <Card className="p-4 border border-blue-100 bg-blue-50">
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <Label htmlFor="title">Aktivite Başlığı</Label>
+          <Label htmlFor="title">{t("forms.activityTitle")}</Label>
           <Input
             id="title"
             name="title"
-            placeholder="Aktivite başlığı..."
+            placeholder={t("forms.activityTitle")}
             value={formData.title}
             onChange={handleInputChange}
             required
@@ -98,11 +100,11 @@ const NewTaskForm = ({
         </div>
         
         <div>
-          <Label htmlFor="description">Açıklama</Label>
+          <Label htmlFor="description">{t("forms.description")}</Label>
           <Textarea
             id="description"
             name="description"
-            placeholder="Aktivite açıklaması..."
+            placeholder={t("forms.activityDescription")}
             value={formData.description}
             onChange={handleInputChange}
             rows={3}
@@ -111,24 +113,24 @@ const NewTaskForm = ({
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="priority">Öncelik</Label>
+            <Label htmlFor="priority">{t("forms.priority")}</Label>
             <Select 
               value={formData.priority} 
               onValueChange={(value) => handleSelectChange("priority", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Öncelik seçin" />
+                <SelectValue placeholder={t("forms.selectPriority")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="low">Düşük</SelectItem>
-                <SelectItem value="medium">Orta</SelectItem>
-                <SelectItem value="high">Yüksek</SelectItem>
+                <SelectItem value="low">{t("forms.low")}</SelectItem>
+                <SelectItem value="medium">{t("forms.medium")}</SelectItem>
+                <SelectItem value="high">{t("forms.high")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <div>
-            <Label htmlFor="due_date">Bitiş Tarihi</Label>
+            <Label htmlFor="due_date">{t("forms.dueDate")}</Label>
             <Input
               id="due_date"
               name="due_date"
@@ -146,13 +148,13 @@ const NewTaskForm = ({
             onClick={onCancel}
             disabled={isSubmitting}
           >
-            İptal
+            {t("common.cancel")}
           </Button>
           <Button 
             type="submit"
             disabled={isSubmitting || !formData.title}
           >
-            Kaydet
+            {t("common.save")}
           </Button>
         </div>
       </form>

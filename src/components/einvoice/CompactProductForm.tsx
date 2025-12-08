@@ -15,13 +15,14 @@ import { Loader2, Package, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UNIT_OPTIONS, mapUnitToDropdownValue } from "@/utils/unitConstants";
+import { useTranslation } from "react-i18next";
 
-const formSchema = z.object({
-  name: z.string().min(1, "Ürün adı gerekli"),
+const createFormSchema = (t: (key: string) => string) => z.object({
+  name: z.string().min(1, t("validation.nameRequired")),
   sku: z.string().optional(),
-  unit: z.string().min(1, "Birim gerekli"),
-  price: z.number().min(0, "Fiyat 0'dan büyük olmalı"),
-  tax_rate: z.number().min(0).max(100, "Vergi oranı 0-100 arasında olmalı"),
+  unit: z.string().min(1, t("validation.required")),
+  price: z.number().min(0, t("validation.priceMin")),
+  tax_rate: z.number().min(0).max(100, t("validation.taxRateRange")),
   description: z.string().optional(),
 });
 
@@ -46,8 +47,10 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
   onProductCreated,
   initialData
 }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
+  const formSchema = createFormSchema(t);
 
   // Get current user's company_id
   const { data: userProfile } = useQuery({
@@ -246,8 +249,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
         <Alert className="mb-4">
           <Info className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            Bu hızlı ekleme formu, temel bilgilerle ürün oluşturur. 
-            Detaylı düzenleme için ürün sayfasına gidebilirsiniz.
+            {t("forms.quickAddInfo")}
           </AlertDescription>
         </Alert>
 
@@ -258,9 +260,9 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ürün Adı *</FormLabel>
+                  <FormLabel>{t("forms.productName")} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ürün adını girin" {...field} />
+                    <Input placeholder={t("forms.enterProductName")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -273,7 +275,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                 name="sku"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ürün Kodu</FormLabel>
+                    <FormLabel>{t("forms.productCode")}</FormLabel>
                     <FormControl>
                       <Input placeholder="SKU" {...field} />
                     </FormControl>
@@ -287,11 +289,11 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                 name="unit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Birim *</FormLabel>
+                    <FormLabel>{t("forms.unit")} *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Birim seçin" />
+                          <SelectValue placeholder={t("forms.selectUnit")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -314,7 +316,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Fiyat (TRY) *</FormLabel>
+                    <FormLabel>{t("forms.priceTRY")} *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -335,11 +337,11 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                 name="tax_rate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>KDV Oranı (%) *</FormLabel>
+                    <FormLabel>{t("forms.taxRatePercent")} *</FormLabel>
                     <Select onValueChange={(value) => field.onChange(parseFloat(value))} value={field.value.toString()}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="KDV oranı" />
+                          <SelectValue placeholder={t("forms.selectTaxRate")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -358,11 +360,11 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
               control={form.control}
               name="description"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Açıklama</FormLabel>
+                  <FormItem>
+                  <FormLabel>{t("forms.description")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Ürün açıklaması..."
+                      placeholder={t("forms.productDescription")}
                       rows={2}
                       {...field}
                     />
@@ -379,16 +381,16 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                 onClick={handleClose}
                 disabled={isSaving}
               >
-                İptal
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Oluşturuluyor...
+                    {t("common.creating")}
                   </>
                 ) : (
-                  "Ürün Oluştur"
+                  t("forms.createProduct")
                 )}
               </Button>
             </div>

@@ -24,6 +24,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { Task } from "@/types/task";
 
 interface TaskDetailSheetProps {
@@ -33,6 +34,7 @@ interface TaskDetailSheetProps {
 }
 
 const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<Task | null>(null);
 
@@ -57,11 +59,11 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
-      toast.success('Aktivite başarıyla güncellendi');
+      toast.success(t('toast.activityUpdated'));
       onClose();
     },
     onError: (error) => {
-      toast.error('Aktivite güncellenirken hata oluştu');
+      toast.error(t('toast.activityUpdateError'));
       console.error('Update error:', error);
     }
   });
@@ -82,23 +84,25 @@ const TaskDetailSheet = ({ task, isOpen, onClose }: TaskDetailSheetProps) => {
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <h2 className="text-lg font-semibold text-foreground">Aktivite Detayları</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t("activities.title")}</h2>
         </SheetHeader>
         
         <div className="py-4 space-y-6">
           <Textarea
-            placeholder="Açıklama ekle..."
+            placeholder={t("forms.addDescription")}
             value={formData.description || ""}
             onChange={(e) => handleInputChange('description', e.target.value)}
             className="min-h-[100px]"
           />
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose}>İptal</Button>
+            <Button variant="outline" onClick={onClose}>{t("common.cancel")}</Button>
             <Button onClick={handleSave} disabled={updateTaskMutation.isPending}>
-              {updateTaskMutation.isPending ? "Kaydediliyor..." : (
+              {updateTaskMutation.isPending ? (
+                t("common.saving")
+              ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Değişiklikleri Kaydet
+                  {t("common.save")}
                 </>
               )}
             </Button>

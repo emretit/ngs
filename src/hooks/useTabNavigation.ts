@@ -2,13 +2,18 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTabs } from '@/components/tabs/TabContext';
 import { navItems } from '@/components/navbar/nav-config';
+import { useTranslation } from 'react-i18next';
 
-// Build a flat map of path -> title from navItems
+// Build a flat map of path -> translation key from navItems
 function buildPathTitleMap(): Record<string, string> {
   const map: Record<string, string> = {};
   
   function processItem(item: any) {
-    map[item.path] = item.label;
+    if (item.translationKey) {
+      map[item.path] = item.translationKey;
+    } else {
+      map[item.path] = item.label;
+    }
     if (item.items) {
       item.items.forEach(processItem);
     }
@@ -16,87 +21,83 @@ function buildPathTitleMap(): Record<string, string> {
   
   navItems.forEach(processItem);
   
-  // Add some common detail page patterns
   return map;
 }
 
 const pathTitleMap = buildPathTitleMap();
 
 // Get title for a path, including pattern matching for detail pages
-function getTitleForPath(path: string): string {
-  // Direct match
+function getTitleForPath(path: string, t: (key: string) => string): string {
+  // Direct match - use translation key if available
   if (pathTitleMap[path]) {
-    return pathTitleMap[path];
+    const translationKey = pathTitleMap[path];
+    // If it's a translation key (starts with nav.), translate it
+    if (translationKey.startsWith('nav.')) {
+      return t(translationKey);
+    }
+    // Otherwise return as is (fallback for old labels)
+    return translationKey;
   }
   
   // Pattern matching for detail pages and specific routes
   const patterns: Record<string, string> = {
     // Detail pages
-    '/customers/': 'Müşteri Detay',
-    '/suppliers/': 'Tedarikçi Detay',
-    '/products/': 'Ürün Detay',
-    '/employees/': 'Çalışan Detay',
-    '/opportunities/': 'Fırsat Detay',
-    '/proposals/': 'Teklif Detay',
-    '/proposal/': 'Teklif',
-    '/orders/': 'Sipariş Detay',
-    '/deliveries/': 'Teslimat Detay',
-    '/service/tickets/': 'Servis Talebi',
-    '/service/detail/': 'Servis Detay',
-    '/service/edit/': 'Servis Düzenle',
-    '/service/new': 'Yeni Servis Talebi',
-    '/contracts/': 'Sözleşme Detay',
-    '/vehicles/': 'Araç Detay',
-    '/sales-invoices/': 'Satış Faturası',
-    '/purchase-invoices/': 'Alış Faturası',
-    '/purchasing/requests/': 'Satın Alma Talebi',
-    '/purchasing/rfqs/': 'RFQ Detay',
-    '/purchasing/orders/': 'Satın Alma Siparişi',
-    '/purchasing/grns/': 'GRN Detay',
-    // Service routes
-    '/service/reports': 'Servis Raporları',
-    '/service/settings': 'Servis Ayarları',
-    '/service/parts': 'Servis Parçaları',
-    '/service/list': 'Servis Listesi',
-    '/service/kanban': 'Servis Kanban',
-    '/service/scheduling': 'Servis Planlama',
-    '/service/calendar': 'Servis Takvimi',
-    '/service/contracts': 'Servis Sözleşmeleri',
-    '/service/assets': 'Servis Varlıkları',
-    '/service/warranties': 'Servis Garantileri',
-    '/service/maintenance': 'Bakım Takvimi',
-    // PDF Templates
-    '/pdf-templates/new': 'Yeni PDF Şablonu',
-    '/pdf-templates/edit/': 'PDF Şablonu Düzenle',
-    '/pdf-templates/service/new': 'Yeni Servis Şablonu',
-    '/pdf-templates/service/edit/': 'Servis Şablonu Düzenle',
-    // Cashflow detail pages
-    '/cashflow/cash-accounts/': 'Nakit Hesap Detay',
-    '/cashflow/credit-cards/': 'Kredi Kartı Detay',
-    '/cashflow/bank-accounts/': 'Banka Hesabı Detay',
-    '/cashflow/partner-accounts/': 'Ortak Hesap Detay',
-    // E-Invoice
-    '/e-invoice': 'E-Fatura',
-    '/e-invoice/process/': 'E-Fatura İşle',
-    // Profile
-    '/profile': 'Profil',
-    // Settings sub-pages
-    '/notifications': 'Bildirim Ayarları',
-    '/nilvera': 'Nilvera Ayarları',
-    // Deliveries
-    '/deliveries/new': 'Yeni Teslimat',
-    // Financial
-    '/financial-overview': 'Finansal Özet',
-    '/sales-invoices/create': 'Yeni Satış Faturası',
-    // Contract routes
-    '/contracts/service': 'Servis Sözleşmeleri',
-    '/contracts/vehicle': 'Araç Sözleşmeleri',
-    '/contracts/customer': 'Müşteri Sözleşmeleri',
+    '/customers/': 'nav.customers',
+    '/suppliers/': 'nav.suppliers',
+    '/products/': 'nav.products',
+    '/employees/': 'nav.employees',
+    '/opportunities/': 'nav.opportunities',
+    '/proposals/': 'nav.proposals',
+    '/proposal/': 'nav.proposals',
+    '/orders/': 'nav.orders',
+    '/deliveries/': 'nav.deliveries',
+    '/service/tickets/': 'nav.service',
+    '/service/detail/': 'nav.service',
+    '/service/edit/': 'nav.service',
+    '/service/new': 'nav.service',
+    '/contracts/': 'nav.contractManagement',
+    '/vehicles/': 'nav.vehicleManagement',
+    '/sales-invoices/': 'nav.salesInvoices',
+    '/purchase-invoices/': 'nav.purchaseInvoices',
+    '/purchasing/requests/': 'nav.purchaseRequests',
+    '/purchasing/rfqs/': 'nav.purchaseRfqs',
+    '/purchasing/orders/': 'nav.purchaseOrders',
+    '/purchasing/grns/': 'nav.purchaseGrns',
+    '/service/reports': 'nav.service',
+    '/service/settings': 'nav.service',
+    '/service/parts': 'nav.service',
+    '/service/list': 'nav.service',
+    '/service/kanban': 'nav.service',
+    '/service/scheduling': 'nav.service',
+    '/service/calendar': 'nav.service',
+    '/service/contracts': 'nav.serviceContracts',
+    '/service/assets': 'nav.service',
+    '/service/warranties': 'nav.service',
+    '/service/maintenance': 'nav.service',
+    '/pdf-templates/new': 'nav.pdfTemplates',
+    '/pdf-templates/edit/': 'nav.pdfTemplates',
+    '/pdf-templates/service/new': 'nav.pdfTemplates',
+    '/pdf-templates/service/edit/': 'nav.pdfTemplates',
+    '/cashflow/cash-accounts/': 'nav.accounts',
+    '/cashflow/credit-cards/': 'nav.accounts',
+    '/cashflow/bank-accounts/': 'nav.accounts',
+    '/cashflow/partner-accounts/': 'nav.accounts',
+    '/e-invoice': 'nav.eInvoice',
+    '/e-invoice/process/': 'nav.eInvoice',
+    '/profile': 'settings.profile',
+    '/notifications': 'settings.notifications',
+    '/nilvera': 'nav.eInvoiceIntegrator',
+    '/deliveries/new': 'nav.deliveries',
+    '/financial-overview': 'nav.reports',
+    '/sales-invoices/create': 'nav.salesInvoices',
+    '/contracts/service': 'nav.serviceContracts',
+    '/contracts/vehicle': 'nav.vehicleContracts',
+    '/contracts/customer': 'nav.customerContracts',
   };
   
-  for (const [pattern, title] of Object.entries(patterns)) {
+  for (const [pattern, translationKey] of Object.entries(patterns)) {
     if (path.includes(pattern)) {
-      return title;
+      return t(translationKey);
     }
   }
   
@@ -105,7 +106,11 @@ function getTitleForPath(path: string): string {
   for (let i = segments.length - 1; i >= 0; i--) {
     const parentPath = '/' + segments.slice(0, i + 1).join('/');
     if (pathTitleMap[parentPath]) {
-      return pathTitleMap[parentPath];
+      const translationKey = pathTitleMap[parentPath];
+      if (translationKey.startsWith('nav.')) {
+        return t(translationKey);
+      }
+      return translationKey;
     }
   }
   
@@ -116,18 +121,30 @@ function getTitleForPath(path: string): string {
     
     // Handle common patterns
     if (lastSegment === 'new' && secondLastSegment) {
-      const parentTitle = pathTitleMap[`/${secondLastSegment}`] || secondLastSegment;
-      return `Yeni ${parentTitle}`;
+      const parentPath = `/${secondLastSegment}`;
+      const parentKey = pathTitleMap[parentPath];
+      if (parentKey && parentKey.startsWith('nav.')) {
+        return t('common.create') + ' ' + t(parentKey);
+      }
+      return t('common.create') + ' ' + (parentKey || secondLastSegment);
     }
     
     if (lastSegment === 'edit' && secondLastSegment) {
-      const parentTitle = pathTitleMap[`/${secondLastSegment}`] || secondLastSegment;
-      return `${parentTitle} Düzenle`;
+      const parentPath = `/${secondLastSegment}`;
+      const parentKey = pathTitleMap[parentPath];
+      if (parentKey && parentKey.startsWith('nav.')) {
+        return t(parentKey) + ' ' + t('common.edit');
+      }
+      return (parentKey || secondLastSegment) + ' ' + t('common.edit');
     }
     
     if (lastSegment === 'create' && secondLastSegment) {
-      const parentTitle = pathTitleMap[`/${secondLastSegment}`] || secondLastSegment;
-      return `Yeni ${parentTitle}`;
+      const parentPath = `/${secondLastSegment}`;
+      const parentKey = pathTitleMap[parentPath];
+      if (parentKey && parentKey.startsWith('nav.')) {
+        return t('common.create') + ' ' + t(parentKey);
+      }
+      return t('common.create') + ' ' + (parentKey || secondLastSegment);
     }
     
     // Capitalize and format last segment
@@ -140,12 +157,13 @@ function getTitleForPath(path: string): string {
   }
   
   // Last resort
-  return 'Sayfa';
+  return t('common.view');
 }
 
 export function useTabNavigation() {
   const location = useLocation();
   const { addTab, tabs } = useTabs();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const path = location.pathname;
@@ -156,9 +174,9 @@ export function useTabNavigation() {
     }
     
     // Get title for the path
-    const title = getTitleForPath(path);
+    const title = getTitleForPath(path, t);
     
     // Always add/activate tab for current path
     addTab(path, title);
-  }, [location.pathname, addTab]);
+  }, [location.pathname, addTab, t]);
 }

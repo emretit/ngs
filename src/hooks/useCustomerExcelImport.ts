@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { importCustomersFromExcel, readExcelColumns } from '@/utils/excelUtils';
 import { mapCustomerColumnsWithAI, ColumnMapping } from '@/services/customerColumnMappingService';
+import { useTranslation } from 'react-i18next';
 
 interface ImportStats {
   success: number;
@@ -13,6 +14,7 @@ interface ImportStats {
 }
 
 export const useCustomerExcelImport = (onSuccess?: () => void) => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const isCancelledRef = useRef<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -46,7 +48,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
         setExcelColumns(columns);
         
         if (columns.length === 0) {
-          toast.error('Excel dosyasında kolon bulunamadı');
+          toast.error(t('toast.excelNoColumns'));
           setIsMappingColumns(false);
           return;
         }
@@ -63,7 +65,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
         
       } catch (error: any) {
         console.error('Error mapping columns:', error);
-        toast.error('Kolon eşleştirme yapılırken bir hata oluştu');
+        toast.error(t('toast.excelMappingError'));
       } finally {
         setIsMappingColumns(false);
       }
@@ -141,11 +143,11 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
     try {
       isCancelledRef.current = true;
       setIsLoading(false);
-      toast.info('İçe aktarma iptal edildi');
+      toast.info(t('toast.importCancelled'));
     } catch (error) {
       console.error('Error cancelling import:', error);
       setIsLoading(false);
-      toast.info('İçe aktarma iptal edildi');
+      toast.info(t('toast.importCancelled'));
     }
   };
 
@@ -171,7 +173,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
       console.log('📋 Imported data sample (first row):', importedData[0]);
 
       if (!importedData || importedData.length === 0) {
-        toast.error('Excel dosyası boş veya geçersiz');
+        toast.error(t('toast.excelEmpty'));
         setIsLoading(false);
         return;
       }
@@ -199,7 +201,7 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
       for (let i = 0; i < normalizedData.length; i++) {
         // İptal kontrolü - her iterasyonda kontrol et
         if (isCancelledRef.current) {
-          toast.info('İçe aktarma iptal edildi');
+          toast.info(t('toast.importCancelled'));
           setIsLoading(false);
           return;
         }
@@ -356,14 +358,14 @@ export const useCustomerExcelImport = (onSuccess?: () => void) => {
           if (onSuccess) onSuccess();
         }
         
-        if (duplicateCount > 0) toast.info(`${duplicateCount} müşteri zaten mevcut`);
-        if (invalidCount > 0) toast.warning(`${invalidCount} satır geçersiz`);
-        if (failedCount > 0) toast.error(`${failedCount} müşteri eklenirken hata oluştu`);
+        if (duplicateCount > 0) toast.info(`${duplicateCount} ${t('toast.customersAlreadyExist')}`);
+        if (invalidCount > 0) toast.warning(`${invalidCount} ${t('toast.invalidRows')}`);
+        if (failedCount > 0) toast.error(`${failedCount} ${t('toast.customersAddError')}`);
       }
       
     } catch (error) {
       console.error('Import error:', error);
-      toast.error('İçe aktarma sırasında bir hata oluştu');
+      toast.error(t('toast.importError'));
     } finally {
       setIsLoading(false);
       if (!isCancelledRef.current) {

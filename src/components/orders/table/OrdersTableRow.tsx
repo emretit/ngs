@@ -1,6 +1,7 @@
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Order, OrderStatus } from "@/types/orders";
+import { useTranslation } from "react-i18next";
 import { 
   Edit, 
   MoreHorizontal, 
@@ -37,6 +38,9 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
   onConvertToService,
   onPrint
 }) => {
+  const { i18n } = useTranslation();
+  const locale = i18n.language === 'en' ? 'en-US' : 'tr-TR';
+  
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
       case "pending":
@@ -161,7 +165,7 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
           if (!dateValue) return <span className="text-muted-foreground">-</span>;
           const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
           if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
-          return dateObj.toLocaleDateString('tr-TR', {
+          return dateObj.toLocaleDateString(locale, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
@@ -174,7 +178,7 @@ export const OrdersTableRow: React.FC<OrdersTableRowProps> = ({
           if (!dateValue) return <span className="text-muted-foreground">-</span>;
           const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
           if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
-          return dateObj.toLocaleDateString('tr-TR', {
+          return dateObj.toLocaleDateString(locale, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'

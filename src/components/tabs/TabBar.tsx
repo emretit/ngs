@@ -29,8 +29,8 @@ export default function TabBar() {
     removeTab(tabId);
   };
 
-  // Always show tab bar when there are tabs
-  if (tabs.length === 0) {
+  // Don't show tab bar if there's only one tab or no tabs
+  if (tabs.length <= 1) {
     return null;
   }
 

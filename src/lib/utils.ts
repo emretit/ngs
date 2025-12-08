@@ -21,7 +21,9 @@ export function formatCurrency(amount: number, currency: string = 'TRY'): string
 export function formatDate(date: string | Date | null | undefined): string {
   if (!date) return "-";
   const d = new Date(date);
-  return d.toLocaleDateString("tr-TR", {
+  const lang = typeof window !== 'undefined' ? (localStorage.getItem('i18nextLng') || 'tr') : 'tr';
+  const locale = lang === 'en' ? 'en-US' : 'tr-TR';
+  return d.toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",

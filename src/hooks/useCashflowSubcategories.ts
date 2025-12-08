@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export interface CashflowSubcategory {
   id: string;
@@ -12,6 +13,7 @@ export interface CashflowSubcategory {
 }
 
 export const useCashflowSubcategories = (categoryId?: string) => {
+  const { t } = useTranslation();
   const [subcategories, setSubcategories] = useState<CashflowSubcategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,11 +81,11 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       if (error) throw error;
       
       setSubcategories(prev => [...prev, newSubcategory as CashflowSubcategory].sort((a, b) => a.name.localeCompare(b.name)));
-      toast.success("Alt kategori başarıyla oluşturuldu");
+      toast.success(t('toast.subcategoryCreated'));
       
       return newSubcategory;
     } catch (err: any) {
-      toast.error("Alt kategori oluşturulurken hata oluştu: " + err.message);
+      toast.error(t('toast.subcategoryCreateError') + ': ' + err.message);
       throw err;
     }
   };
@@ -100,11 +102,11 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       if (error) throw error;
       
       setSubcategories(prev => prev.map(s => s.id === id ? updatedSubcategory as CashflowSubcategory : s).sort((a, b) => a.name.localeCompare(b.name)));
-      toast.success("Alt kategori başarıyla güncellendi");
+      toast.success(t('toast.subcategoryUpdated'));
       
       return updatedSubcategory;
     } catch (err: any) {
-      toast.error("Alt kategori güncellenirken hata oluştu: " + err.message);
+      toast.error(t('toast.subcategoryUpdateError') + ': ' + err.message);
       throw err;
     }
   };
@@ -119,9 +121,9 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       if (error) throw error;
       
       setSubcategories(prev => prev.filter(s => s.id !== id));
-      toast.success("Alt kategori başarıyla silindi");
+      toast.success(t('toast.subcategoryDeleted'));
     } catch (err: any) {
-      toast.error("Alt kategori silinirken hata oluştu: " + err.message);
+      toast.error(t('toast.subcategoryDeleteError') + ': ' + err.message);
       throw err;
     }
   };

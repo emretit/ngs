@@ -19,6 +19,22 @@ const AuditLogs = React.lazy(() => import("@/pages/admin/AuditLogs"));
 // Define settings routes
 export const settingsRoutes: RouteConfig[] = [
   { path: "/settings", component: Settings, protected: true },
+  { path: "/settings/users", component: UsersSettings, protected: true },
+  { path: "/settings/roles", component: RolesSettings, protected: true },
+  { path: "/settings/subscription", component: Subscription, protected: true },
+  { path: "/settings/integrator", component: IntegratorSettings, protected: true },
+  { path: "/settings/nilvera", component: NilveraSettingsPage, protected: true },
+  { path: "/settings/system", component: SystemSettingsPage, protected: true },
+  { path: "/settings/system-parameters", component: SystemParametersPage, protected: true },
+  { path: "/settings/pdf-templates", component: PdfTemplates, protected: true },
+  // Service template routes MUST come before general pdf-templates routes (more specific first)
+  { path: "/settings/pdf-templates/service/new", component: ServiceTemplateEditor, protected: true },
+  { path: "/settings/pdf-templates/service/edit/:id", component: ServiceTemplateEditor, protected: true },
+  { path: "/settings/pdf-templates/new", component: PdfTemplateEditor, protected: true },
+  { path: "/settings/pdf-templates/edit/:templateId", component: PdfTemplateEditor, protected: true },
+  { path: "/settings/audit-logs", component: AuditLogs, protected: true },
+  { path: "/settings/notifications", component: NotificationSettings, protected: true },
+  // Backward compatibility routes (without /settings prefix)
   { path: "/users", component: UsersSettings, protected: true },
   { path: "/roles", component: RolesSettings, protected: true },
   { path: "/subscription", component: Subscription, protected: true },
@@ -27,7 +43,6 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/system", component: SystemSettingsPage, protected: true },
   { path: "/system-parameters", component: SystemParametersPage, protected: true },
   { path: "/pdf-templates", component: PdfTemplates, protected: true },
-  // Service template routes MUST come before general pdf-templates routes (more specific first)
   { path: "/pdf-templates/service/new", component: ServiceTemplateEditor, protected: true },
   { path: "/pdf-templates/service/edit/:id", component: ServiceTemplateEditor, protected: true },
   { path: "/pdf-templates/new", component: PdfTemplateEditor, protected: true },

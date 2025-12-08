@@ -71,6 +71,7 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
     },
     section: {
       marginBottom: 12,
+      marginTop: 8,
     },
     sectionTitle: {
       fontSize: schema.serviceInfo.titleFontSize || 14,
@@ -83,18 +84,30 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
     },
     infoRow: {
       flexDirection: 'row',
-      marginBottom: 4,
+      marginBottom: 0,
+      paddingVertical: 0,
+      height: 'auto',
     },
     infoLabel: {
       fontSize: schema.serviceInfo.infoFontSize || 10,
       fontWeight: 'bold',
       width: 120,
       color: schema.page.fontColor || '#6B7280',
+      lineHeight: 1.2,
+      paddingVertical: 0,
+      marginVertical: 0,
     },
     infoValue: {
       fontSize: schema.serviceInfo.infoFontSize || 10,
       flex: 1,
       color: schema.page.fontColor || '#374151',
+      lineHeight: 1.2,
+      paddingVertical: 0,
+      marginVertical: 0,
+    },
+    infoValueContainer: {
+      marginBottom: 6,
+      paddingVertical: 2,
     },
     twoColumnRow: {
       flexDirection: 'row',
@@ -306,40 +319,64 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
         </View>
 
         {/* Customer & Technician Info */}
-        <View style={styles.twoColumnRow}>
+        <View style={[styles.twoColumnRow, { marginTop: 12, marginBottom: 16 }]}>
           {/* Customer Info */}
           {data.customer && (
-            <View style={[styles.section, styles.column]}>
+            <View style={[styles.column, { marginRight: 15, paddingRight: 10 }]}>
               <Text style={styles.sectionTitle}>Müşteri Bilgileri</Text>
-              <Text style={styles.infoValue}>{safeText(data.customer.name)}</Text>
-              {data.customer.company && (
-                <Text style={styles.infoValue}>{safeText(data.customer.company)}</Text>
-              )}
-              {data.customer.phone && (
-                <Text style={styles.infoValue}>{safeText(data.customer.phone)}</Text>
-              )}
-              {data.customer.email && (
-                <Text style={styles.infoValue}>{safeText(data.customer.email)}</Text>
-              )}
-              {data.customer.address && (
-                <Text style={[styles.infoValue, { marginTop: 4 }]}>
-                  {safeText(data.customer.address)}
-                </Text>
-              )}
+              <View style={{ marginTop: 8, gap: 4 }}>
+                {data.customer.name && (
+                  <View style={{ marginBottom: 4 }}>
+                    <Text style={styles.infoValue}>{safeText(data.customer.name)}</Text>
+                  </View>
+                )}
+                {data.customer.company && (
+                  <View style={{ marginBottom: 4 }}>
+                    <Text style={styles.infoValue}>{safeText(data.customer.company)}</Text>
+                  </View>
+                )}
+                {data.customer.phone && (
+                  <View style={{ marginBottom: 4 }}>
+                    <Text style={styles.infoValue}>{safeText(data.customer.phone)}</Text>
+                  </View>
+                )}
+                {data.customer.email && (
+                  <View style={{ marginBottom: 4 }}>
+                    <Text style={styles.infoValue}>{safeText(data.customer.email)}</Text>
+                  </View>
+                )}
+                {data.customer.address && (
+                  <View style={{ marginBottom: 4 }}>
+                    <Text style={styles.infoValue}>
+                      {safeText(data.customer.address)}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           )}
 
           {/* Technician Info */}
           {schema.serviceInfo.showTechnician && data.technician && (
-            <View style={[styles.section, styles.column]}>
+            <View style={[styles.column, { marginLeft: 15, paddingLeft: 10 }]}>
               <Text style={styles.sectionTitle}>Teknisyen Bilgileri</Text>
-              <Text style={styles.infoValue}>{safeText(data.technician.name)}</Text>
-              {data.technician.phone && (
-                <Text style={styles.infoValue}>{safeText(data.technician.phone)}</Text>
-              )}
-              {data.technician.email && (
-                <Text style={styles.infoValue}>{safeText(data.technician.email)}</Text>
-              )}
+              <View style={{ marginTop: 8, gap: 4 }}>
+                {data.technician.name && (
+                  <View style={{ marginBottom: 4 }}>
+                    <Text style={styles.infoValue}>{safeText(data.technician.name)}</Text>
+                  </View>
+                )}
+                {data.technician.phone && (
+                  <View style={{ marginBottom: 4 }}>
+                    <Text style={styles.infoValue}>{safeText(data.technician.phone)}</Text>
+                  </View>
+                )}
+                {data.technician.email && (
+                  <View style={{ marginBottom: 4 }}>
+                    <Text style={styles.infoValue}>{safeText(data.technician.email)}</Text>
+                  </View>
+                )}
+              </View>
             </View>
           )}
         </View>

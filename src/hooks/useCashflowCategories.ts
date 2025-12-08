@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export interface CashflowCategory {
   id: string;
@@ -18,6 +19,7 @@ export interface CreateCategoryData {
 }
 
 export const useCashflowCategories = () => {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<CashflowCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,11 +87,11 @@ export const useCashflowCategories = () => {
       if (error) throw error;
       
       setCategories(prev => [...prev, newCategory as CashflowCategory].sort((a, b) => a.name.localeCompare(b.name)));
-      toast.success("Kategori başarıyla oluşturuldu");
+      toast.success(t('toast.categoryCreated'));
       
       return newCategory;
     } catch (err: any) {
-      toast.error("Kategori oluşturulurken hata oluştu: " + err.message);
+      toast.error(t('toast.categoryCreateError') + ': ' + err.message);
       throw err;
     }
   };
@@ -106,11 +108,11 @@ export const useCashflowCategories = () => {
       if (error) throw error;
       
       setCategories(prev => prev.map(c => c.id === id ? updatedCategory as CashflowCategory : c).sort((a, b) => a.name.localeCompare(b.name)));
-      toast.success("Kategori başarıyla güncellendi");
+      toast.success(t('toast.categoryUpdated'));
       
       return updatedCategory;
     } catch (err: any) {
-      toast.error("Kategori güncellenirken hata oluştu: " + err.message);
+      toast.error(t('toast.categoryUpdateError') + ': ' + err.message);
       throw err;
     }
   };
@@ -149,9 +151,9 @@ export const useCashflowCategories = () => {
       if (error) throw error;
       
       setCategories(prev => prev.filter(c => c.id !== id));
-      toast.success("Kategori başarıyla silindi");
+      toast.success(t('toast.categoryDeleted'));
     } catch (err: any) {
-      toast.error(err.message || "Kategori silinirken hata oluştu: " + err.message);
+      toast.error(err.message || t('toast.categoryDeleteError') + ': ' + err.message);
       throw err;
     }
   };

@@ -283,12 +283,16 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
 
                 // Teknisyene bildirim gönder (eğer user_id varsa)
                 if (technician.user_id) {
+                  const notificationTitle = 'Yeni Servis Ataması';
+                  const notificationBody = `${service.service_title} servisi size atandı. Tarih: ${formatDate(startTime, 'dd MMM yyyy HH:mm')}`;
+                  
+                  // Database'e bildirim kaydı ekle
                   const { error: notificationError } = await supabase
                     .from('notifications')
                     .insert({
                       user_id: technician.user_id,
-                      title: 'Yeni Servis Ataması',
-                      body: `${service.service_title} servisi size atandı. Tarih: ${formatDate(startTime, 'dd MMM yyyy HH:mm')}`,
+                      title: notificationTitle,
+                      body: notificationBody,
                       type: 'service_assignment',
                       service_request_id: serviceId,
                       technician_id: technicianId,
@@ -297,8 +301,50 @@ const ServicePage = ({ defaultView = "scheduling", hideHeader = false }: Service
                     });
 
                   if (notificationError) {
-                    console.error('Bildirim gönderme hatası:', notificationError);
+                    console.error('Bildirim kaydı hatası:', notificationError);
                     // Bildirim hatası kritik değil, devam et
+                  }
+
+                  // Push notification gönder (mobil uygulamaya)
+                  try {
+                    console.log('📱 Push notification gönderiliyor...', {
+                      user_id: technician.user_id,
+                      title: notificationTitle,
+                      body: notificationBody
+                    });
+
+                    const { data: pushData, error: pushError } = await supabase.functions.invoke('send-push-notification', {
+                      body: {
+                        user_id: technician.user_id,
+                        title: notificationTitle,
+                        body: notificationBody,
+                        data: {
+                          type: 'service_assignment',
+                          service_request_id: serviceId,
+                          action: 'open_service_request',
+                        }
+                      }
+                    });
+
+                    if (pushError) {
+                      console.error('❌ Push notification gönderme hatası:', pushError);
+                      // Hata detaylarını göster
+                      toast.error(`Push notification hatası: ${pushError.message || 'Bilinmeyen hata'}`);
+                    } else {
+                      console.log('✅ Push notification başarıyla gönderildi:', pushData);
+                      if (pushData?.fcm_message_id) {
+                        console.log('📨 FCM Message ID:', pushData.fcm_message_id);
+                      }
+                    }
+                  } catch (pushErr: any) {
+                    console.error('❌ Push notification çağrı hatası:', pushErr);
+                    console.error('Hata detayları:', {
+                      message: pushErr?.message,
+                      stack: pushErr?.stack,
+                      name: pushErr?.name
+                    });
+                    toast.error(`Push notification gönderilemedi: ${pushErr?.message || 'Bilinmeyen hata'}`);
+                    // Push notification hatası kritik değil, devam et
                   }
                 }
 

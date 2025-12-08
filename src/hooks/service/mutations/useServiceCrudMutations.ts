@@ -172,6 +172,13 @@ export const useServiceCrudMutations = () => {
         attachmentsForDb = [...attachmentsForDb, ...newAttachments];
       }
 
+      const newAssignedTechnician = updateData.assigned_technician && 
+        updateData.assigned_technician !== 'unassigned' && 
+        isValidUUID(updateData.assigned_technician) ? updateData.assigned_technician : currentRequest.assigned_technician;
+      
+      const isTechnicianChanged = newAssignedTechnician && 
+        newAssignedTechnician !== currentRequest.assigned_technician;
+
       const updatePayload = {
         ...updateData,
         service_due_date: updateData.service_due_date ? 
@@ -183,9 +190,7 @@ export const useServiceCrudMutations = () => {
         issue_date: updateData.issue_date ? 
           (typeof updateData.issue_date === 'string' ? updateData.issue_date : currentRequest.issue_date) : 
           currentRequest.issue_date,
-        assigned_technician: updateData.assigned_technician && 
-          updateData.assigned_technician !== 'unassigned' && 
-          isValidUUID(updateData.assigned_technician) ? updateData.assigned_technician : currentRequest.assigned_technician,
+        assigned_technician: newAssignedTechnician,
         service_status: updateData.assigned_technician && 
           updateData.assigned_technician !== 'unassigned' && 
           isValidUUID(updateData.assigned_technician) ? 'assigned' as const : currentRequest.service_status,
@@ -208,6 +213,66 @@ export const useServiceCrudMutations = () => {
       }
 
       console.log("Service request updated successfully:", data);
+
+      // Eğer teknisyen değiştiyse ve yeni bir teknisyen atandıysa push notification gönder
+      if (isTechnicianChanged && newAssignedTechnician) {
+        try {
+          // Teknisyenin user_id'sini bul
+          const { data: technician, error: techError } = await supabase
+            .from('employees')
+            .select('user_id, first_name, last_name')
+            .eq('id', newAssignedTechnician)
+            .single();
+
+          if (!techError && technician?.user_id) {
+            const notificationTitle = 'Yeni Servis Ataması';
+            const notificationBody = `${currentRequest.service_title || 'Servis talebi'} size atandı.`;
+            
+            // Database'e bildirim kaydı ekle
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: technician.user_id,
+                title: notificationTitle,
+                body: notificationBody,
+                type: 'service_assignment',
+                service_request_id: id,
+                technician_id: newAssignedTechnician,
+                company_id: userData.company_id,
+                is_read: false,
+              });
+
+            // Push notification gönder (mobil uygulamaya)
+            try {
+              const { data: pushData, error: pushError } = await supabase.functions.invoke('send-push-notification', {
+                body: {
+                  user_id: technician.user_id,
+                  title: notificationTitle,
+                  body: notificationBody,
+                  data: {
+                    type: 'service_assignment',
+                    service_request_id: id,
+                    action: 'open_service_request',
+                  }
+                }
+              });
+
+              if (pushError) {
+                console.error('Push notification gönderme hatası:', pushError);
+              } else {
+                console.log('Push notification başarıyla gönderildi:', pushData);
+              }
+            } catch (pushErr) {
+              console.error('Push notification çağrı hatası:', pushErr);
+              // Push notification hatası kritik değil, devam et
+            }
+          }
+        } catch (notifErr) {
+          console.error('Bildirim gönderme hatası:', notifErr);
+          // Bildirim hatası kritik değil, devam et
+        }
+      }
+
       return data;
     },
     onSuccess: () => {

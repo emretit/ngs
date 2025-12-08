@@ -29,8 +29,9 @@ function getTitleForPath(path: string): string {
     return pathTitleMap[path];
   }
   
-  // Pattern matching for detail pages
+  // Pattern matching for detail pages and specific routes
   const patterns: Record<string, string> = {
+    // Detail pages
     '/customers/': 'Müşteri Detay',
     '/suppliers/': 'Tedarikçi Detay',
     '/products/': 'Ürün Detay',
@@ -41,6 +42,9 @@ function getTitleForPath(path: string): string {
     '/orders/': 'Sipariş Detay',
     '/deliveries/': 'Teslimat Detay',
     '/service/tickets/': 'Servis Talebi',
+    '/service/detail/': 'Servis Detay',
+    '/service/edit/': 'Servis Düzenle',
+    '/service/new': 'Yeni Servis Talebi',
     '/contracts/': 'Sözleşme Detay',
     '/vehicles/': 'Araç Detay',
     '/sales-invoices/': 'Satış Faturası',
@@ -49,6 +53,45 @@ function getTitleForPath(path: string): string {
     '/purchasing/rfqs/': 'RFQ Detay',
     '/purchasing/orders/': 'Satın Alma Siparişi',
     '/purchasing/grns/': 'GRN Detay',
+    // Service routes
+    '/service/reports': 'Servis Raporları',
+    '/service/settings': 'Servis Ayarları',
+    '/service/parts': 'Servis Parçaları',
+    '/service/list': 'Servis Listesi',
+    '/service/kanban': 'Servis Kanban',
+    '/service/scheduling': 'Servis Planlama',
+    '/service/calendar': 'Servis Takvimi',
+    '/service/contracts': 'Servis Sözleşmeleri',
+    '/service/assets': 'Servis Varlıkları',
+    '/service/warranties': 'Servis Garantileri',
+    '/service/maintenance': 'Bakım Takvimi',
+    // PDF Templates
+    '/pdf-templates/new': 'Yeni PDF Şablonu',
+    '/pdf-templates/edit/': 'PDF Şablonu Düzenle',
+    '/pdf-templates/service/new': 'Yeni Servis Şablonu',
+    '/pdf-templates/service/edit/': 'Servis Şablonu Düzenle',
+    // Cashflow detail pages
+    '/cashflow/cash-accounts/': 'Nakit Hesap Detay',
+    '/cashflow/credit-cards/': 'Kredi Kartı Detay',
+    '/cashflow/bank-accounts/': 'Banka Hesabı Detay',
+    '/cashflow/partner-accounts/': 'Ortak Hesap Detay',
+    // E-Invoice
+    '/e-invoice': 'E-Fatura',
+    '/e-invoice/process/': 'E-Fatura İşle',
+    // Profile
+    '/profile': 'Profil',
+    // Settings sub-pages
+    '/notifications': 'Bildirim Ayarları',
+    '/nilvera': 'Nilvera Ayarları',
+    // Deliveries
+    '/deliveries/new': 'Yeni Teslimat',
+    // Financial
+    '/financial-overview': 'Finansal Özet',
+    '/sales-invoices/create': 'Yeni Satış Faturası',
+    // Contract routes
+    '/contracts/service': 'Servis Sözleşmeleri',
+    '/contracts/vehicle': 'Araç Sözleşmeleri',
+    '/contracts/customer': 'Müşteri Sözleşmeleri',
   };
   
   for (const [pattern, title] of Object.entries(patterns)) {
@@ -64,6 +107,36 @@ function getTitleForPath(path: string): string {
     if (pathTitleMap[parentPath]) {
       return pathTitleMap[parentPath];
     }
+  }
+  
+  // Smart fallback: generate title from path
+  if (segments.length > 0) {
+    const lastSegment = segments[segments.length - 1];
+    const secondLastSegment = segments.length > 1 ? segments[segments.length - 2] : null;
+    
+    // Handle common patterns
+    if (lastSegment === 'new' && secondLastSegment) {
+      const parentTitle = pathTitleMap[`/${secondLastSegment}`] || secondLastSegment;
+      return `Yeni ${parentTitle}`;
+    }
+    
+    if (lastSegment === 'edit' && secondLastSegment) {
+      const parentTitle = pathTitleMap[`/${secondLastSegment}`] || secondLastSegment;
+      return `${parentTitle} Düzenle`;
+    }
+    
+    if (lastSegment === 'create' && secondLastSegment) {
+      const parentTitle = pathTitleMap[`/${secondLastSegment}`] || secondLastSegment;
+      return `Yeni ${parentTitle}`;
+    }
+    
+    // Capitalize and format last segment
+    const formatted = lastSegment
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+    
+    return formatted;
   }
   
   // Last resort

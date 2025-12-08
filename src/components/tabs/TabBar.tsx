@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTabs } from './TabContext';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export default function TabBar() {
   const { tabs, activeTabId, setActiveTab, removeTab } = useTabs();
@@ -41,32 +42,39 @@ export default function TabBar() {
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId;
+          
           return (
-            <button
-              key={tab.id}
-              ref={isActive ? activeTabRef : null}
-              onClick={() => handleTabClick(tab.id)}
-              className={cn(
-                'group flex items-center gap-2 px-4 py-2 text-sm font-medium border-r border-border whitespace-nowrap transition-colors min-w-0',
-                'hover:bg-muted/50',
-                isActive
-                  ? 'bg-background text-foreground border-b-2 border-b-primary -mb-[1px]'
-                  : 'bg-muted/30 text-muted-foreground'
-              )}
-            >
-              <span className="truncate max-w-[150px]">{tab.title}</span>
-              {tab.closable && (
-                <span
-                  onClick={(e) => handleCloseTab(e, tab.id)}
+            <Tooltip key={tab.id}>
+              <TooltipTrigger asChild>
+                <button
+                  ref={isActive ? activeTabRef : null}
+                  onClick={() => handleTabClick(tab.id)}
                   className={cn(
-                    'p-0.5 rounded hover:bg-destructive/20 hover:text-destructive transition-colors',
-                    isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    'group flex items-center gap-2 px-4 py-2 text-sm font-medium border-r border-border whitespace-nowrap transition-colors min-w-0',
+                    'hover:bg-muted/50',
+                    isActive
+                      ? 'bg-background text-foreground border-b-2 border-b-primary -mb-[1px]'
+                      : 'bg-muted/30 text-muted-foreground'
                   )}
                 >
-                  <X className="h-3 w-3" />
-                </span>
-              )}
-            </button>
+                  <span className="truncate max-w-[150px]">{tab.title}</span>
+                  {tab.closable && (
+                    <span
+                      onClick={(e) => handleCloseTab(e, tab.id)}
+                      className={cn(
+                        'p-0.5 rounded hover:bg-destructive/20 hover:text-destructive transition-colors',
+                        isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      )}
+                    >
+                      <X className="h-3 w-3" />
+                    </span>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-[300px]">
+                <p className="break-words">{tab.title}</p>
+              </TooltipContent>
+            </Tooltip>
           );
         })}
       </div>

@@ -37,9 +37,16 @@ export const CompanySwitcher = ({ open, onOpenChange }: CompanySwitcherProps) =>
     }
     
     try {
+      // Loading toast göster
+      const loadingToast = toast.loading("Şirket değiştiriliyor...");
+      
       await switchCompany.mutateAsync(companyId);
-      toast.success("Şirket değiştirildi");
+      
+      // Başarı mesajı göster ve sayfa yenilenecek
+      toast.success("Şirket değiştirildi, sayfa yenileniyor...", { id: loadingToast });
       onOpenChange(false);
+      
+      // Sayfa yenilenecek (useSwitchCompany hook'unda)
     } catch (error: any) {
       const errorMessage = error?.message || "Şirket değiştirilemedi";
       toast.error(errorMessage);
@@ -54,11 +61,18 @@ export const CompanySwitcher = ({ open, onOpenChange }: CompanySwitcherProps) =>
     }
     
     try {
+      // Loading toast göster
+      const loadingToast = toast.loading("Yeni şirket oluşturuluyor...");
+      
       await createCompany.mutateAsync(newCompanyName.trim());
-      toast.success("Yeni şirket oluşturuldu");
+      
+      // Başarı mesajı göster ve sayfa yenilenecek
+      toast.success("Yeni şirket oluşturuldu, sayfa yenileniyor...", { id: loadingToast });
       setNewCompanyName("");
       setShowNewCompanyForm(false);
       onOpenChange(false);
+      
+      // Sayfa yenilenecek (useCreateUserCompany hook'unda)
     } catch (error: any) {
       const errorMessage = error?.message || "Şirket oluşturulamadı";
       toast.error(errorMessage);

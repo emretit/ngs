@@ -89,13 +89,44 @@ export const useSwitchCompany = () => {
       return companyId;
     },
     onSuccess: () => {
-      // Invalidate all company-related queries
+      // Tüm company-related query'leri invalidate et
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['current-company'] });
       queryClient.invalidateQueries({ queryKey: ['user-companies'] });
       
-      // Reload the page to refresh all data with the new company context
-      window.location.reload();
+      // Tüm company_id'ye bağlı query'leri invalidate et
+      queryClient.invalidateQueries({ predicate: (query) => {
+        const queryKey = query.queryKey;
+        // Company ID içeren tüm query'leri bul
+        return Array.isArray(queryKey) && (
+          queryKey.some(key => 
+            typeof key === 'string' && (
+              key.includes('company') || 
+              key.includes('Company') ||
+              key.includes('dashboard') ||
+              key.includes('orders') ||
+              key.includes('proposals') ||
+              key.includes('opportunities') ||
+              key.includes('activities') ||
+              key.includes('expenses') ||
+              key.includes('service') ||
+              key.includes('calendar') ||
+              key.includes('products') ||
+              key.includes('employees') ||
+              key.includes('customers') ||
+              key.includes('suppliers')
+            )
+          )
+        );
+      }});
+      
+      // Tüm query cache'ini temizle ve sayfayı yenile
+      queryClient.clear();
+      
+      // Kısa bir gecikme sonrası sayfayı yenile (cache temizleme işleminin tamamlanması için)
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     },
   });
 };
@@ -113,69 +144,71 @@ export const useCreateUserCompany = () => {
         throw new Error('Şirket adı gereklidir');
       }
       
-      // Create the new company
+      // Create the new company - RLS bypass için RPC kullan
       const { data: company, error: companyError } = await supabase
-        .from('companies')
-        .insert([{ 
-          name: companyName.trim(),
-          is_active: true
-        }])
-        .select()
-        .single();
+        .rpc('create_company_for_user', {
+          company_name: companyName.trim()
+        });
 
       if (companyError) {
         console.error('Şirket oluşturma hatası:', companyError);
         throw new Error(companyError.message || 'Şirket oluşturulamadı');
       }
       
-      if (!company?.id) {
+      if (!company?.company_id) {
         throw new Error('Şirket oluşturuldu ancak ID alınamadı');
       }
       
-      // Add user to the company as owner
-      const { error: userCompanyError } = await supabase
-        .from('user_companies')
-        .insert([{
-          user_id: user.id,
-          company_id: company.id,
-          role: 'owner',
-          is_owner: true
-        }]);
-
-      if (userCompanyError) {
-        console.error('Kullanıcı-şirket ilişkisi oluşturma hatası:', userCompanyError);
-        // Şirketi silmeyi dene (rollback)
-        await supabase.from('companies').delete().eq('id', company.id);
-        throw new Error(userCompanyError.message || 'Kullanıcı-şirket ilişkisi oluşturulamadı');
-      }
+      const companyId = company.company_id;
       
-      // Update user's profile to the new company
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ company_id: company.id })
-        .eq('id', user.id);
-
-      if (profileError) {
-        console.error('Profil güncelleme hatası:', profileError);
-        // Şirketi ve user_companies kaydını silmeyi dene (rollback)
-        await supabase.from('user_companies').delete().eq('company_id', company.id).eq('user_id', user.id);
-        await supabase.from('companies').delete().eq('id', company.id);
-        throw new Error(profileError.message || 'Profil güncellenemedi');
-      }
+      // RPC fonksiyonu her şeyi yapıyor (user_companies, profiles)
+      // Bu yüzden aşağıdaki adımlara gerek yok
       
       // Clear user data cache
       sessionStorage.removeItem(`user_data_${user.id}`);
       
-      return company;
+      return { id: companyId, name: companyName.trim(), is_active: true };
     },
     onSuccess: () => {
+      // Tüm company-related query'leri invalidate et
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['current-company'] });
       queryClient.invalidateQueries({ queryKey: ['user-companies'] });
       queryClient.invalidateQueries({ queryKey: ['allCompanies'] });
       
-      // Reload the page to refresh all data with the new company context
-      window.location.reload();
+      // Tüm company_id'ye bağlı query'leri invalidate et
+      queryClient.invalidateQueries({ predicate: (query) => {
+        const queryKey = query.queryKey;
+        // Company ID içeren tüm query'leri bul
+        return Array.isArray(queryKey) && (
+          queryKey.some(key => 
+            typeof key === 'string' && (
+              key.includes('company') || 
+              key.includes('Company') ||
+              key.includes('dashboard') ||
+              key.includes('orders') ||
+              key.includes('proposals') ||
+              key.includes('opportunities') ||
+              key.includes('activities') ||
+              key.includes('expenses') ||
+              key.includes('service') ||
+              key.includes('calendar') ||
+              key.includes('products') ||
+              key.includes('employees') ||
+              key.includes('customers') ||
+              key.includes('suppliers')
+            )
+          )
+        );
+      }});
+      
+      // Tüm query cache'ini temizle ve sayfayı yenile
+      queryClient.clear();
+      
+      // Kısa bir gecikme sonrası sayfayı yenile (cache temizleme işleminin tamamlanması için)
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     },
   });
 };

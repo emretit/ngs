@@ -14,6 +14,7 @@ import { formatCurrency, getStatusConfig } from "@/utils/cashflowUtils";
 import CheckCreateDialog, { CheckRecord } from "@/components/shared/CheckCreateDialog";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 interface Check {
   id: string;
@@ -80,7 +81,7 @@ const CashflowChecks = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["checks"] });
-      toast({ title: "Başarılı", description: "Çek silindi" });
+      toast({ title: t("toast.success"), description: t("cashflow.checkDeleted") });
     },
   });
 

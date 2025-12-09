@@ -228,19 +228,19 @@ const ServicesTable = ({
 
   const allSelected = sortedServices.length > 0 && sortedServices.every(s => isServiceSelected(s.id));
 
-  // Servis fişi yazdırma işlemi
+  // Servis yazdırma işlemi
   const handleServiceSlipPrint = async (e: React.MouseEvent, service: ServiceRequest, templateId?: string) => {
     e.stopPropagation();
     try {
-      const serviceSlipData = await PdfExportService.transformServiceSlipForPdf(service);
-      await PdfExportService.openServicePdfInNewTab(serviceSlipData, { 
+      const serviceData = await PdfExportService.transformServiceForPdf(service);
+      await PdfExportService.openServicePdfInNewTab(serviceData, { 
         templateId,
-        filename: `servis-fisi-${serviceSlipData.serviceNumber}.pdf`
+        filename: `servis-${serviceData.serviceNumber}.pdf`
       });
-      toast.success("Servis fişi PDF'i yeni sekmede açıldı");
+      toast.success("Servis PDF'i yeni sekmede açıldı");
     } catch (error) {
-      console.error('Servis fişi PDF oluşturma hatası:', error);
-      toast.error("Servis fişi PDF'i oluşturulurken hata oluştu: " + (error as Error).message);
+      console.error('Servis PDF oluşturma hatası:', error);
+      toast.error("Servis PDF'i oluşturulurken hata oluştu: " + (error as Error).message);
     }
   };
 
@@ -407,8 +407,8 @@ const ServicesTable = ({
                       <DropdownMenuLabel>Yazdırma</DropdownMenuLabel>
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger>
-                          <Receipt className="h-4 w-4 mr-2 text-green-500" />
-                          <span>Servis Fişi Yazdır</span>
+                          <Printer className="h-4 w-4 mr-2 text-blue-500" />
+                          <span>Yazdır</span>
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent className="w-48">
                           {serviceTemplates && serviceTemplates.length > 0 ? (
@@ -418,7 +418,7 @@ const ServicesTable = ({
                                 onClick={(e) => handleServiceSlipPrint(e, service, template.id)}
                                 className="cursor-pointer"
                               >
-                                <Receipt className="h-4 w-4 mr-2 text-green-500" />
+                                <Printer className="h-4 w-4 mr-2 text-blue-500" />
                                 <span>{template.name || 'PDF Yazdır'}</span>
                               </DropdownMenuItem>
                             ))

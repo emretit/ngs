@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { EnhancedDatePicker } from "@/components/ui/enhanced-date-picker";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, getStatusConfig } from "@/utils/cashflowUtils";
+import { useTranslation } from "react-i18next";
 
 interface FinancialInstrument {
   id: string;
@@ -165,19 +166,19 @@ const CashflowNotes = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>Düzenleme Tarihi</Label>
-            <EnhancedDatePicker date={issueDate} onSelect={setIssueDate} placeholder="Tarih seçin" />
+            <Label>{t("cashflow.issueDate")}</Label>
+            <EnhancedDatePicker date={issueDate} onSelect={setIssueDate} placeholder={t("forms.selectDate")} />
             <input type="hidden" name="issue_date" value={issueDate ? format(issueDate, "yyyy-MM-dd") : ""} />
           </div>
           <div>
-            <Label>Vade Tarihi</Label>
-            <EnhancedDatePicker date={dueDate} onSelect={setDueDate} placeholder="Tarih seçin" />
+            <Label>{t("cashflow.dueDate")}</Label>
+            <EnhancedDatePicker date={dueDate} onSelect={setDueDate} placeholder={t("forms.selectDate")} />
             <input type="hidden" name="due_date" value={dueDate ? format(dueDate, "yyyy-MM-dd") : ""} />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="bank_name">Banka</Label>
+            <Label htmlFor="bank_name">{t("cashflow.bank")}</Label>
             <Input
               id="bank_name"
               name="bank_name"
@@ -185,7 +186,7 @@ const CashflowNotes = () => {
             />
           </div>
           <div>
-            <Label htmlFor="branch_name">Şube</Label>
+            <Label htmlFor="branch_name">{t("cashflow.branch")}</Label>
             <Input
               id="branch_name"
               name="branch_name"
@@ -233,12 +234,12 @@ const CashflowNotes = () => {
             id="notes"
             name="notes"
             defaultValue={editingNote?.notes || ""}
-            placeholder="Notlar..."
+            placeholder={t("forms.notes")}
           />
         </div>
         <div className="flex justify-end space-x-2">
           <Button variant="outline" onClick={() => setNoteDialog(false)}>
-            İptal
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={(e) => {
@@ -247,7 +248,7 @@ const CashflowNotes = () => {
               saveNoteMutation.mutate(formData);
             }}
           >
-            Kaydet
+            {t("common.save")}
           </Button>
         </div>
       </div>
@@ -287,7 +288,7 @@ const CashflowNotes = () => {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
-                {editingNote ? "Senet Düzenle" : "Yeni Senet Ekle"}
+                {editingNote ? t("cashflow.editNote") : t("cashflow.addNote")}
               </DialogTitle>
             </DialogHeader>
             <form>
@@ -304,7 +305,7 @@ const CashflowNotes = () => {
               <TableHead>Senet No</TableHead>
               <TableHead>Keşideci</TableHead>
               <TableHead>Lehtar</TableHead>
-              <TableHead>Düzenleme</TableHead>
+              <TableHead>{t("common.actions")}</TableHead>
               <TableHead>Vade</TableHead>
               <TableHead className="text-right">Tutar</TableHead>
               <TableHead>Banka</TableHead>

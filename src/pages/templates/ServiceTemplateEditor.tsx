@@ -371,11 +371,18 @@ export default function ServiceTemplateEditor() {
                       <Input
                         id="template-name"
                         type="text"
-                        value={templateName}
-                        onChange={(e) => setTemplateName(e.target.value)}
+                        {...form.register('name')}
+                        value={form.watch('name') || templateName}
+                        onChange={(e) => {
+                          setTemplateName(e.target.value);
+                          form.setValue('name', e.target.value);
+                        }}
                         placeholder="Şablon adı"
                         className="h-7 w-40 text-xs"
                       />
+                      {form.formState.errors.name && (
+                        <p className="text-xs text-destructive ml-2">{form.formState.errors.name.message}</p>
+                      )}
                     </div>
 
                     {/* Font Family */}
@@ -512,42 +519,6 @@ export default function ServiceTemplateEditor() {
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-2 min-h-0 space-y-2">
               
-              {/* Şablon Bilgileri */}
-              <Accordion type="single" collapsible defaultValue="templateInfo">
-                <AccordionItem value="templateInfo" className="border border-gray-200 rounded-lg">
-                  <AccordionTrigger className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs">📋</span>
-                      <span>Şablon Bilgileri</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-2 pt-1.5 px-2 pb-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="name" className="text-xs text-gray-600">Şablon Adı *</Label>
-                      <Input
-                        id="name"
-                        {...form.register('name')}
-                        placeholder="Örn: Bakım Şablonu"
-                        className="h-7 text-xs"
-                      />
-                      {form.formState.errors.name && (
-                        <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="description" className="text-xs text-gray-600">Açıklama</Label>
-                      <Textarea
-                        id="description"
-                        {...form.register('description')}
-                        placeholder="Şablon hakkında açıklama"
-                        rows={2}
-                        className="text-xs"
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
               {/* Servis Detayları */}
               <Accordion type="single" collapsible defaultValue="serviceDetails">
                 <AccordionItem value="serviceDetails" className="border border-gray-200 rounded-lg">
@@ -832,25 +803,10 @@ export default function ServiceTemplateEditor() {
                   </AccordionTrigger>
                   <AccordionContent className="px-2 pb-2 pt-1.5">
                     <div className="grid grid-cols-2 gap-1.5">
-                      <div className="border rounded-md p-1.5 bg-purple-50">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs">1</span>
-                            <Label className="text-xs font-medium text-gray-700">Öncelik</Label>
-                          </div>
-                          <Switch
-                            id="show-priority"
-                            checked={pdfSchema.serviceInfo.showPriority}
-                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showPriority', checked)}
-                            className="scale-[0.65]"
-                          />
-                        </div>
-                      </div>
-
                       <div className="border rounded-md p-1.5 bg-blue-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs">2</span>
+                            <span className="text-xs">1</span>
                             <Label className="text-xs font-medium text-gray-700">Tahmini Süre</Label>
                           </div>
                           <Switch
@@ -862,25 +818,10 @@ export default function ServiceTemplateEditor() {
                         </div>
                       </div>
 
-                      <div className="border rounded-md p-1.5 bg-green-50">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs">3</span>
-                            <Label className="text-xs font-medium text-gray-700">Teknisyen</Label>
-                          </div>
-                          <Switch
-                            id="show-technician"
-                            checked={pdfSchema.serviceInfo.showTechnician}
-                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showTechnician', checked)}
-                            className="scale-[0.65]"
-                          />
-                        </div>
-                      </div>
-
                       <div className="border rounded-md p-1.5 bg-orange-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs">4</span>
+                            <span className="text-xs">3</span>
                             <Label className="text-xs font-medium text-gray-700">Konum</Label>
                           </div>
                           <Switch
@@ -895,7 +836,7 @@ export default function ServiceTemplateEditor() {
                       <div className="border rounded-md p-1.5 bg-yellow-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs">5</span>
+                            <span className="text-xs">4</span>
                             <Label className="text-xs font-medium text-gray-700">Servis Tipi</Label>
                           </div>
                           <Switch
@@ -910,7 +851,7 @@ export default function ServiceTemplateEditor() {
                       <div className="border rounded-md p-1.5 bg-pink-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs">6</span>
+                            <span className="text-xs">5</span>
                             <Label className="text-xs font-medium text-gray-700">Tarihler</Label>
                           </div>
                           <Switch
@@ -995,6 +936,103 @@ export default function ServiceTemplateEditor() {
                         />
                       </div>
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Signatures Settings */}
+              <Accordion type="single" collapsible defaultValue="signatures">
+                <AccordionItem value="signatures" className="border border-gray-200 rounded-lg">
+                  <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">✍️</span>
+                      <span>İmzalar</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-2 pb-2 pt-1.5 space-y-1.5">
+                    <div className="border rounded-md p-1.5 bg-indigo-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs">1</span>
+                          <Label className="text-xs font-medium text-gray-700">İmza Bölümü</Label>
+                        </div>
+                        <Switch
+                          id="show-signatures"
+                          checked={pdfSchema.signatures?.show ?? true}
+                          onCheckedChange={(checked) => updatePdfSchema('signatures.show', checked)}
+                          className="scale-[0.65]"
+                        />
+                      </div>
+                    </div>
+
+                    {pdfSchema.signatures?.show && (
+                      <>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <div className="border rounded-md p-1.5 bg-blue-50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs">2</span>
+                                <Label className="text-xs font-medium text-gray-700">Teknisyen İmzası</Label>
+                              </div>
+                              <Switch
+                                id="show-technician-signature"
+                                checked={pdfSchema.signatures?.showTechnician ?? true}
+                                onCheckedChange={(checked) => updatePdfSchema('signatures.showTechnician', checked)}
+                                className="scale-[0.65]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="border rounded-md p-1.5 bg-green-50">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs">3</span>
+                                <Label className="text-xs font-medium text-gray-700">Müşteri İmzası</Label>
+                              </div>
+                              <Switch
+                                id="show-customer-signature"
+                                checked={pdfSchema.signatures?.showCustomer ?? true}
+                                onCheckedChange={(checked) => updatePdfSchema('signatures.showCustomer', checked)}
+                                className="scale-[0.65]"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 pt-1">
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-0.5 block">Teknisyen Etiketi</Label>
+                            <Input
+                              value={pdfSchema.signatures?.technicianLabel || 'Teknisyen'}
+                              onChange={(e) => updatePdfSchema('signatures.technicianLabel', e.target.value)}
+                              placeholder="Teknisyen"
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-0.5 block">Müşteri Etiketi</Label>
+                            <Input
+                              value={pdfSchema.signatures?.customerLabel || 'Müşteri'}
+                              onChange={(e) => updatePdfSchema('signatures.customerLabel', e.target.value)}
+                              placeholder="Müşteri"
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-0.5 block">Font Boyutu</Label>
+                            <Input
+                              type="number"
+                              value={pdfSchema.signatures?.fontSize || 10}
+                              onChange={(e) => updatePdfSchema('signatures.fontSize', Number(e.target.value))}
+                              min="8"
+                              max="14"
+                              placeholder="10"
+                              className="h-7 w-14 text-center text-xs"
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

@@ -14,11 +14,13 @@ import TasksKanban from "@/components/activities/TasksKanban";
 import TasksCalendar from "@/components/activities/calendar/TasksCalendar";
 import MyDayView from "@/components/activities/myday/MyDayView";
 import { useActivities } from "@/hooks/useActivities";
+import { useTranslation } from "react-i18next";
 interface ActivitiesPageProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
 const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAssignee, setSelectedAssignee] = useState<string | null>(null);
@@ -145,12 +147,12 @@ const Activities = ({ isCollapsed, setIsCollapsed }: ActivitiesPageProps) => {
             <div className="flex items-center justify-center h-[400px]">
               <div className="text-center space-y-4">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-muted-foreground">Aktiviteler yükleniyor...</p>
+                <p className="text-muted-foreground">{t("pages.activities.loading")}</p>
               </div>
             </div>
           ) : error ? (
             <div className="h-96 flex items-center justify-center">
-              <div className="text-red-500">Aktiviteler yüklenirken bir hata oluştu</div>
+              <div className="text-red-500">{t("pages.activities.loadError")}</div>
             </div>
           ) : (
             <TasksContent 

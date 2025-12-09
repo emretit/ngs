@@ -35,6 +35,7 @@
     "yes": "Evet",
     "no": "Hayır",
     "view": "Görüntüle",
+    "unknownError": "Bilinmeyen hata",
     "year": "Yılı",
     "allMonths": "Tüm Aylar",
     "january": "Ocak",
@@ -96,6 +97,7 @@
     "district": "İlçe",
     "postalCode": "Posta Kodu",
     "notes": "Notlar",
+    "selectDate": "Tarih seçin",
     "success": "Başarılı",
     "error": "Hata",
     "warning": "Uyarı",
@@ -183,6 +185,8 @@
   "toast": {
     "success": "Başarılı",
     "error": "Hata",
+    "success": "Başarılı",
+    "error": "Hata",
     "warning": "Uyarı",
     "info": "Bilgi",
     "saved": "Kaydedildi",
@@ -235,6 +239,62 @@
     "customersAlreadyExist": "müşteri zaten mevcut",
     "invalidRows": "satır geçersiz",
     "customersAddError": "müşteri eklenirken hata oluştu"
+  },
+  "pages": {
+    "products": {
+      "loading": "Ürünler yükleniyor...",
+      "loadError": "Ürünler yüklenirken bir hata oluştu",
+      "activateError": "Ürünler aktifleştirilirken bir hata oluştu",
+      "deactivateError": "Ürünler pasifleştirilirken bir hata oluştu",
+      "deleteError": "Ürünler silinirken bir hata oluştu",
+      "deleteTitle": "Ürünleri Sil",
+      "selectAllError": "Tüm ürünler seçilirken bir hata oluştu",
+      "cannotDeleteOrders": "Bu ürünler siparişlerde kullanıldığı için silinemez",
+      "cannotDeleteInvoices": "Bu ürünler satış faturalarında kullanıldığı için silinemez",
+      "cannotDeleteInUse": "Bu ürünler başka kayıtlarda kullanıldığı için silinemez (sipariş, fatura, stok hareketi, teklif vb.)",
+      "activated": "{{count}} ürün başarıyla aktifleştirildi",
+      "deactivated": "{{count}} ürün başarıyla pasifleştirildi",
+      "deleted": "{{count}} ürün başarıyla silindi"
+    },
+    "customers": {
+      "loading": "Müşteriler yükleniyor...",
+      "loadError": "Müşteriler yüklenirken bir hata oluştu",
+      "deleteError": "Müşteriler silinirken bir hata oluştu",
+      "deleteTitle": "Müşterileri Sil",
+      "deleteDescription": "Seçili {{count}} müşteriyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+    },
+    "suppliers": {
+      "loading": "Tedarikçiler yükleniyor...",
+      "loadError": "Tedarikçiler yüklenirken bir hata oluştu",
+      "deleteError": "Tedarikçiler silinirken bir hata oluştu",
+      "deleteTitle": "Tedarikçileri Sil",
+      "selectAtLeastOne": "Lütfen silmek için en az bir tedarikçi seçin",
+      "cannotDeleteInvoices": "Bu tedarikçiler alış faturalarında kullanıldığı için silinemez",
+      "cannotDeleteOrders": "Bu tedarikçiler satın alma siparişlerinde kullanıldığı için silinemez",
+      "cannotDeleteInProducts": "Bu tedarikçiler ürünlerde kullanıldığı için silinemez",
+      "cannotDeleteInUse": "Bu tedarikçiler başka kayıtlarda kullanıldığı için silinemez (fatura, sipariş, ürün vb.)",
+      "deleteDescription": "Seçili {{count}} tedarikçiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "deleted": "{{count}} tedarikçi başarıyla silindi"
+    },
+    "employees": {
+      "loading": "Çalışanlar yükleniyor...",
+      "loadError": "Çalışanlar yüklenirken bir hata oluştu"
+    },
+    "orders": {
+      "loading": "Siparişler yükleniyor...",
+      "loadError": "Siparişler yüklenirken bir hata oluştu"
+    },
+    "activities": {
+      "loading": "Aktiviteler yükleniyor...",
+      "loadError": "Aktiviteler yüklenirken bir hata oluştu"
+    }
+  },
+  "dashboard": {
+    "aiAgent": {
+      "title": "AI Agent ile Analiz",
+      "description": "Doğal dille veri sorgulama",
+      "new": "Yeni"
+    }
   },
   "nav": {
     "dashboard": "Gösterge Paneli",
@@ -441,7 +501,29 @@
     "backToSignIn": "Giriş sayfasına dön"
   },
   "settings": {
-    "title": "Ayarlar",
+    "title": "Ayarlar & Yönetim",
+    "description": "Sistem ayarlarını yönetin ve kullanıcı izinlerini düzenleyin.",
+    "systemStatus": "Sistem Durumu",
+    "active": "Aktif",
+    "users": "Kullanıcılar",
+    "integrations": "Entegrasyonlar",
+    "manageUsers": "Sistem kullanıcılarını yönetin",
+    "subscription": "Abonelik & Faturalama",
+    "subscriptionDescription": "Paket ve ödeme yönetimi",
+    "rolesAndPermissions": "Roller & İzinler",
+    "manageRoles": "Kullanıcı rollerini düzenleyin",
+    "eInvoiceIntegrator": "E-Fatura Entegratörü",
+    "integratorDescription": "Nilvera ve e-Logo entegrasyonu",
+    "systemSettings": "Sistem Ayarları",
+    "systemSettingsDescription": "Genel sistem ayarları",
+    "pdfTemplates": "PDF Şablonları",
+    "pdfTemplatesDescription": "PDF şablonlarını yönetin",
+    "auditLogs": "Denetim Günlüğü",
+    "auditLogsDescription": "Sistem aktivite logları ve değişiklik geçmişi",
+    "roleManagement": "Rol Yönetimi",
+    "roleManagementDescription": "Kullanıcı rollerini yönetin ve yetkileri kontrol edin",
+    "rolePermissions": "Rol Yetkileri",
+    "noUsersFound": "Kullanıcı bulunamadı",
     "profile": "Profil",
     "company": "Şirket",
     "preferences": "Tercihler",

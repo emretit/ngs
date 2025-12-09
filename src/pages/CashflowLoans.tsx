@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
 interface Loan {
   id: string;
@@ -125,8 +126,8 @@ const CashflowLoans = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      odenecek: { label: "Ödenecek", variant: "destructive" as const },
-      odendi: { label: "Ödendi", variant: "default" as const },
+      odenecek: { label: t("cashflow.toBePaid"), variant: "destructive" as const },
+      odendi: { label: t("cashflow.paid"), variant: "default" as const },
     };
     
     const config = statusConfig[status as keyof typeof statusConfig];
@@ -140,7 +141,7 @@ const CashflowLoans = () => {
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="loan_name">Kredi Adı</Label>
+            <Label htmlFor="loan_name">{t("cashflow.loanName")}</Label>
             <Input
               id="loan_name"
               name="loan_name"
@@ -149,7 +150,7 @@ const CashflowLoans = () => {
             />
           </div>
           <div>
-            <Label htmlFor="bank">Banka</Label>
+            <Label htmlFor="bank">{t("cashflow.bank")}</Label>
             <Input
               id="bank"
               name="bank"
@@ -160,7 +161,7 @@ const CashflowLoans = () => {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="amount">Kredi Tutarı</Label>
+            <Label htmlFor="amount">{t("cashflow.loanAmount")}</Label>
             <Input
               id="amount"
               name="amount"
@@ -171,7 +172,7 @@ const CashflowLoans = () => {
             />
           </div>
           <div>
-            <Label htmlFor="interest_rate">Faiz Oranı (%)</Label>
+            <Label htmlFor="interest_rate">{t("cashflow.interestRate")}</Label>
             <Input
               id="interest_rate"
               name="interest_rate"
@@ -184,7 +185,7 @@ const CashflowLoans = () => {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="start_date">Vade Başlangıcı</Label>
+            <Label htmlFor="start_date">{t("cashflow.startDate")}</Label>
             <Input
               id="start_date"
               name="start_date"
@@ -253,12 +254,12 @@ const CashflowLoans = () => {
             id="notes"
             name="notes"
             defaultValue={editingLoan?.notes || ""}
-            placeholder="Notlar..."
+            placeholder={t("forms.notes")}
           />
         </div>
         <div className="flex justify-end space-x-2">
           <Button variant="outline" onClick={() => setLoanDialog(false)}>
-            İptal
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={(e) => {
@@ -267,7 +268,7 @@ const CashflowLoans = () => {
               saveLoanMutation.mutate(formData);
             }}
           >
-            Kaydet
+            {t("common.save")}
           </Button>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { RoleManagementPanel } from "@/components/settings/users/RoleManagementP
 import { Shield, ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface UserWithEmployee {
   id: string;
@@ -31,6 +32,7 @@ interface UserWithEmployee {
 }
 
 const RolesSettings = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   
   // Fetch users with their employees and roles
@@ -99,7 +101,7 @@ const RolesSettings = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Yükleniyor...</p>
+          <p className="text-muted-foreground">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -117,17 +119,17 @@ const RolesSettings = () => {
             className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary hover:border-primary/20 transition-all duration-200 hover:shadow-sm"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span className="font-medium">Geri</span>
+            <span className="font-medium">{t("common.back")}</span>
           </Button>
           <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-white shadow-lg">
             <Shield className="h-5 w-5" />
           </div>
           <div className="space-y-0.5">
             <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-              Rol Yönetimi
+              {t("settings.roleManagement")}
             </h1>
             <p className="text-xs text-muted-foreground/70">
-              Kullanıcı rollerini yönetin ve yetkileri kontrol edin
+              {t("settings.roleManagementDescription")}
             </p>
           </div>
         </div>
@@ -138,7 +140,7 @@ const RolesSettings = () => {
         <div className="p-4 border-b bg-gray-50">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-purple-600" />
-            <h3 className="text-base font-semibold text-foreground">Rol Yetkileri</h3>
+            <h3 className="text-base font-semibold text-foreground">{t("settings.rolePermissions")}</h3>
           </div>
         </div>
         <div className="p-4">
@@ -146,7 +148,7 @@ const RolesSettings = () => {
             <RoleManagementPanel users={users} />
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              Kullanıcı bulunamadı
+              {t("settings.noUsersFound")}
             </div>
           )}
         </div>

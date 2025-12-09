@@ -13,8 +13,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, TrendingUp, FileDown, Building2 } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useTranslation } from "react-i18next";
 
 const Employees = () => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
@@ -232,7 +234,7 @@ const Employees = () => {
   }, [selectedEmployees.length]);
 
   if (error) {
-    toast.error("Çalışanlar yüklenirken bir hata oluştu");
+    toast.error(t("pages.employees.loadError"));
     console.error("Error loading employees:", error);
   }
 
@@ -274,12 +276,12 @@ const Employees = () => {
         <div className="flex items-center justify-center h-[400px]">
           <div className="text-center space-y-4">
             <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p className="text-muted-foreground">Çalışanlar yükleniyor...</p>
+            <p className="text-muted-foreground">{t("pages.employees.loading")}</p>
           </div>
         </div>
       ) : error ? (
         <div className="h-96 flex items-center justify-center">
-          <div className="text-red-500">Çalışanlar yüklenirken bir hata oluştu</div>
+          <div className="text-red-500">{t("pages.employees.loadError")}</div>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

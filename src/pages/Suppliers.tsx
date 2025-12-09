@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useSuppliersInfiniteScroll } from "@/hooks/useSuppliersInfiniteScroll";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { useTranslation } from "react-i18next";
 
 interface SuppliersProps {
   isCollapsed?: boolean;
@@ -16,6 +17,7 @@ interface SuppliersProps {
 }
 
 const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -123,7 +125,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   });
 
   if (error) {
-    toast.error("Tedarikçiler yüklenirken bir hata oluştu");
+    toast.error(t("pages.suppliers.loadError"));
     console.error("Error loading suppliers:", error);
   }
   const handleSupplierSelect = useCallback((supplier: Supplier) => {
@@ -142,7 +144,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
   const handleBulkAction = useCallback(async (action: string) => {
     if (action === 'delete') {
       if (selectedSuppliers.length === 0) {
-        toast.error('Lütfen silmek için en az bir tedarikçi seçin', { duration: 2000 });
+        toast.error(t("pages.suppliers.selectAtLeastOne"), { duration: 2000 });
         return;
       }
       setIsDeleteDialogOpen(true);
@@ -196,7 +198,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         console.log('Suppliers have purchase invoices, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
-        toast.error('Bu tedarikçiler alış faturalarında kullanıldığı için silinemez', { duration: 2000 });
+        toast.error(t("pages.suppliers.cannotDeleteInvoices"), { duration: 2000 });
         return;
       }
 
@@ -204,7 +206,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         console.log('Suppliers have purchase orders, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
-        toast.error('Bu tedarikçiler satın alma siparişlerinde kullanıldığı için silinemez', { duration: 2000 });
+        toast.error(t("pages.suppliers.cannotDeleteOrders"), { duration: 2000 });
         return;
       }
 
@@ -212,7 +214,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         console.log('Suppliers have products, cannot delete');
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
-        toast.error('Bu tedarikçiler ürünlerde kullanıldığı için silinemez', { duration: 2000 });
+        toast.error(t("pages.suppliers.cannotDeleteInProducts"), { duration: 2000 });
         return;
       }
 
@@ -247,9 +249,9 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
         setIsDeleting(false);
         setIsDeleteDialogOpen(false);
         if (isConflictError) {
-          toast.error('Bu tedarikçiler başka kayıtlarda kullanıldığı için silinemez (fatura, sipariş, ürün vb.)', { duration: 2000 });
+          toast.error(t("pages.suppliers.cannotDeleteInUse"), { duration: 2000 });
         } else {
-          toast.error(`Silme hatası: ${error.message || 'Bilinmeyen hata'}`, { duration: 2000 });
+          toast.error(`${t("pages.suppliers.deleteError")}: ${error.message || t("common.unknownError")}`, { duration: 2000 });
         }
         if (!isConflictError) {
           throw error;
@@ -258,7 +260,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
       }
 
       console.log('Suppliers deleted successfully');
-      toast.success(`${selectedSuppliers.length} tedarikçi başarıyla silindi`, { duration: 2000 });
+      toast.success(t("pages.suppliers.deleted", { count: selectedSuppliers.length }), { duration: 2000 });
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['supplier_statistics'] });
       setSelectedSuppliers([]);
@@ -266,7 +268,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
       refreshSuppliers();
     } catch (error: any) {
       console.error('Error deleting suppliers:', error);
-      toast.error(`Tedarikçiler silinirken bir hata oluştu: ${error?.message || 'Bilinmeyen hata'}`, { duration: 2000 });
+      toast.error(`${t("pages.suppliers.deleteError")}: ${error?.message || t("common.unknownError")}`, { duration: 2000 });
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -312,7 +314,7 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
           </div>
         ) : error ? (
           <div className="h-96 flex items-center justify-center">
-            <div className="text-red-500">Tedarikçiler yüklenirken bir hata oluştu</div>
+            <div className="text-red-500">{t("pages.suppliers.loadError")}</div>
           </div>
         ) : (
           <SuppliersContent
@@ -340,10 +342,10 @@ const Suppliers = ({ isCollapsed, setIsCollapsed }: SuppliersProps) => {
       <ConfirmationDialogComponent
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        title="Tedarikçileri Sil"
-        description={`Seçili ${selectedSuppliers.length} tedarikçiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        title={t("pages.suppliers.deleteTitle")}
+        description={t("pages.suppliers.deleteDescription", { count: selectedSuppliers.length })}
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleBulkDeleteConfirm}
         onCancel={handleBulkDeleteCancel}

@@ -9,8 +9,10 @@ import { toast } from "sonner";
 import { useCustomersInfiniteScroll } from "@/hooks/useCustomersInfiniteScroll";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { useTranslation } from "react-i18next";
 
 const Contacts = memo(() => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -120,7 +122,7 @@ const Contacts = memo(() => {
   });
 
   if (error) {
-    toast.error("Müşteriler yüklenirken bir hata oluştu");
+    toast.error(t("pages.customers.loadError"));
     console.error("Error loading customers:", error);
   }
   const handleCustomerSelect = (customer: Customer) => {
@@ -260,7 +262,7 @@ const Contacts = memo(() => {
       refreshCustomers();
     } catch (error: any) {
       console.error('Error deleting customers:', error);
-      toast.error(`Müşteriler silinirken bir hata oluştu: ${error?.message || 'Bilinmeyen hata'}`, { duration: 2000 });
+      toast.error(`${t("pages.customers.deleteError")}: ${error?.message || t("common.unknownError")}`, { duration: 2000 });
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -301,12 +303,12 @@ const Contacts = memo(() => {
           <div className="flex items-center justify-center h-[400px]">
             <div className="text-center space-y-4">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-muted-foreground">Müşteriler yükleniyor...</p>
+              <p className="text-muted-foreground">{t("pages.customers.loading")}</p>
             </div>
           </div>
         ) : error ? (
           <div className="h-96 flex items-center justify-center">
-            <div className="text-red-500">Müşteriler yüklenirken bir hata oluştu</div>
+            <div className="text-red-500">{t("pages.customers.loadError")}</div>
           </div>
         ) : (
           <CustomersContent
@@ -332,9 +334,9 @@ const Contacts = memo(() => {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         title="Müşterileri Sil"
-        description={`Seçili ${selectedCustomers.length} müşteriyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        description={t("pages.customers.deleteDescription", { count: selectedCustomers.length })}
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleBulkDeleteConfirm}
         onCancel={handleBulkDeleteCancel}

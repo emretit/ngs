@@ -1,10 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { Settings2, Users, UserCheck, Zap, Wrench, FileText, CreditCard, ClipboardList } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
 interface SettingsProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
 const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   return (
     <div className="space-y-6">
@@ -17,10 +20,10 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
             </div>
             <div className="space-y-0.5">
               <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                Ayarlar & Yönetim
+                {t("settings.title")}
               </h1>
               <p className="text-xs text-muted-foreground/70">
-                Sistem ayarlarını yönetin ve kullanıcı izinlerini düzenleyin.
+                {t("settings.description")}
               </p>
             </div>
           </div>
@@ -29,15 +32,15 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
             {/* Sistem Durumu */}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-gradient-to-r from-green-600 to-green-700 text-white border border-green-600 shadow-sm">
               <Settings2 className="h-3 w-3" />
-              <span className="font-bold">Sistem Durumu</span>
+              <span className="font-bold">{t("settings.systemStatus")}</span>
               <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">
-                Aktif
+                {t("settings.active")}
               </span>
             </div>
             {/* Toplam Kullanıcı */}
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">
               <Users className="h-3 w-3" />
-              <span className="font-medium">Kullanıcılar</span>
+              <span className="font-medium">{t("settings.users")}</span>
               <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
                 -
               </span>
@@ -45,7 +48,7 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
             {/* Entegrasyonlar */}
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 border border-purple-300">
               <Zap className="h-3 w-3" />
-              <span className="font-medium">Entegrasyonlar</span>
+              <span className="font-medium">{t("settings.integrations")}</span>
               <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
                 -
               </span>
@@ -71,10 +74,10 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      Kullanıcılar
+                      {t("settings.users")}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Sistem kullanıcılarını yönetin
+                      {t("settings.manageUsers")}
                     </p>
                   </div>
                 </div>
@@ -90,10 +93,10 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      Abonelik & Faturalama
+                      {t("settings.subscription")}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Paket ve ödeme yönetimi
+                      {t("settings.subscriptionDescription")}
                     </p>
                   </div>
                 </div>
@@ -109,10 +112,10 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                      Roller & İzinler
+                      {t("settings.rolesAndPermissions")}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Kullanıcı rollerini düzenleyin
+                      {t("settings.manageRoles")}
                     </p>
                   </div>
                 </div>
@@ -128,10 +131,10 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                      E-Fatura Entegratörü
+                      {t("settings.eInvoiceIntegrator")}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Nilvera ve e-Logo entegrasyonu
+                      {t("settings.integratorDescription")}
                     </p>
                   </div>
                 </div>
@@ -147,10 +150,10 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
-                      Sistem Ayarları
+                      {t("settings.systemSettings")}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Genel sistem ayarları
+                      {t("settings.systemSettingsDescription")}
                     </p>
                   </div>
                 </div>
@@ -166,10 +169,10 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
-                      PDF Şablonları
+                      {t("settings.pdfTemplates")}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      PDF şablonlarını yönetin
+                      {t("settings.pdfTemplatesDescription")}
                     </p>
                   </div>
                 </div>
@@ -185,10 +188,10 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                      Denetim Günlüğü
+                      {t("settings.auditLogs")}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Sistem aktivite logları ve değişiklik geçmişi
+                      {t("settings.auditLogsDescription")}
                     </p>
                   </div>
                 </div>

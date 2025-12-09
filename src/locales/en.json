@@ -35,6 +35,7 @@
     "yes": "Yes",
     "no": "No",
     "view": "View",
+    "unknownError": "Unknown error",
     "year": "Year",
     "allMonths": "All Months",
     "january": "January",
@@ -96,6 +97,7 @@
     "district": "District",
     "postalCode": "Postal Code",
     "notes": "Notes",
+    "selectDate": "Select date",
     "success": "Success",
     "error": "Error",
     "warning": "Warning",
@@ -183,6 +185,8 @@
   "toast": {
     "success": "Success",
     "error": "Error",
+    "success": "Success",
+    "error": "Error",
     "warning": "Warning",
     "info": "Info",
     "saved": "Saved",
@@ -235,6 +239,62 @@
     "customersAlreadyExist": "customers already exist",
     "invalidRows": "rows invalid",
     "customersAddError": "error occurred while adding customers"
+  },
+  "pages": {
+    "products": {
+      "loading": "Loading products...",
+      "loadError": "An error occurred while loading products",
+      "activateError": "An error occurred while activating products",
+      "deactivateError": "An error occurred while deactivating products",
+      "deleteError": "An error occurred while deleting products",
+      "deleteTitle": "Delete Products",
+      "selectAllError": "An error occurred while selecting all products",
+      "cannotDeleteOrders": "These products cannot be deleted because they are used in orders",
+      "cannotDeleteInvoices": "These products cannot be deleted because they are used in sales invoices",
+      "cannotDeleteInUse": "These products cannot be deleted because they are used in other records (orders, invoices, stock movements, proposals, etc.)",
+      "activated": "{{count}} products activated successfully",
+      "deactivated": "{{count}} products deactivated successfully",
+      "deleted": "{{count}} products deleted successfully"
+    },
+    "customers": {
+      "loading": "Loading customers...",
+      "loadError": "An error occurred while loading customers",
+      "deleteError": "An error occurred while deleting customers",
+      "deleteTitle": "Delete Customers",
+      "deleteDescription": "Are you sure you want to delete {{count}} selected customers? This action cannot be undone."
+    },
+    "suppliers": {
+      "loading": "Loading suppliers...",
+      "loadError": "An error occurred while loading suppliers",
+      "deleteError": "An error occurred while deleting suppliers",
+      "deleteTitle": "Delete Suppliers",
+      "selectAtLeastOne": "Please select at least one supplier to delete",
+      "cannotDeleteInvoices": "These suppliers cannot be deleted because they are used in purchase invoices",
+      "cannotDeleteOrders": "These suppliers cannot be deleted because they are used in purchase orders",
+      "cannotDeleteInProducts": "These suppliers cannot be deleted because they are used in products",
+      "cannotDeleteInUse": "These suppliers cannot be deleted because they are used in other records (invoices, orders, products, etc.)",
+      "deleteDescription": "Are you sure you want to delete {{count}} selected suppliers? This action cannot be undone.",
+      "deleted": "{{count}} suppliers deleted successfully"
+    },
+    "employees": {
+      "loading": "Loading employees...",
+      "loadError": "An error occurred while loading employees"
+    },
+    "orders": {
+      "loading": "Loading orders...",
+      "loadError": "An error occurred while loading orders"
+    },
+    "activities": {
+      "loading": "Loading activities...",
+      "loadError": "An error occurred while loading activities"
+    }
+  },
+  "dashboard": {
+    "aiAgent": {
+      "title": "AI Agent Analysis",
+      "description": "Query data in natural language",
+      "new": "New"
+    }
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -441,7 +501,29 @@
     "backToSignIn": "Back to sign in"
   },
   "settings": {
-    "title": "Settings",
+    "title": "Settings & Management",
+    "description": "Manage system settings and configure user permissions.",
+    "systemStatus": "System Status",
+    "active": "Active",
+    "users": "Users",
+    "integrations": "Integrations",
+    "manageUsers": "Manage system users",
+    "subscription": "Subscription & Billing",
+    "subscriptionDescription": "Package and payment management",
+    "rolesAndPermissions": "Roles & Permissions",
+    "manageRoles": "Manage user roles",
+    "eInvoiceIntegrator": "E-Invoice Integrator",
+    "integratorDescription": "Nilvera and e-Logo integration",
+    "systemSettings": "System Settings",
+    "systemSettingsDescription": "General system settings",
+    "pdfTemplates": "PDF Templates",
+    "pdfTemplatesDescription": "Manage PDF templates",
+    "auditLogs": "Audit Logs",
+    "auditLogsDescription": "System activity logs and change history",
+    "roleManagement": "Role Management",
+    "roleManagementDescription": "Manage user roles and control permissions",
+    "rolePermissions": "Role Permissions",
+    "noUsersFound": "No users found",
     "profile": "Profile",
     "company": "Company",
     "preferences": "Preferences",

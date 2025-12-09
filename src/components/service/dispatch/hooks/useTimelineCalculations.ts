@@ -14,7 +14,7 @@ export const useTimelineCalculations = (selectedDate: Date) => {
       slots.push({
         hour,
         minute: 0,
-        label: format(time, 'HH:mm'),
+        label: format(time, 'HH'),
       });
     }
     

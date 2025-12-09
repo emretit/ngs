@@ -11,8 +11,10 @@ import { useProductsInfiniteScroll } from "@/hooks/useProductsInfiniteScroll";
 import { Product } from "@/types/product";
 import { toast } from "sonner";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { useTranslation } from "react-i18next";
 
 const Products = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<"grid" | "table">("table");
@@ -242,7 +244,7 @@ const Products = () => {
   });
 
   if (error) {
-    toast.error("Ürünler yüklenirken bir hata oluştu", { duration: 1000 });
+      toast.error(t("pages.products.loadError"), { duration: 1000 });
     console.error("Error loading products:", error);
   }
 
@@ -373,7 +375,7 @@ const Products = () => {
       }
     } catch (error) {
       console.error('Error selecting all products:', error);
-      toast.error('Tüm ürünler seçilirken bir hata oluştu', { duration: 1000 });
+        toast.error(t("pages.products.selectAllError"), { duration: 1000 });
     }
   }, [debouncedSearchQuery, categoryFilter, stockFilter]);
 
@@ -400,14 +402,14 @@ const Products = () => {
 
         if (error) throw error;
 
-        toast.success(`${selectedProducts.length} ürün başarıyla aktifleştirildi`, { duration: 1000 });
+        toast.success(t("pages.products.activated", { count: selectedProducts.length }), { duration: 1000 });
         queryClient.invalidateQueries({ queryKey: ['products'] });
         queryClient.invalidateQueries({ queryKey: ['product_statistics', companyId] });
         refresh();
         setSelectedProducts([]);
       } catch (error) {
         console.error('Error activating products:', error);
-        toast.error('Ürünler aktifleştirilirken bir hata oluştu', { duration: 1000 });
+        toast.error(t("pages.products.activateError"), { duration: 1000 });
       }
     } else if (action === 'deactivate') {
       try {
@@ -419,14 +421,14 @@ const Products = () => {
 
         if (error) throw error;
 
-        toast.success(`${selectedProducts.length} ürün başarıyla pasifleştirildi`, { duration: 1000 });
+        toast.success(t("pages.products.deactivated", { count: selectedProducts.length }), { duration: 1000 });
         queryClient.invalidateQueries({ queryKey: ['products'] });
         queryClient.invalidateQueries({ queryKey: ['product_statistics', companyId] });
         refresh();
         setSelectedProducts([]);
       } catch (error) {
         console.error('Error deactivating products:', error);
-        toast.error('Ürünler pasifleştirilirken bir hata oluştu', { duration: 1000 });
+        toast.error(t("pages.products.deactivateError"), { duration: 1000 });
       }
     }
   }, [selectedProducts, queryClient, refresh, companyId]);
@@ -476,12 +478,12 @@ const Products = () => {
         .limit(1);
 
       if (orderItems && orderItems.length > 0) {
-        toast.error('Bu ürünler siparişlerde kullanıldığı için silinemez', { duration: 1000 });
+        toast.error(t("pages.products.cannotDeleteOrders"), { duration: 1000 });
         return;
       }
 
       if (salesInvoiceItems && salesInvoiceItems.length > 0) {
-        toast.error('Bu ürünler satış faturalarında kullanıldığı için silinemez', { duration: 1000 });
+        toast.error(t("pages.products.cannotDeleteInvoices"), { duration: 1000 });
         return;
       }
 
@@ -547,7 +549,7 @@ const Products = () => {
           statusText === 'Conflict';
 
         if (isConflictError) {
-          toast.error('Bu ürünler başka kayıtlarda kullanıldığı için silinemez (sipariş, fatura, stok hareketi, teklif vb.)', { duration: 1000 });
+          toast.error(t("pages.products.cannotDeleteInUse"), { duration: 1000 });
           console.error('Delete conflict error:', { error, status, statusText, httpStatus, productIds });
         } else {
           console.error('Delete error:', { error, status, statusText, httpStatus, productIds });
@@ -556,7 +558,7 @@ const Products = () => {
         return;
       }
 
-      toast.success(`${selectedProducts.length} ürün başarıyla silindi`, { duration: 1000 });
+        toast.success(t("pages.products.deleted", { count: selectedProducts.length }), { duration: 1000 });
       // Tüm products query'lerini invalidate et (tüm sayfalar dahil)
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product_statistics', companyId] });
@@ -576,9 +578,9 @@ const Products = () => {
         error?.message?.includes('still referenced');
 
       if (isConflictError) {
-        toast.error('Bu ürünler başka kayıtlarda kullanıldığı için silinemez (sipariş, fatura, stok hareketi, teklif vb.)', { duration: 1000 });
+        toast.error(t("pages.products.cannotDeleteInUse"), { duration: 1000 });
       } else {
-        toast.error(`Ürünler silinirken bir hata oluştu: ${error?.message || 'Bilinmeyen hata'}`, { duration: 1000 });
+        toast.error(`${t("pages.products.deleteError")}: ${error?.message || t("common.unknownError")}`, { duration: 1000 });
       }
     } finally {
       setIsDeleting(false);
@@ -626,12 +628,12 @@ const Products = () => {
         <div className="flex items-center justify-center h-[400px]">
           <div className="text-center space-y-4">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-            <p className="text-muted-foreground">Ürünler yükleniyor...</p>
+            <p className="text-muted-foreground">{t("pages.products.loading")}</p>
           </div>
         </div>
       ) : error ? (
         <div className="h-96 flex items-center justify-center">
-          <div className="text-red-500">Ürünler yüklenirken bir hata oluştu</div>
+          <div className="text-red-500">{t("pages.products.loadError")}</div>
         </div>
       ) : (
         <ProductsContent
@@ -660,7 +662,7 @@ const Products = () => {
       <ConfirmationDialogComponent
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        title="Ürünleri Sil"
+        title={t("pages.products.deleteTitle")}
         description={`Seçili ${selectedProducts.length} ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
         confirmText="Sil"
         cancelText="İptal"

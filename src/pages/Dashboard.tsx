@@ -9,8 +9,10 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useNavigate } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AIAgentPanel } from "@/components/dashboard/AIAgentPanel";
+import { useTranslation } from "react-i18next";
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { financialData, crmStats, hrStats, isLoading } = useDashboardData();
   const navigate = useNavigate();
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
@@ -44,13 +46,13 @@ const Dashboard = () => {
                 <Bot className="h-4 w-4 text-primary" />
               </div>
               <div className="text-left">
-                <span className="font-medium text-sm">AI Agent ile Analiz</span>
+                <span className="font-medium text-sm">{t("dashboard.aiAgent.title")}</span>
                 <span className="text-xs text-muted-foreground ml-2 hidden sm:inline">
-                  Doğal dille veri sorgulama
+                  {t("dashboard.aiAgent.description")}
                 </span>
               </div>
               <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-600 rounded-full hidden sm:inline">
-                Yeni
+                {t("dashboard.aiAgent.new")}
               </span>
             </div>
             <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${aiPanelOpen ? 'rotate-180' : ''}`} />

@@ -955,6 +955,8 @@ export class PdfExportService {
         })),
         instructions: Array.isArray(instructions) ? instructions : [],
         notes: serviceDetails?.notes || service.notes || undefined,
+        technicianSignature: (service as any).technician_signature || undefined,
+        customerSignature: (service as any).customer_signature || undefined,
         createdAt: service.created_at || new Date().toISOString(),
       };
     } catch (error) {
@@ -1149,9 +1151,15 @@ export class PdfExportService {
 
   /**
    * Transform service slip to ServicePdfData format
+   * This is used for completed services with signatures
    */
   static async transformServiceSlipForPdf(service: ServiceRequest): Promise<ServicePdfData> {
     try {
+      // Check if service is completed
+      if (service.service_status !== 'completed') {
+        throw new Error('Servis fişi sadece tamamlanmış servisler için oluşturulabilir');
+      }
+
       // Get service slip data
       const serviceData = await this.transformServiceForPdf(service);
       
@@ -1166,14 +1174,14 @@ export class PdfExportService {
         serviceData.completedDate = service.completion_date;
       }
 
-      // Add technician signature info if available
-      if (service.technician_signature) {
-        // Signature data can be added to notes or a separate field
-        if (serviceData.notes) {
-          serviceData.notes += '\n\nTeknisyen İmzası: Onaylandı';
-        } else {
-          serviceData.notes = 'Teknisyen İmzası: Onaylandı';
-        }
+      // Add signatures - these are already included in transformServiceForPdf
+      // but we ensure they're set correctly here
+      const serviceWithSignatures = service as any;
+      if (serviceWithSignatures.technician_signature) {
+        serviceData.technicianSignature = serviceWithSignatures.technician_signature;
+      }
+      if (serviceWithSignatures.customer_signature) {
+        serviceData.customerSignature = serviceWithSignatures.customer_signature;
       }
 
       return serviceData;

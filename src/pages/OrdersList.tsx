@@ -6,11 +6,13 @@ import OrdersContent from "@/components/orders/OrdersContent";
 import { ViewType } from "@/components/orders/header/OrdersViewToggle";
 import { Order, OrderStatus } from "@/types/orders";
 import { useOrdersInfiniteScroll } from "@/hooks/useOrders";
+import { useTranslation } from "react-i18next";
 interface OrdersListProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
 const OrdersList = ({ isCollapsed, setIsCollapsed }: OrdersListProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<ViewType>("table");
   const [searchQuery, setSearchQuery] = useState("");
@@ -84,12 +86,12 @@ const OrdersList = ({ isCollapsed, setIsCollapsed }: OrdersListProps) => {
             <div className="flex items-center justify-center h-[400px]">
               <div className="text-center space-y-4">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-muted-foreground">Siparişler yükleniyor...</p>
+                <p className="text-muted-foreground">{t("pages.orders.loading")}</p>
               </div>
             </div>
           ) : error ? (
             <div className="h-96 flex items-center justify-center">
-              <div className="text-red-500">Siparişler yüklenirken bir hata oluştu</div>
+              <div className="text-red-500">{t("pages.orders.loadError")}</div>
             </div>
           ) : (
             <OrdersContent

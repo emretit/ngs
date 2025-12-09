@@ -28,6 +28,14 @@ export interface ServiceTemplateSchema {
     titleFontSize: number;
     fontSize: number;
   };
+  signatures: {
+    show: boolean;
+    showTechnician: boolean;
+    showCustomer: boolean;
+    technicianLabel?: string;
+    customerLabel?: string;
+    fontSize: number;
+  };
   notes: NotesSettings;
 }
 
@@ -75,6 +83,8 @@ export interface ServicePdfData {
   }>;
   instructions?: string[];
   notes?: string;
+  technicianSignature?: string; // Base64 image URL
+  customerSignature?: string; // Base64 image URL
   createdAt: string;
 }
 
@@ -124,9 +134,9 @@ export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
   serviceInfo: {
     titleFontSize: 14,
     infoFontSize: 10,
-    showPriority: true,
+    showPriority: false,
     showEstimatedDuration: true,
-    showTechnician: true,
+    showTechnician: false,
     showLocation: true,
     showServiceType: true,
     showDates: true,
@@ -145,6 +155,14 @@ export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
   instructions: {
     show: true,
     titleFontSize: 12,
+    fontSize: 10,
+  },
+  signatures: {
+    show: true,
+    showTechnician: true,
+    showCustomer: true,
+    technicianLabel: 'Teknisyen',
+    customerLabel: 'Müşteri',
     fontSize: 10,
   },
   notes: {

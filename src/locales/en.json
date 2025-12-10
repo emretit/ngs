@@ -289,13 +289,6 @@
       "loadError": "An error occurred while loading activities"
     }
   },
-  "dashboard": {
-    "aiAgent": {
-      "title": "AI Agent Analysis",
-      "description": "Query data in natural language",
-      "new": "New"
-    }
-  },
   "nav": {
     "dashboard": "Dashboard",
     "customers": "Customers",
@@ -365,7 +358,12 @@
     "salesOverview": "Sales Overview",
     "cashFlow": "Cash Flow",
     "receivables": "Receivables",
-    "payables": "Payables"
+    "payables": "Payables",
+    "aiAgent": {
+      "title": "AI Agent Analysis",
+      "description": "Query data in natural language",
+      "new": "New"
+    }
   },
   "customers": {
     "title": "Customers",

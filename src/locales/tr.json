@@ -289,13 +289,6 @@
       "loadError": "Aktiviteler yüklenirken bir hata oluştu"
     }
   },
-  "dashboard": {
-    "aiAgent": {
-      "title": "AI Agent ile Analiz",
-      "description": "Doğal dille veri sorgulama",
-      "new": "Yeni"
-    }
-  },
   "nav": {
     "dashboard": "Gösterge Paneli",
     "customers": "Müşteriler",
@@ -365,7 +358,12 @@
     "salesOverview": "Satış Genel Bakış",
     "cashFlow": "Nakit Akışı",
     "receivables": "Alacaklar",
-    "payables": "Borçlar"
+    "payables": "Borçlar",
+    "aiAgent": {
+      "title": "AI Agent ile Analiz",
+      "description": "Doğal dille veri sorgulama",
+      "new": "Yeni"
+    }
   },
   "customers": {
     "title": "Müşteriler",

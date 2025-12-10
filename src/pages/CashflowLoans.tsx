@@ -32,6 +32,7 @@ interface Loan {
 }
 
 const CashflowLoans = () => {
+  const { t } = useTranslation();
   const [loanDialog, setLoanDialog] = useState(false);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [loanFilters, setLoanFilters] = useState({ status: "all", dateRange: "" });

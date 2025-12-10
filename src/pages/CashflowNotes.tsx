@@ -35,6 +35,7 @@ interface FinancialInstrument {
 }
 
 const CashflowNotes = () => {
+  const { t } = useTranslation();
   const [noteDialog, setNoteDialog] = useState(false);
   const [editingNote, setEditingNote] = useState<FinancialInstrument | null>(null);
   const [noteFilters, setNoteFilters] = useState({ status: "all", dateRange: "" });

@@ -127,8 +127,8 @@ export default function ServiceDashboard() {
       : '0';
 
     // Toplam gelir ve maliyet
-    const totalRevenue = serviceRequests?.reduce((sum, s) => sum + (parseFloat(s.total_cost || '0')), 0) || 0;
-    const totalCost = serviceRequests?.reduce((sum, s) => sum + (parseFloat(s.service_cost || '0')), 0) || 0;
+    const totalRevenue = serviceRequests?.reduce((sum, s) => sum + (parseFloat(String(s.total_cost || '0'))), 0) || 0;
+    const totalCost = serviceRequests?.reduce((sum, s) => sum + (parseFloat(String(s.service_cost || '0'))), 0) || 0;
     const profit = totalRevenue - totalCost;
     const profitMargin = totalRevenue > 0 ? ((profit / totalRevenue) * 100).toFixed(1) : '0';
 

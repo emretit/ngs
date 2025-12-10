@@ -26,7 +26,7 @@ const createFormSchema = (t: (key: string) => string) => z.object({
   description: z.string().optional(),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 
 interface CompactProductFormProps {
   isOpen: boolean;

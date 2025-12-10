@@ -61,9 +61,11 @@ import { useTranslation } from "react-i18next";
 interface NavbarProps {
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void;
+  isMobileOpen?: boolean;
+  setIsMobileOpen?: (value: boolean) => void;
 }
 
-const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
+const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobileOpen }: NavbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const navRef = useRef<HTMLElement>(null);
@@ -290,10 +292,17 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
 
   return (
     <div className={cn(
-      "fixed left-0 top-0 z-40 h-screen bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col",
-      isCollapsed ? "w-[60px]" : "w-56"
+      "fixed left-0 top-0 z-50 h-screen bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800 transition-all duration-300 flex flex-col",
+      // Mobile'da state'e göre açılır/kapanır, desktop'ta her zaman görünür
+      isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+      // Desktop'ta genişlik, mobile'da her zaman tam genişlik
+      isCollapsed ? "w-[60px] lg:w-[60px]" : "w-56 lg:w-56"
     )}>
-      <NavHeader isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+      <NavHeader 
+        isCollapsed={isCollapsed} 
+        setIsCollapsed={setIsCollapsed}
+        onCloseMobile={() => setIsMobileOpen?.(false)}
+      />
       
       {/* Scrollable content area */}
       <nav 
@@ -321,5 +330,8 @@ const Navbar = ({ isCollapsed, setIsCollapsed }: NavbarProps) => {
 };
 
 export default React.memo(Navbar, (prevProps, nextProps) => {
-  return prevProps.isCollapsed === nextProps.isCollapsed;
+  return (
+    prevProps.isCollapsed === nextProps.isCollapsed &&
+    prevProps.isMobileOpen === nextProps.isMobileOpen
+  );
 });

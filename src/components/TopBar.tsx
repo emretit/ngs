@@ -11,7 +11,7 @@ import HeaderUserInfo from "@/components/HeaderUserInfo";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import GlobalSearchDialog from "@/components/GlobalSearchDialog";
 import CompanySwitcher from "@/components/CompanySwitcher";
-import { Calendar, Search, Command, Building, User, Settings, LogOut, Globe } from "lucide-react";
+import { Calendar, Search, Command, Building, User, Settings, LogOut, Globe, Menu } from "lucide-react";
 import { format } from "date-fns";
 import { tr, enUS } from "date-fns/locale";
 import {
@@ -30,7 +30,11 @@ const languages = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
 ];
 
-export const TopBar = () => {
+interface TopBarProps {
+  onMenuClick?: () => void;
+}
+
+export const TopBar = ({ onMenuClick }: TopBarProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { handleLogout } = useLogout();
@@ -72,8 +76,26 @@ export const TopBar = () => {
       <CompanySwitcher open={companySwitcherOpen} onOpenChange={setCompanySwitcherOpen} />
       
       <div className="h-14 border-b bg-card/95 backdrop-blur-sm flex items-center justify-between px-4 sm:px-6">
-        {/* Left side - User and Company info */}
-        <HeaderUserInfo />
+        {/* Left side - Mobile menu button and User/Company info */}
+        <div className="flex items-center gap-3">
+          {/* Mobile menu button */}
+          {onMenuClick && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMenuClick();
+              }}
+              className="lg:hidden h-9 w-9"
+              title="Menü"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <HeaderUserInfo />
+        </div>
         
         {/* Center - Search Button */}
         <Button

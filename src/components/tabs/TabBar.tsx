@@ -57,7 +57,7 @@ export default function TabBar() {
                       : 'bg-muted/30 text-muted-foreground'
                   )}
                 >
-                  <span className="truncate max-w-[150px]">{tab.title}</span>
+                  <span className="truncate max-w-[120px] sm:max-w-[150px] md:max-w-[200px]">{tab.title}</span>
                   {tab.closable && (
                     <span
                       onClick={(e) => handleCloseTab(e, tab.id)}

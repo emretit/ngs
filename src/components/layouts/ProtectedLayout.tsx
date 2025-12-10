@@ -39,22 +39,56 @@ const ProtectedLayout = () => {
     return saved ? JSON.parse(saved) : true;
   });
 
+  // Mobile sidebar state
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(isCollapsed));
   }, [isCollapsed]);
+
+  // Close mobile sidebar when clicking outside
+  useEffect(() => {
+    const handleResize = () => {
+      // Desktop'ta mobile sidebar'ı kapat
+      if (window.innerWidth >= 1024) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <TabProvider>
       <TabNavigationHandler />
       <div className="flex h-screen bg-gray-50">
-        <Navbar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+        {/* Mobile backdrop */}
+        {isMobileSidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
+
+        <Navbar 
+          isCollapsed={isCollapsed} 
+          setIsCollapsed={setIsCollapsed}
+          isMobileOpen={isMobileSidebarOpen}
+          setIsMobileOpen={setIsMobileSidebarOpen}
+        />
         
         <div 
           className={`flex-1 transition-all duration-300 ease-in-out overflow-auto ${
-            isCollapsed ? "ml-[60px]" : "ml-56"
+            // Mobile'da margin yok, desktop'ta sidebar genişliğine göre
+            isCollapsed 
+              ? "lg:ml-[60px]" 
+              : "lg:ml-56"
           }`}
         >
-          <TopBar />
+          <TopBar 
+            onMenuClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+          />
           <TabBar />
           <Separator />
           

@@ -38,6 +38,7 @@ interface Bank {
 }
 
 const CashflowChecks = () => {
+  const { t } = useTranslation();
   const [checkDialog, setCheckDialog] = useState(false);
   const [editingCheck, setEditingCheck] = useState<Check | null>(null);
   const [checkStatus, setCheckStatus] = useState("pending");

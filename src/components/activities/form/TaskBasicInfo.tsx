@@ -5,7 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from "react-hook-form";
 import { FormValues } from "./types";
 import { useTranslation } from "react-i18next";
-import { useTranslation } from "react-i18next";
 
 interface TaskBasicInfoProps {
   register: UseFormRegister<FormValues>;

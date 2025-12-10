@@ -806,7 +806,27 @@ export class PdfExportService {
   /**
    * Get company settings for PDF header from companies table
    */
-  static async getCompanySettings() {
+  static async getCompanySettings(): Promise<{
+    company_name?: string;
+    company_address?: string;
+    company_phone?: string;
+    company_email?: string;
+    company_website?: string;
+    company_logo_url?: string;
+    company_tax_number?: string;
+    company_tax_office?: string;
+    company_city?: string;
+    company_district?: string;
+    company_country?: string;
+    company_postal_code?: string;
+    company_trade_registry_number?: string;
+    company_mersis_number?: string;
+    company_bank_name?: string;
+    company_iban?: string;
+    company_account_number?: string;
+    default_currency?: string;
+    default_prepared_by?: string;
+  }> {
     try {
       console.log('getCompanySettings: Starting...'); // Debug
       const companyId = await this.getCurrentCompanyId();

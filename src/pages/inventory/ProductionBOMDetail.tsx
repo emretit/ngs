@@ -49,7 +49,7 @@ const ProductionBOMDetail = () => {
     onSuccess: () => {
       toast.success("Reçete başarıyla silindi");
       queryClient.invalidateQueries({ queryKey: ["boms"] });
-      navigate("/production");
+      navigate("/production/boms");
     },
     onError: (error) => {
       console.error("Delete error:", error);

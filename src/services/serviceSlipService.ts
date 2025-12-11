@@ -32,7 +32,7 @@ export class ServiceSlipService {
       .single();
 
     const serviceSlipData = {
-      slip_number: slipNumber,
+      service_number: slipNumber,
       issue_date: new Date().toISOString(),
       completion_date: formData.completion_date,
       technician_name: technicanProfile?.full_name || 'Belirtilmemiş',
@@ -76,7 +76,7 @@ export class ServiceSlipService {
     return {
       id: data.id,
       service_request_id: data.id,
-      slip_number: data.slip_number,
+      slip_number: data.service_number,
       issue_date: data.issue_date,
       completion_date: data.completion_date,
       technician_name: data.technician_name,
@@ -117,7 +117,7 @@ export class ServiceSlipService {
     return {
       id: data.id,
       service_request_id: data.id,
-      slip_number: data.slip_number,
+      slip_number: data.service_number,
       issue_date: data.issue_date,
       completion_date: data.completion_date,
       technician_name: data.technician_name,
@@ -139,14 +139,14 @@ export class ServiceSlipService {
       .from('service_requests')
       .select('*')
       .eq('id', serviceRequestId)
-      .not('slip_number', 'is', null)
+      .not('service_number', 'is', null)
       .single();
 
     if (error && error.code !== 'PGRST116') {
       throw new Error('Servis fişi getirilemedi: ' + error.message);
     }
 
-    if (!data || !data.slip_number) {
+    if (!data || !data.service_number) {
       return null;
     }
 
@@ -154,7 +154,7 @@ export class ServiceSlipService {
     return {
       id: data.id,
       service_request_id: data.id,
-      slip_number: data.slip_number,
+      slip_number: data.service_number,
       issue_date: data.issue_date,
       completion_date: data.completion_date,
       technician_name: data.technician_name,
@@ -176,7 +176,7 @@ export class ServiceSlipService {
     const { count } = await supabase
       .from('service_requests')
       .select('*', { count: 'exact', head: true })
-      .not('slip_number', 'is', null)
+      .not('service_number', 'is', null)
       .gte('created_at', `${year}-01-01`)
       .lt('created_at', `${year + 1}-01-01`);
 
@@ -223,7 +223,7 @@ export class ServiceSlipService {
     return {
       id: data.id,
       service_request_id: data.id,
-      slip_number: data.slip_number,
+      slip_number: data.service_number,
       issue_date: data.issue_date,
       completion_date: data.completion_date,
       technician_name: data.technician_name,

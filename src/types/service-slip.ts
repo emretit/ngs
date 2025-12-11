@@ -1,7 +1,7 @@
 export interface ServiceSlipData {
   id: string;
   service_request_id: string;
-  slip_number: string;
+  slip_number: string; // Deprecated: Use service_number from service_requests instead
   issue_date: string;
   completion_date?: string;
   technician_name: string;

@@ -1,22 +1,25 @@
 {
-    "mcpServers": {
-      "supabase": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@supabase/mcp-server-supabase@latest",
-          "--project-ref=vwhwufnckpqirxptwncw"
-        ],
-        "env": {
-          "SUPABASE_ACCESS_TOKEN": "sbp_55caca2e7bcb134c3f5785c485ffe5c73419cfcf"
-        }
-      },
-      "context7": {
-        "command": "npx",
-        "args": ["-y", "@upstash/context7-mcp@latest"]
-      },
-      "shadcn": {
-        "url": "https://www.shadcn.io/api/mcp"
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=vwhwufnckpqirxptwncw"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_55caca2e7bcb134c3f5785c485ffe5c73419cfcf"
       }
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ]
+    },
+    "shadcn": {
+      "url": "https://www.shadcn.io/api/mcp"
     }
   }
+}

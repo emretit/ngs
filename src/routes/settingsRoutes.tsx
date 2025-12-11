@@ -4,6 +4,7 @@ import { RouteConfig } from "./types";
 // Lazy load all settings pages
 const Settings = React.lazy(() => import("@/pages/Settings"));
 const UsersSettings = React.lazy(() => import("@/pages/settings/UsersSettings"));
+const UserRedirect = React.lazy(() => import("@/pages/settings/UserRedirect"));
 const RolesSettings = React.lazy(() => import("@/pages/settings/RolesSettings"));
 const NilveraSettingsPage = React.lazy(() => import("@/pages/settings/NilveraSettings"));
 const IntegratorSettings = React.lazy(() => import("@/pages/settings/IntegratorSettings"));
@@ -19,7 +20,7 @@ const AuditLogs = React.lazy(() => import("@/pages/admin/AuditLogs"));
 // Define settings routes
 export const settingsRoutes: RouteConfig[] = [
   { path: "/settings", component: Settings, protected: true },
-  { path: "/settings/users", component: UsersSettings, protected: true },
+  { path: "/settings/user", component: UserRedirect, protected: true },
   { path: "/settings/roles", component: RolesSettings, protected: true },
   { path: "/settings/subscription", component: Subscription, protected: true },
   { path: "/settings/integrator", component: IntegratorSettings, protected: true },

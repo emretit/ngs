@@ -65,7 +65,7 @@ const Settings = ({ isCollapsed, setIsCollapsed }: SettingsProps) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Kullanıcılar */}
               <div 
-                onClick={() => navigate("/settings/users")}
+                onClick={() => navigate("/users")}
                 className="p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">

@@ -1,10 +1,8 @@
 import React from "react";
-import { Draggable } from "@hello-pangea/dnd";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CalendarIcon, MoreHorizontal, Edit, Trash2, Factory, FileText, AlertCircle } from "lucide-react";
+import { CalendarIcon, MoreHorizontal, Edit, Trash2, Factory, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { WorkOrder, WorkOrderPriority } from "@/types/production";
@@ -49,101 +47,89 @@ const WorkOrderCard = ({
   };
 
   return (
-    <Draggable draggableId={workOrder.id} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className={`mb-3 ${snapshot.isDragging ? "opacity-75" : ""}`}
-        >
-          <Card 
-            className="border-gray-200 hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer bg-white group"
-            onClick={onClick}
-          >
-            <CardContent className="p-3">
-              {/* Header: No ve Menü */}
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="font-mono text-xs bg-gray-50 text-gray-600 border-gray-200 px-1.5 h-5">
-                    #{workOrder.order_number}
-                  </Badge>
-                  <Badge variant="outline" className={`text-[10px] px-1.5 h-5 border ${getPriorityColor(workOrder.priority)}`}>
-                    {getPriorityLabel(workOrder.priority)}
-                  </Badge>
-                </div>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className="h-3 w-3 text-gray-500" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    {onEdit && (
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(workOrder);
-                      }}>
-                        <Edit className="mr-2 h-3 w-3" />
-                        Düzenle
-                      </DropdownMenuItem>
-                    )}
-                    {onDelete && (
-                      <DropdownMenuItem 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm("İş emrini silmek istediğinize emin misiniz?")) {
-                            onDelete(workOrder.id);
-                          }
-                        }}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-3 w-3" />
-                        Sil
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+    <div className="w-full relative" onClick={onClick}>
+      {/* Header: No ve Menü */}
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="font-mono text-xs bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border-gray-300 px-2 h-6 shadow-sm font-semibold">
+            #{workOrder.order_number}
+          </Badge>
+          <Badge variant="outline" className={`text-[10px] px-2 h-6 border-2 font-semibold shadow-sm ${getPriorityColor(workOrder.priority)}`}>
+            {getPriorityLabel(workOrder.priority)}
+          </Badge>
+        </div>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 hover:bg-gray-100/80 opacity-0 group-hover:opacity-100 transition-all duration-200 rounded-full hover:scale-110"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="h-4 w-4 text-gray-600" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 shadow-lg border-2">
+            {onEdit && (
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                onEdit(workOrder);
+              }} className="cursor-pointer">
+                <Edit className="mr-2 h-4 w-4" />
+                Düzenle
+              </DropdownMenuItem>
+            )}
+            {onDelete && (
+              <DropdownMenuItem 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm("İş emrini silmek istediğinize emin misiniz?")) {
+                    onDelete(workOrder.id);
+                  }
+                }}
+                className="text-red-600 focus:text-red-600 cursor-pointer"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Sil
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-              {/* Başlık */}
-              <h3 className="font-medium text-gray-900 line-clamp-2 text-sm mb-2 leading-snug">
-                {workOrder.title}
-              </h3>
+      {/* Başlık */}
+      <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm mb-3 leading-snug hover:text-primary transition-colors">
+        {workOrder.title}
+      </h3>
 
-              {/* Reçete Bilgisi */}
-              {workOrder.bom_name && (
-                <div className="flex items-center gap-1.5 mb-3 text-xs text-gray-500 bg-gray-50/50 p-1.5 rounded border border-gray-100">
-                  <FileText className="h-3 w-3 text-purple-500" />
-                  <span className="truncate">{shortenText(workOrder.bom_name, 25)}</span>
-                </div>
-              )}
-
-              {/* Footer: Miktar ve Tarih */}
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-2">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
-                  <Factory className="h-3 w-3 text-gray-400" />
-                  <span>{workOrder.quantity} Adet</span>
-                </div>
-
-                {workOrder.planned_start_date && (
-                  <div className="flex items-center gap-1 text-[10px] text-gray-500" title="Planlanan Başlangıç">
-                    <CalendarIcon className="h-3 w-3" />
-                    <span>{format(new Date(workOrder.planned_start_date), 'd MMM', { locale: tr })}</span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+      {/* Reçete Bilgisi */}
+      {workOrder.bom_name && (
+        <div className="flex items-center gap-2 mb-3 text-xs text-gray-600 bg-gradient-to-r from-purple-50 to-purple-100/50 p-2 rounded-lg border border-purple-200 shadow-sm">
+          <div className="p-1 bg-purple-100 rounded">
+            <FileText className="h-3.5 w-3.5 text-purple-600" />
+          </div>
+          <span className="truncate font-medium">{shortenText(workOrder.bom_name, 25)}</span>
         </div>
       )}
-    </Draggable>
+
+      {/* Footer: Miktar ve Tarih */}
+      <div className="flex items-center justify-between pt-3 border-t-2 border-gray-100 mt-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 bg-gray-50 px-2 py-1 rounded-md">
+          <div className="p-0.5 bg-blue-100 rounded">
+            <Factory className="h-3.5 w-3.5 text-blue-600" />
+          </div>
+          <span>{workOrder.quantity} Adet</span>
+        </div>
+
+        {workOrder.planned_start_date && (
+          <div className="flex items-center gap-1.5 text-[10px] text-gray-600 bg-gray-50 px-2 py-1 rounded-md font-medium" title="Planlanan Başlangıç">
+            <CalendarIcon className="h-3.5 w-3.5 text-gray-500" />
+            <span>{format(new Date(workOrder.planned_start_date), 'd MMM', { locale: tr })}</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

@@ -17,6 +17,7 @@ import {
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import BackButton from '@/components/ui/back-button';
 import { useCustomerSelect } from '@/hooks/useCustomerSelect';
+import { useNumberGenerator } from '@/hooks/useNumberGenerator';
 import { ServiceRecurrenceForm } from '@/components/service/ServiceRecurrenceForm';
 import { RecurrenceConfig } from '@/utils/serviceRecurrenceUtils';
 import ServiceBasicInfoCard from '@/components/service/cards/ServiceBasicInfoCard';
@@ -69,7 +70,7 @@ interface ServiceRequestFormData {
     size: number;
   }>;
   notes: string[];
-  slip_number: string;
+  service_number: string;
   service_result: string;
   received_by: string | null;
   assigned_technician: string | null;
@@ -88,6 +89,7 @@ const NewServiceRequest = () => {
   const queryClient = useQueryClient();
   const { userData } = useCurrentUser();
   const { customers, suppliers, isLoading: partnersLoading } = useCustomerSelect();
+  const { generateServiceNumber } = useNumberGenerator();
 
   // Teknisyenleri getir
   const { data: technicians = [] } = useQuery({
@@ -139,7 +141,7 @@ const NewServiceRequest = () => {
     warranty_info: null,
     attachments: [],
     notes: [],
-    slip_number: '',
+    service_number: '',
     service_result: '',
     received_by: null,
     assigned_technician: null,
@@ -417,46 +419,177 @@ const NewServiceRequest = () => {
         throw new Error('Şirket bilgisi bulunamadı');
       }
 
-      // Ana servis kaydını oluştur
-      const { data: result, error } = await supabase
-        .from('service_requests')
-        .insert({
-          company_id: companyId,
-          service_title: data.service_title,
-          service_request_description: data.service_request_description,
-          service_location: data.service_location,
-          service_priority: data.service_priority,
-          service_status: data.service_status,
-          service_type: data.service_type,
-          customer_id: data.customer_id,
-          supplier_id: data.supplier_id,
-          service_due_date: data.service_due_date?.toISOString(),
-          service_reported_date: data.service_reported_date.toISOString(),
-          service_start_date: data.service_start_date?.toISOString(),
-          service_end_date: data.service_end_date?.toISOString(),
-          contact_person: data.contact_person,
-          contact_phone: data.contact_phone,
-          contact_email: data.contact_email,
-          warranty_info: data.warranty_info,
-          attachments: data.attachments,
-          notes: data.notes,
-          slip_number: data.slip_number,
-          service_result: data.service_result,
-          received_by: data.received_by,
-          created_by: userData?.id,
-          assigned_technician: data.assigned_technician || null,
-          // Recurrence fields
-          is_recurring: recurrenceConfig.type !== 'none',
-          recurrence_type: recurrenceConfig.type !== 'none' ? recurrenceConfig.type : null,
-          recurrence_interval: recurrenceConfig.type !== 'none' ? recurrenceConfig.interval : null,
-          recurrence_end_date: recurrenceConfig.endDate ? recurrenceConfig.endDate.toISOString().split('T')[0] : null,
-          recurrence_days: recurrenceConfig.days || null,
-          recurrence_day_of_month: recurrenceConfig.dayOfMonth || null,
-        })
-        .select()
-        .single();
+      // Kayıt anında servis numarası üret (kullanıcı girmediyse)
+      let serviceNumber = data.service_number?.trim() || '';
+      let attempts = 0;
+      const maxAttempts = 5; // Maksimum 5 deneme
 
-      if (error) throw error;
+      // Eğer kullanıcı numara girmemişse, otomatik üret
+      if (!serviceNumber) {
+        while (attempts < maxAttempts) {
+          try {
+            serviceNumber = await generateServiceNumber();
+            break; // Başarılı, döngüden çık
+          } catch (error) {
+            attempts++;
+            if (attempts >= maxAttempts) {
+              throw new Error('Servis numarası üretilemedi. Lütfen tekrar deneyin.');
+            }
+            // Kısa bir bekleme sonrası tekrar dene
+            await new Promise(resolve => setTimeout(resolve, 100 * attempts));
+          }
+        }
+      }
+
+      // Ana servis kaydını oluştur (retry mekanizması ile)
+      let result;
+      let error;
+      attempts = 0;
+
+      // received_by alanı employee ID'si olabilir, user_id'ye çevir
+      let receivedByUserId: string | null = null;
+      if (data.received_by) {
+        try {
+          const { data: employee } = await supabase
+            .from('employees')
+            .select('user_id')
+            .eq('id', data.received_by)
+            .single();
+          
+          if (employee?.user_id) {
+            receivedByUserId = employee.user_id;
+          }
+        } catch (err) {
+          console.warn('Employee user_id bulunamadı:', err);
+          // Eğer employee bulunamazsa, değeri direkt kullan (belki zaten user_id'dir)
+          receivedByUserId = data.received_by;
+        }
+      }
+
+      while (attempts < maxAttempts) {
+        try {
+          // Undefined değerleri temizle ve null yap
+          const insertData: any = {
+            company_id: companyId,
+            service_title: data.service_title,
+            service_request_description: data.service_request_description || null,
+            service_location: data.service_location || null,
+            service_priority: data.service_priority || null,
+            service_status: data.service_status || 'new',
+            service_type: data.service_type || null,
+            customer_id: data.customer_id || null,
+            supplier_id: data.supplier_id || null,
+            service_due_date: data.service_due_date ? data.service_due_date.toISOString() : null,
+            service_reported_date: data.service_reported_date ? data.service_reported_date.toISOString() : new Date().toISOString(),
+            service_start_date: data.service_start_date ? data.service_start_date.toISOString() : null,
+            service_end_date: data.service_end_date ? data.service_end_date.toISOString() : null,
+            contact_person: data.contact_person || null,
+            contact_phone: data.contact_phone || null,
+            contact_email: data.contact_email || null,
+            warranty_info: data.warranty_info || null,
+            attachments: data.attachments || [],
+            notes: data.notes || [],
+            service_number: serviceNumber,
+            service_result: data.service_result || null,
+            received_by: receivedByUserId,
+            created_by: userData?.id || null,
+            assigned_technician: data.assigned_technician && data.assigned_technician !== 'unassigned' ? data.assigned_technician : null,
+            // Recurrence fields
+            is_recurring: recurrenceConfig.type !== 'none',
+            recurrence_type: recurrenceConfig.type !== 'none' ? recurrenceConfig.type : null,
+            recurrence_interval: recurrenceConfig.type !== 'none' ? recurrenceConfig.interval : null,
+            recurrence_end_date: recurrenceConfig.endDate ? recurrenceConfig.endDate.toISOString().split('T')[0] : null,
+            recurrence_days: recurrenceConfig.days || null,
+            recurrence_day_of_month: recurrenceConfig.dayOfMonth || null,
+          };
+
+          // Undefined değerleri kaldır
+          Object.keys(insertData).forEach(key => {
+            if (insertData[key] === undefined) {
+              delete insertData[key];
+            }
+          });
+
+          const response = await supabase
+            .from('service_requests')
+            .insert(insertData)
+            .select()
+            .single();
+
+          result = response.data;
+          error = response.error;
+
+          // Başarılı ise döngüden çık
+          if (!error) {
+            break;
+          }
+
+          console.error('Insert hatası:', error);
+
+          // Unique constraint hatası kontrolü (23505 veya 409 conflict)
+          const isUniqueConstraintError = 
+            error.code === '23505' || 
+            error.code === 'PGRST301' ||
+            (error.message && error.message.includes('service_number')) ||
+            (error.message && error.message.includes('unique constraint')) ||
+            (error.message && error.message.includes('duplicate key'));
+
+          if (isUniqueConstraintError) {
+            attempts++;
+            if (attempts >= maxAttempts) {
+              throw new Error('Servis numarası çakışması. Lütfen tekrar deneyin.');
+            }
+            
+            // Yeni numara üret
+            try {
+              serviceNumber = await generateServiceNumber();
+              console.log('Yeni servis numarası üretildi:', serviceNumber);
+            } catch (genError) {
+              console.error('Yeni numara üretme hatası:', genError);
+              throw new Error('Yeni servis numarası üretilemedi. Lütfen tekrar deneyin.');
+            }
+            
+            // Kısa bir bekleme sonrası tekrar dene
+            await new Promise(resolve => setTimeout(resolve, 100 * attempts));
+            continue; // Tekrar dene
+          }
+
+          // Diğer hatalar için direkt fırlat
+          throw error;
+
+        } catch (err: any) {
+          console.error('Catch bloğunda hata:', err);
+          
+          // Unique constraint hatası kontrolü
+          const isUniqueConstraintError = 
+            err.code === '23505' || 
+            err.code === 'PGRST301' ||
+            (err.message && err.message.includes('service_number')) ||
+            (err.message && err.message.includes('unique constraint')) ||
+            (err.message && err.message.includes('duplicate key'));
+
+          if (!isUniqueConstraintError) {
+            throw err;
+          }
+          
+          attempts++;
+          if (attempts >= maxAttempts) {
+            throw new Error('Servis kaydı oluşturulamadı. Lütfen tekrar deneyin.');
+          }
+          
+          // Yeni numara üret ve tekrar dene
+          try {
+            serviceNumber = await generateServiceNumber();
+            await new Promise(resolve => setTimeout(resolve, 100 * attempts));
+          } catch (genError) {
+            throw new Error('Yeni servis numarası üretilemedi. Lütfen tekrar deneyin.');
+          }
+        }
+      }
+
+      if (!result) {
+        throw new Error('Servis kaydı oluşturulamadı.');
+      }
 
       // Service items'ı ayrı tabloya ekle (order_items gibi)
       if (data.product_items && data.product_items.length > 0) {

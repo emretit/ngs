@@ -12,7 +12,7 @@ interface ServiceBasicInfoCardProps {
   formData: {
     service_title: string;
     service_type: string;
-    slip_number: string;
+    service_number: string;
     service_request_description: string;
     service_location: string;
     service_priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -122,14 +122,14 @@ const ServiceBasicInfoCard: React.FC<ServiceBasicInfoCardProps> = ({
           </div>
           
           <div>
-            <Label htmlFor="slip_number" className="text-sm font-medium text-gray-700 mb-1.5 block">
-              Servis Fişi No
+            <Label htmlFor="service_number" className="text-sm font-medium text-gray-700 mb-1.5 block">
+              Servis No
             </Label>
             <Input
-              id="slip_number"
-              value={formData.slip_number}
-              onChange={(e) => handleInputChange('slip_number', e.target.value)}
-              placeholder="Fiş numarası (opsiyonel)"
+              id="service_number"
+              value={formData.service_number}
+              onChange={(e) => handleInputChange('service_number', e.target.value)}
+              placeholder="Kayıt anında otomatik üretilecek"
               className="h-8 text-xs"
             />
           </div>

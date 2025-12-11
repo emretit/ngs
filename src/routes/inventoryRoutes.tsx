@@ -4,8 +4,10 @@ import { RouteConfig } from "./types";
 // Lazy load all inventory pages
 const InventoryDashboard = React.lazy(() => import("@/pages/inventory/InventoryDashboard"));
 const Production = React.lazy(() => import("@/pages/inventory/Production"));
+const ProductionBOMs = React.lazy(() => import("@/pages/inventory/ProductionBOMs"));
 const ProductionBOMNew = React.lazy(() => import("@/pages/inventory/ProductionBOMNew"));
 const ProductionBOMDetail = React.lazy(() => import("@/pages/inventory/ProductionBOMDetail"));
+const NewWorkOrderCreate = React.lazy(() => import("@/pages/inventory/NewWorkOrderCreate"));
 const Warehouses = React.lazy(() => import("@/pages/inventory/Warehouses"));
 const WarehouseDetails = React.lazy(() => import("@/pages/inventory/WarehouseDetails"));
 const WarehouseNew = React.lazy(() => import("@/pages/inventory/WarehouseNew"));
@@ -33,7 +35,10 @@ export const inventoryRoutes: RouteConfig[] = [
   { path: "/inventory/counts", component: InventoryCounts, protected: true },
   { path: "/inventory/transactions/sayim/new", component: NewInventoryCount, protected: true },
   { path: "/production", component: Production, protected: true },
-  { path: "/production/work-orders/new", component: Production, protected: true },
+  { path: "/production/work-orders/new", component: NewWorkOrderCreate, protected: true },
+  { path: "/production/work-orders/:id/edit", component: NewWorkOrderCreate, protected: true },
+  { path: "/production/boms", component: ProductionBOMs, protected: true },
   { path: "/production/bom/new", component: ProductionBOMNew, protected: true },
+  { path: "/production/bom/:id/edit", component: ProductionBOMNew, protected: true },
   { path: "/production/bom/:id", component: ProductionBOMDetail, protected: true },
 ];

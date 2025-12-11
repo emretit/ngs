@@ -70,7 +70,7 @@ interface ServiceRequestFormData {
     size: number;
   }>;
   notes: string[];
-  slip_number: string;
+  service_number: string;
   service_result: string;
   received_by: string | null;
   assigned_technician: string | null;
@@ -191,7 +191,7 @@ const ServiceEdit = () => {
     warranty_info: null,
     attachments: [],
     notes: [],
-    slip_number: '',
+    service_number: '',
     service_result: '',
     received_by: null,
     assigned_technician: null,
@@ -327,7 +327,7 @@ const ServiceEdit = () => {
         warranty_info: warrantyInfo,
         attachments: attachments,
         notes: notes,
-        slip_number: serviceRequest.slip_number || '',
+        service_number: serviceRequest.service_number || '',
         service_result: serviceRequest.service_result || '',
         received_by: serviceRequest.received_by || null,
         assigned_technician: serviceRequest.assigned_technician || null,
@@ -665,6 +665,60 @@ const ServiceEdit = () => {
         throw new Error('Şirket bilgisi bulunamadı');
       }
 
+      // received_by alanı employee ID'si olabilir, user_id'ye çevir
+      let receivedByUserId: string | null = null;
+      if (data.received_by) {
+        try {
+          const { data: employee } = await supabase
+            .from('employees')
+            .select('user_id')
+            .eq('id', data.received_by)
+            .single();
+          
+          if (employee?.user_id) {
+            receivedByUserId = employee.user_id;
+          } else {
+            // Eğer employee bulunamazsa, değeri direkt kullan (belki zaten user_id'dir)
+            receivedByUserId = data.received_by;
+          }
+        } catch (err) {
+          console.warn('Employee user_id bulunamadı:', err);
+          // Eğer employee bulunamazsa, değeri direkt kullan (belki zaten user_id'dir)
+          receivedByUserId = data.received_by;
+        }
+      }
+
+      // Mevcut servis verisini al (teknisyen değişikliğini kontrol etmek için)
+      const { data: currentRequest, error: currentError } = await supabase
+        .from('service_requests')
+        .select('assigned_technician, service_title')
+        .eq('id', id)
+        .single();
+
+      if (currentError) {
+        console.error('Mevcut servis verisi alınamadı:', currentError);
+      }
+
+      // Teknisyen değişikliğini kontrol et
+      const newAssignedTechnician = data.assigned_technician && 
+        data.assigned_technician !== 'unassigned' ? data.assigned_technician : null;
+      
+      const isTechnicianChanged = newAssignedTechnician && 
+        newAssignedTechnician !== currentRequest?.assigned_technician;
+
+      // Durum otomatik güncelleme: Teknisyen atandıysa 'assigned' yap
+      let finalStatus = data.service_status;
+      if (newAssignedTechnician && !currentRequest?.assigned_technician) {
+        // İlk kez teknisyen atanıyorsa
+        finalStatus = 'assigned';
+      } else if (newAssignedTechnician && isTechnicianChanged) {
+        // Teknisyen değiştiyse
+        finalStatus = 'assigned';
+      } else if (!newAssignedTechnician && currentRequest?.assigned_technician) {
+        // Teknisyen kaldırıldıysa
+        finalStatus = 'new';
+      }
+
       // Ana servis bilgilerini güncelle
       const { data: result, error } = await supabase
         .from('service_requests')
@@ -673,7 +727,7 @@ const ServiceEdit = () => {
           service_request_description: data.service_request_description,
           service_location: data.service_location,
           service_priority: data.service_priority,
-          service_status: data.service_status,
+          service_status: finalStatus,
           service_type: data.service_type,
           customer_id: data.customer_id,
           supplier_id: data.supplier_id,
@@ -687,10 +741,10 @@ const ServiceEdit = () => {
           warranty_info: data.warranty_info,
           attachments: data.attachments,
           notes: data.notes,
-          slip_number: data.slip_number,
+          service_number: data.service_number,
           service_result: data.service_result,
-          received_by: data.received_by,
-          assigned_technician: data.assigned_technician || null,
+          received_by: receivedByUserId,
+          assigned_technician: newAssignedTechnician,
           // Recurrence fields
           is_recurring: recurrenceConfig.type !== 'none',
           recurrence_type: recurrenceConfig.type !== 'none' ? recurrenceConfig.type : null,
@@ -704,6 +758,65 @@ const ServiceEdit = () => {
         .single();
 
       if (error) throw error;
+
+      // Eğer teknisyen değiştiyse ve yeni bir teknisyen atandıysa push notification gönder
+      if (isTechnicianChanged && newAssignedTechnician) {
+        try {
+          // Teknisyenin user_id'sini bul
+          const { data: technician, error: techError } = await supabase
+            .from('employees')
+            .select('user_id, first_name, last_name')
+            .eq('id', newAssignedTechnician)
+            .single();
+
+          if (!techError && technician?.user_id) {
+            const notificationTitle = 'Yeni Servis Ataması';
+            const notificationBody = `${currentRequest?.service_title || result.service_title || 'Servis talebi'} size atandı.`;
+            
+            // Database'e bildirim kaydı ekle
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: technician.user_id,
+                title: notificationTitle,
+                body: notificationBody,
+                type: 'service_assignment',
+                service_request_id: id,
+                technician_id: newAssignedTechnician,
+                company_id: profile.company_id,
+                is_read: false,
+              });
+
+            // Push notification gönder (mobil uygulamaya)
+            try {
+              const { data: pushData, error: pushError } = await supabase.functions.invoke('send-push-notification', {
+                body: {
+                  user_id: technician.user_id,
+                  title: notificationTitle,
+                  body: notificationBody,
+                  data: {
+                    type: 'service_assignment',
+                    service_request_id: id,
+                    action: 'open_service_request',
+                  }
+                }
+              });
+
+              if (pushError) {
+                console.error('Push notification gönderme hatası:', pushError);
+              } else {
+                console.log('Push notification başarıyla gönderildi:', pushData);
+              }
+            } catch (pushErr) {
+              console.error('Push notification çağrı hatası:', pushErr);
+              // Push notification hatası kritik değil, devam et
+            }
+          }
+        } catch (notifErr) {
+          console.error('Bildirim gönderme hatası:', notifErr);
+          // Bildirim hatası kritik değil, devam et
+        }
+      }
 
       // Service items'ı güncelle (order_items gibi)
       if (data.product_items && data.product_items.length > 0) {

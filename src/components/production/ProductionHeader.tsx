@@ -1,21 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, Factory, ClipboardCheck, Settings } from "lucide-react";
 import { ProductionStats } from "@/types/production";
+import ProductionWorkOrdersViewToggle, { WorkOrdersViewType } from "./ProductionWorkOrdersViewToggle";
+import NewWorkOrderDialog from "./NewWorkOrderDialog";
 
 interface ProductionHeaderProps {
   stats?: ProductionStats;
   onCreateWorkOrder?: () => void;
-  onCreateBOM?: () => void;
+  activeView?: WorkOrdersViewType;
+  setActiveView?: (view: WorkOrdersViewType) => void;
 }
 
 const ProductionHeader = ({ 
   stats,
   onCreateWorkOrder,
-  onCreateBOM
+  activeView,
+  setActiveView
 }: ProductionHeaderProps) => {
   const navigate = useNavigate();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const statsData = stats || {
     active_work_orders: 0,
@@ -58,13 +63,18 @@ const ProductionHeader = ({
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
       {/* Sol taraf - Başlık */}
-      <div className="space-y-0.5">
-        <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-          Üretim Yönetimi
-        </h1>
-        <p className="text-xs text-muted-foreground/70">
-          İş emirleri, ürün reçeteleri ve üretim planlaması
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg text-white shadow-lg">
+          <Factory className="h-5 w-5" />
+        </div>
+        <div className="space-y-0.5">
+          <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+            Üretim Yönetimi
+          </h1>
+          <p className="text-xs text-muted-foreground/70">
+            İş emirleri, ürün reçeteleri ve üretim planlaması
+          </p>
+        </div>
       </div>
       
       {/* Orta - İstatistik Kartları */}
@@ -83,25 +93,43 @@ const ProductionHeader = ({
         ))}
       </div>
       
-      {/* Sağ taraf - Butonlar */}
+      {/* Sağ taraf - Görünüm Toggle ve Butonlar */}
       <div className="flex items-center gap-2">
+        {activeView && setActiveView && (
+          <ProductionWorkOrdersViewToggle 
+            activeView={activeView} 
+            setActiveView={setActiveView} 
+          />
+        )}
         <Button
           variant="outline"
-          size="sm"
-          onClick={onCreateBOM || (() => navigate('/production/bom/new'))}
-          className="text-xs"
+          className="flex items-center gap-2 border-2 border-primary/50 hover:bg-primary hover:text-white transition-all duration-300"
+          onClick={() => navigate("/production/boms")}
         >
-          <Settings className="h-3 w-3 mr-1" />
-          Yeni Ürün Reçetesi
+          <Settings className="h-4 w-4" />
+          <span>Ürün Reçeteleri</span>
         </Button>
         <Button 
           className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg transition-all duration-300" 
-          onClick={onCreateWorkOrder || (() => navigate('/production/work-orders/new', { replace: false }))}
+          onClick={() => setDialogOpen(true)}
         >
           <Plus className="h-4 w-4" />
           <span>Yeni İş Emri</span>
         </Button>
       </div>
+
+      <NewWorkOrderDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSuccess={() => {
+          // Sayfayı yenile veya verileri güncelle
+          if (onCreateWorkOrder) {
+            onCreateWorkOrder();
+          } else {
+            window.location.reload();
+          }
+        }}
+      />
     </div>
   );
 };

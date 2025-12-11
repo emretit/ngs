@@ -1,7 +1,14 @@
-import React, { useMemo } from "react";
-import { DragDropContext, DropResult } from "@hello-pangea/dnd";
+import React, { useMemo, useState, useEffect } from "react";
+import { DragEndEvent } from "@dnd-kit/core";
 import { WorkOrder, WorkOrderStatus } from "@/types/production";
-import WorkOrderColumn from "./WorkOrderColumn";
+import {
+  KanbanProvider,
+  KanbanBoard,
+  KanbanHeader,
+  KanbanCards,
+  KanbanCard,
+} from "@/components/ui/kanban";
+import WorkOrderCard from "./WorkOrderCard";
 
 interface WorkOrdersKanbanBoardProps {
   workOrders: WorkOrder[];
@@ -11,13 +18,77 @@ interface WorkOrdersKanbanBoardProps {
   onStatusChange?: (workOrderId: string, status: WorkOrderStatus) => Promise<void> | void;
 }
 
+// Frontend status değerlerini veritabanı status değerlerine map et
+const mapStatusToDb = (frontendStatus: WorkOrderStatus): string => {
+  const statusMap: Record<WorkOrderStatus, string> = {
+    'draft': 'assigned',
+    'planned': 'assigned',
+    'in_progress': 'in_progress',
+    'completed': 'completed',
+    'cancelled': 'cancelled'
+  };
+  return statusMap[frontendStatus] || 'assigned';
+};
+
 const columns = [
-  { id: "draft", title: "📝 Taslak", color: "bg-gray-500" },
-  { id: "planned", title: "📅 Planlandı", color: "bg-blue-600" },
-  { id: "in_progress", title: "⚙️ Üretimde", color: "bg-orange-600" },
-  { id: "completed", title: "✔️ Tamamlandı", color: "bg-green-600" },
-  { id: "cancelled", title: "❌ İptal", color: "bg-red-600" }
+  { 
+    id: "draft", 
+    name: "Taslak", 
+    icon: "📝",
+    color: "bg-gray-500",
+    bgGradient: "from-gray-50 to-gray-100/50",
+    borderColor: "border-gray-200",
+    headerBg: "bg-gradient-to-r from-gray-50 to-gray-100",
+    accentColor: "text-gray-600"
+  },
+  { 
+    id: "planned", 
+    name: "Planlandı", 
+    icon: "📅",
+    color: "bg-blue-500",
+    bgGradient: "from-blue-50 to-blue-100/50",
+    borderColor: "border-blue-200",
+    headerBg: "bg-gradient-to-r from-blue-50 to-blue-100",
+    accentColor: "text-blue-600"
+  },
+  { 
+    id: "in_progress", 
+    name: "Üretimde", 
+    icon: "⚙️",
+    color: "bg-orange-500",
+    bgGradient: "from-orange-50 to-orange-100/50",
+    borderColor: "border-orange-200",
+    headerBg: "bg-gradient-to-r from-orange-50 to-orange-100",
+    accentColor: "text-orange-600"
+  },
+  { 
+    id: "completed", 
+    name: "Tamamlandı", 
+    icon: "✔️",
+    color: "bg-green-500",
+    bgGradient: "from-green-50 to-green-100/50",
+    borderColor: "border-green-200",
+    headerBg: "bg-gradient-to-r from-green-50 to-green-100",
+    accentColor: "text-green-600"
+  },
+  { 
+    id: "cancelled", 
+    name: "İptal", 
+    icon: "❌",
+    color: "bg-red-500",
+    bgGradient: "from-red-50 to-red-100/50",
+    borderColor: "border-red-200",
+    headerBg: "bg-gradient-to-r from-red-50 to-red-100",
+    accentColor: "text-red-600"
+  }
 ];
+
+type KanbanWorkOrder = {
+  id: string;
+  name: string;
+  column: string;
+  workOrder: WorkOrder;
+};
 
 const WorkOrdersKanbanBoard = ({
   workOrders,
@@ -26,90 +97,153 @@ const WorkOrdersKanbanBoard = ({
   onDelete,
   onStatusChange
 }: WorkOrdersKanbanBoardProps) => {
-  // İş emirlerini durumlarına göre grupla
-  const workOrdersByStatus = useMemo(() => {
-    const grouped: Record<string, WorkOrder[]> = {
-      draft: [],
-      planned: [],
-      in_progress: [],
-      completed: [],
-      cancelled: []
-    };
-
-    workOrders.forEach(wo => {
-      if (grouped[wo.status]) {
-        grouped[wo.status].push(wo);
-      } else {
-        // Bilinmeyen bir durum varsa draft'a at veya yeni key oluştur
-        if (!grouped[wo.status]) grouped[wo.status] = [];
-        grouped[wo.status].push(wo);
-      }
-    });
-
-    return grouped;
+  // İş emirlerini kanban formatına dönüştür
+  const kanbanData = useMemo<KanbanWorkOrder[]>(() => {
+    return workOrders.map(wo => ({
+      id: wo.id,
+      name: wo.title,
+      column: wo.status,
+      workOrder: wo,
+    }));
   }, [workOrders]);
 
-  const handleDragEnd = async (result: DropResult) => {
-    const { destination, source, draggableId } = result;
+  const [data, setData] = useState<KanbanWorkOrder[]>(kanbanData);
 
-    if (!destination) return;
+  // data değiştiğinde güncelle
+  useEffect(() => {
+    setData(kanbanData);
+  }, [kanbanData]);
 
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
-
-    const newStatus = destination.droppableId as WorkOrderStatus;
+  const handleDataChange = async (newData: KanbanWorkOrder[]) => {
+    setData(newData);
     
-    // Durumun geçerli olduğunu kontrol et
-    if (!columns.some(col => col.id === newStatus)) {
+    // Değişen kartları bul ve durum güncellemesi yap
+    const changedItems = newData.filter((item, index) => {
+      const oldItem = kanbanData.find(d => d.id === item.id);
+      return oldItem && oldItem.column !== item.column;
+    });
+
+    for (const item of changedItems) {
+      if (onStatusChange) {
+        try {
+          await onStatusChange(item.id, item.column as WorkOrderStatus);
+        } catch (error) {
+          console.error("İş emri durumu güncellenirken hata:", error);
+          // Hata durumunda eski veriye geri dön
+          setData(kanbanData);
+        }
+      }
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
       return;
     }
 
-    // Backend'e durum güncellemesi gönder
-    if (onStatusChange) {
+    const activeItem = data.find((item) => item.id === active.id);
+    if (!activeItem) return;
+
+    const newColumn = 
+      data.find((item) => item.id === over.id)?.column ||
+      columns.find(col => col.id === over.id)?.id ||
+      activeItem.column;
+
+    if (activeItem.column !== newColumn && onStatusChange) {
       try {
-        await onStatusChange(draggableId, newStatus);
+        // Frontend status değerini kullan (zaten map edilmiş)
+        await onStatusChange(activeItem.id, newColumn as WorkOrderStatus);
       } catch (error) {
         console.error("İş emri durumu güncellenirken hata:", error);
       }
     }
   };
 
+  // Kolon başına kart sayısını hesapla
+  const getColumnCount = (columnId: string) => {
+    return data.filter(item => item.column === columnId).length;
+  };
+
+  const getColumnConfig = (columnId: string) => {
+    return columns.find(col => col.id === columnId) || columns[0];
+  };
+
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex overflow-x-auto gap-4 pb-4 h-full items-start">
-        {columns.map((column) => (
-          <div key={column.id} className="flex-none w-[300px] flex flex-col h-full max-h-[calc(100vh-250px)]">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <div className="flex items-center gap-2">
-                <div className={`h-2.5 w-2.5 rounded-full ${column.color}`}></div>
-                <h2 className="font-semibold text-gray-900 text-sm">
-                  {column.title}
-                </h2>
-              </div>
-              <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full border border-gray-200">
-                {workOrdersByStatus[column.id]?.length || 0}
-              </span>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto pr-2 -mr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
-              <WorkOrderColumn
-                id={column.id}
-                title={column.title}
-                workOrders={workOrdersByStatus[column.id] || []}
-                color={column.color}
-                onWorkOrderClick={onWorkOrderClick}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </DragDropContext>
+    <div className="h-full w-full overflow-x-auto pb-6 px-2">
+      <KanbanProvider
+        columns={columns}
+        data={data}
+        onDataChange={handleDataChange}
+        onDragEnd={handleDragEnd}
+        className="min-w-max gap-6"
+      >
+        {(column) => {
+          const config = getColumnConfig(column.id);
+          const count = getColumnCount(column.id);
+          
+          return (
+            <KanbanBoard
+              id={column.id}
+              className={`w-[320px] min-h-[calc(100vh-250px)] bg-gradient-to-b ${config.bgGradient} border-2 ${config.borderColor} shadow-lg rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl`}
+            >
+              <KanbanHeader className={`flex items-center justify-between px-4 py-3 ${config.headerBg} border-b-2 ${config.borderColor} backdrop-blur-sm`}>
+                <div className="flex items-center gap-3">
+                  <div className={`h-3 w-3 rounded-full ${config.color} shadow-sm animate-pulse`}></div>
+                  <span className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <span className="text-xl">{config.icon}</span>
+                    {config.name}
+                  </span>
+                </div>
+                <span className={`${config.accentColor} text-xs font-bold px-3 py-1 rounded-full bg-white/80 backdrop-blur-sm border ${config.borderColor} shadow-sm min-w-[28px] text-center`}>
+                  {count}
+                </span>
+              </KanbanHeader>
+              <KanbanCards id={column.id} className="min-h-[400px] p-3">
+                {(item) => {
+                  const workOrder = item.workOrder;
+                  const hoverBorderClass = config.id === "draft" ? "hover:border-gray-400" :
+                                         config.id === "planned" ? "hover:border-blue-400" :
+                                         config.id === "in_progress" ? "hover:border-orange-400" :
+                                         config.id === "completed" ? "hover:border-green-400" :
+                                         "hover:border-red-400";
+                  
+                  return (
+                    <KanbanCard
+                      id={item.id}
+                      name={item.name}
+                      column={item.column}
+                      className={`border-2 ${config.borderColor} ${hoverBorderClass} hover:shadow-lg transition-all duration-300 bg-white/95 backdrop-blur-sm group hover:scale-[1.02] hover:-translate-y-0.5`}
+                      onClick={() => onWorkOrderClick(workOrder)}
+                    >
+                      <WorkOrderCard
+                        workOrder={workOrder}
+                        index={0}
+                        onClick={() => onWorkOrderClick(workOrder)}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                      />
+                    </KanbanCard>
+                  );
+                }}
+              </KanbanCards>
+              {count === 0 && (
+                <div className={`flex flex-col items-center justify-center h-64 p-6 text-center border-2 border-dashed ${config.borderColor} m-3 rounded-xl bg-white/40 backdrop-blur-sm`}>
+                  <div className="text-5xl mb-3 opacity-40 animate-pulse">{config.icon}</div>
+                  <p className={`text-sm ${config.accentColor} font-semibold opacity-60`}>
+                    Bu durumda iş emri yok
+                  </p>
+                  <p className={`text-xs ${config.accentColor} opacity-40 mt-1`}>
+                    Kartları buraya sürükleyin
+                  </p>
+                </div>
+              )}
+            </KanbanBoard>
+          );
+        }}
+      </KanbanProvider>
+    </div>
   );
 };
 

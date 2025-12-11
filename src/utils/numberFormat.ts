@@ -224,10 +224,16 @@ const checkNumberExists = async (
       .eq(tableInfo.column, number)
       .eq('company_id', companyId)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     // Eğer kayıt bulunduysa true döndür
-    return !error && !!data;
+    // maybeSingle() kayıt yoksa null döndürür, hata vermez
+    if (error && error.code !== 'PGRST116') {
+      console.error('Numara kontrolü sırasında hata:', error);
+      return false;
+    }
+    
+    return !!data;
   } catch (error) {
     // PGRST116 = not found, bu durumda numara yok demektir
     if ((error as any)?.code === 'PGRST116') {

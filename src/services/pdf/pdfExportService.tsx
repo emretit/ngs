@@ -1185,7 +1185,10 @@ export class PdfExportService {
       
       // Add slip-specific data
       const serviceDetails = service.service_details as any;
-      if (service.slip_number) {
+      if (service.service_number) {
+        serviceData.serviceNumber = service.service_number;
+      } else if (service.slip_number) {
+        // Fallback for backward compatibility
         serviceData.serviceNumber = service.slip_number;
       }
 

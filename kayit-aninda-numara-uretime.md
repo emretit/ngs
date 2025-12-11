@@ -166,3 +166,4 @@ if (error.code === '23505' && error.message.includes('service_number')) {
 **Tarih:** 2025-01-XX  
 **Migration ID:** `add_service_number_unique_constraint`
 
+

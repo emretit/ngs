@@ -943,11 +943,18 @@ const NewProposalCreate = () => {
           onItemChange={handleItemChange}
           onProductModalSelect={(product, itemIndex) => {
             if (itemIndex !== undefined) {
-              // Editing existing item
-              setSelectedProduct(product); // product'ı set et, null yapma
+              setSelectedProduct(product);
               setEditingItemIndex(itemIndex);
-              // Eğer product'ta existingData varsa onu kullan, yoksa product'ı kullan
-              setEditingItemData(product?.existingData || product);
+              
+              // Eğer product'ta existingData varsa edit modunda aç (edit butonundan geldi)
+              // Yoksa yeni ekleme modunda aç (ProductSelector'dan geldi)
+              if (product?.existingData) {
+                // Edit butonundan geldi - edit modunda aç
+                setEditingItemData(product.existingData);
+              } else {
+                // ProductSelector'dan geldi - yeni ekleme modunda aç
+                setEditingItemData(null);
+              }
               setProductModalOpen(true);
             } else {
               // Adding new item

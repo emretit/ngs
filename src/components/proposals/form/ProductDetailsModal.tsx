@@ -85,8 +85,25 @@ const ProductDetailsModal = ({
   useEffect(() => {
     if (!open) return; // Dialog kapalıysa state'leri değiştirme
     
-    if (product) {
+    // Edit modu öncelikli - existingData varsa onu kullan
+    if (existingData) {
+      // We're editing an existing line item
+      console.log('ProductDetailsModal - Edit mode, existingData:', existingData);
+      console.log('ProductDetailsModal - quantity:', existingData.quantity, 'unit_price:', existingData.unit_price, 'vat_rate:', existingData.vat_rate, 'discount_rate:', existingData.discount_rate);
+      
+      // Tüm değerleri mevcut existingData'dan al
+      setQuantity(existingData.quantity ?? 1);
+      setUnitPrice(existingData.unit_price ?? 0);
+      setVatRate(existingData.vat_rate ?? 20);
+      setDiscountRate(existingData.discount_rate ?? 0);
+      setDescription(existingData.description || "");
+      setUnit(existingData.unit || "adet");
+      setIsManualPriceEdit(true);
+      // Reset currency ref to original currency
+      prevCurrencyRef.current = existingData.currency || originalCurrency;
+    } else if (product) {
       // We're adding a new product
+      console.log('ProductDetailsModal - New mode, product:', product);
       setQuantity(1);
       setUnitPrice(product.price || 0);
       setVatRate(product.tax_rate || 20);
@@ -96,17 +113,6 @@ const ProductDetailsModal = ({
       setIsManualPriceEdit(false);
       // Reset currency ref to original currency
       prevCurrencyRef.current = originalCurrency;
-    } else if (existingData) {
-      // We're editing an existing line item
-      setQuantity(existingData.quantity || 1);
-      setUnitPrice(existingData.unit_price || 0);
-      setVatRate(existingData.vat_rate || 20);
-      setDiscountRate(existingData.discount_rate || 0);
-      setDescription(existingData.description || "");
-      setUnit(existingData.unit || "adet");
-      setIsManualPriceEdit(true);
-      // Reset currency ref to original currency
-      prevCurrencyRef.current = existingData.currency || originalCurrency;
     }
   }, [open, product, existingData, originalCurrency]);
   
@@ -233,7 +239,7 @@ const ProductDetailsModal = ({
   
   const dialogTitle = (
     <div className="flex items-center justify-between w-full gap-3">
-      <span className="truncate">{isEditMode ? `${displayName} - Düzenle` : displayName}</span>
+      <span className="truncate">{displayName}</span>
       {product?.sku && (
         <span className="text-sm font-normal text-gray-500 whitespace-nowrap flex-shrink-0">
           {product.sku}

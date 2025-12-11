@@ -161,21 +161,9 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                         onItemChange(index, 'description', productName);
                       }}
                       onProductSelect={(product) => {
-                        // Mevcut item verilerini de gönder
-                        const existingData = {
-                          name: item.name,
-                          description: item.description || '',
-                          quantity: item.quantity,
-                          unit: item.unit,
-                          unit_price: item.unit_price,
-                          vat_rate: item.tax_rate || 20,
-                          discount_rate: item.discount_rate || 0,
-                          currency: item.currency,
-                          // image_url: önce item'dan, yoksa product'tan al
-                          image_url: item.image_url || product?.image_url
-                        };
-                        // Product'a existingData'yı ekle, product'ın image_url'ini de koru
-                        onProductModalSelect({ ...product, image_url: product?.image_url || item.image_url, existingData }, index);
+                        // ProductSelector'dan ürün seçildiğinde yeni ekleme modunda açılmalı
+                        // existingData göndermiyoruz, böylece ProductDetailsModal yeni ekleme modunda açılır
+                        onProductModalSelect({ ...product, image_url: product?.image_url || item.image_url }, index);
                       }}
                       placeholder="Ürün seçin..."
                       className="flex-1 max-w-full group-hover:font-bold"
@@ -330,12 +318,25 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                         quantity: item.quantity,
                         unit: item.unit,
                         unit_price: item.unit_price,
-                        vat_rate: item.tax_rate || 20,
+                        vat_rate: item.tax_rate || 20, // ProposalItem'da tax_rate, ProductDetailsModal'da vat_rate bekleniyor
                         discount_rate: item.discount_rate || 0,
-                        currency: item.currency
+                        currency: item.currency || 'TRY'
                       };
                       
-                      onProductModalSelect(existingData, index);
+                      // Edit butonundan geldiğini belirtmek için existingData'yı product içine sarıyoruz
+                      // Product bilgisi yoksa, existingData'dan oluşturuyoruz
+                      const productData = {
+                        id: item.id || '',
+                        name: item.name || '',
+                        price: item.unit_price || 0,
+                        currency: item.currency || 'TRY',
+                        sku: '',
+                        stock_quantity: 0,
+                        description: item.description || '',
+                        existingData: existingData
+                      };
+                      
+                      onProductModalSelect(productData, index);
                     }}
                     className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                   >

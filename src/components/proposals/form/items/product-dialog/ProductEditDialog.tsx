@@ -19,7 +19,7 @@ import NotesSection from "./components/NotesSection";
 import OriginalCurrencyInfo from "./components/OriginalCurrencyInfo";
 import TotalPriceSection from "./components/TotalPriceSection";
 
-interface ProductDetailsDialogProps {
+interface ProductEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedProduct: Product | null;
@@ -32,11 +32,11 @@ interface ProductDetailsDialogProps {
   discountRate: number;
   setDiscountRate: (value: number) => void;
   formatCurrency?: (amount: number, currency?: string) => string;
-  onSelectProduct: () => void;
+  onConfirm: () => void;
   selectedCurrency: string;
 }
 
-const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
+const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
   open,
   onOpenChange,
   selectedProduct,
@@ -49,7 +49,7 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
   discountRate,
   setDiscountRate,
   formatCurrency: formatCurrencyProp,
-  onSelectProduct,
+  onConfirm,
   selectedCurrency,
 }) => {
   // Default formatCurrency function
@@ -78,15 +78,22 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
     }
   }, [selectedProduct]);
 
-  // Reset state when dialog opens with a product (yeni ekleme için)
+  // Initialize state when dialog opens with existing item data
   useEffect(() => {
     if (open && selectedProduct) {
-      console.log('ProductDetailsDialog opened (yeni ekleme) - quantity:', quantity, 'customPrice:', customPrice, 'discountRate:', discountRate);
+      console.log('ProductEditDialog opened - quantity:', quantity, 'customPrice:', customPrice, 'discountRate:', discountRate);
       
-      // Yeni ekleme modunda varsayılan değerleri set et
-      setQuantity(1);
-      setDiscountRate(0);
-      setCustomPrice(undefined);
+      // Edit mode'da mevcut değerleri kullan - prop'lar zaten doğru değerlerle geliyor
+      // Sadece emin olmak için set ediyoruz
+      if (quantity !== undefined && quantity > 0) {
+        setQuantity(quantity);
+      }
+      if (discountRate !== undefined) {
+        setDiscountRate(discountRate);
+      }
+      if (customPrice !== undefined) {
+        setCustomPrice(customPrice);
+      }
       
       setAvailableStock(selectedProduct.stock_quantity || 0);
       setStockStatus(
@@ -105,12 +112,7 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
       // Initialize current currency from selected currency
       setCurrentCurrency(selectedCurrency);
     }
-  }, [open, selectedProduct, selectedCurrency, setQuantity, setDiscountRate, setCustomPrice]);
-
-  // Handle clicking the Add to Proposal button
-  const handleAddToProposal = () => {
-    onSelectProduct();
-  };
+  }, [open, selectedProduct, selectedCurrency, quantity, customPrice, discountRate, setQuantity, setDiscountRate, setCustomPrice]);
 
   if (!selectedProduct) return null;
 
@@ -118,7 +120,7 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ürün Detayları</DialogTitle>
+          <DialogTitle>Teklif Kalemini Düzenle</DialogTitle>
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
@@ -194,10 +196,10 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
           </Button>
           
           <Button 
-            onClick={handleAddToProposal}
+            onClick={onConfirm}
             disabled={quantity < 1 || calculatedTotal <= 0}
           >
-            Teklife Ekle
+            Güncelle
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -205,4 +207,5 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
   );
 };
 
-export default ProductDetailsDialog;
+export default ProductEditDialog;
+

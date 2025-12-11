@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Building, Plus, Check, ChevronRight } from "lucide-react";
 import {
   Dialog,
@@ -80,18 +80,38 @@ export const CompanySwitcher = ({ open, onOpenChange }: CompanySwitcherProps) =>
     }
   };
 
-  const handleClose = (isOpen: boolean) => {
+  // Optimized close handler with mutation guard and state batching
+  const handleClose = useCallback((isOpen: boolean) => {
+    // Pending mutation varsa kapanmayı engelle
+    if (!isOpen && (switchCompany.isPending || createCompany.isPending)) {
+      return;
+    }
+    
     if (!isOpen) {
-      // Dialog kapanırken state'leri temizle
-      setShowNewCompanyForm(false);
-      setNewCompanyName("");
+      // State güncellemelerini batch olarak yap
+      requestAnimationFrame(() => {
+        setShowNewCompanyForm(false);
+        setNewCompanyName("");
+      });
     }
     onOpenChange(isOpen);
-  };
+  }, [switchCompany.isPending, createCompany.isPending, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent 
+        className="sm:max-w-md"
+        onEscapeKeyDown={(e) => {
+          // Pending mutation varsa ESC ile kapanmayı engelle
+          if (switchCompany.isPending || createCompany.isPending) {
+            e.preventDefault();
+          }
+        }}
+        onCloseAutoFocus={(e) => {
+          // Focus trap sorunlarını önle
+          e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />

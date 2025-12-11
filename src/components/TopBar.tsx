@@ -73,7 +73,10 @@ export const TopBar = ({ onMenuClick }: TopBarProps) => {
   return (
     <>
       <GlobalSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
-      <CompanySwitcher open={companySwitcherOpen} onOpenChange={setCompanySwitcherOpen} />
+      {/* Lazy mount pattern - sadece açık olduğunda render et */}
+      {companySwitcherOpen && (
+        <CompanySwitcher open={companySwitcherOpen} onOpenChange={setCompanySwitcherOpen} />
+      )}
       
       <div className="h-14 border-b bg-card/95 backdrop-blur-sm flex items-center justify-between px-4 sm:px-6">
         {/* Left side - Mobile menu button and User/Company info */}

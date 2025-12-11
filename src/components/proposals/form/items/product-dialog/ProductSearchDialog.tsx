@@ -11,7 +11,7 @@ import {
 import { Product } from "@/types/product";
 import ProductList from "./ProductList";
 import ProductDetailsDialog from "./ProductDetailsDialog";
-import { useProductSearchDialog } from "./useProductSearchDialog";
+import { useProductSearchDialog, EditingRowValues } from "./useProductSearchDialog";
 
 interface ProductSearchDialogProps {
   open: boolean;
@@ -25,6 +25,7 @@ interface ProductSearchDialogProps {
   selectedCurrency: string;
   triggerRef?: React.RefObject<HTMLButtonElement>;
   initialSelectedProduct?: Product | null;
+  editingRowValues?: EditingRowValues | null;
 }
 
 const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({ 
@@ -33,7 +34,8 @@ const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
   onSelectProduct,
   selectedCurrency,
   triggerRef,
-  initialSelectedProduct = null
+  initialSelectedProduct = null,
+  editingRowValues = null
 }) => {
   const {
     searchQuery,
@@ -54,7 +56,7 @@ const ProductSearchDialog: React.FC<ProductSearchDialogProps> = ({
     isLoading,
     formatCurrency,
     resetForm
-  } = useProductSearchDialog(open, initialSelectedProduct);
+  } = useProductSearchDialog(open, initialSelectedProduct, editingRowValues);
 
   const handleSelectProduct = () => {
     if (selectedProduct) {

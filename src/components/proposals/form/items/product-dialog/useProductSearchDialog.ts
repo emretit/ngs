@@ -5,9 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { formatCurrencyValue, convertCurrency } from "../utils/currencyUtils";
 
+export interface EditingRowValues {
+  productId?: string;
+  quantity: number;
+  unitPrice: number;
+  discountRate: number;
+}
+
 export const useProductSearchDialog = (
   open: boolean,
-  initialSelectedProduct: Product | null = null
+  initialSelectedProduct: Product | null = null,
+  editingRowValues: EditingRowValues | null = null
 ) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
@@ -141,9 +149,19 @@ export const useProductSearchDialog = (
 
   const openProductDetails = (product: Product) => {
     setSelectedProduct(product);
-    setCustomPrice(product.price);
-    setQuantity(1);
-    setDiscountRate(0);
+    
+    // Eğer seçilen ürün, düzenlenen satırdaki ürünle aynıysa mevcut değerleri kullan
+    if (editingRowValues && editingRowValues.productId && product.id === editingRowValues.productId) {
+      setQuantity(editingRowValues.quantity);
+      setCustomPrice(editingRowValues.unitPrice);
+      setDiscountRate(editingRowValues.discountRate);
+    } else {
+      // Farklı ürün seçildi, varsayılan değerler
+      setCustomPrice(product.price);
+      setQuantity(1);
+      setDiscountRate(0);
+    }
+    
     setDetailsDialogOpen(true);
   };
 

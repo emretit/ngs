@@ -1,5 +1,5 @@
 
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, AlertCircle, Info } from "lucide-react";
 import { ProposalItem } from "@/types/proposal";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PROPOSAL_ITEM_GROUPS } from "./proposalItemsConstants";
 import { useExchangeRates } from "@/hooks/useExchangeRates";
+import { EditingRowValues } from "./product-dialog/useProductSearchDialog";
 
 interface ProposalItemsProps {
   items: ProposalItem[];
@@ -38,6 +39,9 @@ const ProposalItems: React.FC<ProposalItemsProps> = ({
   const [editSelectedDepo, setEditSelectedDepo] = React.useState("");
   const [editDiscountRate, setEditDiscountRate] = React.useState(0);
 
+  // State for product search dialog editing
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [editingRowValues, setEditingRowValues] = useState<EditingRowValues | null>(null);
   const {
     selectedCurrency,
     setSelectedCurrency,
@@ -161,9 +165,44 @@ const ProposalItems: React.FC<ProposalItemsProps> = ({
     return totals;
   }, [items, globalCurrency, dashboardConvert]);
 
-  const handleProductSelect = (product: Product) => {
-    // Ürünün kendi para birimini koruyacak şekilde teklife ekleme
-    // Product will be added with its original currency
+  const handleProductSelect = (product: Product, quantity?: number, customPrice?: number, discountRate?: number) => {
+    // Eğer düzenleme modundaysa - mevcut satırı güncelle
+    if (editingRowIndex !== null) {
+      const updatedItems = [...items];
+      const existingItem = updatedItems[editingRowIndex];
+      
+      // Calculate total price
+      const qty = quantity || 1;
+      const unitPrice = customPrice || product.price;
+      const discount = discountRate || 0;
+      const tax = existingItem.tax_rate || 20;
+      const discountedPrice = unitPrice * (1 - discount / 100);
+      const totalPrice = qty * discountedPrice * (1 + tax / 100);
+      
+      updatedItems[editingRowIndex] = {
+        ...existingItem,
+        product_id: product.id,
+        name: product.name,
+        quantity: qty,
+        unit_price: unitPrice,
+        discount_rate: discount,
+        currency: product.currency || globalCurrency,
+        original_currency: product.currency,
+        original_price: product.price,
+        total_price: totalPrice,
+        stock_status: product.stock_quantity > 10 ? 'in_stock' : product.stock_quantity > 0 ? 'low_stock' : 'out_of_stock',
+      };
+      
+      onItemsChange(updatedItems);
+      toast.success(`${product.name} güncellendi`);
+      
+      // Reset editing state
+      setEditingRowIndex(null);
+      setEditingRowValues(null);
+      return;
+    }
+    
+    // Normal ekleme modu - Ürünün kendi para birimini koruyacak şekilde teklife ekleme
     const updatedItems = handleSelectProduct(product);
     if (updatedItems) {
       onItemsChange(updatedItems);
@@ -279,6 +318,28 @@ const ProposalItems: React.FC<ProposalItemsProps> = ({
     setEditDialogOpen(true);
   };
 
+  // Handle opening product search dialog for editing a row
+  const handleOpenProductDialogForEdit = (index: number) => {
+    const item = items[index];
+    setEditingRowIndex(index);
+    setEditingRowValues({
+      productId: item.product_id,
+      quantity: item.quantity || 1,
+      unitPrice: item.unit_price || 0,
+      discountRate: item.discount_rate || 0,
+    });
+    setProductDialogOpen(true);
+  };
+
+  // Handle product dialog close - reset editing state
+  const handleProductDialogClose = (open: boolean) => {
+    setProductDialogOpen(open);
+    if (!open) {
+      setEditingRowIndex(null);
+      setEditingRowValues(null);
+    }
+  };
+
   // Handle updating the edited item
   const handleUpdateItem = () => {
     if (editingIndex === null || !editingItem) return;
@@ -369,6 +430,7 @@ const ProposalItems: React.FC<ProposalItemsProps> = ({
           handleItemChange={onItemChange}
           handleRemoveItem={onRemoveItem}
           handleEditItem={handleEditItem}
+          handleOpenProductDialogForEdit={handleOpenProductDialogForEdit}
           selectedCurrency={globalCurrency || "TRY"}
           formatCurrency={formatCurrency}
           currencyOptions={currencyOptions}
@@ -425,9 +487,10 @@ const ProposalItems: React.FC<ProposalItemsProps> = ({
       
       <ProductSearchDialog
         open={productDialogOpen}
-        onOpenChange={setProductDialogOpen}
+        onOpenChange={handleProductDialogClose}
         onSelectProduct={handleProductSelect}
         selectedCurrency={globalCurrency || "TRY"}
+        editingRowValues={editingRowValues}
       />
 
       {/* Edit Item Dialog */}

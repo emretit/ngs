@@ -31,6 +31,7 @@ interface ProposalItemsTableProps {
   handleMoveItemUp?: (index: number) => void;
   handleMoveItemDown?: (index: number) => void;
   handleEditItem?: (index: number) => void;
+  handleOpenProductDialogForEdit?: (index: number) => void;
   selectedCurrency: string;
   formatCurrency: (amount: number, currency?: string) => string;
   currencyOptions: { value: string; label: string; symbol: string }[];
@@ -45,6 +46,7 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
   handleMoveItemUp,
   handleMoveItemDown,
   handleEditItem,
+  handleOpenProductDialogForEdit,
   selectedCurrency,
   formatCurrency,
   currencyOptions,
@@ -145,13 +147,15 @@ const ProposalItemsTable: React.FC<ProposalItemsTableProps> = ({
               {items.map((item, index) => (
                 <TableRow key={item.id} className="group">
                   <TableCell className="py-3 px-4">
-                    <div className="flex flex-col space-y-1">
-                      <Input
-                        value={item.name}
-                        onChange={(e) => handleItemChange(index, "name", e.target.value)}
-                        placeholder="Ürün/Hizmet adı"
-                        className="h-9"
-                      />
+                    <div 
+                      className="flex flex-col space-y-1 cursor-pointer"
+                      onClick={() => handleOpenProductDialogForEdit?.(index)}
+                    >
+                      <div className="flex items-center h-9 px-3 border rounded-md bg-background hover:bg-muted/50 transition-colors">
+                        <span className={`truncate ${item.name ? '' : 'text-muted-foreground'}`}>
+                          {item.name || "Ürün seçin..."}
+                        </span>
+                      </div>
                       {item.stock_status && (
                         <div className="flex items-center">
                           <Badge variant="outline" className={`text-xs py-0 px-2 ${getStockStatusColor(item.stock_status)}`}>

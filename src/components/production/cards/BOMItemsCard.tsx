@@ -31,6 +31,7 @@ const BOMItemsCard: React.FC<BOMItemsCardProps> = ({
   onRemoveItem,
   onMoveItemUp,
   onMoveItemDown,
+  onItemChange,
   showMoveButtons = false,
   inputHeight = "h-8"
 }) => {

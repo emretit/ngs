@@ -100,8 +100,8 @@ const NewWorkOrderDialog = ({ open, onOpenChange, onSuccess }: NewWorkOrderDialo
       setFormData({
         title: "",
         description: "",
-        priority: "normal",
-        status: "assigned",
+        priority: "medium" as WorkOrderPriority,
+        status: "draft" as WorkOrderStatus,
         quantity: 1,
         code: "",
       });

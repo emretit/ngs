@@ -1187,9 +1187,9 @@ export class PdfExportService {
       const serviceDetails = service.service_details as any;
       if (service.service_number) {
         serviceData.serviceNumber = service.service_number;
-      } else if (service.slip_number) {
-        // Fallback for backward compatibility
-        serviceData.serviceNumber = service.slip_number;
+      } else if ((service as any).slip_number) {
+        // Fallback for backward compatibility with legacy data
+        serviceData.serviceNumber = (service as any).slip_number;
       }
 
       // Add completion date if available

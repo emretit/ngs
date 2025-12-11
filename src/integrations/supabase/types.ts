@@ -7710,7 +7710,6 @@ export type Database = {
           customer_id: string | null
           customer_signature: string | null
           equipment_data: Json | null
-          equipment_id: string | null
           id: string
           is_recurring: boolean | null
           is_recurring_instance: boolean | null
@@ -7739,7 +7738,6 @@ export type Database = {
           service_status: Database["public"]["Enums"]["service_status"] | null
           service_title: string
           service_type: string | null
-          slip_number: string | null
           slip_status: string | null
           supplier_id: string | null
           technician_name: string | null
@@ -7761,7 +7759,6 @@ export type Database = {
           customer_id?: string | null
           customer_signature?: string | null
           equipment_data?: Json | null
-          equipment_id?: string | null
           id?: string
           is_recurring?: boolean | null
           is_recurring_instance?: boolean | null
@@ -7790,7 +7787,6 @@ export type Database = {
           service_status?: Database["public"]["Enums"]["service_status"] | null
           service_title: string
           service_type?: string | null
-          slip_number?: string | null
           slip_status?: string | null
           supplier_id?: string | null
           technician_name?: string | null
@@ -7812,7 +7808,6 @@ export type Database = {
           customer_id?: string | null
           customer_signature?: string | null
           equipment_data?: Json | null
-          equipment_id?: string | null
           id?: string
           is_recurring?: boolean | null
           is_recurring_instance?: boolean | null
@@ -7841,7 +7836,6 @@ export type Database = {
           service_status?: Database["public"]["Enums"]["service_status"] | null
           service_title?: string
           service_type?: string | null
-          slip_number?: string | null
           slip_status?: string | null
           supplier_id?: string | null
           technician_name?: string | null
@@ -10587,6 +10581,7 @@ export type Database = {
           asset_id: string | null
           assigned_at: string | null
           assigned_to: string | null
+          bom_id: string | null
           code: string
           company_id: string | null
           created_at: string | null
@@ -10615,6 +10610,7 @@ export type Database = {
           asset_id?: string | null
           assigned_at?: string | null
           assigned_to?: string | null
+          bom_id?: string | null
           code: string
           company_id?: string | null
           created_at?: string | null
@@ -10643,6 +10639,7 @@ export type Database = {
           asset_id?: string | null
           assigned_at?: string | null
           assigned_to?: string | null
+          bom_id?: string | null
           code?: string
           company_id?: string | null
           created_at?: string | null
@@ -10671,6 +10668,13 @@ export type Database = {
             columns: ["asset_id"]
             isOneToOne: false
             referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_bom_id_fkey"
+            columns: ["bom_id"]
+            isOneToOne: false
+            referencedRelation: "boms"
             referencedColumns: ["id"]
           },
           {

@@ -48,6 +48,8 @@ export const useUserCompanies = () => {
       return data as UserCompany[];
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 dakika cache - gereksiz re-fetch'leri önle
+    refetchOnWindowFocus: false, // Window focus'ta yeniden fetch yapma
   });
 };
 

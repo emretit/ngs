@@ -45,10 +45,13 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
     queryFn: async () => {
       if (!searchQuery.trim()) return null;
       
+      // Normalize search query to lowercase for case-insensitive search
+      const normalizedQuery = searchQuery.trim().toLowerCase();
+      
       const { data, error } = await supabase
         .from("customers")
         .select("id, name, company, email, mobile_phone, office_phone, address, representative")
-        .or(`name.ilike.%${searchQuery}%,company.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .or(`name.ilike.%${normalizedQuery}%,company.ilike.%${normalizedQuery}%,email.ilike.%${normalizedQuery}%`)
         .limit(50);
       
       if (error) throw error;
@@ -62,10 +65,13 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
     queryFn: async () => {
       if (!searchQuery.trim()) return null;
       
+      // Normalize search query to lowercase for case-insensitive search
+      const normalizedQuery = searchQuery.trim().toLowerCase();
+      
       const { data, error } = await supabase
         .from("suppliers")
         .select("id, name, company, email, mobile_phone, office_phone, address, representative")
-        .or(`name.ilike.%${searchQuery}%,company.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .or(`name.ilike.%${normalizedQuery}%,company.ilike.%${normalizedQuery}%,email.ilike.%${normalizedQuery}%`)
         .limit(50);
       
       if (error) throw error;

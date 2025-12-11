@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SoapClient } from '../_shared/soap-helper.ts';
-import { parseUBLTRXML, decodeZIPAndExtractXML } from '../_shared/ubl-parser.ts';
+import { SoapClient } from './soap-helper.ts';
+import { parseUBLTRXML, decodeZIPAndExtractXML } from './ubl-parser.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -117,19 +117,44 @@ serve(async (req) => {
     console.log('👤 User ID:', user.id);
     console.log('🏢 Company ID:', profile.company_id);
 
-    // Login to e-Logo
-    const loginResult = await SoapClient.login(
-      {
-        username: elogoAuth.username,
-        password: elogoAuth.password,
-      },
-      elogoAuth.webservice_url
-    );
-
-    if (!loginResult.success || !loginResult.sessionID) {
+    // Validate required fields
+    if (!elogoAuth.username || !elogoAuth.password) {
+      console.error('❌ e-Logo kimlik bilgileri eksik');
       return new Response(JSON.stringify({ 
         success: false,
-        error: loginResult.error || 'e-Logo giriş başarısız'
+        error: 'e-Logo kullanıcı adı veya şifre eksik. Lütfen ayarlar sayfasından kontrol edin.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Login to e-Logo
+    let loginResult;
+    try {
+      loginResult = await SoapClient.login(
+        {
+          username: elogoAuth.username,
+          password: elogoAuth.password,
+        },
+        elogoAuth.webservice_url
+      );
+    } catch (loginError: any) {
+      console.error('❌ e-Logo login exception:', loginError);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: `e-Logo giriş hatası: ${loginError.message || 'Bilinmeyen hata'}`
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!loginResult || !loginResult.success || !loginResult.sessionID) {
+      console.error('❌ e-Logo login başarısız:', loginResult);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: loginResult?.error || 'e-Logo giriş başarısız'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -145,16 +170,25 @@ serve(async (req) => {
       // Note: e-Logo returns documents one by one, we need to loop
       let hasMoreDocuments = true;
       let fetchedCount = 0;
-      const maxFetch = 100; // Safety limit
+      const maxFetch = 10; // Reduced limit to prevent timeout
 
       while (hasMoreDocuments && fetchedCount < maxFetch) {
-        const docResult = await SoapClient.getDocument(
-          sessionID,
-          'EINVOICE', // Get e-invoices
-          elogoAuth.webservice_url
-        );
+        let docResult;
+        try {
+          docResult = await SoapClient.getDocument(
+            sessionID,
+            'EINVOICE', // Get e-invoices
+            elogoAuth.webservice_url
+          );
+        } catch (docError: any) {
+          console.error(`❌ GetDocument hatası (fatura ${fetchedCount + 1}):`, docError);
+          // Break on error, but don't fail the whole request
+          hasMoreDocuments = false;
+          break;
+        }
 
-        if (!docResult.success || !docResult.data?.binaryData) {
+        if (!docResult || !docResult.success || !docResult.data?.binaryData) {
+          console.log(`ℹ️ Daha fazla fatura yok veya hata oluştu (${fetchedCount} fatura alındı)`);
           hasMoreDocuments = false;
           break;
         }
@@ -188,9 +222,17 @@ serve(async (req) => {
           // Continue with basic info if parsing fails
         }
 
+        // Use ETTN (UUID) as primary identifier, fallback to envelopeId
+        // ETTN is unique per invoice, envelopeId might be reused
+        const invoiceUuid = parsedInvoice?.ettn || docResult.data.envelopeId || `elogo-${Date.now()}-${fetchedCount}`;
+        const envelopeId = docResult.data.envelopeId || '';
+        
+        console.log(`📋 Fatura UUID: ${invoiceUuid}`);
+        console.log(`📦 Envelope ID: ${envelopeId}`);
+
         // Use parsed data if available, otherwise use basic info
         const invoice = parsedInvoice ? {
-          id: docResult.data.envelopeId || parsedInvoice.ettn || `elogo-${Date.now()}-${fetchedCount}`,
+          id: invoiceUuid, // Use ETTN/UUID as unique ID
           invoiceNumber: parsedInvoice.invoiceNumber || docResult.data.fileName || `INV-${fetchedCount}`,
           supplierName: parsedInvoice.supplierInfo.name || 'e-Logo Fatura',
           supplierTaxNumber: parsedInvoice.supplierInfo.taxNumber || '',
@@ -207,11 +249,13 @@ serve(async (req) => {
             ...docResult.data,
             parsedInvoice,
             xmlContent,
+            envelopeId, // Store envelopeId in xml_data
           },
           items: parsedInvoice?.items || [],
-          ettn: parsedInvoice?.ettn || docResult.data.envelopeId,
+          ettn: parsedInvoice?.ettn || invoiceUuid,
+          envelopeId: envelopeId, // Store envelopeId separately
         } : {
-          id: docResult.data.envelopeId || `elogo-${Date.now()}-${fetchedCount}`,
+          id: invoiceUuid, // Use envelopeId as UUID if no ETTN
           invoiceNumber: docResult.data.fileName || `INV-${fetchedCount}`,
           supplierName: 'e-Logo Fatura',
           supplierTaxNumber: '',
@@ -223,8 +267,13 @@ serve(async (req) => {
           isAnswered: false,
           invoiceType: 'SATIS',
           invoiceProfile: 'TEMELFATURA',
-          xmlData: docResult.data,
+          xmlData: {
+            ...docResult.data,
+            envelopeId, // Store envelopeId in xml_data
+          },
           items: [],
+          ettn: invoiceUuid,
+          envelopeId: envelopeId,
         };
 
         // Save to database (einvoices table)
@@ -253,6 +302,18 @@ serve(async (req) => {
             company_id: profile.company_id,
           };
 
+          // Check if invoice already exists by ID (ETTN/UUID)
+          const { data: existingInvoice } = await supabase
+            .from('einvoices')
+            .select('id, invoice_number')
+            .eq('id', invoiceData.id)
+            .eq('company_id', profile.company_id)
+            .single();
+
+          if (existingInvoice) {
+            console.log(`ℹ️ Fatura zaten mevcut, güncelleniyor: ${invoice.invoiceNumber} (ID: ${invoiceData.id})`);
+          }
+
           const { error: dbError } = await supabase
             .from('einvoices')
             .upsert(invoiceData, {
@@ -261,8 +322,10 @@ serve(async (req) => {
 
           if (dbError) {
             console.error('❌ Veritabanı kayıt hatası:', dbError);
+            console.error('❌ Fatura ID:', invoiceData.id);
+            console.error('❌ Fatura No:', invoiceData.invoice_number);
           } else {
-            console.log(`✅ Fatura veritabanına kaydedildi: ${invoice.invoiceNumber}`);
+            console.log(`✅ Fatura veritabanına kaydedildi: ${invoice.invoiceNumber} (ID: ${invoiceData.id})`);
             
             // Save invoice items if available
             if (parsedInvoice && parsedInvoice.items.length > 0) {
@@ -300,14 +363,29 @@ serve(async (req) => {
 
         invoices.push(invoice);
 
-        // Mark as done
-        if (docResult.data.envelopeId) {
-          await SoapClient.getDocumentDone(
-            sessionID,
-            docResult.data.envelopeId,
-            'EINVOICE',
-            elogoAuth.webservice_url
-          );
+        // Mark as done - Use envelopeId (UUID) for GetDocumentDone
+        // According to docs, GetDocumentDone expects UUID which is envelopeId
+        if (envelopeId) {
+          try {
+            const doneResult = await SoapClient.getDocumentDone(
+              sessionID,
+              envelopeId, // Use envelopeId as UUID parameter
+              'EINVOICE',
+              elogoAuth.webservice_url
+            );
+            
+            if (doneResult.success) {
+              console.log(`✅ Fatura alındı olarak işaretlendi: ${envelopeId}`);
+            } else {
+              console.error(`❌ GetDocumentDone başarısız: ${doneResult.error || 'Bilinmeyen hata'}`);
+              // Don't break, continue processing but log the error
+            }
+          } catch (doneError: any) {
+            console.error(`❌ GetDocumentDone exception: ${doneError.message}`);
+            // Don't break, continue processing but log the error
+          }
+        } else {
+          console.warn('⚠️ EnvelopeId bulunamadı, GetDocumentDone çağrılamadı');
         }
 
         fetchedCount++;

@@ -20,6 +20,7 @@ interface LineItem {
   discount_rate?: number;
   total_price: number;
   currency?: string;
+  image_url?: string;
 }
 
 interface ProductServiceCardProps {
@@ -55,7 +56,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
   onItemChange,
   onProductModalSelect,
   showMoveButtons = false,
-  inputHeight = "h-10"
+  inputHeight = "h-8"
 }) => {
   // Inline düzenleme için state: { itemIndex: { field: value } }
   const [editingField, setEditingField] = useState<{ itemIndex: number; field: string } | null>(null);
@@ -147,21 +148,37 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
             </div>
           ) : (
             items.map((item, index) => (
-            <div key={item.id} className="border rounded-lg p-1.5 bg-gray-50/50">
+            <div key={item.id} className="border rounded-lg p-1.5 bg-gray-50/50 group hover:bg-gray-50/50 transition-colors">
               <div className="grid grid-cols-12 gap-2 items-center">
                 {/* Ürün/Hizmet */}
                 <div className="col-span-5">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-xs text-gray-600 min-w-[20px]">{item.row_number}.</span>
+                    <span className="font-medium text-xs text-gray-600 min-w-[20px] group-hover:font-bold">{item.row_number}.</span>
                     <ProductSelector
                       value={item.name || item.description || ''}
                       onChange={(productName) => {
                         onItemChange(index, 'name', productName);
                         onItemChange(index, 'description', productName);
                       }}
-                      onProductSelect={(product) => onProductModalSelect(product, index)}
+                      onProductSelect={(product) => {
+                        // Mevcut item verilerini de gönder
+                        const existingData = {
+                          name: item.name,
+                          description: item.description || '',
+                          quantity: item.quantity,
+                          unit: item.unit,
+                          unit_price: item.unit_price,
+                          vat_rate: item.tax_rate || 20,
+                          discount_rate: item.discount_rate || 0,
+                          currency: item.currency,
+                          // image_url: önce item'dan, yoksa product'tan al
+                          image_url: item.image_url || product?.image_url
+                        };
+                        // Product'a existingData'yı ekle, product'ın image_url'ini de koru
+                        onProductModalSelect({ ...product, image_url: product?.image_url || item.image_url, existingData }, index);
+                      }}
                       placeholder="Ürün seçin..."
-                      className="flex-1 max-w-full"
+                      className="flex-1 max-w-full group-hover:font-bold"
                     />
                   </div>
                 </div>
@@ -183,7 +200,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                     value={item.unit || 'Adet'}
                     onValueChange={(value) => onItemChange(index, 'unit', value)}
                   >
-                    <SelectTrigger className={`${inputHeight} text-xs font-medium bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300`}>
+                    <SelectTrigger className={`${inputHeight} text-xs font-medium bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300 group-hover:font-bold`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -211,7 +228,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                     />
                   ) : (
                     <div 
-                      className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs cursor-pointer hover:bg-gray-200 transition-colors"
+                      className={`${inputHeight} flex items-center justify-end bg-gray-100 rounded text-right font-medium text-xs cursor-pointer hover:bg-gray-200 transition-colors group-hover:font-bold px-2`}
                       onClick={() => handleFieldClick(index, 'unit_price', item.unit_price)}
                     >
                       {formatCurrency(item.unit_price, item.currency || 'TRY')}
@@ -234,7 +251,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                     />
                   ) : (
                     <div 
-                      className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs cursor-pointer hover:bg-gray-200 transition-colors"
+                      className={`${inputHeight} flex items-center justify-center bg-gray-100 rounded text-center font-medium text-xs cursor-pointer hover:bg-gray-200 transition-colors group-hover:font-bold px-2`}
                       onClick={() => handleFieldClick(index, 'tax_rate', item.tax_rate || 0)}
                     >
                       {item.tax_rate ? `%${item.tax_rate}` : '-'}
@@ -257,7 +274,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                     />
                   ) : (
                     <div 
-                      className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs cursor-pointer hover:bg-gray-200 transition-colors"
+                      className={`${inputHeight} flex items-center justify-center bg-gray-100 rounded text-center font-medium text-xs cursor-pointer hover:bg-gray-200 transition-colors group-hover:font-bold px-2`}
                       onClick={() => handleFieldClick(index, 'discount_rate', item.discount_rate || 0)}
                     >
                       {item.discount_rate && item.discount_rate > 0 ? `%${item.discount_rate}` : '-'}
@@ -267,7 +284,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                 
                 {/* Toplam */}
                 <div className="col-span-1">
-                  <div className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs">
+                  <div className={`${inputHeight} flex items-center justify-end bg-gray-100 rounded text-right font-medium text-xs group-hover:font-bold px-2`}>
                     {formatCurrency(item.total_price, item.currency || 'TRY')}
                   </div>
                 </div>

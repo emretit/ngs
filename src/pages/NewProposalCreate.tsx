@@ -463,6 +463,13 @@ const NewProposalCreate = () => {
   const handleProductModalSelect = (product: any, itemIndex?: number) => {
     setSelectedProduct(product);
     setEditingItemIndex(itemIndex);
+    // Eğer product'ta existingData varsa (aynı ürün tekrar seçildiğinde), onu kullan
+    if (product?.existingData) {
+      setEditingItemData(product.existingData);
+    } else {
+      // Yeni ürün seçildiğinde veya existingData yoksa null yap
+      setEditingItemData(null);
+    }
     setProductModalOpen(true);
   };
 
@@ -939,7 +946,8 @@ const NewProposalCreate = () => {
               // Editing existing item
               setSelectedProduct(product); // product'ı set et, null yapma
               setEditingItemIndex(itemIndex);
-              setEditingItemData(product);
+              // Eğer product'ta existingData varsa onu kullan, yoksa product'ı kullan
+              setEditingItemData(product?.existingData || product);
               setProductModalOpen(true);
             } else {
               // Adding new item
@@ -947,7 +955,7 @@ const NewProposalCreate = () => {
             }
           }}
           showMoveButtons={true}
-          inputHeight="h-10"
+          inputHeight="h-8"
         />
 
         {/* Terms and Financial Summary - Side by Side */}

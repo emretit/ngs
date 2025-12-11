@@ -67,10 +67,10 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
           Teklif Detayları
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 pt-0 px-4 pb-4">
+      <CardContent className="space-y-3 pt-0 px-3 pb-3">
         {/* Teklif Konusu */}
-        <div>
-          <Label htmlFor="subject" className="text-sm font-medium text-gray-700">
+        <div className="space-y-1.5">
+          <Label htmlFor="subject" className="text-xs font-medium text-gray-700">
             Teklif Konusu <span className="text-red-500">*</span>
           </Label>
           <Input
@@ -78,90 +78,70 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
             value={formData.subject || ""}
             onChange={(e) => handleFieldChange('subject', e.target.value)}
             placeholder="Teklif konusunu girin"
-            className="mt-1 h-8 text-sm"
+            className="h-8 text-xs"
           />
         </div>
 
-        {/* Tarih Alanları - Altlı Üstlü */}
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="offer_date" className="text-sm font-medium text-gray-700">Teklif Tarihi</Label>
-              <DatePicker
-                date={formData.offer_date}
-                onSelect={(date) => handleFieldChange('offer_date', date)}
-                placeholder="Teklif tarihi seçin"
-              />
-            </div>
-            <div>
-              <Label htmlFor="validity_date" className="text-sm font-medium text-gray-700">
-                Geçerlilik Tarihi <span className="text-red-500">*</span>
-              </Label>
-              <DatePicker
-                date={formData.validity_date}
-                onSelect={(date) => handleFieldChange('validity_date', date)}
-                placeholder="Geçerlilik tarihi seçin"
-              />
-            </div>
+        {/* Tarih Alanları - Yan Yana */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="offer_date" className="text-xs font-medium text-gray-700">Teklif Tarihi</Label>
+            <DatePicker
+              date={formData.offer_date}
+              onSelect={(date) => handleFieldChange('offer_date', date)}
+              placeholder="Teklif tarihi seçin"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="validity_date" className="text-xs font-medium text-gray-700">
+              Geçerlilik Tarihi <span className="text-red-500">*</span>
+            </Label>
+            <DatePicker
+              date={formData.validity_date}
+              onSelect={(date) => handleFieldChange('validity_date', date)}
+              placeholder="Geçerlilik tarihi seçin"
+            />
           </div>
         </div>
 
-        {/* Teklif No, Revizyon No ve Durum */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <Label htmlFor="offer_number" className="text-sm font-medium text-gray-700">Teklif No</Label>
+        {/* Teklif No ve Revizyon No */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="offer_number" className="text-xs font-medium text-gray-700 flex items-center min-h-[20px]">
+              Teklif No
+            </Label>
             <Input
               id="offer_number"
               value={formData.offer_number}
               onChange={(e) => handleFieldChange('offer_number', e.target.value)}
-              className="mt-1 h-8 text-sm"
+              className="h-8 text-xs"
             />
           </div>
-          <div>
-            <Label htmlFor="revision_number" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+          <div className="space-y-1.5">
+            <Label htmlFor="revision_number" className="text-xs font-medium text-gray-700 flex items-center gap-1.5 min-h-[20px]">
               <GitBranch className="h-3.5 w-3.5 text-orange-500" />
               Revizyon No
             </Label>
-            <div className="relative mt-1">
-              <Input
-                id="revision_number"
-                value={`R${formData.revision_number ?? 0}`}
-                readOnly
-                disabled
-                className={`h-8 text-sm font-medium ${
-                  formData.revision_number 
-                    ? 'bg-orange-50 text-orange-700 border-orange-200' 
-                    : 'bg-blue-50 text-blue-700 border-blue-200'
-                }`}
-              />
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="status" className="text-sm font-medium text-gray-700">Teklif Durumu</Label>
-            <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
-              <SelectTrigger className="mt-1 h-8 text-sm">
-                <SelectValue placeholder="Durum seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(proposalStatusLabels).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-block w-2 h-2 rounded-full ${proposalStatusColors[value as ProposalStatus]}`}></span>
-                      {label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="revision_number"
+              value={`R${formData.revision_number ?? 0}`}
+              readOnly
+              disabled
+              className={`h-8 text-xs font-medium ${
+                formData.revision_number 
+                  ? 'bg-orange-50 text-orange-700 border-orange-200' 
+                  : 'bg-blue-50 text-blue-700 border-blue-200'
+              }`}
+            />
           </div>
         </div>
 
-        {/* Para Birimi ve Döviz Kuru - İki Sütunlu */}
+        {/* Para Birimi ve Teklif Durumu */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div>
-            <Label htmlFor="currency" className="text-sm font-medium text-gray-700">Para Birimi</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="currency" className="text-xs font-medium text-gray-700">Para Birimi</Label>
             <Select value={formData.currency || "TRY"} onValueChange={(value) => handleFieldChange('currency', value)}>
-              <SelectTrigger className="mt-1 h-8">
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Para birimi" />
               </SelectTrigger>
               <SelectContent>
@@ -178,70 +158,85 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
               </div>
             )}
           </div>
-          {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
-          {formData.currency && formData.currency !== "TRY" ? (
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label htmlFor="exchange_rate" className="text-sm font-medium text-gray-700">
-                  Döviz Kuru
-                </Label>
-                {currentRate && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <ArrowRightLeft className="h-3 w-3" />
-                    <span>Güncel: {currentRate.toFixed(4)} TRY</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2 items-center">
-                <div className="flex-1 relative">
-                  <Input
-                    id="exchange_rate"
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    value={formData.exchange_rate || ""}
-                    onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
-                    placeholder={currentRate ? currentRate.toFixed(4) : "Örn: 32.50"}
-                    className="h-8 text-sm pr-20"
-                  />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                    1 {formData.currency} = ? TRY
-                  </div>
-                </div>
-                {currentRate && (
-                  <button
-                    type="button"
-                    onClick={() => handleFieldChange('exchange_rate', currentRate)}
-                    className="px-3 py-2 text-xs border rounded-md hover:bg-muted whitespace-nowrap flex items-center gap-1 h-8"
-                    title="Güncel kuru uygula"
-                  >
-                    <ArrowRightLeft className="h-3 w-3" />
-                    <span>Uygula</span>
-                  </button>
-                )}
-              </div>
-              {formData.exchange_rate && currentRate && Math.abs(formData.exchange_rate - currentRate) > 0.01 && (
-                <p className="text-xs text-orange-600 mt-1">
-                  Güncel kurdan {formData.exchange_rate > currentRate ? '+' : ''}{((formData.exchange_rate - currentRate) / currentRate * 100).toFixed(2)}% farklı
-                </p>
-              )}
-            </div>
-          ) : (
-            <div>
-              {/* TRY seçildiğinde boş alan - layout'u korumak için */}
-            </div>
-          )}
+          <div className="space-y-1.5">
+            <Label htmlFor="status" className="text-xs font-medium text-gray-700">Teklif Durumu</Label>
+            <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Durum seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(proposalStatusLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${proposalStatusColors[value as ProposalStatus]}`}></span>
+                      {label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
+        {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
+        {formData.currency && formData.currency !== "TRY" && (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
+                Döviz Kuru
+              </Label>
+              {currentRate && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <ArrowRightLeft className="h-3 w-3" />
+                  <span>Güncel: {currentRate.toFixed(4)} TRY</span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1 relative">
+                <Input
+                  id="exchange_rate"
+                  type="number"
+                  step="0.0001"
+                  min="0"
+                  value={formData.exchange_rate || ""}
+                  onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
+                  placeholder={currentRate ? currentRate.toFixed(4) : "Örn: 32.50"}
+                  className="h-8 text-xs pr-20"
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                  1 {formData.currency} = ? TRY
+                </div>
+              </div>
+              {currentRate && (
+                <button
+                  type="button"
+                  onClick={() => handleFieldChange('exchange_rate', currentRate)}
+                  className="px-3 py-2 text-xs border rounded-md hover:bg-muted whitespace-nowrap flex items-center gap-1 h-8"
+                  title="Güncel kuru uygula"
+                >
+                  <ArrowRightLeft className="h-3 w-3" />
+                  <span>Uygula</span>
+                </button>
+              )}
+            </div>
+            {formData.exchange_rate && currentRate && Math.abs(formData.exchange_rate - currentRate) > 0.01 && (
+              <p className="text-xs text-orange-600 mt-1">
+                Güncel kurdan {formData.exchange_rate > currentRate ? '+' : ''}{((formData.exchange_rate - currentRate) / currentRate * 100).toFixed(2)}% farklı
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Notlar Alanı */}
-        <div>
-          <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Notlar</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="notes" className="text-xs font-medium text-gray-700">Notlar</Label>
           <Textarea
             id="notes"
             value={formData.notes}
             onChange={(e) => handleFieldChange('notes', e.target.value)}
             placeholder="Teklif hakkında notlarınızı yazın..."
-            className="mt-1 resize-none h-8 text-sm"
+            className="resize-none min-h-[80px] text-xs"
           />
         </div>
       </CardContent>

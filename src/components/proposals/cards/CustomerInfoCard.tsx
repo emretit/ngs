@@ -46,7 +46,7 @@ const CustomerInfoCard: React.FC<CustomerInfoCardProps> = ({
           Müşteri / Tedarikçi Bilgileri
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
+      <CardContent className="space-y-3 pt-0 px-3 pb-3">
         <FormProvider {...formToUse}>
           <div className="grid grid-cols-1 gap-3">
             <ProposalPartnerSelect partnerType="customer" placeholder="Müşteri veya Tedarikçi seçin..." required />
@@ -66,13 +66,13 @@ const CustomerInfoCard: React.FC<CustomerInfoCardProps> = ({
               error={errors.employee_id || ""}
             />
             {/* Hazırlayan */}
-              <EmployeeSelector
-                value={formData.prepared_by || ""}
+            <EmployeeSelector
+              value={formData.prepared_by || ""}
               onChange={(value) => handleFieldChange('prepared_by', value)}
               label="Hazırlayan"
               placeholder="Hazırlayan seçin..."
-                error={errors.prepared_by || ""}
-              />
+              error={errors.prepared_by || ""}
+            />
           </div>
         </FormProvider>
       </CardContent>

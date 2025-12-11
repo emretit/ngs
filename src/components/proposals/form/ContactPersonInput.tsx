@@ -324,8 +324,8 @@ const ContactPersonInput: React.FC<ContactPersonInputProps> = ({
   const partnerId = customerId || supplierId;
 
   return (
-    <div className="space-y-1">
-      <Label className="text-sm font-medium text-gray-700">
+    <div className="space-y-1.5">
+      <Label className="text-xs font-medium text-gray-700">
         İletişim Kişisi {required && <span className="text-red-500">*</span>}
       </Label>
       {hasContacts && !isCustomInput ? (

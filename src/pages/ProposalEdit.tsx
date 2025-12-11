@@ -402,6 +402,13 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   const handleProductModalSelect = (product: any, itemIndex?: number) => {
     setSelectedProduct(product);
     setEditingItemIndex(itemIndex);
+    // Eğer product'ta existingData varsa (aynı ürün tekrar seçildiğinde), onu kullan
+    if (product?.existingData) {
+      setEditingItemData(product.existingData);
+    } else {
+      // Yeni ürün seçildiğinde veya existingData yoksa null yap
+      setEditingItemData(null);
+    }
     setProductModalOpen(true);
   };
 
@@ -1165,9 +1172,10 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           onProductModalSelect={(product, itemIndex) => {
             if (itemIndex !== undefined) {
               // Editing existing item
-              setSelectedProduct(null);
+              setSelectedProduct(product); // product'ı set et, null yapma
               setEditingItemIndex(itemIndex);
-              setEditingItemData(product);
+              // Eğer product'ta existingData varsa onu kullan, yoksa product'ı kullan
+              setEditingItemData(product?.existingData || product);
               setProductModalOpen(true);
             } else {
               // Adding new item

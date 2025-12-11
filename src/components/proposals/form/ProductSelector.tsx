@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Package, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -131,8 +131,25 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
   });
 
   // Tüm sayfalardan ürünleri birleştir
-  const allProducts = data?.pages.flatMap(page => page.products) || [];
+  const allProductsRaw = data?.pages.flatMap(page => page.products) || [];
   const totalCount = data?.pages[0]?.totalCount || 0;
+
+  // Seçili ürünü en üste taşı
+  const allProducts = useMemo(() => {
+    if (!value || allProductsRaw.length === 0) {
+      return allProductsRaw;
+    }
+    
+    const selectedIndex = allProductsRaw.findIndex(p => p.name === value);
+    if (selectedIndex === -1) {
+      return allProductsRaw;
+    }
+    
+    const selectedProduct = allProductsRaw[selectedIndex];
+    const otherProducts = allProductsRaw.filter((_, index) => index !== selectedIndex);
+    
+    return [selectedProduct, ...otherProducts];
+  }, [allProductsRaw, value]);
 
   // Scroll event handler - infinite scroll için
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -156,6 +173,13 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
     setOpen(false);
   };
 
+  // Karakter sınırlaması için utility fonksiyonu
+  const truncateText = (text: string, maxLength: number) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
   // Popover açıldığında arama alanını temizle
   useEffect(() => {
     if (!open) {
@@ -171,150 +195,147 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between min-w-0 bg-background border-border hover:border-primary hover:bg-background transition-colors duration-200 focus:border-primary focus:ring-0",
+            "w-full justify-between mt-0.5 h-8 text-xs",
             !value && "text-muted-foreground",
             className
           )}
-          style={{
-            borderColor: 'hsl(var(--border))',
-            backgroundColor: 'hsl(var(--background))'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'hsl(var(--primary))';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'hsl(var(--border))';
-          }}
         >
-          <span className="truncate text-left flex-1 min-w-0" title={value || placeholder}>
-            {value || <span className="text-muted-foreground">{placeholder}</span>}
-          </span>
-          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+          <div className="flex items-center">
+            <Package className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
+            <span className="truncate text-left" title={value || placeholder}>
+              {value ? truncateText(value, 50) : placeholder}
+            </span>
+          </div>
+          <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[550px] p-0 z-[100]" align="start">
-        <Command shouldFilter={false} className="rounded-lg border shadow-md">
-          <CommandInput 
-            placeholder="Ürün ara..." 
+      <PopoverContent 
+        className="w-[550px] max-w-[90vw] p-0 z-[9999] pointer-events-auto" 
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
+        <div className="p-1.5 border-b">
+          <Input
+            placeholder="Ürün ara..."
             value={searchQuery}
-            onValueChange={setSearchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-8 text-xs"
+            autoFocus
           />
-          <CommandList 
-            ref={listRef}
-            className="max-h-[400px] overflow-y-auto"
-            onScroll={handleScroll}
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center py-6">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">Ürünler yükleniyor...</span>
-              </div>
-            ) : isError ? (
-              <div className="py-6 text-center text-sm text-destructive">
-                Ürünler yüklenirken bir hata oluştu.
-              </div>
-            ) : allProducts.length === 0 ? (
-              <CommandEmpty className="py-6 text-center text-sm">
-                {debouncedSearch ? "Aramanızla eşleşen ürün bulunamadı." : "Henüz ürün bulunmuyor."}
-              </CommandEmpty>
-            ) : (
-              <CommandGroup>
-                {/* Toplam sonuç bilgisi */}
-                {totalCount > 0 && (
-                  <div className="px-2 py-1 text-[10px] text-muted-foreground border-b bg-gray-50/50">
-                    {totalCount} ürün bulundu
-                  </div>
-                )}
-                
+        </div>
+        <div 
+          ref={listRef}
+          className="h-[200px] overflow-y-auto"
+          onScroll={handleScroll}
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-3 w-3 animate-spin text-primary" />
+              <span className="ml-2 text-xs">Ürünler yükleniyor...</span>
+            </div>
+          ) : isError ? (
+            <div className="p-3 text-center text-destructive text-xs">
+              Ürünler yüklenirken bir hata oluştu.
+            </div>
+          ) : allProducts.length === 0 ? (
+            <div className="p-3 text-center text-muted-foreground text-xs">
+              {debouncedSearch ? `"${debouncedSearch}" ile eşleşen ürün bulunamadı` : "Henüz ürün bulunmuyor."}
+            </div>
+          ) : (
+            <>
+              {/* Toplam sonuç bilgisi */}
+              {totalCount > 0 && (
+                <div className="px-2 py-1 text-[10px] text-muted-foreground border-b bg-gray-50/50">
+                  {totalCount} ürün bulundu
+                </div>
+              )}
+              
+              <div className="grid gap-0.5 p-1">
                 {allProducts.map((product) => (
-                  <CommandItem
+                  <div
                     key={product.id}
-                    value={product.name}
-                    onSelect={() => handleSelect(product)}
-                    className="flex items-start gap-1.5 px-2 py-1.5 cursor-pointer hover:bg-muted/50 data-[selected=true]:bg-accent/10 data-[selected=true]:text-accent-foreground rounded-sm transition-colors"
+                    className={cn(
+                      "flex items-start py-1 px-1.5 cursor-pointer rounded-md hover:bg-muted/50",
+                      value === product.name && "bg-muted"
+                    )}
+                    onClick={() => handleSelect(product)}
                     title={`${product.name}${product.description ? `\n${product.description}` : ''}${product.sku ? `\nSKU: ${product.sku}` : ''}`}
                   >
-                    <Check
-                      className={cn(
-                        "h-3 w-3 shrink-0 mt-0.5",
-                        value === product.name ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                      {/* Üst satır: Ürün İsmi + SKU (sağ üst) */}
-                      <div className="flex items-start justify-between gap-2">
-                        <span 
-                          className="font-medium text-foreground text-xs leading-tight truncate"
-                          title={product.name}
-                        >
-                          {product.name}
-                        </span>
+                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-1.5 mt-0.5 text-[10px] font-medium">
+                      {(product.name || 'Ü').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <p className="font-medium truncate text-xs" title={product.name}>
+                          {truncateText(product.name, 60)}
+                        </p>
                         {product.sku && (
-                          <span 
-                            className="text-[9px] text-muted-foreground font-mono truncate max-w-[140px] shrink-0"
-                            title={product.sku}
-                          >
-                            {product.sku}
+                          <span className="text-[9px] text-muted-foreground font-mono truncate max-w-[140px] shrink-0 ml-2" title={product.sku}>
+                            {truncateText(product.sku, 20)}
                           </span>
                         )}
                       </div>
-                      
-                      {/* Alt satır: Fiyat, Stok + Kategori */}
-                      <div className="flex items-center justify-between gap-2 text-[10px]">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-primary">
-                            {formatCurrency(product.price, product.currency || 'TRY')}
-                          </span>
-                          <span className="text-muted-foreground">
-                            Stok: {product.stock_quantity} {product.unit}
-                          </span>
-                        </div>
+                      {product.description && (
+                        <p className="text-[11px] text-muted-foreground truncate" title={product.description}>
+                          {truncateText(product.description, 70)}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                        <span className="font-semibold text-primary">
+                          {formatCurrency(product.price, product.currency || 'TRY')}
+                        </span>
+                        <span>•</span>
+                        <span>
+                          Stok: {product.stock_quantity} {product.unit}
+                        </span>
                         {product.category_type && (
-                          <span className="text-[9px] text-muted-foreground bg-gray-50 px-1 py-0.5 rounded whitespace-nowrap shrink-0">
-                            {product.category_type}
-                          </span>
+                          <>
+                            <span>•</span>
+                            <span className="bg-gray-50 px-1 py-0.5 rounded">
+                              {product.category_type}
+                            </span>
+                          </>
                         )}
                       </div>
                     </div>
-                  </CommandItem>
+                  </div>
                 ))}
-                
-                {/* Loading more indicator */}
-                {isFetchingNextPage && (
-                  <div className="flex items-center justify-center py-2">
-                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                    <span className="ml-1.5 text-[10px] text-muted-foreground">Daha fazla yükleniyor...</span>
-                  </div>
-                )}
-                
-                {/* End of list indicator */}
-                {!hasNextPage && allProducts.length > 0 && !isFetchingNextPage && (
-                  <div className="text-center py-1.5 text-[10px] text-muted-foreground">
-                    {allProducts.length} ürün gösteriliyor
-                  </div>
-                )}
-              </CommandGroup>
-            )}
-            
-            {/* Yeni Ürün Oluştur Butonu - Ayrı CommandGroup */}
-            {onNewProduct && (
-              <CommandGroup>
-                <CommandItem
-                  onSelect={() => {
-                    onNewProduct();
-                    setOpen(false);
-                  }}
-                  className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/50 data-[selected=true]:bg-accent/10 data-[selected=true]:text-accent-foreground rounded-sm transition-colors border-t border-border mt-1"
-                >
-                  <div className="flex items-center gap-2">
-                    <Plus size={16} className="text-primary" />
-                    <span className="text-sm font-medium text-primary">Yeni ürün oluştur</span>
-                  </div>
-                </CommandItem>
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
+              </div>
+              
+              {/* Loading more indicator */}
+              {isFetchingNextPage && (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  <span className="ml-1.5 text-[10px] text-muted-foreground">Daha fazla yükleniyor...</span>
+                </div>
+              )}
+              
+              {/* End of list indicator */}
+              {!hasNextPage && allProducts.length > 0 && !isFetchingNextPage && (
+                <div className="text-center py-1.5 text-[10px] text-muted-foreground">
+                  {allProducts.length} ürün gösteriliyor
+                </div>
+              )}
+            </>
+          )}
+          
+          {/* Yeni Ürün Oluştur Butonu */}
+          {onNewProduct && (
+            <div className="border-t border-border mt-1">
+              <div
+                onClick={() => {
+                  onNewProduct();
+                  setOpen(false);
+                }}
+                className="flex items-center gap-2 py-2 px-3 cursor-pointer hover:bg-muted/50 rounded-sm transition-colors"
+              >
+                <Plus size={16} className="text-primary" />
+                <span className="text-sm font-medium text-primary">Yeni ürün oluştur</span>
+              </div>
+            </div>
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );

@@ -80,10 +80,13 @@ export const CompanySwitcher = ({ open, onOpenChange }: CompanySwitcherProps) =>
     }
   };
 
-  const handleClose = () => {
-    setShowNewCompanyForm(false);
-    setNewCompanyName("");
-    onOpenChange(false);
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      // Dialog kapanırken state'leri temizle
+      setShowNewCompanyForm(false);
+      setNewCompanyName("");
+    }
+    onOpenChange(isOpen);
   };
 
   return (

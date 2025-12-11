@@ -305,7 +305,7 @@ export function EnhancedDatePicker({
         <Button
           variant="outline"
           className={cn(
-            "w-full h-9 justify-between text-left font-normal text-sm",
+            "w-full h-8 justify-between text-left font-normal text-xs",
             "border-border/50 hover:border-primary/50 hover:bg-accent/30",
             "transition-all duration-200",
             "group",

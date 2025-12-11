@@ -139,11 +139,27 @@ export class IntegratorService {
     filters: InvoiceFilters
   ): Promise<IntegratorServiceResponse> {
     try {
+      console.log('📊 e-Logo faturalar alınıyor, filtreler:', filters);
+      
       const { data, error } = await supabase.functions.invoke('elogo-incoming-invoices', {
         body: { filters }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ e-Logo Edge Function hatası:', error);
+        throw error;
+      }
+
+      // Check if the response indicates an error
+      if (data && !data.success) {
+        console.error('❌ e-Logo function başarısız:', data.error);
+        return {
+          success: false,
+          invoices: [],
+          error: data.error || 'e-Logo faturalar alınamadı',
+          message: data.message,
+        };
+      }
 
       return {
         success: data?.success || false,
@@ -152,9 +168,26 @@ export class IntegratorService {
         message: data?.message,
       };
     } catch (error: any) {
+      console.error('❌ e-Logo faturalar alınırken hata:', {
+        message: error.message,
+        status: error.status,
+        statusText: error.statusText,
+        error
+      });
+      
+      // Extract error message from different error formats
+      let errorMessage = 'e-Logo faturalar alınamadı';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.error) {
+        errorMessage = error.error;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       return {
         success: false,
-        error: error.message || 'e-Logo faturalar alınamadı',
+        error: errorMessage,
       };
     }
   }

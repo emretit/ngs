@@ -48,7 +48,19 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
       
     } catch (error: any) {
       console.error('Error fetching incoming invoices:', error);
-      showError(error.message || 'Gelen faturalar yüklenirken hata oluştu');
+      
+      // Extract more detailed error message
+      let errorMessage = 'Gelen faturalar yüklenirken hata oluştu';
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      // Show user-friendly error message
+      showError(errorMessage);
       throw error;
     } finally {
       setIsLoading(false);

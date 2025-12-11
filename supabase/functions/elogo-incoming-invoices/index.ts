@@ -75,6 +75,11 @@ serve(async (req) => {
       .single();
 
     if (authError || !elogoAuth) {
+      console.error('❌ e-Logo auth bulunamadı:', {
+        authError,
+        companyId: profile.company_id,
+        hasElogoAuth: !!elogoAuth
+      });
       return new Response(JSON.stringify({ 
         success: false,
         error: 'e-Logo kimlik doğrulama bilgileri bulunamadı. Lütfen ayarlar sayfasından e-Logo bilgilerinizi girin.'
@@ -84,10 +89,33 @@ serve(async (req) => {
       });
     }
 
-    const { filters } = await req.json();
+    // Validate webservice URL
+    if (!elogoAuth.webservice_url) {
+      console.error('❌ e-Logo webservice URL bulunamadı');
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'e-Logo webservice URL yapılandırılmamış. Lütfen ayarlar sayfasından e-Logo bilgilerinizi kontrol edin.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Parse request body safely
+    let filters = {};
+    try {
+      const requestBody = await req.json();
+      filters = requestBody?.filters || {};
+      console.log('📨 Request body parsed:', { filters });
+    } catch (parseError: any) {
+      console.warn('⚠️ Request body parse hatası, varsayılan filtreler kullanılıyor:', parseError.message);
+      // Continue with empty filters if parsing fails
+    }
 
     console.log('🔍 e-Logo gelen faturalar alınıyor...');
     console.log('📡 Webservice URL:', elogoAuth.webservice_url);
+    console.log('👤 User ID:', user.id);
+    console.log('🏢 Company ID:', profile.company_id);
 
     // Login to e-Logo
     const loginResult = await SoapClient.login(
@@ -110,6 +138,7 @@ serve(async (req) => {
 
     const sessionID = loginResult.sessionID;
     const invoices: any[] = [];
+    let logoutAttempted = false;
 
     try {
       // Get invoices using GetDocument method
@@ -287,8 +316,16 @@ serve(async (req) => {
       console.log(`✅ ${fetchedCount} adet e-Logo fatura alındı ve işlendi`);
 
     } finally {
-      // Always logout
-      await SoapClient.logout(sessionID, elogoAuth.webservice_url);
+      // Always logout if we have a session ID
+      if (sessionID && !logoutAttempted) {
+        try {
+          logoutAttempted = true;
+          await SoapClient.logout(sessionID, elogoAuth.webservice_url);
+          console.log('✅ e-Logo oturumu kapatıldı');
+        } catch (logoutError: any) {
+          console.error('⚠️ Logout hatası (kritik değil):', logoutError.message);
+        }
+      }
     }
 
     return new Response(JSON.stringify({ 
@@ -301,12 +338,24 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('❌ e-Logo incoming invoices function hatası:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      cause: error.cause
+    });
+    
+    // Return more detailed error information
+    const errorMessage = error.message || 'Bilinmeyen hata oluştu';
+    const statusCode = error.status || error.statusCode || 500;
     
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'Bilinmeyen hata oluştu'
+      error: errorMessage,
+      errorType: error.name || 'UnknownError',
+      timestamp: new Date().toISOString()
     }), {
-      status: 500,
+      status: statusCode,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

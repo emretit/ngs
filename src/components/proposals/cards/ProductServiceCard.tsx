@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowUp, ArrowDown, Edit, Trash } from "lucide-react";
 import ProductSelector from "@/components/proposals/form/ProductSelector";
 import { formatCurrency } from "@/utils/formatters";
@@ -33,6 +34,18 @@ interface ProductServiceCardProps {
   inputHeight?: "h-10" | "h-8";
 }
 
+const UNIT_OPTIONS = [
+  "Adet",
+  "Kilogram",
+  "Metre",
+  "Metrekare",
+  "Metreküp",
+  "Litre",
+  "Paket",
+  "Kutu",
+  "Saat"
+];
+
 const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
   items,
   onAddItem,
@@ -44,6 +57,43 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
   showMoveButtons = false,
   inputHeight = "h-10"
 }) => {
+  // Inline düzenleme için state: { itemIndex: { field: value } }
+  const [editingField, setEditingField] = useState<{ itemIndex: number; field: string } | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
+
+  const handleFieldClick = (itemIndex: number, field: string, currentValue: any) => {
+    setEditingField({ itemIndex, field });
+    setEditValue(String(currentValue || ""));
+  };
+
+  const handleFieldSave = (itemIndex: number, field: keyof LineItem) => {
+    if (editingField?.itemIndex === itemIndex && editingField?.field === field) {
+      let value: any = editValue;
+      
+      // Sayısal alanlar için dönüşüm
+      if (field === 'unit_price' || field === 'tax_rate' || field === 'discount_rate') {
+        value = parseFloat(editValue) || 0;
+      }
+      
+      onItemChange(itemIndex, field, value);
+      setEditingField(null);
+      setEditValue("");
+    }
+  };
+
+  const handleFieldCancel = () => {
+    setEditingField(null);
+    setEditValue("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, itemIndex: number, field: keyof LineItem) => {
+    if (e.key === "Enter") {
+      handleFieldSave(itemIndex, field);
+    } else if (e.key === "Escape") {
+      handleFieldCancel();
+    }
+  };
+
   return (
     <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl relative z-10">
       <CardHeader className="pb-2 pt-2.5">
@@ -129,30 +179,90 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                 
                 {/* Birim */}
                 <div className="col-span-1">
-                  <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
-                    {item.unit || 'adet'}
-                  </div>
+                  <Select
+                    value={item.unit || 'Adet'}
+                    onValueChange={(value) => onItemChange(index, 'unit', value)}
+                  >
+                    <SelectTrigger className={`${inputHeight} text-xs font-medium bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNIT_OPTIONS.map((unit) => (
+                        <SelectItem key={unit} value={unit}>
+                          {unit}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 {/* Birim Fiyat */}
                 <div className="col-span-1">
-                  <div className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs">
-                    {formatCurrency(item.unit_price, item.currency || 'TRY')}
-                  </div>
+                  {editingField?.itemIndex === index && editingField?.field === 'unit_price' ? (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={() => handleFieldSave(index, 'unit_price')}
+                      onKeyDown={(e) => handleKeyDown(e, index, 'unit_price')}
+                      autoFocus
+                      className={inputHeight}
+                    />
+                  ) : (
+                    <div 
+                      className="p-1.5 bg-gray-100 rounded text-right font-medium text-xs cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={() => handleFieldClick(index, 'unit_price', item.unit_price)}
+                    >
+                      {formatCurrency(item.unit_price, item.currency || 'TRY')}
+                    </div>
+                  )}
                 </div>
                 
                 {/* KDV % */}
                 <div className="col-span-1">
-                  <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
-                    {item.tax_rate ? `%${item.tax_rate}` : '-'}
-                  </div>
+                  {editingField?.itemIndex === index && editingField?.field === 'tax_rate' ? (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={() => handleFieldSave(index, 'tax_rate')}
+                      onKeyDown={(e) => handleKeyDown(e, index, 'tax_rate')}
+                      autoFocus
+                      className={inputHeight}
+                    />
+                  ) : (
+                    <div 
+                      className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={() => handleFieldClick(index, 'tax_rate', item.tax_rate || 0)}
+                    >
+                      {item.tax_rate ? `%${item.tax_rate}` : '-'}
+                    </div>
+                  )}
                 </div>
                 
                 {/* İndirim */}
                 <div className="col-span-1">
-                  <div className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs">
-                    {item.discount_rate && item.discount_rate > 0 ? `%${item.discount_rate}` : '-'}
-                  </div>
+                  {editingField?.itemIndex === index && editingField?.field === 'discount_rate' ? (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={() => handleFieldSave(index, 'discount_rate')}
+                      onKeyDown={(e) => handleKeyDown(e, index, 'discount_rate')}
+                      autoFocus
+                      className={inputHeight}
+                    />
+                  ) : (
+                    <div 
+                      className="p-1.5 bg-gray-100 rounded text-center font-medium text-xs cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={() => handleFieldClick(index, 'discount_rate', item.discount_rate || 0)}
+                    >
+                      {item.discount_rate && item.discount_rate > 0 ? `%${item.discount_rate}` : '-'}
+                    </div>
+                  )}
                 </div>
                 
                 {/* Toplam */}

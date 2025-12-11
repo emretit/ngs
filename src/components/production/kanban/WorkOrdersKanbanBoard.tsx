@@ -201,7 +201,7 @@ const WorkOrdersKanbanBoard = ({
                 </span>
               </KanbanHeader>
               <KanbanCards id={column.id} className="min-h-[400px] p-3">
-                {(item) => {
+                {(item: KanbanWorkOrder) => {
                   const workOrder = item.workOrder;
                   const hoverBorderClass = config.id === "draft" ? "hover:border-gray-400" :
                                          config.id === "planned" ? "hover:border-blue-400" :

@@ -16,7 +16,7 @@ import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog
 const ProductionBOMs = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { boms, isLoading, error } = useProduction();
+  const { boms, isLoading } = useProduction();
   const [bomsView, setBomsView] = useState<BOMsViewType>("table");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<string>('all');
@@ -201,10 +201,7 @@ const ProductionBOMs = () => {
     setBulkDeleteDialogOpen(false);
   };
 
-  if (error) {
-    toast.error("Reçeteler yüklenirken bir hata oluştu");
-    console.error("Error loading BOMs:", error);
-  }
+  // Note: error handling removed - useProduction doesn't expose error state
 
   return (
     <>
@@ -245,16 +242,12 @@ const ProductionBOMs = () => {
               <p className="text-muted-foreground">Reçeteler yükleniyor...</p>
             </div>
           </div>
-        ) : error ? (
-          <div className="h-96 flex items-center justify-center">
-            <div className="text-red-500">Reçeteler yüklenirken bir hata oluştu</div>
-          </div>
         ) : (
           <BOMsContent
             boms={filteredBOMs}
             isLoading={isLoading}
             totalCount={filteredBOMs.length}
-            error={error}
+            error={null}
             activeView={bomsView}
             setActiveView={setBomsView}
             onSelectBOM={handleBOMClick}

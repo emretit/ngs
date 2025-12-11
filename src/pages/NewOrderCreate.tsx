@@ -37,6 +37,7 @@ interface LineItem {
   total_price: number;
   currency?: string;
   product_id?: string;
+  image_url?: string;
 }
 
 interface CustomerData {

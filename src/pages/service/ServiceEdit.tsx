@@ -56,6 +56,7 @@ interface ServiceRequestFormData {
     discount_rate?: number;
     total_price: number;
     currency?: string;
+    image_url?: string;
   }>;
   warranty_info: {
     is_under_warranty: boolean;

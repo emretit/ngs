@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
@@ -24,6 +24,14 @@ export const useProductSearchDialog = (
   const [customPrice, setCustomPrice] = useState<number | undefined>(undefined);
   const [selectedDepo, setSelectedDepo] = useState("");
   const [discountRate, setDiscountRate] = useState(0);
+  
+  // useRef to always have the latest editingRowValues in openProductDetails
+  const editingRowValuesRef = useRef<EditingRowValues | null>(editingRowValues);
+  
+  // Keep ref updated
+  useEffect(() => {
+    editingRowValuesRef.current = editingRowValues;
+  }, [editingRowValues]);
   
   // Update selectedProduct when initialSelectedProduct changes or when dialog opens
   useEffect(() => {
@@ -150,13 +158,18 @@ export const useProductSearchDialog = (
   const openProductDetails = (product: Product) => {
     setSelectedProduct(product);
     
+    // Use ref to get the latest editingRowValues
+    const currentEditingValues = editingRowValuesRef.current;
+    
     // Eğer seçilen ürün, düzenlenen satırdaki ürünle aynıysa mevcut değerleri kullan
-    if (editingRowValues && editingRowValues.productId && product.id === editingRowValues.productId) {
-      setQuantity(editingRowValues.quantity);
-      setCustomPrice(editingRowValues.unitPrice);
-      setDiscountRate(editingRowValues.discountRate);
+    if (currentEditingValues && currentEditingValues.productId && product.id === currentEditingValues.productId) {
+      console.log('Same product selected, using existing values:', currentEditingValues);
+      setQuantity(currentEditingValues.quantity);
+      setCustomPrice(currentEditingValues.unitPrice);
+      setDiscountRate(currentEditingValues.discountRate);
     } else {
       // Farklı ürün seçildi, varsayılan değerler
+      console.log('Different product selected, using defaults');
       setCustomPrice(product.price);
       setQuantity(1);
       setDiscountRate(0);

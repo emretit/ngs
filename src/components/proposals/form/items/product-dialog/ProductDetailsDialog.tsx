@@ -85,6 +85,8 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
   // Reset state when dialog opens with a product
   useEffect(() => {
     if (open && selectedProduct) {
+      console.log('ProductDetailsDialog opened - isEditMode:', isEditMode, 'quantity:', quantity, 'customPrice:', customPrice, 'discountRate:', discountRate);
+      
       // Only reset quantity and discount if NOT in edit mode
       if (!isEditMode) {
         setQuantity(1);
@@ -108,7 +110,7 @@ const ProductDetailsDialog: React.FC<ProductDetailsDialogProps> = ({
       // Initialize current currency from selected currency
       setCurrentCurrency(selectedCurrency);
     }
-  }, [open, selectedProduct, selectedCurrency, setQuantity, setDiscountRate, isEditMode]);
+  }, [open, selectedProduct, selectedCurrency, isEditMode]);
 
   // Handle clicking the Add to Proposal button
   const handleAddToProposal = () => {

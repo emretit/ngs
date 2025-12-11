@@ -40,7 +40,6 @@ const PriceAndDiscountSection: React.FC<PriceAndDiscountSectionProps> = ({
     GBP: 41.3
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [initialized, setInitialized] = useState(false);
 
   // Fetch exchange rates when component mounts
   useEffect(() => {
@@ -68,17 +67,12 @@ const PriceAndDiscountSection: React.FC<PriceAndDiscountSectionProps> = ({
     getExchangeRates();
   }, []);
 
-  // Sync local state with props - but only update when props actually change from parent
+  // Sync local state with props - always sync when props change
   useEffect(() => {
-    // If customPrice is explicitly provided (not undefined), use it
-    if (customPrice !== undefined) {
-      setLocalPrice(customPrice);
-    } else if (!initialized) {
-      // Only use convertedPrice as fallback on first initialization
-      setLocalPrice(convertedPrice);
-      setInitialized(true);
-    }
-  }, [customPrice, convertedPrice, initialized]);
+    const priceToUse = customPrice !== undefined ? customPrice : convertedPrice;
+    console.log('PriceAndDiscountSection sync - customPrice:', customPrice, 'convertedPrice:', convertedPrice, 'using:', priceToUse);
+    setLocalPrice(priceToUse);
+  }, [customPrice, convertedPrice]);
 
   useEffect(() => {
     setLocalDiscountRate(discountRate);

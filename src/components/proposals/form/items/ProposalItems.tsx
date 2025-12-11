@@ -309,13 +309,15 @@ const ProposalItems: React.FC<ProposalItemsProps> = ({
   // Handle editing an item - open ProductDetailsDialog with item data
   const handleEditItem = (index: number) => {
     const item = items[index];
+    console.log('handleEditItem called with item:', item);
     setEditingItem(item);
     setEditingIndex(index);
     setEditQuantity(item.quantity || 1);
     setEditCustomPrice(item.unit_price);
     setEditDiscountRate(item.discount_rate || 0);
     setEditSelectedDepo("");
-    setEditDialogOpen(true);
+    // Use setTimeout to ensure state is updated before opening dialog
+    setTimeout(() => setEditDialogOpen(true), 0);
   };
 
   // Handle opening product search dialog for editing a row

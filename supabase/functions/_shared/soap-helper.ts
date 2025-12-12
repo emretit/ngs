@@ -919,67 +919,24 @@ export class SoapClient {
         };
       }
 
-      // Try multiple document list patterns (e-Logo API might use different tags)
-      let docListXml = '';
-      
-      // Pattern 1: <docList>...</docList>
-      const docListMatch1 = xmlText.match(/<docList>(.*?)<\/docList>/s);
-      if (docListMatch1) {
-        docListXml = docListMatch1[1];
-        console.log('✅ Found docList pattern 1');
-      }
-      
-      // Pattern 2: <a:docList>...</a:docList>
-      if (!docListXml) {
-        const docListMatch2 = xmlText.match(/<a:docList>(.*?)<\/a:docList>/s);
-        if (docListMatch2) {
-          docListXml = docListMatch2[1];
-          console.log('✅ Found docList pattern 2 (a: prefix)');
-        }
-      }
-      
-      // Pattern 3: <GetDocumentListResult>...</GetDocumentListResult>
-      if (!docListXml) {
-        const docListMatch3 = xmlText.match(/<GetDocumentListResult[^>]*>(.*?)<\/GetDocumentListResult>/s);
-        if (docListMatch3) {
-          docListXml = docListMatch3[1];
-          console.log('✅ Found GetDocumentListResult pattern');
-        }
-      }
-
-      console.log('📋 DocList XML length:', docListXml.length);
-      if (docListXml.length > 0) {
-        console.log('📋 DocList XML sample (first 500 chars):', docListXml.substring(0, 500));
-      }
-
-      // Parse each document - try multiple patterns
+      // Parse each document directly from the full XML response
+      // The documents are in <docList> section which is SEPARATE from <GetDocumentListResult>
       const documents: any[] = [];
       
-      // Pattern 1: <a:Document>...</a:Document>
-      let docMatches = [...docListXml.matchAll(/<a:Document>(.*?)<\/a:Document>/gs)];
+      // Pattern 1: <a:Document>...</a:Document> (most common for e-Logo)
+      let docMatches = [...xmlText.matchAll(/<a:Document>(.*?)<\/a:Document>/gs)];
+      console.log('📊 Pattern 1 (a:Document) matches:', docMatches.length);
       
       // Pattern 2: <Document>...</Document> (without namespace)
       if (docMatches.length === 0) {
-        docMatches = [...docListXml.matchAll(/<Document>(.*?)<\/Document>/gs)];
-        if (docMatches.length > 0) {
-          console.log('✅ Found Document pattern (no namespace)');
-        }
+        docMatches = [...xmlText.matchAll(/<Document>(.*?)<\/Document>/gs)];
+        console.log('📊 Pattern 2 (Document) matches:', docMatches.length);
       }
-      
-      // Pattern 3: Try DocumentType
-      if (docMatches.length === 0) {
-        docMatches = [...docListXml.matchAll(/<a:DocumentType>(.*?)<\/a:DocumentType>/gs)];
-        if (docMatches.length > 0) {
-          console.log('✅ Found DocumentType pattern');
-        }
-      }
-
-      console.log('📊 Document matches found:', docMatches.length);
 
       for (const docMatch of docMatches) {
         const docXml = docMatch[1];
 
-        // Try both with and without namespace prefix
+        // Try both with and without namespace prefix for UUID
         let documentUuid = '';
         let documentId = '';
         

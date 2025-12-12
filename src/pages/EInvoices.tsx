@@ -6,13 +6,15 @@ import EInvoiceContent from "@/components/einvoice/EInvoiceContent";
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 interface EInvoicesProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
 const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
   // Date range filter states - Default to current month
   const getCurrentMonthRange = () => {
     const now = new Date();
@@ -71,10 +73,18 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
     const matchesType = typeFilter === 'all' || typeFilter === 'TEMELFATURA';
     return matchesSearch && matchesType;
   });
-  const handleRefresh = () => {
-    refetch();
-    refetchProcessedIds(); // İşlenmiş faturalar listesini de yenile
-    toast.info("E-fatura listesi güncellendi");
+  const handleRefresh = async () => {
+    try {
+      toast.loading("e-Logo'dan faturalar çekiliyor...", { id: 'fetching-invoices' });
+      
+      // Cache'i invalidate et - bu sayede fresh data çeker
+      await queryClient.invalidateQueries({ queryKey: ['incoming-invoices'] });
+      await refetchProcessedIds(); // İşlenmiş faturalar listesini de yenile
+      
+      toast.success("E-faturalar başarıyla güncellendi", { id: 'fetching-invoices' });
+    } catch (error: any) {
+      toast.error(error.message || "Faturalar güncellenirken hata oluştu", { id: 'fetching-invoices' });
+    }
   };
   const handleFilter = () => {
     // React Query otomatik olarak date filters değişikliğini algılar

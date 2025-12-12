@@ -1,27 +1,31 @@
 import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { chatWithAI, generateSQLQuery } from "@/services/geminiService";
 import {
   Send,
   Bot,
   User,
   Loader2,
-  Database,
-  BarChart3,
   Sparkles,
   Copy,
   Check,
-  AlertTriangle,
+  AlertCircle,
   TrendingUp,
   PieChart,
   LineChart,
   Table,
   Lightbulb,
-  ChevronRight
+  MessageSquare,
+  Zap,
+  BarChart3,
+  X,
+  RefreshCw,
+  Database
 } from "lucide-react";
 import {
   BarChart,
@@ -41,6 +45,7 @@ import {
   Legend
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface ChatMessage {
   id: string;
@@ -85,7 +90,7 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
     {
       id: '1',
       type: 'ai',
-      content: 'Merhaba! Size raporlarınızla ilgili nasıl yardımcı olabilirim? Doğal dilde sorular sorabilir veya hızlı sorgu önerilerini kullanabilirsiniz.',
+      content: 'Merhaba! 👋 Ben Gemini AI asistanınızım. Raporlarınızla ilgili doğal dilde sorular sorabilirsiniz. Örneğin: "Bu ayın satış toplamı nedir?" veya "En çok satan ürünleri göster".',
       timestamp: new Date()
     }
   ]);
@@ -94,6 +99,7 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [copiedSql, setCopiedSql] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     checkAPIConnection();
@@ -102,11 +108,9 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
   const checkAPIConnection = async () => {
     setApiStatus('checking');
     try {
-      const { data, error } = await supabase.functions.invoke('groq-chat', {
-        body: { type: 'status' }
-      });
-      
-      if (error || !data?.configured) {
+      // Test Gemini connection
+      const testResult = await generateSQLQuery("test", "opportunities");
+      if (testResult.error && testResult.error.includes('API')) {
         setApiStatus('error');
       } else {
         setApiStatus('connected');
@@ -124,6 +128,21 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
       }
     }
   }, [messages]);
+
+  const executeSQL = async (sql: string) => {
+    try {
+      // execute_readonly_query function automatically adds company_id filter
+      const { data, error } = await supabase.rpc('execute_readonly_query', {
+        query_text: sql
+      });
+      
+      if (error) throw error;
+      return data || [];
+    } catch (err: any) {
+      console.error('SQL execution error:', err);
+      throw new Error(err.message || 'SQL sorgusu çalıştırılamadı');
+    }
+  };
 
   const handleSendMessage = async (query?: string) => {
     const messageText = query || inputValue.trim();
@@ -157,29 +176,47 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
         currency: searchParams.get('currency') || 'TRY',
       };
 
-      const { data, error } = await supabase.functions.invoke('groq-chat', {
-        body: { 
-          type: 'report',
-          query: messageText,
-          context
+      // Use Gemini to generate SQL
+      const sqlResult = await generateSQLQuery(messageText, 'opportunities');
+      
+      if (sqlResult.error) {
+        throw new Error(sqlResult.error);
+      }
+
+      if (!sqlResult.sql) {
+        throw new Error('SQL sorgusu oluşturulamadı');
+      }
+
+      // Execute SQL
+      const queryData = await executeSQL(sqlResult.sql);
+
+      // Get explanation from Gemini
+      const chatMessages = [
+        {
+          role: 'system' as const,
+          content: 'Sen bir veri analiz asistanısın. SQL sorgusu sonuçlarını açık ve anlaşılır şekilde açıkla.'
+        },
+        {
+          role: 'user' as const,
+          content: `Soru: ${messageText}\n\nSQL: ${sqlResult.sql}\n\nSonuç: ${JSON.stringify(queryData.slice(0, 5))}\n\nBu sonuçları Türkçe olarak açıkla.`
         }
-      });
+      ];
 
-      if (error) throw new Error(error.message);
+      const explanationResult = await chatWithAI(chatMessages);
+      const explanation = explanationResult.content || 'Sorgu başarıyla çalıştırıldı.';
 
-      // Execute the SQL query if we got one
-      let queryData: any[] = [];
-      if (data?.sql) {
-        try {
-          const { data: sqlResult, error: sqlError } = await supabase.rpc('execute_readonly_query', {
-            query_text: data.sql
-          });
-          
-          if (!sqlError && sqlResult) {
-            queryData = sqlResult;
-          }
-        } catch (sqlErr) {
-          console.error('SQL execution error:', sqlErr);
+      // Determine chart type based on data
+      let chartType: 'table' | 'bar' | 'line' | 'pie' | 'area' = 'table';
+      if (queryData.length > 0) {
+        const columns = Object.keys(queryData[0]);
+        const numericColumns = columns.filter(col => 
+          typeof queryData[0][col] === 'number'
+        );
+        
+        if (numericColumns.length >= 2) {
+          chartType = 'bar';
+        } else if (queryData.length > 10) {
+          chartType = 'line';
         }
       }
 
@@ -187,11 +224,14 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId ? {
           ...msg,
-          content: data?.explanation || 'Sorgunuz işlendi.',
-          sql: data?.sql,
+          content: explanation,
+          sql: sqlResult.sql,
           data: queryData,
-          chartType: data?.chartType || 'table',
-          chartConfig: data?.chartConfig,
+          chartType,
+          chartConfig: {
+            xKey: Object.keys(queryData[0] || {})[0],
+            yKey: Object.keys(queryData[0] || {}).find(k => typeof queryData[0]?.[k] === 'number')
+          },
           isStreaming: false
         } : msg
       ));
@@ -200,13 +240,15 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
       setMessages(prev => prev.map(msg => 
         msg.id === aiMessageId ? {
           ...msg,
-          content: `Üzgünüm, bir hata oluştu: ${error.message}`,
+          content: `Üzgünüm, bir hata oluştu: ${error.message || 'Bilinmeyen hata'}`,
           error: error.message,
           isStreaming: false
         } : msg
       ));
+      toast.error(error.message || 'Bir hata oluştu');
     } finally {
       setIsLoading(false);
+      inputRef.current?.focus();
     }
   };
 
@@ -221,6 +263,16 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
     navigator.clipboard.writeText(sql);
     setCopiedSql(sql);
     setTimeout(() => setCopiedSql(null), 2000);
+    toast.success('SQL kopyalandı!');
+  };
+
+  const clearChat = () => {
+    setMessages([{
+      id: '1',
+      type: 'ai',
+      content: 'Merhaba! 👋 Ben Gemini AI asistanınızım. Raporlarınızla ilgili doğal dilde sorular sorabilirsiniz.',
+      timestamp: new Date()
+    }]);
   };
 
   const formatTime = (date: Date) => {
@@ -345,7 +397,7 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
       case 'table':
       default:
         return (
-          <div className="mt-3 border border-border/50 rounded-lg overflow-hidden">
+          <div className="mt-3 border border-border/50 rounded-lg overflow-hidden bg-card">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
@@ -391,56 +443,79 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
   };
 
   return (
-    <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
-      <CardHeader className="pb-3 border-b border-border/30">
-        <div className="flex items-center justify-between">
+    <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden shadow-lg">
+      {/* Modern Header */}
+      <div className="bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-pink-500/10 border-b border-border/30 p-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg text-white shadow-lg shadow-violet-500/20">
-              <Sparkles className="h-5 w-5" />
+            <div className="relative">
+              <div className="p-2.5 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl text-white shadow-lg shadow-violet-500/30">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
             </div>
             <div>
-              <CardTitle className="text-base font-semibold">AI Rapor Asistanı</CardTitle>
-              <p className="text-xs text-muted-foreground">Doğal dilde soru sorun, anında rapor alın</p>
+              <h3 className="text-base font-semibold flex items-center gap-2">
+                Gemini AI Asistanı
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-violet-500/10 text-violet-600 border-violet-500/20">
+                  <Zap className="h-2.5 w-2.5 mr-1" />
+                  Gemini 2.5 Flash
+                </Badge>
+              </h3>
+              <p className="text-xs text-muted-foreground">Doğal dilde sorular sorun, anında analiz alın</p>
             </div>
           </div>
-          <Badge
-            variant="outline"
-            className={cn(
-              "text-xs",
-              apiStatus === 'connected' && 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-              apiStatus === 'error' && 'bg-rose-500/10 text-rose-600 border-rose-500/20',
-              apiStatus === 'checking' && 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs px-2 py-1",
+                apiStatus === 'connected' && 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+                apiStatus === 'error' && 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+                apiStatus === 'checking' && 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+              )}
+            >
+              {apiStatus === 'checking' ? (
+                <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Bağlanıyor</>
+              ) : apiStatus === 'connected' ? (
+                <><div className="h-2 w-2 mr-1.5 bg-emerald-500 rounded-full animate-pulse" />Aktif</>
+              ) : (
+                <><AlertCircle className="h-3 w-3 mr-1" />Bağlantı Hatası</>
+              )}
+            </Badge>
+            {messages.length > 1 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearChat}
+                className="h-7 w-7 p-0"
+                title="Sohbeti Temizle"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </Button>
             )}
-          >
-            {apiStatus === 'checking' ? (
-              <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Kontrol</>
-            ) : apiStatus === 'connected' ? (
-              <><Database className="h-3 w-3 mr-1" />Aktif</>
-            ) : (
-              <><AlertTriangle className="h-3 w-3 mr-1" />Hata</>
-            )}
-          </Badge>
+          </div>
         </div>
 
         {/* Quick Query Suggestions */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {QUICK_QUERIES.map((q, idx) => (
             <Button
               key={idx}
               variant="outline"
               size="sm"
               onClick={() => handleSendMessage(q.query)}
-              disabled={isLoading}
-              className="h-7 text-xs gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/30"
+              disabled={isLoading || apiStatus !== 'connected'}
+              className="h-7 text-xs gap-1.5 hover:bg-violet-500/10 hover:text-violet-600 hover:border-violet-500/30 transition-all"
             >
               <Lightbulb className="h-3 w-3" />
               {q.label}
             </Button>
           ))}
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="p-0 flex flex-col h-[450px]">
+      <CardContent className="p-0 flex flex-col h-[500px]">
         {/* Messages Area */}
         <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
           <div className="space-y-4 py-4">
@@ -448,47 +523,52 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
               <div
                 key={message.id}
                 className={cn(
-                  "flex gap-3",
+                  "flex gap-3 group",
                   message.type === 'user' ? 'justify-end' : 'justify-start'
                 )}
               >
                 {message.type === 'ai' && (
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-violet-500/20">
-                      <Bot className="h-4 w-4 text-white" />
+                    <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-violet-500/20 ring-2 ring-violet-500/20">
+                      <Bot className="h-4.5 w-4.5 text-white" />
                     </div>
                   </div>
                 )}
 
-                <div className={cn("max-w-[85%]", message.type === 'user' && 'order-2')}>
+                <div className={cn("max-w-[80%] flex flex-col", message.type === 'user' && 'items-end')}>
                   <div
                     className={cn(
-                      "rounded-xl px-4 py-3",
+                      "rounded-2xl px-4 py-3 shadow-sm transition-all",
                       message.type === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted/50 text-foreground border border-border/30'
+                        ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
+                        : 'bg-muted/60 text-foreground border border-border/40 backdrop-blur-sm'
                     )}
                   >
                     {message.isStreaming ? (
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Analiz ediliyor...</span>
+                        <span className="text-sm">Gemini analiz ediyor...</span>
                       </div>
                     ) : (
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
                     )}
                   </div>
 
                   {/* SQL Query Display */}
                   {message.sql && !message.isStreaming && (
-                    <div className="mt-2 rounded-lg overflow-hidden border border-border/30">
-                      <div className="flex items-center justify-between px-3 py-2 bg-muted/30">
-                        <span className="text-xs text-muted-foreground font-medium">SQL Sorgusu</span>
+                    <div className="mt-2 rounded-xl overflow-hidden border border-border/40 bg-card shadow-sm w-full">
+                      <div className="flex items-center justify-between px-3 py-2 bg-muted/40 border-b border-border/30">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 bg-violet-500/10 rounded">
+                            <Database className="h-3 w-3 text-violet-600" />
+                          </div>
+                          <span className="text-xs text-muted-foreground font-medium">SQL Sorgusu</span>
+                        </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => copySQL(message.sql!)}
-                          className="h-6 px-2 text-xs"
+                          className="h-6 px-2 text-xs hover:bg-violet-500/10"
                         >
                           {copiedSql === message.sql ? (
                             <><Check className="h-3 w-3 mr-1" />Kopyalandı</>
@@ -497,8 +577,8 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
                           )}
                         </Button>
                       </div>
-                      <pre className="p-3 bg-zinc-900 text-emerald-400 font-mono text-xs overflow-x-auto">
-                        {message.sql}
+                      <pre className="p-3 bg-zinc-950 text-emerald-400 font-mono text-xs overflow-x-auto border-t border-zinc-800">
+                        <code>{message.sql}</code>
                       </pre>
                     </div>
                   )}
@@ -506,9 +586,9 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
                   {/* Chart Type Badge */}
                   {message.data && message.data.length > 0 && !message.isStreaming && (
                     <div className="mt-2 flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs gap-1">
+                      <Badge variant="secondary" className="text-xs gap-1.5 px-2 py-0.5">
                         {getChartIcon(message.chartType)}
-                        {message.data.length} kayıt
+                        <span>{message.data.length} kayıt</span>
                       </Badge>
                     </div>
                   )}
@@ -516,15 +596,15 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
                   {/* Data Visualization */}
                   {!message.isStreaming && renderChart(message)}
 
-                  <div className="mt-1.5 text-[10px] text-muted-foreground">
+                  <div className="mt-1.5 text-[10px] text-muted-foreground px-1">
                     {formatTime(message.timestamp)}
                   </div>
                 </div>
 
                 {message.type === 'user' && (
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-primary-foreground" />
+                    <div className="w-9 h-9 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center shadow-md ring-2 ring-primary/20">
+                      <User className="h-4.5 w-4.5 text-primary-foreground" />
                     </div>
                   </div>
                 )}
@@ -534,24 +614,47 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t border-border/30 p-4 bg-muted/20">
-          <div className="flex gap-2">
-            <Input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Soru sorun... (örn: 'Bu ayın satış toplamı nedir?')"
-              disabled={isLoading || apiStatus !== 'connected'}
-              className="flex-1 bg-background/50"
-            />
+        <div className="border-t border-border/30 p-4 bg-gradient-to-t from-muted/40 to-transparent">
+          <div className="flex gap-2 items-end">
+            <div className="flex-1 relative">
+              <Input
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Raporlarınız hakkında soru sorun... (örn: 'Bu ayın satış toplamı nedir?')"
+                disabled={isLoading || apiStatus !== 'connected'}
+                className="pr-10 bg-background/80 border-border/50 focus:border-violet-500/50 focus:ring-violet-500/20"
+              />
+              {inputValue && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setInputValue('')}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
             <Button
               onClick={() => handleSendMessage()}
               disabled={isLoading || !inputValue.trim() || apiStatus !== 'connected'}
-              className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg shadow-violet-500/20"
+              className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg shadow-violet-500/20 disabled:opacity-50 disabled:shadow-none h-10 px-4"
             >
-              <Send className="h-4 w-4" />
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
+          {apiStatus === 'error' && (
+            <p className="text-xs text-rose-600 mt-2 flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Gemini API bağlantısı kurulamadı. Lütfen ayarları kontrol edin.
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

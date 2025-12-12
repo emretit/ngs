@@ -237,11 +237,11 @@ export const ElogoSettings = () => {
                 <p className="text-xs text-blue-900">
                   {testMode ? (
                     <>
-                      <strong>Test Modu:</strong> https://pb-demo.elogo.com.tr
+                      <strong>Test Modu:</strong> https://pb-demo.elogo.com.tr/PostBoxService.svc
                     </>
                   ) : (
                     <>
-                      <strong>Production Modu:</strong> https://pb.elogo.com.tr
+                      <strong>Production Modu:</strong> https://pb.elogo.com.tr/PostBoxService.svc
                     </>
                   )}
                 </p>

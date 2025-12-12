@@ -18,6 +18,7 @@ import { vehicleRoutes } from "./vehicleRoutes";
 import { adminRoutes } from "./adminRoutes";
 import { supplierPortalRoutes } from "./supplierPortalRoutes";
 import { contractRoutes } from "./contractRoutes";
+import { reportRoutes } from "./reportRoutes";
 
 // Lazy load remaining pages
 const Deliveries = React.lazy(() => import("@/pages/Deliveries"));
@@ -45,6 +46,7 @@ export const appRoutes: RouteConfig[] = [
   ...proposalRoutes,
   ...vehicleRoutes,
   ...contractRoutes,
+  ...reportRoutes,
   ...adminRoutes,
   
 

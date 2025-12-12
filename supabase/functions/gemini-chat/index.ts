@@ -22,6 +22,7 @@ interface GeminiRequest {
   sourceColumns?: string[];
   targetFields?: Array<{ name: string; description: string }>;
   stream?: boolean;
+  companyId?: string;
   context?: {
     startDate?: string;
     endDate?: string;
@@ -30,51 +31,65 @@ interface GeminiRequest {
 }
 
 // Database schema for SQL generation
-const DATABASE_SCHEMA = `
+const getDatabaseSchema = (companyId?: string) => `
 TABLOLAR VE İLİŞKİLER:
 
+ÖNEMLİ: Tüm tablolarda company_id kolonu vardır ve her sorguda MUTLAKA company_id filtresi kullanılmalıdır.
+Sadece kullanıcının kendi şirketinin verilerine erişilmelidir.
+
 1. proposals (Teklifler)
-   - id, customer_id, status, total_amount, currency, created_at, valid_until
+   - id, company_id, customer_id, status, total_amount, currency, created_at, valid_until
    - status: 'draft', 'sent', 'accepted', 'rejected', 'expired'
 
 2. proposal_items (Teklif Kalemleri)
    - id, proposal_id, product_id, product_name, quantity, unit_price, total_price
 
 3. customers (Müşteriler)
-   - id, name, email, phone, address, city, balance, type, status, created_at
+   - id, company_id, name, email, phone, address, city, balance, type, status, created_at
 
 4. products (Ürünler)
-   - id, name, code, price, quantity (stok), category_id, unit, created_at
+   - id, company_id, name, code, price, quantity (stok), category_id, unit, created_at
 
 5. orders (Siparişler)
-   - id, customer_id, status, total_amount, created_at
+   - id, company_id, customer_id, status, total_amount, created_at
 
 6. sales_invoices (Satış Faturaları)
-   - id, customer_id, total_amount, status, invoice_date, due_date
+   - id, company_id, customer_id, total_amount, status, invoice_date, due_date
 
-7. einvoices (Alış Faturaları)
-   - id, supplier_id, total_amount, status, invoice_date
+7. purchase_invoices (Alış Faturaları)
+   - id, company_id, supplier_id, total_amount, status, invoice_date
 
 8. suppliers (Tedarikçiler)
-   - id, name, email, phone, balance, created_at
+   - id, company_id, name, email, phone, balance, created_at
 
 9. service_requests (Servis Talepleri)
-   - id, customer_id, service_status, priority, created_at, completed_at, assigned_to
+   - id, company_id, customer_id, service_status, priority, created_at, completed_at, assigned_to
 
 10. employees (Çalışanlar)
-    - id, first_name, last_name, email, department_id, is_active, hire_date
+    - id, company_id, first_name, last_name, email, department_id, is_active, hire_date
 
 11. vehicles (Araçlar)
-    - id, plate_number, brand, model, year, status
+    - id, company_id, plate_number, brand, model, year, status
 
 12. vehicle_fuel (Yakıt Kayıtları)
     - id, vehicle_id, fuel_date, liters, total_cost, odometer
 
 13. opportunities (Satış Fırsatları)
-    - id, customer_id, value, status, stage, probability, expected_close_date
+    - id, company_id, customer_id, value, status, stage, probability, expected_close_date
 
 14. activities (Aktiviteler/Görevler)
-    - id, title, type, status, due_date, assignee_id
+    - id, company_id, title, type, status, due_date, assignee_id
+
+15. bank_accounts (Banka Hesapları)
+    - id, company_id, account_name, account_number, bank_name, balance
+
+16. service_slips (Servis Fişleri)
+    - id, company_id, customer_id, vehicle_id, service_date, total_amount
+
+17. tasks (Görevler)
+    - id, company_id, title, description, status, due_date, assignee_id
+
+${companyId ? `\nŞİRKET FİLTRESİ: Tüm sorgularda WHERE company_id = '${companyId}' kullanılmalıdır.` : '\nŞİRKET FİLTRESİ: Tüm sorgularda WHERE company_id filtresi kullanılmalıdır.'}
 `;
 
 // Available Gemini models
@@ -142,13 +157,15 @@ serve(async (req) => {
 2. Sonuçların nasıl görselleştirileceğini öner
 3. Kısa bir açıklama yaz
 
-${DATABASE_SCHEMA}
+${getDatabaseSchema(body.companyId)}
 
 KURALLAR:
 - SADECE SELECT sorguları oluştur, veri değiştiren sorgular YASAK
 - Tarih filtrelerini WHERE clause'a ekle
 - Aggregate fonksiyonları (SUM, COUNT, AVG) kullan
 - Anlamlı alias'lar kullan
+- MUTLAKA WHERE clause'a company_id filtresi ekle (WHERE company_id = '${body.companyId || 'current_company_id()'}' veya WHERE company_id = current_company_id())
+- Eğer zaten WHERE clause varsa, company_id filtresini AND ile ekle
 
 YANIT FORMATI (JSON):
 {
@@ -167,14 +184,16 @@ YANIT FORMATI (JSON):
       case 'sql':
         systemInstruction = `Sen bir SQL uzmanısın. Kullanıcının doğal dil sorgularını PostgreSQL SELECT sorgularına çeviriyorsun.
 
-${DATABASE_SCHEMA}
+${getDatabaseSchema(body.companyId)}
             
 KURALLAR:
 - SADECE SELECT sorguları oluştur
 - INSERT, UPDATE, DELETE, DROP, ALTER, CREATE gibi değiştirici ifadeler YASAK
 - Sorguyu düz metin olarak döndür, markdown formatı kullanma
 - Sadece SQL sorgusunu döndür, açıklama ekleme
-- Tablo ve sütun adlarını doğru kullan`;
+- Tablo ve sütun adlarını doğru kullan
+- MUTLAKA WHERE clause'a company_id filtresi ekle (WHERE company_id = '${body.companyId || 'current_company_id()'}' veya WHERE company_id = current_company_id())
+- Eğer zaten WHERE clause varsa, company_id filtresini AND ile ekle`;
         userContent = body.query || '';
         break;
 

@@ -365,6 +365,57 @@ export const navItems = [
     icon: BarChart2,
     label: "Raporlar",
     translationKey: "nav.reports",
+    hasDropdown: true,
+    items: [
+      {
+        path: "/reports",
+        icon: BarChart3,
+        label: "Genel Bakış",
+        translationKey: "nav.reportsOverview",
+      },
+      {
+        path: "/reports/sales",
+        icon: TrendingUp,
+        label: "Satış Raporları",
+        translationKey: "nav.salesReports",
+      },
+      {
+        path: "/reports/financial",
+        icon: Banknote,
+        label: "Finansal Raporlar",
+        translationKey: "nav.financialReports",
+      },
+      {
+        path: "/reports/service",
+        icon: Wrench,
+        label: "Servis Raporları",
+        translationKey: "nav.serviceReports",
+      },
+      {
+        path: "/reports/inventory",
+        icon: Package,
+        label: "Envanter Raporları",
+        translationKey: "nav.inventoryReports",
+      },
+      {
+        path: "/reports/purchasing",
+        icon: ShoppingCart,
+        label: "Satın Alma Raporları",
+        translationKey: "nav.purchasingReports",
+      },
+      {
+        path: "/reports/hr",
+        icon: Briefcase,
+        label: "İK Raporları",
+        translationKey: "nav.hrReports",
+      },
+      {
+        path: "/reports/vehicles",
+        icon: Car,
+        label: "Araç Filosu Raporları",
+        translationKey: "nav.vehicleReports",
+      },
+    ],
   },
   // 13. Modül Ağacı
   {

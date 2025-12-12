@@ -102,7 +102,7 @@ serve(async (req) => {
     }
 
     // Parse request body safely
-    let filters = {};
+    let filters: any = {};
     try {
       const requestBody = await req.json();
       filters = requestBody?.filters || {};
@@ -112,10 +112,23 @@ serve(async (req) => {
       // Continue with empty filters if parsing fails
     }
 
+    // Parse date filters - default to current month if not provided
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    const startDate = filters?.startDate 
+      ? filters.startDate.split('T')[0]
+      : startOfMonth.toISOString().split('T')[0];
+    const endDate = filters?.endDate 
+      ? filters.endDate.split('T')[0]
+      : endOfMonth.toISOString().split('T')[0];
+
     console.log('🔍 e-Logo gelen faturalar alınıyor...');
     console.log('📡 Webservice URL:', elogoAuth.webservice_url);
     console.log('👤 User ID:', user.id);
     console.log('🏢 Company ID:', profile.company_id);
+    console.log('📅 Tarih aralığı:', { startDate, endDate });
 
     // Validate required fields
     if (!elogoAuth.username || !elogoAuth.password) {
@@ -166,232 +179,159 @@ serve(async (req) => {
     let logoutAttempted = false;
 
     try {
-      // Get invoices using GetDocument method
-      // Note: e-Logo returns documents one by one, we need to loop
-      let hasMoreDocuments = true;
-      let fetchedCount = 0;
-      const maxFetch = 10; // Reduced limit to prevent timeout
+      // First, get document list for the date range using GetDocumentList
+      console.log('📋 Tarih aralığındaki faturalar listeleniyor...');
+      
+      const paramList = [
+        `DOCUMENTTYPE=EINVOICE`,
+        `BEGINDATE=${startDate}`,
+        `ENDDATE=${endDate}`,
+        `OPTYPE=2`, // 2 = Gelen faturalar
+        `DATEBY=0`, // 0 = Oluşturma tarihi
+      ];
+      
+      console.log('📋 GetDocumentList parametreleri:', paramList);
 
-      while (hasMoreDocuments && fetchedCount < maxFetch) {
+      const listResult = await SoapClient.getDocumentList(
+        sessionID,
+        paramList,
+        elogoAuth.webservice_url
+      );
+
+      console.log('📊 GetDocumentList sonucu:', {
+        success: listResult.success,
+        documentCount: listResult.data?.documents?.length || 0
+      });
+
+      if (!listResult.success || !listResult.data?.documents) {
+        console.log('ℹ️ Belge listesi alınamadı veya boş');
+        return new Response(JSON.stringify({ 
+          success: true,
+          invoices: [],
+          message: 'Seçili tarih aralığında fatura bulunamadı'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const documentList = listResult.data.documents || [];
+      console.log(`✅ ${documentList.length} adet fatura UUID'si bulundu`);
+
+      if (documentList.length === 0) {
+        return new Response(JSON.stringify({ 
+          success: true,
+          invoices: [],
+          message: 'Seçili tarih aralığında fatura bulunamadı'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Fetch and parse each invoice
+      console.log(`🔄 ${documentList.length} adet fatura detayı çekiliyor...`);
+      
+      for (let i = 0; i < documentList.length; i++) {
+        const doc = documentList[i];
+        const invoiceUuid = doc.documentUuid;
+        
+        console.log(`📄 Fatura ${i + 1}/${documentList.length} çekiliyor (UUID: ${invoiceUuid?.substring(0, 8)}...)`);
+
+        // Get document data
         let docResult;
         try {
-          docResult = await SoapClient.getDocument(
+          docResult = await SoapClient.getDocumentData(
             sessionID,
-            'EINVOICE', // Get e-invoices
+            invoiceUuid,
+            [], // paramList - boş array, gerekirse parametreler eklenebilir
             elogoAuth.webservice_url
           );
         } catch (docError: any) {
-          console.error(`❌ GetDocument hatası (fatura ${fetchedCount + 1}):`, docError);
-          // Break on error, but don't fail the whole request
-          hasMoreDocuments = false;
-          break;
+          console.error(`❌ GetDocumentData hatası (fatura ${i + 1}):`, docError);
+          continue; // Skip this invoice and continue with next
         }
 
         if (!docResult || !docResult.success || !docResult.data?.binaryData) {
-          console.log(`ℹ️ Daha fazla fatura yok veya hata oluştu (${fetchedCount} fatura alındı)`);
-          hasMoreDocuments = false;
-          break;
+          console.error(`❌ Fatura verisi alınamadı: ${invoiceUuid}`);
+          continue;
         }
 
-        console.log(`📄 Fatura ${fetchedCount + 1} işleniyor...`);
-        
         // Decode ZIP and extract XML
-        let parsedInvoice = null;
-        let xmlContent: string | null = null;
-        
+        let xmlContent = '';
         try {
           xmlContent = await decodeZIPAndExtractXML(docResult.data.binaryData);
-          
-          if (xmlContent) {
-            console.log('✅ XML içeriği başarıyla çıkarıldı');
-            parsedInvoice = parseUBLTRXML(xmlContent);
-            
-            if (parsedInvoice) {
-              console.log('✅ UBL-TR XML başarıyla parse edildi');
-              console.log(`📋 Fatura No: ${parsedInvoice.invoiceNumber}`);
-              console.log(`🏢 Tedarikçi: ${parsedInvoice.supplierInfo.name}`);
-              console.log(`📦 Kalem Sayısı: ${parsedInvoice.items.length}`);
-            } else {
-              console.warn('⚠️ XML parse edilemedi');
-            }
-          } else {
-            console.warn('⚠️ ZIP içinden XML çıkarılamadı');
-          }
-        } catch (parseError: any) {
-          console.error('❌ Parse hatası:', parseError.message);
-          // Continue with basic info if parsing fails
+        } catch (decodeError: any) {
+          console.error(`❌ ZIP decode hatası: ${decodeError.message}`);
+          continue;
         }
 
-        // Use ETTN (UUID) as primary identifier, fallback to envelopeId
-        // ETTN is unique per invoice, envelopeId might be reused
-        const invoiceUuid = parsedInvoice?.ettn || docResult.data.envelopeId || `elogo-${Date.now()}-${fetchedCount}`;
-        const envelopeId = docResult.data.envelopeId || '';
-        
-        console.log(`📋 Fatura UUID: ${invoiceUuid}`);
-        console.log(`📦 Envelope ID: ${envelopeId}`);
+        // Parse UBL-TR XML
+        let parsedInvoice = null;
+        try {
+          parsedInvoice = parseUBLTRXML(xmlContent);
+        } catch (parseError: any) {
+          console.error(`❌ XML parse hatası: ${parseError.message}`);
+        }
 
-        // Use parsed data if available, otherwise use basic info
+        // Extract envelopeId from GetDocumentData response
+        const envelopeId = docResult.data.envelopeUUID || invoiceUuid;
+
+        // Create invoice object (Nilvera formatına benzer)
         const invoice = parsedInvoice ? {
-          id: invoiceUuid, // Use ETTN/UUID as unique ID
-          invoiceNumber: parsedInvoice.invoiceNumber || docResult.data.fileName || `INV-${fetchedCount}`,
+          id: parsedInvoice.ettn || invoiceUuid,
+          invoiceNumber: parsedInvoice.invoiceNumber || `INV-${i + 1}`,
           supplierName: parsedInvoice.supplierInfo.name || 'e-Logo Fatura',
           supplierTaxNumber: parsedInvoice.supplierInfo.taxNumber || '',
-          invoiceDate: parsedInvoice.invoiceDate || docResult.data.currentDate || new Date().toISOString(),
-          dueDate: parsedInvoice.dueDate,
+          invoiceDate: parsedInvoice.invoiceDate || new Date().toISOString(),
+          dueDate: parsedInvoice.dueDate || null,
           totalAmount: parsedInvoice.payableAmount || 0,
+          paidAmount: 0,
           currency: parsedInvoice.currency || 'TRY',
           taxAmount: parsedInvoice.taxTotalAmount || 0,
           status: 'pending',
+          responseStatus: 'pending',
           isAnswered: false,
+          pdfUrl: null,
+          xmlData: {
+            raw: xmlContent,
+            envelopeId,
+          },
+          // Additional fields
           invoiceType: parsedInvoice.invoiceType || 'SATIS',
           invoiceProfile: parsedInvoice.invoiceProfile || 'TEMELFATURA',
-          xmlData: {
-            ...docResult.data,
-            parsedInvoice,
-            xmlContent,
-            envelopeId, // Store envelopeId in xml_data
-          },
-          items: parsedInvoice?.items || [],
-          ettn: parsedInvoice?.ettn || invoiceUuid,
-          envelopeId: envelopeId, // Store envelopeId separately
+          items: parsedInvoice.items || [],
+          ettn: parsedInvoice.ettn || invoiceUuid,
+          envelopeId: envelopeId,
         } : {
-          id: invoiceUuid, // Use envelopeId as UUID if no ETTN
-          invoiceNumber: docResult.data.fileName || `INV-${fetchedCount}`,
+          id: invoiceUuid,
+          invoiceNumber: docResult.data.fileName || `INV-${i + 1}`,
           supplierName: 'e-Logo Fatura',
           supplierTaxNumber: '',
           invoiceDate: docResult.data.currentDate || new Date().toISOString(),
+          dueDate: null,
           totalAmount: 0,
+          paidAmount: 0,
           currency: 'TRY',
           taxAmount: 0,
           status: 'pending',
+          responseStatus: 'pending',
           isAnswered: false,
-          invoiceType: 'SATIS',
-          invoiceProfile: 'TEMELFATURA',
+          pdfUrl: null,
           xmlData: {
             ...docResult.data,
-            envelopeId, // Store envelopeId in xml_data
+            envelopeId,
           },
+          invoiceType: 'SATIS',
+          invoiceProfile: 'TEMELFATURA',
           items: [],
           ettn: invoiceUuid,
           envelopeId: envelopeId,
         };
 
-        // Save to database (einvoices table)
-        try {
-          // Only include columns that exist in the einvoices table
-          // Note: invoice_type and invoice_profile columns don't exist yet
-          const invoiceData = {
-            id: invoice.id,
-            invoice_number: invoice.invoiceNumber,
-            supplier_name: invoice.supplierName,
-            supplier_tax_number: invoice.supplierTaxNumber,
-            invoice_date: invoice.invoiceDate.split('T')[0], // Extract date part
-            due_date: invoice.dueDate ? invoice.dueDate.split('T')[0] : null,
-            status: 'pending',
-            total_amount: invoice.totalAmount,
-            paid_amount: 0,
-            remaining_amount: invoice.totalAmount,
-            currency: invoice.currency,
-            tax_amount: invoice.taxAmount,
-            xml_data: {
-              ...invoice.xmlData,
-              // Store invoice_type and invoice_profile in xml_data for now
-              invoiceType: invoice.invoiceType,
-              invoiceProfile: invoice.invoiceProfile,
-            },
-            company_id: profile.company_id,
-          };
-
-          // Check if invoice already exists by ID (ETTN/UUID)
-          const { data: existingInvoice } = await supabase
-            .from('einvoices')
-            .select('id, invoice_number')
-            .eq('id', invoiceData.id)
-            .eq('company_id', profile.company_id)
-            .single();
-
-          if (existingInvoice) {
-            console.log(`ℹ️ Fatura zaten mevcut, güncelleniyor: ${invoice.invoiceNumber} (ID: ${invoiceData.id})`);
-          }
-
-          const { error: dbError } = await supabase
-            .from('einvoices')
-            .upsert(invoiceData, {
-              onConflict: 'id'
-            });
-
-          if (dbError) {
-            console.error('❌ Veritabanı kayıt hatası:', dbError);
-            console.error('❌ Fatura ID:', invoiceData.id);
-            console.error('❌ Fatura No:', invoiceData.invoice_number);
-          } else {
-            console.log(`✅ Fatura veritabanına kaydedildi: ${invoice.invoiceNumber} (ID: ${invoiceData.id})`);
-            
-            // Save invoice items if available
-            if (parsedInvoice && parsedInvoice.items.length > 0) {
-              const invoiceItems = parsedInvoice.items.map((item, index) => ({
-                received_invoice_id: invoice.id, // Use received_invoice_id for incoming invoices
-                line_number: typeof item.lineNumber === 'number' ? item.lineNumber : index + 1,
-                product_name: item.description,
-                product_code: item.productCode,
-                quantity: item.quantity,
-                unit: item.unit,
-                unit_price: item.unitPrice,
-                tax_rate: item.vatRate,
-                line_total: item.totalAmount,
-                discount_rate: item.discountRate || 0,
-                company_id: profile.company_id,
-              }));
-
-              const { error: itemsError } = await supabase
-                .from('einvoice_items')
-                .upsert(invoiceItems, {
-                  onConflict: 'received_invoice_id,line_number'
-                });
-
-              if (itemsError) {
-                console.error('❌ Fatura kalemleri kayıt hatası:', itemsError);
-              } else {
-                console.log(`✅ ${invoiceItems.length} adet fatura kalemi kaydedildi`);
-              }
-            }
-          }
-        } catch (dbError: any) {
-          console.error('❌ Veritabanı işlemi hatası:', dbError);
-          // Continue even if DB save fails
-        }
-
         invoices.push(invoice);
-
-        // Mark as done - Use envelopeId (UUID) for GetDocumentDone
-        // According to docs, GetDocumentDone expects UUID which is envelopeId
-        if (envelopeId) {
-          try {
-            const doneResult = await SoapClient.getDocumentDone(
-              sessionID,
-              envelopeId, // Use envelopeId as UUID parameter
-              'EINVOICE',
-              elogoAuth.webservice_url
-            );
-            
-            if (doneResult.success) {
-              console.log(`✅ Fatura alındı olarak işaretlendi: ${envelopeId}`);
-            } else {
-              console.error(`❌ GetDocumentDone başarısız: ${doneResult.error || 'Bilinmeyen hata'}`);
-              // Don't break, continue processing but log the error
-            }
-          } catch (doneError: any) {
-            console.error(`❌ GetDocumentDone exception: ${doneError.message}`);
-            // Don't break, continue processing but log the error
-          }
-        } else {
-          console.warn('⚠️ EnvelopeId bulunamadı, GetDocumentDone çağrılamadı');
-        }
-
-        fetchedCount++;
+        console.log(`✅ Fatura ${i + 1}/${documentList.length} işlendi: ${invoice.invoiceNumber}`);
       }
 
-      console.log(`✅ ${fetchedCount} adet e-Logo fatura alındı ve işlendi`);
+      console.log(`✅ ${invoices.length} adet e-Logo fatura alındı ve işlendi`);
 
     } finally {
       // Always logout if we have a session ID

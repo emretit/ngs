@@ -136,4 +136,180 @@ export class ElogoService {
       return false;
     }
   }
+
+  /**
+   * Fatura gönder
+   */
+  static async sendInvoice(params: {
+    invoiceId: string;
+    xmlContent: string;
+    documentType?: string;
+    customerAlias?: string;
+    signed?: number;
+  }): Promise<ElogoResponse> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Oturum bulunamadı');
+      }
+
+      const { data, error } = await supabase.functions.invoke('elogo-send-invoice', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: params
+      });
+
+      if (error) throw error;
+
+      return {
+        success: data?.success || false,
+        data: data,
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Fatura gönderilemedi',
+      };
+    }
+  }
+
+  /**
+   * Fatura durum sorgula
+   */
+  static async getInvoiceStatus(params: {
+    invoiceId?: string;
+    ettn?: string;
+    documentType?: string;
+  }): Promise<ElogoResponse> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Oturum bulunamadı');
+      }
+
+      const { data, error } = await supabase.functions.invoke('elogo-invoice-status', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: params
+      });
+
+      if (error) throw error;
+
+      return {
+        success: data?.success || false,
+        data: data?.status,
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Fatura durumu sorgulanamadı',
+      };
+    }
+  }
+
+  /**
+   * Belge listesi al
+   */
+  static async getDocumentList(params: {
+    documentType?: string;
+    beginDate: string; // yyyy-MM-dd
+    endDate: string; // yyyy-MM-dd
+    opType?: string; // '1': Giden, '2': Gelen
+    dateBy?: string; // '0': Oluşturma, '1': Belge tarihi
+  }): Promise<ElogoResponse> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Oturum bulunamadı');
+      }
+
+      const { data, error } = await supabase.functions.invoke('elogo-document-list', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: params
+      });
+
+      if (error) throw error;
+
+      return {
+        success: data?.success || false,
+        data: data?.documents,
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Belge listesi alınamadı',
+      };
+    }
+  }
+
+  /**
+   * Belge verisini formatında al (HTML, PDF, XML)
+   */
+  static async getDocumentData(params: {
+    ettn: string;
+    documentType?: string;
+    dataFormat?: 'UBL' | 'HTML' | 'PDF'; // Default: PDF
+  }): Promise<ElogoResponse> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Oturum bulunamadı');
+      }
+
+      const { data, error } = await supabase.functions.invoke('elogo-document-data', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: params
+      });
+
+      if (error) throw error;
+
+      return {
+        success: data?.success || false,
+        data: data?.data,
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Belge verisi alınamadı',
+      };
+    }
+  }
+
+  /**
+   * 2FA kodu al (e-Arşiv Type 2 için)
+   */
+  static async get2FACode(): Promise<ElogoResponse> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Oturum bulunamadı');
+      }
+
+      // Note: This would require a new Edge Function: elogo-get-2fa-code
+      // For now, return error
+      return {
+        success: false,
+        error: '2FA kodu alma özelliği henüz implement edilmedi',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : '2FA kodu alınamadı',
+      };
+    }
+  }
 }

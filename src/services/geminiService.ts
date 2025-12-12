@@ -32,6 +32,26 @@ export interface SQLGenerationResult {
 }
 
 /**
+ * Get current user's company_id
+ */
+export const getCurrentCompanyId = async (): Promise<string | null> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) return null;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    return profile?.company_id || null;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Check if Gemini API is configured
  */
 export const checkGeminiStatus = async (): Promise<{ configured: boolean; message: string }> => {
@@ -59,11 +79,14 @@ export const generateSQLFromQuery = async (
   userQuery: string
 ): Promise<SQLGenerationResult> => {
   try {
+    const companyId = await getCurrentCompanyId();
+    
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'sql', 
         query: userQuery,
-        model: 'gemini-2.5-flash'
+        model: 'gemini-2.5-flash',
+        companyId // Add company_id to request
       }
     });
     
@@ -104,14 +127,19 @@ export const generateSQLFromQuery = async (
  */
 export const generateSQLQuery = async (
   query: string,
+  tableName?: string,
   model: string = 'gemini-2.5-flash'
 ): Promise<GeminiChatResponse> => {
   try {
+    const companyId = await getCurrentCompanyId();
+    
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'sql', 
         query,
-        model 
+        tableName,
+        model,
+        companyId // Add company_id to request
       }
     });
     
@@ -135,11 +163,14 @@ export const chatWithAI = async (
   model: string = 'gemini-2.5-flash'
 ): Promise<GeminiChatResponse> => {
   try {
+    const companyId = await getCurrentCompanyId();
+    
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'chat', 
         messages,
-        model 
+        model,
+        companyId // Add company_id to request
       }
     });
     
@@ -165,13 +196,16 @@ export const analyzeDataWithAI = async (
   model: string = 'gemini-2.5-flash'
 ): Promise<GeminiAnalyzeResponse> => {
   try {
+    const companyId = await getCurrentCompanyId();
+    
     const { data: result, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'analyze', 
         tableName,
         data,
         summary,
-        model 
+        model,
+        companyId // Add company_id to request
       }
     });
     
@@ -196,12 +230,15 @@ export const mapColumnsWithAI = async (
   model: string = 'gemini-2.5-flash-lite'
 ): Promise<GeminiMappingResponse> => {
   try {
+    const companyId = await getCurrentCompanyId();
+    
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'map-columns', 
         sourceColumns,
         targetFields,
-        model 
+        model,
+        companyId // Add company_id to request
       }
     });
     
@@ -226,12 +263,17 @@ export const testGeminiConnection = async (): Promise<boolean> => {
 };
 
 /**
- * Execute SQL Query against Supabase
+ * Execute SQL Query against Supabase with company_id filter
  */
 export const executeSQLQuery = async (sql: string): Promise<any[]> => {
   console.log('Executing SQL:', sql);
 
   try {
+    const companyId = await getCurrentCompanyId();
+    if (!companyId) {
+      throw new Error('Şirket bilgisi bulunamadı');
+    }
+
     // Security check - only allow SELECT queries
     const trimmedSql = sql.trim().toLowerCase();
     if (!trimmedSql.startsWith('select')) {
@@ -250,7 +292,8 @@ export const executeSQLQuery = async (sql: string): Promise<any[]> => {
     const allowedTables = [
       'proposals', 'customers', 'products', 'employees',
       'opportunities', 'service_requests', 'bank_accounts',
-      'tasks', 'service_slips', 'activities'
+      'tasks', 'service_slips', 'activities', 'sales_invoices',
+      'purchase_invoices', 'suppliers', 'vehicles', 'service_records'
     ];
 
     if (!allowedTables.includes(tableName)) {
@@ -265,14 +308,18 @@ export const executeSQLQuery = async (sql: string): Promise<any[]> => {
 
     let query = supabase.from(tableName).select('*', isAggregateQuery ? { count: 'exact', head: false } : undefined);
 
-    // Parse WHERE clause
+    // IMPORTANT: Always add company_id filter for data isolation
+    // Check if company_id column exists in the table
+    query = query.eq('company_id', companyId);
+
+    // Parse WHERE clause and merge with company_id filter
     const whereMatch = sql.match(/where\s+(.+?)(?:\s+group|\s+order|\s+limit|$)/i);
     if (whereMatch) {
       const whereClause = whereMatch[1].trim();
       
-      // Simple equality check
+      // Simple equality check (additional filters)
       const eqMatch = whereClause.match(/(\w+)\s*=\s*'([^']+)'/);
-      if (eqMatch) {
+      if (eqMatch && eqMatch[1] !== 'company_id') {
         query = query.eq(eqMatch[1], eqMatch[2]);
       }
     }
@@ -335,10 +382,15 @@ export const executeSQLQuery = async (sql: string): Promise<any[]> => {
 export const testDatabaseTables = async (): Promise<string[]> => {
   const testTables = ['proposals', 'customers', 'employees', 'opportunities', 'products', 'bank_accounts', 'service_requests', 'tasks', 'service_slips', 'activities'];
   const availableTables: string[] = [];
+  const companyId = await getCurrentCompanyId();
 
   for (const table of testTables) {
     try {
-      const { data, error } = await supabase.from(table).select('id').limit(1);
+      let query = supabase.from(table).select('id').limit(1);
+      if (companyId) {
+        query = query.eq('company_id', companyId);
+      }
+      const { data, error } = await query;
       if (!error) {
         availableTables.push(table);
       }

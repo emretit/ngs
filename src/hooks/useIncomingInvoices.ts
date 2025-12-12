@@ -30,9 +30,17 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
     try {
       setIsLoading(true);
       
-      // Use provided date filters or default to 1 August - 1 September
-      const startDate = dateFilters?.startDate ? `${dateFilters.startDate}T00:00:00.000Z` : '2025-08-01T00:00:00.000Z';
-      const endDate = dateFilters?.endDate ? `${dateFilters.endDate}T23:59:59.999Z` : '2025-09-01T23:59:59.999Z';
+      // Use provided date filters or default to current month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
+      const startDate = dateFilters?.startDate 
+        ? `${dateFilters.startDate}T00:00:00.000Z` 
+        : `${startOfMonth.toISOString().split('T')[0]}T00:00:00.000Z`;
+      const endDate = dateFilters?.endDate 
+        ? `${dateFilters.endDate}T23:59:59.999Z` 
+        : `${endOfMonth.toISOString().split('T')[0]}T23:59:59.999Z`;
       
       // Use IntegratorService which automatically routes to correct integrator
       const result = await IntegratorService.getIncomingInvoices({
@@ -73,10 +81,10 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
     enabled, // Hook'u koşullu olarak etkinleştir
     retry: 2,
     retryDelay: 2000,
-    staleTime: 15 * 60 * 1000, // 15 dakika cache - daha uzun cache
-    gcTime: 30 * 60 * 1000, // 30 dakika cache'de tut
+    staleTime: 0, // Cache kullanma - her zaman fresh data çek
+    gcTime: 5 * 60 * 1000, // 5 dakika cache'de tut (memory'den temizleme için)
     refetchOnWindowFocus: false, // Pencere odaklandığında refetch etme
-    refetchOnMount: false, // Mount'ta refetch etme
+    refetchOnMount: true, // Mount'ta refetch et (sayfa yüklenince çek)
     refetchOnReconnect: true, // Bağlantı yenilendiğinde refetch et
     placeholderData: (previousData) => previousData, // Önceki veriyi tut (smooth transition)
   });

@@ -1,19 +1,15 @@
-import { FileDown, RefreshCw, Calendar } from "lucide-react";
+import { RefreshCw, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 
 interface ReportsHeaderProps {
-  onExportPDF?: () => void;
-  onExportExcel?: () => void;
   onRefresh?: () => void;
   lastUpdated?: Date;
 }
 
 export default function ReportsHeader({ 
-  onExportPDF, 
-  onExportExcel, 
   onRefresh,
   lastUpdated = new Date()
 }: ReportsHeaderProps) {
@@ -35,7 +31,7 @@ export default function ReportsHeader({
                 Raporlar & Analitik
               </h1>
               <p className="text-muted-foreground text-sm mt-0.5">
-                Tüm iş süreçlerinizi tek bir yerden analiz edin
+                Her modül için Excel ve PDF raporlarını aşağıdan indirebilirsiniz
               </p>
             </div>
           </div>
@@ -62,23 +58,6 @@ export default function ReportsHeader({
           >
             <RefreshCw className="h-4 w-4" />
             Yenile
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={onExportExcel}
-            className="gap-2"
-          >
-            <FileDown className="h-4 w-4" />
-            Excel
-          </Button>
-          <Button 
-            size="sm"
-            onClick={onExportPDF}
-            className="gap-2"
-          >
-            <FileDown className="h-4 w-4" />
-            PDF Rapor
           </Button>
         </div>
       </div>

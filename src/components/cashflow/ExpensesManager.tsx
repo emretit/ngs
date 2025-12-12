@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,10 +57,12 @@ interface ExpensesManagerProps {
 
 const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDateChange, onEndDateChange, onTotalAmountChange }: ExpensesManagerProps) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   
   // React Query ile expenses verilerini al
   const { data: expenses = [], isLoading: loading, error: expensesError } = useExpenses({ startDate, endDate });
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCategoryOption, setSelectedCategoryOption] = useState("");
@@ -271,6 +273,116 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
 
       if (error) throw error;
 
+      // Eğer ödeme yapıldıysa ve ödeme hesabı seçildiyse, ilgili transaction tablosuna işlem ekle
+      if (isPaid && paymentAccountType && paymentAccountId && insertedExpense) {
+        const expenseAmount = parseFloat(amount);
+        const transactionDate = isPaid && paidDate ? format(paidDate, 'yyyy-MM-dd') : format(date, 'yyyy-MM-dd');
+        // Masraf açıklaması boşsa sadece "Masraf" göster, ID gösterme
+        const transactionDescription = description || "Masraf";
+        
+        let transactionError = null;
+        
+        switch (paymentAccountType) {
+          case 'cash':
+            const { error: cashError } = await supabase
+              .from('cash_transactions')
+              .insert({
+                account_id: paymentAccountId,
+                amount: expenseAmount,
+                type: 'expense',
+                description: transactionDescription,
+                category: categories.find(c => c.id === selectedCategory)?.name || 'Genel',
+                reference: `EXP-${insertedExpense.id}`,
+                transaction_date: transactionDate,
+                company_id: profile.company_id
+              });
+            transactionError = cashError;
+            if (!cashError) {
+              await supabase.rpc('update_cash_account_balance', {
+                p_account_id: paymentAccountId,
+                p_amount: expenseAmount,
+                p_type: 'expense'
+              });
+            }
+            break;
+            
+          case 'bank':
+            const { error: bankError } = await supabase
+              .from('bank_transactions')
+              .insert({
+                account_id: paymentAccountId,
+                amount: expenseAmount,
+                type: 'expense',
+                description: transactionDescription,
+                category: categories.find(c => c.id === selectedCategory)?.name || 'Genel',
+                reference: `EXP-${insertedExpense.id}`,
+                transaction_date: transactionDate,
+                company_id: profile.company_id
+              });
+            transactionError = bankError;
+            if (!bankError) {
+              await supabase.rpc('update_bank_account_balance', {
+                account_id: paymentAccountId,
+                amount: expenseAmount,
+                transaction_type: 'expense'
+              });
+            }
+            break;
+            
+          case 'credit_card':
+            const { error: cardError } = await supabase
+              .from('credit_card_transactions')
+              .insert({
+                card_id: paymentAccountId,
+                amount: expenseAmount,
+                type: 'expense',
+                description: transactionDescription,
+                category: categories.find(c => c.id === selectedCategory)?.name || 'Genel',
+                reference: `EXP-${insertedExpense.id}`,
+                transaction_date: transactionDate,
+                company_id: profile.company_id
+              });
+            transactionError = cardError;
+            if (!cardError) {
+              await supabase.rpc('update_credit_card_balance', {
+                card_id: paymentAccountId,
+                amount: expenseAmount,
+                transaction_type: 'expense'
+              });
+            }
+            break;
+            
+          case 'partner':
+            const { error: partnerError } = await supabase
+              .from('partner_transactions')
+              .insert({
+                partner_id: paymentAccountId,
+                amount: expenseAmount,
+                type: 'expense',
+                description: transactionDescription,
+                category: categories.find(c => c.id === selectedCategory)?.name || 'Genel',
+                reference: `EXP-${insertedExpense.id}`,
+                transaction_date: transactionDate,
+                company_id: profile.company_id
+              });
+            transactionError = partnerError;
+            if (!partnerError) {
+              await supabase.rpc('update_partner_account_balance', {
+                account_id: paymentAccountId,
+                amount: expenseAmount,
+                transaction_type: 'expense'
+              });
+            }
+            break;
+        }
+        
+        if (transactionError) {
+          console.error('Error adding transaction to payment account:', transactionError);
+          // Transaction hatası olsa bile masraf kaydedildi, sadece uyarı ver
+          toast.error("Masraf kaydedildi ancak ödeme hesabına işlem eklenirken hata oluştu");
+        }
+      }
+
       // Create recurring instances if needed
       if (isRecurring && recurrenceType && insertedExpense && totalRecurringCount > 1) {
         const instances = generateRecurringExpenses(date, {
@@ -338,7 +450,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
     setIsDeleteDialogOpen(true);
   };
 
-  const handleEditClick = (expense: ExpenseItem) => {
+  const handleEditClick = useCallback((expense: ExpenseItem) => {
     setEditingExpense(expense);
     setEditAmount(expense.amount.toString());
     setEditDate(new Date(expense.date));
@@ -359,7 +471,20 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
     setEditSubcategory(expense.subcategory || "");
     setEditVatRate('0');
     setIsEditSheetOpen(true);
-  };
+  }, []);
+
+  // Query parametresinden expenseId'yi oku ve ilgili masrafı seç
+  useEffect(() => {
+    const expenseId = searchParams.get('expenseId');
+    if (expenseId && expenses.length > 0) {
+      const expense = expenses.find(e => e.id === expenseId);
+      if (expense) {
+        handleEditClick(expense);
+        // Query parametresini temizle
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, expenses, handleEditClick, setSearchParams]);
 
   const handleEditCategoryOptionChange = (option: string) => {
     setEditSelectedCategoryOption(option);
@@ -379,6 +504,11 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
 
     setIsUpdating(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Kullanıcı bulunamadı');
+      const { data: profile } = await supabase.from('profiles').select('company_id').eq('id', user.id).single();
+      if (!profile?.company_id) throw new Error('Şirket bilgisi bulunamadı');
+
       let categoryId = editingExpense.category_id;
       if (editSelectedCategoryOption.startsWith('cat:')) {
         categoryId = editSelectedCategoryOption.slice(4);
@@ -406,6 +536,116 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         .eq('id', editingExpense.id);
 
       if (error) throw error;
+
+      // Eğer ödeme durumu değiştiyse ve ödeme yapıldıysa, ödeme hesabına işlem ekle
+      const wasPaidBefore = editingExpense.is_paid;
+      if (editIsPaid && !wasPaidBefore && editPaymentAccountType && editPaymentAccountId) {
+        const expenseAmount = parseFloat(editAmount);
+        const transactionDate = editIsPaid && editPaidDate ? format(editPaidDate, 'yyyy-MM-dd') : format(editDate, 'yyyy-MM-dd');
+        // Masraf açıklaması boşsa sadece "Masraf" göster, ID gösterme
+        const transactionDescription = editDescription || "Masraf";
+        
+        let transactionError = null;
+        
+        switch (editPaymentAccountType) {
+          case 'cash':
+            const { error: cashError } = await supabase
+              .from('cash_transactions')
+              .insert({
+                account_id: editPaymentAccountId,
+                amount: expenseAmount,
+                type: 'expense',
+                description: transactionDescription,
+                category: categories.find(c => c.id === categoryId)?.name || 'Genel',
+                reference: `EXP-${editingExpense.id}`,
+                transaction_date: transactionDate,
+                company_id: editingExpense.company_id || profile?.company_id
+              });
+            transactionError = cashError;
+            if (!cashError) {
+              await supabase.rpc('update_cash_account_balance', {
+                p_account_id: editPaymentAccountId,
+                p_amount: expenseAmount,
+                p_type: 'expense'
+              });
+            }
+            break;
+            
+          case 'bank':
+            const { error: bankError } = await supabase
+              .from('bank_transactions')
+              .insert({
+                account_id: editPaymentAccountId,
+                amount: expenseAmount,
+                type: 'expense',
+                description: transactionDescription,
+                category: categories.find(c => c.id === categoryId)?.name || 'Genel',
+                reference: `EXP-${editingExpense.id}`,
+                transaction_date: transactionDate,
+                company_id: editingExpense.company_id || profile?.company_id
+              });
+            transactionError = bankError;
+            if (!bankError) {
+              await supabase.rpc('update_bank_account_balance', {
+                account_id: editPaymentAccountId,
+                amount: expenseAmount,
+                transaction_type: 'expense'
+              });
+            }
+            break;
+            
+          case 'credit_card':
+            const { error: cardError } = await supabase
+              .from('credit_card_transactions')
+              .insert({
+                card_id: editPaymentAccountId,
+                amount: expenseAmount,
+                type: 'expense',
+                description: transactionDescription,
+                category: categories.find(c => c.id === categoryId)?.name || 'Genel',
+                reference: `EXP-${editingExpense.id}`,
+                transaction_date: transactionDate,
+                company_id: editingExpense.company_id || profile?.company_id
+              });
+            transactionError = cardError;
+            if (!cardError) {
+              await supabase.rpc('update_credit_card_balance', {
+                card_id: editPaymentAccountId,
+                amount: expenseAmount,
+                transaction_type: 'expense'
+              });
+            }
+            break;
+            
+          case 'partner':
+            const { error: partnerError } = await supabase
+              .from('partner_transactions')
+              .insert({
+                partner_id: editPaymentAccountId,
+                amount: expenseAmount,
+                type: 'expense',
+                description: transactionDescription,
+                category: categories.find(c => c.id === categoryId)?.name || 'Genel',
+                reference: `EXP-${editingExpense.id}`,
+                transaction_date: transactionDate,
+                company_id: editingExpense.company_id || profile?.company_id
+              });
+            transactionError = partnerError;
+            if (!partnerError) {
+              await supabase.rpc('update_partner_account_balance', {
+                account_id: editPaymentAccountId,
+                amount: expenseAmount,
+                transaction_type: 'expense'
+              });
+            }
+            break;
+        }
+        
+        if (transactionError) {
+          console.error('Error adding transaction to payment account:', transactionError);
+          toast.error("Masraf güncellendi ancak ödeme hesabına işlem eklenirken hata oluştu");
+        }
+      }
 
       toast.success("Masraf başarıyla güncellendi");
       setIsEditSheetOpen(false);

@@ -17,7 +17,6 @@ const InventoryCounts = React.lazy(() => import("@/pages/inventory/InventoryCoun
 const NewInventoryCount = React.lazy(() => import("@/pages/inventory/transactions/sayim/new"));
 const NewStockEntry = React.lazy(() => import("@/pages/inventory/transactions/giris/new"));
 const NewStockExit = React.lazy(() => import("@/pages/inventory/transactions/cikis/new"));
-const NewStockTransfer = React.lazy(() => import("@/pages/inventory/transactions/transfer/new"));
 const InventoryTransactionDetail = React.lazy(() => import("@/pages/inventory/transactions/[id]"));
 
 // Define inventory routes
@@ -31,7 +30,6 @@ export const inventoryRoutes: RouteConfig[] = [
   { path: "/inventory/transactions/:id", component: InventoryTransactionDetail, protected: true },
   { path: "/inventory/transactions/giris/new", component: NewStockEntry, protected: true },
   { path: "/inventory/transactions/cikis/new", component: NewStockExit, protected: true },
-  { path: "/inventory/transactions/transfer/new", component: NewStockTransfer, protected: true },
   { path: "/inventory/counts", component: InventoryCounts, protected: true },
   { path: "/inventory/transactions/sayim/new", component: NewInventoryCount, protected: true },
   { path: "/production", component: Production, protected: true },

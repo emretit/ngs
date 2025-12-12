@@ -32,6 +32,52 @@ const Warehouses = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Real-time subscription - warehouses tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      // Subscribe to warehouses table changes
+      const channel = supabase
+        .channel('warehouses_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // INSERT, UPDATE, DELETE
+            schema: 'public',
+            table: 'warehouses',
+            filter: `company_id=eq.${profile.company_id}`
+          },
+          (payload) => {
+            console.log('🔄 Warehouse changed:', payload.eventType, payload.new || payload.old);
+            // Invalidate queries to refetch data
+            queryClient.invalidateQueries({ queryKey: ['warehouses'] });
+            queryClient.invalidateQueries({ queryKey: ['warehouse'] });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanup = setupRealtimeSubscription();
+
+    return () => {
+      cleanup.then(cleanupFn => cleanupFn?.());
+    };
+  }, [queryClient]);
+
   // Fetch warehouses
   const { 
     data: warehouses, 
@@ -81,6 +127,7 @@ const Warehouses = () => {
       };
     },
     enabled: !!debouncedSearchQuery !== undefined,
+    refetchOnMount: true, // Mount olduğunda yeniden yükleme
   });
 
   if (error) {
@@ -114,6 +161,174 @@ const Warehouses = () => {
     setSelectedWarehouses([]);
   }, []);
 
+  const handleDeleteWarehouse = useCallback(async (warehouse: Warehouse) => {
+    if (!confirm(`"${warehouse.name}" deposunu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (!profile?.company_id) {
+        toast.error("Şirket bilgisi bulunamadı");
+        return;
+      }
+
+      // Önce depoda stok var mı kontrol et
+      const { data: stockData, error: stockError } = await supabase
+        .from("warehouse_stock")
+        .select("id")
+        .eq("warehouse_id", warehouse.id)
+        .eq("company_id", profile.company_id)
+        .limit(1);
+
+      if (stockError) {
+        console.error("Stok kontrolü hatası:", stockError);
+      }
+
+      if (stockData && stockData.length > 0) {
+        toast.error("Bu depoda stok bulunmaktadır. Önce stokları temizlemeniz gerekmektedir.");
+        return;
+      }
+
+      // Depo ile ilişkili transaction var mı kontrol et
+      const { data: transactionData, error: transactionError } = await supabase
+        .from("inventory_transactions")
+        .select("id")
+        .or(`warehouse_id.eq.${warehouse.id},from_warehouse_id.eq.${warehouse.id},to_warehouse_id.eq.${warehouse.id}`)
+        .eq("company_id", profile.company_id)
+        .limit(1);
+
+      if (transactionError) {
+        console.error("Transaction kontrolü hatası:", transactionError);
+      }
+
+      if (transactionData && transactionData.length > 0) {
+        toast.error("Bu depo ile ilişkili stok hareketleri bulunmaktadır. Depo silinemez.");
+        return;
+      }
+
+      // Depoyu sil
+      const { error } = await supabase
+        .from("warehouses")
+        .delete()
+        .eq("id", warehouse.id)
+        .eq("company_id", profile.company_id);
+
+      if (error) {
+        console.error("Depo silme hatası:", error);
+        toast.error("Depo silinirken bir hata oluştu");
+        return;
+      }
+
+      toast.success(`"${warehouse.name}" deposu başarıyla silindi`);
+      queryClient.invalidateQueries({ queryKey: ["warehouses"] });
+      queryClient.invalidateQueries({ queryKey: ["warehouse_statistics"] });
+      
+      // Seçili listeden de çıkar
+      setSelectedWarehouses(prev => prev.filter(w => w.id !== warehouse.id));
+    } catch (error) {
+      console.error("Depo silme hatası:", error);
+      toast.error("Depo silinirken bir hata oluştu");
+    }
+  }, [queryClient]);
+
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedWarehouses.length === 0) return;
+
+    const warehouseNames = selectedWarehouses.map(w => w.name).join(", ");
+    if (!confirm(`${selectedWarehouses.length} depoyu silmek istediğinize emin misiniz?\n\nSilinecek depolar: ${warehouseNames}\n\nBu işlem geri alınamaz.`)) {
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (!profile?.company_id) {
+        toast.error("Şirket bilgisi bulunamadı");
+        return;
+      }
+
+      const warehouseIds = selectedWarehouses.map(w => w.id);
+      let deletedCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (const warehouse of selectedWarehouses) {
+        try {
+          // Stok kontrolü
+          const { data: stockData } = await supabase
+            .from("warehouse_stock")
+            .select("id")
+            .eq("warehouse_id", warehouse.id)
+            .eq("company_id", profile.company_id)
+            .limit(1);
+
+          if (stockData && stockData.length > 0) {
+            errors.push(`${warehouse.name}: Depoda stok bulunmaktadır`);
+            errorCount++;
+            continue;
+          }
+
+          // Transaction kontrolü
+          const { data: transactionData } = await supabase
+            .from("inventory_transactions")
+            .select("id")
+            .or(`warehouse_id.eq.${warehouse.id},from_warehouse_id.eq.${warehouse.id},to_warehouse_id.eq.${warehouse.id}`)
+            .eq("company_id", profile.company_id)
+            .limit(1);
+
+          if (transactionData && transactionData.length > 0) {
+            errors.push(`${warehouse.name}: Depo ile ilişkili stok hareketleri bulunmaktadır`);
+            errorCount++;
+            continue;
+          }
+
+          // Depoyu sil
+          const { error } = await supabase
+            .from("warehouses")
+            .delete()
+            .eq("id", warehouse.id)
+            .eq("company_id", profile.company_id);
+
+          if (error) {
+            errors.push(`${warehouse.name}: ${error.message}`);
+            errorCount++;
+          } else {
+            deletedCount++;
+          }
+        } catch (error: any) {
+          errors.push(`${warehouse.name}: ${error.message || "Bilinmeyen hata"}`);
+          errorCount++;
+        }
+      }
+
+      if (deletedCount > 0) {
+        toast.success(`${deletedCount} depo başarıyla silindi`);
+        queryClient.invalidateQueries({ queryKey: ["warehouses"] });
+        queryClient.invalidateQueries({ queryKey: ["warehouse_statistics"] });
+        setSelectedWarehouses([]);
+      }
+
+      if (errorCount > 0) {
+        toast.error(`${errorCount} depo silinemedi. Detaylar: ${errors.join("; ")}`);
+      }
+    } catch (error) {
+      console.error("Toplu silme hatası:", error);
+      toast.error("Depolar silinirken bir hata oluştu");
+    }
+  }, [selectedWarehouses, queryClient]);
+
   const handleBulkAction = useCallback(async (action: string) => {
     if (action === 'export') {
       // TODO: Export functionality
@@ -124,10 +339,12 @@ const Warehouses = () => {
     } else if (action === 'deactivate') {
       // TODO: Bulk deactivate
       toast.info("Toplu pasifleştirme yakında eklenecek");
+    } else if (action === 'delete') {
+      await handleBulkDelete();
     } else {
       console.log('Bulk action:', action, selectedWarehouses);
     }
-  }, [selectedWarehouses]);
+  }, [selectedWarehouses, handleBulkDelete]);
 
   const handleCreateWarehouse = useCallback(() => {
     navigate('/inventory/warehouses/new');
@@ -258,6 +475,7 @@ const Warehouses = () => {
           onSortFieldChange={handleSort}
           onWarehouseClick={handleWarehouseClick}
           onWarehouseSelect={handleWarehouseSelect}
+          onWarehouseDelete={handleDeleteWarehouse}
           selectedWarehouses={selectedWarehouses}
           searchQuery={searchQuery}
           typeFilter={typeFilter}

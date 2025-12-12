@@ -1,5 +1,5 @@
 import * as React from "react";
-import { format, setMonth, setYear, getMonth, getYear } from "date-fns";
+import { format, setMonth, setYear, getMonth, getYear, isToday, startOfDay } from "date-fns";
 import { tr } from "date-fns/locale";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -207,6 +207,28 @@ function EnhancedCalendar({
     selected instanceof Date ? selected : new Date()
   );
 
+  // Bugünün her zaman seçilebilir olmasını garanti et
+  const disabledWithTodayAllowed = React.useMemo(() => {
+    if (!disabled) return undefined;
+    if (typeof disabled === 'boolean') {
+      // Boolean disabled ise, sadece bugünü seçilebilir yap
+      return (date: Date) => {
+        if (isToday(startOfDay(date))) {
+          return false;
+        }
+        return disabled;
+      };
+    }
+    
+    return (date: Date) => {
+      // Bugünü her zaman seçilebilir yap
+      if (isToday(startOfDay(date))) {
+        return false;
+      }
+      return disabled(date);
+    };
+  }, [disabled]);
+
   return (
     <div className={cn("p-3", className)}>
       {/* Custom Month/Year Header */}
@@ -226,7 +248,7 @@ function EnhancedCalendar({
         onMonthChange={setCurrentMonth}
         selected={selected}
         onSelect={onSelect}
-        disabled={disabled}
+        disabled={disabledWithTodayAllowed}
         classNames={{
           months: "flex flex-col",
           month: "space-y-2",
@@ -263,7 +285,7 @@ function EnhancedCalendar({
           ),
           today: cn(
             "relative font-semibold text-primary",
-            "before:absolute before:inset-0 before:rounded-full before:border-2 before:border-primary/40",
+            "before:absolute before:inset-0 before:rounded-full before:border-2 before:border-primary/40 before:pointer-events-none",
             "before:animate-pulse"
           ),
           outside: cn(

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -392,13 +392,43 @@ export const useOrders = () => {
     queryKey: ['orders', userData?.company_id, filters],
     queryFn: fetchOrders,
     enabled: !!userData?.company_id,
+    refetchOnMount: true, // Mount olduğunda yeniden yükleme
   });
 
   const { data: orderStats, isLoading: statsLoading } = useQuery({
     queryKey: ['orderStats', userData?.company_id],
     queryFn: fetchOrderStats,
     enabled: !!userData?.company_id,
+    refetchOnMount: true, // Mount olduğunda yeniden yükleme
   });
+
+  // Real-time subscription - orders tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    if (!userData?.company_id) return;
+
+    const channel = supabase
+      .channel('orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'orders',
+          filter: `company_id=eq.${userData.company_id}`,
+        },
+        () => {
+          // Orders tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
+          queryClient.invalidateQueries({ queryKey: ['orders'] });
+          queryClient.invalidateQueries({ queryKey: ['orderStats'] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription when component unmounts or company_id changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.company_id, queryClient]);
 
   const getOrderWithItems = (id: string) => {
     return useQuery({

@@ -1,13 +1,11 @@
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogActionButton, UnifiedDialogCancelButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -24,12 +22,19 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, ArrowRightLeft, Plus, X, Search, Package, AlertTriangle } from "lucide-react";
+import { Plus, X, Search, Package, AlertTriangle, ArrowRightLeft } from "lucide-react";
 import { useInventoryTransactions } from "@/hooks/useInventoryTransactions";
 import { Product } from "@/types/product";
 import { toast } from "sonner";
 
-interface TransactionItem {
+interface StockTransferDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  fromWarehouseId?: string;
+  onSuccess?: () => void;
+}
+
+interface TransferItem {
   product_id: string;
   product_name: string;
   product_sku?: string;
@@ -39,28 +44,42 @@ interface TransactionItem {
   notes?: string;
 }
 
-export default function NewStockTransfer() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const fromWarehouseIdFromUrl = searchParams.get("from_warehouse_id");
-  
+export default function StockTransferDialog({ 
+  isOpen, 
+  onClose, 
+  fromWarehouseId: initialFromWarehouseId,
+  onSuccess
+}: StockTransferDialogProps) {
   const { createTransaction } = useInventoryTransactions();
-  const [fromWarehouseId, setFromWarehouseId] = useState<string>(fromWarehouseIdFromUrl || "");
+  const [fromWarehouseId, setFromWarehouseId] = useState<string>(initialFromWarehouseId || "");
   const [toWarehouseId, setToWarehouseId] = useState<string>("");
-  const [items, setItems] = useState<TransactionItem[]>([]);
+  const [items, setItems] = useState<TransferItem[]>([]);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [productSearchQuery, setProductSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [transactionDate, setTransactionDate] = useState<Date>(new Date());
+  const [referenceNumber, setReferenceNumber] = useState("");
+  const [notes, setNotes] = useState("");
 
-  const { register, handleSubmit, setValue } = useForm({
-    defaultValues: {
-      from_warehouse_id: fromWarehouseIdFromUrl || "",
-      to_warehouse_id: "",
-      transaction_date: new Date().toISOString().split('T')[0],
-      reference_number: "",
-      notes: "",
-    },
-  });
+  // Dialog kapandığında formu temizle
+  useEffect(() => {
+    if (!isOpen) {
+      setItems([]);
+      setFromWarehouseId(initialFromWarehouseId || "");
+      setToWarehouseId("");
+      setTransactionDate(new Date());
+      setReferenceNumber("");
+      setNotes("");
+      setProductSearchQuery("");
+    }
+  }, [isOpen, initialFromWarehouseId]);
+
+  // Kaynak depo değiştiğinde ürünleri temizle
+  useEffect(() => {
+    if (fromWarehouseId) {
+      setItems([]);
+    }
+  }, [fromWarehouseId]);
 
   // Aktif depoları getir
   const { data: warehouses = [] } = useQuery({
@@ -144,7 +163,7 @@ export default function NewStockTransfer() {
       return;
     }
 
-    const newItem: TransactionItem = {
+    const newItem: TransferItem = {
       product_id: product.id,
       product_name: product.name || "Bilinmeyen Ürün",
       product_sku: product.sku,
@@ -163,7 +182,7 @@ export default function NewStockTransfer() {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof TransactionItem, value: any) => {
+  const updateItem = (index: number, field: keyof TransferItem, value: any) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     
@@ -175,7 +194,7 @@ export default function NewStockTransfer() {
     setItems(newItems);
   };
 
-  const onSubmit = async (data: any) => {
+  const handleSubmit = async () => {
     if (!fromWarehouseId) {
       toast.error("Lütfen kaynak depo seçin");
       return;
@@ -215,9 +234,9 @@ export default function NewStockTransfer() {
         transaction_type: 'transfer',
         from_warehouse_id: fromWarehouseId,
         to_warehouse_id: toWarehouseId,
-        transaction_date: data.transaction_date,
-        reference_number: data.reference_number || undefined,
-        notes: data.notes || undefined,
+        transaction_date: transactionDate.toISOString().split('T')[0],
+        reference_number: referenceNumber || undefined,
+        notes: notes || undefined,
         items: items.map(item => ({
           product_id: item.product_id,
           product_name: item.product_name,
@@ -228,7 +247,10 @@ export default function NewStockTransfer() {
       });
 
       toast.success("Depo transferi başarıyla oluşturuldu");
-      navigate("/inventory/transactions");
+      if (onSuccess) {
+        onSuccess();
+      }
+      onClose();
     } catch (error: any) {
       console.error("Error creating stock transfer:", error);
       toast.error(error.message || "Depo transferi oluşturulurken hata oluştu");
@@ -238,39 +260,24 @@ export default function NewStockTransfer() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/inventory/transactions")}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Yeni Depo Transferi</h1>
-          <p className="text-muted-foreground">Depolar arası stok transferi yapın</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* İşlem Bilgileri */}
-        <Card className="p-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ArrowRightLeft className="h-5 w-5 text-blue-600" />
-              İşlem Bilgileri
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+    <>
+      <UnifiedDialog
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Yeni Depo Transferi"
+        maxWidth="4xl"
+        headerColor="blue"
+      >
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+          {/* İşlem Bilgileri */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-gray-700 border-b pb-2">İşlem Bilgileri</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="from_warehouse_id">Kaynak Depo *</Label>
                 <Select
                   value={fromWarehouseId}
-                  onValueChange={(value) => {
-                    setFromWarehouseId(value);
-                    setValue("from_warehouse_id", value);
-                    // Kaynak depo değiştiğinde ürünleri temizle
-                    setItems([]);
-                  }}
+                  onValueChange={setFromWarehouseId}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Kaynak depo seçin" />
@@ -290,10 +297,7 @@ export default function NewStockTransfer() {
                 <Label htmlFor="to_warehouse_id">Hedef Depo *</Label>
                 <Select
                   value={toWarehouseId}
-                  onValueChange={(value) => {
-                    setToWarehouseId(value);
-                    setValue("to_warehouse_id", value);
-                  }}
+                  onValueChange={setToWarehouseId}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Hedef depo seçin" />
@@ -312,11 +316,12 @@ export default function NewStockTransfer() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="transaction_date">Tarih *</Label>
-                <Input
-                  id="transaction_date"
-                  type="date"
-                  {...register("transaction_date", { required: true })}
+                <Label>Tarih *</Label>
+                <UnifiedDatePicker
+                  label="Tarih"
+                  date={transactionDate}
+                  onSelect={(date) => date && setTransactionDate(date)}
+                  placeholder="Tarih seçin"
                 />
               </div>
 
@@ -325,7 +330,8 @@ export default function NewStockTransfer() {
                 <Input
                   id="reference_number"
                   placeholder="Opsiyonel"
-                  {...register("reference_number")}
+                  value={referenceNumber}
+                  onChange={(e) => setReferenceNumber(e.target.value)}
                 />
               </div>
             </div>
@@ -335,18 +341,17 @@ export default function NewStockTransfer() {
               <Textarea
                 id="notes"
                 placeholder="İşlem notları..."
-                {...register("notes")}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
                 rows={2}
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Ürün Listesi */}
-        <Card className="p-6">
-          <CardHeader>
+          {/* Ürün Listesi */}
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <CardTitle>Transfer Edilecek Ürünler</CardTitle>
+              <h3 className="text-sm font-semibold text-gray-700 border-b pb-2 flex-1">Transfer Edilecek Ürünler</h3>
               {fromWarehouseId ? (
                 <Button
                   type="button"
@@ -361,10 +366,9 @@ export default function NewStockTransfer() {
                 <p className="text-sm text-muted-foreground">Önce kaynak depo seçin</p>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
+
             {items.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-muted-foreground border rounded-lg">
                 <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>Henüz ürün eklenmedi</p>
                 {fromWarehouseId && (
@@ -380,91 +384,87 @@ export default function NewStockTransfer() {
                 )}
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ürün</TableHead>
-                    <TableHead className="text-right">Kaynak Depo Stoku</TableHead>
-                    <TableHead className="text-right">Transfer Miktarı</TableHead>
-                    <TableHead className="text-right">Birim</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item, index) => {
-                    const isInsufficient = item.quantity > item.available_stock;
-                    return (
-                      <TableRow key={item.product_id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{item.product_name}</div>
-                            {item.product_sku && (
-                              <div className="text-xs text-muted-foreground">
-                                SKU: {item.product_sku}
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ürün</TableHead>
+                      <TableHead className="text-right">Kaynak Depo Stoku</TableHead>
+                      <TableHead className="text-right">Transfer Miktarı</TableHead>
+                      <TableHead className="text-right">Birim</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item, index) => {
+                      const isInsufficient = item.quantity > item.available_stock;
+                      return (
+                        <TableRow key={item.product_id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{item.product_name}</div>
+                              {item.product_sku && (
+                                <div className="text-xs text-muted-foreground">
+                                  SKU: {item.product_sku}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {item.available_stock.toLocaleString('tr-TR')}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Input
+                              type="number"
+                              min="0.01"
+                              step="0.01"
+                              max={item.available_stock}
+                              value={item.quantity || ""}
+                              onChange={(e) => updateItem(index, "quantity", Number(e.target.value) || 0)}
+                              className={`w-32 ml-auto text-right ${isInsufficient ? 'border-red-500' : ''}`}
+                            />
+                            {isInsufficient && (
+                              <div className="text-xs text-red-600 mt-1 flex items-center gap-1 justify-end">
+                                <AlertTriangle className="h-3 w-3" />
+                                Yetersiz stok
                               </div>
                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {item.available_stock.toLocaleString('tr-TR')}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Input
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            max={item.available_stock}
-                            value={item.quantity || ""}
-                            onChange={(e) => updateItem(index, "quantity", Number(e.target.value) || 0)}
-                            className={`w-32 ml-auto text-right ${isInsufficient ? 'border-red-500' : ''}`}
-                          />
-                          {isInsufficient && (
-                            <div className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              Yetersiz stok
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {item.unit}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeItem(index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {item.unit}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeItem(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Butonlar */}
-        <div className="flex items-center justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/inventory/transactions")}
-          >
-            İptal
-          </Button>
-          <Button
-            type="submit"
-            disabled={!fromWarehouseId || !toWarehouseId || items.length === 0 || isSubmitting}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isSubmitting ? "Kaydediliyor..." : "Transferi Kaydet"}
-          </Button>
+          {/* Footer */}
+          <UnifiedDialogFooter>
+            <UnifiedDialogCancelButton onClick={onClose} />
+            <UnifiedDialogActionButton 
+              onClick={handleSubmit}
+              disabled={!fromWarehouseId || !toWarehouseId || items.length === 0 || isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSubmitting ? "Kaydediliyor..." : "Transferi Kaydet"}
+            </UnifiedDialogActionButton>
+          </UnifiedDialogFooter>
         </div>
-      </form>
+      </UnifiedDialog>
 
       {/* Ürün Seçim Dialog */}
       <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
@@ -529,7 +529,7 @@ export default function NewStockTransfer() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

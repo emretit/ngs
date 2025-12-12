@@ -246,19 +246,42 @@ export default function EInvoiceProcess() {
     refetchOnWindowFocus: false,
   });
 
-  // React Query ile tedarikçileri yükle
-  const { data: suppliers = [], isLoading: isLoadingSuppliers } = useQuery({
-    queryKey: ['suppliers-for-einvoice'],
+  // Kullanıcının company_id'sini al
+  const { data: userCompanyId } = useQuery({
+    queryKey: ['user-company-id'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Kullanıcı oturumu bulunamadı');
+      
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) throw error;
+      return profile?.company_id;
+    },
+    staleTime: Infinity, // Company ID değişmez
+  });
+
+  // React Query ile tedarikçileri yükle - company_id filtresi ile
+  const { data: suppliers = [], isLoading: isLoadingSuppliers } = useQuery({
+    queryKey: ['suppliers-for-einvoice', userCompanyId],
+    queryFn: async () => {
+      if (!userCompanyId) return [];
+      
       const { data: suppliersData, error: suppliersError } = await supabase
         .from('suppliers')
         .select('id, name, tax_number, email, company_id')
         .eq('status', 'aktif')
+        .eq('company_id', userCompanyId) // Sadece kullanıcının şirketinin tedarikçileri
         .order('name')
         .limit(500);
       if (suppliersError) throw suppliersError;
       return suppliersData || [];
     },
+    enabled: !!userCompanyId, // company_id yoksa sorguyu çalıştırma
     staleTime: 10 * 60 * 1000, // 10 dakika cache
     gcTime: 20 * 60 * 1000, // 20 dakika cache'de tut
     refetchOnWindowFocus: false,
@@ -416,18 +439,32 @@ export default function EInvoiceProcess() {
 
   // Tedarikçi eşleştirmesi için ayrı fonksiyon - useCallback ile optimize et
   const matchSupplier = useCallback(async () => {
-    if (!invoice || !suppliers.length) return;
+    if (!invoice) {
+      console.log('⚠️ Invoice yok, tedarikçi araması yapılamıyor');
+      return;
+    }
+    
+    if (!suppliers.length) {
+      console.log('⚠️ Tedarikçi listesi boş, not_found olarak işaretleniyor');
+      setSupplierMatchStatus('not_found');
+      return;
+    }
+    
     setSupplierMatchStatus('searching');
+    console.log('🔍 Tedarikçi aranıyor. VKN:', invoice.supplier_tax_number, 'Toplam tedarikçi:', suppliers.length);
+    
     const matchingSupplier = suppliers.find(s => 
       s.tax_number === invoice.supplier_tax_number
     );
+    
     if (matchingSupplier) {
       setSelectedSupplierId(matchingSupplier.id);
       setSupplierMatchStatus('found');
-      console.log('✅ Tedarikçi otomatik eşleştirildi:', matchingSupplier.name);
+      console.log('✅ Tedarikçi otomatik eşleştirildi:', matchingSupplier.name, 'VKN:', matchingSupplier.tax_number);
     } else {
       setSupplierMatchStatus('not_found');
-      console.log('⚠️ Tedarikçi bulunamadı:', invoice.supplier_tax_number);
+      console.log('⚠️ VKN eşleşmedi. Aranan VKN:', invoice.supplier_tax_number);
+      console.log('📋 Sistemdeki tedarikçi VKN\'leri:', suppliers.map(s => s.tax_number).join(', '));
     }
   }, [invoice, suppliers]);
 
@@ -435,8 +472,12 @@ export default function EInvoiceProcess() {
   useEffect(() => {
     if (invoice && suppliers.length > 0) {
       matchSupplier();
+    } else if (invoice && !isLoadingSuppliers && suppliers.length === 0) {
+      // Tedarikçi listesi yüklendi ama boş - not_found olarak işaretle
+      console.log('⚠️ Tedarikçi listesi boş, not_found durumu');
+      setSupplierMatchStatus('not_found');
     }
-  }, [invoice, suppliers, matchSupplier]);
+  }, [invoice, suppliers, matchSupplier, isLoadingSuppliers]);
   
   // Loading state'i hesapla
   const isLoading = !invoice || isLoadingProducts || isLoadingSuppliers;
@@ -571,8 +612,14 @@ export default function EInvoiceProcess() {
     }
   };
   const handleCreatePurchaseInvoice = async () => {
-    if (!invoice || !selectedSupplierId || matchingItems.length === 0) {
-      toast.error("Lütfen tüm gerekli alanları doldurun");
+    if (!invoice || matchingItems.length === 0) {
+      toast.error("Lütfen ürün eşleştirmelerini tamamlayın");
+      return;
+    }
+    
+    // Tedarikçi yoksa önce oluştur
+    if (!selectedSupplierId) {
+      toast.error("Lütfen önce tedarikçi oluşturun veya seçin");
       return;
     }
     setIsCreating(true);
@@ -1102,45 +1149,123 @@ export default function EInvoiceProcess() {
                   </div>
                   
                   <Separator className="my-2" />
-                  <div>
-                    {supplierMatchStatus === 'searching' && (
-                      <div className="flex items-center gap-1.5">
+                  
+                  {/* Tedarikçi Durum ve Seçim Bölümü */}
+                  <div className="space-y-2">
+                    {/* Durum Göstergesi */}
+                    {(supplierMatchStatus === 'searching' || supplierMatchStatus === null || isLoadingSuppliers) && (
+                      <div className="flex items-center gap-1.5 p-2 bg-blue-50 rounded border border-blue-200">
                         <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
-                        <span className="text-blue-700 text-xs">Aranıyor...</span>
+                        <span className="text-blue-700 text-xs">Tedarikçi aranıyor...</span>
                       </div>
                     )}
+                    
+                    {/* Tedarikçi Bulundu */}
                     {supplierMatchStatus === 'found' && selectedSupplierId && matchedSupplier && (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5">
-                          <CheckCircle2 className="h-3 w-3 text-green-600" />
-                          <span className="text-green-700 font-medium text-xs">Sistemde kayıtlı</span>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 p-2 bg-green-50 rounded border border-green-200">
+                          <CheckCircle2 className="h-3 w-3 text-green-600 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-green-700 font-medium text-xs">VKN ile otomatik eşleşti</div>
+                            <div className="text-xs text-gray-600 truncate">
+                              {matchedSupplier.name}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-600 pl-4.5">
-                          Eşleşen: {matchedSupplier.name} (VKN: {matchedSupplier.tax_number})
+                        
+                        {/* Farklı tedarikçi seçme opsiyonu */}
+                        <div className="space-y-1">
+                          <Label htmlFor="change_supplier" className="text-xs font-medium text-gray-600">
+                            Farklı bir tedarikçi seçebilirsiniz
+                          </Label>
+                          <Select
+                            value={selectedSupplierId || ''}
+                            onValueChange={(value) => {
+                              setSelectedSupplierId(value);
+                              if (value) {
+                                setSupplierMatchStatus('found');
+                              }
+                            }}
+                          >
+                            <SelectTrigger id="change_supplier" className="h-8 text-xs">
+                              <SelectValue placeholder="Tedarikçi seçin..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {suppliers.map((supplier) => (
+                                <SelectItem key={supplier.id} value={supplier.id} className="text-xs">
+                                  {supplier.name} {supplier.tax_number ? `(VKN: ${supplier.tax_number})` : ''}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                     )}
+                    
+                    {/* Tedarikçi Bulunamadı - VKN ile eşleşmedi */}
                     {supplierMatchStatus === 'not_found' && (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 p-2 bg-orange-50 rounded border border-orange-200">
                           <AlertCircle className="h-3 w-3 text-orange-600" />
-                          <span className="text-orange-700 text-xs font-medium">Kayıtlı değil</span>
+                          <span className="text-orange-700 text-xs font-medium">
+                            Bu VKN sistemde kayıtlı değil
+                          </span>
                         </div>
+                        
+                        {/* Önce manuel seçim opsiyonu sun */}
+                        {suppliers.length > 0 && (
+                          <>
+                            <div className="space-y-1">
+                              <Label htmlFor="manual_supplier" className="text-xs font-medium">
+                                Mevcut tedarikçilerden seç
+                              </Label>
+                              <Select
+                                value={selectedSupplierId || ''}
+                                onValueChange={(value) => {
+                                  setSelectedSupplierId(value);
+                                  if (value) {
+                                    setSupplierMatchStatus('found');
+                                  }
+                                }}
+                              >
+                                <SelectTrigger id="manual_supplier" className="h-8 text-xs">
+                                  <SelectValue placeholder="Tedarikçi seçin..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {suppliers.map((supplier) => (
+                                    <SelectItem key={supplier.id} value={supplier.id} className="text-xs">
+                                      {supplier.name} {supplier.tax_number ? `(VKN: ${supplier.tax_number})` : ''}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            {/* Ayraç */}
+                            <div className="flex items-center gap-2">
+                              <Separator className="flex-1" />
+                              <span className="text-xs text-gray-500">veya</span>
+                              <Separator className="flex-1" />
+                            </div>
+                          </>
+                        )}
+                        
+                        {/* Yeni Tedarikçi Ekle Butonu */}
                         <Button
                           onClick={handleCreateNewSupplier}
                           disabled={isCreatingSupplier}
                           size="sm"
-                          className="w-full h-7 text-xs bg-orange-600 hover:bg-orange-700 text-white"
+                          className="w-full h-8 text-xs bg-orange-600 hover:bg-orange-700 text-white"
                         >
                           {isCreatingSupplier ? (
                             <>
-                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                              Ekleniyor...
+                              <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                              Tedarikçi ekleniyor...
                             </>
                           ) : (
                             <>
-                              <Plus className="h-3 w-3 mr-1" />
-                              Tedarikçi Ekle
+                              <Plus className="h-3 w-3 mr-1.5" />
+                              Yeni Tedarikçi Ekle
                             </>
                           )}
                         </Button>

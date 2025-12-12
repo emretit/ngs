@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { X, CheckCircle, XCircle, Download, FileSpreadsheet } from "lucide-react";
+import { X, CheckCircle, XCircle, Download, FileSpreadsheet, Trash2 } from "lucide-react";
 import { Warehouse } from "@/types/warehouse";
 
 interface WarehousesBulkActionsProps {
@@ -56,6 +56,17 @@ const WarehousesBulkActions = ({
         >
           <XCircle className="h-4 w-4 mr-1" />
           Pasifleştir
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-red-700 border-red-300 hover:bg-red-100"
+          disabled={!hasSelection}
+          onClick={() => onBulkAction('delete')}
+        >
+          <Trash2 className="h-4 w-4 mr-1" />
+          Sil
         </Button>
         
         {hasSelection && (

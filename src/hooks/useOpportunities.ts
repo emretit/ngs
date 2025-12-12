@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Opportunity, OpportunityStatus, OpportunitiesState } from "@/types/crm";
@@ -137,9 +137,37 @@ export const useOpportunities = (filters: UseOpportunitiesFilters = {}) => {
     },
     enabled: !!userData?.company_id,
     refetchOnWindowFocus: false,
+    refetchOnMount: true, // Mount olduğunda yeniden yükleme
     staleTime: 5 * 60 * 1000, // 5 dakika
     gcTime: 10 * 60 * 1000, // 10 dakika
   });
+
+  // Real-time subscription - opportunities tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    if (!userData?.company_id) return;
+
+    const channel = supabase
+      .channel('opportunities-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'opportunities',
+          filter: `company_id=eq.${userData.company_id}`,
+        },
+        () => {
+          // Opportunities tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
+          queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription when component unmounts or company_id changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.company_id, queryClient]);
 
   // Group opportunities by status (dynamic grouping)
   const opportunities: { [key: string]: Opportunity[] } = {};

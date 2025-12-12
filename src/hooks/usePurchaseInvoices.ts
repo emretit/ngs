@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PurchaseInvoice, InvoiceStatus } from "@/types/purchase";
@@ -295,7 +295,54 @@ export const usePurchaseInvoices = () => {
     staleTime: 5 * 60 * 1000, // 5 dakika boyunca fresh kabul et
     gcTime: 10 * 60 * 1000, // 10 dakika cache'de tut
     refetchOnWindowFocus: false, // Pencere odaklandığında refetch etme
+    refetchOnMount: true, // Mount olduğunda yeniden yükleme
   });
+
+  // Real-time subscription - purchase_invoices tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      // Subscribe to purchase_invoices table changes
+      const channel = supabase
+        .channel('purchase_invoices_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // INSERT, UPDATE, DELETE
+            schema: 'public',
+            table: 'purchase_invoices',
+            filter: `company_id=eq.${profile.company_id}`
+          },
+          (payload) => {
+            console.log('🔄 Purchase invoice changed:', payload.eventType, payload.new || payload.old);
+            // Invalidate queries to refetch data
+            queryClient.invalidateQueries({ queryKey: ['purchaseInvoices'] });
+            queryClient.invalidateQueries({ queryKey: ['purchase-invoices-infinite'] });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanup = setupRealtimeSubscription();
+
+    return () => {
+      cleanup.then(cleanupFn => cleanupFn?.());
+    };
+  }, [queryClient]);
 
   const createInvoiceMutation = useMutation({
     mutationFn: createInvoice,

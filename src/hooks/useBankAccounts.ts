@@ -1,6 +1,7 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 export type BankAccount = {
   id: string;
@@ -22,6 +23,53 @@ export type BankAccount = {
 };
 
 export const useBankAccounts = () => {
+  const queryClient = useQueryClient();
+
+  // Real-time subscription - bank_accounts tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      // Subscribe to bank_accounts table changes
+      const channel = supabase
+        .channel('bank_accounts_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // INSERT, UPDATE, DELETE
+            schema: 'public',
+            table: 'bank_accounts',
+            filter: `company_id=eq.${profile.company_id}`
+          },
+          (payload) => {
+            console.log('🔄 Bank account changed:', payload.eventType, payload.new || payload.old);
+            // Invalidate queries to refetch data
+            queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanup = setupRealtimeSubscription();
+
+    return () => {
+      cleanup.then(cleanupFn => cleanupFn?.());
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["bankAccounts"],
     queryFn: async () => {
@@ -48,6 +96,7 @@ export const useBankAccounts = () => {
       if (error) throw error;
       return data as BankAccount[];
     },
+    refetchOnMount: true, // Mount olduğunda yeniden yükleme
   });
 };
 

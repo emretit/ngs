@@ -1,11 +1,13 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ServiceRequest, ServiceQueriesResult } from "./types";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useEffect } from "react";
 
 export const useServiceQueries = (): ServiceQueriesResult => {
   const { userData } = useCurrentUser();
+  const queryClient = useQueryClient();
   
   // Fetch all service requests
   const serviceRequestsQuery = useQuery({
@@ -66,8 +68,37 @@ export const useServiceQueries = (): ServiceQueriesResult => {
       }));
     },
     enabled: !!userData?.company_id,
+    refetchOnMount: true, // Mount olduğunda yeniden yükleme
     staleTime: 5 * 60 * 1000, // 5 dakika
   });
+
+  // Real-time subscription - service_requests tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    if (!userData?.company_id) return;
+
+    const channel = supabase
+      .channel('service-requests-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'service_requests',
+          filter: `company_id=eq.${userData.company_id}`,
+        },
+        () => {
+          // Service requests tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
+          queryClient.invalidateQueries({ queryKey: ['service-requests'] });
+          queryClient.invalidateQueries({ queryKey: ['customer-service-requests'] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription when component unmounts or company_id changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.company_id, queryClient]);
 
   // Get a single service request
   const getServiceRequest = async (id: string): Promise<ServiceRequest | null> => {

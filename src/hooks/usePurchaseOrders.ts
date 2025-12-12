@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useInfiniteScroll } from './useInfiniteScroll';
 import { useCurrentUser } from './useCurrentUser';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 export interface PurchaseOrder {
   id: string;
@@ -90,6 +90,37 @@ export const usePurchaseOrders = (filters?: {
   startDate?: string;
   endDate?: string;
 }) => {
+  const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
+
+  // Real-time subscription - purchase_orders tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    if (!userData?.company_id) return;
+
+    const channel = supabase
+      .channel('purchase-orders-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'purchase_orders',
+          filter: `company_id=eq.${userData.company_id}`,
+        },
+        () => {
+          // Purchase orders tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
+          queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+          queryClient.invalidateQueries({ queryKey: ['purchase-orders-infinite'] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription when component unmounts or company_id changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.company_id, queryClient]);
+
   return useQuery({
     queryKey: ['purchase-orders', filters],
     queryFn: async () => {
@@ -138,7 +169,7 @@ export const usePurchaseOrders = (filters?: {
     staleTime: 5 * 60 * 1000, // 5 dakika
     gcTime: 10 * 60 * 1000, // 10 dakika
     refetchOnWindowFocus: false, // Pencere odaklandığında yeniden yükleme
-    refetchOnMount: false, // Mount olduğunda yeniden yükleme
+    refetchOnMount: true, // Mount olduğunda yeniden yükleme (real-time ile birlikte)
   });
 };
 

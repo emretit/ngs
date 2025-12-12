@@ -47,7 +47,10 @@ import {
   Warehouse,
   FileSignature,
   Tag,
-  Cog
+  Cog,
+  BarChart,
+  CheckCircle,
+  PieChart
 } from "lucide-react";
 
 export const navItems = [
@@ -305,7 +308,47 @@ export const navItems = [
       },
     ],
   },
-  // 9. Stok Yönetimi
+  // 9. Bütçe Yönetimi
+  {
+    path: "/budget",
+    icon: FileText,
+    label: "Bütçe Yönetimi",
+    translationKey: "nav.budgetManagement",
+    hasDropdown: true,
+    items: [
+      {
+        path: "/budget",
+        icon: LayoutDashboard,
+        label: "Dashboard",
+        translationKey: "nav.budgetDashboard",
+      },
+      {
+        path: "/budget/entry",
+        icon: Plus,
+        label: "Bütçe Girişi",
+        translationKey: "nav.budgetEntry",
+      },
+      {
+        path: "/budget/comparison",
+        icon: BarChart,
+        label: "Varyans Analizi",
+        translationKey: "nav.budgetComparison",
+      },
+      {
+        path: "/budget/approvals",
+        icon: CheckCircle,
+        label: "Onaylar",
+        translationKey: "nav.budgetApprovals",
+      },
+      {
+        path: "/budget/reports",
+        icon: PieChart,
+        label: "Raporlar",
+        translationKey: "nav.budgetReports",
+      },
+    ],
+  },
+  // 9.5. Stok Yönetimi
   {
     path: "/inventory",
     icon: Package,

@@ -18,6 +18,7 @@ interface WarehousesTableProps {
   onSortFieldChange: (field: "name" | "code" | "warehouse_type" | "is_active") => void;
   onWarehouseClick?: (warehouse: Warehouse) => void;
   onWarehouseSelect?: (warehouse: Warehouse) => void;
+  onWarehouseDelete?: (warehouse: Warehouse) => void;
   selectedWarehouses?: Warehouse[];
 }
 
@@ -33,6 +34,7 @@ const WarehousesTable = ({
   onSortFieldChange,
   onWarehouseClick,
   onWarehouseSelect,
+  onWarehouseDelete,
   selectedWarehouses = []
 }: WarehousesTableProps) => {
   const handleWarehouseSelectToggle = useCallback((warehouse: Warehouse) => {
@@ -96,6 +98,7 @@ const WarehousesTable = ({
                   onSelect={onWarehouseSelect}
                   onSelectToggle={handleWarehouseSelectToggle}
                   onView={onWarehouseClick}
+                  onDelete={onWarehouseDelete}
                   isSelected={isSelected}
                 />
               );

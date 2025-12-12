@@ -23,12 +23,22 @@ const BankAccountDetail = React.lazy(() => import("@/pages/BankAccountDetail"));
 const PartnerAccountDetail = React.lazy(() => import("@/pages/PartnerAccountDetail"));
 const EInvoiceProcess = React.lazy(() => import("@/pages/EInvoiceProcess"));
 const EInvoices = React.lazy(() => import("@/pages/EInvoices"));
-const BudgetManagement = React.lazy(() => import("@/pages/BudgetManagement"));
+const BudgetEntry = React.lazy(() => import("@/pages/budget/BudgetEntry"));
+const BudgetComparison = React.lazy(() => import("@/pages/budget/BudgetComparison"));
+const BudgetApprovals = React.lazy(() => import("@/pages/budget/BudgetApprovals"));
+const BudgetReports = React.lazy(() => import("@/pages/budget/BudgetReports"));
+const BudgetDashboard = React.lazy(() => import("@/pages/budget/BudgetDashboard"));
 
 // Define cashflow routes
 export const cashflowRoutes: RouteConfig[] = [
   { path: "/cashflow", component: Cashflow, protected: true },
-  { path: "/cashflow/budget-management", component: BudgetManagement, protected: true },
+  // BudgetManagement route'u kaldırıldı, artık BudgetDashboard kullanılıyor
+  { path: "/cashflow/budget-management", component: BudgetDashboard, protected: true },
+  { path: "/budget", component: BudgetDashboard, protected: true },
+  { path: "/budget/entry", component: BudgetEntry, protected: true },
+  { path: "/budget/comparison", component: BudgetComparison, protected: true },
+  { path: "/budget/approvals", component: BudgetApprovals, protected: true },
+  { path: "/budget/reports", component: BudgetReports, protected: true },
   { path: "/cashflow/expenses", component: CashflowExpenses, protected: true },
   // Yeni ayrı route'lar
   { path: "/cashflow/checks", component: CashflowChecks, protected: true },

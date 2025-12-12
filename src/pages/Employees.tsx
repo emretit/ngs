@@ -1,5 +1,5 @@
-import { useState, memo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, memo, useCallback, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeList } from "@/components/employees/EmployeeList";
 import EmployeesHeader from "@/components/employees/EmployeesHeader";
@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 
 const Employees = () => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
@@ -25,6 +26,52 @@ const Employees = () => {
   const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
   const [bulkPayrollOpen, setBulkPayrollOpen] = useState(false);
   const [bulkPaymentOpen, setBulkPaymentOpen] = useState(false);
+
+  // Real-time subscription - employees tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) return;
+
+      // Subscribe to employees table changes
+      const channel = supabase
+        .channel('employees_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // INSERT, UPDATE, DELETE
+            schema: 'public',
+            table: 'employees',
+            filter: `company_id=eq.${profile.company_id}`
+          },
+          (payload) => {
+            console.log('🔄 Employee changed:', payload.eventType, payload.new || payload.old);
+            // Invalidate queries to refetch data
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+            queryClient.invalidateQueries({ queryKey: ['employee'] });
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanup = setupRealtimeSubscription();
+
+    return () => {
+      cleanup.then(cleanupFn => cleanupFn?.());
+    };
+  }, [queryClient]);
 
   // Fetch employees with stats
   const { data: employees = [], isLoading, error } = useQuery({
@@ -76,6 +123,7 @@ const Employees = () => {
       
       return processedData;
     },
+    refetchOnMount: true, // Mount olduğunda yeniden yükleme
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     gcTime: 5 * 60 * 1000, // 5 minutes
   });

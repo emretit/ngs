@@ -6,15 +6,24 @@ import { Warehouse } from "@/types/warehouse";
 import { InventoryTransaction } from "@/types/inventory";
 import { showSuccess, showError } from "@/utils/toastUtils";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ChevronDown, ArrowDownToLine, ArrowUpFromLine, ArrowRightLeft, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import WarehouseDetailsHeader from "@/components/warehouses/details/WarehouseDetailsHeader";
 import { WarehouseInfo } from "@/components/warehouses/details/WarehouseInfo";
 import InventoryTransactionsContent from "@/components/inventory/InventoryTransactionsContent";
 import InventoryTransactionsFilterBar from "@/components/inventory/InventoryTransactionsFilterBar";
 import InventoryTransactionsBulkActions from "@/components/inventory/InventoryTransactionsBulkActions";
 import InventoryTransactionsViewToggle from "@/components/inventory/InventoryTransactionsViewToggle";
+import StockEntryExitDialog from "@/components/inventory/StockEntryExitDialog";
+import StockTransferDialog from "@/components/inventory/StockTransferDialog";
+import { useInventoryTransactions } from "@/hooks/useInventoryTransactions";
 import { toast } from "sonner";
 
 const WarehouseDetails = () => {
@@ -33,6 +42,9 @@ const WarehouseDetails = () => {
   const [sortField, setSortField] = useState<"transaction_number" | "transaction_date" | "transaction_type" | "status">("transaction_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedTransactions, setSelectedTransactions] = useState<InventoryTransaction[]>([]);
+  const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
+  const [stockDialogType, setStockDialogType] = useState<'giris' | 'cikis'>('giris');
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
 
   // Debounce search query
   useEffect(() => {
@@ -73,63 +85,30 @@ const WarehouseDetails = () => {
     enabled: !!id
   });
 
-  // Fetch warehouse transactions with filters
-  const { data: transactions = [], isLoading: isLoadingTransactions } = useQuery({
-    queryKey: ["warehouse_transactions", id, debouncedSearchQuery, typeFilter, statusFilter, startDate, endDate, sortField, sortDirection],
-    queryFn: async () => {
-      // Get current user's company_id
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user?.id)
-        .single();
+  // useInventoryTransactions hook'unu kullan
+  const { 
+    transactions, 
+    isLoading: isLoadingTransactions,
+    filters,
+    setFilters,
+  } = useInventoryTransactions();
 
-      // TODO: inventory_transactions tablosu oluşturulduğunda bu sorguyu güncelle
-      // Şimdilik boş array döndürüyoruz
-      return [];
-      
-      // let query = supabase
-      //   .from("inventory_transactions")
-      //   .select(`
-      //     *,
-      //     items:inventory_transaction_items(*)
-      //   `)
-      //   .eq("company_id", profile?.company_id)
-      //   .or(`warehouse_id.eq.${id},from_warehouse_id.eq.${id},to_warehouse_id.eq.${id}`);
-
-      // // Search filter
-      // if (debouncedSearchQuery) {
-      //   query = query.or(`transaction_number.ilike.%${debouncedSearchQuery}%,reference_number.ilike.%${debouncedSearchQuery}%,notes.ilike.%${debouncedSearchQuery}%`);
-      // }
-
-      // // Type filter
-      // if (typeFilter && typeFilter !== "all") {
-      //   query = query.eq("transaction_type", typeFilter);
-      // }
-
-      // // Status filter
-      // if (statusFilter && statusFilter !== "all") {
-      //   query = query.eq("status", statusFilter);
-      // }
-
-      // // Date range filter
-      // if (startDate) {
-      //   query = query.gte("transaction_date", startDate.toISOString().split("T")[0]);
-      // }
-      // if (endDate) {
-      //   query = query.lte("transaction_date", endDate.toISOString().split("T")[0]);
-      // }
-
-      // // Sort
-      // query = query.order(sortField, { ascending: sortDirection === "asc" });
-
-      // const { data, error } = await query;
-      // if (error) throw error;
-      // return (data as unknown as InventoryTransaction[]) || [];
-    },
-    enabled: !!id
-  });
+  // Depo ID'sine göre filtreleri güncelle
+  useEffect(() => {
+    if (id) {
+      setFilters(prev => ({
+        ...prev,
+        warehouse_id: id,
+        transaction_type: typeFilter !== "all" ? typeFilter : "all",
+        status: statusFilter !== "all" ? statusFilter : "all",
+        search: debouncedSearchQuery,
+        dateRange: {
+          from: startDate || null,
+          to: endDate || null,
+        },
+      }));
+    }
+  }, [id, typeFilter, statusFilter, debouncedSearchQuery, startDate, endDate, setFilters]);
 
   // İşlem istatistikleri hesapla
   const transactionStats = {
@@ -182,8 +161,16 @@ const WarehouseDetails = () => {
     }
   }, [selectedTransactions]);
 
-  const handleCreateTransaction = useCallback((type: string) => {
-    navigate(`/inventory/transactions/${type}/new?warehouse_id=${id}`);
+  const handleCreateTransaction = useCallback((type: 'giris' | 'cikis' | 'transfer' | 'sayim') => {
+    if (type === 'giris' || type === 'cikis') {
+      setStockDialogType(type);
+      setIsStockDialogOpen(true);
+    } else if (type === 'transfer') {
+      setIsTransferDialogOpen(true);
+    } else {
+      // Sayım için sayfa navigasyonu
+      navigate(`/inventory/transactions/${type}/new?warehouse_id=${id}`);
+    }
   }, [navigate, id]);
 
   const updateWarehouseMutation = useMutation({
@@ -267,13 +254,45 @@ const WarehouseDetails = () => {
                 activeView={activeView} 
                 setActiveView={setActiveView} 
               />
-              <Button
-                onClick={() => handleCreateTransaction('giris')}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Yeni İşlem</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Yeni İşlem</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => handleCreateTransaction('giris')}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <ArrowDownToLine className="h-4 w-4 text-green-600" />
+                    <span>Stok Girişi</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleCreateTransaction('cikis')}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <ArrowUpFromLine className="h-4 w-4 text-red-600" />
+                    <span>Stok Çıkışı</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleCreateTransaction('transfer')}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <ArrowRightLeft className="h-4 w-4 text-blue-600" />
+                    <span>Depo Transferi</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleCreateTransaction('sayim')}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <ClipboardList className="h-4 w-4 text-purple-600" />
+                    <span>Stok Sayımı</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -315,14 +334,48 @@ const WarehouseDetails = () => {
             <Card>
               <CardContent className="text-center py-12 text-muted-foreground">
                 <p className="mb-4">Bu depoya ait henüz işlem kaydı bulunmuyor</p>
-                <Button
-                  variant="outline"
-                  onClick={() => handleCreateTransaction('giris')}
-                  className="flex items-center gap-2 mx-auto"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Yeni İşlem Oluştur</span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 mx-auto"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Yeni İşlem Oluştur</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-48">
+                    <DropdownMenuItem
+                      onClick={() => handleCreateTransaction('giris')}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <ArrowDownToLine className="h-4 w-4 text-green-600" />
+                      <span>Stok Girişi</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleCreateTransaction('cikis')}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <ArrowUpFromLine className="h-4 w-4 text-red-600" />
+                      <span>Stok Çıkışı</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleCreateTransaction('transfer')}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <ArrowRightLeft className="h-4 w-4 text-blue-600" />
+                      <span>Depo Transferi</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleCreateTransaction('sayim')}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <ClipboardList className="h-4 w-4 text-purple-600" />
+                      <span>Stok Sayımı</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </CardContent>
             </Card>
           ) : (
@@ -344,6 +397,27 @@ const WarehouseDetails = () => {
           )}
         </div>
       </div>
+
+      {/* Stok Giriş/Çıkış Dialog */}
+      <StockEntryExitDialog
+        isOpen={isStockDialogOpen}
+        onClose={() => setIsStockDialogOpen(false)}
+        transactionType={stockDialogType}
+        warehouseId={id}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["inventory_transactions"] });
+        }}
+      />
+
+      {/* Depo Transferi Dialog */}
+      <StockTransferDialog
+        isOpen={isTransferDialogOpen}
+        onClose={() => setIsTransferDialogOpen(false)}
+        fromWarehouseId={id}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["inventory_transactions"] });
+        }}
+      />
     </>
   );
 };

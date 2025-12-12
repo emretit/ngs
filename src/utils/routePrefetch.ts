@@ -14,7 +14,8 @@ const routePrefetchMap: Record<string, () => Promise<any>> = {
   '/cashflow/loans': () => import('@/pages/CashflowLoans'),
   '/cashflow/bank-accounts': () => import('@/pages/CashflowBankAccounts'),
   '/cashflow/categories': () => import('@/pages/CashflowCategories'),
-  '/cashflow/budget-management': () => import('@/pages/BudgetManagement'),
+  '/cashflow/budget-management': () => import('@/pages/budget/BudgetDashboard'),
+  '/budget': () => import('@/pages/budget/BudgetDashboard'),
   
   // Finance routes
   '/financial-overview': () => import('@/pages/FinancialOverview'),

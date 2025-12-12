@@ -5,6 +5,7 @@ import InventoryTransactionsFilterBar from "@/components/inventory/InventoryTran
 import InventoryTransactionsContent from "@/components/inventory/InventoryTransactionsContent";
 import InventoryTransactionsBulkActions from "@/components/inventory/InventoryTransactionsBulkActions";
 import StockEntryExitDialog from "@/components/inventory/StockEntryExitDialog";
+import StockTransferDialog from "@/components/inventory/StockTransferDialog";
 import { useInventoryTransactions } from "@/hooks/useInventoryTransactions";
 import { InventoryTransaction } from "@/types/inventory";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
   const [selectedTransactions, setSelectedTransactions] = useState<InventoryTransaction[]>([]);
   const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
   const [stockDialogType, setStockDialogType] = useState<'giris' | 'cikis'>('giris');
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
 
   // Debounce search query
   useEffect(() => {
@@ -116,8 +118,10 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
     if (type === 'giris' || type === 'cikis') {
       setStockDialogType(type);
       setIsStockDialogOpen(true);
+    } else if (type === 'transfer') {
+      setIsTransferDialogOpen(true);
     } else {
-      // Transfer ve sayım için sayfa navigasyonu
+      // Sayım için sayfa navigasyonu
       navigate(`/inventory/transactions/${type}/new`);
     }
   }, [navigate]);
@@ -249,6 +253,15 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
         isOpen={isStockDialogOpen}
         onClose={() => setIsStockDialogOpen(false)}
         transactionType={stockDialogType}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
+
+      {/* Depo Transferi Dialog */}
+      <StockTransferDialog
+        isOpen={isTransferDialogOpen}
+        onClose={() => setIsTransferDialogOpen(false)}
         onSuccess={() => {
           refetch();
         }}

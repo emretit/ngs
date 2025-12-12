@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Plus, 
@@ -26,21 +27,17 @@ import {
   PieChart,
   BarChart3,
   Target,
-  Award
+  Award,
+  Search
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import { 
-  CustomTabs, 
-  CustomTabsContent, 
-  CustomTabsList, 
-  CustomTabsTrigger 
-} from "@/components/ui/custom-tabs";
 import { useCreditCardDetail, useCreditCardTransactions } from "@/hooks/useAccountDetail";
 import { Skeleton } from "@/components/ui/skeleton";
 import CreditCardIncomeModal from "@/components/cashflow/modals/CreditCardIncomeModal";
 import CreditCardExpenseModal from "@/components/cashflow/modals/CreditCardExpenseModal";
 import TransferModal from "@/components/cashflow/modals/TransferModal";
+import { AccountTransactionHistory } from "@/components/cashflow/AccountTransactionHistory";
 
 interface CreditCardDetailProps {
   isCollapsed: boolean;
@@ -52,10 +49,10 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   const navigate = useNavigate();
   const [showBalances, setShowBalances] = useState(true);
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
-  const [activeTab, setActiveTab] = useState("overview");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // React Query hooks ile optimize edilmiş veri çekme
   const { data: card, isLoading: isLoadingCard, error: cardError } = useCreditCardDetail(id);
@@ -262,96 +259,89 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="space-y-3">
+      {/* Arama ve Filtreleme */}
+      <div className="flex flex-col sm:flex-row gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200 mb-2">
+        <div className="relative min-w-[250px] flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="İşlem açıklaması veya kategori ile ara..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full"
+          />
+        </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="space-y-2">
         {/* Main Grid Layout - Sol: Kompakt Bilgiler, Sağ: Geniş İşlem Geçmişi */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-2">
           {/* Sol Taraf - Kompakt Bilgiler ve İşlemler */}
-          <div className="space-y-2">
+          <div className="xl:col-span-3 space-y-2">
             {/* Kart Bilgileri ve Hızlı İşlemler - Tek Kart */}
-            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
-                    <CreditCard className="h-4 w-4 text-purple-600" />
+            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-xl">
+              <CardHeader className="pb-2 px-3 pt-3">
+                <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                  <div className="p-1 rounded-lg bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50">
+                    <CreditCard className="h-3.5 w-3.5 text-purple-600" />
                   </div>
-                  Kart Bilgileri & İşlemler
+                  Kart & İşlemler
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 space-y-4">
+              <CardContent className="pt-0 px-3 pb-3 space-y-3">
                 {/* Kart Bilgileri - Kompakt */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Kart Adı</label>
-                    <p className="text-sm font-semibold">{card.card_name}</p>
+                    <label className="text-[10px] font-medium text-muted-foreground">Kart Adı</label>
+                    <p className="text-xs font-semibold truncate">{card.card_name}</p>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Kart Türü</label>
-                    <p className="text-sm">{getCardTypeLabel(card.card_type)}</p>
+                    <label className="text-[10px] font-medium text-muted-foreground">Kart Türü</label>
+                    <p className="text-xs">{getCardTypeLabel(card.card_type)}</p>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Banka</label>
-                    <p className="text-sm">{card.bank_name}</p>
+                    <label className="text-[10px] font-medium text-muted-foreground">Banka</label>
+                    <p className="text-xs truncate">{card.bank_name}</p>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground">Durum</label>
+                    <label className="text-[10px] font-medium text-muted-foreground">Durum</label>
                     <Badge 
-                      className={`text-xs ${
+                      className={`text-[10px] h-4 px-1.5 ${
                         card.status === 'active'
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      <Activity className="h-3 w-3 mr-1" />
+                      <Activity className="h-2.5 w-2.5 mr-0.5" />
                       {card.status === 'active' ? "Aktif" : "Pasif"}
                     </Badge>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Kart Numarası</label>
-                    <p className="text-sm font-mono">{formatCardNumber(card.card_number)}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Son Kullanma</label>
-                    <p className="text-sm">{card.expiry_date}</p>
                   </div>
                 </div>
 
                 {/* Hızlı İşlemler */}
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Hızlı İşlemler</h4>
-                  <div className="grid grid-cols-1 gap-2">
+                <div className="border-t pt-2">
+                  <div className="grid grid-cols-1 gap-1.5">
                     <Button 
                       onClick={() => setIsIncomeModalOpen(true)}
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-sm"
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-xs h-7"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ödeme Ekle
+                      <Plus className="h-3 w-3 mr-1" />
+                      Ödeme
                     </Button>
                     <Button 
                       onClick={() => setIsExpenseModalOpen(true)}
-                      className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm"
+                      className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs h-7"
                     >
-                      <Minus className="h-4 w-4 mr-2" />
-                      Harcama Ekle
+                      <Minus className="h-3 w-3 mr-1" />
+                      Harcama
                     </Button>
                     <Button 
                       onClick={() => setIsTransferModalOpen(true)}
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs h-7"
                     >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Transfer Yap
+                      <ArrowLeft className="h-3 w-3 mr-1" />
+                      Transfer
                     </Button>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" size="sm" className="text-xs">
-                        <Filter className="h-3 w-3 mr-1" />
-                        Filtrele
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-xs">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Tarih
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -359,84 +349,17 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
           </div>
 
           {/* Sağ Taraf - Geniş İşlem Geçmişi */}
-          <div className="xl:col-span-2 space-y-2">
-            {/* İşlem Geçmişi */}
-            <Card className="shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-gray-50 to-gray-50/50 border border-gray-200/50">
-                      <FileText className="h-4 w-4 text-gray-600" />
-                    </div>
-                    İşlem Geçmişi
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {filteredTransactions.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="p-3 bg-gray-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                      <FileText className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-700 mb-1">Henüz işlem bulunmuyor</h3>
-                    <p className="text-sm text-gray-500 mb-3">İlk işleminizi ekleyerek başlayın</p>
-                    <div className="flex gap-2 justify-center">
-                      <Button 
-                        onClick={() => setIsIncomeModalOpen(true)}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Ödeme
-                      </Button>
-                      <Button 
-                        onClick={() => setIsExpenseModalOpen(true)}
-                        size="sm"
-                        variant="outline"
-                        className="border-red-200 text-red-700 hover:bg-red-50"
-                      >
-                        <Minus className="h-3 w-3 mr-1" />
-                        Harcama
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {filteredTransactions.map((transaction) => (
-                      <div 
-                        key={transaction.id} 
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full ${
-                            transaction.type === "income" ? "bg-green-500" : "bg-red-500"
-                          }`}></div>
-                          <div>
-                            <p className="font-medium text-sm">
-                              {transaction.customer_name ? `Müşteri: ${transaction.customer_name}` : ''}
-                              {transaction.supplier_name ? `Tedarikçi: ${transaction.supplier_name}` : ''}
-                              {!transaction.customer_name && !transaction.supplier_name ? (transaction.description || '-') : ''}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(transaction.transaction_date).toLocaleDateString('tr-TR')} • {transaction.category}
-                              {transaction.description && (transaction.customer_name || transaction.supplier_name) ? ` • ${transaction.description}` : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className={`font-bold ${
-                            transaction.type === "income" ? "text-green-600" : "text-red-600"
-                          }`}>
-                            {transaction.type === "income" ? "+" : "-"}
-                            {showBalances ? formatCurrency(transaction.amount, "TRY") : "••••••"}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <div className="xl:col-span-9 space-y-2">
+            <AccountTransactionHistory
+              transactions={transactions}
+              currency="TRY"
+              showBalances={showBalances}
+              filterType={filterType}
+              onFilterTypeChange={setFilterType}
+              onAddIncome={() => setIsIncomeModalOpen(true)}
+              onAddExpense={() => setIsExpenseModalOpen(true)}
+              initialBalance={0}
+            />
           </div>
         </div>
 

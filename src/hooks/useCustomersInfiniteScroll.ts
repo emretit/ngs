@@ -1,6 +1,9 @@
 import { useInfiniteScroll } from "./useInfiniteScroll";
 import { supabase } from "@/integrations/supabase/client";
 import { Customer } from "@/types/customer";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentUser } from "./useCurrentUser";
 
 interface UseCustomersFilters {
   search?: string;
@@ -11,6 +14,36 @@ interface UseCustomersFilters {
 }
 
 export const useCustomersInfiniteScroll = (filters: UseCustomersFilters = {}) => {
+  const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
+
+  // Real-time subscription - customers tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    if (!userData?.company_id) return;
+
+    const channel = supabase
+      .channel('customers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'customers',
+          filter: `company_id=eq.${userData.company_id}`,
+        },
+        () => {
+          // Customers tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
+          queryClient.invalidateQueries({ queryKey: ["customers"] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription when component unmounts or company_id changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.company_id, queryClient]);
+
   const fetchCustomers = async (page: number, pageSize: number) => {
     // Önce kullanıcının company_id'sini al
     const { data: { user } } = await supabase.auth.getUser();

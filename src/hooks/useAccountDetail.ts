@@ -207,8 +207,8 @@ export function useCashAccountTransactions(accountId: string | undefined, limit:
       }));
 
       const allTransactions = [
-        ...cashTransactions.data,
-        ...formattedPayments
+        ...cashTransactions.data.map(t => ({ ...t, reference: t.reference || null })),
+        ...formattedPayments.map(p => ({ ...p, reference: null }))
       ].sort((a, b) => 
         new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
       );
@@ -289,11 +289,12 @@ export function useBankAccountTransactions(accountId: string | undefined, limit:
         customer_name: payment.customer?.name,
         supplier_name: payment.supplier?.name,
         payment_direction: payment.payment_direction,
-        payment_type: payment.payment_type
+        payment_type: payment.payment_type,
+        reference: null
       }));
 
       const allTransactions = [
-        ...bankTransactions.data,
+        ...bankTransactions.data.map(t => ({ ...t, reference: t.reference || null })),
         ...formattedPayments
       ].sort((a, b) => 
         new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
@@ -370,7 +371,8 @@ export function useCreditCardTransactions(cardId: string | undefined, limit: num
         ...item,
         type: item.transaction_type === 'payment' ? 'income' : 'expense',
         category: item.merchant_category || item.category || 'Genel',
-        description: item.description || item.merchant_name || 'Kart İşlemi'
+        description: item.description || item.merchant_name || 'Kart İşlemi',
+        reference: item.reference || null
       }));
 
       const formattedPayments = payments.data.map((payment) => ({
@@ -383,7 +385,8 @@ export function useCreditCardTransactions(cardId: string | undefined, limit: num
         currency: payment.currency,
         customer_name: payment.customer?.name,
         supplier_name: payment.supplier?.name,
-        payment_direction: payment.payment_direction
+        payment_direction: payment.payment_direction,
+        reference: null
       }));
 
       const allTransactions = [
@@ -463,7 +466,8 @@ export function usePartnerAccountTransactions(accountId: string | undefined, lim
       // Partner transactions için özel mapping
       const mappedPartnerTransactions = (partnerTransactions.data || []).map((transaction: any) => ({
         ...transaction,
-        type: transaction.type === 'capital_increase' || transaction.type === 'profit_distribution' ? 'income' : 'expense'
+        type: transaction.type === 'capital_increase' || transaction.type === 'profit_distribution' ? 'income' : 'expense',
+        reference: transaction.reference || null
       }));
 
       const formattedPayments = payments.data.map((payment) => ({
@@ -476,7 +480,8 @@ export function usePartnerAccountTransactions(accountId: string | undefined, lim
         currency: payment.currency,
         customer_name: payment.customer?.name,
         supplier_name: payment.supplier?.name,
-        payment_direction: payment.payment_direction
+        payment_direction: payment.payment_direction,
+        reference: null
       }));
 
       const allTransactions = [

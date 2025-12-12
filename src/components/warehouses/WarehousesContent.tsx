@@ -17,6 +17,7 @@ interface WarehousesContentProps {
   onSortFieldChange: (field: "name" | "code" | "warehouse_type" | "is_active") => void;
   onWarehouseClick: (warehouse: Warehouse) => void;
   onWarehouseSelect: (warehouse: Warehouse) => void;
+  onWarehouseDelete?: (warehouse: Warehouse) => void;
   selectedWarehouses?: Warehouse[];
   searchQuery?: string;
   typeFilter?: string;
@@ -37,6 +38,7 @@ const WarehousesContent = ({
   onSortFieldChange,
   onWarehouseClick,
   onWarehouseSelect,
+  onWarehouseDelete,
   selectedWarehouses = [],
   searchQuery,
   typeFilter,
@@ -77,6 +79,7 @@ const WarehousesContent = ({
             onSortFieldChange={onSortFieldChange}
             onWarehouseClick={onWarehouseClick}
             onWarehouseSelect={onWarehouseSelect}
+            onWarehouseDelete={onWarehouseDelete}
             selectedWarehouses={selectedWarehouses}
           />
         )}

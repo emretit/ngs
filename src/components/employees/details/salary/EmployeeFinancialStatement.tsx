@@ -35,11 +35,13 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
+import { format } from "date-fns";
+import { AccountTransactionHistory } from "@/components/cashflow/AccountTransactionHistory";
 
 interface FinancialTransaction {
   id: string;
   date: string;
-  type: 'tahakkuk' | 'odeme' | 'bonus' | 'kesinti' | 'yardim' | 'avans' | 'prim' | 'ikramiye';
+  type: 'tahakkuk' | 'odeme' | 'bonus' | 'kesinti' | 'yardim' | 'avans' | 'prim' | 'ikramiye' | 'masraf';
   description: string;
   amount: number;
   status: 'beklemende' | 'tamamlandi' | 'iptal';
@@ -58,12 +60,12 @@ interface EmployeeFinancialStatementProps {
 
 export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger }: EmployeeFinancialStatementProps) => {
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
+  const [employeeTransactions, setEmployeeTransactions] = useState<EmployeeTransaction[]>([]);
   const [currentSalary, setCurrentSalary] = useState<any>(null);
   const [selectedPeriod, setSelectedPeriod] = useState("last_6_months");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [showBalances, setShowBalances] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   // Stats calculated from transactions
@@ -81,7 +83,7 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
     const totalDeductions = transactions
-      .filter(t => ['kesinti', 'avans'].includes(t.type) && t.status === 'tamamlandi')
+      .filter(t => ['kesinti', 'avans', 'masraf'].includes(t.type) && t.status === 'tamamlandi')
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
     const lastPayment = transactions
@@ -100,28 +102,6 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
     };
   }, [transactions]);
 
-  // Filtered transactions based on search and filter
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter(transaction => {
-      // Filter by type
-      if (filterType === "income" && !['tahakkuk', 'bonus', 'prim', 'ikramiye', 'yardim'].includes(transaction.type)) {
-        return false;
-      }
-      if (filterType === "expense" && !['kesinti', 'avans'].includes(transaction.type)) {
-        return false;
-      }
-      if (filterType === "expense" && transaction.type === 'odeme') {
-        return false; // Ödemeler expense'a dahil değil
-      }
-
-      // Filter by search term
-      if (searchTerm && !transaction.description.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [transactions, filterType, searchTerm]);
 
   useEffect(() => {
     fetchData();
@@ -213,6 +193,154 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
         }
       }
 
+      // Fetch employee expenses from expenses table
+      const { data: employeeExpenses, error: expensesError } = await supabase
+        .from('expenses')
+        .select(`
+          id,
+          amount,
+          date,
+          description,
+          category:cashflow_categories(name),
+          is_paid,
+          paid_date,
+          payment_account_type,
+          payment_account_id
+        `)
+        .eq('employee_id', employeeId)
+        .eq('expense_type', 'employee')
+        .gte('date', format(startDate, 'yyyy-MM-dd'))
+        .lte('date', format(endDate, 'yyyy-MM-dd'))
+        .order('date', { ascending: false });
+
+      // AccountTransactionHistory için transaction listesi
+      const accountTransactions: EmployeeTransaction[] = [];
+
+      if (!expensesError && employeeExpenses) {
+        // Ödeme yapılan masrafların transaction'larını çek
+        const paidExpenses = employeeExpenses.filter(e => e.is_paid && e.payment_account_type && e.payment_account_id);
+        const expenseIds = paidExpenses.map(e => e.id);
+        
+        // Tüm payment account transaction'larını çek
+        const paymentTransactions: any[] = [];
+        
+        if (expenseIds.length > 0) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('company_id')
+              .eq('id', user.id)
+              .single();
+            
+            if (profile?.company_id) {
+              const referenceValues = expenseIds.map(id => `EXP-${id}`);
+              
+              // Cash transactions
+              const { data: cashTransactions } = await supabase
+                .from('cash_transactions')
+                .select('*')
+                .eq('company_id', profile.company_id)
+                .in('reference', referenceValues);
+              
+              if (cashTransactions) {
+                paymentTransactions.push(...cashTransactions.map(t => ({ ...t, account_type: 'cash' })));
+              }
+              
+              // Bank transactions
+              const { data: bankTransactions } = await supabase
+                .from('bank_transactions')
+                .select('*')
+                .in('reference', referenceValues);
+              
+              if (bankTransactions) {
+                paymentTransactions.push(...bankTransactions.map(t => ({ ...t, account_type: 'bank' })));
+              }
+              
+              // Credit card transactions
+              const { data: cardTransactions } = await supabase
+                .from('credit_card_transactions')
+                .select('*')
+                .in('reference', referenceValues);
+              
+              if (cardTransactions) {
+                paymentTransactions.push(...cardTransactions.map(t => ({ ...t, account_type: 'credit_card' })));
+              }
+              
+              // Partner transactions
+              const { data: partnerTransactions } = await supabase
+                .from('partner_transactions')
+                .select('*')
+                .in('reference', referenceValues);
+              
+              if (partnerTransactions) {
+                paymentTransactions.push(...partnerTransactions.map(t => ({ ...t, account_type: 'partner' })));
+              }
+            }
+          }
+        }
+        
+        // Her masraf için iki transaction oluştur
+        employeeExpenses.forEach((expense: any) => {
+          // Eski format için (geriye dönük uyumluluk)
+          formattedTransactions.push({
+            id: `expense_${expense.id}`,
+            date: expense.date,
+            type: 'masraf',
+            description: expense.description || `Masraf - ${expense.category?.name || 'Genel'}`,
+            amount: -Math.abs(expense.amount),
+            status: expense.is_paid ? 'tamamlandi' : 'beklemende',
+            category: expense.category?.name || 'masraf',
+            notes: expense.is_paid && expense.payment_account_type 
+              ? `Ödeme: ${expense.payment_account_type === 'cash' ? 'Kasa' : expense.payment_account_type === 'bank' ? 'Banka' : expense.payment_account_type === 'credit_card' ? 'Kredi Kartı' : 'Ortak'}`
+              : undefined,
+            reference_id: expense.id
+          });
+          
+          // 1. Masraf girişi (borç)
+          accountTransactions.push({
+            id: `expense_entry_${expense.id}`,
+            type: "expense",
+            amount: expense.amount,
+            description: expense.description || "Masraf",
+            transaction_date: expense.date,
+            category: expense.category?.name || 'Masraf',
+            reference: `EXP-${expense.id}`,
+            isExpenseEntry: true,
+            expenseId: expense.id
+          });
+          
+          // 2. Ödeme işlemi (alacak) - eğer ödendiyse
+          if (expense.is_paid && expense.paid_date) {
+            const paymentTransaction = paymentTransactions.find(
+              pt => pt.reference === `EXP-${expense.id}`
+            );
+            
+            const accountTypeLabel = expense.payment_account_type === 'cash' 
+              ? 'Kasa' 
+              : expense.payment_account_type === 'bank' 
+              ? 'Banka' 
+              : expense.payment_account_type === 'credit_card' 
+              ? 'Kredi Kartı' 
+              : 'Ortak';
+            
+            accountTransactions.push({
+              id: `expense_payment_${expense.id}`,
+              type: "income",
+              amount: expense.amount,
+              description: `Masraf Ödemesi (${accountTypeLabel})`,
+              transaction_date: expense.paid_date,
+              category: 'Masraf Ödemesi',
+              reference: `EXP-${expense.id}`,
+              isExpenseEntry: false,
+              expenseId: expense.id
+            });
+          }
+        });
+      }
+      
+      setEmployeeTransactions(accountTransactions);
+
       // Sort by date (newest first)
       formattedTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -225,6 +353,10 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
       formattedTransactions.reverse();
 
       setTransactions(formattedTransactions);
+      
+      // AccountTransactionHistory component'i kendi bakiye hesaplamasını yapacak
+      // Bu yüzden sadece transaction'ları set ediyoruz, balanceAfter hesaplamıyoruz
+      setEmployeeTransactions(accountTransactions);
 
     } catch (error: any) {
       toast({
@@ -251,6 +383,8 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
         return <Plus className="h-4 w-4 text-purple-600" />;
       case 'avans':
         return <CreditCard className="h-4 w-4 text-orange-600" />;
+      case 'masraf':
+        return <Receipt className="h-4 w-4 text-red-600" />;
       default:
         return <Activity className="h-4 w-4 text-gray-600" />;
     }
@@ -276,17 +410,16 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
 
   const exportStatement = () => {
     const headers = [
-      'Tarih', 'İşlem Tipi', 'Açıklama', 'Tutar', 'Durum', 'Bakiye', 'Notlar'
+      'Tarih', 'İşlem Tipi', 'Açıklama', 'Tutar', 'Bakiye', 'Kategori'
     ];
 
-    const csvData = filteredTransactions.map(transaction => [
-      new Date(transaction.date).toLocaleDateString('tr-TR'),
-      transaction.type,
-      transaction.description,
+    const csvData = employeeTransactions.map(transaction => [
+      new Date(transaction.transaction_date).toLocaleDateString('tr-TR'),
+      transaction.type === 'income' ? 'Gelir' : 'Gider',
+      transaction.description || '',
       transaction.amount.toLocaleString('tr-TR'),
-      transaction.status,
-      (transaction.balance_after || 0).toLocaleString('tr-TR'),
-      transaction.notes || ''
+      (transaction.balanceAfter || 0).toLocaleString('tr-TR'),
+      transaction.category || ''
     ]);
 
     const csvContent = [headers, ...csvData]
@@ -365,17 +498,6 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
             </CardTitle>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="search" className="text-sm">Ara:</Label>
-                <Input
-                  id="search"
-                  placeholder="İşlem ara..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-40"
-                />
-              </div>
-
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                 <SelectTrigger className="w-40">
                   <CalendarDays className="h-4 w-4 mr-2" />
@@ -386,18 +508,6 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
                   <SelectItem value="last_3_months">Son 3 Ay</SelectItem>
                   <SelectItem value="last_6_months">Son 6 Ay</SelectItem>
                   <SelectItem value="last_year">Son 1 Yıl</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
-                <SelectTrigger className="w-32">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
-                  <SelectItem value="income">Gelir</SelectItem>
-                  <SelectItem value="expense">Gider</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -415,69 +525,24 @@ export const EmployeeFinancialStatement = ({ employeeId, onEdit, refreshTrigger 
         </CardHeader>
 
         <CardContent className="p-0">
-          {filteredTransactions.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <div className="text-lg text-gray-600 mb-2">İşlem bulunamadı</div>
-              <div className="text-sm text-gray-500">Seçilen kriterlere uygun işlem bulunmuyor</div>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-              {filteredTransactions.map((transaction, index) => (
-                <div key={transaction.id} className="p-4 hover:bg-gray-50 transition-colors duration-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
-                        {getTransactionIcon(transaction.type)}
-                      </div>
-
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {transaction.description}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {new Date(transaction.date).toLocaleDateString('tr-TR', {
-                            weekday: 'short',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                          {transaction.category && (
-                            <span className="ml-2 text-xs bg-gray-200 px-2 py-0.5 rounded-full">
-                              {transaction.category}
-                            </span>
-                          )}
-                        </div>
-                        {transaction.notes && (
-                          <div className="text-xs text-gray-400 mt-1">
-                            {transaction.notes}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div className={`text-lg font-bold ${getTransactionColor(transaction.type, transaction.amount)}`}>
-                        {transaction.amount >= 0 ? '+' : ''}
-                        {showBalances ? formatCurrency(Math.abs(transaction.amount), 'TRY') : "••••••"}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Bakiye: {showBalances ? formatCurrency(transaction.balance_after || 0, 'TRY') : "••••••"}
-                      </div>
-                      <div className="mt-1 flex items-center gap-2">
-                        {getStatusBadge(transaction.status)}
-                        {transaction.payment_method && (
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                            {transaction.payment_method}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <AccountTransactionHistory
+            transactions={employeeTransactions.map(t => ({
+              id: t.id,
+              type: t.type,
+              amount: t.amount,
+              description: t.description || null,
+              transaction_date: t.transaction_date,
+              category: t.category || null,
+              reference: t.reference || null
+            }))}
+            currency="TRY"
+            showBalances={showBalances}
+            filterType={filterType}
+            onFilterTypeChange={setFilterType}
+            initialBalance={0}
+            emptyStateTitle="Henüz işlem bulunmuyor"
+            emptyStateDescription="İlk işleminizi ekleyerek başlayın"
+          />
         </CardContent>
       </Card>
     </div>

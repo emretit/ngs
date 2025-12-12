@@ -1,6 +1,9 @@
 import { useInfiniteScroll } from "./useInfiniteScroll";
 import { supabase } from "@/integrations/supabase/client";
 import { Supplier } from "@/types/supplier";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentUser } from "./useCurrentUser";
 
 interface UseSuppliersFilters {
   search?: string;
@@ -11,6 +14,36 @@ interface UseSuppliersFilters {
 }
 
 export const useSuppliersInfiniteScroll = (filters: UseSuppliersFilters = {}) => {
+  const queryClient = useQueryClient();
+  const { userData } = useCurrentUser();
+
+  // Real-time subscription - suppliers tablosundaki değişiklikleri dinle
+  useEffect(() => {
+    if (!userData?.company_id) return;
+
+    const channel = supabase
+      .channel('suppliers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'suppliers',
+          filter: `company_id=eq.${userData.company_id}`,
+        },
+        () => {
+          // Suppliers tablosunda herhangi bir değişiklik olduğunda query'yi invalidate et
+          queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription when component unmounts or company_id changes
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userData?.company_id, queryClient]);
+
   const fetchSuppliers = async (page: number, pageSize: number) => {
     let query = supabase
       .from("suppliers")

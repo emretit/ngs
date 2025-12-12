@@ -1,9 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Copy, Edit, Warehouse as WarehouseIcon } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { ArrowLeft, Edit, Warehouse as WarehouseIcon } from "lucide-react";
 import { Warehouse } from "@/types/warehouse";
 
 interface WarehouseDetailsHeaderProps {
@@ -14,43 +11,6 @@ interface WarehouseDetailsHeaderProps {
 }
 
 const WarehouseDetailsHeader = ({ warehouse, id, onEdit, onUpdate }: WarehouseDetailsHeaderProps) => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  const duplicateWarehouseMutation = useMutation({
-    mutationFn: async () => {
-      if (!warehouse) return;
-      
-      const newWarehouse = {
-        ...warehouse,
-        name: `${warehouse.name} (Kopya)`,
-        code: warehouse.code ? `${warehouse.code}-copy` : null,
-      };
-      
-      delete (newWarehouse as any).id;
-      delete (newWarehouse as any).created_at;
-      delete (newWarehouse as any).updated_at;
-
-      const { data, error } = await supabase
-        .from("warehouses")
-        .insert([newWarehouse])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: async (newWarehouse) => {
-      await queryClient.invalidateQueries({ queryKey: ["warehouses"] });
-      toast.success("Depo başarıyla kopyalandı");
-      if (newWarehouse) {
-        navigate(`/inventory/warehouses/${newWarehouse.id}`);
-      }
-    },
-    onError: () => {
-      toast.error("Depo kopyalanırken bir hata oluştu");
-    },
-  });
 
   const getTypeLabel = (type?: string) => {
     switch (type) {
@@ -143,14 +103,6 @@ const WarehouseDetailsHeader = ({ warehouse, id, onEdit, onUpdate }: WarehouseDe
         >
           <Edit className="h-4 w-4" />
           <span>Düzenle</span>
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={() => duplicateWarehouseMutation.mutate()}
-          disabled={duplicateWarehouseMutation.isPending}
-        >
-          <Copy className="h-4 w-4 mr-2" />
-          Kopyala
         </Button>
       </div>
     </div>

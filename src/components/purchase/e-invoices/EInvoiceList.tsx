@@ -26,21 +26,21 @@ import { useNilveraPdf } from '@/hooks/useNilveraPdf';
 import { DateDisplay } from '@/components/ui/date-display';
 
 export default function EInvoiceList() {
-  // Date range filter states - Default to current month
-  const getCurrentMonthRange = () => {
+  // Date range filter states - Default to last 30 days
+  const getLast30DaysRange = () => {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(now.getDate() - 30);
     
     return {
-      start: startOfMonth.toISOString().split('T')[0],
-      end: endOfMonth.toISOString().split('T')[0]
+      start: thirtyDaysAgo.toISOString().split('T')[0],
+      end: now.toISOString().split('T')[0]
     };
   };
   
-  const currentMonth = getCurrentMonthRange();
-  const [startDate, setStartDate] = useState(currentMonth.start);
-  const [endDate, setEndDate] = useState(currentMonth.end);
+  const defaultRange = getLast30DaysRange();
+  const [startDate, setStartDate] = useState(defaultRange.start);
+  const [endDate, setEndDate] = useState(defaultRange.end);
   
   const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ startDate, endDate });
   const navigate = useNavigate();

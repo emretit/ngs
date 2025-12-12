@@ -52,6 +52,19 @@ interface FinancialTransaction {
   reference_id?: string;
 }
 
+interface EmployeeTransaction {
+  id: string;
+  type: 'income' | 'expense';
+  amount: number;
+  description: string;
+  transaction_date: string;
+  category?: string;
+  reference?: string;
+  balanceAfter?: number;
+  isExpenseEntry?: boolean;
+  expenseId?: string;
+}
+
 interface EmployeeFinancialStatementProps {
   employeeId: string;
   onEdit?: (salaryData: any) => void;

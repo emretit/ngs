@@ -82,7 +82,7 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
     // Transfer işlemlerini transaction formatına çevir
     const transferActivities = transfers.map(transfer => ({
       id: `transfer_${transfer.id}`,
-      type: transfer.direction === 'incoming' ? 'income' : 'expense',
+      type: (transfer.direction === 'incoming' ? 'income' : 'expense') as 'income' | 'expense',
       amount: transfer.amount,
       description: transfer.direction === 'incoming' 
         ? `Transfer (${transfer.from_account_name || 'Bilinmeyen Hesap'} → Bu Hesap)`
@@ -93,8 +93,8 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
       isTransfer: true,
       transfer_direction: transfer.direction,
       category: 'Transfer',
-      customer_name: undefined,
-      supplier_name: undefined
+      customer_name: undefined as string | null | undefined,
+      supplier_name: undefined as string | null | undefined
     }));
 
     // Normal işlemler ve transfer işlemlerini birleştir

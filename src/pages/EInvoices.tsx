@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import EInvoiceHeader from "@/components/einvoice/EInvoiceHeader";
 import EInvoiceFilterBar from "@/components/einvoice/EInvoiceFilterBar";
@@ -15,21 +15,28 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  // Date range filter states - Default to last 3 months for better testing
+  // Date range filter states - Default to last 1 month
   const getDefaultDateRange = () => {
     const now = new Date();
-    // Last 3 months to capture more invoices
-    const startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const oneMonthAgo = new Date(now);
+    oneMonthAgo.setMonth(now.getMonth() - 1);
     return {
-      start: startDate.toISOString().split('T')[0],
-      end: endDate.toISOString().split('T')[0]
+      start: oneMonthAgo,
+      end: now
     };
   };
   const defaultRange = getDefaultDateRange();
-  const [startDate, setStartDate] = useState(defaultRange.start);
-  const [endDate, setEndDate] = useState(defaultRange.end);
-  const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ startDate, endDate });
+  const [startDate, setStartDate] = useState<Date | undefined>(defaultRange.start);
+  const [endDate, setEndDate] = useState<Date | undefined>(defaultRange.end);
+  
+  // Convert Date to string for API
+  const startDateString = startDate ? startDate.toISOString().split('T')[0] : undefined;
+  const endDateString = endDate ? endDate.toISOString().split('T')[0] : undefined;
+  
+  const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ 
+    startDate: startDateString, 
+    endDate: endDateString 
+  });
   
   // İşlenmiş e-fatura ID'lerini çek (purchase_invoices tablosundan)
   const { data: processedEinvoiceIds = [], refetch: refetchProcessedIds } = useQuery({
@@ -113,6 +120,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
+          onFilter={handleFilter}
           isFiltering={isLoading}
         />
         <EInvoiceContent

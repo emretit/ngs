@@ -2,6 +2,7 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, FileText, Calendar } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface EInvoiceFilterBarProps {
   searchTerm: string;
@@ -10,10 +11,10 @@ interface EInvoiceFilterBarProps {
   setDateFilter: (value: string) => void;
   typeFilter: string;
   setTypeFilter: (value: string) => void;
-  startDate: string;
-  setStartDate: (value: string) => void;
-  endDate: string;
-  setEndDate: (value: string) => void;
+  startDate?: Date | undefined;
+  setStartDate?: (value: Date | undefined) => void;
+  endDate?: Date | undefined;
+  setEndDate?: (value: Date | undefined) => void;
   onFilter?: () => void;
   isFiltering?: boolean;
 }
@@ -62,23 +63,29 @@ const EInvoiceFilterBar = ({
       </Select>
 
       {/* Tarih Filtreleri */}
-      <div className="flex items-center gap-2">
-        <Calendar className="h-4 w-4 text-muted-foreground" />
-        <Input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="w-[140px]"
-          title="Başlangıç Tarihi"
-        />
-        <span className="text-muted-foreground text-sm">-</span>
-        <Input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="w-[140px]"
-          title="Bitiş Tarihi"
-        />
+      <div className="flex items-center gap-2 border border-border rounded-lg p-2 bg-background">
+        <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-medium text-muted-foreground px-1">Başlangıç</label>
+            <DatePicker
+              date={startDate}
+              onSelect={setStartDate}
+              placeholder="Tarih seçin"
+              className="min-w-[140px]"
+            />
+          </div>
+          <span className="text-muted-foreground text-sm hidden sm:block">→</span>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-medium text-muted-foreground px-1">Bitiş</label>
+            <DatePicker
+              date={endDate}
+              onSelect={setEndDate}
+              placeholder="Tarih seçin"
+              className="min-w-[140px]"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

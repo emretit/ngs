@@ -50,20 +50,25 @@ function MonthYearSelector({
         setShowYearPicker(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    
+    if (showMonthPicker || showYearPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showMonthPicker, showYearPicker]);
 
   const handleMonthSelect = (monthIndex: number) => {
     const newDate = setMonth(currentMonth, monthIndex);
     onMonthChange(newDate);
-    setShowMonthPicker(false);
+    // Küçük bir gecikme ile kapat (animasyon için)
+    setTimeout(() => setShowMonthPicker(false), 100);
   };
 
   const handleYearSelect = (year: number) => {
     const newDate = setYear(currentMonth, year);
     onMonthChange(newDate);
-    setShowYearPicker(false);
+    // Küçük bir gecikme ile kapat (animasyon için)
+    setTimeout(() => setShowYearPicker(false), 100);
   };
 
   const handlePrevMonth = () => {
@@ -79,49 +84,53 @@ function MonthYearSelector({
   };
 
   return (
-    <div className="flex items-center justify-between px-1 pt-1 pb-3">
+    <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
       {/* Prev Button */}
       <button
+        type="button"
         onClick={handlePrevMonth}
-        className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-all duration-200 active:scale-95"
+        className="h-9 w-9 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 active:scale-95"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-5 w-5" />
       </button>
 
       {/* Month & Year Selectors */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         {/* Month Selector */}
         <div className="relative" ref={monthRef}>
           <button
+            type="button"
             onClick={() => {
               setShowMonthPicker(!showMonthPicker);
               setShowYearPicker(false);
             }}
             className={cn(
-              "px-3 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200",
-              "hover:bg-primary/10 hover:text-primary",
-              showMonthPicker && "bg-primary/10 text-primary"
+              "px-4 py-2 text-sm font-semibold rounded-md transition-all duration-150",
+              "hover:bg-accent/80 hover:text-foreground",
+              "border border-transparent",
+              showMonthPicker && "bg-accent text-foreground border-border"
             )}
           >
             {MONTHS[selectedMonth]}
           </button>
           
           {showMonthPicker && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 pointer-events-auto">
-              <div className="bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl shadow-black/20 p-2 grid grid-cols-3 gap-1 min-w-[200px]">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-[99999] pointer-events-auto">
+              <div className="bg-popover border border-border rounded-lg shadow-xl p-2 grid grid-cols-3 gap-1 min-w-[240px]">
                 {MONTHS.map((month, index) => (
                   <button
                     key={month}
                     onClick={() => handleMonthSelect(index)}
+                    type="button"
                     className={cn(
-                      "px-2 py-2 text-xs font-medium rounded-lg transition-all duration-150",
-                      "hover:bg-primary/15 hover:text-primary hover:scale-105",
+                      "px-3 py-2.5 text-xs font-medium rounded-md transition-all duration-100",
+                      "hover:bg-accent hover:text-foreground",
                       selectedMonth === index 
-                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/30" 
-                        : "text-foreground/80"
+                        ? "bg-primary text-primary-foreground font-semibold shadow-sm" 
+                        : "text-foreground/70"
                     )}
                   >
-                    {month.slice(0, 3)}
+                    {month}
                   </button>
                 ))}
               </div>
@@ -132,33 +141,36 @@ function MonthYearSelector({
         {/* Year Selector */}
         <div className="relative" ref={yearRef}>
           <button
+            type="button"
             onClick={() => {
               setShowYearPicker(!showYearPicker);
               setShowMonthPicker(false);
             }}
             className={cn(
-              "px-3 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200",
-              "hover:bg-primary/10 hover:text-primary",
-              showYearPicker && "bg-primary/10 text-primary"
+              "px-4 py-2 text-sm font-semibold rounded-md transition-all duration-150",
+              "hover:bg-accent/80 hover:text-foreground",
+              "border border-transparent",
+              showYearPicker && "bg-accent text-foreground border-border"
             )}
           >
             {selectedYear}
           </button>
           
           {showYearPicker && (
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 pointer-events-auto">
-              <div className="bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl shadow-black/20 p-2 max-h-[240px] overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-                <div className="grid grid-cols-4 gap-1 min-w-[180px]">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-[99999] pointer-events-auto">
+              <div className="bg-popover border border-border rounded-lg shadow-xl p-2 max-h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+                <div className="grid grid-cols-4 gap-1 min-w-[220px]">
                   {YEARS.map((year) => (
                     <button
                       key={year}
                       onClick={() => handleYearSelect(year)}
+                      type="button"
                       className={cn(
-                        "px-2 py-2 text-xs font-medium rounded-lg transition-all duration-150",
-                        "hover:bg-primary/15 hover:text-primary hover:scale-105",
+                        "px-3 py-2.5 text-xs font-medium rounded-md transition-all duration-100",
+                        "hover:bg-accent hover:text-foreground",
                         selectedYear === year 
-                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/30" 
-                          : "text-foreground/80"
+                          ? "bg-primary text-primary-foreground font-semibold shadow-sm" 
+                          : "text-foreground/70"
                       )}
                     >
                       {year}
@@ -173,10 +185,11 @@ function MonthYearSelector({
 
       {/* Next Button */}
       <button
+        type="button"
         onClick={handleNextMonth}
-        className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-all duration-200 active:scale-95"
+        className="h-9 w-9 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150 active:scale-95"
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-5 w-5" />
       </button>
     </div>
   );
@@ -208,7 +221,7 @@ function EnhancedCalendar({
   );
 
   return (
-    <div className={cn("p-3", className)}>
+    <div className={cn("pb-3", className)}>
       {/* Custom Month/Year Header */}
       <MonthYearSelector
         currentMonth={currentMonth}
@@ -219,7 +232,7 @@ function EnhancedCalendar({
       <DayPicker
         mode="single"
         showOutsideDays={showOutsideDays}
-        className="pointer-events-auto"
+        className="pointer-events-auto px-3 pt-2"
         weekStartsOn={1}
         locale={tr}
         month={currentMonth}
@@ -227,50 +240,53 @@ function EnhancedCalendar({
         selected={selected}
         onSelect={onSelect}
         disabled={disabled}
+        formatters={{
+          formatWeekdayName: (date) => {
+            const weekdays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+            return weekdays[date.getDay() === 0 ? 6 : date.getDay() - 1];
+          }
+        }}
         classNames={{
           months: "flex flex-col",
-          month: "space-y-2",
+          month: "space-y-3",
           caption: "hidden",
           nav: "hidden",
-          table: "w-full border-collapse",
+          table: "w-full border-collapse border-spacing-0",
           head_row: "flex mb-1",
           head_cell: cn(
-            "text-muted-foreground/70 rounded-md w-10 h-8 font-medium text-[11px] uppercase tracking-wider",
+            "text-muted-foreground/60 w-10 h-8 font-semibold text-[11px] uppercase tracking-wide",
             "flex items-center justify-center"
           ),
-          row: "flex w-full",
+          row: "flex w-full mt-0.5",
           cell: cn(
-            "relative p-0.5 text-center text-sm focus-within:relative focus-within:z-20",
+            "relative p-0 text-center text-sm",
             "[&:has([aria-selected])]:bg-transparent"
           ),
           day: cn(
-            "h-9 w-9 p-0 font-medium rounded-lg",
+            "h-10 w-10 p-0 font-normal rounded-md text-sm",
             "inline-flex items-center justify-center",
-            "transition-all duration-200 ease-out",
-            "hover:bg-primary/10 hover:text-primary hover:scale-110",
-            "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-1",
+            "transition-colors duration-100",
+            "hover:bg-accent hover:text-accent-foreground",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             "aria-selected:opacity-100"
           ),
           day_range_end: "day-range-end",
           day_selected: cn(
-            "bg-gradient-to-br from-primary to-primary/80",
-            "text-primary-foreground font-semibold",
-            "shadow-lg shadow-primary/25",
-            "hover:from-primary hover:to-primary/90 hover:text-primary-foreground hover:scale-110",
-            "focus:from-primary focus:to-primary/90 focus:text-primary-foreground"
+            "bg-primary text-primary-foreground font-semibold",
+            "hover:bg-primary hover:text-primary-foreground",
+            "focus:bg-primary focus:text-primary-foreground"
           ),
           day_today: cn(
-            "relative font-semibold text-primary",
-            "before:absolute before:inset-0 before:rounded-lg before:border-2 before:border-primary/40",
-            "before:animate-pulse"
+            "bg-accent/50 font-semibold",
+            "aria-selected:bg-primary aria-selected:text-primary-foreground"
           ),
           day_outside: cn(
-            "text-muted-foreground/40 opacity-60",
-            "hover:bg-muted/50 hover:text-muted-foreground/60",
-            "aria-selected:bg-accent/30 aria-selected:text-muted-foreground/50"
+            "text-muted-foreground/40",
+            "hover:bg-accent/50 hover:text-muted-foreground/60",
+            "aria-selected:bg-accent/30 aria-selected:text-muted-foreground"
           ),
-          day_disabled: "text-muted-foreground/30 opacity-40 cursor-not-allowed hover:bg-transparent hover:scale-100",
-          day_range_middle: "aria-selected:bg-accent/20 aria-selected:text-accent-foreground",
+          day_disabled: "text-muted-foreground/30 opacity-40 cursor-not-allowed hover:bg-transparent",
+          day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
           day_hidden: "invisible",
           ...customClassNames,
         }}
@@ -305,8 +321,8 @@ export function EnhancedDatePicker({
         <Button
           variant="outline"
           className={cn(
-            "w-full h-8 justify-between text-left font-normal text-xs",
-            "border-border/50 hover:border-primary/50 hover:bg-accent/30",
+            "w-full h-9 justify-between text-left font-normal text-xs",
+            "border-border hover:border-primary/50 hover:bg-accent/50",
             "transition-all duration-200",
             "group",
             !date && "text-muted-foreground",
@@ -314,23 +330,24 @@ export function EnhancedDatePicker({
           )}
           disabled={isButtonDisabled}
         >
-          <span className="truncate text-left flex-1">
-            {date ? format(date, "dd MMMM yyyy", { locale: tr }) : placeholder}
+          <span className="truncate text-left flex-1 text-sm">
+            {date ? format(date, "dd MMM yyyy", { locale: tr }) : placeholder}
           </span>
-          <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50 group-hover:opacity-80 transition-opacity" />
+          <CalendarIcon className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
         </Button>
       </PopoverTrigger>
       <PopoverContent 
         className={cn(
           "w-auto p-0",
-          "bg-popover/95 backdrop-blur-xl",
-          "border-border/50",
-          "shadow-2xl shadow-black/20",
+          "bg-popover backdrop-blur-xl",
+          "border-2 border-border",
+          "shadow-2xl",
           "rounded-xl",
           "z-[9999] pointer-events-auto"
         )} 
         align="start"
-        sideOffset={8}
+        sideOffset={4}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <EnhancedCalendar
           mode="single"

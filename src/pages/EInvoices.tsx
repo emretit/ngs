@@ -15,19 +15,20 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  // Date range filter states - Default to current month
-  const getCurrentMonthRange = () => {
+  // Date range filter states - Default to last 3 months for better testing
+  const getDefaultDateRange = () => {
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    // Last 3 months to capture more invoices
+    const startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     return {
-      start: startOfMonth.toISOString().split('T')[0],
-      end: endOfMonth.toISOString().split('T')[0]
+      start: startDate.toISOString().split('T')[0],
+      end: endDate.toISOString().split('T')[0]
     };
   };
-  const currentMonth = getCurrentMonthRange();
-  const [startDate, setStartDate] = useState(currentMonth.start);
-  const [endDate, setEndDate] = useState(currentMonth.end);
+  const defaultRange = getDefaultDateRange();
+  const [startDate, setStartDate] = useState(defaultRange.start);
+  const [endDate, setEndDate] = useState(defaultRange.end);
   const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ startDate, endDate });
   
   // İşlenmiş e-fatura ID'lerini çek (purchase_invoices tablosundan)

@@ -99,8 +99,8 @@ const WarehouseDetails = () => {
       setFilters(prev => ({
         ...prev,
         warehouse_id: id,
-        transaction_type: typeFilter !== "all" ? typeFilter : "all",
-        status: statusFilter !== "all" ? statusFilter : "all",
+        transaction_type: typeFilter as typeof prev.transaction_type,
+        status: statusFilter as typeof prev.status,
         search: debouncedSearchQuery,
         dateRange: {
           from: startDate || null,

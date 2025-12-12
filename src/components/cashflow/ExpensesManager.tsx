@@ -44,6 +44,7 @@ export interface ExpenseItem {
   parent_expense_id?: string | null;
   payment_account_type?: 'cash' | 'bank' | 'credit_card' | 'partner' | null;
   payment_account_id?: string | null;
+  company_id?: string;
 }
 
 interface ExpensesManagerProps {

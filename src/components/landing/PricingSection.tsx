@@ -17,7 +17,7 @@ const PricingSection = () => {
   };
 
   return (
-    <section id="pricing" className="relative py-24 px-4 sm:px-6 lg:px-8">
+    <section id="pricing" className="scroll-mt-24 relative py-24 px-4 sm:px-6 lg:px-8">
       {/* Dark Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(220,38,38,0.15),transparent_60%)]"></div>

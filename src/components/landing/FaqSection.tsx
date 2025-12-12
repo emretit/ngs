@@ -6,7 +6,7 @@ const FaqSection = () => {
   const { t } = useTranslation();
   
   return (
-    <section id="faq" className="py-24 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-gray-50 via-white to-gray-50">
+    <section id="faq" className="scroll-mt-24 py-24 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-gray-50 via-white to-gray-50">
       {/* Light Background with subtle effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-gray-50"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(220,38,38,0.05),transparent_60%)]"></div>

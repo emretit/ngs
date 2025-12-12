@@ -20,8 +20,8 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react";
-import { generateSQLFromQuery, executeSQLQuery, testGroqConnection } from "@/services/groqService";
-import { GroqUsageTracker } from "@/services/groqUsageTracker";
+import { generateSQLFromQuery, executeSQLQuery, testGeminiConnection } from "@/services/geminiService";
+import { GeminiUsageTracker } from "@/services/geminiUsageTracker";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -37,7 +37,7 @@ export const AIAgentPanel = memo(() => {
   const [selectedModel, setSelectedModel] = useState("llama3-70b-8192");
   const [isRunning, setIsRunning] = useState(false);
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'error'>('checking');
-  const usageTracker = GroqUsageTracker.getInstance();
+  const usageTracker = GeminiUsageTracker.getInstance();
 
   useEffect(() => {
     checkAPIConnection();
@@ -45,7 +45,7 @@ export const AIAgentPanel = memo(() => {
 
   const checkAPIConnection = async () => {
     setApiStatus('checking');
-    const isConnected = await testGroqConnection();
+    const isConnected = await testGeminiConnection();
     setApiStatus(isConnected ? 'connected' : 'error');
   };
 
@@ -195,7 +195,7 @@ export const AIAgentPanel = memo(() => {
               <AlertCircle className="h-3 w-3 text-amber-500" />
             )}
             <span className="text-[10px] text-muted-foreground">
-              {apiStatus === 'connected' ? 'Groq API Aktif' : apiStatus === 'error' ? 'Demo Mod' : 'Kontrol ediliyor...'}
+              {apiStatus === 'connected' ? 'Gemini API Aktif' : apiStatus === 'error' ? 'Demo Mod' : 'Kontrol ediliyor...'}
             </span>
           </div>
         </div>

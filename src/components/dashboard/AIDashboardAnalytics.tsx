@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { generateSQLFromQuery, executeSQLQuery, testGroqConnection } from "@/services/groqService";
-import { GroqUsageTracker } from "@/services/groqUsageTracker";
+import { generateSQLFromQuery, executeSQLQuery, testGeminiConnection } from "@/services/geminiService";
+import { GeminiUsageTracker } from "@/services/geminiUsageTracker";
 import {
   Send,
   Bot,
@@ -46,7 +46,7 @@ export default function AIDashboardAnalytics() {
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [isExpanded, setIsExpanded] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const usageTracker = GroqUsageTracker.getInstance();
+  const usageTracker = GeminiUsageTracker.getInstance();
 
   useEffect(() => {
     checkAPIConnection();
@@ -54,14 +54,14 @@ export default function AIDashboardAnalytics() {
 
   const checkAPIConnection = async () => {
     setApiStatus('checking');
-    const isConnected = await testGroqConnection();
+    const isConnected = await testGeminiConnection();
     setApiStatus(isConnected ? 'connected' : 'error');
 
     if (!isConnected) {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         type: 'ai',
-        content: '⚠️ Groq API bağlantısı kurulamadı. .env dosyanızda VITE_GROQ_API_KEY ayarlandığından emin olun.',
+        content: '⚠️ Google Gemini API bağlantısı kurulamadı. Lütfen API anahtarınızı kontrol edin.',
         timestamp: new Date(),
         error: 'API_CONNECTION_ERROR'
       }]);

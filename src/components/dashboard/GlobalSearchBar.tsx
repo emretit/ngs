@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { generateSQLFromQuery, executeSQLQuery } from "@/services/groqService";
+import { generateSQLFromQuery, executeSQLQuery } from "@/services/geminiService";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ChatMessage {

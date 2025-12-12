@@ -32,6 +32,9 @@ export const useDashboardData = () => {
     },
     enabled: !!userData?.company_id,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes - garbage collection
+    refetchOnWindowFocus: false, // Don't refetch on tab switch
+    retry: 2, // Retry twice on failure
   });
 
   // Combined CRM stats query
@@ -54,6 +57,9 @@ export const useDashboardData = () => {
     },
     enabled: !!userData?.company_id,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 2,
   });
 
   // Combined HR stats query
@@ -74,6 +80,9 @@ export const useDashboardData = () => {
     },
     enabled: !!userData?.company_id,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 2,
   });
 
   return {

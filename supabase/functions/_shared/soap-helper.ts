@@ -1232,7 +1232,7 @@ export class SoapClient {
       );
       
       // Calculate MD5 hash
-      const md5Hash = SparkMD5.ArrayBuffer.hash(arrayBuffer);
+      const md5Hash = SparkMD5.ArrayBuffer.hash(arrayBuffer as ArrayBuffer);
       
       console.log('✅ MD5 hash calculated successfully');
       return md5Hash.toUpperCase();

@@ -719,6 +719,67 @@ export type Database = {
           },
         ]
       }
+      budget_approvals: {
+        Row: {
+          approval_level: number
+          approver_id: string | null
+          comment: string | null
+          company_id: string
+          created_at: string | null
+          decided_at: string | null
+          id: string
+          revision_id: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          approval_level: number
+          approver_id?: string | null
+          comment?: string | null
+          company_id: string
+          created_at?: string | null
+          decided_at?: string | null
+          id?: string
+          revision_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          approval_level?: number
+          approver_id?: string | null
+          comment?: string | null
+          company_id?: string
+          created_at?: string | null
+          decided_at?: string | null
+          id?: string
+          revision_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_approvals_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_approvals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_approvals_revision_id_fkey"
+            columns: ["revision_id"]
+            isOneToOne: false
+            referencedRelation: "budget_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_categories: {
         Row: {
           company_id: string | null
@@ -763,6 +824,150 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "budget_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_forecasts: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          department_id: string | null
+          forecast_amount: number | null
+          forecast_type: string | null
+          id: string
+          month: number
+          subcategory: string | null
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          category: string
+          company_id: string
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          department_id?: string | null
+          forecast_amount?: number | null
+          forecast_type?: string | null
+          id?: string
+          month: number
+          subcategory?: string | null
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          department_id?: string | null
+          forecast_amount?: number | null
+          forecast_type?: string | null
+          id?: string
+          month?: number
+          subcategory?: string | null
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_forecasts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_forecasts_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_revisions: {
+        Row: {
+          approval_level: number | null
+          approved_at: string | null
+          budget_id: string | null
+          category: string
+          company_id: string
+          created_at: string | null
+          id: string
+          max_approval_level: number | null
+          month: number | null
+          new_requested_amount: number
+          old_budget_amount: number | null
+          reason: string
+          rejected_at: string | null
+          rejected_reason: string | null
+          requester_id: string | null
+          status: string
+          subcategory: string | null
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          approval_level?: number | null
+          approved_at?: string | null
+          budget_id?: string | null
+          category: string
+          company_id: string
+          created_at?: string | null
+          id?: string
+          max_approval_level?: number | null
+          month?: number | null
+          new_requested_amount?: number
+          old_budget_amount?: number | null
+          reason: string
+          rejected_at?: string | null
+          rejected_reason?: string | null
+          requester_id?: string | null
+          status?: string
+          subcategory?: string | null
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          approval_level?: number | null
+          approved_at?: string | null
+          budget_id?: string | null
+          category?: string
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          max_approval_level?: number | null
+          month?: number | null
+          new_requested_amount?: number
+          old_budget_amount?: number | null
+          reason?: string
+          rejected_at?: string | null
+          rejected_reason?: string | null
+          requester_id?: string | null
+          status?: string
+          subcategory?: string | null
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_revisions_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_revisions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -6386,7 +6591,7 @@ export type Database = {
           po_id: string | null
           status: Database["public"]["Enums"]["invoice_status"] | null
           subtotal: number
-          supplier_id: string
+          supplier_id: string | null
           tax_amount: number
           total_amount: number
           updated_at: string | null
@@ -6405,7 +6610,7 @@ export type Database = {
           po_id?: string | null
           status?: Database["public"]["Enums"]["invoice_status"] | null
           subtotal?: number
-          supplier_id: string
+          supplier_id?: string | null
           tax_amount?: number
           total_amount?: number
           updated_at?: string | null
@@ -6424,7 +6629,7 @@ export type Database = {
           po_id?: string | null
           status?: Database["public"]["Enums"]["invoice_status"] | null
           subtotal?: number
-          supplier_id?: string
+          supplier_id?: string | null
           tax_amount?: number
           total_amount?: number
           updated_at?: string | null

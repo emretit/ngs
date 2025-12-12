@@ -154,8 +154,7 @@ const BudgetDashboard = () => {
               </div>
             </Tabs>
           </Card>
-        );
-    }
+    );
   };
 
   return (

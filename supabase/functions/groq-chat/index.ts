@@ -12,7 +12,7 @@ interface ChatMessage {
 }
 
 interface GroqRequest {
-  type: 'chat' | 'sql' | 'analyze' | 'map-columns' | 'status';
+  type: 'chat' | 'sql' | 'analyze' | 'map-columns' | 'status' | 'report';
   messages?: ChatMessage[];
   query?: string;
   data?: any;
@@ -21,10 +21,63 @@ interface GroqRequest {
   summary?: Record<string, any>;
   sourceColumns?: string[];
   targetFields?: Array<{ name: string; description: string }>;
+  stream?: boolean;
+  context?: {
+    startDate?: string;
+    endDate?: string;
+    currency?: string;
+  };
 }
 
+// Database schema for SQL generation
+const DATABASE_SCHEMA = `
+TABLOLAR VE İLİŞKİLER:
+
+1. proposals (Teklifler)
+   - id, customer_id, status, total_amount, currency, created_at, valid_until
+   - status: 'draft', 'sent', 'accepted', 'rejected', 'expired'
+
+2. proposal_items (Teklif Kalemleri)
+   - id, proposal_id, product_id, product_name, quantity, unit_price, total_price
+
+3. customers (Müşteriler)
+   - id, name, email, phone, address, city, balance, type, status, created_at
+
+4. products (Ürünler)
+   - id, name, code, price, quantity (stok), category_id, unit, created_at
+
+5. orders (Siparişler)
+   - id, customer_id, status, total_amount, created_at
+
+6. sales_invoices (Satış Faturaları)
+   - id, customer_id, total_amount, status, invoice_date, due_date
+
+7. einvoices (Alış Faturaları)
+   - id, supplier_id, total_amount, status, invoice_date
+
+8. suppliers (Tedarikçiler)
+   - id, name, email, phone, balance, created_at
+
+9. service_requests (Servis Talepleri)
+   - id, customer_id, service_status, priority, created_at, completed_at, assigned_to
+
+10. employees (Çalışanlar)
+    - id, first_name, last_name, email, department_id, is_active, hire_date
+
+11. vehicles (Araçlar)
+    - id, plate_number, brand, model, year, status
+
+12. vehicle_fuel (Yakıt Kayıtları)
+    - id, vehicle_id, fuel_date, liters, total_cost, odometer
+
+13. opportunities (Satış Fırsatları)
+    - id, customer_id, value, status, stage, probability, expected_close_date
+
+14. activities (Aktiviteler/Görevler)
+    - id, title, type, status, due_date, assignee_id
+`;
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -33,9 +86,9 @@ serve(async (req) => {
   
   try {
     const body: GroqRequest = await req.json();
-    const { type, model = 'llama-3.3-70b-versatile' } = body;
+    const { type, model = 'llama-3.3-70b-versatile', stream = false } = body;
 
-    // Status check - returns whether API is configured
+    // Status check
     if (type === 'status') {
       return new Response(JSON.stringify({ 
         configured: !!GROQ_API_KEY,
@@ -62,11 +115,53 @@ serve(async (req) => {
         messages = body.messages || [];
         break;
 
+      case 'report':
+        // Enhanced report query with full schema context
+        const contextInfo = body.context ? 
+          `\nFİLTRELER:\n- Başlangıç: ${body.context.startDate || 'Belirtilmedi'}\n- Bitiş: ${body.context.endDate || 'Belirtilmedi'}\n- Para Birimi: ${body.context.currency || 'TRY'}` : '';
+        
+        messages = [
+          {
+            role: 'system',
+            content: `Sen bir iş analizi ve raporlama uzmanısın. Kullanıcının Türkçe sorularını analiz edip:
+1. Uygun PostgreSQL SELECT sorgusu oluştur
+2. Sonuçların nasıl görselleştirileceğini öner
+3. Kısa bir açıklama yaz
+
+${DATABASE_SCHEMA}
+
+KURALLAR:
+- SADECE SELECT sorguları oluştur, veri değiştiren sorgular YASAK
+- Tarih filtrelerini WHERE clause'a ekle
+- Aggregate fonksiyonları (SUM, COUNT, AVG) kullan
+- Anlamlı alias'lar kullan
+
+YANIT FORMATI (JSON):
+{
+  "sql": "SELECT sorgusu",
+  "explanation": "Türkçe kısa açıklama",
+  "chartType": "table|bar|line|pie|area",
+  "chartConfig": {
+    "xKey": "x ekseni alan adı",
+    "yKey": "y ekseni alan adı",
+    "title": "Grafik başlığı"
+  }
+}`
+          },
+          {
+            role: 'user',
+            content: `${body.query}${contextInfo}`
+          }
+        ];
+        break;
+
       case 'sql':
         messages = [
           {
             role: 'system',
             content: `Sen bir SQL uzmanısın. Kullanıcının doğal dil sorgularını PostgreSQL SELECT sorgularına çeviriyorsun.
+
+${DATABASE_SCHEMA}
             
 KURALLAR:
 - SADECE SELECT sorguları oluştur
@@ -89,32 +184,28 @@ KURALLAR:
         messages = [
           {
             role: 'system',
-            content: `Sen bir veri analiz uzmanısın. Supabase veritabanı verilerini analiz edip Türkçe olarak özetliyorsun.
-Verileri detaylı analiz edip, önemli bulguları ve önerileri sunuyorsun.`
+            content: `Sen bir veri analiz uzmanısın. Verileri analiz edip Türkçe olarak içgörüler sunuyorsun.
+Kısa, öz ve aksiyon odaklı analizler yap.`
           },
           {
             role: 'user',
-            content: `Aşağıdaki Supabase verilerini analiz et ve Türkçe olarak özetle.
+            content: `Aşağıdaki verileri analiz et:
 
 TABLO: ${body.tableName}
-TOPLAM KAYIT SAYISI: ${body.data?.length || 0}
+KAYIT SAYISI: ${body.data?.length || 0}
 
 VERİ ÖZETİ:
 ${summaryText}
 
-ÖRNEK VERİLER (ilk 10 kayıt):
+ÖRNEK VERİLER:
 ${sampleData}
 
-GÖREVİN:
-1. Verilerin genel durumunu özetle (2-3 cümle)
-2. Önemli bulguları listele (3-5 madde)
-3. Öneriler sun (2-3 madde)
-
-Yanıtını JSON formatında ver:
+JSON formatında yanıt ver:
 {
-  "summary": "Genel özet",
-  "insights": ["bulgu1", "bulgu2", ...],
-  "recommendations": ["öneri1", "öneri2", ...]
+  "summary": "2-3 cümlelik özet",
+  "insights": ["önemli bulgu 1", "bulgu 2", "bulgu 3"],
+  "recommendations": ["öneri 1", "öneri 2"],
+  "alerts": ["dikkat edilmesi gereken durum"]
 }`
           }
         ];
@@ -150,8 +241,40 @@ Bu kolonları en uygun hedef alanlarla eşleştir.`
         });
     }
 
-    console.log(`Groq API call - Type: ${type}, Model: ${model}`);
+    console.log(`Groq API call - Type: ${type}, Model: ${model}, Stream: ${stream}`);
 
+    // Handle streaming for chat
+    if (stream && type === 'chat') {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.7,
+          max_tokens: 2000,
+          stream: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Groq API streaming error:', response.status, errorText);
+        return new Response(JSON.stringify({ error: `Groq API error: ${response.status}` }), {
+          status: response.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      return new Response(response.body, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+      });
+    }
+
+    // Non-streaming request
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -162,8 +285,10 @@ Bu kolonları en uygun hedef alanlarla eşleştir.`
         model,
         messages,
         temperature: type === 'sql' ? 0.1 : 0.7,
-        max_tokens: type === 'sql' ? 500 : 1000,
-        response_format: (type === 'analyze' || type === 'map-columns') ? { type: 'json_object' } : undefined,
+        max_tokens: type === 'sql' ? 500 : 2000,
+        response_format: (type === 'analyze' || type === 'map-columns' || type === 'report') 
+          ? { type: 'json_object' } 
+          : undefined,
       }),
     });
 
@@ -182,15 +307,12 @@ Bu kolonları en uygun hedef alanlarla eşleştir.`
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || '';
 
-    // Parse response based on type
     let result: any = { content };
 
     if (type === 'sql') {
-      // Clean SQL query
       let sql = content.trim();
       sql = sql.replace(/```sql\n?/gi, '').replace(/```\n?/g, '').trim();
       
-      // Security check
       const forbidden = /\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE)\b/i;
       if (forbidden.test(sql)) {
         return new Response(JSON.stringify({ 
@@ -202,7 +324,7 @@ Bu kolonları en uygun hedef alanlarla eşleştir.`
       }
       
       result = { sql, raw: content };
-    } else if (type === 'analyze' || type === 'map-columns') {
+    } else if (type === 'analyze' || type === 'map-columns' || type === 'report') {
       try {
         result = JSON.parse(content);
       } catch {

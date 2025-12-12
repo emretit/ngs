@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { generateSQLFromQuery, executeSQLQuery, testGroqConnection, testDatabaseTables } from "@/services/groqService";
-import { GroqUsageTracker } from "@/services/groqUsageTracker";
-import GroqUsageMonitor from "./GroqUsageMonitor";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Send,
   Bot,
@@ -14,13 +12,35 @@ import {
   Loader2,
   Database,
   BarChart3,
-  MessageSquare,
   Sparkles,
   Copy,
-  Download,
+  Check,
   AlertTriangle,
-  BarChart
+  TrendingUp,
+  PieChart,
+  LineChart,
+  Table,
+  Lightbulb,
+  ChevronRight
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart as RechartsPie,
+  Pie,
+  Cell,
+  LineChart as RechartsLine,
+  Line,
+  AreaChart,
+  Area,
+  Legend
+} from "recharts";
+import { cn } from "@/lib/utils";
 
 interface ChatMessage {
   id: string;
@@ -30,69 +50,72 @@ interface ChatMessage {
   sql?: string;
   data?: any[];
   error?: string;
-  chartType?: 'table' | 'bar' | 'line' | 'pie';
+  chartType?: 'table' | 'bar' | 'line' | 'pie' | 'area';
+  chartConfig?: {
+    xKey?: string;
+    yKey?: string;
+    title?: string;
+  };
+  isStreaming?: boolean;
 }
 
 interface AIReportChatProps {
   searchParams: URLSearchParams;
 }
 
+const CHART_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
+
+const QUICK_QUERIES = [
+  { label: "Bu ayın satışları", query: "Bu ayın toplam satış tutarı nedir?" },
+  { label: "En çok satanlar", query: "En çok satan 10 ürün hangileri?" },
+  { label: "Müşteri analizi", query: "Müşteri bazında gelir dağılımını göster" },
+  { label: "Açık siparişler", query: "Açık durumda kaç sipariş var?" },
+  { label: "Stok durumu", query: "Kritik stok seviyesindeki ürünler hangileri?" },
+  { label: "Servis talepleri", query: "Açık servis taleplerinin durumu nedir?" },
+];
+
 export default function AIReportChat({ searchParams }: AIReportChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       type: 'ai',
-      content: 'Merhaba! Size raporlarınızla ilgili nasıl yardımcı olabilirim? Örneğin: "Bu ayın satış toplamı", "En çok satan ürünler", "Müşteri bazında gelir analizi" gibi sorular sorabilirsiniz.',
+      content: 'Merhaba! Size raporlarınızla ilgili nasıl yardımcı olabilirim? Doğal dilde sorular sorabilir veya hızlı sorgu önerilerini kullanabilirsiniz.',
       timestamp: new Date()
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'error'>('checking');
-  const [showUsageMonitor, setShowUsageMonitor] = useState(false);
+  const [copiedSql, setCopiedSql] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const usageTracker = GroqUsageTracker.getInstance();
 
-  // Check Groq API connection on mount
   useEffect(() => {
     checkAPIConnection();
   }, []);
 
   const checkAPIConnection = async () => {
     setApiStatus('checking');
-    const isConnected = await testGroqConnection();
-    setApiStatus(isConnected ? 'connected' : 'error');
-
-    if (!isConnected) {
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: '⚠️ Groq API bağlantısı kurulamadı. .env dosyanızda VITE_GROQ_API_KEY ayarlandığından emin olun. Şimdilik demo mod aktif.',
-        timestamp: new Date(),
-        error: 'API_CONNECTION_ERROR'
-      }]);
-    }
-  };
-
-  const testTables = async () => {
-    setIsLoading(true);
     try {
-      const availableTables = await testDatabaseTables();
-      const tableMessage = {
-        id: Date.now().toString(),
-        type: 'ai' as const,
-        content: `Mevcut tablolar test edildi:\n\n✅ Kullanılabilir tablolar:\n${availableTables.map(t => `- ${t}`).join('\n')}\n\nBu tablolar üzerinde sorgular yapabilirsiniz.`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, tableMessage]);
-    } catch (error) {
-      console.error('Table test failed:', error);
-    } finally {
-      setIsLoading(false);
+      const { data, error } = await supabase.functions.invoke('groq-chat', {
+        body: { type: 'status' }
+      });
+      
+      if (error || !data?.configured) {
+        setApiStatus('error');
+      } else {
+        setApiStatus('connected');
+      }
+    } catch {
+      setApiStatus('error');
     }
   };
 
-  // Auto scroll to bottom when new messages are added
   useEffect(() => {
     if (scrollAreaRef.current) {
       const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -102,158 +125,88 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
     }
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
-
-    // Check usage limits before processing
-    const canRequest = usageTracker.canMakeRequest();
-    if (!canRequest.allowed) {
-      const errorMessage: ChatMessage = {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: `⚠️ ${canRequest.reason}`,
-        timestamp: new Date(),
-        error: 'RATE_LIMIT_EXCEEDED'
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      return;
-    }
+  const handleSendMessage = async (query?: string) => {
+    const messageText = query || inputValue.trim();
+    if (!messageText) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputValue,
+      content: messageText,
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
-    const query = inputValue;
     setInputValue('');
     setIsLoading(true);
 
+    // Add placeholder AI message for streaming effect
+    const aiMessageId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, {
+      id: aiMessageId,
+      type: 'ai',
+      content: '',
+      timestamp: new Date(),
+      isStreaming: true
+    }]);
+
     try {
-      // Use real Groq API if connected, otherwise fallback to demo
-      if (apiStatus === 'connected') {
-        // Track the request
-        usageTracker.trackRequest();
-        const result = await generateSQLFromQuery(query);
-
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        // Execute SQL and get data
-        const data = await executeSQLQuery(result.sql);
-
-        const aiResponse: ChatMessage = {
-          id: Date.now().toString(),
-          type: 'ai',
-          content: result.explanation || 'SQL sorgusu başarıyla oluşturuldu ve çalıştırıldı.',
-          timestamp: new Date(),
-          sql: result.sql,
-          data: data,
-          chartType: result.chartType || 'table'
-        };
-
-        setMessages(prev => [...prev, aiResponse]);
-      } else {
-        // Fallback to demo processing
-        const aiResponse = processUserQuery(query);
-        setMessages(prev => [...prev, aiResponse]);
-      }
-    } catch (error: any) {
-      const errorResponse: ChatMessage = {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: `Üzgünüm, sorgunuzu işlerken bir hata oluştu: ${error.message}`,
-        timestamp: new Date(),
-        error: error.message
+      const context = {
+        startDate: searchParams.get('startDate') || undefined,
+        endDate: searchParams.get('endDate') || undefined,
+        currency: searchParams.get('currency') || 'TRY',
       };
 
-      setMessages(prev => [...prev, errorResponse]);
+      const { data, error } = await supabase.functions.invoke('groq-chat', {
+        body: { 
+          type: 'report',
+          query: messageText,
+          context
+        }
+      });
+
+      if (error) throw new Error(error.message);
+
+      // Execute the SQL query if we got one
+      let queryData: any[] = [];
+      if (data?.sql) {
+        try {
+          const { data: sqlResult, error: sqlError } = await supabase.rpc('execute_readonly_query', {
+            query_text: data.sql
+          });
+          
+          if (!sqlError && sqlResult) {
+            queryData = sqlResult;
+          }
+        } catch (sqlErr) {
+          console.error('SQL execution error:', sqlErr);
+        }
+      }
+
+      // Update the AI message with results
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId ? {
+          ...msg,
+          content: data?.explanation || 'Sorgunuz işlendi.',
+          sql: data?.sql,
+          data: queryData,
+          chartType: data?.chartType || 'table',
+          chartConfig: data?.chartConfig,
+          isStreaming: false
+        } : msg
+      ));
+
+    } catch (error: any) {
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId ? {
+          ...msg,
+          content: `Üzgünüm, bir hata oluştu: ${error.message}`,
+          error: error.message,
+          isStreaming: false
+        } : msg
+      ));
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const processUserQuery = (query: string): ChatMessage => {
-    // Mock AI processing - konuşma dilinden SQL'e çevirme simülasyonu
-    const lowerQuery = query.toLowerCase();
-
-    if (lowerQuery.includes('satış') || lowerQuery.includes('gelir')) {
-      return {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: 'Satış verilerinizi analiz ettim. İşte bu ayın satış raporu:',
-        timestamp: new Date(),
-        sql: `SELECT
-  DATE_TRUNC('month', created_at) as month,
-  SUM(total_amount) as total_sales,
-  COUNT(*) as order_count
-FROM proposals
-WHERE status = 'accepted'
-  AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
-GROUP BY month
-ORDER BY month DESC;`,
-        data: [
-          { month: '2025-09', total_sales: 450000, order_count: 23 },
-          { month: '2025-08', total_sales: 380000, order_count: 19 }
-        ],
-        chartType: 'bar'
-      };
-    } else if (lowerQuery.includes('ürün') || lowerQuery.includes('product')) {
-      return {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: 'En çok satan ürünlerinizin listesini hazırladım:',
-        timestamp: new Date(),
-        sql: `SELECT
-  p.name,
-  SUM(pi.quantity) as total_sold,
-  SUM(pi.total_price) as total_revenue
-FROM products p
-JOIN proposal_items pi ON p.id = pi.product_id
-JOIN proposals pr ON pi.proposal_id = pr.id
-WHERE pr.status = 'accepted'
-GROUP BY p.id, p.name
-ORDER BY total_sold DESC
-LIMIT 10;`,
-        data: [
-          { name: 'Laptop Dell XPS', total_sold: 45, total_revenue: 135000 },
-          { name: 'Yazıcı HP LaserJet', total_sold: 32, total_revenue: 48000 }
-        ],
-        chartType: 'table'
-      };
-    } else if (lowerQuery.includes('müşteri') || lowerQuery.includes('customer')) {
-      return {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: 'Müşteri bazında gelir analizinizi hazırladım:',
-        timestamp: new Date(),
-        sql: `SELECT
-  c.name as customer_name,
-  COUNT(p.id) as proposal_count,
-  SUM(p.total_amount) as total_revenue,
-  AVG(p.total_amount) as avg_order_value
-FROM customers c
-JOIN proposals p ON c.id = p.customer_id
-WHERE p.status = 'accepted'
-GROUP BY c.id, c.name
-ORDER BY total_revenue DESC
-LIMIT 15;`,
-        data: [
-          { customer_name: 'ABC Teknoloji', proposal_count: 8, total_revenue: 95000, avg_order_value: 11875 },
-          { customer_name: 'XYZ Ltd.', proposal_count: 5, total_revenue: 72000, avg_order_value: 14400 }
-        ],
-        chartType: 'pie'
-      };
-    } else {
-      return {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: 'Üzgünüm, bu soruyu tam olarak anlayamadım. Lütfen şu türde sorular sorun:\n\n• "Bu ayın satış toplamı nedir?"\n• "En çok satan ürünler hangileri?"\n• "Müşteri bazında gelir analizi"\n• "Geçen ayın kar marjı"\n• "Açık siparişlerin durumu"',
-        timestamp: new Date()
-      };
     }
   };
 
@@ -266,273 +219,341 @@ LIMIT 15;`,
 
   const copySQL = (sql: string) => {
     navigator.clipboard.writeText(sql);
+    setCopiedSql(sql);
+    setTimeout(() => setCopiedSql(null), 2000);
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('tr-TR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const renderDataVisualization = (message: ChatMessage) => {
+  const formatValue = (value: any, key: string): string => {
+    if (typeof value === 'number') {
+      if (key.includes('amount') || key.includes('total') || key.includes('revenue') || key.includes('value') || key.includes('price')) {
+        return `₺${value.toLocaleString('tr-TR')}`;
+      }
+      if (key.includes('percent') || key.includes('rate') || key.includes('margin')) {
+        return `%${value.toFixed(1)}`;
+      }
+      return value.toLocaleString('tr-TR');
+    }
+    return String(value ?? '-');
+  };
+
+  const renderChart = (message: ChatMessage) => {
     if (!message.data || message.data.length === 0) return null;
 
-    if (message.chartType === 'table') {
-      const columns = Object.keys(message.data[0]);
-      return (
-        <div className="mt-3 border rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                {columns.map(col => (
-                  <th key={col} className="px-3 py-2 text-left font-medium text-gray-700 capitalize">
-                    {col.replace(/_/g, ' ')}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {message.data.map((row, idx) => (
-                <tr key={idx} className="border-t">
-                  {columns.map(col => (
-                    <td key={col} className="px-3 py-2 text-gray-900">
-                      {typeof row[col] === 'number' && col.includes('revenue') || col.includes('sales') || col.includes('total') ?
-                        `₺${row[col].toLocaleString()}` :
-                        row[col]
-                      }
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
+    const columns = Object.keys(message.data[0]);
+    const xKey = message.chartConfig?.xKey || columns[0];
+    const yKey = message.chartConfig?.yKey || columns.find(c => typeof message.data![0][c] === 'number') || columns[1];
 
-    // Diğer chart türleri için placeholder
-    return (
-      <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-center gap-2 text-blue-700">
-          <BarChart3 className="h-4 w-4" />
-          <span className="text-sm font-medium">Grafik Görünümü ({message.chartType})</span>
-        </div>
-        <p className="text-xs text-blue-600 mt-1">
-          Veri başarıyla yüklendi. Grafik görünümü yakında eklenecek.
-        </p>
-      </div>
-    );
+    switch (message.chartType) {
+      case 'bar':
+        return (
+          <div className="mt-4 h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={message.data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey={xKey} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }} 
+                />
+                <Bar dataKey={yKey} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case 'line':
+        return (
+          <div className="mt-4 h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RechartsLine data={message.data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey={xKey} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }} 
+                />
+                <Line type="monotone" dataKey={yKey} stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+              </RechartsLine>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case 'pie':
+        return (
+          <div className="mt-4 h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RechartsPie>
+                <Pie
+                  data={message.data.slice(0, 6)}
+                  dataKey={yKey}
+                  nameKey={xKey}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  labelLine={false}
+                >
+                  {message.data.slice(0, 6).map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }} 
+                />
+              </RechartsPie>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case 'area':
+        return (
+          <div className="mt-4 h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={message.data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey={xKey} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }} 
+                />
+                <Area type="monotone" dataKey={yKey} stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        );
+
+      case 'table':
+      default:
+        return (
+          <div className="mt-3 border border-border/50 rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    {columns.map(col => (
+                      <th key={col} className="px-3 py-2.5 text-left font-medium text-muted-foreground capitalize text-xs">
+                        {col.replace(/_/g, ' ')}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {message.data.slice(0, 10).map((row, idx) => (
+                    <tr key={idx} className="border-t border-border/30 hover:bg-muted/30 transition-colors">
+                      {columns.map(col => (
+                        <td key={col} className="px-3 py-2 text-foreground text-xs">
+                          {formatValue(row[col], col)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {message.data.length > 10 && (
+              <div className="px-3 py-2 bg-muted/30 text-xs text-muted-foreground text-center">
+                +{message.data.length - 10} daha fazla kayıt
+              </div>
+            )}
+          </div>
+        );
+    }
+  };
+
+  const getChartIcon = (type?: string) => {
+    switch (type) {
+      case 'bar': return <BarChart3 className="h-3.5 w-3.5" />;
+      case 'line': return <LineChart className="h-3.5 w-3.5" />;
+      case 'pie': return <PieChart className="h-3.5 w-3.5" />;
+      case 'area': return <TrendingUp className="h-3.5 w-3.5" />;
+      default: return <Table className="h-3.5 w-3.5" />;
+    }
   };
 
   return (
-    <div className="space-y-4">
-      {/* Usage Monitor */}
-      <GroqUsageMonitor
-        isVisible={showUsageMonitor}
-        onToggle={() => setShowUsageMonitor(false)}
-      />
-
-      {/* Main Chat Card */}
-      <Card className="h-[600px] flex flex-col">
-      <CardHeader className="pb-4 flex-shrink-0">
+    <Card className="border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden">
+      <CardHeader className="pb-3 border-b border-border/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg text-white">
+            <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg text-white shadow-lg shadow-violet-500/20">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-lg font-semibold">AI Rapor Asistanı</CardTitle>
-              <p className="text-sm text-muted-foreground">Konuşma dilinizle rapor oluşturun</p>
+              <CardTitle className="text-base font-semibold">AI Rapor Asistanı</CardTitle>
+              <p className="text-xs text-muted-foreground">Doğal dilde soru sorun, anında rapor alın</p>
             </div>
           </div>
           <Badge
-            variant="secondary"
-            className={
-              apiStatus === 'connected'
-                ? 'bg-green-100 text-green-700'
-                : apiStatus === 'error'
-                ? 'bg-red-100 text-red-700'
-                : 'bg-yellow-100 text-yellow-700'
-            }
+            variant="outline"
+            className={cn(
+              "text-xs",
+              apiStatus === 'connected' && 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+              apiStatus === 'error' && 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+              apiStatus === 'checking' && 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+            )}
           >
             {apiStatus === 'checking' ? (
-              <>
-                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                Kontrol Ediliyor
-              </>
+              <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Kontrol</>
             ) : apiStatus === 'connected' ? (
-              <>
-                <Database className="h-3 w-3 mr-1" />
-                Groq AI Aktif
-              </>
+              <><Database className="h-3 w-3 mr-1" />Aktif</>
             ) : (
-              <>
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                Demo Mod
-              </>
+              <><AlertTriangle className="h-3 w-3 mr-1" />Hata</>
             )}
           </Badge>
-          <div className="flex gap-2">
+        </div>
+
+        {/* Quick Query Suggestions */}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {QUICK_QUERIES.map((q, idx) => (
             <Button
+              key={idx}
               variant="outline"
               size="sm"
-              onClick={testTables}
+              onClick={() => handleSendMessage(q.query)}
               disabled={isLoading}
-              title="Veritabanı Tablolarını Test Et"
+              className="h-7 text-xs gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/30"
             >
-              <Database className="h-4 w-4" />
+              <Lightbulb className="h-3 w-3" />
+              {q.label}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowUsageMonitor(!showUsageMonitor)}
-              title="Kullanım İstatistikleri"
-            >
-              <BarChart className="h-4 w-4" />
-            </Button>
-          </div>
+          ))}
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+      <CardContent className="p-0 flex flex-col h-[450px]">
         {/* Messages Area */}
-        <ScrollArea className="flex-1 px-6 min-h-0" ref={scrollAreaRef}>
-          <div className="space-y-4 pb-4">
+        <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
+          <div className="space-y-4 py-4">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-3 ${
+                className={cn(
+                  "flex gap-3",
                   message.type === 'user' ? 'justify-end' : 'justify-start'
-                }`}
+                )}
               >
                 {message.type === 'ai' && (
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-violet-500/20">
                       <Bot className="h-4 w-4 text-white" />
                     </div>
                   </div>
                 )}
 
-                <div className={`max-w-[80%] ${message.type === 'user' ? 'order-2' : ''}`}>
+                <div className={cn("max-w-[85%]", message.type === 'user' && 'order-2')}>
                   <div
-                    className={`rounded-lg px-4 py-3 ${
+                    className={cn(
+                      "rounded-xl px-4 py-3",
                       message.type === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted/50 text-foreground border border-border/30'
+                    )}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    {message.isStreaming ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Analiz ediliyor...</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    )}
                   </div>
 
                   {/* SQL Query Display */}
-                  {message.sql && (
-                    <div className="mt-2 p-3 bg-gray-900 rounded-lg text-green-400 font-mono text-xs">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-400">Generated SQL:</span>
+                  {message.sql && !message.isStreaming && (
+                    <div className="mt-2 rounded-lg overflow-hidden border border-border/30">
+                      <div className="flex items-center justify-between px-3 py-2 bg-muted/30">
+                        <span className="text-xs text-muted-foreground font-medium">SQL Sorgusu</span>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => copySQL(message.sql!)}
-                          className="h-6 px-2 text-gray-400 hover:text-white"
+                          className="h-6 px-2 text-xs"
                         >
-                          <Copy className="h-3 w-3" />
+                          {copiedSql === message.sql ? (
+                            <><Check className="h-3 w-3 mr-1" />Kopyalandı</>
+                          ) : (
+                            <><Copy className="h-3 w-3 mr-1" />Kopyala</>
+                          )}
                         </Button>
                       </div>
-                      <pre className="overflow-x-auto">{message.sql}</pre>
+                      <pre className="p-3 bg-zinc-900 text-emerald-400 font-mono text-xs overflow-x-auto">
+                        {message.sql}
+                      </pre>
+                    </div>
+                  )}
+
+                  {/* Chart Type Badge */}
+                  {message.data && message.data.length > 0 && !message.isStreaming && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs gap-1">
+                        {getChartIcon(message.chartType)}
+                        {message.data.length} kayıt
+                      </Badge>
                     </div>
                   )}
 
                   {/* Data Visualization */}
-                  {renderDataVisualization(message)}
+                  {!message.isStreaming && renderChart(message)}
 
-                  <div className="mt-1 text-xs text-gray-500">
+                  <div className="mt-1.5 text-[10px] text-muted-foreground">
                     {formatTime(message.timestamp)}
                   </div>
                 </div>
 
                 {message.type === 'user' && (
                   <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-white" />
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-primary-foreground" />
                     </div>
                   </div>
                 )}
               </div>
             ))}
-
-            {/* Loading State */}
-            {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-white" />
-                  </div>
-                </div>
-                <div className="bg-gray-100 rounded-lg px-4 py-3">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">AI raporu hazırlıyor...</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t p-4 flex-shrink-0">
+        <div className="border-t border-border/30 p-4 bg-muted/20">
           <div className="flex gap-2">
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Rapor sorgunuzu yazın... (örn: 'Bu ayın satış toplamı nedir?')"
-              disabled={isLoading}
-              className="flex-1"
+              placeholder="Soru sorun... (örn: 'Bu ayın satış toplamı nedir?')"
+              disabled={isLoading || apiStatus !== 'connected'}
+              className="flex-1 bg-background/50"
             />
             <Button
-              onClick={handleSendMessage}
-              disabled={isLoading || !inputValue.trim()}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              onClick={() => handleSendMessage()}
+              disabled={isLoading || !inputValue.trim() || apiStatus !== 'connected'}
+              className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-lg shadow-violet-500/20"
             >
               <Send className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex gap-2 mt-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setInputValue('Bu ayın satış toplamı nedir?')}
-              disabled={isLoading}
-              className="text-xs"
-            >
-              💰 Satış Toplamı
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setInputValue('En çok satan ürünler hangileri?')}
-              disabled={isLoading}
-              className="text-xs"
-            >
-              📦 En Çok Satan
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setInputValue('Müşteri bazında gelir analizi')}
-              disabled={isLoading}
-              className="text-xs"
-            >
-              👥 Müşteri Analizi
             </Button>
           </div>
         </div>
       </CardContent>
     </Card>
-    </div>
   );
 }

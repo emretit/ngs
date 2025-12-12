@@ -121,7 +121,7 @@ export default function ReportsPurchasingSection({ isExpanded, onToggle, searchP
     enabled: isExpanded
   });
 
-  const totalPurchasing = monthlyVolume?.reduce((sum, m) => sum + m.tutar, 0) || 0;
+  const totalPurchasing = monthlyVolume?.reduce((sum, m) => sum + (m.tutar as number), 0) || 0;
 
   return (
     <Card className="border-border/50">

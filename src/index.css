@@ -64,9 +64,105 @@
   background-size: 40px 40px;
 }
 
+/* Hero Grid Pattern - 3D Space Feel */
+.hero-grid {
+  background-image: 
+    linear-gradient(90deg, rgba(220, 38, 38, 0.1) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(220, 38, 38, 0.1) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
 /* Enhanced Shadow */
 .shadow-3xl {
   box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== AAA GAME INTRO - CINEMATIC EFFECTS ===== */
+
+/* Light Sweep - Panel üzerinden geçen ışık */
+@keyframes light-sweep {
+  0% { transform: translateX(-100%) rotate(25deg); }
+  100% { transform: translateX(200%) rotate(25deg); }
+}
+
+.light-sweep-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.02) 45%,
+    rgba(255,255,255,0.06) 50%,
+    rgba(255,255,255,0.02) 55%,
+    transparent 100%
+  );
+  animation: light-sweep 12s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Noise/Grain Overlay */
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.015;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: overlay;
+}
+
+/* Fog Gradient Drift */
+@keyframes fog-drift {
+  0%, 100% { 
+    transform: translateX(0) scale(1); 
+    opacity: 0.6; 
+  }
+  50% { 
+    transform: translateX(3%) scale(1.05); 
+    opacity: 0.8; 
+  }
+}
+
+@keyframes fog-drift-reverse {
+  0%, 100% { 
+    transform: translateX(0) scale(1); 
+    opacity: 0.5; 
+  }
+  50% { 
+    transform: translateX(-3%) scale(1.08); 
+    opacity: 0.7; 
+  }
+}
+
+.animate-fog-drift {
+  animation: fog-drift 20s ease-in-out infinite;
+}
+
+.animate-fog-drift-reverse {
+  animation: fog-drift-reverse 25s ease-in-out infinite;
+}
+
+/* Floating Dashboard Panel */
+.floating-dashboard-panel {
+  will-change: transform;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .light-sweep-overlay,
+  .animate-fog-drift,
+  .animate-fog-drift-reverse,
+  .floating-dashboard-panel {
+    animation: none !important;
+    transform: none !important;
+  }
+  
+  .hero-stage * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* React Big Calendar Özelleştirmeleri */

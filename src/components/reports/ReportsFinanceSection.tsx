@@ -112,12 +112,15 @@ export default function ReportsFinanceSection({ isExpanded, onToggle, searchPara
         return acc;
       }, {} as Record<string, { inflow: number; outflow: number }>);
       
-      return Object.entries(monthly).map(([month, d]) => ({
-        month,
-        gelen: d.inflow,
-        giden: d.outflow,
-        net: d.inflow - d.outflow
-      }));
+      return Object.entries(monthly).map(([month, d]) => {
+        const data = d as { inflow: number; outflow: number };
+        return {
+          month,
+          gelen: data.inflow,
+          giden: data.outflow,
+          net: data.inflow - data.outflow
+        };
+      });
     },
     enabled: isExpanded
   });

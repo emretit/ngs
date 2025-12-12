@@ -3,6 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SoapClient } from '../_shared/soap-helper.ts';
 import { parseUBLTRXML, decodeZIPAndExtractXML } from '../_shared/ubl-parser.ts';
 
+// Kaynak limitini aşmamak için maksimum fatura sayısı
+const MAX_INVOICES_PER_REQUEST = 5;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -269,8 +272,7 @@ serve(async (req) => {
         });
       }
 
-      // Kaynak limitini aşmamak için maksimum 5 fatura işle
-      const MAX_INVOICES_PER_REQUEST = 5;
+      // Kaynak limitini aşmamak için maksimum fatura sayısı kadar işle
       const documentList = allDocuments.slice(0, MAX_INVOICES_PER_REQUEST);
       
       if (allDocuments.length > MAX_INVOICES_PER_REQUEST) {

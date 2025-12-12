@@ -269,7 +269,13 @@ serve(async (req) => {
         });
       }
 
-      const documentList = allDocuments;
+      // Kaynak limitini aşmamak için maksimum 5 fatura işle
+      const MAX_INVOICES_PER_REQUEST = 5;
+      const documentList = allDocuments.slice(0, MAX_INVOICES_PER_REQUEST);
+      
+      if (allDocuments.length > MAX_INVOICES_PER_REQUEST) {
+        console.log(`⚠️ Toplam ${allDocuments.length} fatura var, kaynak limiti nedeniyle ilk ${MAX_INVOICES_PER_REQUEST} tanesi işlenecek`);
+      }
 
       // Fetch and parse each invoice
       console.log(`🔄 ${documentList.length} adet fatura detayı çekiliyor...`);
@@ -429,10 +435,16 @@ serve(async (req) => {
       }
     }
 
+    const hasMore = allDocuments.length > MAX_INVOICES_PER_REQUEST;
+    
     return new Response(JSON.stringify({ 
       success: true,
       invoices,
-      message: `${invoices.length} adet fatura alındı`
+      message: hasMore 
+        ? `${invoices.length} adet fatura alındı (toplam ${allDocuments.length} faturadan)`
+        : `${invoices.length} adet fatura alındı`,
+      totalCount: allDocuments.length,
+      hasMore
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

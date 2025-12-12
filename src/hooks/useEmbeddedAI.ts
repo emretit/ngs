@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react';
-import { analyzeSupabaseData, analyzeMultipleTables, DataAnalysisResult } from '@/services/embeddedAIService';
-import { checkGroqStatus } from '@/services/groqService';
+import { useState, useEffect } from 'react';
+import { analyzeSupabaseData, analyzeMultipleTables, DataAnalysisResult, getModelStatus } from '@/services/embeddedAIService';
 
 export const useEmbeddedAI = () => {
   const [loading, setLoading] = useState(false);
@@ -8,13 +7,17 @@ export const useEmbeddedAI = () => {
   const [modelStatus, setModelStatus] = useState({ loaded: false, loading: true });
 
   // Check model status on mount
-  const checkStatus = useCallback(async () => {
-    const status = await checkGroqStatus();
-    setModelStatus({ loaded: status.configured, loading: false });
-    return { loaded: status.configured, loading: false, message: status.message };
+  useEffect(() => {
+    checkStatus();
   }, []);
 
-  const analyzeTable = useCallback(async (
+  const checkStatus = async () => {
+    const status = await getModelStatus();
+    setModelStatus({ loaded: status.loaded, loading: false });
+    return { loaded: status.loaded, loading: false, message: status.loaded ? 'Gemini API hazır' : 'Gemini API yapılandırılmadı' };
+  };
+
+  const analyzeTable = async (
     tableName: string,
     query?: {
       select?: string;
@@ -34,9 +37,9 @@ export const useEmbeddedAI = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const analyzeTables = useCallback(async (
+  const analyzeTables = async (
     tables: Array<{ name: string; query?: any }>
   ): Promise<Record<string, DataAnalysisResult>> => {
     try {
@@ -51,7 +54,7 @@ export const useEmbeddedAI = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   return {
     analyzeTable,

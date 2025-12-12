@@ -23,5 +23,5 @@ verify_jwt = true
 [functions.exchange-rates]
 verify_jwt = false
 
-[functions.groq-chat]
+[functions.gemini-chat]
 verify_jwt = true

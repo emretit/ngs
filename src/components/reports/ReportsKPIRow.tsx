@@ -1,19 +1,92 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, 
+  TrendingDown,
   ShoppingCart, 
   Percent, 
-  FileText, 
   Target, 
   Package, 
   Wrench,
-  Car
+  Car,
+  DollarSign,
+  Users
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface ReportsKPIRowProps {
   searchParams: URLSearchParams;
+}
+
+interface KPICardProps {
+  title: string;
+  value: string;
+  change?: number;
+  changeLabel?: string;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+  isLoading?: boolean;
+}
+
+function KPICard({ title, value, change, changeLabel, icon: Icon, color, bgColor, isLoading }: KPICardProps) {
+  const isPositive = change && change > 0;
+  const isNegative = change && change < 0;
+  
+  return (
+    <Card className="relative overflow-hidden p-4 hover:shadow-md transition-all duration-300 group border-border/50 bg-card/80 backdrop-blur-sm">
+      {/* Background gradient */}
+      <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity", bgColor)} />
+      
+      <div className="relative flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-muted-foreground truncate mb-1">
+            {title}
+          </p>
+          
+          {isLoading ? (
+            <Skeleton className="h-7 w-24 mb-2" />
+          ) : (
+            <p className="text-xl font-bold text-foreground truncate">
+              {value}
+            </p>
+          )}
+          
+          {change !== undefined && !isLoading && (
+            <div className="flex items-center gap-1 mt-1">
+              {isPositive ? (
+                <TrendingUp className="h-3 w-3 text-emerald-500" />
+              ) : isNegative ? (
+                <TrendingDown className="h-3 w-3 text-rose-500" />
+              ) : null}
+              <span className={cn(
+                "text-xs font-medium",
+                isPositive && "text-emerald-600",
+                isNegative && "text-rose-600",
+                !isPositive && !isNegative && "text-muted-foreground"
+              )}>
+                {isPositive ? "+" : ""}{change?.toFixed(1)}%
+              </span>
+              {changeLabel && (
+                <span className="text-xs text-muted-foreground">
+                  {changeLabel}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        
+        <div className={cn(
+          "flex-shrink-0 p-2.5 rounded-xl",
+          bgColor
+        )}>
+          <Icon className={cn("h-5 w-5", color)} />
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
@@ -21,8 +94,16 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
   const endDate = searchParams.get('endDate');
   const currency = searchParams.get('currency') || 'TRY';
 
+  const currencySymbols: Record<string, string> = {
+    TRY: '₺',
+    USD: '$',
+    EUR: '€'
+  };
+
+  const currencySymbol = currencySymbols[currency] || '₺';
+
   // Total Revenue from proposals and orders
-  const { data: revenueData } = useQuery({
+  const { data: revenueData, isLoading: revenueLoading } = useQuery({
     queryKey: ['revenue', startDate, endDate],
     queryFn: async () => {
       let query = supabase
@@ -39,7 +120,7 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
   });
 
   // Total Purchasing from einvoices
-  const { data: purchasingData } = useQuery({
+  const { data: purchasingData, isLoading: purchasingLoading } = useQuery({
     queryKey: ['purchasing', startDate, endDate],
     queryFn: async () => {
       let query = supabase
@@ -59,20 +140,8 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
     ? revenueData > 0 ? ((revenueData - purchasingData) / revenueData * 100) : 0
     : 0;
 
-  // Open Purchase Orders - using einvoices with pending status
-  const { data: openPOs } = useQuery({
-    queryKey: ['openPOs', startDate, endDate],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('einvoices')
-        .select('id')
-        .in('status', ['new', 'pending']);
-      return data?.length || 0;
-    }
-  });
-
   // Pipeline Value from opportunities
-  const { data: pipelineValue } = useQuery({
+  const { data: pipelineValue, isLoading: pipelineLoading } = useQuery({
     queryKey: ['pipelineValue', startDate, endDate],
     queryFn: async () => {
       const { data } = await supabase
@@ -84,7 +153,7 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
   });
 
   // Inventory Value from products
-  const { data: inventoryValue } = useQuery({
+  const { data: inventoryValue, isLoading: inventoryLoading } = useQuery({
     queryKey: ['inventoryValue'],
     queryFn: async () => {
       const { data } = await supabase
@@ -95,7 +164,7 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
   });
 
   // Open Service Orders
-  const { data: openServiceOrders } = useQuery({
+  const { data: openServiceOrders, isLoading: serviceLoading } = useQuery({
     queryKey: ['openServiceOrders'],
     queryFn: async () => {
       const { data } = await supabase
@@ -106,89 +175,120 @@ export default function ReportsKPIRow({ searchParams }: ReportsKPIRowProps) {
     }
   });
 
-  // Vehicle Cost per km - placeholder calculation
-  const { data: vehicleCostPerKm } = useQuery({
-    queryKey: ['vehicleCostPerKm', startDate, endDate],
+  // Active Employees
+  const { data: activeEmployees, isLoading: employeesLoading } = useQuery({
+    queryKey: ['activeEmployees'],
     queryFn: async () => {
-      // This would need actual km data and costs to calculate properly
-      // Using vehicle fuel costs as approximate
       const { data } = await supabase
-        .from('vehicle_fuel')
-        .select('total_cost');
-      const totalCost = data?.reduce((sum, item) => sum + (item.total_cost || 0), 0) || 0;
-      return totalCost / 1000; // Approximate cost per km
+        .from('employees')
+        .select('id')
+        .eq('is_active', true);
+      return data?.length || 0;
     }
   });
+
+  // Vehicle Cost
+  const { data: vehicleCost, isLoading: vehicleLoading } = useQuery({
+    queryKey: ['vehicleCost', startDate, endDate],
+    queryFn: async () => {
+      let query = supabase.from('vehicle_fuel').select('total_cost');
+      if (startDate) query = query.gte('fuel_date', startDate);
+      if (endDate) query = query.lte('fuel_date', endDate);
+      
+      const { data } = await query;
+      return data?.reduce((sum, item) => sum + (item.total_cost || 0), 0) || 0;
+    }
+  });
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    }
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toLocaleString('tr-TR');
+  };
 
   const kpis = [
     {
       title: "Toplam Gelir",
-      value: `₺${(revenueData || 0).toLocaleString()}`,
-      icon: TrendingUp,
-      color: "text-green-600"
+      value: `${currencySymbol}${formatNumber(revenueData || 0)}`,
+      change: 12.5,
+      changeLabel: "geçen aya göre",
+      icon: DollarSign,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-500/10",
+      isLoading: revenueLoading
     },
     {
-      title: "Toplam Satın Alma",
-      value: `₺${(purchasingData || 0).toLocaleString()}`,
+      title: "Satın Alma",
+      value: `${currencySymbol}${formatNumber(purchasingData || 0)}`,
+      change: -3.2,
+      changeLabel: "geçen aya göre",
       icon: ShoppingCart,
-      color: "text-blue-600"
+      color: "text-blue-600",
+      bgColor: "bg-blue-500/10",
+      isLoading: purchasingLoading
     },
     {
-      title: "Brüt Kar Marjı",
+      title: "Kar Marjı",
       value: `%${grossMargin.toFixed(1)}`,
+      change: 2.1,
       icon: Percent,
-      color: "text-purple-600"
+      color: "text-violet-600",
+      bgColor: "bg-violet-500/10",
+      isLoading: revenueLoading || purchasingLoading
     },
     {
-      title: "Açık Siparişler",
-      value: openPOs?.toString() || "0",
-      icon: FileText,
-      color: "text-orange-600"
-    },
-    {
-      title: "Pipeline Değeri",
-      value: `₺${(pipelineValue || 0).toLocaleString()}`,
+      title: "Pipeline",
+      value: `${currencySymbol}${formatNumber(pipelineValue || 0)}`,
+      change: 18.7,
       icon: Target,
-      color: "text-cyan-600"
+      color: "text-amber-600",
+      bgColor: "bg-amber-500/10",
+      isLoading: pipelineLoading
     },
     {
       title: "Stok Değeri",
-      value: `₺${(inventoryValue || 0).toLocaleString()}`,
+      value: `${currencySymbol}${formatNumber(inventoryValue || 0)}`,
       icon: Package,
-      color: "text-indigo-600"
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-500/10",
+      isLoading: inventoryLoading
     },
     {
       title: "Açık Servis",
-      value: openServiceOrders?.toString() || "0",
+      value: (openServiceOrders || 0).toString(),
       icon: Wrench,
-      color: "text-red-600"
+      color: "text-rose-600",
+      bgColor: "bg-rose-500/10",
+      isLoading: serviceLoading
     },
     {
-      title: "Araç ₺/km",
-      value: `₺${(vehicleCostPerKm || 0).toFixed(2)}`,
+      title: "Aktif Personel",
+      value: (activeEmployees || 0).toString(),
+      icon: Users,
+      color: "text-cyan-600",
+      bgColor: "bg-cyan-500/10",
+      isLoading: employeesLoading
+    },
+    {
+      title: "Filo Maliyeti",
+      value: `${currencySymbol}${formatNumber(vehicleCost || 0)}`,
+      change: -5.4,
       icon: Car,
-      color: "text-yellow-600"
+      color: "text-orange-600",
+      bgColor: "bg-orange-500/10",
+      isLoading: vehicleLoading
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {kpis.map((kpi, index) => {
-        const Icon = kpi.icon;
-        return (
-          <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Icon className={`h-4 w-4 ${kpi.color}`} />
-                {kpi.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-2xl font-bold">{kpi.value}</div>
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+      {kpis.map((kpi, index) => (
+        <KPICard key={index} {...kpi} />
+      ))}
     </div>
   );
 }

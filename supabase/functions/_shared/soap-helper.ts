@@ -445,6 +445,9 @@ export class SoapClient {
 </soapenv:Envelope>`;
 
     try {
+      console.log('🔄 GetDocumentList SOAP Request URL:', url);
+      console.log('🔄 GetDocumentList SOAP Request Body:', soapRequest);
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -455,8 +458,12 @@ export class SoapClient {
       });
 
       const xmlText = await response.text();
+      console.log('📄 GetDocumentList SOAP Response Status:', response.status);
+      console.log('📄 GetDocumentList SOAP Response (first 3000 chars):', xmlText.substring(0, 3000));
+      
       return this.parseGetDocumentListResponse(xmlText);
     } catch (error) {
+      console.error('❌ GetDocumentList fetch error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'GetDocumentList failed',
@@ -891,43 +898,114 @@ export class SoapClient {
    */
   private static parseGetDocumentListResponse(xmlText: string): ElogoSoapResponse {
     try {
+      // Debug: Log raw response (first 2000 chars for debugging)
+      console.log('📄 GetDocumentList Raw Response (first 2000 chars):', xmlText.substring(0, 2000));
+      
       const resultCodeMatch = xmlText.match(/<a:resultCode>(.*?)<\/a:resultCode>/);
       const resultCode = resultCodeMatch ? parseInt(resultCodeMatch[1]) : -1;
 
       const resultMsgMatch = xmlText.match(/<a:resultMsg>(.*?)<\/a:resultMsg>/);
       const resultMsg = resultMsgMatch ? resultMsgMatch[1] : '';
 
+      console.log('📊 GetDocumentList resultCode:', resultCode, 'resultMsg:', resultMsg);
+
       if (resultCode !== 1) {
+        console.log('❌ GetDocumentList resultCode is not 1');
         return {
           success: false,
-          error: resultMsg,
+          error: resultMsg || `Beklenmeyen resultCode: ${resultCode}`,
           resultCode,
           resultMsg,
         };
       }
 
-      // Extract document list
-      const docListMatch = xmlText.match(/<docList>(.*?)<\/docList>/s);
-      const docListXml = docListMatch ? docListMatch[1] : '';
+      // Try multiple document list patterns (e-Logo API might use different tags)
+      let docListXml = '';
+      
+      // Pattern 1: <docList>...</docList>
+      const docListMatch1 = xmlText.match(/<docList>(.*?)<\/docList>/s);
+      if (docListMatch1) {
+        docListXml = docListMatch1[1];
+        console.log('✅ Found docList pattern 1');
+      }
+      
+      // Pattern 2: <a:docList>...</a:docList>
+      if (!docListXml) {
+        const docListMatch2 = xmlText.match(/<a:docList>(.*?)<\/a:docList>/s);
+        if (docListMatch2) {
+          docListXml = docListMatch2[1];
+          console.log('✅ Found docList pattern 2 (a: prefix)');
+        }
+      }
+      
+      // Pattern 3: <GetDocumentListResult>...</GetDocumentListResult>
+      if (!docListXml) {
+        const docListMatch3 = xmlText.match(/<GetDocumentListResult[^>]*>(.*?)<\/GetDocumentListResult>/s);
+        if (docListMatch3) {
+          docListXml = docListMatch3[1];
+          console.log('✅ Found GetDocumentListResult pattern');
+        }
+      }
 
-      // Parse each document
+      console.log('📋 DocList XML length:', docListXml.length);
+      if (docListXml.length > 0) {
+        console.log('📋 DocList XML sample (first 500 chars):', docListXml.substring(0, 500));
+      }
+
+      // Parse each document - try multiple patterns
       const documents: any[] = [];
-      const docMatches = docListXml.matchAll(/<a:Document>(.*?)<\/a:Document>/gs);
+      
+      // Pattern 1: <a:Document>...</a:Document>
+      let docMatches = [...docListXml.matchAll(/<a:Document>(.*?)<\/a:Document>/gs)];
+      
+      // Pattern 2: <Document>...</Document> (without namespace)
+      if (docMatches.length === 0) {
+        docMatches = [...docListXml.matchAll(/<Document>(.*?)<\/Document>/gs)];
+        if (docMatches.length > 0) {
+          console.log('✅ Found Document pattern (no namespace)');
+        }
+      }
+      
+      // Pattern 3: Try DocumentType
+      if (docMatches.length === 0) {
+        docMatches = [...docListXml.matchAll(/<a:DocumentType>(.*?)<\/a:DocumentType>/gs)];
+        if (docMatches.length > 0) {
+          console.log('✅ Found DocumentType pattern');
+        }
+      }
+
+      console.log('📊 Document matches found:', docMatches.length);
 
       for (const docMatch of docMatches) {
         const docXml = docMatch[1];
 
-        const documentUuidMatch = docXml.match(/<a:documentUuid>(.*?)<\/a:documentUuid>/);
-        const documentUuid = documentUuidMatch ? documentUuidMatch[1] : '';
+        // Try both with and without namespace prefix
+        let documentUuid = '';
+        let documentId = '';
+        
+        const documentUuidMatch1 = docXml.match(/<a:documentUuid>(.*?)<\/a:documentUuid>/);
+        const documentUuidMatch2 = docXml.match(/<documentUuid>(.*?)<\/documentUuid>/);
+        const documentUuidMatch3 = docXml.match(/<a:uuid>(.*?)<\/a:uuid>/);
+        const documentUuidMatch4 = docXml.match(/<uuid>(.*?)<\/uuid>/);
+        documentUuid = documentUuidMatch1?.[1] || documentUuidMatch2?.[1] || documentUuidMatch3?.[1] || documentUuidMatch4?.[1] || '';
 
-        const documentIdMatch = docXml.match(/<a:documentId>(.*?)<\/a:documentId>/);
-        const documentId = documentIdMatch ? documentIdMatch[1] : '';
+        const documentIdMatch1 = docXml.match(/<a:documentId>(.*?)<\/a:documentId>/);
+        const documentIdMatch2 = docXml.match(/<documentId>(.*?)<\/documentId>/);
+        documentId = documentIdMatch1?.[1] || documentIdMatch2?.[1] || '';
 
-        // Extract docInfo array
-        const docInfoMatches = docXml.matchAll(/<b:string>(.*?)<\/b:string>/g);
+        // Extract docInfo array - try multiple patterns
         const docInfo: Record<string, string> = {};
+        
+        // Pattern 1: <b:string>KEY=VALUE</b:string>
+        const docInfoMatches1 = [...docXml.matchAll(/<b:string>(.*?)<\/b:string>/g)];
+        // Pattern 2: <string>KEY=VALUE</string>
+        const docInfoMatches2 = [...docXml.matchAll(/<string>(.*?)<\/string>/g)];
+        // Pattern 3: <arr:string>KEY=VALUE</arr:string>
+        const docInfoMatches3 = [...docXml.matchAll(/<arr:string>(.*?)<\/arr:string>/g)];
+        
+        const allInfoMatches = [...docInfoMatches1, ...docInfoMatches2, ...docInfoMatches3];
 
-        for (const infoMatch of docInfoMatches) {
+        for (const infoMatch of allInfoMatches) {
           const infoStr = infoMatch[1];
           const [key, ...valueParts] = infoStr.split('=');
           if (key && valueParts.length > 0) {
@@ -935,12 +1013,17 @@ export class SoapClient {
           }
         }
 
-        documents.push({
-          documentUuid,
-          documentId,
-          docInfo,
-        });
+        if (documentUuid) {
+          documents.push({
+            documentUuid,
+            documentId,
+            docInfo,
+          });
+          console.log('📄 Found document:', documentUuid.substring(0, 8) + '...');
+        }
       }
+
+      console.log('✅ Total documents parsed:', documents.length);
 
       return {
         success: true,
@@ -950,10 +1033,11 @@ export class SoapClient {
           documents,
         },
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ XML parse error:', error.message);
       return {
         success: false,
-        error: 'XML parse error',
+        error: 'XML parse error: ' + (error.message || 'Unknown error'),
       };
     }
   }

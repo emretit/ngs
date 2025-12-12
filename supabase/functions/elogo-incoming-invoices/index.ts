@@ -117,18 +117,29 @@ serve(async (req) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     
-    const startDate = filters?.startDate 
+    // Get dates in YYYY-MM-DD format first
+    const startDateISO = filters?.startDate 
       ? filters.startDate.split('T')[0]
       : startOfMonth.toISOString().split('T')[0];
-    const endDate = filters?.endDate 
+    const endDateISO = filters?.endDate 
       ? filters.endDate.split('T')[0]
       : endOfMonth.toISOString().split('T')[0];
+
+    // Convert to DD.MM.YYYY format (e-Logo API format)
+    const formatDateForElogo = (isoDate: string): string => {
+      const [year, month, day] = isoDate.split('-');
+      return `${day}.${month}.${year}`;
+    };
+    
+    const startDate = formatDateForElogo(startDateISO);
+    const endDate = formatDateForElogo(endDateISO);
 
     console.log('🔍 e-Logo gelen faturalar alınıyor...');
     console.log('📡 Webservice URL:', elogoAuth.webservice_url);
     console.log('👤 User ID:', user.id);
     console.log('🏢 Company ID:', profile.company_id);
-    console.log('📅 Tarih aralığı:', { startDate, endDate });
+    console.log('📅 Tarih aralığı (ISO):', { startDateISO, endDateISO });
+    console.log('📅 Tarih aralığı (e-Logo format):', { startDate, endDate });
 
     // Validate required fields
     if (!elogoAuth.username || !elogoAuth.password) {

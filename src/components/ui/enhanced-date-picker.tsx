@@ -232,19 +232,19 @@ function EnhancedCalendar({
           month: "space-y-2",
           caption: "hidden",
           nav: "hidden",
-          table: "w-full border-collapse",
-          head_row: "grid grid-cols-7 mb-1",
-          head_cell: cn(
+          month_grid: "w-full border-collapse",
+          weekdays: "flex w-full mb-1",
+          weekday: cn(
             "text-muted-foreground/70 font-medium text-[11px] uppercase tracking-wider",
-            "h-8 flex items-center justify-center"
+            "h-8 w-10 flex items-center justify-center"
           ),
-          row: "grid grid-cols-7 w-full",
-          cell: cn(
+          week: "flex w-full",
+          day: cn(
             "relative p-0.5 text-center text-sm focus-within:relative focus-within:z-20",
-            "flex items-center justify-center",
+            "h-10 w-10 flex items-center justify-center",
             "[&:has([aria-selected])]:bg-transparent"
           ),
-          day: cn(
+          day_button: cn(
             "h-9 w-9 p-0 font-medium rounded-lg",
             "inline-flex items-center justify-center",
             "transition-all duration-200 ease-out",
@@ -252,27 +252,27 @@ function EnhancedCalendar({
             "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-1",
             "aria-selected:opacity-100"
           ),
-          day_range_end: "day-range-end",
-          day_selected: cn(
+          range_end: "day-range-end",
+          selected: cn(
             "bg-gradient-to-br from-primary to-primary/80",
             "text-primary-foreground font-semibold",
             "shadow-lg shadow-primary/25",
             "hover:from-primary hover:to-primary/90 hover:text-primary-foreground hover:scale-110",
             "focus:from-primary focus:to-primary/90 focus:text-primary-foreground"
           ),
-          day_today: cn(
+          today: cn(
             "relative font-semibold text-primary",
             "before:absolute before:inset-0 before:rounded-lg before:border-2 before:border-primary/40",
             "before:animate-pulse"
           ),
-          day_outside: cn(
+          outside: cn(
             "text-muted-foreground/40 opacity-60",
             "hover:bg-muted/50 hover:text-muted-foreground/60",
             "aria-selected:bg-accent/30 aria-selected:text-muted-foreground/50"
           ),
-          day_disabled: "text-muted-foreground/30 opacity-40 cursor-not-allowed hover:bg-transparent hover:scale-100",
-          day_range_middle: "aria-selected:bg-accent/20 aria-selected:text-accent-foreground",
-          day_hidden: "invisible",
+          disabled: "text-muted-foreground/30 opacity-40 cursor-not-allowed hover:bg-transparent hover:scale-100",
+          range_middle: "aria-selected:bg-accent/20 aria-selected:text-accent-foreground",
+          hidden: "invisible",
           ...customClassNames,
         }}
       />

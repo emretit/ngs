@@ -14,6 +14,7 @@ import ReportsFinanceSection from "@/components/reports/ReportsFinanceSection";
 import ReportsHRSection from "@/components/reports/ReportsHRSection";
 import ReportsVehicleSection from "@/components/reports/ReportsVehicleSection";
 import AIReportChat from "@/components/reports/AIReportChat";
+import { useReportExport } from "@/hooks/useReportExport";
 
 interface ReportsProps {
   isCollapsed?: boolean;
@@ -25,6 +26,7 @@ export default function Reports({ isCollapsed, setIsCollapsed }: ReportsProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>(['sales']);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const queryClient = useQueryClient();
+  const { exportToExcel, exportToPDF } = useReportExport();
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev =>
@@ -43,13 +45,21 @@ export default function Reports({ isCollapsed, setIsCollapsed }: ReportsProps) {
   };
 
   const handleExportPDF = () => {
-    toast.info("PDF raporu hazırlanıyor...");
-    // TODO: Implement PDF export
+    const options = {
+      startDate: searchParams.get("startDate") || undefined,
+      endDate: searchParams.get("endDate") || undefined,
+      currency: searchParams.get("currency") || undefined
+    };
+    exportToPDF(options);
   };
 
   const handleExportExcel = () => {
-    toast.info("Excel dosyası hazırlanıyor...");
-    // TODO: Implement Excel export
+    const options = {
+      startDate: searchParams.get("startDate") || undefined,
+      endDate: searchParams.get("endDate") || undefined,
+      currency: searchParams.get("currency") || undefined
+    };
+    exportToExcel(options);
   };
 
   try {

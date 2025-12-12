@@ -106,16 +106,35 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
   }, []);
 
   const checkAPIConnection = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AIReportChat.tsx:108',message:'checkAPIConnection entry',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+    // #endregion
     setApiStatus('checking');
     try {
-      // Test Gemini connection
-      const testResult = await generateSQLQuery("test", "opportunities");
-      if (testResult.error && testResult.error.includes('API')) {
-        setApiStatus('error');
-      } else {
+      // Use checkGeminiStatus instead of generateSQLQuery for better error detection
+      const { checkGeminiStatus } = await import('@/services/geminiService');
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AIReportChat.tsx:112',message:'calling checkGeminiStatus',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+      // #endregion
+      const statusResult = await checkGeminiStatus();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AIReportChat.tsx:113',message:'statusResult received',data:{configured:statusResult.configured,message:statusResult.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'J'})}).catch(()=>{});
+      // #endregion
+      if (statusResult.configured) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AIReportChat.tsx:116',message:'connection successful',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'L'})}).catch(()=>{});
+        // #endregion
         setApiStatus('connected');
+      } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AIReportChat.tsx:114',message:'API error detected',data:{message:statusResult.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'K'})}).catch(()=>{});
+        // #endregion
+        setApiStatus('error');
       }
-    } catch {
+    } catch (err: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AIReportChat.tsx:118',message:'exception in checkAPIConnection',data:{errorMessage:err.message,errorType:err.constructor?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'M'})}).catch(()=>{});
+      // #endregion
       setApiStatus('error');
     }
   };
@@ -177,9 +196,18 @@ export default function AIReportChat({ searchParams }: AIReportChatProps) {
       };
 
       // Use Gemini to generate SQL
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AIReportChat.tsx:180',message:'handleSendMessage calling generateSQLQuery',data:{messageText,tableName:'opportunities'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'N'})}).catch(()=>{});
+      // #endregion
       const sqlResult = await generateSQLQuery(messageText, 'opportunities');
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AIReportChat.tsx:182',message:'sqlResult received in handleSendMessage',data:{hasError:!!sqlResult.error,errorMessage:sqlResult.error||'none',hasSql:!!sqlResult.sql},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'O'})}).catch(()=>{});
+      // #endregion
       
       if (sqlResult.error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AIReportChat.tsx:183',message:'throwing error from sqlResult',data:{errorMessage:sqlResult.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'P'})}).catch(()=>{});
+        // #endregion
         throw new Error(sqlResult.error);
       }
 

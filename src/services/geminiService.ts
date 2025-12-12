@@ -55,20 +55,39 @@ export const getCurrentCompanyId = async (): Promise<string | null> => {
  * Check if Gemini API is configured
  */
 export const checkGeminiStatus = async (): Promise<{ configured: boolean; message: string }> => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:57',message:'checkGeminiStatus entry',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'Q'})}).catch(()=>{});
+  // #endregion
   try {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:59',message:'invoking gemini-chat status',data:{functionName:'gemini-chat',bodyType:'status'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'R'})}).catch(()=>{});
+    // #endregion
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { type: 'status' }
     });
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:63',message:'status check response',data:{hasError:!!error,errorMessage:error?.message||'none',errorStatus:error?.status||'none',hasData:!!data,configured:data?.configured},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'S'})}).catch(()=>{});
+    // #endregion
+    
     if (error) {
       console.error('Gemini status check error:', error);
-      return { configured: false, message: 'Bağlantı hatası' };
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:65',message:'status check error detected',data:{errorMessage:error.message,errorStatus:error.status||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'T'})}).catch(()=>{});
+      // #endregion
+      return { configured: false, message: error.message || 'Bağlantı hatası' };
     }
     
-    return data;
-  } catch (err) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:68',message:'status check success',data:{configured:data?.configured,message:data?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'U'})}).catch(()=>{});
+    // #endregion
+    return data || { configured: false, message: 'Yanıt alınamadı' };
+  } catch (err: any) {
     console.error('Gemini status check exception:', err);
-    return { configured: false, message: 'Bağlantı hatası' };
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:70',message:'status check exception',data:{errorMessage:err.message,errorType:err.constructor?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'V'})}).catch(()=>{});
+    // #endregion
+    return { configured: false, message: err.message || 'Bağlantı hatası' };
   }
 };
 
@@ -130,9 +149,18 @@ export const generateSQLQuery = async (
   tableName?: string,
   model: string = 'gemini-2.5-flash'
 ): Promise<GeminiChatResponse> => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:128',message:'generateSQLQuery entry',data:{query,tableName,model},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   try {
     const companyId = await getCurrentCompanyId();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:134',message:'companyId retrieved',data:{companyId:companyId||'null'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:136',message:'invoking gemini-chat function',data:{functionName:'gemini-chat',bodyType:'sql'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'sql', 
@@ -143,14 +171,27 @@ export const generateSQLQuery = async (
       }
     });
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:145',message:'function invoke response',data:{hasError:!!error,errorMessage:error?.message||'none',hasData:!!data,dataKeys:data?Object.keys(data):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    
     if (error) {
       console.error('SQL generation error:', error);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:147',message:'error detected',data:{errorType:error.constructor?.name,errorMessage:error.message,errorStatus:error.status||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
       return { error: error.message };
     }
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:151',message:'returning success data',data:{hasSql:!!data?.sql,hasError:!!data?.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion
     return data;
   } catch (err: any) {
     console.error('SQL generation exception:', err);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:153',message:'exception caught',data:{errorType:err.constructor?.name,errorMessage:err.message,errorStack:err.stack?.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+    // #endregion
     return { error: err.message };
   }
 };

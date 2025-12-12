@@ -108,7 +108,7 @@ export default function ReportsFilters({ searchParams, setSearchParams }: Report
   const { data: employees } = useQuery({
     queryKey: ['employees-filter'],
     queryFn: async () => {
-      const { data } = await supabase.from('employees').select('id, first_name, last_name').eq('is_active', true).limit(50);
+      const { data } = await supabase.from('employees').select('id, first_name, last_name').eq('status', 'aktif').limit(50);
       return data || [];
     }
   });

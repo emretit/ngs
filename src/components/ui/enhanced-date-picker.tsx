@@ -231,6 +231,7 @@ function EnhancedCalendar({
           months: "flex flex-col",
           month: "space-y-2",
           caption: "hidden",
+          caption_label: "hidden",
           nav: "hidden",
           month_grid: "w-full border-collapse",
           weekdays: "flex w-full mb-1",
@@ -245,7 +246,7 @@ function EnhancedCalendar({
             "[&:has([aria-selected])]:bg-transparent"
           ),
           day_button: cn(
-            "h-9 w-9 p-0 font-medium rounded-lg",
+            "h-9 w-9 p-0 font-medium rounded-full",
             "inline-flex items-center justify-center",
             "transition-all duration-200 ease-out",
             "hover:bg-primary/10 hover:text-primary hover:scale-110",
@@ -256,13 +257,13 @@ function EnhancedCalendar({
           selected: cn(
             "bg-gradient-to-br from-primary to-primary/80",
             "text-primary-foreground font-semibold",
-            "shadow-lg shadow-primary/25",
+            "shadow-lg shadow-primary/25 rounded-full",
             "hover:from-primary hover:to-primary/90 hover:text-primary-foreground hover:scale-110",
             "focus:from-primary focus:to-primary/90 focus:text-primary-foreground"
           ),
           today: cn(
             "relative font-semibold text-primary",
-            "before:absolute before:inset-0 before:rounded-lg before:border-2 before:border-primary/40",
+            "before:absolute before:inset-0 before:rounded-full before:border-2 before:border-primary/40",
             "before:animate-pulse"
           ),
           outside: cn(

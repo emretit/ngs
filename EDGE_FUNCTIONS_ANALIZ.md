@@ -106,3 +106,4 @@ Genel olarak Edge Functions **iyi durumda**. Sadece birkaç küçük iyileştirm
 
 v21 ile performans %90 artmış durumda! 🚀
 
+

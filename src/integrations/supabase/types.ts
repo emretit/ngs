@@ -2478,13 +2478,23 @@ export type Database = {
       }
       einvoices: {
         Row: {
+          answer_date: string | null
+          answer_type: string | null
           company_id: string | null
           created_at: string
           currency: string
           due_date: string | null
+          elogo_status: number | null
+          elogo_status_code: number | null
+          elogo_status_desc: string | null
+          envelope_id: string | null
+          ettn: string | null
           id: string
           invoice_date: string
           invoice_number: string
+          invoice_profile: string | null
+          invoice_type: string | null
+          is_answered: boolean | null
           nilvera_id: string | null
           paid_amount: number
           pdf_url: string | null
@@ -2498,13 +2508,23 @@ export type Database = {
           xml_data: Json | null
         }
         Insert: {
+          answer_date?: string | null
+          answer_type?: string | null
           company_id?: string | null
           created_at?: string
           currency?: string
           due_date?: string | null
+          elogo_status?: number | null
+          elogo_status_code?: number | null
+          elogo_status_desc?: string | null
+          envelope_id?: string | null
+          ettn?: string | null
           id?: string
           invoice_date: string
           invoice_number: string
+          invoice_profile?: string | null
+          invoice_type?: string | null
+          is_answered?: boolean | null
           nilvera_id?: string | null
           paid_amount?: number
           pdf_url?: string | null
@@ -2518,13 +2538,23 @@ export type Database = {
           xml_data?: Json | null
         }
         Update: {
+          answer_date?: string | null
+          answer_type?: string | null
           company_id?: string | null
           created_at?: string
           currency?: string
           due_date?: string | null
+          elogo_status?: number | null
+          elogo_status_code?: number | null
+          elogo_status_desc?: string | null
+          envelope_id?: string | null
+          ettn?: string | null
           id?: string
           invoice_date?: string
           invoice_number?: string
+          invoice_profile?: string | null
+          invoice_type?: string | null
+          is_answered?: boolean | null
           nilvera_id?: string | null
           paid_amount?: number
           pdf_url?: string | null
@@ -5261,6 +5291,218 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "orgs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outgoing_invoice_items: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          description: string | null
+          discount_amount: number | null
+          discount_rate: number | null
+          gross_amount: number | null
+          gtip_code: string | null
+          id: string
+          line_number: number
+          line_total: number
+          line_total_with_tax: number | null
+          notes: string | null
+          outgoing_invoice_id: string
+          product_code: string | null
+          product_name: string
+          quantity: number
+          tax_amount: number | null
+          tax_rate: number | null
+          unit: string
+          unit_code: string | null
+          unit_price: number
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_amount?: number | null
+          discount_rate?: number | null
+          gross_amount?: number | null
+          gtip_code?: string | null
+          id?: string
+          line_number: number
+          line_total: number
+          line_total_with_tax?: number | null
+          notes?: string | null
+          outgoing_invoice_id: string
+          product_code?: string | null
+          product_name: string
+          quantity: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          unit?: string
+          unit_code?: string | null
+          unit_price: number
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount_amount?: number | null
+          discount_rate?: number | null
+          gross_amount?: number | null
+          gtip_code?: string | null
+          id?: string
+          line_number?: number
+          line_total?: number
+          line_total_with_tax?: number | null
+          notes?: string | null
+          outgoing_invoice_id?: string
+          product_code?: string | null
+          product_name?: string
+          quantity?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          unit?: string
+          unit_code?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outgoing_invoice_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outgoing_invoice_items_outgoing_invoice_id_fkey"
+            columns: ["outgoing_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "outgoing_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outgoing_invoices: {
+        Row: {
+          answer_date: string | null
+          answer_description: string | null
+          answer_type: string | null
+          company_id: string | null
+          created_at: string | null
+          currency: string | null
+          customer_alias: string | null
+          customer_name: string
+          customer_tax_number: string | null
+          delivered_at: string | null
+          document_type: string | null
+          due_date: string | null
+          elogo_code: number | null
+          elogo_description: string | null
+          elogo_status: number | null
+          envelope_id: string | null
+          ettn: string | null
+          html_content: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          invoice_profile: string | null
+          invoice_type: string | null
+          is_answered: boolean | null
+          notes: string | null
+          payable_amount: number | null
+          pdf_url: string | null
+          ref_id: number | null
+          scenario: string | null
+          sent_at: string | null
+          status: string
+          tax_exclusive_amount: number | null
+          tax_total_amount: number | null
+          updated_at: string | null
+          xml_content: string | null
+          xml_data: Json | null
+        }
+        Insert: {
+          answer_date?: string | null
+          answer_description?: string | null
+          answer_type?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_alias?: string | null
+          customer_name: string
+          customer_tax_number?: string | null
+          delivered_at?: string | null
+          document_type?: string | null
+          due_date?: string | null
+          elogo_code?: number | null
+          elogo_description?: string | null
+          elogo_status?: number | null
+          envelope_id?: string | null
+          ettn?: string | null
+          html_content?: string | null
+          id?: string
+          invoice_date: string
+          invoice_number: string
+          invoice_profile?: string | null
+          invoice_type?: string | null
+          is_answered?: boolean | null
+          notes?: string | null
+          payable_amount?: number | null
+          pdf_url?: string | null
+          ref_id?: number | null
+          scenario?: string | null
+          sent_at?: string | null
+          status?: string
+          tax_exclusive_amount?: number | null
+          tax_total_amount?: number | null
+          updated_at?: string | null
+          xml_content?: string | null
+          xml_data?: Json | null
+        }
+        Update: {
+          answer_date?: string | null
+          answer_description?: string | null
+          answer_type?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_alias?: string | null
+          customer_name?: string
+          customer_tax_number?: string | null
+          delivered_at?: string | null
+          document_type?: string | null
+          due_date?: string | null
+          elogo_code?: number | null
+          elogo_description?: string | null
+          elogo_status?: number | null
+          envelope_id?: string | null
+          ettn?: string | null
+          html_content?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          invoice_profile?: string | null
+          invoice_type?: string | null
+          is_answered?: boolean | null
+          notes?: string | null
+          payable_amount?: number | null
+          pdf_url?: string | null
+          ref_id?: number | null
+          scenario?: string | null
+          sent_at?: string | null
+          status?: string
+          tax_exclusive_amount?: number | null
+          tax_total_amount?: number | null
+          updated_at?: string | null
+          xml_content?: string | null
+          xml_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outgoing_invoices_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

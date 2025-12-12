@@ -334,9 +334,13 @@ serve(async (req) => {
         }
 
         // Decode ZIP and extract XML
-        let xmlContent = '';
+        let xmlContent: string | null = null;
         try {
           xmlContent = await decodeZIPAndExtractXML(docResult.data.binaryData);
+          if (!xmlContent) {
+            console.error('❌ XML içeriği çıkarılamadı, belge atlanıyor');
+            continue;
+          }
         } catch (decodeError: any) {
           console.error(`❌ ZIP decode hatası: ${decodeError.message}`);
           continue;

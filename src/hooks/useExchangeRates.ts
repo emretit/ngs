@@ -1,5 +1,5 @@
-
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -58,221 +58,151 @@ const fallbackRates: ExchangeRate[] = [
   }
 ];
 
+// Keep only the latest update_date entries and dedupe by currency_code
+const normalizeLatestRates = (rates: ExchangeRate[]): { list: ExchangeRate[]; latestDate: string | null } => {
+  if (!rates?.length) return { list: [], latestDate: null };
+  const latestDate = rates.reduce((max, r) => (r.update_date > max ? r.update_date : max), rates[0].update_date);
+  const forLatest = rates.filter(r => r.update_date === latestDate);
+  const seen = new Set<string>();
+  const deduped: ExchangeRate[] = [];
+  
+  // Priority order: USD, EUR, GBP first, then others
+  const priorityCurrencies = ['USD', 'EUR', 'GBP'];
+  const otherCurrencies = forLatest.filter(r => !priorityCurrencies.includes(r.currency_code));
+  
+  // Add priority currencies first
+  for (const currency of priorityCurrencies) {
+    const rate = forLatest.find(r => r.currency_code === currency);
+    if (rate && !seen.has(rate.currency_code)) {
+      seen.add(rate.currency_code);
+      deduped.push(rate);
+    }
+  }
+  
+  // Add other currencies
+  for (const r of otherCurrencies) {
+    if (!seen.has(r.currency_code)) {
+      seen.add(r.currency_code);
+      deduped.push(r);
+    }
+  }
+  
+  return { list: deduped, latestDate };
+};
+
+// Fetch exchange rates from database
+const fetchExchangeRatesFromDB = async (): Promise<ExchangeRate[]> => {
+  const { data, error } = await supabase
+    .from('exchange_rates')
+    .select('id, currency_code, forex_buying, forex_selling, banknote_buying, banknote_selling, cross_rate, update_date')
+    .order('update_date', { ascending: false });
+    
+  if (error) throw error;
+  return data || [];
+};
+
+// Trigger edge function to fetch fresh rates
+const fetchFreshRates = async (): Promise<ExchangeRate[]> => {
+  const { data, error } = await supabase.functions.invoke('exchange-rates', {
+    method: 'POST'
+  });
+  
+  if (error) throw error;
+  return data?.rates || [];
+};
+
 export const useExchangeRates = () => {
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
-
-  // Keep only the latest update_date entries and dedupe by currency_code
-  const normalizeLatestRates = useCallback((rates: ExchangeRate[]): { list: ExchangeRate[]; latestDate: string | null } => {
-    if (!rates?.length) return { list: [], latestDate: null };
-    const latestDate = rates.reduce((max, r) => (r.update_date > max ? r.update_date : max), rates[0].update_date);
-    const forLatest = rates.filter(r => r.update_date === latestDate);
-    const seen = new Set<string>();
-    const deduped: ExchangeRate[] = [];
-    
-    // Priority order: USD, EUR, GBP first, then others
-    const priorityCurrencies = ['USD', 'EUR', 'GBP'];
-    const otherCurrencies = forLatest.filter(r => !priorityCurrencies.includes(r.currency_code));
-    
-    // Add priority currencies first
-    for (const currency of priorityCurrencies) {
-      const rate = forLatest.find(r => r.currency_code === currency);
-      if (rate && !seen.has(rate.currency_code)) {
-        seen.add(rate.currency_code);
-        deduped.push(rate);
-      }
-    }
-    
-    // Add other currencies
-    for (const r of otherCurrencies) {
-      if (!seen.has(r.currency_code)) {
-        seen.add(r.currency_code);
-        deduped.push(r);
-      }
-    }
-    
-    return { list: deduped, latestDate };
-  }, []);
-
-  // Fetch exchange rates from database
-  const fetchExchangeRatesFromDB = async (): Promise<ExchangeRate[]> => {
-    const { data, error } = await supabase
-      .from('exchange_rates')
-      .select('id, currency_code, forex_buying, forex_selling, banknote_buying, banknote_selling, cross_rate, update_date')
-      .order('update_date', { ascending: false });
-      
-    if (error) throw error;
-    return data || [];
-  };
-
-  // Trigger edge function to fetch fresh rates
-  const fetchFreshRates = async (): Promise<ExchangeRate[]> => {
-    const { data, error } = await supabase.functions.invoke('exchange-rates', {
-      method: 'POST'
-    });
-    
-    if (error) throw error;
-    return data?.rates || [];
-  };
-
-  // Initial fetch on component mount
-  useEffect(() => {
-    const loadExchangeRates = async () => {
-      try {
-        setLoading(true);
-        
-        // First try to get from database
-        const dbRates = await fetchExchangeRatesFromDB();
-        
-        if (dbRates.length > 0) {
-          const { list, latestDate } = normalizeLatestRates(dbRates);
-          setExchangeRates(list);
-          setLastUpdate(latestDate);
-          return;
-        }
-        
-        // If no data in database, try to fetch fresh rates
-        try {
-          const freshRates = await fetchFreshRates();
-          const { list, latestDate } = normalizeLatestRates(freshRates);
-          setExchangeRates(list);
-          setLastUpdate(latestDate);
-        } catch (freshError) {
-          console.error("Failed to fetch fresh rates:", freshError);
-          // Use fallback rates
-          setExchangeRates(fallbackRates);
-          setLastUpdate(fallbackRates[0].update_date);
-        }
-      } catch (err) {
-        console.error("Error loading exchange rates:", err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-        // Use fallback rates
-        setExchangeRates(fallbackRates);
-        setLastUpdate(fallbackRates[0].update_date);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadExchangeRates();
-  }, []);
-
-  // Exchange rates are now updated daily via Supabase cron job at 09:00 UTC (12:00 Turkey time)
-  // No need for client-side auto-refresh
-
-  // Function to manually refresh exchange rates
-  const refreshExchangeRates = useCallback(async () => {
-    try {
-      setLoading(true);
-      toast.info('Döviz kurları güncelleniyor...', {
-        duration: 2000
-      });
-      
-      const freshRates = await fetchFreshRates();
-      
-      if (freshRates.length > 0) {
-        const { list, latestDate } = normalizeLatestRates(freshRates);
-        setExchangeRates(list);
-        setLastUpdate(latestDate);
-        
-        // Format date consistently for toast message
-        const formattedDate = latestDate ? new Date(latestDate).toLocaleDateString('tr-TR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }) : '-';
-        
-        toast.success('Döviz kurları başarıyla güncellendi', {
-          description: `${list.length} adet kur bilgisi alındı.`,
-        });
-        return;
-      }
-      
-      // If no fresh rates, try database again
+  // Use React Query for better caching and state management
+  const { data, isLoading: loading, error, refetch } = useQuery({
+    queryKey: ['exchange-rates'],
+    queryFn: async () => {
+      // First try to get from database
       const dbRates = await fetchExchangeRatesFromDB();
       
       if (dbRates.length > 0) {
-        const { list, latestDate } = normalizeLatestRates(dbRates);
-        setExchangeRates(list);
-        setLastUpdate(latestDate);
-        
-        // Format date consistently for toast message
-        const formattedDate = latestDate ? new Date(latestDate).toLocaleDateString('tr-TR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        }) : '-';
-        
-        toast.info('Mevcut kur bilgileri yüklendi', {
-          description: `Son güncelleme tarihi: ${formattedDate}`,
+        return normalizeLatestRates(dbRates);
+      }
+      
+      // If no data in database, try to fetch fresh rates
+      const freshRates = await fetchFreshRates();
+      if (freshRates.length > 0) {
+        return normalizeLatestRates(freshRates);
+      }
+      
+      // Fallback
+      return normalizeLatestRates(fallbackRates);
+    },
+    staleTime: 30 * 60 * 1000, // 30 minutes - rates update once daily
+    gcTime: 60 * 60 * 1000, // 1 hour in cache
+    retry: 2,
+    refetchOnWindowFocus: false,
+    placeholderData: { list: fallbackRates, latestDate: fallbackRates[0].update_date },
+  });
+
+  const exchangeRates = data?.list || fallbackRates;
+  const lastUpdate = data?.latestDate || null;
+
+  // Function to manually refresh exchange rates
+  const refreshExchangeRates = useCallback(async () => {
+    toast.info('Döviz kurları güncelleniyor...', { duration: 2000 });
+    
+    try {
+      const freshRates = await fetchFreshRates();
+      
+      if (freshRates.length > 0) {
+        // Refetch to update cache
+        await refetch();
+        toast.success('Döviz kurları başarıyla güncellendi', {
+          description: `${freshRates.length} adet kur bilgisi alındı.`,
         });
         return;
       }
-      
-      // Last resort - use fallback rates
-      setExchangeRates(fallbackRates);
-      setLastUpdate(fallbackRates[0].update_date);
       
       toast.warning('Varsayılan kurlar kullanılıyor', {
         description: 'Güncel kurlar alınamadı, geçici referans değerler kullanılıyor.',
       });
     } catch (err) {
       console.error("Error refreshing exchange rates:", err);
-      setError(err instanceof Error ? err : new Error(String(err)));
-      
       toast.error('Döviz kurları güncelleme hatası', {
         description: err instanceof Error ? err.message : 'Bilinmeyen hata',
       });
-      
-      // Fallback to default rates
-      setExchangeRates(fallbackRates);
-      setLastUpdate(fallbackRates[0].update_date);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [refetch]);
 
-  // Get a simple map of currency codes to rates (for easier use in calculations)
-  const getRatesMap = useCallback(() => {
-    const ratesMap: Record<string, number> = { TRY: 1 };
-    
+  // Memoized rates map for currency calculations
+  const ratesMap = useMemo(() => {
+    const map: Record<string, number> = { TRY: 1 };
     exchangeRates.forEach(rate => {
       if (rate.currency_code && rate.forex_selling) {
-        // Use forex_selling for converting FROM foreign currency TO TRY
-        ratesMap[rate.currency_code] = rate.forex_selling;
+        map[rate.currency_code] = rate.forex_selling;
       }
     });
-    
-    return ratesMap;
+    return map;
   }, [exchangeRates]);
+
+  // Get rates map function (for backward compatibility)
+  const getRatesMap = useCallback(() => ratesMap, [ratesMap]);
 
   // Convert amount between currencies
   const convertCurrency = useCallback((amount: number, fromCurrency: string, toCurrency: string): number => {
     if (fromCurrency === toCurrency) return amount;
     
-    const rates = getRatesMap();
-    
     // If converting FROM foreign currency TO TRY
     if (toCurrency === 'TRY') {
-      const rate = rates[fromCurrency] || 1;
-      const result = amount * rate;
-      return result;
+      const rate = ratesMap[fromCurrency] || 1;
+      return amount * rate;
     }
     
     // If converting FROM TRY TO foreign currency
     if (fromCurrency === 'TRY') {
-      const rate = rates[toCurrency] || 1;
-      const result = amount / rate;
-      return result;
+      const rate = ratesMap[toCurrency] || 1;
+      return amount / rate;
     }
     
     // If converting between two foreign currencies, go through TRY
-    const amountInTRY = amount * (rates[fromCurrency] || 1);
-    const result = amountInTRY / (rates[toCurrency] || 1);
-    return result;
-  }, [getRatesMap]);
+    const amountInTRY = amount * (ratesMap[fromCurrency] || 1);
+    return amountInTRY / (ratesMap[toCurrency] || 1);
+  }, [ratesMap]);
 
   // Format currency with proper symbol
   const formatCurrency = useCallback((amount: number, currencyCode = 'TRY'): string => {
@@ -285,7 +215,7 @@ export const useExchangeRates = () => {
   return {
     exchangeRates,
     loading,
-    error,
+    error: error as Error | null,
     lastUpdate,
     refreshExchangeRates,
     getRatesMap,

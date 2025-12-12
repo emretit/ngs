@@ -130,16 +130,45 @@ serve(async (req) => {
       const [year, month, day] = isoDate.split('-');
       return `${day}.${month}.${year}`;
     };
-    
-    const startDate = formatDateForElogo(startDateISO);
-    const endDate = formatDateForElogo(endDateISO);
 
     console.log('🔍 e-Logo gelen faturalar alınıyor...');
     console.log('📡 Webservice URL:', elogoAuth.webservice_url);
     console.log('👤 User ID:', user.id);
     console.log('🏢 Company ID:', profile.company_id);
     console.log('📅 Tarih aralığı (ISO):', { startDateISO, endDateISO });
-    console.log('📅 Tarih aralığı (e-Logo format):', { startDate, endDate });
+
+    // e-Logo API sadece maksimum 30 günlük aralık destekliyor
+    // Tarih aralığını 30 günlük parçalara bölelim
+    const generateDateRanges = (start: string, end: string): Array<{start: string, end: string}> => {
+      const ranges: Array<{start: string, end: string}> = [];
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      
+      let currentStart = new Date(startDate);
+      
+      while (currentStart < endDate) {
+        let currentEnd = new Date(currentStart);
+        currentEnd.setDate(currentEnd.getDate() + 29); // 30 gün (başlangıç dahil)
+        
+        if (currentEnd > endDate) {
+          currentEnd = new Date(endDate);
+        }
+        
+        ranges.push({
+          start: currentStart.toISOString().split('T')[0],
+          end: currentEnd.toISOString().split('T')[0]
+        });
+        
+        // Sonraki aralığın başlangıcı
+        currentStart = new Date(currentEnd);
+        currentStart.setDate(currentStart.getDate() + 1);
+      }
+      
+      return ranges;
+    };
+
+    const dateRanges = generateDateRanges(startDateISO, endDateISO);
+    console.log(`📅 Tarih aralığı ${dateRanges.length} parçaya bölündü:`, dateRanges);
 
     // Validate required fields
     if (!elogoAuth.username || !elogoAuth.password) {
@@ -188,34 +217,49 @@ serve(async (req) => {
     const sessionID = loginResult.sessionID;
     const invoices: any[] = [];
     let logoutAttempted = false;
+    let allDocuments: any[] = [];
 
     try {
-      // First, get document list for the date range using GetDocumentList
-      console.log('📋 Tarih aralığındaki faturalar listeleniyor...');
-      
-      const paramList = [
-        `DOCUMENTTYPE=EINVOICE`,
-        `BEGINDATE=${startDate}`,
-        `ENDDATE=${endDate}`,
-        `OPTYPE=2`, // 2 = Gelen faturalar
-        `DATEBY=0`, // 0 = Oluşturma tarihi
-      ];
-      
-      console.log('📋 GetDocumentList parametreleri:', paramList);
+      // Her tarih aralığı için GetDocumentList çağır
+      for (let rangeIndex = 0; rangeIndex < dateRanges.length; rangeIndex++) {
+        const range = dateRanges[rangeIndex];
+        const startDateElogo = formatDateForElogo(range.start);
+        const endDateElogo = formatDateForElogo(range.end);
+        
+        console.log(`📋 Tarih aralığı ${rangeIndex + 1}/${dateRanges.length}: ${startDateElogo} - ${endDateElogo}`);
+        
+        const paramList = [
+          `DOCUMENTTYPE=EINVOICE`,
+          `BEGINDATE=${startDateElogo}`,
+          `ENDDATE=${endDateElogo}`,
+          `OPTYPE=2`, // 2 = Gelen faturalar
+          `DATEBY=0`, // 0 = Oluşturma tarihi
+        ];
+        
+        console.log('📋 GetDocumentList parametreleri:', paramList);
 
-      const listResult = await SoapClient.getDocumentList(
-        sessionID,
-        paramList,
-        elogoAuth.webservice_url
-      );
+        const listResult = await SoapClient.getDocumentList(
+          sessionID,
+          paramList,
+          elogoAuth.webservice_url
+        );
 
-      console.log('📊 GetDocumentList sonucu:', {
-        success: listResult.success,
-        documentCount: listResult.data?.documents?.length || 0
-      });
+        console.log('📊 GetDocumentList sonucu:', {
+          success: listResult.success,
+          documentCount: listResult.data?.documents?.length || 0
+        });
 
-      if (!listResult.success || !listResult.data?.documents) {
-        console.log('ℹ️ Belge listesi alınamadı veya boş');
+        if (listResult.success && listResult.data?.documents) {
+          allDocuments = allDocuments.concat(listResult.data.documents);
+          console.log(`✅ Bu aralıkta ${listResult.data.documents.length} fatura bulundu`);
+        } else {
+          console.log('ℹ️ Bu tarih aralığında fatura bulunamadı');
+        }
+      }
+
+      console.log(`✅ Toplam ${allDocuments.length} adet fatura UUID'si bulundu`);
+
+      if (allDocuments.length === 0) {
         return new Response(JSON.stringify({ 
           success: true,
           invoices: [],
@@ -225,18 +269,7 @@ serve(async (req) => {
         });
       }
 
-      const documentList = listResult.data.documents || [];
-      console.log(`✅ ${documentList.length} adet fatura UUID'si bulundu`);
-
-      if (documentList.length === 0) {
-        return new Response(JSON.stringify({ 
-          success: true,
-          invoices: [],
-          message: 'Seçili tarih aralığında fatura bulunamadı'
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      const documentList = allDocuments;
 
       // Fetch and parse each invoice
       console.log(`🔄 ${documentList.length} adet fatura detayı çekiliyor...`);

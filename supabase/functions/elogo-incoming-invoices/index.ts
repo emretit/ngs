@@ -280,22 +280,48 @@ serve(async (req) => {
         
         console.log(`📄 Fatura ${i + 1}/${documentList.length} çekiliyor (UUID: ${invoiceUuid?.substring(0, 8)}...)`);
 
-        // Get document data
+        // Get document data with correct parameters
         let docResult;
         try {
+          // KRITIK: DOCUMENTTYPE ve DATAFORMAT parametreleri zorunlu!
+          const docParamList = [
+            'DOCUMENTTYPE=EINVOICE',
+            'DATAFORMAT=UBL'
+          ];
+          
+          console.log(`📥 GetDocumentData çağrılıyor - UUID: ${invoiceUuid}, Params:`, docParamList);
+          
           docResult = await SoapClient.getDocumentData(
             sessionID,
             invoiceUuid,
-            [], // paramList - boş array, gerekirse parametreler eklenebilir
+            docParamList,
             elogoAuth.webservice_url
           );
+          
+          // Debug log
+          console.log(`📥 GetDocumentData response:`, {
+            success: docResult?.success,
+            resultCode: docResult?.resultCode,
+            resultMsg: docResult?.resultMsg,
+            hasBinaryData: !!docResult?.data?.binaryData,
+            binaryDataLength: docResult?.data?.binaryData?.length || 0
+          });
+          
         } catch (docError: any) {
-          console.error(`❌ GetDocumentData hatası (fatura ${i + 1}):`, docError);
+          console.error(`❌ GetDocumentData hatası (fatura ${i + 1}):`, {
+            error: docError.message,
+            stack: docError.stack
+          });
           continue; // Skip this invoice and continue with next
         }
 
         if (!docResult || !docResult.success || !docResult.data?.binaryData) {
-          console.error(`❌ Fatura verisi alınamadı: ${invoiceUuid}`);
+          console.error(`❌ Fatura verisi alınamadı: ${invoiceUuid}`, {
+            success: docResult?.success,
+            resultCode: docResult?.resultCode,
+            resultMsg: docResult?.resultMsg,
+            error: docResult?.error
+          });
           continue;
         }
 
@@ -373,6 +399,19 @@ serve(async (req) => {
 
         invoices.push(invoice);
         console.log(`✅ Fatura ${i + 1}/${documentList.length} işlendi: ${invoice.invoiceNumber}`);
+        
+        // Fatura başarıyla işlendikten sonra GetDocumentDone çağır (alındı olarak işaretle)
+        try {
+          await SoapClient.getDocumentDone(
+            sessionID,
+            invoiceUuid,
+            'EINVOICE',
+            elogoAuth.webservice_url
+          );
+          console.log(`✅ Fatura alındı olarak işaretlendi: ${invoiceUuid.substring(0, 8)}...`);
+        } catch (doneError: any) {
+          console.warn(`⚠️ GetDocumentDone hatası (kritik değil): ${doneError.message}`);
+        }
       }
 
       console.log(`✅ ${invoices.length} adet e-Logo fatura alındı ve işlendi`);

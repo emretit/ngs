@@ -846,36 +846,81 @@ export class SoapClient {
    */
   private static parseGetDocumentDataResponse(xmlText: string): ElogoSoapResponse {
     try {
+      // Debug log - response'un ilk 2000 karakterini logla
+      console.log('📄 GetDocumentData Response (first 2000 chars):', xmlText.substring(0, 2000));
+      
       const resultCodeMatch = xmlText.match(/<a:resultCode>(.*?)<\/a:resultCode>/);
       const resultCode = resultCodeMatch ? parseInt(resultCodeMatch[1]) : -1;
 
       const resultMsgMatch = xmlText.match(/<a:resultMsg>(.*?)<\/a:resultMsg>/);
       const resultMsg = resultMsgMatch ? resultMsgMatch[1] : '';
 
+      console.log('📊 GetDocumentData resultCode:', resultCode, 'resultMsg:', resultMsg);
+
       if (resultCode !== 1) {
+        console.error('❌ GetDocumentData API hata döndü:', { resultCode, resultMsg });
         return {
           success: false,
-          error: resultMsg,
+          error: resultMsg || `API Error: resultCode=${resultCode}`,
           resultCode,
           resultMsg,
         };
       }
 
-      // Extract document data
-      const binaryDataMatch = xmlText.match(/<a:Value>(.*?)<\/a:Value>/s);
-      const binaryData = binaryDataMatch ? binaryDataMatch[1].trim() : '';
+      // Extract document data - try multiple patterns
+      let binaryData = '';
+      
+      // Pattern 1: <a:Value>...</a:Value>
+      const binaryDataMatch1 = xmlText.match(/<a:Value>(.*?)<\/a:Value>/s);
+      if (binaryDataMatch1) {
+        binaryData = binaryDataMatch1[1].trim();
+        console.log('✅ Binary data found with pattern 1 (a:Value), length:', binaryData.length);
+      }
+      
+      // Pattern 2: <Value>...</Value> (without namespace)
+      if (!binaryData) {
+        const binaryDataMatch2 = xmlText.match(/<Value>(.*?)<\/Value>/s);
+        if (binaryDataMatch2) {
+          binaryData = binaryDataMatch2[1].trim();
+          console.log('✅ Binary data found with pattern 2 (Value), length:', binaryData.length);
+        }
+      }
+      
+      // Pattern 3: <binaryData>...<Value>...</Value>...</binaryData>
+      if (!binaryData) {
+        const binaryDataMatch3 = xmlText.match(/<(?:a:)?binaryData[^>]*>.*?<(?:a:)?Value>(.*?)<\/(?:a:)?Value>/s);
+        if (binaryDataMatch3) {
+          binaryData = binaryDataMatch3[1].trim();
+          console.log('✅ Binary data found with pattern 3 (nested), length:', binaryData.length);
+        }
+      }
 
-      const fileNameMatch = xmlText.match(/<a:fileName>(.*?)<\/a:fileName>/);
+      if (!binaryData) {
+        console.error('❌ Binary data bulunamadı! Response sample:', xmlText.substring(0, 3000));
+      }
+
+      const fileNameMatch = xmlText.match(/<(?:a:)?fileName>(.*?)<\/(?:a:)?fileName>/);
       const fileName = fileNameMatch ? fileNameMatch[1] : '';
 
-      const hashMatch = xmlText.match(/<a:hash>(.*?)<\/a:hash>/);
+      const hashMatch = xmlText.match(/<(?:a:)?hash>(.*?)<\/(?:a:)?hash>/);
       const hash = hashMatch ? hashMatch[1] : '';
 
-      const currentDateMatch = xmlText.match(/<a:currentDate>(.*?)<\/a:currentDate>/);
+      const currentDateMatch = xmlText.match(/<(?:a:)?currentDate>(.*?)<\/(?:a:)?currentDate>/);
       const currentDate = currentDateMatch ? currentDateMatch[1] : '';
 
+      const envelopeUUIDMatch = xmlText.match(/<(?:a:)?envelopeUUID>(.*?)<\/(?:a:)?envelopeUUID>/);
+      const envelopeUUID = envelopeUUIDMatch ? envelopeUUIDMatch[1] : '';
+
+      console.log('📄 GetDocumentData parsed:', {
+        hasBinaryData: !!binaryData,
+        binaryDataLength: binaryData.length,
+        fileName,
+        hash: hash ? hash.substring(0, 20) + '...' : '',
+        envelopeUUID
+      });
+
       return {
-        success: true,
+        success: !!binaryData,
         resultCode,
         resultMsg,
         data: {
@@ -883,12 +928,14 @@ export class SoapClient {
           fileName,
           hash,
           currentDate,
+          envelopeUUID,
         },
       };
     } catch (error) {
+      console.error('❌ GetDocumentData parse error:', error);
       return {
         success: false,
-        error: 'XML parse error',
+        error: 'XML parse error: ' + (error instanceof Error ? error.message : 'Unknown error'),
       };
     }
   }

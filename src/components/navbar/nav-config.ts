@@ -325,7 +325,7 @@ export const navItems = [
       {
         path: "/budget/entry",
         icon: Plus,
-        label: "Bütçe Girişi",
+        label: "Bütçe Planlama",
         translationKey: "nav.budgetEntry",
       },
       {

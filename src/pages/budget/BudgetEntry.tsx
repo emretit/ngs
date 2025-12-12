@@ -1,14 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Upload, Copy, Save } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { 
+  ArrowLeft, 
+  Download, 
+  Upload, 
+  Copy, 
+  Save, 
+  Send, 
+  Edit
+} from "lucide-react";
 import BudgetGrid from "@/components/budget/entry/BudgetGrid";
 import BudgetFilters from "@/components/budget/BudgetFilters";
 import { BudgetFiltersState } from "@/pages/BudgetManagement";
 import { useBudgetMatrix } from "@/hooks/useBudgetMatrix";
+import { useBudget } from "@/hooks/useBudget";
+import { useBudgetApproval } from "@/hooks/useBudgetApproval";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
 
 const BudgetEntry = () => {
   const navigate = useNavigate();
@@ -25,6 +37,7 @@ const BudgetEntry = () => {
   });
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [budgetStatus, setBudgetStatus] = useState<"draft" | "approved" | "locked">("draft");
 
   const { exportToCSV } = useBudgetMatrix({
     year: filters.year,
@@ -130,10 +143,121 @@ const BudgetEntry = () => {
     }
   };
 
-  const handleSave = () => {
-    // Save all changes
-    setHasUnsavedChanges(false);
-    console.log("Save all changes");
+  const { updateBudgetStatus, lockYearBudgets } = useBudget({ 
+    year: filters.year, 
+    currency: filters.currency 
+  });
+  const { createRevision } = useBudgetApproval(filters.year);
+
+  // Fetch budget status
+  useEffect(() => {
+    const fetchBudgetStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("company_id")
+          .eq("id", user.id)
+          .single();
+
+        if (!profile?.company_id) return;
+
+        const { data: budgets } = await supabase
+          .from("budgets")
+          .select("status")
+          .eq("year", filters.year)
+          .eq("company_id", profile.company_id)
+          .limit(1)
+          .single();
+
+        if (budgets) {
+          setBudgetStatus(budgets.status || "draft");
+        }
+      } catch (error) {
+        console.error("Error fetching budget status:", error);
+      }
+    };
+
+    fetchBudgetStatus();
+  }, [filters.year]);
+
+  const handleSave = async () => {
+    try {
+      // Save all changes - BudgetGrid handles individual cell saves
+      setHasUnsavedChanges(false);
+      toast({
+        title: "Başarılı",
+        description: "Bütçe planlaması kaydedildi",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: error.message || "Kaydetme sırasında hata oluştu",
+      });
+    }
+  };
+
+  const handleSubmitForApproval = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Kullanıcı oturumu bulunamadı");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
+
+      // Update all budgets to approved status
+      const { error } = await supabase
+        .from("budgets")
+        .update({ status: "approved" })
+        .eq("year", filters.year)
+        .eq("company_id", profile.company_id)
+        .eq("status", "draft");
+
+      if (error) throw error;
+
+      setBudgetStatus("approved");
+      setHasUnsavedChanges(false);
+
+      toast({
+        title: "Başarılı",
+        description: "Bütçe planlaması onaya gönderildi",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: error.message || "Onaya gönderilirken hata oluştu",
+      });
+    }
+  };
+
+  const handleRequestRevision = async () => {
+    // Navigate to approval page with revision form
+    navigate("/budget/approvals");
+  };
+
+  const getStatusBadge = () => {
+    const statusConfig = {
+      draft: { label: "Taslak", color: "bg-gray-100 text-gray-800 border-gray-200" },
+      approved: { label: "Onaylandı", color: "bg-green-100 text-green-800 border-green-200" },
+      locked: { label: "Kilitli", color: "bg-red-100 text-red-800 border-red-200" },
+    };
+
+    const config = statusConfig[budgetStatus] || statusConfig.draft;
+
+    return (
+      <Badge variant="outline" className={cn("text-xs font-medium", config.color)}>
+        {config.label}
+      </Badge>
+    );
   };
 
   return (
@@ -155,14 +279,17 @@ const BudgetEntry = () => {
           </div>
           <div className="space-y-0.5">
             <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-              Bütçe Girişi
+              Bütçe Planlama
             </h1>
             <p className="text-xs text-muted-foreground/70">
-              Spreadsheet benzeri grid görünümü ile bütçe girişi yapın
+              Belirlenen dönem için gelir ve gider hedeflerinin; proje, departman ve kategori bazında tanımlandığı, revize edildiği ve onaya hazırlandığı alan
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Status Badge */}
+          {getStatusBadge()}
+
           <Button
             variant="outline"
             size="sm"
@@ -190,15 +317,48 @@ const BudgetEntry = () => {
             <Download className="h-4 w-4" />
             Excel Dışa Aktar
           </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!hasUnsavedChanges}
-            className="gap-2"
-          >
-            <Save className="h-4 w-4" />
-            Kaydet
-          </Button>
+          {budgetStatus === "draft" && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRequestRevision}
+                className="gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Revizyon Talebi
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={!hasUnsavedChanges}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Kaydet
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSubmitForApproval}
+                disabled={hasUnsavedChanges}
+                className="gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <Send className="h-4 w-4" />
+                Onaya Gönder
+              </Button>
+            </>
+          )}
+          {budgetStatus === "approved" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRequestRevision}
+              className="gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              Revizyon Talebi
+            </Button>
+          )}
         </div>
       </div>
 

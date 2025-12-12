@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Target, BarChart3, Calendar, Table2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   BarChart,
@@ -16,9 +17,12 @@ import {
 } from "recharts";
 import BudgetFilters from "@/components/budget/BudgetFilters";
 import VarianceChart from "@/components/budget/comparison/VarianceChart";
-import VarianceTable from "@/components/budget/comparison/VarianceTable";
+import EnhancedBudgetMatrix from "@/components/budget/comparison/EnhancedBudgetMatrix";
 import { useBudgetMatrix } from "@/hooks/useBudgetMatrix";
 import { BudgetFiltersState } from "@/pages/BudgetManagement";
+
+// Lazy load timeline view for better performance
+const BudgetTimelineView = lazy(() => import("@/components/budget/views/BudgetTimelineView"));
 
 const CategoryBarChart = ({ filters }: { filters: BudgetFiltersState }) => {
   const {
@@ -115,6 +119,8 @@ const BudgetComparison = () => {
     currency: "TRY",
   });
 
+  const [activeView, setActiveView] = useState<"matrix" | "timeline">("matrix");
+
   // Fetch budget data for summary cards
   const {
     grandTotals,
@@ -171,68 +177,74 @@ const BudgetComparison = () => {
 
   return (
     <div className="w-full space-y-6">
-      {/* Header with Summary Cards */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/budget")}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Geri
-            </Button>
-            <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-white shadow-lg">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div className="space-y-0.5">
-              <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                Varyans Analizi
-              </h1>
-              <p className="text-xs text-muted-foreground/70">
-                Bütçe vs Gerçekleşen vs Tahmin karşılaştırması
-              </p>
-            </div>
+      {/* Header with Statistics Cards */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+        {/* Sol taraf - Başlık */}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/budget")}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Geri
+          </Button>
+          <div className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg text-white shadow-lg">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <div className="space-y-0.5">
+            <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              Varyans Analizi
+            </h1>
+            <p className="text-xs text-muted-foreground/70">
+              Bütçe vs Gerçekleşen vs Tahmin karşılaştırması
+            </p>
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Toplam Bütçe</p>
-                <p className="text-2xl font-bold">{formatAmount(totalBudget)}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Gerçekleşen</p>
-                <p className="text-2xl font-bold">{formatAmount(totalActual)}</p>
-                <p className={cn("text-sm font-medium flex items-center gap-1", getVarianceColor(totalVariancePercent))}>
-                  {getVarianceIcon(totalVariancePercent)}
-                  {formatPercent(totalVariancePercent)}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Varyans</p>
-                <p className={cn("text-2xl font-bold", totalVariance >= 0 ? "text-green-600" : "text-red-600")}>
-                  {formatAmount(totalVariance)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {totalVariance >= 0 ? "Bütçe altında" : "Bütçe üstünde"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Orta - İstatistik Kartları */}
+        <div className="flex flex-wrap gap-1.5 justify-center flex-1 items-center">
+          {/* Toplam Bütçe */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border bg-blue-100 text-blue-800 border-blue-200 transition-all duration-200 hover:shadow-sm">
+            <Target className="h-3 w-3" />
+            <span className="font-medium">Toplam Bütçe</span>
+            <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+              {formatAmount(totalBudget)}
+            </span>
+          </div>
+
+          {/* Gerçekleşen */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border bg-green-100 text-green-800 border-green-200 transition-all duration-200 hover:shadow-sm">
+            <DollarSign className="h-3 w-3" />
+            <span className="font-medium">Gerçekleşen</span>
+            <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+              {formatAmount(totalActual)}
+            </span>
+            {totalBudget > 0 && (
+              <span className={cn("text-[10px] font-bold flex items-center gap-0.5", getVarianceColor(totalVariancePercent))}>
+                {getVarianceIcon(totalVariancePercent)}
+                {formatPercent(totalVariancePercent)}
+              </span>
+            )}
+          </div>
+
+          {/* Varyans */}
+          <div className={cn(
+            "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border transition-all duration-200 hover:shadow-sm",
+            totalVariance >= 0 
+              ? "bg-green-100 text-green-800 border-green-200" 
+              : "bg-red-100 text-red-800 border-red-200"
+          )}>
+            <BarChart3 className="h-3 w-3" />
+            <span className="font-medium">Varyans</span>
+            <span className="bg-white/50 px-1.5 py-0.5 rounded-full text-xs font-bold">
+              {formatAmount(totalVariance)}
+            </span>
+            <span className="text-[10px] opacity-70">
+              {totalVariance >= 0 ? "Altında" : "Üstünde"}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -254,12 +266,48 @@ const BudgetComparison = () => {
         </Card>
       </div>
 
-      {/* Mevcut Variance Table */}
+      {/* View Tabs - Matrix or Timeline */}
       <Card>
-        <div className="p-4">
-          <h3 className="text-lg font-semibold mb-4">Detaylı Aylık Varyans Tablosu</h3>
-          <VarianceTable filters={filters} />
-        </div>
+        <Tabs value={activeView} onValueChange={(v) => setActiveView(v as typeof activeView)} className="w-full">
+          <div className="border-b border-gray-200 px-4 pt-4">
+            <TabsList className="grid w-full grid-cols-2 h-auto bg-transparent p-0 gap-2">
+              <TabsTrigger 
+                value="matrix" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-sm"
+              >
+                <Table2 className="h-4 w-4" />
+                Detaylı Matris
+              </TabsTrigger>
+              <TabsTrigger 
+                value="timeline" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-sm"
+              >
+                <Calendar className="h-4 w-4" />
+                Zaman Çizelgesi
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="p-4">
+            <TabsContent value="matrix" className="mt-0">
+              <EnhancedBudgetMatrix 
+                filters={filters} 
+                showSubcategories={true}
+                editable={false}
+              />
+            </TabsContent>
+
+            <TabsContent value="timeline" className="mt-0">
+              <Suspense fallback={
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              }>
+                <BudgetTimelineView filters={filters} />
+              </Suspense>
+            </TabsContent>
+          </div>
+        </Tabs>
       </Card>
     </div>
   );

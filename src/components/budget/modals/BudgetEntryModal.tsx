@@ -174,7 +174,7 @@ const BudgetEntryModal = ({
         toast({
           variant: "destructive",
           title: "Hata",
-          description: "En az bir ay için bütçe girmelisiniz",
+          description: "En az bir ay için bütçe planlamalısınız",
         });
         return;
       }
@@ -266,10 +266,10 @@ const BudgetEntryModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-blue-500" />
-            Bütçe Girişi - {year}
+            Bütçe Planlama - {year}
           </DialogTitle>
           <DialogDescription>
-            Kategori bazında aylık bütçe değerlerini girin
+            Kategori bazında aylık bütçe değerlerini planlayın
           </DialogDescription>
         </DialogHeader>
 

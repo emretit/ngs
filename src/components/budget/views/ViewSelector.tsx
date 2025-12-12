@@ -1,8 +1,8 @@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Table2, Calendar, BarChart3 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type BudgetViewType = "matrix" | "timeline" | "tabs";
+export type BudgetViewType = "tabs";
 
 interface ViewSelectorProps {
   value: BudgetViewType;
@@ -11,18 +11,6 @@ interface ViewSelectorProps {
 }
 
 const VIEW_OPTIONS = [
-  {
-    value: "matrix" as const,
-    label: "Matrix",
-    icon: Table2,
-    description: "Spreadsheet görünümü",
-  },
-  {
-    value: "timeline" as const,
-    label: "Timeline",
-    icon: Calendar,
-    description: "Zaman çizelgesi",
-  },
   {
     value: "tabs" as const,
     label: "Detay",

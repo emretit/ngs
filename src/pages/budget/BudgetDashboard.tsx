@@ -23,9 +23,6 @@ import BudgetAlerts from "@/components/budget/BudgetAlerts";
 import BenchmarkAnalysis from "@/components/budget/BenchmarkAnalysis";
 import QuickActions from "@/components/budget/QuickActions";
 import BudgetLock from "@/components/budget/BudgetLock";
-import ViewSelector, { BudgetViewType } from "@/components/budget/views/ViewSelector";
-import BudgetMatrixView from "@/components/budget/views/BudgetMatrixView";
-import BudgetTimelineView from "@/components/budget/views/BudgetTimelineView";
 import BudgetEntryModal from "@/components/budget/modals/BudgetEntryModal";
 
 export interface BudgetFiltersState {
@@ -50,7 +47,6 @@ const BudgetDashboard = () => {
   });
 
   const [activeTab, setActiveTab] = useState("alerts");
-  const [viewType, setViewType] = useState<BudgetViewType>("tabs");
   const [budgetEntryOpen, setBudgetEntryOpen] = useState(false);
   const [budgetEntryCategory, setBudgetEntryCategory] = useState<string>("");
   const [budgetEntryMonth, setBudgetEntryMonth] = useState<number>(0);
@@ -67,21 +63,7 @@ const BudgetDashboard = () => {
   };
 
   const renderContent = () => {
-    switch (viewType) {
-      case "matrix":
-        return (
-          <BudgetMatrixView 
-            filters={filters} 
-            onAddBudget={handleAddBudget}
-          />
-        );
-      case "timeline":
-        return (
-          <BudgetTimelineView filters={filters} />
-        );
-      case "tabs":
-      default:
-        return (
+    return (
           <Card className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="border-b border-gray-200 px-4 pt-4">
@@ -194,7 +176,6 @@ const BudgetDashboard = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <ViewSelector value={viewType} onChange={setViewType} />
           <Button 
             size="sm" 
             onClick={() => handleAddBudget()}

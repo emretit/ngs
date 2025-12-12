@@ -15,7 +15,7 @@ const BudgetFilters = ({ filters, onFiltersChange }: BudgetFiltersProps) => {
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
       {/* Year Selector */}
       <div className="space-y-1">
         <label className="text-xs font-medium text-muted-foreground">Yıl</label>
@@ -51,24 +51,6 @@ const BudgetFilters = ({ filters, onFiltersChange }: BudgetFiltersProps) => {
             <SelectItem value="sales">Satış</SelectItem>
             <SelectItem value="marketing">Pazarlama</SelectItem>
             <SelectItem value="operations">Operasyon</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Project Selector */}
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-muted-foreground">Proje</label>
-        <Select
-          value={filters.project}
-          onValueChange={(value) => handleFilterChange("project", value)}
-        >
-          <SelectTrigger className="h-9 text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tümü</SelectItem>
-            <SelectItem value="project1">Proje 1</SelectItem>
-            <SelectItem value="project2">Proje 2</SelectItem>
           </SelectContent>
         </Select>
       </div>

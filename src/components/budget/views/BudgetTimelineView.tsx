@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, memo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +41,50 @@ const MONTHS = [
   "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
 ];
 
-const BudgetTimelineView = ({ filters }: BudgetTimelineViewProps) => {
+// Memoized chart components for better performance
+const MemoizedBarChart = memo(({ data, onMonthClick, formatAmount, currentMonth, year }: any) => (
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={data} onClick={(e) => e?.activePayload && onMonthClick(e.activePayload[0]?.payload?.monthNum)}>
+      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+      <XAxis 
+        dataKey="month" 
+        tick={{ fontSize: 11 }}
+        tickFormatter={(value) => value.substring(0, 3)}
+      />
+      <YAxis 
+        tick={{ fontSize: 11 }}
+        tickFormatter={(value) => formatAmount(value)}
+      />
+      <Tooltip
+        formatter={(value: number) => formatAmount(value)}
+        labelFormatter={(label) => `${label} ${year}`}
+      />
+      <Legend wrapperStyle={{ fontSize: 12 }} />
+      <Bar 
+        dataKey="budget" 
+        name="Bütçe" 
+        fill="#3b82f6"
+        radius={[4, 4, 0, 0]}
+      />
+      <Bar 
+        dataKey="actual" 
+        name="Gerçekleşen" 
+        fill="#10b981"
+        radius={[4, 4, 0, 0]}
+      />
+      <Bar 
+        dataKey="forecast" 
+        name="Tahmin" 
+        fill="#94a3b8"
+        radius={[4, 4, 0, 0]}
+      />
+      <ReferenceLine x={MONTHS[currentMonth - 1]} stroke="#6366f1" strokeWidth={2} strokeDasharray="5 5" />
+    </BarChart>
+  </ResponsiveContainer>
+));
+MemoizedBarChart.displayName = "MemoizedBarChart";
+
+const BudgetTimelineView = memo(({ filters }: BudgetTimelineViewProps) => {
   const {
     matrixRows,
     grandTotals,
@@ -59,24 +102,29 @@ const BudgetTimelineView = ({ filters }: BudgetTimelineViewProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
 
-  const getCurrencySymbol = () => {
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleMonthClick = useCallback((monthNum: number) => {
+    setSelectedMonth(prev => prev === monthNum ? null : monthNum);
+  }, []);
+
+  // Memoize currency symbol and format functions
+  const currencySymbol = useMemo(() => {
     switch (filters.currency) {
       case "USD": return "$";
       case "EUR": return "€";
       default: return "₺";
     }
-  };
+  }, [filters.currency]);
 
-  const formatAmount = (amount: number) => {
-    const symbol = getCurrencySymbol();
+  const formatAmount = useCallback((amount: number) => {
     if (amount >= 1000000) {
-      return `${symbol}${(amount / 1000000).toFixed(1)}M`;
+      return `${currencySymbol}${(amount / 1000000).toFixed(1)}M`;
     }
     if (amount >= 1000) {
-      return `${symbol}${(amount / 1000).toFixed(0)}K`;
+      return `${currencySymbol}${(amount / 1000).toFixed(0)}K`;
     }
-    return `${symbol}${amount.toFixed(0)}`;
-  };
+    return `${currencySymbol}${amount.toFixed(0)}`;
+  }, [currencySymbol]);
 
   // Get categories for filter
   const categories = useMemo(() => {
@@ -85,31 +133,33 @@ const BudgetTimelineView = ({ filters }: BudgetTimelineViewProps) => {
       .map(r => r.category);
   }, [matrixRows]);
 
-  // Prepare timeline data
+  // Prepare timeline data - optimized with early returns
   const timelineData = useMemo(() => {
+    const categoryRow = selectedCategory !== "all" 
+      ? matrixRows.find(r => r.category === selectedCategory && !r.isSubcategory)
+      : null;
+
     return MONTHS.map((month, index) => {
       const monthNum = index + 1;
+      const isPast = monthNum <= currentMonth;
+      
       let budget = 0;
       let actual = 0;
       let forecast = 0;
 
-      if (selectedCategory === "all") {
-        budget = grandTotals.months[monthNum]?.budget_amount || 0;
-        actual = grandTotals.months[monthNum]?.actual_amount || 0;
-        forecast = grandTotals.months[monthNum]?.forecast_amount || 0;
+      if (categoryRow) {
+        const monthData = categoryRow.months[monthNum];
+        budget = monthData?.budget_amount || 0;
+        actual = monthData?.actual_amount || 0;
+        forecast = monthData?.forecast_amount || 0;
       } else {
-        const categoryRow = matrixRows.find(
-          r => r.category === selectedCategory && !r.isSubcategory
-        );
-        if (categoryRow) {
-          budget = categoryRow.months[monthNum]?.budget_amount || 0;
-          actual = categoryRow.months[monthNum]?.actual_amount || 0;
-          forecast = categoryRow.months[monthNum]?.forecast_amount || 0;
-        }
+        const monthData = grandTotals.months[monthNum];
+        budget = monthData?.budget_amount || 0;
+        actual = monthData?.actual_amount || 0;
+        forecast = monthData?.forecast_amount || 0;
       }
 
       const variance = budget - actual;
-      const isPast = monthNum <= currentMonth;
 
       return {
         month,
@@ -336,44 +386,13 @@ const BudgetTimelineView = ({ filters }: BudgetTimelineViewProps) => {
             <CardTitle className="text-base">Aylık Bütçe vs Gerçekleşen</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={timelineData} onClick={(e) => e?.activePayload && setSelectedMonth(e.activePayload[0]?.payload?.monthNum)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="month" 
-                  tick={{ fontSize: 11 }}
-                  tickFormatter={(value) => value.substring(0, 3)}
-                />
-                <YAxis 
-                  tick={{ fontSize: 11 }}
-                  tickFormatter={(value) => formatAmount(value)}
-                />
-                <Tooltip
-                  formatter={(value: number) => formatAmount(value)}
-                  labelFormatter={(label) => `${label} ${filters.year}`}
-                />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar 
-                  dataKey="budget" 
-                  name="Bütçe" 
-                  fill="#3b82f6"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="actual" 
-                  name="Gerçekleşen" 
-                  fill="#10b981"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="forecast" 
-                  name="Tahmin" 
-                  fill="#94a3b8"
-                  radius={[4, 4, 0, 0]}
-                />
-                <ReferenceLine x={MONTHS[currentMonth - 1]} stroke="#6366f1" strokeWidth={2} strokeDasharray="5 5" />
-              </BarChart>
-            </ResponsiveContainer>
+            <MemoizedBarChart 
+              data={timelineData} 
+              onMonthClick={handleMonthClick}
+              formatAmount={formatAmount}
+              currentMonth={currentMonth}
+              year={filters.year}
+            />
           </CardContent>
         </Card>
 
@@ -572,7 +591,9 @@ const BudgetTimelineView = ({ filters }: BudgetTimelineViewProps) => {
       )}
     </div>
   );
-};
+});
+
+BudgetTimelineView.displayName = "BudgetTimelineView";
 
 export default BudgetTimelineView;
 

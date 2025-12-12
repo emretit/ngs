@@ -40,19 +40,19 @@ export const EmbeddedAIAnalysis = ({
               {title || `${tableName} Analizi`}
             </CardTitle>
             <CardDescription>
-              Groq AI ile veri analizi
+              Google Gemini AI ile veri analizi
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {modelStatus.loaded ? (
               <span className="flex items-center gap-1 text-green-600">
                 <CheckCircle className="h-4 w-4" />
-                Groq API hazır
+                Gemini API hazır
               </span>
             ) : (
               <span className="flex items-center gap-1 text-amber-600">
                 <AlertCircle className="h-4 w-4" />
-                Groq API key gerekli
+                Gemini API key gerekli
               </span>
             )}
           </div>
@@ -86,13 +86,11 @@ export const EmbeddedAIAnalysis = ({
 
         {result && (
           <div className="space-y-4">
-            {/* Özet */}
             <div className="rounded-lg bg-muted p-4">
               <h3 className="font-semibold mb-2">Özet</h3>
               <p className="text-sm text-muted-foreground">{result.summary}</p>
             </div>
 
-            {/* Bulgular */}
             {result.insights && result.insights.length > 0 && (
               <div className="space-y-2">
                 <h3 className="font-semibold flex items-center gap-2">
@@ -107,7 +105,6 @@ export const EmbeddedAIAnalysis = ({
               </div>
             )}
 
-            {/* Öneriler */}
             {result.recommendations && result.recommendations.length > 0 && (
               <div className="space-y-2">
                 <h3 className="font-semibold">Öneriler</h3>
@@ -122,9 +119,7 @@ export const EmbeddedAIAnalysis = ({
             {result.error && (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-xs">
-                  {result.error}
-                </AlertDescription>
+                <AlertDescription className="text-xs">{result.error}</AlertDescription>
               </Alert>
             )}
           </div>
@@ -133,4 +128,3 @@ export const EmbeddedAIAnalysis = ({
     </Card>
   );
 };
-

@@ -11,7 +11,7 @@ interface ChatMessage {
   content: string;
 }
 
-interface GroqRequest {
+interface GeminiRequest {
   type: 'chat' | 'sql' | 'analyze' | 'map-columns' | 'status' | 'report';
   messages?: ChatMessage[];
   query?: string;
@@ -77,30 +77,38 @@ TABLOLAR VE İLİŞKİLER:
     - id, title, type, status, due_date, assignee_id
 `;
 
+// Available Gemini models
+const GEMINI_MODELS: Record<string, string> = {
+  'gemini-2.5-flash': 'gemini-2.5-flash-preview-05-20',
+  'gemini-2.5-pro': 'gemini-2.5-pro-preview-05-06',
+  'gemini-2.5-flash-lite': 'gemini-2.0-flash-lite',
+  'gemini-2.0-flash': 'gemini-2.0-flash',
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+  const GOOGLE_GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
   
   try {
-    const body: GroqRequest = await req.json();
-    const { type, model = 'llama-3.3-70b-versatile', stream = false } = body;
+    const body: GeminiRequest = await req.json();
+    const { type, model = 'gemini-2.5-flash', stream = false } = body;
 
     // Status check
     if (type === 'status') {
       return new Response(JSON.stringify({ 
-        configured: !!GROQ_API_KEY,
-        message: GROQ_API_KEY ? 'Groq API yapılandırıldı' : 'GROQ_API_KEY ayarlanmadı'
+        configured: !!GOOGLE_GEMINI_API_KEY,
+        message: GOOGLE_GEMINI_API_KEY ? 'Google Gemini API yapılandırıldı' : 'GOOGLE_GEMINI_API_KEY ayarlanmadı'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    if (!GROQ_API_KEY) {
+    if (!GOOGLE_GEMINI_API_KEY) {
       return new Response(JSON.stringify({ 
-        error: 'GROQ_API_KEY is not configured',
+        error: 'GOOGLE_GEMINI_API_KEY is not configured',
         configured: false 
       }), {
         status: 500,
@@ -108,22 +116,28 @@ serve(async (req) => {
       });
     }
 
-    let messages: ChatMessage[] = [];
+    // Get actual model name
+    const actualModel = GEMINI_MODELS[model] || GEMINI_MODELS['gemini-2.5-flash'];
+
+    let systemInstruction = '';
+    let userContent = '';
 
     switch (type) {
       case 'chat':
-        messages = body.messages || [];
+        // Extract system message and combine user/assistant messages
+        const systemMsg = body.messages?.find(m => m.role === 'system');
+        systemInstruction = systemMsg?.content || 'Sen yardımcı bir AI asistanısın. Türkçe yanıt ver.';
+        userContent = body.messages
+          ?.filter(m => m.role !== 'system')
+          ?.map(m => `${m.role === 'user' ? 'Kullanıcı' : 'Asistan'}: ${m.content}`)
+          ?.join('\n\n') || '';
         break;
 
       case 'report':
-        // Enhanced report query with full schema context
         const contextInfo = body.context ? 
           `\nFİLTRELER:\n- Başlangıç: ${body.context.startDate || 'Belirtilmedi'}\n- Bitiş: ${body.context.endDate || 'Belirtilmedi'}\n- Para Birimi: ${body.context.currency || 'TRY'}` : '';
         
-        messages = [
-          {
-            role: 'system',
-            content: `Sen bir iş analizi ve raporlama uzmanısın. Kullanıcının Türkçe sorularını analiz edip:
+        systemInstruction = `Sen bir iş analizi ve raporlama uzmanısın. Kullanıcının Türkçe sorularını analiz edip:
 1. Uygun PostgreSQL SELECT sorgusu oluştur
 2. Sonuçların nasıl görselleştirileceğini öner
 3. Kısa bir açıklama yaz
@@ -146,20 +160,12 @@ YANIT FORMATI (JSON):
     "yKey": "y ekseni alan adı",
     "title": "Grafik başlığı"
   }
-}`
-          },
-          {
-            role: 'user',
-            content: `${body.query}${contextInfo}`
-          }
-        ];
+}`;
+        userContent = `${body.query}${contextInfo}`;
         break;
 
       case 'sql':
-        messages = [
-          {
-            role: 'system',
-            content: `Sen bir SQL uzmanısın. Kullanıcının doğal dil sorgularını PostgreSQL SELECT sorgularına çeviriyorsun.
+        systemInstruction = `Sen bir SQL uzmanısın. Kullanıcının doğal dil sorgularını PostgreSQL SELECT sorgularına çeviriyorsun.
 
 ${DATABASE_SCHEMA}
             
@@ -168,28 +174,17 @@ KURALLAR:
 - INSERT, UPDATE, DELETE, DROP, ALTER, CREATE gibi değiştirici ifadeler YASAK
 - Sorguyu düz metin olarak döndür, markdown formatı kullanma
 - Sadece SQL sorgusunu döndür, açıklama ekleme
-- Tablo ve sütun adlarını doğru kullan`
-          },
-          {
-            role: 'user',
-            content: body.query || ''
-          }
-        ];
+- Tablo ve sütun adlarını doğru kullan`;
+        userContent = body.query || '';
         break;
 
       case 'analyze':
         const sampleData = JSON.stringify(body.data?.slice(0, 10), null, 2);
         const summaryText = JSON.stringify(body.summary, null, 2);
         
-        messages = [
-          {
-            role: 'system',
-            content: `Sen bir veri analiz uzmanısın. Verileri analiz edip Türkçe olarak içgörüler sunuyorsun.
-Kısa, öz ve aksiyon odaklı analizler yap.`
-          },
-          {
-            role: 'user',
-            content: `Aşağıdaki verileri analiz et:
+        systemInstruction = `Sen bir veri analiz uzmanısın. Verileri analiz edip Türkçe olarak içgörüler sunuyorsun.
+Kısa, öz ve aksiyon odaklı analizler yap.`;
+        userContent = `Aşağıdaki verileri analiz et:
 
 TABLO: ${body.tableName}
 KAYIT SAYISI: ${body.data?.length || 0}
@@ -206,32 +201,22 @@ JSON formatında yanıt ver:
   "insights": ["önemli bulgu 1", "bulgu 2", "bulgu 3"],
   "recommendations": ["öneri 1", "öneri 2"],
   "alerts": ["dikkat edilmesi gereken durum"]
-}`
-          }
-        ];
+}`;
         break;
 
       case 'map-columns':
-        messages = [
-          {
-            role: 'system',
-            content: `Sen bir veri eşleştirme uzmanısın. Excel/CSV kolon isimlerini veritabanı alanlarıyla eşleştiriyorsun.
+        systemInstruction = `Sen bir veri eşleştirme uzmanısın. Excel/CSV kolon isimlerini veritabanı alanlarıyla eşleştiriyorsun.
             
 Yanıtını JSON formatında ver:
 {
   "mappings": [
     { "source": "kaynak_kolon", "target": "hedef_alan", "confidence": 0.95 }
   ]
-}`
-          },
-          {
-            role: 'user',
-            content: `Kaynak kolonlar: ${JSON.stringify(body.sourceColumns)}
+}`;
+        userContent = `Kaynak kolonlar: ${JSON.stringify(body.sourceColumns)}
 Hedef alanlar: ${JSON.stringify(body.targetFields)}
 
-Bu kolonları en uygun hedef alanlarla eşleştir.`
-          }
-        ];
+Bu kolonları en uygun hedef alanlarla eşleştir.`;
         break;
 
       default:
@@ -241,62 +226,103 @@ Bu kolonları en uygun hedef alanlarla eşleştir.`
         });
     }
 
-    console.log(`Groq API call - Type: ${type}, Model: ${model}, Stream: ${stream}`);
+    console.log(`Gemini API call - Type: ${type}, Model: ${actualModel}, Stream: ${stream}`);
+
+    // Prepare request body for Gemini
+    const geminiBody: any = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: userContent }]
+        }
+      ],
+      systemInstruction: {
+        parts: [{ text: systemInstruction }]
+      },
+      generationConfig: {
+        temperature: type === 'sql' ? 0.1 : 0.7,
+        maxOutputTokens: type === 'sql' ? 500 : 2000,
+      }
+    };
+
+    // Add JSON response format for structured responses
+    if (type === 'analyze' || type === 'map-columns' || type === 'report') {
+      geminiBody.generationConfig.responseMimeType = 'application/json';
+    }
 
     // Handle streaming for chat
     if (stream && type === 'chat') {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.7,
-          max_tokens: 2000,
-          stream: true,
-        }),
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:streamGenerateContent?key=${GOOGLE_GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(geminiBody),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Groq API streaming error:', response.status, errorText);
-        return new Response(JSON.stringify({ error: `Groq API error: ${response.status}` }), {
+        console.error('Gemini API streaming error:', response.status, errorText);
+        return new Response(JSON.stringify({ error: `Gemini API error: ${response.status}` }), {
           status: response.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      return new Response(response.body, {
+      // Transform Gemini streaming format to SSE format
+      const transformStream = new TransformStream({
+        transform(chunk, controller) {
+          const text = new TextDecoder().decode(chunk);
+          try {
+            // Gemini returns JSON array chunks
+            const lines = text.split('\n').filter(line => line.trim());
+            for (const line of lines) {
+              if (line.startsWith('[') || line.startsWith(',')) {
+                const cleanLine = line.replace(/^\[|^\,/, '').trim();
+                if (cleanLine && cleanLine !== ']') {
+                  try {
+                    const parsed = JSON.parse(cleanLine.replace(/\]$/, ''));
+                    const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (content) {
+                      controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({
+                        choices: [{ delta: { content } }]
+                      })}\n\n`));
+                    }
+                  } catch (e) {
+                    // Skip malformed JSON
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Stream transform error:', e);
+          }
+        }
+      });
+
+      const transformedStream = response.body?.pipeThrough(transformStream);
+
+      return new Response(transformedStream, {
         headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
       });
     }
 
     // Non-streaming request
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature: type === 'sql' ? 0.1 : 0.7,
-        max_tokens: type === 'sql' ? 500 : 2000,
-        response_format: (type === 'analyze' || type === 'map-columns' || type === 'report') 
-          ? { type: 'json_object' } 
-          : undefined,
-      }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(geminiBody),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Groq API error:', response.status, errorText);
+      console.error('Gemini API error:', response.status, errorText);
       return new Response(JSON.stringify({ 
-        error: `Groq API error: ${response.status}`,
+        error: `Gemini API error: ${response.status}`,
         details: errorText 
       }), {
         status: response.status,
@@ -305,7 +331,7 @@ Bu kolonları en uygun hedef alanlarla eşleştir.`
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     let result: any = { content };
 
@@ -337,7 +363,7 @@ Bu kolonları en uygun hedef alanlarla eşleştir.`
     });
 
   } catch (error) {
-    console.error('Error in groq-chat function:', error);
+    console.error('Error in gemini-chat function:', error);
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error' 
     }), {

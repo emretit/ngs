@@ -1,20 +1,8 @@
-import Groq from 'groq-sdk';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Customer Column Mapping Service using Groq AI
- * 
- * Note: For production, configure GROQ_API_KEY via Supabase Secrets
+ * Customer Column Mapping Service using Google Gemini AI
  */
-const GROQ_API_KEY = ''; // Configure via Supabase Secrets
-
-let groq: Groq | null = null;
-
-if (GROQ_API_KEY) {
-  groq = new Groq({
-    apiKey: GROQ_API_KEY,
-    dangerouslyAllowBrowser: true
-  });
-}
 
 // Sistemdeki beklenen Müşteri alanları ve açıklamaları
 const SYSTEM_FIELDS = {
@@ -109,87 +97,45 @@ export interface MappingResult {
 export const mapCustomerColumnsWithAI = async (
   excelColumns: string[]
 ): Promise<MappingResult> => {
-  if (!GROQ_API_KEY || !groq) {
-    return fallbackMapping(excelColumns);
-  }
-
   try {
-    const systemFieldsDescription = Object.entries(SYSTEM_FIELDS)
-      .map(([field, info]) => {
-        const examples = info.examples.join(', ');
-        return `- ${field}: ${info.description} (Örnekler: ${examples}) ${info.required ? '[ZORUNLU]' : '[İSTEĞE BAĞLI]'}`;
-      })
-      .join('\n');
+    const targetFields = Object.entries(SYSTEM_FIELDS).map(([field, info]) => ({
+      name: field,
+      description: `${info.description} (Örnekler: ${info.examples.join(', ')}) ${info.required ? '[ZORUNLU]' : '[İSTEĞE BAĞLI]'}`
+    }));
 
-    const excelColumnsList = excelColumns.map((col, idx) => `${idx + 1}. "${col}"`).join('\n');
-
-    const systemPrompt = `Sen bir veri eşleştirme uzmanısın. Excel dosyasındaki kolon isimlerini, Müşteri veritabanı alanlarına eşleştiriyorsun.
-
-SİSTEM ALANLARI:
-${systemFieldsDescription}
-
-EXCEL KOLONLARI:
-${excelColumnsList}
-
-GÖREVİN:
-1. Her Excel kolonunu en uygun sistem alanına eşleştir
-2. Eşleştirme güvenilirliğini 0-100 arası puanla (confidence)
-3. Eşleşmeyen kolonları belirt
-4. Türkçe ve İngilizce kolon isimlerini destekle
-
-ÇIKTI FORMATI (JSON):
-{
-  "mappings": [
-    {
-      "excelColumn": "Excel kolon adı",
-      "systemField": "sistem_alanı",
-      "confidence": 95,
-      "description": "Eşleştirme açıklaması"
-    }
-  ],
-  "unmappedColumns": ["eşleşmeyen kolon 1"],
-  "confidence": 85
-}
-
-KURALLAR:
-- Aynı Excel kolonu birden fazla sistem alanına eşlenemez
-- Zorunlu alanlar (name) varsa öncelikli eşleştir
-- Confidence 50'den düşükse eşleştirme yapma`;
-
-    const userPrompt = `Excel kolonlarını müşteri alanlarına eşleştir.`;
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.1,
-      max_tokens: 2000,
-      response_format: { type: 'json_object' }
+    const { data, error } = await supabase.functions.invoke('gemini-chat', {
+      body: {
+        type: 'map-columns',
+        sourceColumns: excelColumns,
+        targetFields,
+        model: 'gemini-2.5-flash-lite'
+      }
     });
 
-    const response = completion.choices[0]?.message?.content;
-    if (!response) throw new Error('AI\'dan yanıt alınamadı');
+    if (error || data.error) {
+      console.error('AI mapping error:', error || data.error);
+      return fallbackMapping(excelColumns);
+    }
 
-    const result = JSON.parse(response) as MappingResult;
+    const result = data;
 
-    const validatedMappings = result.mappings
-      .filter(m => m.confidence >= 50)
-      .filter(m => Object.keys(SYSTEM_FIELDS).includes(m.systemField))
-      .map(m => ({
-        ...m,
-        excelColumn: m.excelColumn.trim(),
-        systemField: m.systemField.trim()
+    const validatedMappings = (result.mappings || [])
+      .filter((m: any) => m.confidence >= 50)
+      .filter((m: any) => Object.keys(SYSTEM_FIELDS).includes(m.target || m.systemField))
+      .map((m: any) => ({
+        excelColumn: (m.source || m.excelColumn || '').trim(),
+        systemField: (m.target || m.systemField || '').trim(),
+        confidence: m.confidence || 80,
+        description: `"${m.source || m.excelColumn}" → ${m.target || m.systemField}`
       }));
 
-    const mappedExcelColumns = new Set(validatedMappings.map(m => m.excelColumn.toLowerCase()));
+    const mappedExcelColumns = new Set(validatedMappings.map((m: any) => m.excelColumn.toLowerCase()));
     const unmappedColumns = excelColumns.filter(
       col => !mappedExcelColumns.has(col.toLowerCase())
     );
 
     const avgConfidence = validatedMappings.length > 0
-      ? validatedMappings.reduce((sum, m) => sum + m.confidence, 0) / validatedMappings.length
+      ? validatedMappings.reduce((sum: number, m: any) => sum + m.confidence, 0) / validatedMappings.length
       : 0;
 
     return {
@@ -312,4 +258,3 @@ const fallbackMapping = (excelColumns: string[]): MappingResult => {
     confidence: mappings.length > 0 ? 80 : 0
   };
 };
-

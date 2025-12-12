@@ -1,21 +1,9 @@
-import Groq from 'groq-sdk';
-import { supabase } from '@/integrations/supabase/client';
-
 /**
- * Groq Usage Tracker
+ * Gemini Usage Tracker
  * 
- * Note: For production, configure GROQ_API_KEY via Supabase Secrets
+ * Note: Google Gemini API has different rate limits than Groq
+ * Free tier: 15 RPM (requests per minute), 1 million tokens per minute
  */
-const GROQ_API_KEY = ''; // Configure via Supabase Secrets
-
-let groq: Groq | null = null;
-
-if (GROQ_API_KEY) {
-  groq = new Groq({
-    apiKey: GROQ_API_KEY,
-    dangerouslyAllowBrowser: true
-  });
-}
 
 export interface UsageStats {
   daily: {
@@ -36,24 +24,24 @@ export interface UsageStats {
 
 // Local storage keys for tracking
 const STORAGE_KEYS = {
-  dailyCount: 'groq_daily_requests',
-  lastReset: 'groq_last_reset',
-  requestLog: 'groq_request_log'
+  dailyCount: 'gemini_daily_requests',
+  lastReset: 'gemini_last_reset',
+  requestLog: 'gemini_request_log'
 };
 
-// Groq Free Tier Limits
+// Gemini Free Tier Limits (more generous than Groq)
 const LIMITS = {
-  dailyRequests: 14400,
-  monthlyRequests: 432000, // 14400 * 30
-  ratePerMinute: 30
+  dailyRequests: 1500, // Generous daily limit
+  monthlyRequests: 45000, // 1500 * 30
+  ratePerMinute: 15 // 15 RPM for free tier
 };
 
-export class GroqUsageTracker {
-  private static instance: GroqUsageTracker;
+export class GeminiUsageTracker {
+  private static instance: GeminiUsageTracker;
 
-  static getInstance(): GroqUsageTracker {
+  static getInstance(): GeminiUsageTracker {
     if (!this.instance) {
-      this.instance = new GroqUsageTracker();
+      this.instance = new GeminiUsageTracker();
     }
     return this.instance;
   }
@@ -177,30 +165,6 @@ export class GroqUsageTracker {
     });
   }
 
-  // Get real usage from Groq API (if available in headers)
-  async getRealUsageFromAPI(): Promise<Partial<UsageStats> | null> {
-    if (!groq) {
-      console.warn('Groq client not initialized');
-      return null;
-    }
-    
-    try {
-      // Make a minimal request to get headers
-      const response = await groq.chat.completions.create({
-        messages: [{ role: 'user', content: 'test' }],
-        model: 'llama3-8b-8192',
-        max_tokens: 1
-      });
-
-      // Note: Groq may not provide usage info in headers for free tier
-      // This is a placeholder for when/if they add it
-      return null;
-    } catch (error) {
-      console.error('Could not fetch real usage from API:', error);
-      return null;
-    }
-  }
-
   // Export usage data for analysis
   exportUsageData() {
     const stats = this.getUsageStats();
@@ -215,8 +179,11 @@ export class GroqUsageTracker {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `groq-usage-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `gemini-usage-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
 }
+
+// Backward compatibility
+export const GroqUsageTracker = GeminiUsageTracker;

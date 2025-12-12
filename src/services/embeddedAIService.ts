@@ -1,21 +1,8 @@
-import Groq from 'groq-sdk';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Embedded AI Service using Groq
- * 
- * Note: For production, configure GROQ_API_KEY via Supabase Secrets
+ * Embedded AI Service using Google Gemini via Edge Function
  */
-const GROQ_API_KEY = ''; // Configure via Supabase Secrets
-
-let groq: Groq | null = null;
-
-if (GROQ_API_KEY) {
-  groq = new Groq({
-    apiKey: GROQ_API_KEY,
-    dangerouslyAllowBrowser: true
-  });
-}
 
 export interface DataAnalysisResult {
   summary: string;
@@ -81,7 +68,7 @@ export const analyzeSupabaseData = async (
     // 2. Veriyi özetle
     const dataSummary = summarizeData(data);
     
-    // 3. AI ile analiz et
+    // 3. AI ile analiz et (Edge function üzerinden)
     const analysis = await analyzeWithAI(tableName, data, dataSummary);
     
     return analysis;
@@ -121,112 +108,53 @@ const summarizeData = (data: any[]): Record<string, any> => {
 };
 
 /**
- * AI ile veriyi analiz et (Groq kullanarak)
+ * AI ile veriyi analiz et (Gemini Edge Function kullanarak)
  */
 const analyzeWithAI = async (
   tableName: string,
   data: any[],
   summary: Record<string, any>
 ): Promise<DataAnalysisResult> => {
-  if (!GROQ_API_KEY || !groq) {
-    // Groq API key yoksa fallback özet
-    return {
-      summary: `${tableName} tablosunda ${data.length} kayıt bulundu.`,
-      insights: [
-        `Toplam kayıt sayısı: ${data.length}`,
-        ...Object.entries(summary)
-          .filter(([key]) => key.includes('total'))
-          .slice(0, 3)
-          .map(([key, value]) => `${key.replace('_total', '')} toplamı: ${value}`)
-      ],
-      recommendations: ['Groq API key ayarlanmadı. Lütfen VITE_GROQ_API_KEY environment variable\'ını ayarlayın.'],
-      error: 'GROQ_API_KEY_MISSING'
-    };
-  }
-
   try {
-    // Veriyi JSON string'e çevir (ilk 10 kayıt)
-    const sampleData = JSON.stringify(data.slice(0, 10), null, 2);
-    const summaryText = JSON.stringify(summary, null, 2);
-    
-    // Prompt oluştur
-    const systemPrompt = `Sen bir veri analiz uzmanısın. Supabase veritabanı verilerini analiz edip Türkçe olarak özetliyorsun. 
-Verileri detaylı analiz edip, önemli bulguları ve önerileri sunuyorsun.`;
-
-    const userPrompt = `Aşağıdaki Supabase verilerini analiz et ve Türkçe olarak özetle.
-
-TABLO: ${tableName}
-TOPLAM KAYIT SAYISI: ${data.length}
-
-VERİ ÖZETİ:
-${summaryText}
-
-ÖRNEK VERİLER (ilk 10 kayıt):
-${sampleData}
-
-GÖREVİN:
-1. Verilerin genel durumunu özetle (2-3 cümle)
-2. Önemli bulguları listele (3-5 madde)
-3. Öneriler sun (2-3 madde)
-
-Yanıtını JSON formatında ver:
-{
-  "summary": "Genel özet",
-  "insights": ["bulgu1", "bulgu2", ...],
-  "recommendations": ["öneri1", "öneri2", ...]
-}`;
-
-    // Groq API'den yanıt al
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt
-        },
-        {
-          role: 'user',
-          content: userPrompt
-        }
-      ],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.7,
-      max_tokens: 1000,
-      response_format: { type: 'json_object' }
+    // Edge function'ı çağır
+    const { data: result, error } = await supabase.functions.invoke('gemini-chat', {
+      body: {
+        type: 'analyze',
+        tableName,
+        data: data.slice(0, 10), // İlk 10 kayıt
+        summary,
+        model: 'gemini-2.5-flash'
+      }
     });
 
-    const response = completion.choices[0]?.message?.content;
-
-    if (!response) {
-      throw new Error('Groq API\'den yanıt alınamadı');
+    if (error) {
+      throw new Error(`Edge function hatası: ${error.message}`);
     }
 
-    // JSON'u parse et
-    let parsedResult: DataAnalysisResult;
-    try {
-      const result = JSON.parse(response) as DataAnalysisResult;
-      
-      // Validasyon
-      parsedResult = {
-        summary: result.summary || `Toplam ${data.length} kayıt analiz edildi.`,
-        insights: result.insights || [],
-        recommendations: result.recommendations || [],
-      };
-    } catch (parseError) {
-      // JSON parse hatası - metni direkt kullan
-      parsedResult = {
-        summary: response.split('\n')[0] || `Toplam ${data.length} kayıt analiz edildi.`,
-        insights: response.split('\n')
-          .filter(line => line.trim().startsWith('-') || line.trim().match(/^\d+\./))
-          .slice(0, 5)
-          .map(line => line.replace(/^[-•\d+\.]\s*/, '').trim())
-          .filter(line => line.length > 0),
-        recommendations: []
+    if (result.error) {
+      // API yapılandırılmamış - fallback özet
+      return {
+        summary: `${tableName} tablosunda ${data.length} kayıt bulundu.`,
+        insights: [
+          `Toplam kayıt sayısı: ${data.length}`,
+          ...Object.entries(summary)
+            .filter(([key]) => key.includes('total'))
+            .slice(0, 3)
+            .map(([key, value]) => `${key.replace('_total', '')} toplamı: ${value}`)
+        ],
+        recommendations: ['Gemini API yapılandırılmadı. Lütfen GOOGLE_GEMINI_API_KEY ayarlayın.'],
+        error: 'GEMINI_API_KEY_MISSING'
       };
     }
-    
-    return parsedResult;
+
+    // Validasyon
+    return {
+      summary: result.summary || `Toplam ${data.length} kayıt analiz edildi.`,
+      insights: result.insights || [],
+      recommendations: result.recommendations || [],
+    };
   } catch (error: any) {
-    console.error('Groq AI analiz hatası:', error);
+    console.error('Gemini AI analiz hatası:', error);
     
     // Fallback: Basit özet
     return {
@@ -238,7 +166,7 @@ Yanıtını JSON formatında ver:
           .slice(0, 3)
           .map(([key, value]) => `${key.replace('_total', '')} toplamı: ${value}`)
       ],
-      recommendations: ['Groq API hatası nedeniyle basit özet gösteriliyor.'],
+      recommendations: ['Gemini API hatası nedeniyle basit özet gösteriliyor.'],
       error: error.message
     };
   }
@@ -268,12 +196,23 @@ export const analyzeMultipleTables = async (
 };
 
 /**
- * Groq API durumunu kontrol et
+ * Gemini API durumunu kontrol et
  */
-export const getModelStatus = () => {
-  return {
-    loaded: !!GROQ_API_KEY && !!groq,
-    loading: false // Groq API anında hazır (model yükleme yok)
-  };
+export const getModelStatus = async () => {
+  try {
+    const { data, error } = await supabase.functions.invoke('gemini-chat', {
+      body: { type: 'status' }
+    });
+    
+    if (error) {
+      return { loaded: false, loading: false };
+    }
+    
+    return {
+      loaded: data?.configured || false,
+      loading: false
+    };
+  } catch {
+    return { loaded: false, loading: false };
+  }
 };
-

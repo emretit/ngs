@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export interface GroqChatResponse {
+export interface GeminiChatResponse {
   content?: string;
   sql?: string;
   raw?: string;
@@ -8,14 +8,14 @@ export interface GroqChatResponse {
   configured?: boolean;
 }
 
-export interface GroqAnalyzeResponse {
+export interface GeminiAnalyzeResponse {
   summary?: string;
   insights?: string[];
   recommendations?: string[];
   error?: string;
 }
 
-export interface GroqMappingResponse {
+export interface GeminiMappingResponse {
   mappings?: Array<{
     source: string;
     target: string;
@@ -32,22 +32,22 @@ export interface SQLGenerationResult {
 }
 
 /**
- * Check if Groq API is configured
+ * Check if Gemini API is configured
  */
-export const checkGroqStatus = async (): Promise<{ configured: boolean; message: string }> => {
+export const checkGeminiStatus = async (): Promise<{ configured: boolean; message: string }> => {
   try {
-    const { data, error } = await supabase.functions.invoke('groq-chat', {
+    const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { type: 'status' }
     });
     
     if (error) {
-      console.error('Groq status check error:', error);
+      console.error('Gemini status check error:', error);
       return { configured: false, message: 'Bağlantı hatası' };
     }
     
     return data;
   } catch (err) {
-    console.error('Groq status check exception:', err);
+    console.error('Gemini status check exception:', err);
     return { configured: false, message: 'Bağlantı hatası' };
   }
 };
@@ -59,11 +59,11 @@ export const generateSQLFromQuery = async (
   userQuery: string
 ): Promise<SQLGenerationResult> => {
   try {
-    const { data, error } = await supabase.functions.invoke('groq-chat', {
+    const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'sql', 
         query: userQuery,
-        model: 'llama-3.3-70b-versatile'
+        model: 'gemini-2.5-flash'
       }
     });
     
@@ -104,10 +104,10 @@ export const generateSQLFromQuery = async (
  */
 export const generateSQLQuery = async (
   query: string,
-  model: string = 'llama-3.3-70b-versatile'
-): Promise<GroqChatResponse> => {
+  model: string = 'gemini-2.5-flash'
+): Promise<GeminiChatResponse> => {
   try {
-    const { data, error } = await supabase.functions.invoke('groq-chat', {
+    const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'sql', 
         query,
@@ -132,10 +132,10 @@ export const generateSQLQuery = async (
  */
 export const chatWithAI = async (
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-  model: string = 'llama-3.3-70b-versatile'
-): Promise<GroqChatResponse> => {
+  model: string = 'gemini-2.5-flash'
+): Promise<GeminiChatResponse> => {
   try {
-    const { data, error } = await supabase.functions.invoke('groq-chat', {
+    const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'chat', 
         messages,
@@ -162,10 +162,10 @@ export const analyzeDataWithAI = async (
   tableName: string,
   data: any[],
   summary: Record<string, any>,
-  model: string = 'llama-3.3-70b-versatile'
-): Promise<GroqAnalyzeResponse> => {
+  model: string = 'gemini-2.5-flash'
+): Promise<GeminiAnalyzeResponse> => {
   try {
-    const { data: result, error } = await supabase.functions.invoke('groq-chat', {
+    const { data: result, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'analyze', 
         tableName,
@@ -193,10 +193,10 @@ export const analyzeDataWithAI = async (
 export const mapColumnsWithAI = async (
   sourceColumns: string[],
   targetFields: Array<{ name: string; description: string }>,
-  model: string = 'llama-3.1-8b-instant'
-): Promise<GroqMappingResponse> => {
+  model: string = 'gemini-2.5-flash-lite'
+): Promise<GeminiMappingResponse> => {
   try {
-    const { data, error } = await supabase.functions.invoke('groq-chat', {
+    const { data, error } = await supabase.functions.invoke('gemini-chat', {
       body: { 
         type: 'map-columns', 
         sourceColumns,
@@ -218,10 +218,10 @@ export const mapColumnsWithAI = async (
 };
 
 /**
- * Test Groq connection (now via edge function)
+ * Test Gemini connection (now via edge function)
  */
-export const testGroqConnection = async (): Promise<boolean> => {
-  const status = await checkGroqStatus();
+export const testGeminiConnection = async (): Promise<boolean> => {
+  const status = await checkGeminiStatus();
   return status.configured;
 };
 
@@ -351,8 +351,12 @@ export const testDatabaseTables = async (): Promise<string[]> => {
 };
 
 // Export available models
-export const GROQ_MODELS = [
-  { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B', description: 'En güçlü model - SQL ve analiz için ideal' },
-  { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B', description: 'Hızlı model - Basit görevler için' },
-  { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', description: 'Uzun context - Detaylı analiz için' },
+export const GEMINI_MODELS = [
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Hızlı ve dengeli - Günlük kullanım için ideal' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'En güçlü model - Karmaşık analiz için' },
+  { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', description: 'En hızlı - Basit görevler için' },
 ] as const;
+
+// Backward compatibility exports
+export const checkGroqStatus = checkGeminiStatus;
+export const GROQ_MODELS = GEMINI_MODELS;

@@ -5,7 +5,7 @@ const FooterSection = () => {
   const { t } = useTranslation();
   
   return (
-    <footer id="contact" className="scroll-mt-24 relative py-24 px-4 sm:px-6 lg:px-8">
+    <footer id="contact" className="relative py-24 px-4 sm:px-6 lg:px-8">
       {/* Header ile aynı arka plan */}
       <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-xl"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(220,38,38,0.1),transparent_60%)]"></div>

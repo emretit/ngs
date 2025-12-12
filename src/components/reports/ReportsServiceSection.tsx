@@ -1,8 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronDown, ChevronRight, Wrench, Clock, CheckCircle } from "lucide-react";
+import { ChevronDown, ChevronRight, Wrench, Clock, CheckCircle, AlertTriangle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  RadialBarChart,
+  RadialBar
+} from "recharts";
 
 interface ReportsServiceSectionProps {
   isExpanded: boolean;
@@ -10,108 +26,143 @@ interface ReportsServiceSectionProps {
   searchParams: URLSearchParams;
 }
 
+const PRIORITY_COLORS = { high: '#ef4444', medium: '#f59e0b', low: '#22c55e' };
+const STATUS_COLORS = { new: '#3b82f6', in_progress: '#f59e0b', assigned: '#8b5cf6', completed: '#22c55e' };
+
 export default function ReportsServiceSection({ isExpanded, onToggle, searchParams }: ReportsServiceSectionProps) {
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
 
+  // SLA Metrics with gauge data
   const { data: slaMetrics } = useQuery({
     queryKey: ['slaMetrics', startDate, endDate],
     queryFn: async () => {
-      let query = supabase
-        .from('service_requests')
-        .select('service_status, created_at, completed_at, service_priority');
-        
+      let query = supabase.from('service_requests').select('service_status, created_at, completed_at, service_priority');
       if (startDate) query = query.gte('created_at', startDate);
       if (endDate) query = query.lte('created_at', endDate);
-      
       const { data } = await query;
       
-      if (!data) return { onTime: 0, total: 0, percentage: 0 };
+      if (!data) return { onTime: 0, total: 0, percentage: 0, gaugeData: [] };
       
-      const completed = data.filter(req => req.service_status === 'completed');
-      // Assuming SLA is 24 hours for high priority, 48 for medium, 72 for low
-      const onTime = completed.filter(req => {
-        if (!req.completed_at) return false;
-        const createdAt = new Date(req.created_at);
-        const completedAt = new Date(req.completed_at);
-        const hoursSpent = (completedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-        
-        const slaHours = req.service_priority === 'high' ? 24 : 
-                        req.service_priority === 'medium' ? 48 : 72;
-        return hoursSpent <= slaHours;
+      const completed = data.filter(r => r.service_status === 'completed');
+      const onTime = completed.filter(r => {
+        if (!r.completed_at) return false;
+        const hours = (new Date(r.completed_at).getTime() - new Date(r.created_at).getTime()) / (1000 * 60 * 60);
+        const sla = r.service_priority === 'high' ? 24 : r.service_priority === 'medium' ? 48 : 72;
+        return hours <= sla;
       }).length;
       
-      return {
-        onTime,
-        total: completed.length,
-        percentage: completed.length > 0 ? (onTime / completed.length) * 100 : 0
+      const percentage = completed.length > 0 ? (onTime / completed.length) * 100 : 0;
+      return { 
+        onTime, 
+        total: completed.length, 
+        percentage,
+        gaugeData: [{ name: 'SLA', value: percentage, fill: percentage >= 80 ? '#22c55e' : percentage >= 60 ? '#f59e0b' : '#ef4444' }]
       };
     },
     enabled: isExpanded
   });
 
+  // Average Close Time
   const { data: avgCloseTime } = useQuery({
     queryKey: ['avgCloseTime', startDate, endDate],
     queryFn: async () => {
-      let query = supabase
-        .from('service_requests')
-        .select('created_at, completed_at')
-        .eq('service_status', 'completed');
-        
+      let query = supabase.from('service_requests').select('created_at, completed_at').eq('service_status', 'completed');
       if (startDate) query = query.gte('created_at', startDate);
       if (endDate) query = query.lte('created_at', endDate);
-      
       const { data } = await query;
       
-      if (!data || data.length === 0) return 0;
-      
-      const totalHours = data.reduce((sum, req) => {
-        if (!req.completed_at) return sum;
-        const createdAt = new Date(req.created_at);
-        const completedAt = new Date(req.completed_at);
-        return sum + (completedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+      if (!data?.length) return 0;
+      const totalHours = data.reduce((sum, r) => {
+        if (!r.completed_at) return sum;
+        return sum + (new Date(r.completed_at).getTime() - new Date(r.created_at).getTime()) / (1000 * 60 * 60);
       }, 0);
-      
       return totalHours / data.length;
     },
     enabled: isExpanded
   });
 
-  const { data: partsVsLabor } = useQuery({
-    queryKey: ['partsVsLabor', startDate, endDate],
+  // Priority Distribution
+  const { data: priorityDist } = useQuery({
+    queryKey: ['priorityDist', startDate, endDate],
     queryFn: async () => {
-      // Note: This would need parts and labor cost fields in service_requests
-      // For now, returning placeholder data
-      return {
-        parts: 60,
-        labor: 40,
-        comment: "Parça ve işçilik maliyet ayrımı için service_requests tablosuna parts_cost ve labor_cost alanları gerekli"
-      };
+      let query = supabase.from('service_requests').select('service_priority');
+      if (startDate) query = query.gte('created_at', startDate);
+      if (endDate) query = query.lte('created_at', endDate);
+      const { data } = await query;
+      
+      const counts = (data || []).reduce((acc: Record<string, number>, r) => {
+        acc[r.service_priority || 'low'] = (acc[r.service_priority || 'low'] || 0) + 1;
+        return acc;
+      }, {});
+      
+      return [
+        { name: 'Yüksek', value: counts.high || 0, fill: '#ef4444' },
+        { name: 'Orta', value: counts.medium || 0, fill: '#f59e0b' },
+        { name: 'Düşük', value: counts.low || 0, fill: '#22c55e' }
+      ];
     },
     enabled: isExpanded
   });
 
-  const { data: openServiceRequests } = useQuery({
+  // Open Service Requests
+  const { data: openRequests } = useQuery({
     queryKey: ['openServiceRequests'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, count } = await supabase
         .from('service_requests')
-        .select('service_number, service_title, service_priority, created_at')
+        .select('service_number, service_title, service_priority, created_at, service_status', { count: 'exact' })
         .in('service_status', ['new', 'in_progress', 'assigned'])
         .order('created_at', { ascending: false })
-        .limit(10);
-      return data || [];
+        .limit(5);
+      return { items: data || [], count: count || 0 };
+    },
+    enabled: isExpanded
+  });
+
+  // Technician Performance
+  const { data: techPerformance } = useQuery({
+    queryKey: ['techPerformance', startDate, endDate],
+    queryFn: async () => {
+      let query = supabase.from('service_requests').select('assigned_to, service_status, employees(first_name, last_name)').eq('service_status', 'completed');
+      if (startDate) query = query.gte('created_at', startDate);
+      if (endDate) query = query.lte('created_at', endDate);
+      const { data } = await query;
+      
+      const techData = (data || []).reduce((acc: Record<string, { name: string; count: number }>, r) => {
+        if (!r.assigned_to) return acc;
+        const name = `${(r.employees as any)?.first_name || ''} ${(r.employees as any)?.last_name || ''}`.trim() || 'Bilinmiyor';
+        if (!acc[r.assigned_to]) acc[r.assigned_to] = { name, count: 0 };
+        acc[r.assigned_to].count++;
+        return acc;
+      }, {});
+      
+      return (Object.values(techData) as Array<{ name: string; count: number }>).sort((a, b) => b.count - a.count).slice(0, 5);
     },
     enabled: isExpanded
   });
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-border/50">
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Wrench className="h-5 w-5" />
-            Saha Servisi Raporları
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-orange-500/10 rounded-lg">
+              <Wrench className="h-5 w-5 text-orange-600" />
+            </div>
+            <div>
+              <span className="text-base font-semibold">Saha Servisi</span>
+              {isExpanded && (
+                <div className="flex items-center gap-2 mt-0.5">
+                  <Badge variant="outline" className={cn("text-xs", (slaMetrics?.percentage || 0) >= 80 ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600")}>
+                    SLA: %{(slaMetrics?.percentage || 0).toFixed(0)}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-rose-500/10 text-rose-600 border-rose-500/20">
+                    {openRequests?.count || 0} Açık
+                  </Badge>
+                </div>
+              )}
+            </div>
           </div>
           <Button variant="ghost" size="sm" onClick={onToggle}>
             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -120,87 +171,100 @@ export default function ReportsServiceSection({ isExpanded, onToggle, searchPara
       </CardHeader>
       
       {isExpanded && (
-        <CardContent>
+        <CardContent className="pt-0">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* SLA Performance */}
+            {/* SLA Gauge + Avg Time */}
             <div>
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
+              <h4 className="font-medium text-sm mb-3 flex items-center gap-2 text-muted-foreground">
                 <CheckCircle className="h-4 w-4" />
                 SLA Performansı
               </h4>
-              <div className="space-y-3">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">
-                    {slaMetrics?.percentage.toFixed(1) || 0}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {slaMetrics?.onTime || 0} / {slaMetrics?.total || 0} zamanında
-                  </div>
-                </div>
+              <div className="h-40">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" barSize={12} data={slaMetrics?.gaugeData} startAngle={180} endAngle={0}>
+                    <RadialBar dataKey="value" cornerRadius={6} background={{ fill: 'hsl(var(--muted))' }} />
+                  </RadialBarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="text-center -mt-8">
+                <div className="text-2xl font-bold">{(slaMetrics?.percentage || 0).toFixed(0)}%</div>
+                <div className="text-xs text-muted-foreground">{slaMetrics?.onTime || 0} / {slaMetrics?.total || 0} zamanında</div>
+              </div>
+              <div className="mt-4 p-3 bg-muted/30 rounded-lg text-center">
+                <Clock className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                <div className="text-lg font-bold">{(avgCloseTime || 0).toFixed(1)} saat</div>
+                <div className="text-xs text-muted-foreground">Ort. Kapanma Süresi</div>
               </div>
             </div>
 
-            {/* Average Close Time */}
+            {/* Priority Pie */}
             <div>
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Ort. Kapanma Süresi
+              <h4 className="font-medium text-sm mb-3 text-muted-foreground">Öncelik Dağılımı</h4>
+              <div className="h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={priorityDist} cx="50%" cy="50%" innerRadius={35} outerRadius={60} paddingAngle={3} dataKey="value">
+                      {priorityDist?.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex justify-center gap-3 text-xs">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" />Yüksek</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" />Orta</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" />Düşük</span>
+              </div>
+            </div>
+
+            {/* Technician Performance */}
+            <div>
+              <h4 className="font-medium text-sm mb-3 flex items-center gap-2 text-muted-foreground">
+                <Users className="h-4 w-4" />
+                Teknisyen Performansı
               </h4>
-              <div className="text-center">
-                <div className="text-2xl font-bold">
-                  {(avgCloseTime || 0).toFixed(1)} saat
-                </div>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={techPerformance} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" width={60} />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Parts vs Labor */}
+            {/* Open Requests List */}
             <div>
-              <h4 className="font-semibold mb-3">Parça vs İşçilik</h4>
-              <div className="space-y-3">
-                {partsVsLabor?.comment ? (
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                    <p className="text-xs text-yellow-800">{partsVsLabor.comment}</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-sm">Parça</span>
-                      <span className="font-medium">{partsVsLabor?.parts || 0}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">İşçilik</span>
-                      <span className="font-medium">{partsVsLabor?.labor || 0}%</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Open Service Requests */}
-            <div>
-              <h4 className="font-semibold mb-3">Açık Servis Talepleri</h4>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {openServiceRequests?.map((request, index) => (
-                  <div key={index} className="p-2 bg-muted/50 rounded">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="text-sm font-medium">{request.service_number}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-1">
-                          {request.service_title}
-                        </div>
+              <h4 className="font-medium text-sm mb-3 flex items-center gap-2 text-muted-foreground">
+                <AlertTriangle className="h-4 w-4" />
+                Açık Talepler
+              </h4>
+              <div className="space-y-2 max-h-52 overflow-y-auto">
+                {openRequests?.items.map((req, i) => (
+                  <div key={i} className="p-2 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium">{req.service_number}</div>
+                        <div className="text-xs text-muted-foreground truncate">{req.service_title}</div>
                       </div>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        request.service_priority === 'high' ? 'bg-red-100 text-red-800' :
-                        request.service_priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {request.service_priority}
-                      </span>
+                      <Badge variant="outline" className={cn("text-[10px] shrink-0",
+                        req.service_priority === 'high' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+                        req.service_priority === 'medium' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                        'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                      )}>
+                        {req.service_priority === 'high' ? 'Yüksek' : req.service_priority === 'medium' ? 'Orta' : 'Düşük'}
+                      </Badge>
                     </div>
                   </div>
                 ))}
-                {!openServiceRequests?.length && (
-                  <p className="text-sm text-muted-foreground">Açık servis talebi yok</p>
+                {!openRequests?.items.length && (
+                  <div className="text-center py-8 text-emerald-600">
+                    <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Açık talep yok</p>
+                  </div>
                 )}
               </div>
             </div>

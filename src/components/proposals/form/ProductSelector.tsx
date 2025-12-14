@@ -195,15 +195,15 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between mt-0.5 h-8 text-xs",
+            "w-full justify-between mt-0.5 h-8 text-xs min-w-0",
             !value && "text-muted-foreground",
             className
           )}
         >
-          <div className="flex items-center">
+          <div className="flex items-center min-w-0 flex-1">
             <Package className="mr-1.5 h-3 w-3 shrink-0 opacity-50" />
-            <span className="truncate text-left" title={value || placeholder}>
-              {value ? truncateText(value, 50) : placeholder}
+            <span className="truncate text-left min-w-0 flex-1" title={value || placeholder}>
+              {value || placeholder}
             </span>
           </div>
           <Search className="ml-1.5 h-3 w-3 shrink-0 opacity-50" />

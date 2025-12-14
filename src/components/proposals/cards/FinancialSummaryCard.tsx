@@ -97,24 +97,25 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                 {/* Financial Summary */}
                 <div className="space-y-2">
                   {/* Gross Total */}
-                  <div className="flex justify-between items-center py-1.5 px-2">
-                    <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                  <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-1.5 px-2">
+                    <div className="flex items-center justify-end gap-1.5">
                       <TrendingUp className="h-3.5 w-3.5 text-gray-400" />
-                      Brüt Toplam:
-                    </span>
-                    <span className="font-medium text-sm text-right tabular-nums">
+                      <span className="text-xs text-gray-500 text-right">Brüt Toplam:</span>
+                    </div>
+                    <span className="font-medium text-sm text-right tabular-nums min-w-[100px]">
                       {formatCurrency(totals.gross, currency)}
                     </span>
                   </div>
 
                   {/* VAT Control - Only in edit mode */}
                   {showVatControl && onVatPercentageChange && (
-                    <div className="flex justify-between items-center py-1.5 px-2">
-                      <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                    <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-1.5 px-2">
+                      <div className="flex items-center justify-end gap-1.5">
                         <Percent className="h-3.5 w-3.5 text-orange-400" />
-                        KDV Oranı
-                      </span>
-                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-500 text-right">KDV Oranı:</span>
+                      </div>
+                      <div className="flex items-center gap-1 justify-end min-w-[100px]">
+                        <span className="text-xs text-gray-400">%</span>
                         <Input
                           type="number"
                           value={vatPercentage}
@@ -125,18 +126,17 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                           step="0.1"
                           className="w-16 h-7 text-xs text-right"
                         />
-                        <span className="text-xs text-gray-400">%</span>
                       </div>
                     </div>
                   )}
 
                   {/* Global Discount Controls */}
-                  <div className="flex justify-between items-center py-1.5 px-2">
-                    <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                  <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-1.5 px-2">
+                    <div className="flex items-center justify-end gap-1.5">
                       <Receipt className="h-3.5 w-3.5 text-blue-400" />
-                      Genel İndirim
-                    </span>
-                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-gray-500 text-right">Genel İndirim:</span>
+                    </div>
+                    <div className="flex items-center gap-1 justify-end min-w-[100px]">
                       <Select 
                         value={globalDiscountType} 
                         onValueChange={onGlobalDiscountTypeChange}
@@ -173,27 +173,27 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
 
                   {/* Discount Display */}
                   {totals.discount > 0 && (
-                    <div className="flex justify-between items-center py-1.5 px-2">
-                      <span className="text-xs text-red-500">İndirim:</span>
-                      <span className="text-red-500 font-medium text-sm text-right tabular-nums">
+                    <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-1.5 px-2">
+                      <span className="text-xs text-red-500 text-right">İndirim:</span>
+                      <span className="text-red-500 font-medium text-sm text-right tabular-nums min-w-[100px]">
                         -{formatCurrency(totals.discount, currency)}
                       </span>
                     </div>
                   )}
 
                   {/* Net Total */}
-                  <div className="flex justify-between items-center py-1.5 px-2">
-                    <span className="text-xs text-gray-500">Net Toplam:</span>
-                    <span className="font-medium text-sm text-right tabular-nums">
+                  <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-1.5 px-2">
+                    <span className="text-xs text-gray-500 text-right">Net Toplam:</span>
+                    <span className="font-medium text-sm text-right tabular-nums min-w-[100px]">
                       {formatCurrency(totals.net, currency)}
                     </span>
                   </div>
 
                   {/* VAT Display */}
                   {totals.vat > 0 && (
-                    <div className="flex justify-between items-center py-1.5 px-2">
-                      <span className="text-xs text-gray-500">KDV:</span>
-                      <span className="font-medium text-sm text-right tabular-nums">
+                    <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-1.5 px-2">
+                      <span className="text-xs text-gray-500 text-right">KDV:</span>
+                      <span className="font-medium text-sm text-right tabular-nums min-w-[100px]">
                         {formatCurrency(totals.vat, currency)}
                       </span>
                     </div>
@@ -203,9 +203,9 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                   <div className="border-t border-gray-200 my-2" />
 
                   {/* Grand Total */}
-                  <div className="flex justify-between items-center py-2 px-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg">
-                    <span className="font-semibold text-sm text-emerald-700">GENEL TOPLAM:</span>
-                    <span className="font-bold text-base text-emerald-600 text-right tabular-nums">
+                  <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-2 px-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg">
+                    <span className="font-semibold text-sm text-emerald-700 text-right">GENEL TOPLAM:</span>
+                    <span className="font-bold text-base text-emerald-600 text-right tabular-nums min-w-[100px]">
                       {formatCurrency(totals.grand, currency)}
                     </span>
                   </div>

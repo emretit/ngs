@@ -36,7 +36,7 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
   // Get exchange rate for selected currency
   const getCurrentExchangeRate = (): number | null => {
     if (!formData.currency || formData.currency === "TRY") {
-      return null;
+      return 1.0; // TRY için 1.0 döndür
     }
 
     const rate = exchangeRates.find(r => r.currency_code === formData.currency);
@@ -51,7 +51,8 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
         handleFieldChange('exchange_rate', currentRate);
       }
     } else if (formData.currency === "TRY") {
-      handleFieldChange('exchange_rate', undefined);
+      // TRY seçili olduğunda döviz kurunu 1.0000 olarak ayarla
+      handleFieldChange('exchange_rate', 1.0);
     }
   }, [formData.currency, exchangeRates]);
 
@@ -68,18 +69,38 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 pt-0 px-3 pb-3">
-        {/* Teklif Konusu */}
-        <div className="space-y-1.5">
-          <Label htmlFor="subject" className="text-xs font-medium text-gray-700">
-            Teklif Konusu <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="subject"
-            value={formData.subject || ""}
-            onChange={(e) => handleFieldChange('subject', e.target.value)}
-            placeholder="Teklif konusunu girin"
-            className="h-8 text-xs"
-          />
+        {/* Teklif Konusu ve Teklif Durumu - Yan Yana */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="subject" className="text-xs font-medium text-gray-700">
+              Teklif Konusu <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="subject"
+              value={formData.subject || ""}
+              onChange={(e) => handleFieldChange('subject', e.target.value)}
+              placeholder="Teklif konusunu girin"
+              className="h-8 text-xs"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="status" className="text-xs font-medium text-gray-700">Teklif Durumu</Label>
+            <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Durum seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(proposalStatusLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-block w-2 h-2 rounded-full ${proposalStatusColors[value as ProposalStatus]}`}></span>
+                      {label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Tarih Alanları - Yan Yana */}
@@ -136,10 +157,10 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
           </div>
         </div>
 
-        {/* Para Birimi ve Teklif Durumu */}
+        {/* Para Birimi ve Döviz Kuru - Yan Yana, Her Zaman Görünür */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label htmlFor="currency" className="text-xs font-medium text-gray-700">Para Birimi</Label>
+            <Label htmlFor="currency" className="text-xs font-medium text-gray-700 flex items-center min-h-[20px]">Para Birimi</Label>
             <Select value={formData.currency || "TRY"} onValueChange={(value) => handleFieldChange('currency', value)}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Para birimi" />
@@ -159,34 +180,12 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
             )}
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="status" className="text-xs font-medium text-gray-700">Teklif Durumu</Label>
-            <Select value={formData.status} onValueChange={(value: ProposalStatus) => handleFieldChange('status', value)}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Durum seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(proposalStatusLabels).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-block w-2 h-2 rounded-full ${proposalStatusColors[value as ProposalStatus]}`}></span>
-                      {label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Döviz Kuru - Sadece TRY dışındaki para birimleri için */}
-        {formData.currency && formData.currency !== "TRY" && (
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700">
+            <div className="flex items-center justify-between min-h-[20px]">
+              <Label htmlFor="exchange_rate" className="text-xs font-medium text-gray-700 flex items-center">
                 Döviz Kuru
               </Label>
-              {currentRate && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              {currentRate && formData.currency !== "TRY" && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground h-5">
                   <ArrowRightLeft className="h-3 w-3" />
                   <span>Güncel: {currentRate.toFixed(4)} TRY</span>
                 </div>
@@ -199,20 +198,25 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
                   type="number"
                   step="0.0001"
                   min="0"
-                  value={formData.exchange_rate || ""}
-                  onChange={(e) => handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1)}
-                  placeholder={currentRate ? currentRate.toFixed(4) : "Örn: 32.50"}
-                  className="h-8 text-xs pr-20"
+                  value={formData.currency === "TRY" ? "1.0000" : (formData.exchange_rate || "")}
+                  onChange={(e) => {
+                    if (formData.currency !== "TRY") {
+                      handleFieldChange('exchange_rate', parseFloat(e.target.value) || 1);
+                    }
+                  }}
+                  disabled={formData.currency === "TRY"}
+                  placeholder={formData.currency === "TRY" ? "1.0000" : (currentRate ? currentRate.toFixed(4) : "Örn: 32.50")}
+                  className="h-8 text-xs pr-24"
                 />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                  1 {formData.currency} = ? TRY
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none flex items-center h-full">
+                  1 {formData.currency || "TRY"} = ? TRY
                 </div>
               </div>
-              {currentRate && (
+              {currentRate && formData.currency !== "TRY" && (
                 <button
                   type="button"
                   onClick={() => handleFieldChange('exchange_rate', currentRate)}
-                  className="px-3 py-2 text-xs border rounded-md hover:bg-muted whitespace-nowrap flex items-center gap-1 h-8"
+                  className="px-3 h-8 text-xs border rounded-md hover:bg-muted whitespace-nowrap flex items-center justify-center gap-1"
                   title="Güncel kuru uygula"
                 >
                   <ArrowRightLeft className="h-3 w-3" />
@@ -220,13 +224,13 @@ const ProposalDetailsCard: React.FC<ProposalDetailsCardProps> = ({
                 </button>
               )}
             </div>
-            {formData.exchange_rate && currentRate && Math.abs(formData.exchange_rate - currentRate) > 0.01 && (
+            {formData.exchange_rate && currentRate && formData.currency !== "TRY" && Math.abs(formData.exchange_rate - currentRate) > 0.01 && (
               <p className="text-xs text-orange-600 mt-1">
                 Güncel kurdan {formData.exchange_rate > currentRate ? '+' : ''}{((formData.exchange_rate - currentRate) / currentRate * 100).toFixed(2)}% farklı
               </p>
             )}
           </div>
-        )}
+        </div>
 
         {/* Notlar Alanı */}
         <div className="space-y-1.5">

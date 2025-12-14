@@ -149,11 +149,11 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
           ) : (
             items.map((item, index) => (
             <div key={item.id} className="border rounded-lg p-1.5 bg-gray-50/50 group hover:bg-gray-50/50 transition-colors">
-              <div className="grid grid-cols-12 gap-2 items-center">
+              <div className="grid grid-cols-12 gap-2 items-center min-w-0">
                 {/* Ürün/Hizmet */}
-                <div className="col-span-5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-xs text-gray-600 min-w-[20px] group-hover:font-bold">{item.row_number}.</span>
+                <div className="col-span-5 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-medium text-xs text-gray-600 shrink-0 group-hover:font-bold">{item.row_number}.</span>
                     <ProductSelector
                       value={item.name || item.description || ''}
                       onChange={(productName) => {
@@ -166,7 +166,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                         onProductModalSelect({ ...product, image_url: product?.image_url || item.image_url }, index);
                       }}
                       placeholder="Ürün seçin..."
-                      className="flex-1 max-w-full group-hover:font-bold"
+                      className="flex-1 min-w-0 max-w-full group-hover:font-bold"
                     />
                   </div>
                 </div>

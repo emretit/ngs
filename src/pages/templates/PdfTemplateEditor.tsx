@@ -1355,7 +1355,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs">4</span>
-                                  <Label className="text-xs font-medium text-gray-700">Fiyat Şartları</Label>
+                                  <Label className="text-xs font-medium text-gray-700">Fiyatlandırma Koşulları</Label>
                                 </div>
                                 <Switch
                                   id="show-price-terms"

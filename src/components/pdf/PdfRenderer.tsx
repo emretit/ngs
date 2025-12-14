@@ -1286,7 +1286,7 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
               {schema.notes.termsSettings?.showPriceTerms && data.price_terms && String(data.price_terms).trim() !== '' && (
                 <View style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }}>
                   <View style={{ width: 80, flexShrink: 0 }}>
-                    <Text style={[styles.notesText, { fontWeight: 'bold' }]}>Fiyatlar</Text>
+                    <Text style={[styles.notesText, { fontWeight: 'bold' }]}>Fiyatlandırma Koşulları</Text>
                   </View>
                   <Text style={[styles.notesText, { fontWeight: 'bold', marginRight: 5 }]}>:</Text>
                   <View style={{ flex: 1 }}>

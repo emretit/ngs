@@ -509,7 +509,7 @@ export class PdfExportService {
         payment_terms: proposal?.payment_terms || undefined,
         delivery_terms: proposal?.delivery_terms || undefined,
         warranty_terms: proposal?.warranty_terms || undefined,
-        price_terms: proposal?.price_terms || undefined, // Fiyat şartları
+        price_terms: proposal?.price_terms || undefined, // Fiyatlandırma koşulları
         other_terms: proposal?.other_terms || undefined, // Diğer şartlar
         notes: proposal?.notes || undefined,
         created_at: proposal?.created_at || new Date().toISOString(),
@@ -1005,7 +1005,7 @@ export class PdfExportService {
       payment_terms: proposal.payment_terms || '',
       delivery_terms: proposal.delivery_terms || '',
       warranty_terms: proposal.warranty_terms || '',
-      price_terms: proposal.price_terms || '', // Fiyat şartları
+      price_terms: proposal.price_terms || '', // Fiyatlandırma koşulları
       other_terms: proposal.other_terms || '', // Diğer şartlar
       notes: proposal.notes || '',
       created_at: proposal.created_at || new Date().toISOString(),

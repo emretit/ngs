@@ -345,7 +345,7 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
       payment_terms: 'Ödeme Şartları',
       delivery_terms: 'Teslimat Şartları',
       warranty_terms: 'Garanti Şartları',
-      price_terms: 'Fiyat Şartları',
+      price_terms: 'Fiyatlandırma Koşulları',
       other_terms: 'Diğer Şartlar',
       notes: 'Notlar',
       currency: 'Para Birimi',

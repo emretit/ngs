@@ -347,7 +347,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
           }
         }}
       >
-        <SelectTrigger className={`w-full ${showOnlyLabel ? '' : 'h-14'} bg-background border-border hover:border-primary transition-colors`}>
+        <SelectTrigger className={`w-full ${showOnlyLabel ? '' : 'h-14'} bg-background border-border hover:border-primary transition-colors leading-tight [&_>span]:leading-tight`}>
           {showOnlyLabel && selectedTerm ? (
             <span>{selectedTerm.label}</span>
           ) : (
@@ -357,13 +357,13 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
         <SelectContent className="bg-background border border-border shadow-xl z-[100] max-h-[300px] overflow-y-auto">
           {availableTerms[category].map((term) => (
             <div key={term.id} className="group relative">
-              <SelectItem 
-                value={term.id} 
+              <SelectItem
+                value={term.id}
                 className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50 data-[highlighted]:bg-muted/50 pr-10 transition-colors"
               >
-                <div className="flex flex-col gap-1 w-full">
-                  <span className="font-medium text-sm text-foreground">{term.label}</span>
-                  <span className="text-xs text-muted-foreground leading-relaxed whitespace-normal break-words">{term.text}</span>
+                <div className="flex flex-col gap-0.5 w-full">
+                  <span className="font-medium text-sm text-foreground leading-tight">{term.label}</span>
+                  <span className="text-xs text-muted-foreground leading-snug whitespace-normal break-words">{term.text}</span>
                 </div>
               </SelectItem>
               

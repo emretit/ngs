@@ -41,7 +41,7 @@ const TERMS_CATEGORIES = {
     ]
   },
   pricing: {
-    title: "Fiyatlar",
+    title: "Fiyatlandırma Koşulları",
     icon: DollarSign,
     color: "text-green-600",
     bgColor: "bg-green-50",

@@ -325,7 +325,7 @@ const ProposalDetailSheet: React.FC<ProposalDetailSheetProps> = ({
                           <div className="flex items-start gap-2">
                             <FileText className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-xs mb-1">Fiyat Şartları</p>
+                              <p className="font-medium text-xs mb-1">Fiyatlandırma Koşulları</p>
                               <p className="text-xs text-muted-foreground leading-relaxed">
                                 {proposal.price_terms}
                               </p>

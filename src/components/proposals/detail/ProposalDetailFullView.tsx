@@ -298,13 +298,13 @@ const ProposalDetailFullView = ({
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className="font-medium text-sm">Fiyat Şartları</h3>
+                    <h3 className="font-medium text-sm">Fiyatlandırma Koşulları</h3>
                     {isEditMode ? (
                       <Textarea 
                         name="price_terms"
                         value={editedData.price_terms || ""} 
                         onChange={handleInputChange}
-                        placeholder="Fiyat şartlarını belirtin"
+                        placeholder="Fiyatlandırma koşullarını belirtin"
                         className="min-h-[100px]"
                       />
                     ) : (

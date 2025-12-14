@@ -31,7 +31,7 @@ export const useProposalCreation = () => {
         payment_terms: formData.payment_terms,
         delivery_terms: formData.delivery_terms,
         warranty_terms: formData.warranty_terms, // Garanti şartları
-        price_terms: formData.price_terms, // Fiyat şartları
+        price_terms: formData.price_terms, // Fiyatlandırma koşulları
         other_terms: formData.other_terms, // Diğer şartlar
         terms: formData.terms, // Birleştirilmiş şartlar metni
         notes: formData.notes,

@@ -19,6 +19,7 @@ interface ProductDetailsModalProps {
   onOpenChange: (open: boolean) => void;
   product: Product | null;
   onAddToProposal: (productData: {
+    id: string; // Required: product_id for fetching image from products table
     name: string;
     description: string;
     quantity: number;
@@ -30,7 +31,7 @@ interface ProductDetailsModalProps {
     currency: string;
     original_price?: number;
     original_currency?: string;
-    image_url?: string;
+    // image_url removed: Always fetch from products table using product_id
   }) => void;
   currency: string;
   existingData?: {
@@ -205,10 +206,9 @@ const ProductDetailsModal = ({
 
   const handleAddToProposal = () => {
     const productName = product ? product.name : (existingData ? existingData.name : "");
-    // image_url: önce product'tan, yoksa existingData'dan al
-    const imageUrl = product?.image_url || (existingData as any)?.image_url;
     
     onAddToProposal({
+      id: product?.id || (existingData as any)?.product_id || (existingData as any)?.id, // Required: product_id for fetching image from products table
       name: productName,
       description,
       quantity,
@@ -220,7 +220,7 @@ const ProductDetailsModal = ({
       currency: selectedCurrency,
       original_price: originalPrice,
       original_currency: originalCurrency,
-      image_url: imageUrl, // PDF export için ürün resmi
+      // image_url removed: Always fetch from products table using product_id
     });
 
     onOpenChange(false);

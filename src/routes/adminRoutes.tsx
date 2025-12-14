@@ -11,6 +11,7 @@ const CompanyFinancials = React.lazy(() => import("@/pages/admin/CompanyFinancia
 const AuditLogs = React.lazy(() => import("@/pages/admin/AuditLogs"));
 const SecurityMonitoring = React.lazy(() => import("@/pages/admin/SecurityMonitoring"));
 const UserDetail = React.lazy(() => import("@/pages/admin/UserDetail"));
+const ConvertImages = React.lazy(() => import("@/pages/admin/ConvertImages"));
 
 export const adminRoutes: RouteConfig[] = [
   { 
@@ -70,6 +71,12 @@ export const adminRoutes: RouteConfig[] = [
   { 
     path: "/admin/users/:id", 
     component: UserDetail, 
+    protected: true,
+    isAdmin: true,
+  },
+  { 
+    path: "/admin/convert-images", 
+    component: ConvertImages, 
     protected: true,
     isAdmin: true,
   },

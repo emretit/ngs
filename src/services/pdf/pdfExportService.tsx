@@ -72,6 +72,7 @@ export class PdfExportService {
           },
           lineTable: {
             columns: [
+              { key: 'product_image', show: true, align: 'center' as const, label: 'Görsel' },
               { key: 'description', show: true, align: 'left' as const, label: 'Açıklama' },
               { key: 'quantity', show: true, align: 'center' as const, label: 'Miktar' },
               { key: 'unit_price', show: true, align: 'right' as const, label: 'Birim Fiyat' },
@@ -124,6 +125,7 @@ export class PdfExportService {
           },
           lineTable: {
             columns: [
+              { key: 'product_image', show: true, align: 'center' as const, label: 'Görsel' },
               { key: 'description', show: true, align: 'left' as const, label: 'Açıklama' },
               { key: 'quantity', show: true, align: 'center' as const, label: 'Miktar' },
               { key: 'unit_price', show: true, align: 'right' as const, label: 'Birim Fiyat' },
@@ -273,6 +275,100 @@ export class PdfExportService {
       // Teklif kalemlerini al (JSON formatında saklı)
       const items = proposal.items || [];
 
+      // Tüm product_id'leri topla (products tablosundan image_url ve description çekmek için)
+      const productIds = (items || [])
+        .map((item: any) => item?.product_id)
+        .filter((id: any) => id) // null/undefined'ları filtrele
+        .filter((id: any, index: number, self: any[]) => self.indexOf(id) === index); // Duplicate'leri kaldır
+
+      // Batch olarak ürün bilgilerini products tablosundan çek (image_url ve description)
+      let productImageMap = new Map<string, string | null>();
+      let productDescriptionMap = new Map<string, string | null>();
+      let productNameMap = new Map<string, string | null>();
+      
+      if (productIds.length > 0) {
+        try {
+          const { data: productsData } = await supabase
+            .from('products')
+            .select('id, image_url, description, name')
+            .in('id', productIds);
+          
+          if (productsData) {
+            // Görselleri base64'e çevir (PDF render için daha güvenilir)
+            // WebP formatını JPG'ye çevir (@react-pdf/renderer WebP desteklemiyor)
+            const imagePromises = productsData.map(async (product: any) => {
+              if (product?.image_url) {
+                try {
+                  // Görsel URL'ini fetch et
+                  const response = await fetch(product.image_url);
+                  if (response.ok) {
+                    const blob = await response.blob();
+                    
+                    // WebP ise JPG'ye çevir
+                    if (blob.type === 'image/webp' || product.image_url.toLowerCase().endsWith('.webp')) {
+                      // Canvas ile JPG'ye çevir
+                      const img = new Image();
+                      const imgLoadPromise = new Promise<string>((resolve, reject) => {
+                        img.onload = () => {
+                          try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            if (ctx) {
+                              ctx.drawImage(img, 0, 0);
+                              // JPG olarak base64'e çevir (kalite: 0.9)
+                              const base64 = canvas.toDataURL('image/jpeg', 0.9);
+                              resolve(base64);
+                            } else {
+                              reject(new Error('Canvas context oluşturulamadı'));
+                            }
+                          } catch (e) {
+                            reject(e);
+                          }
+                        };
+                        img.onerror = () => reject(new Error('Görsel yüklenemedi'));
+                        img.src = URL.createObjectURL(blob);
+                      });
+                      
+                      const base64 = await imgLoadPromise;
+                      productImageMap.set(product.id, base64);
+                      URL.revokeObjectURL(img.src); // Memory leak önleme
+                    } else {
+                      // JPG/PNG/GIF ise direkt base64'e çevir
+                      const base64 = await new Promise<string>((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.readAsDataURL(blob);
+                      });
+                      productImageMap.set(product.id, base64);
+                    }
+                  } else {
+                    // Fetch başarısız, URL'i olduğu gibi kullan
+                    productImageMap.set(product.id, product.image_url);
+                  }
+                } catch (imgError) {
+                  console.warn(`Görsel yüklenemedi (${product.id}):`, imgError);
+                  // Hata durumunda URL'i olduğu gibi kullan
+                  productImageMap.set(product.id, product.image_url);
+                }
+              }
+              if (product?.description) {
+                productDescriptionMap.set(product.id, product.description);
+              }
+              if (product?.name) {
+                productNameMap.set(product.id, product.name);
+              }
+            });
+            
+            // Tüm görsellerin yüklenmesini bekle
+            await Promise.all(imagePromises);
+          }
+        } catch (error) {
+          console.warn('Ürün bilgileri çekilirken hata oluştu:', error);
+        }
+      }
+
       // Totalleri hesapla - null güvenliği ile
       const subtotal = (items || []).reduce((sum: number, item: any) => {
         if (!item) return sum;
@@ -313,16 +409,96 @@ export class PdfExportService {
           tax_office: customer?.tax_office || '',
         } : undefined,
         prepared_by: preparedBy,
-        items: (items || []).map((item: any) => ({
-          id: item?.id || item?.product_id || Math.random().toString(),
-          description: item?.description || item?.name || '',
-          quantity: Number(item?.quantity) || 1,
-          unit_price: Number(item?.unit_price) || 0,
-          unit: item?.unit || 'adet',
-          tax_rate: Number(item?.tax_rate) || 0,
-          discount_rate: Number(item?.discount_rate) || 0,
-          total: Number(item?.total) || (Number(item?.quantity || 1) * Number(item?.unit_price || 0)) || 0,
-          image_url: item?.image_url || undefined, // PDF export için ürün resmi
+        items: await Promise.all((items || []).map(async (item: any) => {
+          // image_url'i products tablosundan çek (product_id kullanarak)
+          // Eski veriler için fallback: proposal item'daki image_url (backward compatibility)
+          let imageUrl: string | undefined = undefined;
+          
+          if (item?.product_id) {
+            // product_id varsa products tablosundan çek (güncel görsel - zaten base64)
+            imageUrl = productImageMap.get(item.product_id) || undefined;
+          }
+          
+          // Fallback: Eski proposal'larda product_id yoksa proposal item'daki image_url kullan
+          if (!imageUrl && item?.image_url) {
+            // Item'daki image_url'i de base64'e çevir (WebP -> JPG)
+            try {
+              const response = await fetch(item.image_url);
+              if (response.ok) {
+                const blob = await response.blob();
+                
+                // WebP ise JPG'ye çevir
+                if (blob.type === 'image/webp' || item.image_url.toLowerCase().endsWith('.webp')) {
+                  const img = new Image();
+                  const imgLoadPromise = new Promise<string>((resolve, reject) => {
+                    img.onload = () => {
+                      try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        if (ctx) {
+                          ctx.drawImage(img, 0, 0);
+                          const base64 = canvas.toDataURL('image/jpeg', 0.9);
+                          resolve(base64);
+                        } else {
+                          reject(new Error('Canvas context oluşturulamadı'));
+                        }
+                      } catch (e) {
+                        reject(e);
+                      }
+                    };
+                    img.onerror = () => reject(new Error('Görsel yüklenemedi'));
+                    img.src = URL.createObjectURL(blob);
+                  });
+                  
+                  imageUrl = await imgLoadPromise;
+                  URL.revokeObjectURL(img.src);
+                } else {
+                  // JPG/PNG/GIF ise direkt base64'e çevir
+                  imageUrl = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(blob);
+                  });
+                }
+              } else {
+                imageUrl = item.image_url; // Fallback: URL'i olduğu gibi kullan
+              }
+            } catch (imgError) {
+              console.warn(`Item görseli yüklenemedi (${item.id}):`, imgError);
+              imageUrl = item.image_url; // Fallback: URL'i olduğu gibi kullan
+            }
+          }
+          
+          // description'ı önce proposal item'dan, yoksa products tablosundan çek
+          // Öncelik: proposal item description (özel açıklama) > products description > products name > item name
+          let description: string = '';
+          if (item?.description && item.description.trim() !== '') {
+            // Proposal item'da özel açıklama varsa onu kullan
+            description = item.description;
+          } else if (item?.product_id) {
+            // product_id varsa products tablosundan güncel description çek
+            description = productDescriptionMap.get(item.product_id) || 
+                         productNameMap.get(item.product_id) || 
+                         item?.name || 
+                         '';
+          } else {
+            // Fallback: proposal item'daki name
+            description = item?.name || '';
+          }
+          
+          return {
+            id: item?.id || item?.product_id || Math.random().toString(),
+            description: description, // Products tablosundan çekilen veya proposal item'dan
+            quantity: Number(item?.quantity) || 1,
+            unit_price: Number(item?.unit_price) || 0,
+            unit: item?.unit || 'adet',
+            tax_rate: Number(item?.tax_rate) || 0,
+            discount_rate: Number(item?.discount_rate) || 0,
+            total: Number(item?.total) || (Number(item?.quantity || 1) * Number(item?.unit_price || 0)) || 0,
+            image_url: imageUrl, // Base64 formatında veya URL (fallback)
+          };
         })),
         subtotal: Number(subtotal) || 0,
         total_discount: Number(totalDiscount) || 0,
@@ -536,12 +712,46 @@ export class PdfExportService {
           }
         }
 
+        // Ensure product_image column exists in schema (for backward compatibility)
+        if (schema.lineTable && schema.lineTable.columns) {
+          const hasProductImageColumn = schema.lineTable.columns.some((col: any) => col.key === 'product_image');
+          if (!hasProductImageColumn) {
+            // Insert product_image column before description column
+            const descriptionIndex = schema.lineTable.columns.findIndex((col: any) => col.key === 'description');
+            if (descriptionIndex !== -1) {
+              schema.lineTable.columns.splice(descriptionIndex, 0, {
+                key: 'product_image',
+                show: true,
+                label: 'Görsel',
+                align: 'center'
+              });
+            } else {
+              // If no description column, add at the beginning
+              schema.lineTable.columns.unshift({
+                key: 'product_image',
+                show: true,
+                label: 'Görsel',
+                align: 'center'
+              });
+            }
+            console.log('Added product_image column to template schema for backward compatibility');
+          }
+        }
+
         console.log('Generating PDF with data:', {
           dataKeys: Object.keys(quoteData),
           customerName: quoteData.customer?.name,
           customerCompany: quoteData.customer?.company,
           itemsCount: quoteData.items?.length,
-          schemaKeys: Object.keys(schema)
+          schemaKeys: Object.keys(schema),
+          itemsWithImages: quoteData.items?.filter((item: any) => item.image_url).length || 0,
+          itemsWithoutImages: quoteData.items?.filter((item: any) => !item.image_url).length || 0,
+          itemsWithImageDetails: quoteData.items?.map((item: any) => ({
+            id: item.id,
+            name: item.description?.substring(0, 50),
+            has_image: !!item.image_url,
+            image_url: item.image_url
+          })) || []
         });
 
         const pdfElement = (
@@ -727,7 +937,7 @@ export class PdfExportService {
       tax_rate: Number(item.tax_rate || item.tax_percentage) || 18,
       discount_rate: Number(item.discount_percentage || item.discount_rate) || 0,
       total: Number(item.total_amount || item.total_price) || (Number(item.quantity) * Number(item.unit_price)),
-      image_url: item.image_url || item.product?.image_url || null, // Ürün fotoğrafını PDF için aktar
+      image_url: item.image_url || item.product?.image_url || undefined, // Proposal item'daki image_url'i kullan
     })) : [
       // Default empty item if no items exist
       {

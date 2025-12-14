@@ -238,7 +238,8 @@ export async function createProposal(proposal: Partial<Proposal>) {
     }
     
     if (proposal.items && proposal.items.length > 0) {
-      insertData.items = JSON.stringify(proposal.items) as unknown as Json;
+      // Items zaten object array, JSON.stringify ile double-encoding olmasın
+      insertData.items = proposal.items as unknown as Json;
     }
     
     const { data, error } = await supabase
@@ -504,7 +505,8 @@ export async function updateProposal(id: string, proposal: Partial<Proposal>) {
     }
     
     if (proposal.items !== undefined) {
-      updateData.items = JSON.stringify(proposal.items) as unknown as Json;
+      // Items zaten object array, JSON.stringify ile double-encoding olmasın
+      updateData.items = proposal.items as unknown as Json;
     }
 
     // History'yi ekle

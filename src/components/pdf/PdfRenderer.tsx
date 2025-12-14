@@ -1105,12 +1105,26 @@ const PdfRenderer: React.FC<PdfRendererProps> = ({ data, schema }) => {
                   // Product Image Column - Special handling
                   if (col.key === 'product_image') {
                     const imageUrl = (item as any).image_url || (item as any).product?.image_url;
+                    // Debug: image_url durumunu logla (sadece development'ta)
+                    if (process.env.NODE_ENV === 'development' && index === 0) {
+                      console.log('PDF Render - Product Image Debug:', {
+                        itemIndex: index,
+                        itemId: (item as any).id,
+                        productId: (item as any).product_id,
+                        hasImageUrl: !!imageUrl,
+                        imageUrl: imageUrl,
+                        itemKeys: Object.keys(item as any),
+                      });
+                    }
                     return (
                       <View key={col.key} style={[styles.tableCell, { flex: 1, justifyContent: 'center', alignItems: 'center', alignSelf: 'stretch' }]}>
                         {imageUrl ? (
                           <Image
                             src={imageUrl}
                             style={{ width: 40, height: 40, objectFit: 'contain' }}
+                            cache={false}
+                            // @react-pdf/renderer, Supabase Storage'dan görselleri direkt olarak fetch ediyor
+                            // Eğer görsel yüklenemezse "-" gösterilecek
                           />
                         ) : (
                           <Text style={[styles.tableCell, { textAlign: 'center', color: '#9CA3AF' }]}>-</Text>

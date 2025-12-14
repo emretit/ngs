@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Check, Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { convertImageToJpg, optimizeImageSize } from "@/utils/imageConverter";
 
 interface ImageUploaderProps {
   form: UseFormReturn<ProductFormSchema>;
@@ -62,26 +63,29 @@ const ImageUploader = ({ form, compact = false }: ImageUploaderProps) => {
     setUploadProgress(0);
     
     try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `products/${Date.now()}.${fileExt}`;
+      // Adım 1: Görseli JPG formatına çevir (PDF uyumluluğu için)
+      // WebP, PNG, GIF gibi formatlar otomatik olarak JPG'ye çevrilir
+      // @react-pdf/renderer WebP formatını desteklemediği için zorunlu
+      setUploadProgress(10);
+      let processedFile = await convertImageToJpg(file);
       
-      // Simulate progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          const next = prev + 10;
-          return next > 90 ? 90 : next;
-        });
-      }, 200);
+      // Adım 2: Görsel boyutunu optimize et (1920x1920 max)
+      setUploadProgress(30);
+      processedFile = await optimizeImageSize(processedFile, 1920, 1920);
+      
+      // Adım 3: Storage'a yükle (her zaman .jpg uzantısı kullan)
+      // Tüm görseller JPG formatında kaydedilir (WebP dahil)
+      const filePath = `products/${Date.now()}.jpg`;
+      
+      setUploadProgress(50);
       
       const { error } = await supabase.storage
         .from('products')
-        .upload(filePath, file);
-      
-      clearInterval(interval);
+        .upload(filePath, processedFile);
       
       if (error) throw error;
       
-      setUploadProgress(100);
+      setUploadProgress(90);
       
       // Get the public URL
       const { data } = supabase.storage
@@ -91,9 +95,11 @@ const ImageUploader = ({ form, compact = false }: ImageUploaderProps) => {
       if (data) {
         form.setValue('image_url', data.publicUrl);
       }
+      
+      setUploadProgress(100);
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Dosya yüklenirken bir hata oluştu');
+      alert('Dosya yüklenirken bir hata oluştu: ' + (error as Error).message);
     } finally {
       setTimeout(() => {
         setIsUploading(false);
@@ -164,7 +170,7 @@ const ImageUploader = ({ form, compact = false }: ImageUploaderProps) => {
             )}
           </Card>
           <FormDescription>
-            Ürün için temsili bir görsel yükleyin (maks. 5MB)
+            Ürün için temsili bir görsel yükleyin (maks. 5MB). Tüm görseller otomatik olarak JPG formatına çevrilir.
           </FormDescription>
           <FormMessage />
         </FormItem>

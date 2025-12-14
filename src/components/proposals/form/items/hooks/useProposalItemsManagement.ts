@@ -46,7 +46,7 @@ export const useProposalItemsManagement = (
 
       const newItem: ProposalItem = {
         id: uuidv4(),
-        product_id: product.id,
+        product_id: product.id, // Required: product_id for fetching image from products table
         name: product.name,
         description: product.description,
         quantity: 1,
@@ -62,7 +62,7 @@ export const useProposalItemsManagement = (
         stock_status: product.stock_quantity && product.stock_quantity > 0
           ? (product.stock_quantity > product.stock_threshold ? 'in_stock' : 'low_stock')
           : 'out_of_stock',
-        image_url: product.image_url, // Ürün fotoğrafını PDF export için sakla
+        // image_url removed: Always fetch from products table using product_id
       };
       
       setItems((prev) => [...prev, newItem]);

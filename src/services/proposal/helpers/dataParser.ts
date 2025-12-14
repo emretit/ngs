@@ -23,10 +23,14 @@ export function parseProposalData(data: any): Proposal | null {
         data.items = JSON.parse(data.items) as ProposalItem[];
       }
       // Transform items: product_name -> name, discount -> discount_rate
+      // product_id is required for new items, but kept optional for backward compatibility with old data
+      // image_url is kept for backward compatibility but should not be used for new items
       data.items = data.items.map((item: any) => ({
         ...item,
         name: item.name || item.product_name || '', // product_name'den name'e map et
         discount_rate: item.discount_rate !== undefined ? item.discount_rate : (item.discount || 0), // discount'u discount_rate'e map et
+        // product_id: item.product_id (kept as-is, required for new items)
+        // image_url: item.image_url (kept for backward compatibility, but new items should use product_id)
       }));
     } else {
       data.items = [];

@@ -418,6 +418,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
       const updatedItems = [...items];
       updatedItems[itemIndex] = {
         ...updatedItems[itemIndex],
+        product_id: productData.id, // Required: product_id for fetching image from products table
         name: productData.name,
         description: productData.description,
         quantity: productData.quantity,
@@ -427,13 +428,14 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         discount_rate: productData.discount_rate,
         total_price: productData.total_price,
         currency: productData.currency || formData.currency,
-        image_url: productData.image_url // PDF export için ürün resmi
+        // image_url removed: Always fetch from products table using product_id
       };
       setItems(updatedItems);
     } else {
       // Add new item
       const newItem: LineItem = {
         id: Date.now().toString(),
+        product_id: productData.id, // Required: product_id for fetching image from products table
         row_number: items.length + 1,
         name: productData.name,
         description: productData.description,
@@ -444,7 +446,7 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
         discount_rate: productData.discount_rate,
         total_price: productData.total_price,
         currency: productData.currency || formData.currency,
-        image_url: productData.image_url // PDF export için ürün resmi
+        // image_url removed: Always fetch from products table using product_id
       };
       setItems([...items, newItem]);
     }

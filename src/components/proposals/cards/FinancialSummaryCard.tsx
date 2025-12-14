@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, Percent, DollarSign, Receipt } from "lucide-react";
-import { formatCurrency } from "@/utils/formatters";
+import { formatCurrency, normalizeCurrency } from "@/utils/formatters";
+import { useExchangeRates } from "@/hooks/useExchangeRates";
 
 interface FinancialTotals {
   gross: number;
@@ -40,6 +41,21 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
 }) => {
   const currencies = Object.keys(calculationsByCurrency);
   const isMultiCurrency = currencies.length > 1;
+  const { exchangeRates } = useExchangeRates();
+
+  // Convert amount to TRY using exchange rates
+  const convertToTRY = (amount: number, fromCurrency: string): number => {
+    if (normalizeCurrency(fromCurrency) === "TRY") return amount;
+    const rate = exchangeRates.find(r => r.currency_code === fromCurrency);
+    return rate?.forex_selling ? amount * rate.forex_selling : amount;
+  };
+
+  // Get exchange rate for currency
+  const getExchangeRate = (currency: string): number | null => {
+    if (normalizeCurrency(currency) === "TRY") return null;
+    const rate = exchangeRates.find(r => r.currency_code === currency);
+    return rate?.forex_selling || null;
+  };
 
   // Get currency icon based on selected currency
   const getCurrencyIcon = (currency: string, size: "large" | "small" = "large"): React.ReactNode => {
@@ -203,11 +219,28 @@ const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
                   <div className="border-t border-gray-200 my-2" />
 
                   {/* Grand Total */}
-                  <div className="grid grid-cols-[1fr_auto] gap-3 items-center py-2 px-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg">
-                    <span className="font-semibold text-sm text-emerald-700 text-right">GENEL TOPLAM:</span>
-                    <span className="font-bold text-base text-emerald-600 text-right tabular-nums min-w-[100px]">
-                      {formatCurrency(totals.grand, currency)}
-                    </span>
+                  <div className="py-2 px-2 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg">
+                    <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
+                      <span className="font-semibold text-sm text-emerald-700 text-right">GENEL TOPLAM:</span>
+                      <span className="font-bold text-base text-emerald-600 text-right tabular-nums min-w-[100px]">
+                        {formatCurrency(totals.grand, currency)}
+                      </span>
+                    </div>
+                    {normalizeCurrency(currency) !== "TRY" && (() => {
+                      const exchangeRate = getExchangeRate(currency);
+                      return (
+                        <div className="grid grid-cols-[1fr_auto] gap-3 items-center mt-1">
+                          {exchangeRate && (
+                            <span className="text-[9px] text-emerald-600/50 text-right">
+                              (Kur: {exchangeRate.toFixed(4)})
+                            </span>
+                          )}
+                          <span className="text-[10px] text-emerald-600/70 text-right tabular-nums min-w-[100px]">
+                            {formatCurrency(convertToTRY(totals.grand, currency), "TRY")}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

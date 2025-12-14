@@ -552,15 +552,25 @@ const ProductDetailsModal = ({
             <div className="flex justify-between items-center text-sm font-bold pt-1.5 border-t border-gray-300">
               <span className="text-gray-700">TOPLAM</span>
               <div className="flex items-center">
-                <span className="w-24 text-center text-blue-600">
-                  {formatCurrency(total, selectedCurrency)}
-                </span>
+                <div className="w-24 text-center flex flex-col items-center">
+                  <span className="text-blue-600">
+                    {formatCurrency(total, selectedCurrency)}
+                  </span>
+                  <span className="text-[10px] text-blue-600/70 font-normal mt-0.5">
+                    {selectedCurrency}
+                  </span>
+                </div>
                 {normalizeCurrency(selectedCurrency) !== "TRY" && (
                   <>
                     <span className="w-px h-4 bg-gray-300 mx-2"></span>
-                    <span className="w-24 text-center text-muted-foreground text-[10px] font-normal">
-                      {formatCurrency(convertAmountWithManualRate(total, selectedCurrency, "TRY"), "TRY")}
-                    </span>
+                    <div className="w-24 text-center flex flex-col items-center">
+                      <span className="text-muted-foreground text-[10px] font-normal">
+                        {formatCurrency(convertAmountWithManualRate(total, selectedCurrency, "TRY"), "TRY")}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/70 font-normal mt-0.5">
+                        TRY
+                      </span>
+                    </div>
                   </>
                 )}
               </div>

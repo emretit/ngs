@@ -94,7 +94,7 @@ const Index = () => {
         <div className="absolute bottom-1/3 left-1/4 w-12 h-12 border border-gray-400/20 rotate-12 animate-pulse will-change-transform motion-reduce:animate-none" style={{ animationDelay: '8s' }}></div>
       </div>
       <header className="fixed top-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl shadow-2xl z-50 border-b border-red-500/20">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
             {/* Logo with Beta Badge */}
             <div className="flex items-center gap-3 group">
@@ -146,9 +146,9 @@ const Index = () => {
               {/* Mobile Menu Button */}
               <button 
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-3 text-gray-700 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 group"
+                className="lg:hidden p-2 text-gray-300 hover:text-red-400 hover:bg-white/10 rounded-lg transition-all duration-200 group"
               >
-                <svg className="w-6 h-6 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
@@ -156,7 +156,7 @@ const Index = () => {
           </div>
         </div>
       </header>
-      <main className="relative z-10 pt-20">
+      <main className="relative z-10 pt-16">
         <HeroSection />
         <ModuleShowcaseSection />
         <PricingSection />

@@ -104,9 +104,8 @@ export const VeribanSettings = () => {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: requestBody,
       });
 
       console.log('✅ Edge function response:', { data, error });
@@ -213,14 +212,13 @@ export const VeribanSettings = () => {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
+        body: {
           action: 'authenticate',
           username: authData.username,
           password: authData.password,
           testMode: authData.test_mode || false,
-        }),
+        },
       });
 
       if (error) {

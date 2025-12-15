@@ -37,9 +37,8 @@ export class VeribanService {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
       if (error) throw error;

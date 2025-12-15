@@ -4,6 +4,7 @@ import ReturnsHeader from "@/components/returns/ReturnsHeader";
 import ReturnsFilterBar from "@/components/returns/ReturnsFilterBar";
 import ReturnsContent from "@/components/returns/ReturnsContent";
 import ReturnForm from "@/components/returns/ReturnForm";
+import ReturnDetailSheet from "@/components/returns/ReturnDetailSheet";
 import { useReturnsInfiniteScroll } from "@/hooks/useReturnsInfiniteScroll";
 import { Return } from "@/types/returns";
 
@@ -22,6 +23,8 @@ const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [showReturnForm, setShowReturnForm] = useState(false);
+  const [selectedReturnId, setSelectedReturnId] = useState<string | null>(null);
+  const [showDetailSheet, setShowDetailSheet] = useState(false);
   
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -56,8 +59,8 @@ const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
   });
 
   const handleReturnClick = (returnItem: Return) => {
-    // TODO: Navigate to return detail page
-    console.log('Return clicked:', returnItem);
+    setSelectedReturnId(returnItem.id);
+    setShowDetailSheet(true);
   };
 
   const handleCreateReturn = () => {
@@ -66,6 +69,11 @@ const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
 
   const handleCloseReturnForm = () => {
     setShowReturnForm(false);
+  };
+
+  const handleCloseDetailSheet = () => {
+    setShowDetailSheet(false);
+    setSelectedReturnId(null);
   };
 
   return (
@@ -110,6 +118,12 @@ const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
       <ReturnForm
         open={showReturnForm}
         onClose={handleCloseReturnForm}
+      />
+
+      <ReturnDetailSheet
+        returnId={selectedReturnId}
+        open={showDetailSheet}
+        onClose={handleCloseDetailSheet}
       />
     </div>
   );

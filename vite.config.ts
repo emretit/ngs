@@ -6,12 +6,13 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "localhost",
+    // In Lovable/hosted previews, hardcoding `localhost` causes the browser to try
+    // to reach the user's own machine (and fails with CORS/blocked address space).
+    host: true,
     port: 8080,
     hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: 8080,
+      protocol: 'wss',
+      clientPort: 443,
     },
   },
   plugins: [

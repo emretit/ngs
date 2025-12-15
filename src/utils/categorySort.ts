@@ -4,7 +4,7 @@
  * @param categoryName - Ana kategori adı
  * @returns Sıralanmış alt kategoriler
  */
-export function sortSubcategoriesByOrder<T extends { name: string; is_default?: boolean }>(
+export function sortSubcategoriesByOrder<T extends { id?: string; name: string; is_default?: boolean }>(
   subcategories: T[],
   categoryName: string
 ): T[] {
@@ -137,8 +137,9 @@ export function sortSubcategoriesByOrder<T extends { name: string; is_default?: 
   const order = subcategoryOrderMap[categoryName];
   if (!order) {
     // Eğer kategori için sıralama tanımlı değilse, default kategorileri önce, sonra ekleme sırasına göre
-    const defaultSubs = subcategories.filter(s => s.is_default === true);
-    const userSubs = subcategories.filter(s => !s.is_default || s.is_default === false)
+    const defaultSubs = subcategories.filter((s) => s.is_default === true);
+    const userSubs = subcategories
+      .filter((s) => s.is_default !== true)
       .sort((a, b) => {
         // created_at varsa ona göre, yoksa id'ye göre sırala
         if ('created_at' in a && 'created_at' in b) {
@@ -150,9 +151,10 @@ export function sortSubcategoriesByOrder<T extends { name: string; is_default?: 
   }
 
   // Default alt kategorileri belirli sıraya göre sırala
-  const defaultSubs = subcategories.filter(s => s.is_default === true);
+  const defaultSubs = subcategories.filter((s) => s.is_default === true);
   // Kullanıcı eklediği alt kategorileri ekleme sırasına göre sırala (en alta)
-  const userSubs = subcategories.filter(s => !s.is_default || s.is_default === false)
+  const userSubs = subcategories
+    .filter((s) => s.is_default !== true)
     .sort((a, b) => {
       // created_at varsa ona göre, yoksa id'ye göre sırala
       if ('created_at' in a && 'created_at' in b) {
@@ -179,13 +181,14 @@ export function sortSubcategoriesByOrder<T extends { name: string; is_default?: 
  * @param type - Kategori tipi ('income' | 'expense')
  * @returns Sıralanmış kategoriler
  */
-export function sortCategoriesByOrder<T extends { name: string; is_default?: boolean }>(
+export function sortCategoriesByOrder<T extends { id?: string; name: string; is_default?: boolean }>(
   categories: T[],
-  type: 'income' | 'expense'
+  type: "income" | "expense"
 ): T[] {
-  const defaultCats = categories.filter(cat => cat.is_default === true);
+  const defaultCats = categories.filter((cat) => cat.is_default === true);
   // Kullanıcı eklediği kategorileri ekleme sırasına göre sırala (en alta)
-  const userCats = categories.filter(cat => !cat.is_default || cat.is_default === false)
+  const userCats = categories
+    .filter((cat) => cat.is_default !== true)
     .sort((a, b) => {
       // created_at varsa ona göre, yoksa id'ye göre sırala
       if ('created_at' in a && 'created_at' in b) {

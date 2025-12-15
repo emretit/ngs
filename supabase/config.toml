@@ -7,7 +7,6 @@ schemas = ["public", "storage", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
-
 [functions.register-user]
 verify_jwt = false
 
@@ -24,4 +23,82 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.gemini-chat]
+verify_jwt = true
+
+[functions.elogo-auth]
+verify_jwt = true
+
+[functions.elogo-check-mukellef]
+verify_jwt = true
+
+[functions.elogo-document-data]
+verify_jwt = true
+
+[functions.elogo-document-list]
+verify_jwt = true
+
+[functions.elogo-incoming-invoices]
+verify_jwt = true
+
+[functions.elogo-invoice-status]
+verify_jwt = true
+
+[functions.elogo-send-invoice]
+verify_jwt = true
+
+[functions.generate-proposal-pdf]
+verify_jwt = true
+
+[functions.generate-service-slip-pdf]
+verify_jwt = true
+
+[functions.iyzico-payment]
+verify_jwt = true
+
+[functions.nilvera-auth]
+verify_jwt = true
+
+[functions.nilvera-check-status]
+verify_jwt = true
+
+[functions.nilvera-company-info]
+verify_jwt = true
+
+[functions.nilvera-incoming-invoices]
+verify_jwt = true
+
+[functions.nilvera-invoice-details]
+verify_jwt = true
+
+[functions.nilvera-invoice-pdf]
+verify_jwt = true
+
+[functions.nilvera-invoice-tags]
+verify_jwt = true
+
+[functions.nilvera-invoices]
+verify_jwt = true
+
+[functions.nilvera-send-invoice]
+verify_jwt = true
+
+[functions.veriban-answer-invoice]
+verify_jwt = true
+
+[functions.veriban-auth]
+verify_jwt = true
+
+[functions.veriban-check-mukellef]
+verify_jwt = true
+
+[functions.veriban-document-data]
+verify_jwt = true
+
+[functions.veriban-document-list]
+verify_jwt = true
+
+[functions.veriban-invoice-status]
+verify_jwt = true
+
+[functions.veriban-send-invoice]
 verify_jwt = true

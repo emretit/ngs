@@ -10,6 +10,7 @@ export interface CashflowSubcategory {
   created_at: string;
   updated_at: string;
   company_id?: string;
+  is_default?: boolean;
 }
 
 export const useCashflowSubcategories = (categoryId?: string) => {
@@ -35,6 +36,8 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       
       if (!profile?.company_id) throw new Error('Şirket bilgisi bulunamadı');
       
+      // Şirkete ait alt kategorileri getir (hem default hem kullanıcı ekledikleri)
+      // Default alt kategoriler de her şirket için ayrı kayıt olarak oluşturuluyor
       let query = supabase
         .from('cashflow_subcategories')
         .select('*')
@@ -74,7 +77,12 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       
       const { data: newSubcategory, error } = await supabase
         .from('cashflow_subcategories')
-        .insert([{ category_id: categoryId, name, company_id: profile.company_id }])
+        .insert([{ 
+          category_id: categoryId, 
+          name, 
+          company_id: profile.company_id,
+          is_default: false 
+        }])
         .select()
         .single();
 
@@ -113,6 +121,15 @@ export const useCashflowSubcategories = (categoryId?: string) => {
 
   const deleteSubcategory = async (id: string) => {
     try {
+      // Önce alt kategoriyi bul ve varsayılan olup olmadığını kontrol et
+      const subcategory = subcategories.find(s => s.id === id);
+      
+      if (subcategory?.is_default) {
+        const errorMessage = "Bu varsayılan alt kategori silinemez. Sistem tarafından otomatik oluşturulan alt kategoriler korunmalıdır.";
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+
       const { error } = await supabase
         .from('cashflow_subcategories')
         .delete()
@@ -123,7 +140,7 @@ export const useCashflowSubcategories = (categoryId?: string) => {
       setSubcategories(prev => prev.filter(s => s.id !== id));
       toast.success(t('toast.subcategoryDeleted'));
     } catch (err: any) {
-      toast.error(t('toast.subcategoryDeleteError') + ': ' + err.message);
+      toast.error(err.message || t('toast.subcategoryDeleteError') + ': ' + err.message);
       throw err;
     }
   };

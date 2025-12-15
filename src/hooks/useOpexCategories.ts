@@ -41,8 +41,12 @@ export const useOpexCategories = () => {
         .single();
 
       const companyId = profile?.company_id;
+      
+      if (!companyId) {
+        throw new Error('Şirket bilgisi bulunamadı');
+      }
 
-      // Fetch both default categories (company_id = null) and company-specific categories
+      // Fetch company-specific categories (default kategoriler de company_id ile oluşturuluyor)
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('cashflow_categories')
         .select(`
@@ -58,6 +62,7 @@ export const useOpexCategories = () => {
           )
         `)
         .eq('type', 'expense')
+        .eq('company_id', companyId)
         .order('name');
 
       if (categoriesError) throw categoriesError;
@@ -94,13 +99,30 @@ export const useOpexCategories = () => {
 
   const createCategory = async (name: string, subcategories: string[] = []) => {
     try {
+      // Get current user's company_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
+      }
+
+      // Get user's company_id from profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        throw new Error('Şirket bilgisi bulunamadı');
+      }
+
       // Create main category
       const { data: categoryData, error: categoryError } = await supabase
         .from('cashflow_categories')
         .insert({
           name,
           type: 'expense',
-          company_id: null
+          company_id: profile.company_id
         })
         .select()
         .single();
@@ -112,7 +134,7 @@ export const useOpexCategories = () => {
         const subcategoryInserts = subcategories.map(sub => ({
           category_id: categoryData.id,
           name: sub,
-          company_id: null
+          company_id: profile.company_id
         }));
 
         const { error: subError } = await supabase
@@ -151,12 +173,28 @@ export const useOpexCategories = () => {
 
       if (deleteError) throw deleteError;
 
+      // Get current user's company_id for subcategories
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        throw new Error('Şirket bilgisi bulunamadı');
+      }
+
       // Create new subcategories
       if (subcategories.length > 0) {
         const subcategoryInserts = subcategories.map(sub => ({
           category_id: id,
           name: sub,
-          company_id: null
+          company_id: profile.company_id
         }));
 
         const { error: subError } = await supabase

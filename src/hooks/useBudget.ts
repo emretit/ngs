@@ -22,17 +22,6 @@ export interface Budget {
   created_by: string | null;
 }
 
-export interface BudgetCategory {
-  id: string;
-  company_id: string | null;
-  name: string;
-  type: "income" | "expense" | "capex";
-  parent_id: string | null;
-  sort_order: number;
-  is_auto_populated: boolean;
-  created_at: string;
-}
-
 export interface BudgetFilters {
   year: number;
   month?: number;
@@ -53,7 +42,6 @@ export interface BudgetSummary {
 
 export const useBudget = (filters?: BudgetFilters) => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -106,20 +94,6 @@ export const useBudget = (filters?: BudgetFilters) => {
     }
   }, [filters, toast]);
 
-  // Fetch budget categories
-  const fetchCategories = useCallback(async () => {
-    try {
-      const { data, error: fetchError } = await supabase
-        .from("budget_categories")
-        .select("*")
-        .order("sort_order");
-
-      if (fetchError) throw fetchError;
-      setCategories(data || []);
-    } catch (err: any) {
-      console.error("fetchCategories error:", err);
-    }
-  }, []);
 
   // Create or update budget
   const upsertBudget = async (budget: Partial<Budget>) => {
@@ -452,16 +426,13 @@ export const useBudget = (filters?: BudgetFilters) => {
 
   useEffect(() => {
     fetchBudgets();
-    fetchCategories();
-  }, [fetchBudgets, fetchCategories]);
+  }, [fetchBudgets]);
 
   return {
     budgets,
-    categories,
     loading,
     error,
     fetchBudgets,
-    fetchCategories,
     upsertBudget,
     bulkUpsertBudgets,
     deleteBudget,

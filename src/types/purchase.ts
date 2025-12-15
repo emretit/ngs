@@ -86,6 +86,7 @@ export interface PurchaseInvoice {
   paid_amount: number;
   invoice_date: string;
   due_date: string;
+  category_id: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -148,5 +149,6 @@ export interface PurchaseInvoiceFormData {
   paid_amount: number;
   invoice_date: string;
   due_date: string;
+  category_id?: string | null;
   notes: string;
 }

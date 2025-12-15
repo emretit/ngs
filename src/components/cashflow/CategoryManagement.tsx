@@ -11,6 +11,7 @@ import { Plus, Edit, Trash2, TrendingUp, TrendingDown, Tag, MoreHorizontal, Sear
 import { useCashflowCategories, CreateCategoryData } from "@/hooks/useCashflowCategories";
 import { useCashflowSubcategories } from "@/hooks/useCashflowSubcategories";
 import { toast } from "sonner";
+import { sortCategoriesByOrder, sortSubcategoriesByOrder } from "@/utils/categorySort";
 
 interface CategoryFormData {
   name: string;
@@ -40,11 +41,11 @@ const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading:
   const [isDeletingSubcategory, setIsDeletingSubcategory] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Bu kategoriye ait alt kategorileri filtrele
-  const categorySubcategories = useMemo(() => 
-    subcategories.filter(sub => sub.category_id === category.id),
-    [subcategories, category.id]
-  );
+  // Bu kategoriye ait alt kategorileri filtrele ve sırala
+  const categorySubcategories = useMemo(() => {
+    const filtered = subcategories.filter(sub => sub.category_id === category.id);
+    return sortSubcategoriesByOrder(filtered, category.name);
+  }, [subcategories, category.id, category.name]);
 
   const {
     register: registerSubcategory,
@@ -116,7 +117,7 @@ const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading:
   return (
     <div className="bg-white rounded-lg hover:shadow-sm transition-all duration-200">
       {/* Ana Kategori Kartı */}
-      <div className="p-1">
+      <div className="p-0.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className={`w-2 h-2 ${colorScheme.dot} rounded-full flex-shrink-0`}></div>
@@ -126,7 +127,7 @@ const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading:
                 size="sm"
                 onClick={categorySubcategories.length > 0 ? () => setIsExpanded(!isExpanded) : undefined}
                 disabled={categorySubcategories.length === 0}
-                className={`w-full justify-between p-2 h-8 text-xs font-medium transition-all duration-200 text-gray-900 hover:text-gray-900 ${
+                className={`w-full justify-between p-1.5 h-7 text-xs font-medium transition-all duration-200 text-gray-900 hover:text-gray-900 ${
                   isIncome
                     ? 'hover:bg-emerald-50 border-0 hover:shadow-sm'
                     : 'hover:bg-rose-50 border-0 hover:shadow-sm'
@@ -232,16 +233,16 @@ const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading:
 
         {/* Alt Kategoriler - Şık Dropdown Panel */}
         {categorySubcategories.length > 0 && isExpanded && (
-          <div className="mt-2 pt-2 border-t border-gray-100/80">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between mb-1">
+          <div className="mt-1 pt-1 border-t border-gray-100/80">
+            <div className="space-y-0.5">
+              <div className="flex items-center justify-between mb-0.5">
                 <h4 className="text-[10px] font-normal text-gray-400 uppercase tracking-wide">Alt Kategoriler</h4>
                 <span className="text-[10px] text-gray-400">{categorySubcategories.length} adet</span>
               </div>
               {categorySubcategories.map((subcategory, index) => (
                 <div
                   key={subcategory.id}
-                  className={`group flex items-center justify-between py-1 px-2 rounded-md text-sm hover:bg-gradient-to-r transition-all duration-200 border border-transparent hover:border-gray-200/60 min-h-[32px] ${
+                  className={`group flex items-center justify-between py-0.5 px-2 rounded-md text-[10px] hover:bg-gradient-to-r transition-all duration-200 border border-transparent hover:border-gray-200/60 min-h-[24px] ${
                     isIncome
                       ? 'bg-emerald-50/50 hover:from-emerald-50 hover:to-emerald-100/50'
                       : 'bg-rose-50/50 hover:from-rose-50 hover:to-rose-100/50'
@@ -249,10 +250,10 @@ const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading:
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                    <div className={`w-1 h-1 rounded-full flex-shrink-0 ${
                       isIncome ? 'bg-emerald-400' : 'bg-rose-400'
                     }`}></div>
-                    <span className="text-gray-900 truncate font-medium leading-none">{subcategory.name}</span>
+                    <span className="text-[10px] text-gray-900 truncate font-medium leading-none">{subcategory.name}</span>
                   </div>
                   {/* Sabit alt kategorilerde düzenleme ve silme butonları gösterilmez, ama aynı genişliği ve yüksekliği korumak için boş div */}
                   <div className="flex gap-1 flex-shrink-0 w-[52px] min-w-[52px] h-6 items-center justify-end">
@@ -464,15 +465,13 @@ const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedT
   const expenseCategories = useMemo(() => getCategoriesByType('expense'), [categories, getCategoriesByType]);
   const incomeCategories = useMemo(() => getCategoriesByType('income'), [categories, getCategoriesByType]);
 
-  // Kategorileri sırala: Önce varsayılanlar (alfabetik), sonra kullanıcı ekledikleri (alfabetik)
-  const sortCategories = useCallback((categories: any[]) => {
-    const defaultCats = categories.filter(cat => cat.is_default === true).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-    const userCats = categories.filter(cat => !cat.is_default || cat.is_default === false).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-    return [...defaultCats, ...userCats];
+  // Kategorileri sırala: Önce varsayılanlar (belirli sırada), sonra kullanıcı ekledikleri (alfabetik)
+  const sortCategories = useCallback((categories: any[], type: 'income' | 'expense' = 'expense') => {
+    return sortCategoriesByOrder(categories, type);
   }, []);
 
-  const sortedIncomeCategories = useMemo(() => sortCategories(incomeCategories), [incomeCategories, sortCategories]);
-  const sortedExpenseCategories = useMemo(() => sortCategories(expenseCategories), [expenseCategories, sortCategories]);
+  const sortedIncomeCategories = useMemo(() => sortCategories(incomeCategories, 'income'), [incomeCategories, sortCategories]);
+  const sortedExpenseCategories = useMemo(() => sortCategories(expenseCategories, 'expense'), [expenseCategories, sortCategories]);
 
   // Memoized filtered categories
   const filteredCategories = useMemo(() => {
@@ -554,7 +553,7 @@ const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedT
           </div>
 
           {/* Categories List */}
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {sortedIncomeCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length === 0 ? (
               <div className="text-center py-4 text-muted-foreground">
                 <TrendingUp className="h-6 w-6 mx-auto mb-2 text-gray-300" />
@@ -647,7 +646,7 @@ const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedT
           </div>
 
           {/* Categories List */}
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {sortedExpenseCategories.filter(cat => searchTerm ? cat.name.toLowerCase().includes(searchTerm.toLowerCase()) : true).length === 0 ? (
               <div className="text-center py-4 text-muted-foreground">
                 <TrendingDown className="h-6 w-6 mx-auto mb-2 text-gray-300" />

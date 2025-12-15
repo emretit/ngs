@@ -101,7 +101,18 @@ export const VeribanSettings = () => {
 
       if (error) {
         console.error('Edge function error details:', error);
-        throw error;
+        
+        // Extract error message from different error formats
+        let errorMessage = "Veriban bağlantısı başarısız";
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (error.error) {
+          errorMessage = error.error;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       if (data?.success) {
@@ -115,14 +126,26 @@ export const VeribanSettings = () => {
           description: "Veriban hesap bilgileri doğrulandı ve kaydedildi",
         });
       } else {
-        throw new Error(data?.error || "Bilinmeyen hata");
+        const errorMsg = data?.error || "Bilinmeyen hata";
+        throw new Error(errorMsg);
       }
     } catch (error: any) {
       console.error('Veriban auth error:', error);
+      
+      // Extract error message from different error formats
+      let errorMessage = "Veriban bağlantısı başarısız";
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         variant: "destructive",
         title: "Hata",
-        description: error.message || "Veriban bağlantısı başarısız",
+        description: errorMessage,
       });
     } finally {
       setLoading(false);

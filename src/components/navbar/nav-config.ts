@@ -283,12 +283,6 @@ export const navItems = [
         translationKey: "nav.expenses",
       },
       {
-        path: "/cashflow/categories",
-        icon: Tag,
-        label: "Gelir-Gider Kategorileri",
-        translationKey: "nav.incomeExpenseCategories",
-      },
-      {
         path: "/cashflow/budget-management",
         icon: FileText,
         label: "Bütçe Yönetimi",
@@ -317,12 +311,6 @@ export const navItems = [
     hasDropdown: true,
     items: [
       {
-        path: "/budget",
-        icon: LayoutDashboard,
-        label: "Dashboard",
-        translationKey: "nav.budgetDashboard",
-      },
-      {
         path: "/budget/entry",
         icon: Plus,
         label: "Bütçe Planlama",
@@ -335,16 +323,22 @@ export const navItems = [
         translationKey: "nav.budgetComparison",
       },
       {
+        path: "/budget/income-expense",
+        icon: BarChart3,
+        label: "Gelir-Gider Analizi",
+        translationKey: "nav.incomeExpenseAnalysis",
+      },
+      {
         path: "/budget/approvals",
         icon: CheckCircle,
         label: "Onaylar",
         translationKey: "nav.budgetApprovals",
       },
       {
-        path: "/budget/reports",
-        icon: PieChart,
-        label: "Raporlar",
-        translationKey: "nav.budgetReports",
+        path: "/budget/categories",
+        icon: Tag,
+        label: "Gelir-Gider Kategorileri",
+        translationKey: "nav.incomeExpenseCategories",
       },
     ],
   },

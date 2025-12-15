@@ -39,6 +39,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatUnit } from '@/utils/unitConstants';
 import { formatCurrency } from '@/utils/formatters';
+import { CategorySelect } from '@/components/budget/CategorySelect';
 interface EInvoiceItem {
   id: string;
   line_number: number;
@@ -787,6 +788,7 @@ export default function EInvoiceProcess() {
           invoice_date: formData.invoice_date,
           due_date: formData.due_date || formData.invoice_date,
           notes: formData.notes,
+          category_id: formData.expense_category_id || null,
           einvoice_id: invoice.id,
           company_id: userProfile.company_id // RLS için company_id ekle
         })
@@ -1285,6 +1287,15 @@ export default function EInvoiceProcess() {
                       type="date"
                       value={formData.invoice_date}
                       onChange={(e) => setFormData(prev => ({ ...prev, invoice_date: e.target.value }))}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="expense_category_id" className="text-xs font-medium mb-1 block">Gider Kategorisi</Label>
+                    <CategorySelect
+                      value={formData.expense_category_id}
+                      onChange={(value) => setFormData(prev => ({ ...prev, expense_category_id: value || '' }))}
+                      placeholder="Kategori seçiniz"
                       className="h-8 text-xs"
                     />
                   </div>

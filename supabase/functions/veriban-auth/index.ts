@@ -65,7 +65,41 @@ serve(async (req) => {
       });
     }
 
-    const { action, username, password, testMode } = await req.json();
+    // Parse request body
+    let requestBody;
+    try {
+      const bodyText = await req.text();
+      if (!bodyText || bodyText.trim() === '') {
+        return new Response(JSON.stringify({ 
+          success: false,
+          error: 'Request body gerekli'
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      requestBody = JSON.parse(bodyText);
+    } catch (parseError) {
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Geçersiz JSON formatı'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { action, username, password, testMode } = requestBody;
+
+    if (!action) {
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Action parametresi gerekli'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (action === 'authenticate') {
       // Determine webservice URL based on test mode

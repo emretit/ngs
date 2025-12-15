@@ -26,8 +26,8 @@ const EInvoices = React.lazy(() => import("@/pages/EInvoices"));
 const BudgetEntry = React.lazy(() => import("@/pages/budget/BudgetEntry"));
 const BudgetComparison = React.lazy(() => import("@/pages/budget/BudgetComparison"));
 const BudgetApprovals = React.lazy(() => import("@/pages/budget/BudgetApprovals"));
-const BudgetReports = React.lazy(() => import("@/pages/budget/BudgetReports"));
 const BudgetDashboard = React.lazy(() => import("@/pages/budget/BudgetDashboard"));
+const IncomeExpenseAnalysis = React.lazy(() => import("@/pages/budget/IncomeExpenseAnalysis"));
 
 // Define cashflow routes
 export const cashflowRoutes: RouteConfig[] = [
@@ -37,8 +37,9 @@ export const cashflowRoutes: RouteConfig[] = [
   { path: "/budget", component: BudgetDashboard, protected: true },
   { path: "/budget/entry", component: BudgetEntry, protected: true },
   { path: "/budget/comparison", component: BudgetComparison, protected: true },
+  { path: "/budget/income-expense", component: IncomeExpenseAnalysis, protected: true },
   { path: "/budget/approvals", component: BudgetApprovals, protected: true },
-  { path: "/budget/reports", component: BudgetReports, protected: true },
+  { path: "/budget/categories", component: CashflowCategories, protected: true },
   { path: "/cashflow/expenses", component: CashflowExpenses, protected: true },
   // Yeni ayrı route'lar
   { path: "/cashflow/checks", component: CashflowChecks, protected: true },
@@ -49,7 +50,6 @@ export const cashflowRoutes: RouteConfig[] = [
   // Backward compatibility (optional): keep the old combined route
   { path: "/cashflow/loans-and-checks", component: CashflowLoansAndChecks, protected: true },
   { path: "/cashflow/bank-accounts", component: CashflowBankAccounts, protected: true },
-  { path: "/cashflow/categories", component: CashflowCategories, protected: true },
   // Account detail routes
   { path: "/cashflow/cash-accounts/:id", component: CashAccountDetail, protected: true },
   { path: "/cashflow/credit-cards/:id", component: CreditCardDetail, protected: true },

@@ -92,12 +92,12 @@ const Navbar = ({ isCollapsed, setIsCollapsed, isMobileOpen = false, setIsMobile
     localStorage.removeItem("expandedMenus");
   }, []);
 
-  // Auto-expand cashflow menu if on categories page
+  // Auto-expand budget menu if on categories page
   useEffect(() => {
-    if (location.pathname === '/cashflow/categories') {
+    if (location.pathname === '/budget/categories') {
       setExpandedMenus(prev => {
         const newExpanded = new Set(prev);
-        newExpanded.add('/cashflow');
+        newExpanded.add('/budget');
         return newExpanded;
       });
     }

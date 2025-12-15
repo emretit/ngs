@@ -755,7 +755,7 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         startDate={startDate}
         endDate={endDate}
         onCreateExpense={() => setIsAddDialogOpen(true)}
-        onNavigateCategories={() => navigate('/cashflow/categories')}
+        onNavigateCategories={() => navigate('/budget/categories')}
       />
 
       {/* Filter Bar */}

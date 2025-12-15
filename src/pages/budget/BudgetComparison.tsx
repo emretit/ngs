@@ -1,110 +1,18 @@
 import React, { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Target, BarChart3, Calendar, Table2 } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, DollarSign, Target, BarChart3, Calendar, LineChart, Calculator } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
 import BudgetFilters from "@/components/budget/BudgetFilters";
-import VarianceChart from "@/components/budget/comparison/VarianceChart";
-import EnhancedBudgetMatrix from "@/components/budget/comparison/EnhancedBudgetMatrix";
+import VarianceAnalysis from "@/components/budget/VarianceAnalysis";
+import OpexMatrix from "@/components/cashflow/OpexMatrix";
 import { useBudgetMatrix } from "@/hooks/useBudgetMatrix";
 import { BudgetFiltersState } from "@/pages/BudgetManagement";
 
 // Lazy load timeline view for better performance
 const BudgetTimelineView = lazy(() => import("@/components/budget/views/BudgetTimelineView"));
-
-const CategoryBarChart = ({ filters }: { filters: BudgetFiltersState }) => {
-  const {
-    matrixRows,
-    loading,
-  } = useBudgetMatrix({
-    year: filters.year,
-    currency: filters.currency,
-    department_id: filters.department === "all" ? undefined : filters.department,
-    showActual: true,
-    showForecast: false,
-    showVariance: false,
-  });
-
-  const getCurrencySymbol = () => {
-    switch (filters.currency) {
-      case "USD": return "$";
-      case "EUR": return "€";
-      default: return "₺";
-    }
-  };
-
-  const formatAmount = (amount: number) => {
-    const symbol = getCurrencySymbol();
-    if (amount >= 1000000) {
-      return `${symbol}${(amount / 1000000).toFixed(1)}M`;
-    }
-    if (amount >= 1000) {
-      return `${symbol}${(amount / 1000).toFixed(0)}K`;
-    }
-    return `${symbol}${amount.toFixed(0)}`;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Prepare chart data from matrix rows (only main categories, not subcategories)
-  const chartData = matrixRows
-    .filter(row => !row.isSubcategory)
-    .map(row => ({
-      category: row.category,
-      budget: row.total.budget_amount,
-      actual: row.total.actual_amount,
-    }));
-
-  return (
-    <div className="space-y-4">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-semibold">Kategori Bazlı Bütçe vs Gerçekleşen</CardTitle>
-      </CardHeader>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis 
-            dataKey="category" 
-            angle={-45} 
-            textAnchor="end" 
-            height={100}
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => formatAmount(value)} />
-          <Tooltip
-            formatter={(value: number) => formatAmount(value)}
-            contentStyle={{
-              backgroundColor: "white",
-              border: "1px solid #e5e7eb",
-              borderRadius: "6px",
-            }}
-          />
-          <Legend />
-          <Bar dataKey="budget" fill="#3b82f6" name="Bütçe" />
-          <Bar dataKey="actual" fill="#10b981" name="Gerçekleşen" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
 
 const BudgetComparison = () => {
   const navigate = useNavigate();
@@ -119,7 +27,7 @@ const BudgetComparison = () => {
     currency: "TRY",
   });
 
-  const [activeView, setActiveView] = useState<"matrix" | "timeline">("matrix");
+  const [activeView, setActiveView] = useState<"timeline" | "profitloss" | "opex">("timeline");
 
   // Fetch budget data for summary cards
   const {
@@ -253,31 +161,11 @@ const BudgetComparison = () => {
         <BudgetFilters filters={filters} onFiltersChange={setFilters} />
       </Card>
 
-      {/* Grafikler - Yan Yana */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Kategori Bazlı Bütçe vs Gerçekleşen */}
-        <Card>
-          <CategoryBarChart filters={filters} />
-        </Card>
-
-        {/* Aylık Bütçe vs Gerçekleşen vs Tahmin */}
-        <Card>
-          <VarianceChart filters={filters} />
-        </Card>
-      </div>
-
-      {/* View Tabs - Matrix or Timeline */}
+      {/* View Tabs - Matrix, Timeline, Profit Loss, or OPEX */}
       <Card>
         <Tabs value={activeView} onValueChange={(v) => setActiveView(v as typeof activeView)} className="w-full">
           <div className="border-b border-gray-200 px-4 pt-4">
-            <TabsList className="grid w-full grid-cols-2 h-auto bg-transparent p-0 gap-2">
-              <TabsTrigger 
-                value="matrix" 
-                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-sm"
-              >
-                <Table2 className="h-4 w-4" />
-                Detaylı Matris
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-auto bg-transparent p-0 gap-2">
               <TabsTrigger 
                 value="timeline" 
                 className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-sm"
@@ -285,18 +173,24 @@ const BudgetComparison = () => {
                 <Calendar className="h-4 w-4" />
                 Zaman Çizelgesi
               </TabsTrigger>
+              <TabsTrigger 
+                value="profitloss" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-sm"
+              >
+                <LineChart className="h-4 w-4" />
+                Kar-Zarar
+              </TabsTrigger>
+              <TabsTrigger 
+                value="opex" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-sm"
+              >
+                <Calculator className="h-4 w-4" />
+                OPEX Matrix
+              </TabsTrigger>
             </TabsList>
           </div>
 
           <div className="p-4">
-            <TabsContent value="matrix" className="mt-0">
-              <EnhancedBudgetMatrix 
-                filters={filters} 
-                showSubcategories={true}
-                editable={false}
-              />
-            </TabsContent>
-
             <TabsContent value="timeline" className="mt-0">
               <Suspense fallback={
                 <div className="flex justify-center items-center h-64">
@@ -305,6 +199,14 @@ const BudgetComparison = () => {
               }>
                 <BudgetTimelineView filters={filters} />
               </Suspense>
+            </TabsContent>
+
+            <TabsContent value="profitloss" className="mt-0">
+              <VarianceAnalysis filters={filters} />
+            </TabsContent>
+
+            <TabsContent value="opex" className="mt-0">
+              <OpexMatrix />
             </TabsContent>
           </div>
         </Tabs>

@@ -23,6 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { CategorySelect } from "@/components/budget/CategorySelect";
 
 interface PurchaseInvoiceFormProps {
   poId: string;
@@ -36,6 +37,7 @@ const formSchema = z.object({
   subtotal: z.coerce.number().min(0, "Ara toplam en az 0 olmalıdır"),
   tax_amount: z.coerce.number().min(0, "KDV tutarı en az 0 olmalıdır"),
   total_amount: z.coerce.number().min(0, "Toplam tutar en az 0 olmalıdır"),
+  category_id: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -53,6 +55,7 @@ const PurchaseInvoiceForm: React.FC<PurchaseInvoiceFormProps> = ({ poId, supplie
       subtotal: 0,
       tax_amount: 0,
       total_amount: 0,
+      category_id: "",
       notes: "",
     },
   });
@@ -65,6 +68,7 @@ const PurchaseInvoiceForm: React.FC<PurchaseInvoiceFormProps> = ({ poId, supplie
       currency: "TRY",
       status: "pending",
       paid_amount: 0,
+      category_id: values.category_id || null,
     };
     
     createInvoiceMutation.mutate(invoiceData, {
@@ -135,6 +139,24 @@ const PurchaseInvoiceForm: React.FC<PurchaseInvoiceFormProps> = ({ poId, supplie
                     <FormLabel>Fatura Numarası</FormLabel>
                     <FormControl>
                       <Input placeholder="Fatura numarası giriniz" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="category_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gider Kategorisi</FormLabel>
+                    <FormControl>
+                      <CategorySelect
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Kategori seçiniz"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

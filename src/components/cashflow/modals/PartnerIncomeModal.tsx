@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { DatePicker } from "@/components/ui/date-picker";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sortCategoriesByOrder } from "@/utils/categorySort";
 
 interface PartnerIncomeModalProps {
   isOpen: boolean;
@@ -61,13 +62,15 @@ const PartnerIncomeModal = ({ isOpen, onClose, onSuccess, accountId, accountName
 
       const { data, error } = await supabase
         .from('cashflow_categories')
-        .select('id, name')
+        .select('id, name, is_default')
         .eq('company_id', profile.company_id)
-        .eq('type', 'income')
-        .order('name');
+        .eq('type', 'income');
 
       if (error) throw error;
-      setCategories(data || []);
+      
+      // Kategorileri belirli sıraya göre sırala
+      const sorted = sortCategoriesByOrder(data || [], 'income');
+      setCategories(sorted.map(cat => ({ id: cat.id, name: cat.name })));
     } catch (error) {
       console.error('Error fetching categories:', error);
     }

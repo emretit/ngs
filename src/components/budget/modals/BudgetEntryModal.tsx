@@ -23,7 +23,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { useBudget, BudgetCategory } from "@/hooks/useBudget";
+import { useBudget } from "@/hooks/useBudget";
+import { useCashflowCategories } from "@/hooks/useCashflowCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Calculator, 
@@ -67,7 +68,8 @@ const BudgetEntryModal = ({
   onSuccess,
 }: BudgetEntryModalProps) => {
   const { toast } = useToast();
-  const { categories, bulkUpsertBudgets, fetchBudgets } = useBudget({ year, currency });
+  const { bulkUpsertBudgets, fetchBudgets } = useBudget({ year, currency });
+  const { categories } = useCashflowCategories();
   
   const [activeTab, setActiveTab] = useState<"single" | "bulk">("single");
   const [loading, setLoading] = useState(false);
@@ -297,8 +299,8 @@ const BudgetEntryModal = ({
                       .map(cat => (
                         <SelectItem key={cat.id} value={cat.name}>
                           {cat.name}
-                          {cat.is_auto_populated && (
-                            <Badge variant="outline" className="ml-2 text-[10px]">Auto</Badge>
+                          {cat.is_default && (
+                            <Badge variant="outline" className="ml-2 text-[10px]">Varsayılan</Badge>
                           )}
                         </SelectItem>
                       ))}

@@ -28,14 +28,18 @@ export class VeribanService {
         throw new Error('Oturum bulunamadı');
       }
 
+      const payload = {
+        action: 'authenticate',
+        ...authData,
+      };
+
       const { data, error } = await supabase.functions.invoke('veriban-auth', {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
         },
-        body: {
-          action: 'authenticate',
-          ...authData
-        }
+        body: JSON.stringify(payload),
       });
 
       if (error) throw error;

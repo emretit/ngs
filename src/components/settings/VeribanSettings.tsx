@@ -101,11 +101,12 @@ export const VeribanSettings = () => {
       console.log('📤 Request body:', requestBody);
 
       const { data, error } = await supabase.functions.invoke('veriban-auth', {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: requestBody
+        body: JSON.stringify(requestBody),
       });
 
       console.log('✅ Edge function response:', { data, error });
@@ -209,16 +210,17 @@ export const VeribanSettings = () => {
       console.log('🧪 Mevcut bağlantı test ediliyor...');
 
       const { data, error } = await supabase.functions.invoke('veriban-auth', {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: {
+        body: JSON.stringify({
           action: 'authenticate',
           username: authData.username,
           password: authData.password,
-          testMode: authData.test_mode || false
-        }
+          testMode: authData.test_mode || false,
+        }),
       });
 
       if (error) {

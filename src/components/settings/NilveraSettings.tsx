@@ -47,7 +47,7 @@ export const NilveraSettings = () => {
         .from('nilvera_auth')
         .select('*')
         .eq('company_id', profile.company_id)
-        .single();
+        .maybeSingle();
 
       if (data && !error) {
         setIsConnected(true);

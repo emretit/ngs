@@ -10,9 +10,13 @@ export default defineConfig(({ mode }) => ({
     // to reach the user's own machine (and fails with CORS/blocked address space).
     host: true,
     port: 8080,
-    hmr: {
+    hmr: mode === 'development' && process.env.LOVABLE ? {
       protocol: 'wss',
       clientPort: 443,
+    } : {
+      // Local development HMR settings
+      protocol: 'ws',
+      host: 'localhost',
     },
   },
   plugins: [

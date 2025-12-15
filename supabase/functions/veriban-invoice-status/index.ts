@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { VeribanSoapClient } from '../_shared/veriban-soap-helper.ts';
+import { VeribanSoapClient, getValidSessionCode } from '../_shared/veriban-soap-helper.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -87,12 +87,14 @@ serve(async (req) => {
     const {
       invoiceId,
       invoiceUUID,
+      invoiceNumber,
+      integrationCode,
     } = await req.json();
 
-    if (!invoiceUUID && !invoiceId) {
+    if (!invoiceUUID && !invoiceId && !invoiceNumber && !integrationCode) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'invoiceUUID veya invoiceId parametresi zorunludur'
+        error: 'invoiceUUID, invoiceId, invoiceNumber veya integrationCode parametrelerinden biri zorunludur'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -102,12 +104,14 @@ serve(async (req) => {
     console.log('🔍 Veriban fatura durum sorgulama başlatılıyor...');
     console.log('📄 Invoice ID:', invoiceId);
     console.log('🆔 Invoice UUID:', invoiceUUID);
+    console.log('📄 Invoice Number:', invoiceNumber);
+    console.log('🔑 Integration Code:', integrationCode);
 
     // Get invoice from database if invoiceId provided
     let invoice;
     if (invoiceId) {
       const { data, error } = await supabase
-        .from('outgoing_invoices')
+        .from('sales_invoices')
         .select('*')
         .eq('id', invoiceId)
         .eq('company_id', profile.company_id)
@@ -125,50 +129,61 @@ serve(async (req) => {
       invoice = data;
     }
 
-    // Get invoice UUID from invoice or use provided one
-    const queryInvoiceUUID = invoiceUUID || invoice?.ettn;
-    if (!queryInvoiceUUID) {
+    // Get valid session code (reuses existing session if not expired)
+    console.log('🔑 Getting valid session code...');
+    const sessionResult = await getValidSessionCode(supabase, veribanAuth);
+
+    if (!sessionResult.success || !sessionResult.sessionCode) {
+      console.error('❌ Session code alınamadı:', sessionResult.error);
       return new Response(JSON.stringify({
         success: false,
-        error: 'Invoice UUID (ETTN) bilgisi bulunamadı. Fatura henüz gönderilmemiş olabilir.'
+        error: sessionResult.error || 'Session code alınamadı'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Login to Veriban
-    console.log('🔐 Veriban girişi yapılıyor...');
-    const loginResult = await VeribanSoapClient.login(
-      {
-        username: veribanAuth.username,
-        password: veribanAuth.password,
-      },
-      veribanAuth.webservice_url
-    );
-
-    if (!loginResult.success || !loginResult.sessionCode) {
-      console.error('❌ Veriban login başarısız:', loginResult.error);
-      return new Response(JSON.stringify({
-        success: false,
-        error: loginResult.error || 'Veriban giriş başarısız'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const sessionCode = loginResult.sessionCode;
-    console.log('✅ Veriban login başarılı');
+    const sessionCode = sessionResult.sessionCode;
+    console.log('✅ Session code alındı');
 
     try {
-      // Query invoice status
-      console.log('📊 GetSalesInvoiceStatusWithInvoiceUUID çağrılıyor...');
-      const statusResult = await VeribanSoapClient.getSalesInvoiceStatus(
-        sessionCode,
-        queryInvoiceUUID,
-        veribanAuth.webservice_url
-      );
+      // Query invoice status based on provided identifier
+      let statusResult;
+      
+      if (integrationCode) {
+        console.log('📊 GetSalesInvoiceStatusWithIntegrationCode çağrılıyor...');
+        statusResult = await VeribanSoapClient.getSalesInvoiceStatusWithIntegrationCode(
+          sessionCode,
+          integrationCode,
+          veribanAuth.webservice_url
+        );
+      } else if (invoiceNumber) {
+        console.log('📊 GetSalesInvoiceStatusWithInvoiceNumber çağrılıyor...');
+        statusResult = await VeribanSoapClient.getSalesInvoiceStatusWithInvoiceNumber(
+          sessionCode,
+          invoiceNumber,
+          veribanAuth.webservice_url
+        );
+      } else {
+        // Use UUID (from parameter or invoice)
+        const queryInvoiceUUID = invoiceUUID || invoice?.ettn;
+        if (!queryInvoiceUUID) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'Invoice UUID (ETTN) bilgisi bulunamadı. Fatura henüz gönderilmemiş olabilir.'
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        console.log('📊 GetSalesInvoiceStatusWithInvoiceUUID çağrılıyor...');
+        statusResult = await VeribanSoapClient.getSalesInvoiceStatus(
+          sessionCode,
+          queryInvoiceUUID,
+          veribanAuth.webservice_url
+        );
+      }
 
       if (!statusResult.success) {
         console.error('❌ GetSalesInvoiceStatus başarısız:', statusResult.error);
@@ -192,46 +207,46 @@ serve(async (req) => {
       // Update invoice status in database if invoiceId provided
       if (invoiceId) {
         const updateData: any = {
-          veriban_status: statusData.stateCode,
-          veriban_code: statusData.answerStateCode || statusData.stateCode,
-          veriban_description: statusData.stateDescription || statusData.stateName,
+          einvoice_invoice_state: statusData.stateCode,
+          einvoice_transfer_state: statusData.answerStateCode || statusData.stateCode,
+          einvoice_error_message: statusData.stateCode === 4 ? (statusData.stateDescription || statusData.stateName) : null,
           updated_at: new Date().toISOString(),
         };
 
-        // Update ETTN if not already set
-        if (!invoice.ettn) {
-          updateData.ettn = queryInvoiceUUID;
+        // Update ETTN if not already set (check if invoice has ettn field or use xml_data)
+        if (queryInvoiceUUID && !invoice.ettn) {
+          // Try to update ettn if field exists, otherwise store in xml_data
+          if (invoice.xml_data) {
+            updateData.xml_data = { ...invoice.xml_data, ettn: queryInvoiceUUID };
+          }
         }
 
         // Update status based on Veriban state code
         // StateCode values: 1=TASLAK, 2=Gönderilmeyi bekliyor/İmza bekliyor, 3=Gönderim listesinde, 4=HATALI, 5=Başarıyla alıcıya iletildi
         if (statusData.stateCode === 5) {
-          updateData.status = 'delivered';
-          updateData.delivered_at = new Date().toISOString();
+          updateData.durum = 'onaylandi';
+          updateData.einvoice_status = 'delivered';
+          updateData.einvoice_delivered_at = new Date().toISOString();
         } else if (statusData.stateCode === 4) {
-          updateData.status = 'failed';
+          updateData.durum = 'iptal';
+          updateData.einvoice_status = 'error';
         } else if (statusData.stateCode === 3 || statusData.stateCode === 2) {
-          updateData.status = 'sent';
+          updateData.durum = 'gonderildi';
+          updateData.einvoice_status = 'sent';
         } else if (statusData.stateCode === 1) {
-          updateData.status = 'draft';
+          updateData.durum = 'taslak';
+          updateData.einvoice_status = 'draft';
         }
 
         // Check for answer
         // AnswerTypeCode: 1=Bilinmiyor, 3=Iade Edildi, 4=Reddedildi, 5=Kabul edildi
         if (statusData.answerTypeCode && statusData.answerTypeCode !== 1) {
-          updateData.is_answered = true;
-          if (statusData.answerTypeCode === 5) {
-            updateData.answer_type = 'KABUL';
-          } else if (statusData.answerTypeCode === 4) {
-            updateData.answer_type = 'RED';
-          } else if (statusData.answerTypeCode === 3) {
-            updateData.answer_type = 'IADE';
-          }
-          updateData.answer_date = new Date().toISOString();
+          updateData.einvoice_responded_at = new Date().toISOString();
+          updateData.einvoice_answer_type = statusData.answerTypeCode === 5 ? 5 : (statusData.answerTypeCode === 4 ? 4 : 3);
         }
 
         const { error: updateError } = await supabase
-          .from('outgoing_invoices')
+          .from('sales_invoices')
           .update(updateData)
           .eq('id', invoiceId);
 
@@ -284,15 +299,17 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
-    } finally {
-      // Always logout
-      try {
-        await VeribanSoapClient.logout(sessionCode, veribanAuth.webservice_url);
-        console.log('✅ Veriban oturumu kapatıldı');
-      } catch (logoutError: any) {
-        console.error('⚠️ Logout hatası (kritik değil):', logoutError.message);
-      }
+    } catch (apiError: any) {
+      console.error('❌ API çağrısı hatası:', apiError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: apiError.message || 'API çağrısı başarısız'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+    // Note: We DO NOT logout here - session is cached for 6 hours
 
   } catch (error: any) {
     console.error('❌ Veriban invoice status function hatası:', error);

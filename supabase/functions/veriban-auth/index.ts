@@ -76,24 +76,13 @@ serve(async (req) => {
       });
     }
 
-    // Parse request body
-    let requestBody;
-    try {
-      const bodyText = await req.text();
-      if (!bodyText || bodyText.trim() === '') {
-        return new Response(JSON.stringify({ 
-          success: false,
-          error: 'Request body gerekli'
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      requestBody = JSON.parse(bodyText);
-    } catch (parseError) {
-      return new Response(JSON.stringify({ 
+    // Parse request body - Supabase automatically parses JSON
+    const requestBody = await req.json().catch(() => null);
+
+    if (!requestBody) {
+      return new Response(JSON.stringify({
         success: false,
-        error: 'Geçersiz JSON formatı'
+        error: 'Request body gerekli veya geçersiz JSON formatı'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -126,7 +115,8 @@ serve(async (req) => {
         });
       }
 
-      // Determine webservice URL based on test mode (default to test if not provided)
+      // Determine webservice URL based on test mode
+      // Test uses HTTPS, Production uses HTTP (according to WSDL documentation)
       const webserviceUrl = testMode === false
         ? 'http://efaturatransfer.veriban.com.tr/IntegrationService.svc'
         : 'https://efaturatransfertest.veriban.com.tr/IntegrationService.svc';
@@ -159,13 +149,15 @@ serve(async (req) => {
 
       console.log('✅ Veriban login başarılı, sessionCode alındı');
 
-      // Logout immediately (we just tested the credentials)
-      if (loginResult.sessionCode) {
-        await VeribanSoapClient.logout(loginResult.sessionCode, webserviceUrl);
-      }
+      // Calculate session expiration time (6 hours from now)
+      const sessionExpiresAt = new Date();
+      sessionExpiresAt.setHours(sessionExpiresAt.getHours() + 6);
 
-      // Save credentials to database
-      console.log('💾 Veriban auth bilgileri veritabanına kaydediliyor...');
+      console.log('⏰ Session expires at:', sessionExpiresAt.toISOString());
+
+      // Save credentials AND session code to database
+      // DO NOT logout - we need to keep the session for 6 hours
+      console.log('💾 Veriban auth bilgileri ve session code veritabanına kaydediliyor...');
       const { error: insertError } = await supabase
         .from('veriban_auth')
         .upsert({
@@ -176,6 +168,8 @@ serve(async (req) => {
           test_mode: testMode !== false, // Default to true if not explicitly false
           webservice_url: webserviceUrl,
           is_active: true,
+          session_code: loginResult.sessionCode,
+          session_expires_at: sessionExpiresAt.toISOString(),
           last_login: new Date().toISOString(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()

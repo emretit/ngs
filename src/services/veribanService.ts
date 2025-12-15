@@ -61,11 +61,18 @@ export class VeribanService {
    * Mükellef sorgulama
    */
   static async checkMukellef(taxNumber: string): Promise<VeribanResponse> {
+    console.log('🔍 [VeribanService] Mükellef sorgulama başlatılıyor...');
+    console.log('📋 [VeribanService] Vergi Numarası:', taxNumber);
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        console.error('❌ [VeribanService] Oturum bulunamadı');
         throw new Error('Oturum bulunamadı');
       }
+
+      console.log('📤 [VeribanService] Edge function çağrılıyor: veriban-check-mukellef');
+      console.log('📦 [VeribanService] Request body:', { taxNumber });
 
       const { data, error } = await supabase.functions.invoke('veriban-check-mukellef', {
         headers: {
@@ -76,19 +83,39 @@ export class VeribanService {
         }
       });
 
-      if (error) throw error;
+      console.log('📥 [VeribanService] Edge function response alındı');
+      console.log('📊 [VeribanService] Response data:', JSON.stringify(data, null, 2));
+      console.log('⚠️ [VeribanService] Response error:', error);
 
-      return {
+      if (error) {
+        console.error('❌ [VeribanService] Edge function error:', error);
+        throw error;
+      }
+
+      const result = {
         success: data?.success || false,
         data: data?.data,
         error: data?.error,
         message: data?.message,
       };
+
+      console.log('✅ [VeribanService] Mükellef sorgulama sonucu:', {
+        success: result.success,
+        isEinvoiceMukellef: result.data ? true : false,
+        aliasName: result.data?.aliasName,
+        companyName: result.data?.companyName,
+        message: result.message
+      });
+
+      return result;
     } catch (err) {
-      return {
+      console.error('❌ [VeribanService] Mükellef sorgulama hatası:', err);
+      const errorResult = {
         success: false,
         error: err instanceof Error ? err.message : 'Mükellef sorgulaması yapılamadı',
       };
+      console.error('❌ [VeribanService] Error result:', errorResult);
+      return errorResult;
     }
   }
 
@@ -194,7 +221,7 @@ export class VeribanService {
         .from('veriban_auth')
         .select('is_active')
         .eq('company_id', profile.company_id)
-        .single();
+        .maybeSingle();
 
       return veribanAuth?.is_active || false;
     } catch {
@@ -353,23 +380,85 @@ export class VeribanService {
   /**
    * Transfer durum sorgula
    */
-  static async getTransferStatus(transferFileUniqueId: string): Promise<VeribanResponse> {
+  static async getTransferStatus(params: {
+    transferFileUniqueId?: string;
+    integrationCode?: string;
+  }): Promise<VeribanResponse> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Oturum bulunamadı');
       }
 
-      // Note: This would require a new Edge Function: veriban-transfer-status
-      // For now, return error
+      if (!params.transferFileUniqueId && !params.integrationCode) {
+        return {
+          success: false,
+          error: 'transferFileUniqueId veya integrationCode parametrelerinden biri zorunludur',
+        };
+      }
+
+      const { data, error } = await supabase.functions.invoke('veriban-transfer-status', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: params
+      });
+
+      if (error) throw error;
+
       return {
-        success: false,
-        error: 'Transfer durum sorgulama özelliği henüz implement edilmedi',
+        success: data?.success || false,
+        data: data?.status,
+        error: data?.error,
+        message: data?.message,
       };
     } catch (err) {
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Transfer durumu sorgulanamadı',
+      };
+    }
+  }
+
+  /**
+   * Gelen fatura durum sorgula
+   */
+  static async getPurchaseInvoiceStatus(params: {
+    invoiceUUID?: string;
+    invoiceNumber?: string;
+  }): Promise<VeribanResponse> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Oturum bulunamadı');
+      }
+
+      if (!params.invoiceUUID && !params.invoiceNumber) {
+        return {
+          success: false,
+          error: 'invoiceUUID veya invoiceNumber parametrelerinden biri zorunludur',
+        };
+      }
+
+      const { data, error } = await supabase.functions.invoke('veriban-purchase-invoice-status', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: params
+      });
+
+      if (error) throw error;
+
+      return {
+        success: data?.success || false,
+        data: data?.status,
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Gelen fatura durumu sorgulanamadı',
       };
     }
   }

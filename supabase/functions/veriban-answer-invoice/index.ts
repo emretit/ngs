@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { VeribanSoapClient } from '../_shared/veriban-soap-helper.ts';
+import { VeribanSoapClient, getValidSessionCode } from '../_shared/veriban-soap-helper.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,24 +86,27 @@ serve(async (req) => {
     // Parse request body
     const {
       invoiceUUID,
-      answerType, // 'KABUL' or 'RED'
-      description = '',
+      invoiceNumber,
+      answerType, // 'KABUL', 'RED', 'IADE' etc.
+      answerTime,
+      answerNote = '',
+      isDirectSend = true,
     } = await req.json();
 
-    if (!invoiceUUID || !answerType) {
+    if (!invoiceUUID && !invoiceNumber) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'invoiceUUID ve answerType parametreleri zorunludur (answerType: KABUL veya RED)'
+        error: 'invoiceUUID veya invoiceNumber parametresi zorunludur'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    if (answerType !== 'KABUL' && answerType !== 'RED') {
+    if (!answerType) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'answerType sadece KABUL veya RED olabilir'
+        error: 'answerType parametresi zorunludur (KABUL, RED, IADE vb.)'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -112,45 +115,60 @@ serve(async (req) => {
 
     console.log('📝 Veriban fatura cevabı gönderiliyor...');
     console.log('🆔 Invoice UUID:', invoiceUUID);
+    console.log('📄 Invoice Number:', invoiceNumber);
     console.log('📋 Answer Type:', answerType);
-    console.log('📝 Description:', description);
+    console.log('⏰ Answer Time:', answerTime);
+    console.log('📝 Answer Note:', answerNote);
+    console.log('📤 Is Direct Send:', isDirectSend);
 
-    // Login to Veriban
-    console.log('🔐 Veriban girişi yapılıyor...');
-    const loginResult = await VeribanSoapClient.login(
-      {
-        username: veribanAuth.username,
-        password: veribanAuth.password,
-      },
-      veribanAuth.webservice_url
-    );
+    // Get valid session code (reuses existing session if not expired)
+    console.log('🔑 Getting valid session code...');
+    const sessionResult = await getValidSessionCode(supabase, veribanAuth);
 
-    if (!loginResult.success || !loginResult.sessionCode) {
-      console.error('❌ Veriban login başarısız:', loginResult.error);
+    if (!sessionResult.success || !sessionResult.sessionCode) {
+      console.error('❌ Session code alınamadı:', sessionResult.error);
       return new Response(JSON.stringify({
         success: false,
-        error: loginResult.error || 'Veriban giriş başarısız'
+        error: sessionResult.error || 'Session code alınamadı'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const sessionCode = loginResult.sessionCode;
-    console.log('✅ Veriban login başarılı');
+    const sessionCode = sessionResult.sessionCode;
+    console.log('✅ Session code alındı');
 
     try {
       // Set Purchase Invoice Answer
-      console.log('📊 SetPurchaseInvoiceAnswerWithInvoiceUUID çağrılıyor...');
-      const answerResult = await VeribanSoapClient.setPurchaseInvoiceAnswer(
-        sessionCode,
-        {
-          invoiceUUID,
-          answerType: answerType as 'KABUL' | 'RED',
-          description,
-        },
-        veribanAuth.webservice_url
-      );
+      let answerResult;
+      if (invoiceUUID) {
+        console.log('📊 SetPurchaseInvoiceAnswerWithInvoiceUUID çağrılıyor...');
+        answerResult = await VeribanSoapClient.setPurchaseInvoiceAnswer(
+          sessionCode,
+          {
+            invoiceUUID,
+            answerType,
+            answerTime,
+            answerNote,
+            isDirectSend,
+          },
+          veribanAuth.webservice_url
+        );
+      } else {
+        console.log('📊 SetPurchaseInvoiceAnswerWithInvoiceNumber çağrılıyor...');
+        answerResult = await VeribanSoapClient.setPurchaseInvoiceAnswerWithInvoiceNumber(
+          sessionCode,
+          {
+            invoiceNumber,
+            answerType,
+            answerTime,
+            answerNote,
+            isDirectSend,
+          },
+          veribanAuth.webservice_url
+        );
+      }
 
       if (!answerResult.success) {
         console.error('❌ SetPurchaseInvoiceAnswer başarısız:', answerResult.error);
@@ -166,12 +184,24 @@ serve(async (req) => {
       console.log('✅ Fatura cevabı başarıyla gönderildi');
 
       // Update invoice in database if exists
-      const { data: invoice } = await supabase
-        .from('incoming_invoices')
-        .select('id')
-        .eq('ettn', invoiceUUID)
-        .eq('company_id', profile.company_id)
-        .single();
+      let invoice;
+      if (invoiceUUID) {
+        const { data } = await supabase
+          .from('incoming_invoices')
+          .select('id')
+          .eq('ettn', invoiceUUID)
+          .eq('company_id', profile.company_id)
+          .single();
+        invoice = data;
+      } else if (invoiceNumber) {
+        const { data } = await supabase
+          .from('incoming_invoices')
+          .select('id')
+          .eq('invoice_number', invoiceNumber)
+          .eq('company_id', profile.company_id)
+          .single();
+        invoice = data;
+      }
 
       if (invoice) {
         await supabase
@@ -179,8 +209,8 @@ serve(async (req) => {
           .update({
             is_answered: true,
             answer_type: answerType,
-            answer_description: description,
-            answer_date: new Date().toISOString(),
+            answer_description: answerNote,
+            answer_date: answerTime || new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq('id', invoice.id);
@@ -193,15 +223,17 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
-    } finally {
-      // Always logout
-      try {
-        await VeribanSoapClient.logout(sessionCode, veribanAuth.webservice_url);
-        console.log('✅ Veriban oturumu kapatıldı');
-      } catch (logoutError: any) {
-        console.error('⚠️ Logout hatası (kritik değil):', logoutError.message);
-      }
+    } catch (apiError: any) {
+      console.error('❌ API çağrısı hatası:', apiError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: apiError.message || 'API çağrısı başarısız'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+    // Note: We DO NOT logout here - session is cached for 6 hours
 
   } catch (error: any) {
     console.error('❌ Veriban answer invoice function hatası:', error);

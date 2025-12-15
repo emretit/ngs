@@ -107,7 +107,7 @@ serve(async (req) => {
 
     // Get invoice from database
     const { data: invoice, error: invoiceError } = await supabase
-      .from('outgoing_invoices')
+      .from('sales_invoices')
       .select('*')
       .eq('id', invoiceId)
       .eq('company_id', profile.company_id)
@@ -153,7 +153,18 @@ serve(async (req) => {
       const zip = new JSZip();
 
       // Add XML to zip
-      const xmlFileName = `${invoice.ettn || invoice.id}.xml`;
+      // Extract ETTN from XML if available, otherwise use invoice ID
+      let ettn = invoice.id;
+      if (invoice.xml_data && invoice.xml_data.ettn) {
+        ettn = invoice.xml_data.ettn;
+      } else if (invoice.einvoice_xml_content) {
+        // Try to extract ETTN from XML content
+        const ettnMatch = invoice.einvoice_xml_content.match(/<cbc:UUID[^>]*>(.*?)<\/cbc:UUID>/i);
+        if (ettnMatch) {
+          ettn = ettnMatch[1].trim();
+        }
+      }
+      const xmlFileName = `${ettn}.xml`;
       zip.file(xmlFileName, xmlContent);
 
       // Generate ZIP
@@ -192,11 +203,11 @@ serve(async (req) => {
 
         // Update invoice status to failed
         await supabase
-          .from('outgoing_invoices')
+          .from('sales_invoices')
           .update({
-            status: 'failed',
-            veriban_status: -1,
-            veriban_description: transferResult.error || 'Belge gönderilemedi',
+            durum: 'iptal',
+            einvoice_status: 'error',
+            einvoice_error_message: transferResult.error || 'Belge gönderilemedi',
             updated_at: new Date().toISOString(),
           })
           .eq('id', invoiceId);
@@ -216,14 +227,13 @@ serve(async (req) => {
 
       // Update invoice in database
       const { error: updateError } = await supabase
-        .from('outgoing_invoices')
+        .from('sales_invoices')
         .update({
-          status: 'sent',
-          ref_id: transferFileUniqueId,
-          veriban_status: 1, // İşlem devam ediyor
-          veriban_code: 2, // İşlenmeyi bekliyor
-          veriban_description: 'Belge Veriban sistemine gönderildi',
-          sent_at: new Date().toISOString(),
+          durum: 'gonderildi',
+          einvoice_status: 'sent',
+          nilvera_transfer_id: transferFileUniqueId, // Using nilvera_transfer_id field for Veriban transfer ID
+          einvoice_transfer_state: 2, // İşlenmeyi bekliyor
+          einvoice_sent_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', invoiceId);

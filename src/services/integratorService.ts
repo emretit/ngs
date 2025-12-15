@@ -289,6 +289,9 @@ export class IntegratorService {
     filters: InvoiceFilters
   ): Promise<IntegratorServiceResponse> {
     try {
+      console.log('📊 Veriban fatura listesi isteniyor...');
+      console.log('📅 Filters:', filters);
+
       const { data, error } = await supabase.functions.invoke('veriban-document-list', {
         body: {
           action: 'getPurchaseInvoices',
@@ -297,7 +300,29 @@ export class IntegratorService {
         }
       });
 
-      if (error) throw error;
+      console.log('📥 Veriban response:', { data, error });
+
+      if (error) {
+        console.error('❌ Veriban error:', error);
+
+        // Try to extract error message from response body
+        if (error.context instanceof Response) {
+          try {
+            const responseText = await error.context.text();
+            console.error('❌ Response body:', responseText);
+            const responseJson = JSON.parse(responseText);
+            if (responseJson.error) {
+              throw new Error(responseJson.error);
+            }
+          } catch (e) {
+            console.error('❌ Could not parse error response:', e);
+          }
+        }
+
+        throw error;
+      }
+
+      console.log('✅ Veriban invoices:', data?.invoices?.length || 0, 'adet');
 
       return {
         success: data?.success || false,
@@ -306,6 +331,7 @@ export class IntegratorService {
         message: data?.message,
       };
     } catch (error: any) {
+      console.error('❌ getVeribanInvoices error:', error);
       return {
         success: false,
         error: error.message || 'Veriban faturalar alınamadı',
@@ -319,26 +345,51 @@ export class IntegratorService {
   private static async checkVeribanMukellef(
     taxNumber: string
   ): Promise<IntegratorServiceResponse> {
+    console.log('🔍 [IntegratorService] Veriban mükellef sorgulama başlatılıyor...');
+    console.log('📋 [IntegratorService] Vergi Numarası:', taxNumber);
+    
     try {
+      console.log('📤 [IntegratorService] Veriban edge function çağrılıyor...');
+      
       const { data, error } = await supabase.functions.invoke('veriban-check-mukellef', {
         body: {
           taxNumber,
         }
       });
 
-      if (error) throw error;
+      console.log('📥 [IntegratorService] Veriban response alındı');
+      console.log('📊 [IntegratorService] Response data:', JSON.stringify(data, null, 2));
+      console.log('⚠️ [IntegratorService] Response error:', error);
 
-      return {
+      if (error) {
+        console.error('❌ [IntegratorService] Veriban edge function error:', error);
+        throw error;
+      }
+
+      const result = {
         success: data?.success || false,
         data: data?.data,
         error: data?.error,
         message: data?.message,
       };
+
+      console.log('✅ [IntegratorService] Veriban mükellef sorgulama sonucu:', {
+        success: result.success,
+        isEinvoiceMukellef: result.data ? true : false,
+        aliasName: result.data?.aliasName,
+        companyName: result.data?.companyName,
+        message: result.message
+      });
+
+      return result;
     } catch (error: any) {
-      return {
+      console.error('❌ [IntegratorService] Veriban mükellef sorgulama hatası:', error);
+      const errorResult = {
         success: false,
         error: error.message || 'Veriban mükellef sorgulaması yapılamadı',
       };
+      console.error('❌ [IntegratorService] Error result:', errorResult);
+      return errorResult;
     }
   }
 

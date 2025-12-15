@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { VeribanSoapClient } from '../_shared/veriban-soap-helper.ts';
+import { VeribanSoapClient, getValidSessionCode } from '../_shared/veriban-soap-helper.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -103,29 +103,23 @@ serve(async (req) => {
     console.log('🆔 Invoice UUID:', invoiceUUID);
     console.log('📋 Invoice Type:', invoiceType);
 
-    // Login to Veriban
-    console.log('🔐 Veriban girişi yapılıyor...');
-    const loginResult = await VeribanSoapClient.login(
-      {
-        username: veribanAuth.username,
-        password: veribanAuth.password,
-      },
-      veribanAuth.webservice_url
-    );
+    // Get valid session code (reuses existing session if not expired)
+    console.log('🔑 Getting valid session code...');
+    const sessionResult = await getValidSessionCode(supabase, veribanAuth);
 
-    if (!loginResult.success || !loginResult.sessionCode) {
-      console.error('❌ Veriban login başarısız:', loginResult.error);
+    if (!sessionResult.success || !sessionResult.sessionCode) {
+      console.error('❌ Session code alınamadı:', sessionResult.error);
       return new Response(JSON.stringify({
         success: false,
-        error: loginResult.error || 'Veriban giriş başarısız'
+        error: sessionResult.error || 'Session code alınamadı'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const sessionCode = loginResult.sessionCode;
-    console.log('✅ Veriban login başarılı');
+    const sessionCode = sessionResult.sessionCode;
+    console.log('✅ Session code alındı');
 
     try {
       // Download invoice based on type
@@ -198,15 +192,17 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
-    } finally {
-      // Always logout
-      try {
-        await VeribanSoapClient.logout(sessionCode, veribanAuth.webservice_url);
-        console.log('✅ Veriban oturumu kapatıldı');
-      } catch (logoutError: any) {
-        console.error('⚠️ Logout hatası (kritik değil):', logoutError.message);
-      }
+    } catch (apiError: any) {
+      console.error('❌ API çağrısı hatası:', apiError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: apiError.message || 'API çağrısı başarısız'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+    // Note: We DO NOT logout here - session is cached for 6 hours
 
   } catch (error: any) {
     console.error('❌ Veriban document data function hatası:', error);

@@ -84,59 +84,24 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const requestBody = await req.json();
     const {
-      action = 'getSalesInvoices', // getSalesInvoices or getPurchaseInvoices
-      startDate,
-      endDate,
-      pageIndex = 1,
-      pageSize = 100,
-    } = requestBody;
+      transferFileUniqueId,
+      integrationCode,
+    } = await req.json();
 
-    // Validate dates if provided
-    let formattedStartDate: string | undefined;
-    let formattedEndDate: string | undefined;
-
-    if (startDate || endDate) {
-      try {
-        if (startDate) {
-          const parsedStart = new Date(startDate);
-          if (isNaN(parsedStart.getTime())) {
-            throw new Error('Invalid startDate format');
-          }
-          formattedStartDate = parsedStart.toISOString().split('T')[0];
-        }
-
-        if (endDate) {
-          const parsedEnd = new Date(endDate);
-          if (isNaN(parsedEnd.getTime())) {
-            throw new Error('Invalid endDate format');
-          }
-          formattedEndDate = parsedEnd.toISOString().split('T')[0];
-        }
-
-        if (formattedStartDate && formattedEndDate && formattedStartDate > formattedEndDate) {
-          throw new Error('startDate cannot be after endDate');
-        }
-      } catch (dateError: any) {
-        return new Response(JSON.stringify({
-          success: false,
-          error: `Geçersiz tarih formatı: ${dateError.message}. Format: YYYY-MM-DD veya ISO 8601`
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    if (!transferFileUniqueId && !integrationCode) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'transferFileUniqueId veya integrationCode parametrelerinden biri zorunludur'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    console.log('📋 Veriban belge listesi sorgulanıyor...');
-    console.log('📄 Action:', action);
-    console.log('📅 Date Range:', formattedStartDate, '-', formattedEndDate);
-    console.log('📊 Page:', pageIndex, 'Size:', pageSize);
-    console.log('🔑 Company ID:', profile.company_id);
-    console.log('👤 User ID:', user.id);
-    console.log('🔐 Veriban Username:', veribanAuth.username);
-    console.log('🌐 Webservice URL:', veribanAuth.webservice_url);
+    console.log('🔍 Veriban transfer durum sorgulama başlatılıyor...');
+    console.log('🆔 Transfer File Unique ID:', transferFileUniqueId);
+    console.log('🔑 Integration Code:', integrationCode);
 
     // Get valid session code (reuses existing session if not expired)
     console.log('🔑 Getting valid session code...');
@@ -156,66 +121,65 @@ serve(async (req) => {
     const sessionCode = sessionResult.sessionCode;
 
     try {
-      // Call appropriate method based on action
-      let listResult;
+      // Query transfer status based on provided identifier
+      let transferStatusResult;
       
-      if (action === 'getSalesInvoices') {
-        console.log('📊 GetSalesInvoiceList çağrılıyor...');
-        listResult = await VeribanSoapClient.getSalesInvoiceList(
+      if (integrationCode) {
+        console.log('📊 GetTransferSalesInvoiceFileStatusWithIntegrationCode çağrılıyor...');
+        transferStatusResult = await VeribanSoapClient.getTransferStatusWithIntegrationCode(
           sessionCode,
-          {
-            startDate: formattedStartDate,
-            endDate: formattedEndDate,
-            pageIndex,
-            pageSize,
-          },
-          veribanAuth.webservice_url
-        );
-      } else if (action === 'getPurchaseInvoices') {
-        console.log('📊 GetPurchaseInvoiceList çağrılıyor...');
-        listResult = await VeribanSoapClient.getPurchaseInvoiceList(
-          sessionCode,
-          {
-            startDate: formattedStartDate,
-            endDate: formattedEndDate,
-            pageIndex,
-            pageSize,
-          },
+          integrationCode,
           veribanAuth.webservice_url
         );
       } else {
-        throw new Error(`Geçersiz action: ${action}. Geçerli değerler: getSalesInvoices, getPurchaseInvoices`);
+        console.log('📊 GetTransferSalesInvoiceFileStatus çağrılıyor...');
+        transferStatusResult = await VeribanSoapClient.getTransferStatus(
+          sessionCode,
+          transferFileUniqueId,
+          veribanAuth.webservice_url
+        );
       }
 
-      if (!listResult.success) {
-        console.error('❌ Invoice list başarısız:', listResult.error);
+      if (!transferStatusResult.success) {
+        console.error('❌ GetTransferStatus başarısız:', transferStatusResult.error);
         return new Response(JSON.stringify({
           success: false,
-          error: listResult.error || 'Fatura listesi alınamadı'
+          error: transferStatusResult.error || 'Transfer durumu sorgulanamadı'
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      const invoices = listResult.data?.invoices || [];
-      console.log('✅ Fatura listesi alındı');
-      console.log('📊 Toplam fatura sayısı:', invoices.length);
-      console.log('📋 İlk 3 fatura:', JSON.stringify(invoices.slice(0, 3), null, 2));
+      const statusData = transferStatusResult.data;
+      console.log('✅ Transfer durum bilgisi alındı');
+      console.log('📊 StateCode:', statusData.stateCode);
+      console.log('📋 StateName:', statusData.stateName);
+      console.log('📝 StateDescription:', statusData.stateDescription);
 
-      // Format invoices for response
-      const formattedInvoices = invoices.map((inv: any) => ({
-        invoiceUUID: inv.invoiceUUID,
-        invoiceId: inv.invoiceId || inv.invoiceUUID,
-      }));
+      // Prepare user-friendly status
+      let userStatus = 'Bilinmeyen durum';
+      if (statusData.stateCode === 5) {
+        userStatus = 'Başarıyla işlendi';
+      } else if (statusData.stateCode === 4) {
+        userStatus = 'Hatalı';
+      } else if (statusData.stateCode === 3) {
+        userStatus = 'İşleniyor';
+      } else if (statusData.stateCode === 2) {
+        userStatus = 'İşlenmeyi bekliyor';
+      } else if (statusData.stateCode === 1) {
+        userStatus = 'Bilinmiyor';
+      }
 
       return new Response(JSON.stringify({
         success: true,
-        invoices: formattedInvoices,
-        totalCount: invoices.length,
-        pageIndex,
-        pageSize,
-        message: `${invoices.length} adet fatura listelendi`
+        status: {
+          stateCode: statusData.stateCode,
+          stateName: statusData.stateName,
+          stateDescription: statusData.stateDescription,
+          userFriendlyStatus: userStatus,
+        },
+        message: 'Transfer durum bilgisi başarıyla alındı'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -233,7 +197,7 @@ serve(async (req) => {
     // Note: We DO NOT logout here - session is cached for 6 hours
 
   } catch (error: any) {
-    console.error('❌ Veriban document list function hatası:', error);
+    console.error('❌ Veriban transfer status function hatası:', error);
 
     return new Response(JSON.stringify({
       success: false,

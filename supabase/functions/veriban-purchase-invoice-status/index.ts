@@ -84,59 +84,24 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const requestBody = await req.json();
     const {
-      action = 'getSalesInvoices', // getSalesInvoices or getPurchaseInvoices
-      startDate,
-      endDate,
-      pageIndex = 1,
-      pageSize = 100,
-    } = requestBody;
+      invoiceUUID,
+      invoiceNumber,
+    } = await req.json();
 
-    // Validate dates if provided
-    let formattedStartDate: string | undefined;
-    let formattedEndDate: string | undefined;
-
-    if (startDate || endDate) {
-      try {
-        if (startDate) {
-          const parsedStart = new Date(startDate);
-          if (isNaN(parsedStart.getTime())) {
-            throw new Error('Invalid startDate format');
-          }
-          formattedStartDate = parsedStart.toISOString().split('T')[0];
-        }
-
-        if (endDate) {
-          const parsedEnd = new Date(endDate);
-          if (isNaN(parsedEnd.getTime())) {
-            throw new Error('Invalid endDate format');
-          }
-          formattedEndDate = parsedEnd.toISOString().split('T')[0];
-        }
-
-        if (formattedStartDate && formattedEndDate && formattedStartDate > formattedEndDate) {
-          throw new Error('startDate cannot be after endDate');
-        }
-      } catch (dateError: any) {
-        return new Response(JSON.stringify({
-          success: false,
-          error: `Geçersiz tarih formatı: ${dateError.message}. Format: YYYY-MM-DD veya ISO 8601`
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    if (!invoiceUUID && !invoiceNumber) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'invoiceUUID veya invoiceNumber parametrelerinden biri zorunludur'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    console.log('📋 Veriban belge listesi sorgulanıyor...');
-    console.log('📄 Action:', action);
-    console.log('📅 Date Range:', formattedStartDate, '-', formattedEndDate);
-    console.log('📊 Page:', pageIndex, 'Size:', pageSize);
-    console.log('🔑 Company ID:', profile.company_id);
-    console.log('👤 User ID:', user.id);
-    console.log('🔐 Veriban Username:', veribanAuth.username);
-    console.log('🌐 Webservice URL:', veribanAuth.webservice_url);
+    console.log('🔍 Veriban gelen fatura durum sorgulama başlatılıyor...');
+    console.log('🆔 Invoice UUID:', invoiceUUID);
+    console.log('📄 Invoice Number:', invoiceNumber);
 
     // Get valid session code (reuses existing session if not expired)
     console.log('🔑 Getting valid session code...');
@@ -156,66 +121,90 @@ serve(async (req) => {
     const sessionCode = sessionResult.sessionCode;
 
     try {
-      // Call appropriate method based on action
-      let listResult;
+      // Query purchase invoice status based on provided identifier
+      let statusResult;
       
-      if (action === 'getSalesInvoices') {
-        console.log('📊 GetSalesInvoiceList çağrılıyor...');
-        listResult = await VeribanSoapClient.getSalesInvoiceList(
+      if (invoiceNumber) {
+        console.log('📊 GetPurchaseInvoiceStatusWithInvoiceNumber çağrılıyor...');
+        statusResult = await VeribanSoapClient.getPurchaseInvoiceStatusWithInvoiceNumber(
           sessionCode,
-          {
-            startDate: formattedStartDate,
-            endDate: formattedEndDate,
-            pageIndex,
-            pageSize,
-          },
-          veribanAuth.webservice_url
-        );
-      } else if (action === 'getPurchaseInvoices') {
-        console.log('📊 GetPurchaseInvoiceList çağrılıyor...');
-        listResult = await VeribanSoapClient.getPurchaseInvoiceList(
-          sessionCode,
-          {
-            startDate: formattedStartDate,
-            endDate: formattedEndDate,
-            pageIndex,
-            pageSize,
-          },
+          invoiceNumber,
           veribanAuth.webservice_url
         );
       } else {
-        throw new Error(`Geçersiz action: ${action}. Geçerli değerler: getSalesInvoices, getPurchaseInvoices`);
+        console.log('📊 GetPurchaseInvoiceStatusWithInvoiceUUID çağrılıyor...');
+        statusResult = await VeribanSoapClient.getPurchaseInvoiceStatus(
+          sessionCode,
+          invoiceUUID,
+          veribanAuth.webservice_url
+        );
       }
 
-      if (!listResult.success) {
-        console.error('❌ Invoice list başarısız:', listResult.error);
+      if (!statusResult.success) {
+        console.error('❌ GetPurchaseInvoiceStatus başarısız:', statusResult.error);
         return new Response(JSON.stringify({
           success: false,
-          error: listResult.error || 'Fatura listesi alınamadı'
+          error: statusResult.error || 'Durum sorgulanamadı'
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      const invoices = listResult.data?.invoices || [];
-      console.log('✅ Fatura listesi alındı');
-      console.log('📊 Toplam fatura sayısı:', invoices.length);
-      console.log('📋 İlk 3 fatura:', JSON.stringify(invoices.slice(0, 3), null, 2));
+      const statusData = statusResult.data;
+      console.log('✅ Durum bilgisi alındı');
+      console.log('📊 StateCode:', statusData.stateCode);
+      console.log('📋 StateName:', statusData.stateName);
+      console.log('📝 StateDescription:', statusData.stateDescription);
+      console.log('📋 AnswerStateCode:', statusData.answerStateCode);
+      console.log('📋 AnswerTypeCode:', statusData.answerTypeCode);
 
-      // Format invoices for response
-      const formattedInvoices = invoices.map((inv: any) => ({
-        invoiceUUID: inv.invoiceUUID,
-        invoiceId: inv.invoiceId || inv.invoiceUUID,
-      }));
+      // Prepare user-friendly status
+      let userStatus = 'Bilinmeyen durum';
+      if (statusData.stateCode === 5) {
+        userStatus = 'Başarılı - Fatura alıcıya ulaştı';
+      } else if (statusData.stateCode === 4) {
+        userStatus = 'Başarısız - Hata oluştu';
+      } else if (statusData.stateCode === 3) {
+        userStatus = 'Gönderim listesinde, işlem yapılıyor';
+      } else if (statusData.stateCode === 2) {
+        userStatus = 'Gönderilmeyi bekliyor, imza bekliyor';
+      } else if (statusData.stateCode === 1) {
+        userStatus = 'Taslak veri';
+      }
+
+      // Answer status
+      let answerStatus = '';
+      if (statusData.answerTypeCode === 5) {
+        answerStatus = 'Kabul edildi';
+      } else if (statusData.answerTypeCode === 4) {
+        answerStatus = 'Reddedildi';
+      } else if (statusData.answerTypeCode === 3) {
+        answerStatus = 'Iade edildi';
+      } else if (statusData.answerStateCode === 2) {
+        answerStatus = 'Cevap bekliyor';
+      }
 
       return new Response(JSON.stringify({
         success: true,
-        invoices: formattedInvoices,
-        totalCount: invoices.length,
-        pageIndex,
-        pageSize,
-        message: `${invoices.length} adet fatura listelendi`
+        status: {
+          stateCode: statusData.stateCode,
+          stateName: statusData.stateName,
+          stateDescription: statusData.stateDescription,
+          answerStateCode: statusData.answerStateCode,
+          answerStateName: statusData.answerStateName,
+          answerStateDescription: statusData.answerStateDescription,
+          answerTypeCode: statusData.answerTypeCode,
+          answerTypeName: statusData.answerTypeName,
+          answerTypeDescription: statusData.answerTypeDescription,
+          envelopeIdentifier: statusData.envelopeIdentifier,
+          envelopeGIBCode: statusData.envelopeGIBCode,
+          envelopeGIBStateName: statusData.envelopeGIBStateName,
+          envelopeCreationTime: statusData.envelopeCreationTime,
+          userFriendlyStatus: userStatus,
+          answerStatus: answerStatus,
+        },
+        message: 'Durum bilgisi başarıyla alındı'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -233,7 +222,7 @@ serve(async (req) => {
     // Note: We DO NOT logout here - session is cached for 6 hours
 
   } catch (error: any) {
-    console.error('❌ Veriban document list function hatası:', error);
+    console.error('❌ Veriban purchase invoice status function hatası:', error);
 
     return new Response(JSON.stringify({
       success: false,

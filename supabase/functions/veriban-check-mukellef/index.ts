@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { VeribanSoapClient } from '../_shared/veriban-soap-helper.ts';
+import { VeribanSoapClient, getValidSessionCode } from '../_shared/veriban-soap-helper.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -96,27 +96,27 @@ serve(async (req) => {
     }
 
     console.log('🔍 Veriban mükellef sorgulama:', taxNumber);
+    console.log('🔐 Veriban Username:', veribanAuth.username);
+    console.log('🌐 Webservice URL:', veribanAuth.webservice_url);
+    console.log('🧪 Test Mode:', veribanAuth.test_mode);
+    console.log('✅ Is Active:', veribanAuth.is_active);
 
-    // Login to Veriban
-    const loginResult = await VeribanSoapClient.login(
-      {
-        username: veribanAuth.username,
-        password: veribanAuth.password,
-      },
-      veribanAuth.webservice_url
-    );
+    // Get valid session code (reuses existing session if not expired)
+    console.log('🔑 Getting valid session code...');
+    const sessionResult = await getValidSessionCode(supabase, veribanAuth);
 
-    if (!loginResult.success || !loginResult.sessionCode) {
-      return new Response(JSON.stringify({ 
+    if (!sessionResult.success || !sessionResult.sessionCode) {
+      console.error('❌ Session code alınamadı:', sessionResult.error);
+      return new Response(JSON.stringify({
         success: false,
-        error: loginResult.error || 'Veriban giriş başarısız'
+        error: sessionResult.error || 'Session code alınamadı'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const sessionCode = loginResult.sessionCode;
+    const sessionCode = sessionResult.sessionCode;
 
     try {
       // Check Taxpayer (GetCustomerData)
@@ -126,7 +126,10 @@ serve(async (req) => {
         veribanAuth.webservice_url
       );
 
+      console.log('📥 Customer data result:', JSON.stringify(customerDataResult, null, 2));
+
       if (!customerDataResult.success) {
+        console.log('⚠️ Mükellef sorgulama başarısız veya mükellef değil');
         return new Response(JSON.stringify({ 
           success: true,
           isEinvoiceMukellef: false,
@@ -136,37 +139,81 @@ serve(async (req) => {
         });
       }
 
+      // Handle both array and single object responses
+      let customerData: any = null;
       const { data } = customerDataResult;
-      const isEinvoiceMukellef = data?.isEinvoiceMukellef || !!data?.alias;
+      
+      if (Array.isArray(data)) {
+        console.log('📊 Data bir array, eleman sayısı:', data.length);
+        // Find first customer with Invoice document type, or just first one
+        customerData = data.find((c: any) => c.documentType === 'Invoice') || data[0];
+        console.log('✅ Seçilen müşteri verisi:', customerData);
+      } else {
+        customerData = data;
+        console.log('📊 Data tek obje');
+      }
+
+      if (!customerData) {
+        console.log('⚠️ Müşteri verisi bulunamadı');
+        return new Response(JSON.stringify({ 
+          success: true,
+          isEinvoiceMukellef: false,
+          message: 'Bu vergi numarası e-fatura mükellefi değil veya sorgulanamadı'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const isEinvoiceMukellef = customerData?.isEinvoiceMukellef || !!customerData?.alias;
+
+      console.log('✅ Mükellef sorgulama sonucu:', {
+        isEinvoiceMukellef,
+        hasAlias: !!customerData?.alias,
+        hasTitle: !!customerData?.title,
+        identifier: customerData?.identifier || customerData?.identifierNumber,
+        documentType: customerData?.documentType
+      });
 
       let formattedData = null;
-      if (isEinvoiceMukellef && data) {
+      if (isEinvoiceMukellef && customerData) {
         formattedData = {
-          aliasName: data.alias || '',
-          companyName: data.title || '',
-          taxNumber: data.identifier || taxNumber,
+          aliasName: customerData.alias || '',
+          companyName: customerData.title || '',
+          taxNumber: customerData.identifier || customerData.identifierNumber || taxNumber,
           taxOffice: '', // Not available in Veriban GetCustomerData
           address: '',
           city: '',
           district: '',
         };
+        console.log('📋 Formatlanmış müşteri verisi:', formattedData);
       }
 
-      return new Response(JSON.stringify({ 
+      const responseMessage = isEinvoiceMukellef ?
+        'Bu vergi numarası e-fatura mükellefidir' :
+        'Bu vergi numarası e-fatura mükellefi değil';
+
+      console.log('✅ Mükellef sorgulama tamamlandı:', responseMessage);
+
+      return new Response(JSON.stringify({
         success: true,
         isEinvoiceMukellef,
         data: formattedData,
-        message: isEinvoiceMukellef ? 
-          'Bu vergi numarası e-fatura mükellefidir' : 
-          'Bu vergi numarası e-fatura mükellefi değil'
+        message: responseMessage
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
-    } finally {
-      // Always logout
-      await VeribanSoapClient.logout(sessionCode, veribanAuth.webservice_url);
+    } catch (apiError: any) {
+      console.error('❌ API çağrısı hatası:', apiError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: apiError.message || 'Mükellef sorgulaması başarısız'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+    // Note: We DO NOT logout here - session is cached for 6 hours
 
   } catch (error: any) {
     console.error('❌ Veriban check mukellef function hatası:', error);

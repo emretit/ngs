@@ -45,9 +45,9 @@ export const ElogoSettings = () => {
       // Check if company has e-Logo auth
       const { data, error } = await supabase
         .from('elogo_auth')
-        .select('*')
+        .select('username, webservice_url, test_mode, is_active')
         .eq('company_id', profile.company_id)
-        .single();
+        .maybeSingle();
 
       if (data && !error) {
         setIsConnected(true);

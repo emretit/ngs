@@ -7099,6 +7099,214 @@ export type Database = {
           },
         ]
       }
+      return_items: {
+        Row: {
+          condition: string | null
+          created_at: string
+          id: string
+          item_status: string | null
+          notes: string | null
+          order_item_id: string | null
+          original_quantity: number
+          product_id: string | null
+          product_name: string
+          return_id: string
+          return_quantity: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          condition?: string | null
+          created_at?: string
+          id?: string
+          item_status?: string | null
+          notes?: string | null
+          order_item_id?: string | null
+          original_quantity?: number
+          product_id?: string | null
+          product_name: string
+          return_id: string
+          return_quantity: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          condition?: string | null
+          created_at?: string
+          id?: string
+          item_status?: string | null
+          notes?: string | null
+          order_item_id?: string | null
+          original_quantity?: number
+          product_id?: string | null
+          product_name?: string
+          return_id?: string
+          return_quantity?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_items_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_warehouse_stocks"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "return_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_items_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "returns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      returns: {
+        Row: {
+          company_id: string
+          completion_date: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          customer_id: string
+          delivery_id: string | null
+          employee_id: string | null
+          id: string
+          internal_notes: string | null
+          notes: string | null
+          order_id: string | null
+          reason_description: string | null
+          refund_amount: number | null
+          refund_method: string | null
+          request_date: string
+          return_number: string
+          return_reason: string
+          return_type: string
+          review_date: string | null
+          reviewed_by: string | null
+          sales_invoice_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          completion_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id: string
+          delivery_id?: string | null
+          employee_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          notes?: string | null
+          order_id?: string | null
+          reason_description?: string | null
+          refund_amount?: number | null
+          refund_method?: string | null
+          request_date?: string
+          return_number: string
+          return_reason: string
+          return_type?: string
+          review_date?: string | null
+          reviewed_by?: string | null
+          sales_invoice_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          completion_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string
+          delivery_id?: string | null
+          employee_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          notes?: string | null
+          order_id?: string | null
+          reason_description?: string | null
+          refund_amount?: number | null
+          refund_method?: string | null
+          request_date?: string
+          return_number?: string
+          return_reason?: string
+          return_type?: string
+          review_date?: string | null
+          reviewed_by?: string | null
+          sales_invoice_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "returns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "returns_sales_invoice_id_fkey"
+            columns: ["sales_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "sales_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rfq_lines: {
         Row: {
           company_id: string
@@ -11582,6 +11790,10 @@ export type Database = {
         Returns: string
       }
       generate_recurring_service_instances: { Args: never; Returns: number }
+      generate_return_number: {
+        Args: { p_company_id: string }
+        Returns: string
+      }
       generate_work_order_code: { Args: never; Returns: string }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {

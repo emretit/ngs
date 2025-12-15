@@ -1,76 +1,118 @@
-import { useState } from "react";
-import { RotateCcw, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ReturnsHeader from "@/components/returns/ReturnsHeader";
+import ReturnsFilterBar from "@/components/returns/ReturnsFilterBar";
+import ReturnsContent from "@/components/returns/ReturnsContent";
+import ReturnForm from "@/components/returns/ReturnForm";
+import { useReturnsInfiniteScroll } from "@/hooks/useReturnsInfiniteScroll";
+import { Return } from "@/types/returns";
+
 interface ReturnsProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
+
 const Returns = ({ isCollapsed, setIsCollapsed }: ReturnsProps) => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [reasonFilter, setReasonFilter] = useState("all");
+  const [customerFilter, setCustomerFilter] = useState("all");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  
+  const [sortField, setSortField] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const {
+    data: returns = [],
+    isLoading,
+    isLoadingMore,
+    hasNextPage,
+    loadMore,
+    totalCount,
+    error
+  } = useReturnsInfiniteScroll({
+    search: searchQuery,
+    status: statusFilter,
+    return_type: typeFilter,
+    return_reason: reasonFilter,
+    customer_id: customerFilter,
+    startDate,
+    endDate,
+    sortField,
+    sortDirection
+  });
+
+  const handleReturnClick = (returnItem: Return) => {
+    // TODO: Navigate to return detail page
+    console.log('Return clicked:', returnItem);
+  };
+
+  const handleCreateReturn = () => {
+    setShowReturnForm(true);
+  };
+
+  const handleCloseReturnForm = () => {
+    setShowReturnForm(false);
+  };
+
   return (
-    <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-card rounded-lg p-6 border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Bekleyen İadeler</p>
-                <p className="text-2xl font-bold">8</p>
-              </div>
-              <Clock className="h-8 w-8 text-orange-500" />
-            </div>
-          </div>
-          <div className="bg-card rounded-lg p-6 border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">İncelenen İadeler</p>
-                <p className="text-2xl font-bold">3</p>
-              </div>
-              <AlertCircle className="h-8 w-8 text-blue-500" />
-            </div>
-          </div>
-          <div className="bg-card rounded-lg p-6 border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Onaylanan İadeler</p>
-                <p className="text-2xl font-bold">15</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
-            </div>
-          </div>
-          <div className="bg-card rounded-lg p-6 border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Bu Ay Toplam</p>
-                <p className="text-2xl font-bold">26</p>
-              </div>
-              <RotateCcw className="h-8 w-8 text-gray-500" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-card rounded-lg border">
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Son İade Talepleri</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <RotateCcw className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">İADE-2024-001</p>
-                    <p className="text-sm text-muted-foreground">XYZ Market - Defolu ürün</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Talep Tarihi</p>
-                    <p className="font-medium">14 Ocak 2024</p>
-                  </div>
-                  <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
-                    Beklemede
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-4 p-4">
+      <ReturnsHeader
+        returns={returns}
+        onCreateReturn={handleCreateReturn}
+      />
+      
+      <ReturnsFilterBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedStatus={statusFilter}
+        setSelectedStatus={setStatusFilter}
+        selectedType={typeFilter}
+        setSelectedType={setTypeFilter}
+        selectedReason={reasonFilter}
+        setSelectedReason={setReasonFilter}
+        selectedCustomer={customerFilter}
+        setSelectedCustomer={setCustomerFilter}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+      />
+      
+      <ReturnsContent
+        returns={returns}
+        isLoading={isLoading}
+        error={error}
+        onSelectReturn={handleReturnClick}
+        searchQuery={searchQuery}
+        statusFilter={statusFilter}
+        isLoadingMore={isLoadingMore}
+        hasNextPage={hasNextPage}
+        loadMore={loadMore}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+      />
+
+      <ReturnForm
+        open={showReturnForm}
+        onClose={handleCloseReturnForm}
+      />
+    </div>
   );
 };
+
 export default Returns;

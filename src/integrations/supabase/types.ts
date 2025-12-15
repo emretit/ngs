@@ -780,54 +780,6 @@ export type Database = {
           },
         ]
       }
-      budget_categories: {
-        Row: {
-          company_id: string | null
-          created_at: string
-          id: string
-          is_auto_populated: boolean | null
-          name: string
-          parent_id: string | null
-          sort_order: number | null
-          type: string
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string
-          id?: string
-          is_auto_populated?: boolean | null
-          name: string
-          parent_id?: string | null
-          sort_order?: number | null
-          type?: string
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string
-          id?: string
-          is_auto_populated?: boolean | null
-          name?: string
-          parent_id?: string | null
-          sort_order?: number | null
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "budget_categories_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "budget_categories_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "budget_categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       budget_forecasts: {
         Row: {
           category: string
@@ -6578,6 +6530,7 @@ export type Database = {
       }
       purchase_invoices: {
         Row: {
+          category_id: string | null
           company_id: string | null
           created_at: string | null
           currency: string
@@ -6597,6 +6550,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          category_id?: string | null
           company_id?: string | null
           created_at?: string | null
           currency?: string
@@ -6616,6 +6570,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          category_id?: string | null
           company_id?: string | null
           created_at?: string | null
           currency?: string
@@ -6635,6 +6590,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_invoices_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "cashflow_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_invoices_company_id_fkey"
             columns: ["company_id"]
@@ -10348,6 +10310,56 @@ export type Database = {
             foreignKeyName: "vehicles_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      veriban_auth: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_login: string | null
+          password: string
+          test_mode: boolean | null
+          updated_at: string | null
+          user_id: string | null
+          username: string
+          webservice_url: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password: string
+          test_mode?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          username: string
+          webservice_url: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password?: string
+          test_mode?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string
+          webservice_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "veriban_auth_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },

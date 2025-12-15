@@ -1,14 +1,18 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeHeader } from "@/components/employees/details/EmployeeHeader";
 import { EmployeeInfo } from "@/components/employees/details/EmployeeInfo";
 import { EmployeeDetailTabs } from "@/components/employees/details/EmployeeDetailTabs";
 import { Employee } from "@/types/employee";
+import { useTabs } from "@/components/tabs/TabContext";
+
 const EmployeeDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { updateTabTitle } = useTabs();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [activeTab, setActiveTab] = useState("salary"); // Varsayılan olarak maaş tab'ı açık
   const { data: fetchedEmployee, isLoading, refetch } = useQuery({
@@ -28,6 +32,16 @@ const EmployeeDetails = () => {
     },
     enabled: !!id,
   });
+
+  // Tab başlığını çalışan bilgileri güncellendiğinde güncelle (useTabNavigation ilk yüklemede zaten yapıyor)
+  useEffect(() => {
+    const currentEmployee = employee || fetchedEmployee;
+    if (currentEmployee && location.pathname && employee) {
+      // Sadece employee state'i güncellendiğinde (sayfa içi güncellemeler için)
+      const employeeName = `${currentEmployee.first_name} ${currentEmployee.last_name}`;
+      updateTabTitle(location.pathname, employeeName);
+    }
+  }, [employee, location.pathname, updateTabTitle]);
   const handleEdit = () => {
     navigate(`/employees/${id}/edit`);
   };

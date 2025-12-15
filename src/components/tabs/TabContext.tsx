@@ -15,6 +15,7 @@ interface TabContextType {
   removeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   getTabByPath: (path: string) => Tab | undefined;
+  updateTabTitle: (path: string, title: string) => void;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -102,8 +103,22 @@ export function TabProvider({ children }: { children: ReactNode }) {
     }
   }, [tabs, navigate]);
 
+  const updateTabTitle = useCallback((path: string, title: string) => {
+    setTabs(prevTabs => {
+      const tabIndex = prevTabs.findIndex(tab => tab.path === path);
+      if (tabIndex === -1) return prevTabs;
+      
+      const updatedTabs = [...prevTabs];
+      updatedTabs[tabIndex] = {
+        ...updatedTabs[tabIndex],
+        title,
+      };
+      return updatedTabs;
+    });
+  }, []);
+
   return (
-    <TabContext.Provider value={{ tabs, activeTabId, addTab, removeTab, setActiveTab, getTabByPath }}>
+    <TabContext.Provider value={{ tabs, activeTabId, addTab, removeTab, setActiveTab, getTabByPath, updateTabTitle }}>
       {children}
     </TabContext.Provider>
   );

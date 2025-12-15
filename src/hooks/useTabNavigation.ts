@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useTabs } from '@/components/tabs/TabContext';
 import { navItems } from '@/components/navbar/nav-config';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
 
 // Build a flat map of path -> translation key from navItems
 function buildPathTitleMap(): Record<string, string> {
@@ -41,11 +42,10 @@ function getTitleForPath(path: string, t: (key: string) => string): string {
   
   // Pattern matching for detail pages and specific routes
   const patterns: Record<string, string> = {
-    // Detail pages
+    // Detail pages - employees pattern'i en son kontrol edilmeli (detay sayfaları önce kontrol edilsin)
     '/customers/': 'nav.customers',
     '/suppliers/': 'nav.suppliers',
     '/products/': 'nav.products',
-    '/employees/': 'nav.employees',
     '/opportunities/': 'nav.opportunities',
     '/proposals/': 'nav.proposals',
     '/proposal/': 'nav.proposals',
@@ -93,6 +93,7 @@ function getTitleForPath(path: string, t: (key: string) => string): string {
     '/contracts/service': 'nav.serviceContracts',
     '/contracts/vehicle': 'nav.vehicleContracts',
     '/contracts/customer': 'nav.customerContracts',
+    '/employees/': 'nav.employees', // Bu en son kontrol edilmeli, detay sayfaları önce kontrol edilsin
   };
   
   for (const [pattern, translationKey] of Object.entries(patterns)) {
@@ -162,7 +163,7 @@ function getTitleForPath(path: string, t: (key: string) => string): string {
 
 export function useTabNavigation() {
   const location = useLocation();
-  const { addTab, tabs } = useTabs();
+  const { addTab, updateTabTitle, tabs } = useTabs();
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -173,10 +174,37 @@ export function useTabNavigation() {
       return;
     }
     
-    // Get title for the path
-    const title = getTitleForPath(path, t);
+    // Check if this is an employee detail page (UUID pattern)
+    const employeeDetailMatch = path.match(/^\/employees\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
     
-    // Always add/activate tab for current path
-    addTab(path, title);
-  }, [location.pathname, addTab, t]);
+    if (employeeDetailMatch) {
+      const employeeId = employeeDetailMatch[1];
+      
+      // Fetch employee name first, then add tab with employee name
+      supabase
+        .from('employees')
+        .select('first_name, last_name')
+        .eq('id', employeeId)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (!error && data) {
+            const employeeName = `${data.first_name} ${data.last_name}`;
+            addTab(path, employeeName);
+          } else {
+            // If fetch fails, add tab with fallback title
+            addTab(path, 'Çalışan Detayı');
+          }
+        })
+        .catch(() => {
+          // If fetch fails, add tab with fallback title
+          addTab(path, 'Çalışan Detayı');
+        });
+    } else {
+      // Get title for the path
+      const title = getTitleForPath(path, t);
+      
+      // Always add/activate tab for current path
+      addTab(path, title);
+    }
+  }, [location.pathname, addTab, updateTabTitle, t]);
 }

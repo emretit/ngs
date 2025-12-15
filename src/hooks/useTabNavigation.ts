@@ -161,6 +161,34 @@ function getTitleForPath(path: string, t: (key: string) => string): string {
   return t('common.view');
 }
 
+// Helper function to fetch and set tab title for detail pages
+async function fetchDetailPageTitle(
+  path: string,
+  table: string,
+  id: string,
+  fields: string[],
+  formatter: (data: any) => string,
+  fallbackTitle: string,
+  addTab: (path: string, title: string) => void
+) {
+  try {
+    const { data, error } = await supabase
+      .from(table)
+      .select(fields.join(', '))
+      .eq('id', id)
+      .maybeSingle();
+
+    if (!error && data) {
+      const title = formatter(data);
+      addTab(path, title);
+    } else {
+      addTab(path, fallbackTitle);
+    }
+  } catch {
+    addTab(path, fallbackTitle);
+  }
+}
+
 export function useTabNavigation() {
   const location = useLocation();
   const { addTab, updateTabTitle, tabs } = useTabs();
@@ -174,37 +202,147 @@ export function useTabNavigation() {
       return;
     }
     
-    // Check if this is an employee detail page (UUID pattern)
-    const employeeDetailMatch = path.match(/^\/employees\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+    // UUID pattern for detail pages
+    const uuidPattern = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+    const match = path.match(uuidPattern);
     
-    if (employeeDetailMatch) {
-      const employeeId = employeeDetailMatch[1];
+    if (match) {
+      const id = match[1];
       
-      // Fetch employee name first, then add tab with employee name
-      supabase
-        .from('employees')
-        .select('first_name, last_name')
-        .eq('id', employeeId)
-        .maybeSingle()
-        .then(({ data, error }) => {
-          if (!error && data) {
-            const employeeName = `${data.first_name} ${data.last_name}`;
-            addTab(path, employeeName);
-          } else {
-            // If fetch fails, add tab with fallback title
-            addTab(path, 'Çalışan Detayı');
-          }
-        })
-        .catch(() => {
-          // If fetch fails, add tab with fallback title
-          addTab(path, 'Çalışan Detayı');
-        });
-    } else {
-      // Get title for the path
-      const title = getTitleForPath(path, t);
+      // Employee detail page
+      if (path.match(/^\/employees\//)) {
+        fetchDetailPageTitle(
+          path,
+          'employees',
+          id,
+          ['first_name', 'last_name'],
+          (data) => `${data.first_name} ${data.last_name}`,
+          'Çalışan Detayı',
+          addTab
+        );
+        return;
+      }
       
-      // Always add/activate tab for current path
-      addTab(path, title);
+      // Customer detail page
+      if (path.match(/^\/customers\//)) {
+        fetchDetailPageTitle(
+          path,
+          'customers',
+          id,
+          ['name', 'company', 'type'],
+          (data) => {
+            if (data.type === 'kurumsal' && data.company) {
+              return data.company;
+            }
+            return data.name || 'Müşteri';
+          },
+          'Müşteri Detayı',
+          addTab
+        );
+        return;
+      }
+      
+      // Supplier detail page
+      if (path.match(/^\/suppliers\//)) {
+        fetchDetailPageTitle(
+          path,
+          'suppliers',
+          id,
+          ['name', 'company'],
+          (data) => data.company || data.name || 'Tedarikçi',
+          'Tedarikçi Detayı',
+          addTab
+        );
+        return;
+      }
+      
+      // Product detail page
+      if (path.match(/^\/products\//) || path.match(/^\/product-details\//)) {
+        fetchDetailPageTitle(
+          path,
+          'products',
+          id,
+          ['name'],
+          (data) => data.name || 'Ürün',
+          'Ürün Detayı',
+          addTab
+        );
+        return;
+      }
+      
+      // Proposal detail page
+      if (path.match(/^\/proposal\//)) {
+        fetchDetailPageTitle(
+          path,
+          'proposals',
+          id,
+          ['number', 'title'],
+          (data) => data.number || data.title || 'Teklif',
+          'Teklif Detayı',
+          addTab
+        );
+        return;
+      }
+      
+      // Order detail page
+      if (path.match(/^\/orders\//)) {
+        fetchDetailPageTitle(
+          path,
+          'orders',
+          id,
+          ['order_number'],
+          (data) => data.order_number || 'Sipariş',
+          'Sipariş Detayı',
+          addTab
+        );
+        return;
+      }
+      
+      // Service detail page
+      if (path.match(/^\/service\/detail\//)) {
+        fetchDetailPageTitle(
+          path,
+          'service_requests',
+          id,
+          ['service_number', 'service_title'],
+          (data) => data.service_number || data.service_title || 'Servis',
+          'Servis Detayı',
+          addTab
+        );
+        return;
+      }
+      
+      // Sales invoice detail page
+      if (path.match(/^\/sales-invoices\//)) {
+        fetchDetailPageTitle(
+          path,
+          'sales_invoices',
+          id,
+          ['invoice_number'],
+          (data) => data.invoice_number || 'Fatura',
+          'Fatura Detayı',
+          addTab
+        );
+        return;
+      }
+      
+      // Purchase invoice detail page
+      if (path.match(/^\/purchase-invoices\//)) {
+        fetchDetailPageTitle(
+          path,
+          'purchase_invoices',
+          id,
+          ['invoice_number'],
+          (data) => data.invoice_number || 'Fatura',
+          'Fatura Detayı',
+          addTab
+        );
+        return;
+      }
     }
+    
+    // Default: Get title for the path
+    const title = getTitleForPath(path, t);
+    addTab(path, title);
   }, [location.pathname, addTab, updateTabTitle, t]);
 }

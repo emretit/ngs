@@ -7,6 +7,7 @@ const UsersSettings = React.lazy(() => import("@/pages/settings/UsersSettings"))
 const UserRedirect = React.lazy(() => import("@/pages/settings/UserRedirect"));
 const RolesSettings = React.lazy(() => import("@/pages/settings/RolesSettings"));
 const NilveraSettingsPage = React.lazy(() => import("@/pages/settings/NilveraSettings"));
+const VeribanSettingsPage = React.lazy(() => import("@/pages/settings/VeribanSettings"));
 const IntegratorSettings = React.lazy(() => import("@/pages/settings/IntegratorSettings"));
 const SystemSettingsPage = React.lazy(() => import("@/pages/settings/SystemSettings"));
 const SystemParametersPage = React.lazy(() => import("@/pages/settings/SystemParameters"));
@@ -25,6 +26,7 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/settings/subscription", component: Subscription, protected: true },
   { path: "/settings/integrator", component: IntegratorSettings, protected: true },
   { path: "/settings/nilvera", component: NilveraSettingsPage, protected: true },
+  { path: "/settings/veriban", component: VeribanSettingsPage, protected: true },
   { path: "/settings/system", component: SystemSettingsPage, protected: true },
   { path: "/settings/system-parameters", component: SystemParametersPage, protected: true },
   { path: "/settings/pdf-templates", component: PdfTemplates, protected: true },
@@ -41,6 +43,7 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/subscription", component: Subscription, protected: true },
   { path: "/integrator", component: IntegratorSettings, protected: true },
   { path: "/nilvera", component: NilveraSettingsPage, protected: true },
+  { path: "/veriban", component: VeribanSettingsPage, protected: true },
   { path: "/system", component: SystemSettingsPage, protected: true },
   { path: "/system-parameters", component: SystemParametersPage, protected: true },
   { path: "/pdf-templates", component: PdfTemplates, protected: true },

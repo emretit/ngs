@@ -1,6 +1,6 @@
 import { supabase } from '../integrations/supabase/client';
 
-export type IntegratorType = 'nilvera' | 'elogo';
+export type IntegratorType = 'nilvera' | 'elogo' | 'veriban';
 
 export interface InvoiceFilters {
   startDate?: string;
@@ -17,7 +17,7 @@ export interface IntegratorServiceResponse {
 
 /**
  * Merkezi Entegratör Servisi
- * Nilvera ve e-Logo entegrasyonlarını yöneten merkezi servis
+ * Nilvera, e-Logo ve Veriban entegrasyonlarını yöneten merkezi servis
  */
 export class IntegratorService {
   /**
@@ -94,8 +94,12 @@ export class IntegratorService {
 
       if (integrator === 'nilvera') {
         return this.getNilveraInvoices(filters);
-      } else {
+      } else if (integrator === 'elogo') {
         return this.getElogoInvoices(filters);
+      } else if (integrator === 'veriban') {
+        return this.getVeribanInvoices(filters);
+      } else {
+        return this.getNilveraInvoices(filters); // Default fallback
       }
     } catch (error: any) {
       return {
@@ -203,8 +207,12 @@ export class IntegratorService {
 
       if (integrator === 'nilvera') {
         return this.checkNilveraMukellef(taxNumber);
-      } else {
+      } else if (integrator === 'elogo') {
         return this.checkElogoMukellef(taxNumber);
+      } else if (integrator === 'veriban') {
+        return this.checkVeribanMukellef(taxNumber);
+      } else {
+        return this.checkNilveraMukellef(taxNumber); // Default fallback
       }
     } catch (error: any) {
       return {
@@ -275,17 +283,78 @@ export class IntegratorService {
   }
 
   /**
+   * Veriban'dan fatura al
+   */
+  private static async getVeribanInvoices(
+    filters: InvoiceFilters
+  ): Promise<IntegratorServiceResponse> {
+    try {
+      const { data, error } = await supabase.functions.invoke('veriban-document-list', {
+        body: {
+          action: 'getPurchaseInvoices',
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+        }
+      });
+
+      if (error) throw error;
+
+      return {
+        success: data?.success || false,
+        invoices: data?.invoices || [],
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Veriban faturalar alınamadı',
+      };
+    }
+  }
+
+  /**
+   * Veriban mükellef sorgula
+   */
+  private static async checkVeribanMukellef(
+    taxNumber: string
+  ): Promise<IntegratorServiceResponse> {
+    try {
+      const { data, error } = await supabase.functions.invoke('veriban-check-mukellef', {
+        body: {
+          taxNumber,
+        }
+      });
+
+      if (error) throw error;
+
+      return {
+        success: data?.success || false,
+        data: data?.data,
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Veriban mükellef sorgulaması yapılamadı',
+      };
+    }
+  }
+
+  /**
    * Entegratör durumunu kontrol et
    */
   static async checkIntegratorStatus(): Promise<{
     nilvera: boolean;
     elogo: boolean;
+    veriban: boolean;
     selected: IntegratorType;
   }> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        return { nilvera: false, elogo: false, selected: 'nilvera' };
+        return { nilvera: false, elogo: false, veriban: false, selected: 'nilvera' };
       }
 
       const { data: profile } = await supabase
@@ -295,7 +364,7 @@ export class IntegratorService {
         .single();
 
       if (!profile?.company_id) {
-        return { nilvera: false, elogo: false, selected: 'nilvera' };
+        return { nilvera: false, elogo: false, veriban: false, selected: 'nilvera' };
       }
 
       // Check Nilvera
@@ -312,17 +381,25 @@ export class IntegratorService {
         .eq('company_id', profile.company_id)
         .single();
 
+      // Check Veriban
+      const { data: veribanAuth } = await supabase
+        .from('veriban_auth')
+        .select('is_active')
+        .eq('company_id', profile.company_id)
+        .single();
+
       // Get selected integrator
       const selected = await this.getSelectedIntegrator();
 
       return {
         nilvera: nilveraAuth?.is_active || false,
         elogo: elogoAuth?.is_active || false,
+        veriban: veribanAuth?.is_active || false,
         selected,
       };
     } catch (error) {
       console.error('checkIntegratorStatus error:', error);
-      return { nilvera: false, elogo: false, selected: 'nilvera' };
+      return { nilvera: false, elogo: false, veriban: false, selected: 'nilvera' };
     }
   }
 }

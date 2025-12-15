@@ -35,7 +35,7 @@ export const proposalStatusColors: Record<ProposalStatus, string> = {
 
 export interface ProposalItem {
   id: string;
-  product_id: string; // Required: Links to products table for fetching current image_url
+  product_id?: string; // Optional: Links to products table for fetching current image_url
   name: string;
   description?: string;
   quantity: number;
@@ -50,7 +50,7 @@ export interface ProposalItem {
   original_currency?: string; // Original currency of the product
   original_price?: number; // Original price of the product
   row_number?: number; // Row number for display
-  // image_url removed: Always fetch from products table using product_id
+  image_url?: string; // Optional: Product image URL
 }
 
 export interface ProposalAttachment {

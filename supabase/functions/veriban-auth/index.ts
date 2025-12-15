@@ -17,6 +17,17 @@ serve(async (req) => {
     });
   }
 
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: 'Sadece POST metodu destekleniyor'
+    }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;

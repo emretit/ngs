@@ -17,6 +17,7 @@ export const VeribanSettings = () => {
   const [connectionStatus, setConnectionStatus] = useState<string>("");
   const [veribanData, setVeribanData] = useState<{username: string, webserviceUrl: string} | null>(null);
   const [showCredentials, setShowCredentials] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
   const { toast } = useToast();
 
   // Check if user already has Veriban authentication
@@ -78,29 +79,39 @@ export const VeribanSettings = () => {
     }
 
     setLoading(true);
+    setConnectionStatus("Bağlanılıyor...");
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        throw new Error("Oturum bulunamadı");
+        throw new Error("Oturum bulunamadı. Lütfen tekrar giriş yapın.");
       }
+
+      console.log('🔐 Veriban auth edge function çağrılıyor...');
+      console.log('📡 Test Mode:', testMode);
+      console.log('👤 Username:', username);
+
+      const requestBody = {
+        action: 'authenticate',
+        username: username.trim(),
+        password: password.trim(),
+        testMode: testMode
+      };
+      
+      console.log('📤 Request body:', requestBody);
 
       const { data, error } = await supabase.functions.invoke('veriban-auth', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
         },
-        body: {
-          action: 'authenticate',
-          username: username,
-          password: password,
-          testMode: testMode
-        }
+        body: requestBody
       });
 
-      console.log('Edge function response:', { data, error });
+      console.log('✅ Edge function response:', { data, error });
 
       if (error) {
-        console.error('Edge function error details:', error);
+        console.error('❌ Edge function error details:', error);
         
         // Extract error message from different error formats
         let errorMessage = "Veriban bağlantısı başarısız";
@@ -112,12 +123,13 @@ export const VeribanSettings = () => {
           errorMessage = error;
         }
         
+        setConnectionStatus(`Bağlantı hatası: ${errorMessage}`);
         throw new Error(errorMessage);
       }
 
       if (data?.success) {
         setIsConnected(true);
-        setConnectionStatus("Veriban bağlantısı başarılı");
+        setConnectionStatus("✅ Veriban bağlantısı başarılı");
         setUsername("");
         setPassword("");
         await checkVeribanStatus(); // Refresh status
@@ -127,10 +139,11 @@ export const VeribanSettings = () => {
         });
       } else {
         const errorMsg = data?.error || "Bilinmeyen hata";
+        setConnectionStatus(`❌ ${errorMsg}`);
         throw new Error(errorMsg);
       }
     } catch (error: any) {
-      console.error('Veriban auth error:', error);
+      console.error('❌ Veriban auth error:', error);
       
       // Extract error message from different error formats
       let errorMessage = "Veriban bağlantısı başarısız";
@@ -142,13 +155,96 @@ export const VeribanSettings = () => {
         errorMessage = error;
       }
       
+      setConnectionStatus(`❌ ${errorMessage}`);
       toast({
         variant: "destructive",
-        title: "Hata",
+        title: "Bağlantı Hatası",
         description: errorMessage,
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    if (!isConnected || !veribanData) {
+      toast({
+        variant: "destructive",
+        title: "Hata",
+        description: "Önce Veriban bağlantısı kurulmalı",
+      });
+      return;
+    }
+
+    setTestingConnection(true);
+    setConnectionStatus("Bağlantı test ediliyor...");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Oturum bulunamadı");
+      }
+
+      // Get stored credentials from database
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        throw new Error("Şirket profili bulunamadı");
+      }
+
+      const { data: authData } = await supabase
+        .from('veriban_auth')
+        .select('username, password, test_mode')
+        .eq('company_id', profile.company_id)
+        .single();
+
+      if (!authData) {
+        throw new Error("Kayıtlı Veriban bilgileri bulunamadı");
+      }
+
+      console.log('🧪 Mevcut bağlantı test ediliyor...');
+
+      const { data, error } = await supabase.functions.invoke('veriban-auth', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          action: 'authenticate',
+          username: authData.username,
+          password: authData.password,
+          testMode: authData.test_mode || false
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Bağlantı testi başarısız');
+      }
+
+      if (data?.success) {
+        setConnectionStatus("✅ Bağlantı testi başarılı");
+        toast({
+          title: "Başarılı",
+          description: "Veriban bağlantısı çalışıyor",
+        });
+        await checkVeribanStatus(); // Refresh status
+      } else {
+        throw new Error(data?.error || 'Bağlantı testi başarısız');
+      }
+    } catch (error: any) {
+      console.error('❌ Bağlantı testi hatası:', error);
+      setConnectionStatus(`❌ Test başarısız: ${error.message || 'Bilinmeyen hata'}`);
+      toast({
+        variant: "destructive",
+        title: "Test Başarısız",
+        description: error.message || "Bağlantı test edilemedi",
+      });
+    } finally {
+      setTestingConnection(false);
     }
   };
 
@@ -196,17 +292,37 @@ export const VeribanSettings = () => {
     <Card className="border-0 bg-white shadow-sm">
       <CardContent className="p-4 space-y-4">
         {/* Connection Status */}
-        <div className={`flex items-center gap-2 p-3 rounded-lg border ${
+        <div className={`flex items-center justify-between gap-2 p-3 rounded-lg border ${
           isConnected
             ? 'bg-green-50 border-green-200 text-green-900'
             : 'bg-orange-50 border-orange-200 text-orange-900'
         }`}>
-          {isConnected ? (
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          ) : (
-            <AlertCircle className="h-4 w-4 text-orange-600" />
+          <div className="flex items-center gap-2">
+            {isConnected ? (
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+            )}
+            <span className="font-medium text-sm">{connectionStatus || (isConnected ? "Veriban bağlantısı aktif" : "Veriban bağlantısı yok")}</span>
+          </div>
+          {isConnected && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestConnection}
+              disabled={testingConnection}
+              className="h-7 px-3 text-xs"
+            >
+              {testingConnection ? (
+                <>
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1"></div>
+                  Test Ediliyor...
+                </>
+              ) : (
+                "Bağlantıyı Test Et"
+              )}
+            </Button>
           )}
-          <span className="font-medium text-sm">{connectionStatus}</span>
         </div>
 
         {!isConnected ? (

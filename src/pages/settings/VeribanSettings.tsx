@@ -67,7 +67,7 @@ const VeribanSettingsPage = ({ isCollapsed, setIsCollapsed }: VeribanSettingsPag
                     <strong>Test:</strong> https://efaturatransfertest.veriban.com.tr/IntegrationService.svc
                   </li>
                   <li>
-                    <strong>Production:</strong> http://efaturatransfer.veriban.com.tr/IntegrationService.svc
+                    <strong>Production:</strong> https://efaturatransfer.veriban.com.tr/IntegrationService.svc
                   </li>
                 </ul>
               </div>

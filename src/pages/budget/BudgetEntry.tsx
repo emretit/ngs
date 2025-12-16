@@ -10,8 +10,17 @@ import {
   Copy, 
   Save, 
   Send, 
-  Edit
+  Edit,
+  MoreHorizontal
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import BudgetGrid from "@/components/budget/entry/BudgetGrid";
 import BudgetFilters from "@/components/budget/BudgetFilters";
 import { BudgetFiltersState } from "@/pages/BudgetManagement";
@@ -290,73 +299,78 @@ const BudgetEntry = () => {
           {/* Status Badge */}
           {getStatusBadge()}
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyFromPreviousYear}
-            className="gap-2"
-          >
-            <Copy className="h-4 w-4" />
-            Önceki Yıldan Kopyala
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleImport}
-            className="gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            Excel İçe Aktar
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            className="gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Excel Dışa Aktar
-          </Button>
+          {/* İşlemler Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <MoreHorizontal className="h-4 w-4" />
+                <span>İşlemler</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem
+                onClick={handleCopyFromPreviousYear}
+                className="gap-2 cursor-pointer"
+              >
+                <Copy className="h-4 w-4" />
+                <span>Önceki Yıldan Kopyala</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleImport}
+                className="gap-2 cursor-pointer"
+              >
+                <Upload className="h-4 w-4" />
+                <span>Excel İçe Aktar</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleExport}
+                className="gap-2 cursor-pointer"
+              >
+                <Download className="h-4 w-4" />
+                <span>Excel Dışa Aktar</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {budgetStatus === "draft" && (
+                <>
+                  <DropdownMenuItem
+                    onClick={handleRequestRevision}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span>Revizyon Talebi</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleSubmitForApproval}
+                    disabled={hasUnsavedChanges}
+                    className="gap-2 cursor-pointer text-green-600 hover:text-green-700 hover:bg-green-50"
+                  >
+                    <Send className="h-4 w-4" />
+                    <span>Onaya Gönder</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+              {budgetStatus === "approved" && (
+                <DropdownMenuItem
+                  onClick={handleRequestRevision}
+                  className="gap-2 cursor-pointer"
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Revizyon Talebi</span>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Kaydet Butonu - Ayrı */}
           {budgetStatus === "draft" && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRequestRevision}
-                className="gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Revizyon Talebi
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={!hasUnsavedChanges}
-                className="gap-2"
-              >
-                <Save className="h-4 w-4" />
-                Kaydet
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSubmitForApproval}
-                disabled={hasUnsavedChanges}
-                className="gap-2 bg-green-600 hover:bg-green-700"
-              >
-                <Send className="h-4 w-4" />
-                Onaya Gönder
-              </Button>
-            </>
-          )}
-          {budgetStatus === "approved" && (
             <Button
-              variant="outline"
               size="sm"
-              onClick={handleRequestRevision}
+              onClick={handleSave}
+              disabled={!hasUnsavedChanges}
               className="gap-2"
             >
-              <Edit className="h-4 w-4" />
-              Revizyon Talebi
+              <Save className="h-4 w-4" />
+              Kaydet
             </Button>
           )}
         </div>

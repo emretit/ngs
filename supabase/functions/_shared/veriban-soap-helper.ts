@@ -613,6 +613,234 @@ export class VeribanSoapClient {
   }
 
   /**
+   * Get Purchase Invoice UUID List
+   * Doküman: Bölüm 19 - Gelen Fatura UUID Listesi
+   */
+  static async getPurchaseInvoiceUUIDList(
+    sessionCode: string,
+    params: {
+      startDate?: string;
+      endDate?: string;
+    },
+    url: string
+  ): Promise<VeribanSoapResponse> {
+    const {
+      startDate = '',
+      endDate = '',
+    } = params;
+
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:GetPurchaseInvoiceUUIDList>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+      ${startDate ? `<tem:startDate>${this.escapeXml(startDate)}</tem:startDate>` : '<tem:startDate xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
+      ${endDate ? `<tem:endDate>${this.escapeXml(endDate)}</tem:endDate>` : '<tem:endDate xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
+    </tem:GetPurchaseInvoiceUUIDList>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'GetPurchaseInvoiceUUIDList',
+        },
+        body: soapRequest,
+      });
+
+      const xmlText = await response.text();
+      return this.parseUUIDListResponse(xmlText);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'GetPurchaseInvoiceUUIDList failed',
+      };
+    }
+  }
+
+  /**
+   * Get UnTransferred Purchase Invoice UUID List
+   * Doküman: Bölüm 20 - Gelen Transfer Edilmemiş UUID Listesi
+   */
+  static async getUnTransferredPurchaseInvoiceUUIDList(
+    sessionCode: string,
+    url: string
+  ): Promise<VeribanSoapResponse> {
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:GetUnTransferredPurchaseInvoiceUUIDList>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+    </tem:GetUnTransferredPurchaseInvoiceUUIDList>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'GetUnTransferredPurchaseInvoiceUUIDList',
+        },
+        body: soapRequest,
+      });
+
+      const xmlText = await response.text();
+      return this.parseUUIDListResponse(xmlText);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'GetUnTransferredPurchaseInvoiceUUIDList failed',
+      };
+    }
+  }
+
+  /**
+   * Set UnTransferred Purchase Invoice Done
+   * Doküman: Bölüm 21 - Gelen Faturayı Transfer Edildi Yap
+   */
+  static async setUnTransferredPurchaseInvoiceDone(
+    sessionCode: string,
+    invoiceUUID: string,
+    url: string
+  ): Promise<VeribanSoapResponse> {
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:SetUnTransferredPurchaseInvoiceDone>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+      <tem:invoiceUUID>${this.escapeXml(invoiceUUID)}</tem:invoiceUUID>
+    </tem:SetUnTransferredPurchaseInvoiceDone>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'SetUnTransferredPurchaseInvoiceDone',
+        },
+        body: soapRequest,
+      });
+
+      const xmlText = await response.text();
+      return this.parseStandardResponse(xmlText);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'SetUnTransferredPurchaseInvoiceDone failed',
+      };
+    }
+  }
+
+  /**
+   * Get Wait Answer Purchase Invoice UUID List
+   * Doküman: Bölüm 22 - Gelen Fatura Cevap Verilmemiş UUID Listesi
+   */
+  static async getWaitAnswerPurchaseInvoiceUUIDList(
+    sessionCode: string,
+    url: string
+  ): Promise<VeribanSoapResponse> {
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:GetWaitAnswerPurchaseInvoiceUUIDList>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+    </tem:GetWaitAnswerPurchaseInvoiceUUIDList>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'GetWaitAnswerPurchaseInvoiceUUIDList',
+        },
+        body: soapRequest,
+      });
+
+      const xmlText = await response.text();
+      return this.parseUUIDListResponse(xmlText);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'GetWaitAnswerPurchaseInvoiceUUIDList failed',
+      };
+    }
+  }
+
+  /**
+   * Set Purchase Invoice Answer With Invoice Number
+   * Doküman: Bölüm 24 - Gelen Faturaya Fatura Numarası İle Cevap Verme
+   */
+  static async setPurchaseInvoiceAnswerWithInvoiceNumber(
+    sessionCode: string,
+    params: {
+      invoiceNumber: string;
+      answerType: string; // KABUL, RED, IADE
+      answerTime?: string;
+      answerNote?: string;
+      isDirectSend: boolean;
+    },
+    url: string
+  ): Promise<VeribanSoapResponse> {
+    const {
+      invoiceNumber,
+      answerType,
+      answerTime,
+      answerNote = '',
+      isDirectSend,
+    } = params;
+
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:SetPurchaseInvoiceAnswerWithInvoiceNumber>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+      <tem:answerType>${this.escapeXml(answerType)}</tem:answerType>
+      ${answerTime ? `<tem:answerTime>${this.escapeXml(answerTime)}</tem:answerTime>` : '<tem:answerTime xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
+      <tem:answerNote>${this.escapeXml(answerNote)}</tem:answerNote>
+      <tem:isDirectSend>${isDirectSend}</tem:isDirectSend>
+      <tem:invoiceNumber>${this.escapeXml(invoiceNumber)}</tem:invoiceNumber>
+    </tem:SetPurchaseInvoiceAnswerWithInvoiceNumber>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'SetPurchaseInvoiceAnswerWithInvoiceNumber',
+        },
+        body: soapRequest,
+      });
+
+      const xmlText = await response.text();
+      return this.parseStandardResponse(xmlText);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'SetPurchaseInvoiceAnswerWithInvoiceNumber failed',
+      };
+    }
+  }
+
+  /**
    * Download Sales Invoice with Invoice UUID
    * Doküman: Bölüm 25 - Giden Faturaya İndirme
    */
@@ -948,65 +1176,6 @@ export class VeribanSoapClient {
   }
 
   /**
-   * Set Purchase Invoice Answer with Invoice Number
-   * Doküman: Bölüm 24 - Gelen Faturaya Fatura Numarası İle Cevap Verme
-   */
-  static async setPurchaseInvoiceAnswerWithInvoiceNumber(
-    sessionCode: string,
-    params: {
-      invoiceNumber: string;
-      answerType: string; // 'KABUL', 'RED', 'IADE' etc.
-      answerTime?: string; // DateTime? format: ISO string
-      answerNote?: string;
-      isDirectSend?: boolean;
-    },
-    url: string
-  ): Promise<VeribanSoapResponse> {
-    const { 
-      invoiceNumber, 
-      answerType, 
-      answerTime = '', 
-      answerNote = '',
-      isDirectSend = true 
-    } = params;
-
-    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
-                  xmlns:tem="http://tempuri.org/">
-  <soapenv:Header/>
-  <soapenv:Body>
-    <tem:SetPurchaseInvoiceAnswerWithInvoiceNumber>
-      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
-      <tem:answerType>${this.escapeXml(answerType)}</tem:answerType>
-      ${answerTime ? `<tem:answerTime>${this.escapeXml(answerTime)}</tem:answerTime>` : '<tem:answerTime xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
-      <tem:answerNote>${this.escapeXml(answerNote)}</tem:answerNote>
-      <tem:isDirectSend>${isDirectSend}</tem:isDirectSend>
-      <tem:invoiceNumber>${this.escapeXml(invoiceNumber)}</tem:invoiceNumber>
-    </tem:SetPurchaseInvoiceAnswerWithInvoiceNumber>
-  </soapenv:Body>
-</soapenv:Envelope>`;
-
-    try {
-      const response = await this.fetchWithTimeout(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/xml; charset=utf-8',
-          'SOAPAction': 'SetPurchaseInvoiceAnswerWithInvoiceNumber',
-        },
-        body: soapRequest,
-      });
-
-      const xmlText = await response.text();
-      return this.parseStandardResponse(xmlText);
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'SetPurchaseInvoiceAnswerWithInvoiceNumber failed',
-      };
-    }
-  }
-
-  /**
    * Parse login response XML
    * Doküman: Bölüm 2 - Oturum Açma
    * Geri Dönüş: String token (sessionCode)
@@ -1304,28 +1473,119 @@ export class VeribanSoapClient {
   }
 
   /**
-   * Parse download response XML
+   * Parse UUID list response XML (List<string>)
+   * Doküman: Bölüm 19 - Gelen Fatura UUID Listesi
    */
-  private static parseDownloadResponse(xmlText: string): VeribanSoapResponse {
+  private static parseUUIDListResponse(xmlText: string): VeribanSoapResponse {
     try {
-      // Extract binary data (base64 ZIP)
-      const binaryDataMatch = xmlText.match(/<BinaryData[^>]*>(.*?)<\/BinaryData>/s);
-      const binaryData = binaryDataMatch ? binaryDataMatch[1].trim() : '';
-
-      const fileNameMatch = xmlText.match(/<FileName[^>]*>(.*?)<\/FileName>/);
-      const fileName = fileNameMatch ? fileNameMatch[1].trim() : '';
+      const uuids: string[] = [];
+      
+      // Extract UUIDs from response - can be in <string> tags or other formats
+      const stringMatches = [...xmlText.matchAll(/<string[^>]*>(.*?)<\/string>/gi)];
+      const uuidMatches = [...xmlText.matchAll(/<[^>]*UUID[^>]*>(.*?)<\/[^>]*UUID[^>]*>/gi)];
+      
+      // Try string format first (common for List<string>)
+      for (const match of stringMatches) {
+        const uuid = match[1].trim();
+        if (uuid && uuid.length > 10) { // UUID should be longer than 10 chars
+          uuids.push(uuid);
+        }
+      }
+      
+      // If no string matches, try UUID format
+      if (uuids.length === 0) {
+        for (const match of uuidMatches) {
+          const uuid = match[1].trim();
+          if (uuid && uuid.length > 10) {
+            uuids.push(uuid);
+          }
+        }
+      }
 
       return {
-        success: !!binaryData,
-        data: {
-          binaryData,
-          fileName,
-        },
+        success: true,
+        data: uuids,
       };
     } catch (error) {
       return {
         success: false,
         error: 'XML parse error',
+      };
+    }
+  }
+
+  /**
+   * Parse download response XML
+   */
+  private static parseDownloadResponse(xmlText: string): VeribanSoapResponse {
+    try {
+      // Check for SOAP Fault first
+      const faultCodeMatch = xmlText.match(/<FaultCode[^>]*>(.*?)<\/FaultCode>/i);
+      const faultDescMatch = xmlText.match(/<FaultDescription[^>]*>(.*?)<\/FaultDescription>/i);
+      const faultStringMatch = xmlText.match(/<faultstring[^>]*>(.*?)<\/faultstring>/i);
+      const soapFaultMatch = xmlText.match(/<soap:Fault[^>]*>[\s\S]*?<soap:faultstring[^>]*>(.*?)<\/soap:faultstring>/i);
+      const soapFaultCodeMatch = xmlText.match(/<soap:Fault[^>]*>[\s\S]*?<soap:faultcode[^>]*>(.*?)<\/soap:faultcode>/i);
+      
+      if (faultCodeMatch || faultDescMatch || faultStringMatch || soapFaultMatch || soapFaultCodeMatch) {
+        const errorMsg = faultDescMatch?.[1] || faultStringMatch?.[1] || soapFaultMatch?.[1] || faultCodeMatch?.[1] || soapFaultCodeMatch?.[1] || 'Bilinmeyen SOAP hatası';
+        console.error('❌ SOAP Fault detected in download response:', errorMsg);
+        return {
+          success: false,
+          error: errorMsg.trim(),
+        };
+      }
+
+      // Extract binary data (base64 ZIP) - can be in BinaryData or FileData field
+      let binaryDataMatch = xmlText.match(/<BinaryData[^>]*>(.*?)<\/BinaryData>/s);
+      let binaryData = binaryDataMatch ? binaryDataMatch[1].trim() : '';
+      
+      // Try FileData if BinaryData is not found (according to documentation)
+      if (!binaryData) {
+        const fileDataMatch = xmlText.match(/<FileData[^>]*>(.*?)<\/FileData>/s);
+        binaryData = fileDataMatch ? fileDataMatch[1].trim() : '';
+      }
+
+      // Extract file name - can be in FileName or DownloadFile/FileName
+      let fileNameMatch = xmlText.match(/<FileName[^>]*>(.*?)<\/FileName>/);
+      let fileName = fileNameMatch ? fileNameMatch[1].trim() : '';
+      
+      // Try DownloadFile/FileName structure
+      if (!fileName) {
+        const downloadFileMatch = xmlText.match(/<DownloadFile[^>]*>[\s\S]*?<FileName[^>]*>(.*?)<\/FileName>/i);
+        fileName = downloadFileMatch ? downloadFileMatch[1].trim() : '';
+      }
+
+      // Check for DownloadFileReady and DownloadDescription
+      const downloadFileReadyMatch = xmlText.match(/<DownloadFileReady[^>]*>(.*?)<\/DownloadFileReady>/i);
+      const downloadFileReady = downloadFileReadyMatch ? downloadFileReadyMatch[1].trim().toLowerCase() === 'true' : true;
+
+      const downloadDescriptionMatch = xmlText.match(/<DownloadDescription[^>]*>(.*?)<\/DownloadDescription>/i);
+      const downloadDescription = downloadDescriptionMatch ? downloadDescriptionMatch[1].trim() : '';
+
+      // If binaryData is empty, check if there's an error message
+      if (!binaryData) {
+        const errorMsg = downloadDescription || 'Binary data bulunamadı';
+        console.error('❌ Download response has no binary data:', errorMsg);
+        return {
+          success: false,
+          error: errorMsg,
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          binaryData,
+          fileName,
+          downloadFileReady,
+          downloadDescription,
+        },
+      };
+    } catch (error) {
+      console.error('❌ parseDownloadResponse error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'XML parse error',
       };
     }
   }

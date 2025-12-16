@@ -1,0 +1,225 @@
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  ArrowLeft,
+  FileText, 
+  TrendingUp, 
+  TrendingDown, 
+  Building2, 
+  DollarSign, 
+  Bell,
+  TrendingUpDown,
+} from "lucide-react";
+import BudgetFilters from "@/components/budget/BudgetFilters";
+import BudgetKPIs from "@/components/budget/BudgetKPIs";
+import OpexTab from "@/components/budget/OpexTab";
+import CapexTab from "@/components/budget/CapexTab";
+import RevenueTab from "@/components/budget/RevenueTab";
+import CashflowTab from "@/components/budget/CashflowTab";
+import RevisionRequestsTab from "@/components/budget/RevisionRequestsTab";
+import BudgetAlerts from "@/components/budget/BudgetAlerts";
+import BenchmarkAnalysis from "@/components/budget/BenchmarkAnalysis";
+import QuickActions from "@/components/budget/QuickActions";
+import BudgetLock from "@/components/budget/BudgetLock";
+import BudgetEntryModal from "@/components/budget/modals/BudgetEntryModal";
+import { BudgetFiltersState } from "./BudgetDashboard";
+
+const BudgetDetail = () => {
+  const { year } = useParams<{ year: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  const yearParam = year ? parseInt(year) : new Date().getFullYear();
+  const currencyParam = searchParams.get('currency') as "TRY" | "USD" | "EUR" | null;
+
+  const [filters, setFilters] = useState<BudgetFiltersState>({
+    year: yearParam,
+    periodView: "yearly",
+    company: "all",
+    department: "all",
+    project: "all",
+    currency: currencyParam || "TRY",
+  });
+
+  // URL parametreleri değiştiğinde filtreleri güncelle
+  useEffect(() => {
+    if (year) {
+      setFilters(prev => ({
+        ...prev,
+        year: parseInt(year),
+        currency: currencyParam || prev.currency,
+      }));
+    }
+  }, [year, currencyParam]);
+
+  const [activeTab, setActiveTab] = useState("alerts");
+  const [budgetEntryOpen, setBudgetEntryOpen] = useState(false);
+  const [budgetEntryCategory, setBudgetEntryCategory] = useState<string>("");
+  const [budgetEntryMonth, setBudgetEntryMonth] = useState<number>(0);
+
+  const handleAddBudget = (category?: string, month?: number) => {
+    setBudgetEntryCategory(category || "");
+    setBudgetEntryMonth(month || 0);
+    setBudgetEntryOpen(true);
+  };
+
+  const handleBudgetSuccess = () => {
+    // Refresh data after budget entry
+  };
+
+  const renderContent = () => {
+    return (
+      <Card className="p-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="border-b border-gray-200 px-4 pt-4">
+            <TabsList className="grid w-full grid-cols-7 h-auto bg-transparent p-0 gap-2">
+              <TabsTrigger 
+                value="alerts" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white relative text-xs"
+              >
+                <Bell className="h-4 w-4" />
+                Uyarılar
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                  2
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="benchmark" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-xs"
+              >
+                <TrendingUpDown className="h-4 w-4" />
+                Benchmark
+              </TabsTrigger>
+              <TabsTrigger 
+                value="opex" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-xs"
+              >
+                <TrendingDown className="h-4 w-4" />
+                OPEX
+              </TabsTrigger>
+              <TabsTrigger 
+                value="capex" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-xs"
+              >
+                <Building2 className="h-4 w-4" />
+                CAPEX
+              </TabsTrigger>
+              <TabsTrigger 
+                value="revenue" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-xs"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Gelir
+              </TabsTrigger>
+              <TabsTrigger 
+                value="cashflow" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-xs"
+              >
+                <DollarSign className="h-4 w-4" />
+                Nakit
+              </TabsTrigger>
+              <TabsTrigger 
+                value="revisions" 
+                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white text-xs"
+              >
+                <FileText className="h-4 w-4" />
+                Revizyon
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="p-4">
+            <TabsContent value="alerts" className="mt-0">
+              <BudgetAlerts filters={filters} />
+            </TabsContent>
+
+            <TabsContent value="benchmark" className="mt-0">
+              <BenchmarkAnalysis filters={filters} />
+            </TabsContent>
+
+            <TabsContent value="opex" className="mt-0">
+              <OpexTab filters={filters} />
+            </TabsContent>
+
+            <TabsContent value="capex" className="mt-0">
+              <CapexTab filters={filters} />
+            </TabsContent>
+
+            <TabsContent value="revenue" className="mt-0">
+              <RevenueTab filters={filters} />
+            </TabsContent>
+
+            <TabsContent value="cashflow" className="mt-0">
+              <CashflowTab filters={filters} />
+            </TabsContent>
+
+            <TabsContent value="revisions" className="mt-0">
+              <RevisionRequestsTab filters={filters} />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </Card>
+    );
+  };
+
+  return (
+    <div className="w-full space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 pl-12 bg-white rounded-md border border-gray-200 shadow-sm">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/budget")}
+            className="h-8 w-8"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg">
+            <FileText className="h-5 w-5" />
+          </div>
+          <div className="space-y-0.5">
+            <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              {yearParam} Yılı Bütçe Detayları
+            </h1>
+            <p className="text-xs text-muted-foreground/70">
+              {yearParam} yılına ait bütçe detaylarını görüntüleyin ve yönetin.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <QuickActions filters={filters} />
+          <BudgetLock filters={filters} />
+        </div>
+      </div>
+
+      {/* Filters & KPI Bar */}
+      <Card className="p-4">
+        <BudgetFilters filters={filters} onFiltersChange={setFilters} />
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <BudgetKPIs filters={filters} />
+        </div>
+      </Card>
+
+      {/* Main Content */}
+      {renderContent()}
+
+      {/* Budget Entry Modal */}
+      <BudgetEntryModal
+        open={budgetEntryOpen}
+        onOpenChange={setBudgetEntryOpen}
+        year={filters.year}
+        currency={filters.currency}
+        initialCategory={budgetEntryCategory}
+        initialMonth={budgetEntryMonth}
+        onSuccess={handleBudgetSuccess}
+      />
+    </div>
+  );
+};
+
+export default BudgetDetail;
+

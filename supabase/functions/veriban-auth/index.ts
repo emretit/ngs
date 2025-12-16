@@ -116,9 +116,9 @@ serve(async (req) => {
       }
 
       // Determine webservice URL based on test mode
-      // Test uses HTTPS, Production uses HTTP (according to WSDL documentation)
+      // Both Test and Production use HTTPS
       const webserviceUrl = testMode === false
-        ? 'http://efaturatransfer.veriban.com.tr/IntegrationService.svc'
+        ? 'https://efaturatransfer.veriban.com.tr/IntegrationService.svc'
         : 'https://efaturatransfertest.veriban.com.tr/IntegrationService.svc';
 
       console.log('🔐 Veriban authentication başlatılıyor...');

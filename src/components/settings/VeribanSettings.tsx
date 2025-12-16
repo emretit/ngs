@@ -33,7 +33,7 @@ export const VeribanSettings = () => {
     if (testMode) {
       setWebserviceUrl("https://efaturatransfertest.veriban.com.tr/IntegrationService.svc");
     } else {
-      setWebserviceUrl("http://efaturatransfer.veriban.com.tr/IntegrationService.svc");
+      setWebserviceUrl("https://efaturatransfer.veriban.com.tr/IntegrationService.svc");
     }
   }, [testMode]);
 
@@ -147,7 +147,7 @@ export const VeribanSettings = () => {
             password: passwordToSave,
             webservice_url: webserviceUrl || (testMode 
               ? "https://efaturatransfertest.veriban.com.tr/IntegrationService.svc"
-              : "http://efaturatransfer.veriban.com.tr/IntegrationService.svc"
+              : "https://efaturatransfer.veriban.com.tr/IntegrationService.svc"
             ),
             test_mode: testMode,
             is_active: false, // Kaydetme sırasında bağlı değil
@@ -167,7 +167,7 @@ export const VeribanSettings = () => {
             password: passwordToSave,
             webservice_url: webserviceUrl || (testMode 
               ? "https://efaturatransfertest.veriban.com.tr/IntegrationService.svc"
-              : "http://efaturatransfer.veriban.com.tr/IntegrationService.svc"
+              : "https://efaturatransfer.veriban.com.tr/IntegrationService.svc"
             ),
             test_mode: testMode,
             is_active: false // Kaydetme sırasında bağlı değil
@@ -567,7 +567,7 @@ export const VeribanSettings = () => {
                   <p className="text-xs text-blue-800 font-mono break-all">
                     {webserviceUrl || (testMode
                       ? "https://efaturatransfertest.veriban.com.tr/IntegrationService.svc"
-                      : "http://efaturatransfer.veriban.com.tr/IntegrationService.svc"
+                      : "https://efaturatransfer.veriban.com.tr/IntegrationService.svc"
                     )}
                   </p>
                   <p className="text-xs text-blue-600 mt-1">

@@ -67,7 +67,7 @@ Canlı ve Test ortamı bilgilerine aşağıdaki şekilde ulaşabilirsiniz.
 | Kullanıcı Adı | Kullanıcı bilgileriniz test ortamında başarılı olduktan sonra size yetkililer tarafından iletilecektir. |
 | Şifresi | Kullanıcı bilgileriniz test ortamında başarılı olduktan sonra size yetkililer tarafından iletilecektir. |
 | API | http(s)://efaturatransfer.veriban.com.tr/IntegrationService.svc |
-| WSDL | http://efaturatransfer.veriban.com.tr/IntegrationService.svc?wsdl |
+| WSDL | https://efaturatransfer.veriban.com.tr/IntegrationService.svc?wsdl |
 | Web adresi | http://portal.veriban.com.tr |
 
 ### Veriban Bilgileri
@@ -1168,7 +1168,7 @@ Test portal üzerinden evrak oluşturabilir ve XML dosyalarını referans olarak
 
 ### WSDL Adresleri
 
-- **Canlı E-Fatura WSDL:** http://efaturatransfer.veriban.com.tr/IntegrationService.svc?wsdl
+- **Canlı E-Fatura WSDL:** https://efaturatransfer.veriban.com.tr/IntegrationService.svc?wsdl
 - **Test E-Fatura WSDL:** http://efaturatransfertest.veriban.com.tr/IntegrationService.svc?wsdl
 
 ### E-Fatura Mevzuat ve Teknik Mimari

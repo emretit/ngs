@@ -7,6 +7,7 @@ import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { IntegratorService } from '@/services/integratorService';
 interface EInvoicesProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
@@ -15,13 +16,13 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  // Date range filter states - Default to last 1 month
+  // Date range filter states - Default to last 7 days (test için)
   const getDefaultDateRange = () => {
     const now = new Date();
-    const oneMonthAgo = new Date(now);
-    oneMonthAgo.setMonth(now.getMonth() - 1);
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
     return {
-      start: oneMonthAgo,
+      start: sevenDaysAgo,
       end: now
     };
   };
@@ -83,7 +84,16 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   });
   const handleRefresh = async () => {
     try {
-      toast.loading("e-Logo'dan faturalar çekiliyor...", { id: 'fetching-invoices' });
+      // Get selected integrator for dynamic message
+      const integrator = await IntegratorService.getSelectedIntegrator();
+      const integratorNames: Record<string, string> = {
+        'nilvera': 'Nilvera',
+        'elogo': 'e-Logo',
+        'veriban': 'Veriban'
+      };
+      const integratorName = integratorNames[integrator] || 'Entegratör';
+      
+      toast.loading(`${integratorName}'dan faturalar çekiliyor...`, { id: 'fetching-invoices' });
       
       // Cache'i invalidate et - bu sayede fresh data çeker
       await queryClient.invalidateQueries({ queryKey: ['incoming-invoices'] });

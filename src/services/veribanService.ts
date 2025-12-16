@@ -125,8 +125,6 @@ export class VeribanService {
   static async getPurchaseInvoices(filters: {
     startDate?: string;
     endDate?: string;
-    pageIndex?: number;
-    pageSize?: number;
   }): Promise<VeribanResponse> {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -134,13 +132,13 @@ export class VeribanService {
         throw new Error('Oturum bulunamadı');
       }
 
-      const { data, error } = await supabase.functions.invoke('veriban-document-list', {
+      const { data, error } = await supabase.functions.invoke('veriban-incoming-invoices', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: {
-          action: 'getPurchaseInvoices',
-          ...filters
+          startDate: filters.startDate,
+          endDate: filters.endDate,
         }
       });
 

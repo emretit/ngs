@@ -289,14 +289,17 @@ export class IntegratorService {
     filters: InvoiceFilters
   ): Promise<IntegratorServiceResponse> {
     try {
-      console.log('📊 Veriban fatura listesi isteniyor...');
+      console.log('📊 Veriban gelen fatura listesi isteniyor...');
       console.log('📅 Filters:', filters);
 
-      const { data, error } = await supabase.functions.invoke('veriban-document-list', {
+      // Extract date strings from ISO format
+      const startDate = filters.startDate ? filters.startDate.split('T')[0] : undefined;
+      const endDate = filters.endDate ? filters.endDate.split('T')[0] : undefined;
+
+      const { data, error } = await supabase.functions.invoke('veriban-incoming-invoices', {
         body: {
-          action: 'getPurchaseInvoices',
-          startDate: filters.startDate,
-          endDate: filters.endDate,
+          startDate,
+          endDate,
         }
       });
 
@@ -324,9 +327,29 @@ export class IntegratorService {
 
       console.log('✅ Veriban invoices:', data?.invoices?.length || 0, 'adet');
 
+      // Transform Veriban invoice format to standard format
+      const transformedInvoices = (data?.invoices || []).map((inv: any) => ({
+        id: inv.einvoice_id || inv.invoiceUUID || '',
+        invoiceNumber: inv.invoiceNumber || '',
+        supplierName: inv.supplierName || '',
+        supplierTaxNumber: inv.supplierTaxNumber || inv.supplierVkn || '',
+        invoiceDate: inv.invoiceDate || new Date().toISOString(),
+        dueDate: inv.dueDate || undefined,
+        totalAmount: inv.totalAmount || 0,
+        currency: inv.currency || 'TRY',
+        taxAmount: inv.taxAmount || 0,
+        paidAmount: 0, // Default - will be updated when payment is recorded
+        status: 'pending',
+        isAnswered: false,
+        xmlData: inv.rawData || {},
+        invoiceType: inv.invoiceType || 'TEMEL',
+        invoiceProfile: inv.invoiceProfile || 'TEMELFATURA',
+        xmlContent: inv.xmlContent,
+      }));
+
       return {
         success: data?.success || false,
-        invoices: data?.invoices || [],
+        invoices: transformedInvoices,
         error: data?.error,
         message: data?.message,
       };

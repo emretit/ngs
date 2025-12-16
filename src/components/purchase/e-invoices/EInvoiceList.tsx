@@ -26,19 +26,19 @@ import { useNilveraPdf } from '@/hooks/useNilveraPdf';
 import { DateDisplay } from '@/components/ui/date-display';
 
 export default function EInvoiceList() {
-  // Date range filter states - Default to last 30 days
-  const getLast30DaysRange = () => {
+  // Date range filter states - Default to last 7 days (test için)
+  const getLast7DaysRange = () => {
     const now = new Date();
-    const thirtyDaysAgo = new Date(now);
-    thirtyDaysAgo.setDate(now.getDate() - 30);
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
     
     return {
-      start: thirtyDaysAgo.toISOString().split('T')[0],
+      start: sevenDaysAgo.toISOString().split('T')[0],
       end: now.toISOString().split('T')[0]
     };
   };
   
-  const defaultRange = getLast30DaysRange();
+  const defaultRange = getLast7DaysRange();
   const [startDate, setStartDate] = useState(defaultRange.start);
   const [endDate, setEndDate] = useState(defaultRange.end);
   

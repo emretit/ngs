@@ -369,8 +369,31 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
  */
 export async function decodeZIPAndExtractXML(base64Data: string): Promise<string | null> {
   try {
+    // Validate base64 string
+    if (!base64Data || typeof base64Data !== 'string') {
+      console.error('❌ Invalid base64 data: not a string');
+      return null;
+    }
+
+    // Clean base64 string (remove whitespace, newlines, etc.)
+    const cleanBase64 = base64Data.trim().replace(/\s/g, '');
+    
+    if (cleanBase64.length === 0) {
+      console.error('❌ Invalid base64 data: empty string');
+      return null;
+    }
+
     // Decode base64 to binary
-    const binaryString = atob(base64Data);
+    let binaryString: string;
+    try {
+      binaryString = atob(cleanBase64);
+    } catch (atobError: any) {
+      console.error('❌ Base64 decode hatası:', atobError.message);
+      console.error('❌ Base64 data length:', cleanBase64.length);
+      console.error('❌ Base64 data preview:', cleanBase64.substring(0, 100));
+      return null;
+    }
+
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
@@ -398,8 +421,13 @@ export async function decodeZIPAndExtractXML(base64Data: string): Promise<string
     
     console.warn('⚠️ ZIP içinde XML dosyası bulunamadı');
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ ZIP decode/extract hatası:', error);
+    console.error('❌ Error details:', {
+      message: error?.message,
+      name: error?.name,
+      stack: error?.stack?.substring(0, 200)
+    });
     
     // Fallback: try to parse as direct XML if it's not actually a ZIP
     try {
@@ -408,7 +436,8 @@ export async function decodeZIPAndExtractXML(base64Data: string): Promise<string
         console.log('✅ Base64 direkt XML içeriyor');
         return text;
       }
-    } catch {
+    } catch (fallbackError) {
+      console.error('❌ Fallback XML parse hatası:', fallbackError);
       // Not XML either
     }
     

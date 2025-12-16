@@ -86,24 +86,21 @@ serve(async (req) => {
     // Parse request body
     const {
       invoiceUUID,
-      invoiceNumber,
-      invoiceType = 'sales', // 'sales' or 'purchase'
     } = await req.json();
 
-    if (!invoiceUUID && !invoiceNumber) {
+    if (!invoiceUUID) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'invoiceUUID veya invoiceNumber parametrelerinden biri zorunludur'
+        error: 'invoiceUUID parametresi zorunludur'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('📄 Veriban belge verisi alınıyor...');
+    console.log('🔄 Veriban gelen faturayı transfer edildi yapılıyor...');
     console.log('🆔 Invoice UUID:', invoiceUUID);
-    console.log('📄 Invoice Number:', invoiceNumber);
-    console.log('📋 Invoice Type:', invoiceType);
+    console.log('🔑 Company ID:', profile.company_id);
 
     // Get valid session code (reuses existing session if not expired)
     console.log('🔑 Getting valid session code...');
@@ -124,103 +121,30 @@ serve(async (req) => {
     console.log('✅ Session code alındı');
 
     try {
-      // Download invoice based on type and identifier
-      let downloadResult;
-      
-      if (invoiceType === 'purchase') {
-        if (invoiceNumber) {
-          console.log('📊 DownloadPurchaseInvoiceWithInvoiceNumber çağrılıyor...');
-          downloadResult = await VeribanSoapClient.downloadPurchaseInvoiceWithInvoiceNumber(
-            sessionCode,
-            {
-              invoiceNumber,
-              downloadDataType: 'XML_INZIP',
-            },
-            veribanAuth.webservice_url
-          );
-        } else {
-          console.log('📊 DownloadPurchaseInvoiceWithInvoiceUUID çağrılıyor...');
-          downloadResult = await VeribanSoapClient.downloadPurchaseInvoice(
-            sessionCode,
-            {
-              invoiceUUID: invoiceUUID!,
-              downloadDataType: 'XML_INZIP',
-            },
-            veribanAuth.webservice_url
-          );
-        }
-      } else {
-        if (invoiceNumber) {
-          console.log('📊 DownloadSalesInvoiceWithInvoiceNumber çağrılıyor...');
-          downloadResult = await VeribanSoapClient.downloadSalesInvoiceWithInvoiceNumber(
-            sessionCode,
-            {
-              invoiceNumber,
-              downloadDataType: 'XML_INZIP',
-            },
-            veribanAuth.webservice_url
-          );
-        } else {
-          console.log('📊 DownloadSalesInvoiceWithInvoiceUUID çağrılıyor...');
-          downloadResult = await VeribanSoapClient.downloadSalesInvoice(
-            sessionCode,
-            {
-              invoiceUUID: invoiceUUID!,
-              downloadDataType: 'XML_INZIP',
-            },
-            veribanAuth.webservice_url
-          );
-        }
-      }
+      // Set UnTransferred Purchase Invoice Done
+      console.log('📊 SetUnTransferredPurchaseInvoiceDone çağrılıyor...');
+      const transferResult = await VeribanSoapClient.setUnTransferredPurchaseInvoiceDone(
+        sessionCode,
+        invoiceUUID,
+        veribanAuth.webservice_url
+      );
 
-      if (!downloadResult.success) {
-        console.error('❌ Download invoice başarısız:', downloadResult.error);
+      if (!transferResult.success) {
+        console.error('❌ Transfer işlemi başarısız:', transferResult.error);
         return new Response(JSON.stringify({
           success: false,
-          error: downloadResult.error || 'Belge verisi alınamadı'
+          error: transferResult.error || 'Fatura transfer edildi olarak işaretlenemedi'
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      const documentData = downloadResult.data;
-      console.log('✅ Belge verisi alındı');
-      console.log('📁 File Name:', documentData.fileName);
-
-      // Decode ZIP and extract XML
-      let xmlContent = null;
-      if (documentData.binaryData) {
-        try {
-          // Decode base64 ZIP
-          const zipData = VeribanSoapClient.decodeBase64(documentData.binaryData);
-          
-          // Extract from ZIP
-          const JSZip = (await import('https://esm.sh/jszip@3.10.1')).default;
-          const zip = await JSZip.loadAsync(zipData);
-          
-          // Find XML file in ZIP
-          const xmlFiles = Object.keys(zip.files).filter(name => name.endsWith('.xml'));
-          if (xmlFiles.length > 0) {
-            const xmlFile = zip.files[xmlFiles[0]];
-            xmlContent = await xmlFile.async('string');
-          }
-        } catch (zipError: any) {
-          console.error('⚠️ ZIP decode hatası:', zipError.message);
-          // Continue without XML extraction
-        }
-      }
+      console.log('✅ Fatura başarıyla transfer edildi olarak işaretlendi');
 
       return new Response(JSON.stringify({
         success: true,
-        data: {
-          fileName: documentData.fileName,
-          xmlContent: xmlContent,
-          binaryData: documentData.binaryData, // Base64 ZIP
-          invoiceUUID: invoiceUUID,
-          invoiceNumber: invoiceNumber,
-        },
-        message: 'Belge verisi başarıyla alındı'
+        message: 'Fatura transfer edildi olarak işaretlendi'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -238,7 +162,7 @@ serve(async (req) => {
     // Note: We DO NOT logout here - session is cached for 6 hours
 
   } catch (error: any) {
-    console.error('❌ Veriban document data function hatası:', error);
+    console.error('❌ Veriban purchase invoice transfer function hatası:', error);
 
     return new Response(JSON.stringify({
       success: false,

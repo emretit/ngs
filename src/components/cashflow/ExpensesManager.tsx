@@ -1,6 +1,7 @@
 import React, { useState, useEffect, memo, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -57,6 +58,7 @@ interface ExpensesManagerProps {
 }
 
 const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDateChange, onEndDateChange, onTotalAmountChange }: ExpensesManagerProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -804,8 +806,8 @@ const ExpensesManager = memo(({ triggerAddDialog, startDate, endDate, onStartDat
         onOpenChange={setIsDeleteDialogOpen}
         title="Masrafı Sil"
         description={`"${expenseToDelete?.description || 'Bu masraf'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteConfirm}
         onCancel={() => { setIsDeleteDialogOpen(false); setExpenseToDelete(null); }}

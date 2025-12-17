@@ -34,7 +34,6 @@
     "upload": "Yükle",
     "yes": "Evet",
     "no": "Hayır",
-    "view": "Görüntüle",
     "unknownError": "Bilinmeyen hata",
     "year": "Yılı",
     "allMonths": "Tüm Aylar",
@@ -54,21 +53,11 @@
     "notSpecified": "Belirtilmemiş",
     "unnamedCustomer": "İsimsiz Müşteri",
     "unnamedUser": "İsimsiz Kullanıcı",
-    "unnamedTag": "İsimsiz Etiket"
-  },
-  "cashflow": {
-    "inflows": "Nakit Girişleri",
-    "outflows": "Nakit Çıkışları",
-    "operating": "Operasyonel",
-    "investing": "Yatırım",
-    "financing": "Finansman"
-  },
-  "common": {
+    "unnamedTag": "İsimsiz Etiket",
     "saving": "Kaydediliyor...",
     "creating": "Oluşturuluyor...",
     "updating": "Güncelleniyor...",
     "deleting": "Siliniyor...",
-    "loading": "Yükleniyor...",
     "processing": "İşleniyor...",
     "title": "Başlık",
     "type": "Tür",
@@ -102,6 +91,13 @@
     "error": "Hata",
     "warning": "Uyarı",
     "info": "Bilgi"
+  },
+  "cashflow": {
+    "inflows": "Nakit Girişleri",
+    "outflows": "Nakit Çıkışları",
+    "operating": "Operasyonel",
+    "investing": "Yatırım",
+    "financing": "Finansman"
   },
   "forms": {
     "title": "Başlık",

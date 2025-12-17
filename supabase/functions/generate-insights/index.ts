@@ -474,7 +474,7 @@ Bu kapsamlı verilere göre işletmenin durumunu özetleyen 2-3 kritik içgörü
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.0-flash-exp',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }

@@ -59,7 +59,7 @@ export const BOMTableRow: React.FC<BOMTableRowProps> = ({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onDelete && confirm('Ürün reçetesini silmek istediğinizden emin misiniz?')) {
+    if (onDelete) {
       onDelete(bom.id);
     }
   };

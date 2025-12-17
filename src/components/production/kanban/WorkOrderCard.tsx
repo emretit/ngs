@@ -84,9 +84,7 @@ const WorkOrderCard = ({
               <DropdownMenuItem 
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (confirm("İş emrini silmek istediğinize emin misiniz?")) {
-                    onDelete(workOrder.id);
-                  }
+                  onDelete(workOrder.id);
                 }}
                 className="text-red-600 focus:text-red-600 cursor-pointer"
               >

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useProduction } from "@/hooks/useProduction";
 import { BOM } from "@/types/production";
 import BOMsContent from "@/components/production/BOMsContent";
@@ -14,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 const ProductionBOMs = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { boms, isLoading } = useProduction();
@@ -24,6 +26,9 @@ const ProductionBOMs = () => {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedBOMs, setSelectedBOMs] = useState<string[]>([]);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [bomToDelete, setBomToDelete] = useState<BOM | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Sıralama state'leri
   const [sortField, setSortField] = useState<BOMSortField>("created_at");
@@ -105,22 +110,42 @@ const ProductionBOMs = () => {
     navigate(`/production/bom/${bom.id}/edit`);
   };
 
-  const handleDeleteBOM = async (bomId: string) => {
+  const handleDeleteBOM = (bomId: string) => {
+    const bom = boms.find(b => b.id === bomId);
+    if (bom) {
+      setBomToDelete(bom);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!bomToDelete) return;
+
+    setIsDeleting(true);
     try {
       const { error } = await supabase
         .from("boms")
         .delete()
-        .eq("id", bomId);
+        .eq("id", bomToDelete.id);
       
       if (error) throw error;
       
       toast.success("Ürün reçetesi silindi");
       queryClient.invalidateQueries({ queryKey: ["boms"] });
       queryClient.invalidateQueries({ queryKey: ["production_stats"] });
+      setIsDeleteDialogOpen(false);
+      setBomToDelete(null);
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Silme işlemi başarısız oldu");
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setBomToDelete(null);
   };
 
   const handleDuplicateBOM = (bom: BOM) => {
@@ -262,6 +287,24 @@ const ProductionBOMs = () => {
             onSort={handleSort}
           />
         )}
+
+        {/* Tekli Silme Onay Dialog */}
+        <ConfirmationDialogComponent
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="Ürün Reçetesini Sil"
+          description={
+            bomToDelete
+              ? `"${bomToDelete.name || bomToDelete.product_name || 'Bu reçete'}" ürün reçetesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+              : "Bu ürün reçetesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+          }
+          confirmText={t("common.delete")}
+          cancelText={t("common.cancel")}
+          variant="destructive"
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isLoading={isDeleting}
+        />
       </div>
 
       {/* Bulk Delete Confirmation Dialog */}

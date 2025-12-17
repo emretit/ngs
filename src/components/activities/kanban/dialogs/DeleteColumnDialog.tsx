@@ -1,7 +1,6 @@
-
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface DeleteColumnDialogProps {
   columnToDelete: string | null;
@@ -14,31 +13,30 @@ const DeleteColumnDialog: React.FC<DeleteColumnDialogProps> = ({
   onClose,
   onConfirmDelete,
 }) => {
+  const { t } = useTranslation();
+
+  const handleConfirm = () => {
+    onConfirmDelete();
+    onClose();
+  };
+
+  const handleCancel = () => {
+    onClose();
+  };
+
   return (
-    <Dialog open={!!columnToDelete} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Sütunu Sil</DialogTitle>
-          <DialogDescription>
-            Bu sütunda görevler var. Silmek istediğinizden emin misiniz? Tüm görevler "Yapılacaklar" sütununa taşınacak.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={onClose}
-          >
-            İptal
-          </Button>
-          <Button 
-            variant="destructive" 
-            onClick={onConfirmDelete}
-          >
-            Sil
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ConfirmationDialogComponent
+      open={!!columnToDelete}
+      onOpenChange={(open) => !open && onClose()}
+      title="Sütunu Sil"
+      description="Bu sütunda görevler var. Silmek istediğinizden emin misiniz? Tüm görevler \"Yapılacaklar\" sütununa taşınacak. Bu işlem geri alınamaz."
+      confirmText={t("common.delete")}
+      cancelText={t("common.cancel")}
+      variant="destructive"
+      onConfirm={handleConfirm}
+      onCancel={handleCancel}
+      isLoading={false}
+    />
   );
 };
 

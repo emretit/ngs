@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import WarehousesHeader from "@/components/warehouses/WarehousesHeader";
 import WarehousesFilterBar from "@/components/warehouses/WarehousesFilterBar";
 import WarehousesContent from "@/components/warehouses/WarehousesContent";
@@ -8,8 +9,10 @@ import WarehousesBulkActions from "@/components/warehouses/WarehousesBulkActions
 import { supabase } from "@/integrations/supabase/client";
 import { Warehouse } from "@/types/warehouse";
 import { toast } from "sonner";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 const Warehouses = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<"grid" | "table">("table");
@@ -22,6 +25,10 @@ const Warehouses = () => {
   const [sortField, setSortField] = useState<"name" | "code" | "warehouse_type" | "is_active">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedWarehouses, setSelectedWarehouses] = useState<Warehouse[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [warehouseToDelete, setWarehouseToDelete] = useState<Warehouse | null>(null);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Debounce search query
   useEffect(() => {
@@ -161,11 +168,15 @@ const Warehouses = () => {
     setSelectedWarehouses([]);
   }, []);
 
-  const handleDeleteWarehouse = useCallback(async (warehouse: Warehouse) => {
-    if (!confirm(`"${warehouse.name}" deposunu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) {
-      return;
-    }
+  const handleDeleteWarehouse = useCallback((warehouse: Warehouse) => {
+    setWarehouseToDelete(warehouse);
+    setIsDeleteDialogOpen(true);
+  }, []);
 
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!warehouseToDelete) return;
+
+    setIsDeleting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profile } = await supabase
@@ -183,7 +194,7 @@ const Warehouses = () => {
       const { data: stockData, error: stockError } = await supabase
         .from("warehouse_stock")
         .select("id")
-        .eq("warehouse_id", warehouse.id)
+        .eq("warehouse_id", warehouseToDelete.id)
         .eq("company_id", profile.company_id)
         .limit(1);
 
@@ -193,6 +204,9 @@ const Warehouses = () => {
 
       if (stockData && stockData.length > 0) {
         toast.error("Bu depoda stok bulunmaktadır. Önce stokları temizlemeniz gerekmektedir.");
+        setIsDeleting(false);
+        setIsDeleteDialogOpen(false);
+        setWarehouseToDelete(null);
         return;
       }
 
@@ -200,7 +214,7 @@ const Warehouses = () => {
       const { data: transactionData, error: transactionError } = await supabase
         .from("inventory_transactions")
         .select("id")
-        .or(`warehouse_id.eq.${warehouse.id},from_warehouse_id.eq.${warehouse.id},to_warehouse_id.eq.${warehouse.id}`)
+        .or(`warehouse_id.eq.${warehouseToDelete.id},from_warehouse_id.eq.${warehouseToDelete.id},to_warehouse_id.eq.${warehouseToDelete.id}`)
         .eq("company_id", profile.company_id)
         .limit(1);
 
@@ -210,6 +224,9 @@ const Warehouses = () => {
 
       if (transactionData && transactionData.length > 0) {
         toast.error("Bu depo ile ilişkili stok hareketleri bulunmaktadır. Depo silinemez.");
+        setIsDeleting(false);
+        setIsDeleteDialogOpen(false);
+        setWarehouseToDelete(null);
         return;
       }
 
@@ -217,35 +234,47 @@ const Warehouses = () => {
       const { error } = await supabase
         .from("warehouses")
         .delete()
-        .eq("id", warehouse.id)
+        .eq("id", warehouseToDelete.id)
         .eq("company_id", profile.company_id);
 
       if (error) {
         console.error("Depo silme hatası:", error);
         toast.error("Depo silinirken bir hata oluştu");
+        setIsDeleting(false);
         return;
       }
 
-      toast.success(`"${warehouse.name}" deposu başarıyla silindi`);
+      toast.success(`"${warehouseToDelete.name}" deposu başarıyla silindi`);
       queryClient.invalidateQueries({ queryKey: ["warehouses"] });
       queryClient.invalidateQueries({ queryKey: ["warehouse_statistics"] });
       
       // Seçili listeden de çıkar
-      setSelectedWarehouses(prev => prev.filter(w => w.id !== warehouse.id));
+      setSelectedWarehouses(prev => prev.filter(w => w.id !== warehouseToDelete.id));
+      
+      setIsDeleteDialogOpen(false);
+      setWarehouseToDelete(null);
     } catch (error) {
       console.error("Depo silme hatası:", error);
       toast.error("Depo silinirken bir hata oluştu");
+    } finally {
+      setIsDeleting(false);
     }
-  }, [queryClient]);
+  }, [warehouseToDelete, queryClient]);
 
-  const handleBulkDelete = useCallback(async () => {
+  const handleDeleteCancel = useCallback(() => {
+    setIsDeleteDialogOpen(false);
+    setWarehouseToDelete(null);
+  }, []);
+
+  const handleBulkDelete = useCallback(() => {
+    if (selectedWarehouses.length === 0) return;
+    setIsBulkDeleteDialogOpen(true);
+  }, [selectedWarehouses.length]);
+
+  const handleBulkDeleteConfirm = useCallback(async () => {
     if (selectedWarehouses.length === 0) return;
 
-    const warehouseNames = selectedWarehouses.map(w => w.name).join(", ");
-    if (!confirm(`${selectedWarehouses.length} depoyu silmek istediğinize emin misiniz?\n\nSilinecek depolar: ${warehouseNames}\n\nBu işlem geri alınamaz.`)) {
-      return;
-    }
-
+    setIsDeleting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profile } = await supabase
@@ -323,11 +352,19 @@ const Warehouses = () => {
       if (errorCount > 0) {
         toast.error(`${errorCount} depo silinemedi. Detaylar: ${errors.join("; ")}`);
       }
+      
+      setIsBulkDeleteDialogOpen(false);
     } catch (error) {
       console.error("Toplu silme hatası:", error);
       toast.error("Depolar silinirken bir hata oluştu");
+    } finally {
+      setIsDeleting(false);
     }
   }, [selectedWarehouses, queryClient]);
+
+  const handleBulkDeleteCancel = useCallback(() => {
+    setIsBulkDeleteDialogOpen(false);
+  }, []);
 
   const handleBulkAction = useCallback(async (action: string) => {
     if (action === 'export') {
@@ -483,6 +520,42 @@ const Warehouses = () => {
           totalCount={warehouses?.totalCount || 0}
         />
       )}
+
+      {/* Tekli Silme Onay Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Depoyu Sil"
+        description={
+          warehouseToDelete
+            ? `"${warehouseToDelete.name}" deposunu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu depoyu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
+      />
+
+      {/* Toplu Silme Onay Dialog */}
+      <ConfirmationDialogComponent
+        open={isBulkDeleteDialogOpen}
+        onOpenChange={setIsBulkDeleteDialogOpen}
+        title="Depoları Sil"
+        description={
+          selectedWarehouses.length > 0
+            ? `${selectedWarehouses.length} depoyu silmek istediğinizden emin misiniz?\n\nSilinecek depolar: ${selectedWarehouses.map(w => w.name).join(", ")}\n\nBu işlem geri alınamaz.`
+            : "Seçili depoları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={handleBulkDeleteConfirm}
+        onCancel={handleBulkDeleteCancel}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

@@ -36,6 +36,7 @@ import { useCreditCardDetail, useCreditCardTransactions } from "@/hooks/useAccou
 import { Skeleton } from "@/components/ui/skeleton";
 import CreditCardIncomeModal from "@/components/cashflow/modals/CreditCardIncomeModal";
 import CreditCardExpenseModal from "@/components/cashflow/modals/CreditCardExpenseModal";
+import CreditCardModal from "@/components/cashflow/modals/CreditCardModal";
 import TransferModal from "@/components/cashflow/modals/TransferModal";
 import { AccountTransactionHistory } from "@/components/cashflow/AccountTransactionHistory";
 
@@ -51,6 +52,7 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -91,7 +93,12 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
   };
 
   const handleEdit = () => {
-    toast.info("Düzenleme özelliği yakında eklenecek");
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    window.location.reload();
   };
 
   if (loading) {
@@ -364,6 +371,13 @@ const CreditCardDetail = memo(({ isCollapsed, setIsCollapsed }: CreditCardDetail
         </div>
 
         {/* Modals */}
+        <CreditCardModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={handleEditSuccess}
+          mode="edit"
+          cardId={id}
+        />
         <CreditCardIncomeModal
           isOpen={isIncomeModalOpen}
           onClose={() => setIsIncomeModalOpen(false)}

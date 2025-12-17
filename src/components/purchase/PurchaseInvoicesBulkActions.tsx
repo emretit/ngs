@@ -1,38 +1,56 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Trash2, Download, Mail, CheckCircle, Archive } from "lucide-react";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
+import { toast } from "sonner";
 
 interface PurchaseInvoicesBulkActionsProps {
   selectedInvoices: any[];
   onClearSelection: () => void;
+  onBulkDelete?: (invoiceIds: string[]) => void;
 }
 
-const PurchaseInvoicesBulkActions = ({ selectedInvoices, onClearSelection }: PurchaseInvoicesBulkActionsProps) => {
+const PurchaseInvoicesBulkActions = ({ 
+  selectedInvoices, 
+  onClearSelection,
+  onBulkDelete 
+}: PurchaseInvoicesBulkActionsProps) => {
   const hasSelection = selectedInvoices.length > 0;
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleBulkExport = () => {
     // Excel export işlemi
+    toast.info("Excel dışa aktarma özelliği yakında eklenecek");
     console.log("Exporting selected invoices:", selectedInvoices);
   };
 
   const handleBulkEmail = () => {
     // Toplu e-posta gönderimi
+    toast.info("Toplu e-posta gönderimi yakında eklenecek");
     console.log("Sending bulk email for invoices:", selectedInvoices);
   };
 
   const handleBulkArchive = () => {
     // Toplu arşivleme işlemi
+    toast.info("Toplu arşivleme özelliği yakında eklenecek");
     console.log("Archiving invoices:", selectedInvoices);
   };
 
   const handleBulkMarkAsPaid = () => {
     // Toplu ödendi olarak işaretle
+    toast.info("Toplu ödeme işaretleme yakında eklenecek");
     console.log("Marking invoices as paid:", selectedInvoices);
   };
 
   const handleBulkDelete = () => {
-    // Toplu silme işlemi
-    console.log("Deleting invoices:", selectedInvoices);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (onBulkDelete) {
+      onBulkDelete(selectedInvoices.map(inv => inv.id));
+    }
+    setDeleteDialogOpen(false);
   };
 
   return (
@@ -113,6 +131,18 @@ const PurchaseInvoicesBulkActions = ({ selectedInvoices, onClearSelection }: Pur
           )}
         </div>
       </div>
+
+      {/* Toplu Silme Onay Dialogu */}
+      <ConfirmationDialogComponent
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Faturaları Sil"
+        description={`${selectedInvoices.length} faturayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        onConfirm={handleConfirmDelete}
+        variant="destructive"
+      />
     </>
   );
 };

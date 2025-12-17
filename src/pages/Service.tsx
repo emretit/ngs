@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import ServicePageHeader from "@/components/service/ServicePageHeader";
 import ServiceKanbanBoard from "@/components/service/ServiceKanbanBoard";
@@ -15,7 +16,7 @@ import { ServicePartsUsageReport } from "@/components/service/ServicePartsUsageR
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -76,6 +77,7 @@ const MONTHS = [
 ];
 
 const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServicePageProps = {}) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { userData } = useCurrentUser();
@@ -285,12 +287,17 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
     setDeleteConfirmOpen(true);
   };
   
-  const confirmDelete = () => {
+  const handleDeleteConfirm = () => {
     if (serviceToDelete) {
       deleteServiceRequest(serviceToDelete.id);
       setDeleteConfirmOpen(false);
       setServiceToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmOpen(false);
+    setServiceToDelete(null);
   };
   
   // Öncelik renklerini belirle
@@ -1341,51 +1348,22 @@ const ServicePage = ({ defaultView = "dashboard", hideHeader = false }: ServiceP
         )}
       </div>
       {/* Silme Onay Dialog'u */}
-        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-red-600">
-                <Trash2 className="h-5 w-5" />
-                Servis Talebini Sil
-              </DialogTitle>
-              <DialogDescription>
-                Bu işlem geri alınamaz. Servis talebi kalıcı olarak silinecektir.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <p className="text-sm text-gray-600 mb-2">
-                Bu servis talebini silmek istediğinizden emin misiniz?
-              </p>
-              {serviceToDelete && (
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="font-medium text-gray-900">{serviceToDelete.service_title}</p>
-                  <p className="text-sm text-gray-600">
-                    Servis No: {serviceToDelete.service_number || 'SR-' + serviceToDelete.id.slice(-6).toUpperCase()}
-                  </p>
-                </div>
-              )}
-              <p className="text-xs text-red-600 mt-2">
-                ⚠️ Bu işlem geri alınamaz. Servis talebi ve ilgili tüm veriler kalıcı olarak silinecektir.
-              </p>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setDeleteConfirmOpen(false)}
-              >
-                İptal
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmDelete}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Sil
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <ConfirmationDialogComponent
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Servis Talebini Sil"
+        description={
+          serviceToDelete
+            ? `"${serviceToDelete.service_title}" (Servis No: ${serviceToDelete.service_number || 'SR-' + serviceToDelete.id.slice(-6).toUpperCase()}) servis talebini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. Servis talebi ve ilgili tüm veriler kalıcı olarak silinecektir.`
+            : "Bu servis talebini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. Servis talebi kalıcı olarak silinecektir."
+        }
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={false}
+      />
     </>
   );
 };

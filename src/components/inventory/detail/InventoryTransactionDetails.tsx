@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { InventoryTransaction, TransactionStatus, TransactionType } from "@/types/inventory";
 import { useInventoryTransactions } from "@/hooks/useInventoryTransactions";
@@ -25,6 +26,7 @@ import {
   Edit2
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface InventoryTransactionDetailsProps {
   transaction: InventoryTransaction | null;
@@ -33,12 +35,15 @@ interface InventoryTransactionDetailsProps {
 }
 
 const InventoryTransactionDetails = ({ transaction, isOpen, onClose }: InventoryTransactionDetailsProps) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { updateTransaction, approveTransaction, cancelTransaction, fetchTransactionById } = useInventoryTransactions();
   
   const [notes, setNotes] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [status, setStatus] = useState<TransactionStatus>("pending");
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Transaction'ı detaylı olarak fetch et (items bilgisi için)
   const { data: fullTransaction } = useQuery({
@@ -137,20 +142,31 @@ const InventoryTransactionDetails = ({ transaction, isOpen, onClose }: Inventory
     }
   };
 
-  const handleCancel = async () => {
+  const handleCancel = () => {
     if (!displayTransaction) return;
-    
-    if (window.confirm(`${displayTransaction.transaction_number} numaralı işlemi iptal etmek istediğinize emin misiniz?`)) {
-      try {
-        await cancelTransaction(displayTransaction.id);
-        toast.success("İşlem iptal edildi");
-        queryClient.invalidateQueries({ queryKey: ["inventory_transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["inventory_transaction", displayTransaction.id] });
-        onClose();
-      } catch (error: any) {
-        toast.error(error.message || "İşlem iptal edilirken hata oluştu");
-      }
+    setIsCancelDialogOpen(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!displayTransaction) return;
+
+    setIsCancelling(true);
+    try {
+      await cancelTransaction(displayTransaction.id);
+      toast.success("İşlem iptal edildi");
+      queryClient.invalidateQueries({ queryKey: ["inventory_transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory_transaction", displayTransaction.id] });
+      setIsCancelDialogOpen(false);
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || "İşlem iptal edilirken hata oluştu");
+    } finally {
+      setIsCancelling(false);
     }
+  };
+
+  const handleCancelCancel = () => {
+    setIsCancelDialogOpen(false);
   };
 
   if (!displayTransaction) return null;
@@ -421,6 +437,24 @@ const InventoryTransactionDetails = ({ transaction, isOpen, onClose }: Inventory
           </Button>
         </div>
       </SheetContent>
+
+      {/* İptal Onay Dialog */}
+      <ConfirmationDialogComponent
+        open={isCancelDialogOpen}
+        onOpenChange={setIsCancelDialogOpen}
+        title="Stok Hareketini İptal Et"
+        description={
+          displayTransaction
+            ? `"${displayTransaction.transaction_number}" numaralı işlemi iptal etmek istediğinizden emin misiniz?`
+            : "Bu işlemi iptal etmek istediğinizden emin misiniz?"
+        }
+        confirmText={t("common.cancel")}
+        cancelText={t("common.close")}
+        variant="default"
+        onConfirm={handleCancelConfirm}
+        onCancel={handleCancelCancel}
+        isLoading={isCancelling}
+      />
     </Sheet>
   );
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton, UnifiedDatePicker } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ interface CreditCardModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  mode?: 'create' | 'edit';
+  cardId?: string;
 }
 
 interface CreditCardFormData {
@@ -25,7 +27,7 @@ interface CreditCardFormData {
   notes: string;
 }
 
-const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) => {
+const CreditCardModal = ({ isOpen, onClose, onSuccess, mode = 'create', cardId }: CreditCardModalProps) => {
   const [formData, setFormData] = useState<CreditCardFormData>({
     card_name: "",
     bank_name: "",
@@ -37,19 +39,57 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) =
     notes: ""
   });
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleInputChange = (field: keyof CreditCardFormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  const [isPrefilling, setIsPrefilling] = useState(false);
 
   const formatCardNumber = (value: string) => {
     // Sadece rakamları al
     const numbers = value.replace(/\D/g, '');
     // 4'lü gruplar halinde formatla
     return numbers.replace(/(.{4})/g, '$1-').slice(0, -1);
+  };
+
+  // Edit modunda formu Supabase'den doldur
+  useEffect(() => {
+    const prefill = async () => {
+      if (!isOpen || mode !== 'edit' || !cardId) return;
+      setIsPrefilling(true);
+      try {
+        const { data, error } = await supabase
+          .from('credit_cards')
+          .select('card_name, bank_name, card_number, card_type, expiry_date, credit_limit, currency, notes')
+          .eq('id', cardId)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          const expiryDate = data.expiry_date ? new Date(data.expiry_date + '-01') : undefined;
+          setFormData({
+            card_name: data.card_name || "",
+            bank_name: data.bank_name || "",
+            card_number: data.card_number ? formatCardNumber(data.card_number) : "",
+            card_type: data.card_type || 'credit',
+            expiry_date: data.expiry_date || "",
+            expiry_date_date: expiryDate,
+            credit_limit: data.credit_limit ? String(data.credit_limit) : "",
+            currency: data.currency || 'TRY',
+            notes: data.notes || ""
+          });
+        }
+      } catch (e) {
+        console.error('Error pre-filling credit card:', e);
+        toast.error("Kart bilgileri yüklenirken hata oluştu");
+      } finally {
+        setIsPrefilling(false);
+      }
+    };
+    prefill();
+  }, [isOpen, mode, cardId]);
+
+  const handleInputChange = (field: keyof CreditCardFormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const handleCardNumberChange = (value: string) => {
@@ -82,23 +122,45 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) =
         throw new Error("Şirket bilgisi bulunamadı");
       }
 
-      const { error } = await supabase
-        .from('credit_cards')
-        .insert({
-          card_name: formData.card_name.trim(),
-          bank_name: formData.bank_name.trim(),
-          card_number: formData.card_number.replace(/-/g, '') || null,
-          card_type: formData.card_type,
-          expiry_date: formData.expiry_date || null,
-          credit_limit: formData.credit_limit ? parseFloat(formData.credit_limit) : null,
-          currency: formData.currency,
-          notes: formData.notes.trim() || null,
-          company_id: profile.company_id
-        });
+      const creditLimit = formData.credit_limit ? parseFloat(formData.credit_limit) : 0;
+      
+      if (mode === 'edit' && cardId) {
+        const { error } = await supabase
+          .from('credit_cards')
+          .update({
+            card_name: formData.card_name.trim(),
+            bank_name: formData.bank_name.trim(),
+            card_number: formData.card_number.replace(/-/g, '') || null,
+            card_type: formData.card_type,
+            expiry_date: formData.expiry_date || null,
+            credit_limit: creditLimit > 0 ? creditLimit : null,
+            currency: formData.currency,
+            notes: formData.notes.trim() || null
+          })
+          .eq('id', cardId);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Kredi kartı güncellendi");
+      } else {
+        const { error } = await supabase
+          .from('credit_cards')
+          .insert({
+            card_name: formData.card_name.trim(),
+            bank_name: formData.bank_name.trim(),
+            card_number: formData.card_number.replace(/-/g, '') || null,
+            card_type: formData.card_type,
+            expiry_date: formData.expiry_date || null,
+            credit_limit: creditLimit > 0 ? creditLimit : null,
+            available_limit: creditLimit > 0 ? creditLimit : null,
+            current_balance: 0,
+            currency: formData.currency,
+            notes: formData.notes.trim() || null,
+            company_id: profile.company_id
+          });
 
-      toast.success("Kredi kartı oluşturuldu");
+        if (error) throw error;
+        toast.success("Kredi kartı oluşturuldu");
+      }
 
       onSuccess();
       onClose();
@@ -125,7 +187,7 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) =
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Yeni Kredi Kartı"
+      title={mode === 'edit' ? "Kredi Kartını Düzenle" : "Yeni Kredi Kartı"}
       maxWidth="md"
       headerColor="purple"
     >
@@ -252,11 +314,11 @@ const CreditCardModal = ({ isOpen, onClose, onSuccess }: CreditCardModalProps) =
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
           <UnifiedDialogActionButton
             onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)}
-            disabled={isLoading}
-            loading={isLoading}
+            disabled={isLoading || isPrefilling}
+            loading={isLoading || isPrefilling}
             variant="primary"
           >
-            Oluştur
+            {mode === 'edit' ? 'Kaydet' : 'Oluştur'}
           </UnifiedDialogActionButton>
         </UnifiedDialogFooter>
       </form>

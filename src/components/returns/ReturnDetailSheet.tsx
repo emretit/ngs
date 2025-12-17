@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import {
   Sheet,
   SheetContent,
@@ -39,17 +40,7 @@ import {
   itemStatusLabels,
   itemConditionLabels,
 } from "@/types/returns";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface ReturnDetailSheetProps {
   returnId: string | null;
@@ -58,9 +49,11 @@ interface ReturnDetailSheetProps {
 }
 
 const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) => {
+  const { t } = useTranslation();
   const { data: returnData, isLoading } = useReturn(returnId || undefined);
   const updateStatus = useUpdateReturnStatus();
   const deleteReturn = useDeleteReturn();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleStatusChange = (newStatus: string) => {
     if (returnId) {
@@ -68,14 +61,23 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
     }
   };
 
-  const handleDelete = () => {
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
     if (returnId) {
       deleteReturn.mutate(returnId, {
         onSuccess: () => {
+          setIsDeleteDialogOpen(false);
           onClose();
         },
       });
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
   };
 
   const getStatusColor = (status: ReturnStatus) => {
@@ -339,28 +341,10 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
 
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={deleteReturn.isPending}>
-                    {deleteReturn.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    İadeyi Sil
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>İadeyi silmek istediğinize emin misiniz?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Bu işlem geri alınamaz. İade kaydı ve tüm ilişkili ürün bilgileri kalıcı olarak silinecektir.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>İptal</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                      Sil
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <Button variant="destructive" onClick={handleDeleteClick} disabled={deleteReturn.isPending}>
+                {deleteReturn.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                İadeyi Sil
+              </Button>
               <Button variant="outline" onClick={onClose}>
                 Kapat
               </Button>
@@ -372,6 +356,20 @@ const ReturnDetailSheet = ({ returnId, open, onClose }: ReturnDetailSheetProps) 
           </div>
         )}
       </SheetContent>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="İadeyi Sil"
+        description={`"${returnData?.return_number || 'Bu iade'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. İade kaydı ve tüm ilişkili ürün bilgileri kalıcı olarak silinecektir.`}
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteReturn.isPending}
+      />
     </Sheet>
   );
 };

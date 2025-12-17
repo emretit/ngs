@@ -23,16 +23,71 @@ export const PaymentsList = ({ supplier }: PaymentsListProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('payments')
-        .select(`
-          *,
-          accounts!inner(name, account_type, bank_name)
-        `)
+        .select('*')
         .eq('supplier_id', supplier.id)
         .eq('company_id', supplier.company_id)
         .order('payment_date', { ascending: false });
 
       if (error) throw error;
-      return data as Payment[];
+      
+      // Her ödeme için hesap bilgisini al
+      const paymentsWithAccounts = await Promise.all(
+        (data || []).map(async (payment: any) => {
+          if (payment.account_id && payment.account_type) {
+            let accountName = "Bilinmeyen Hesap";
+            
+            try {
+              if (payment.account_type === 'bank') {
+                const { data: bankAccount } = await supabase
+                  .from('bank_accounts')
+                  .select('account_name, bank_name')
+                  .eq('id', payment.account_id)
+                  .single();
+                if (bankAccount) {
+                  accountName = `${bankAccount.account_name} - ${bankAccount.bank_name}`;
+                }
+              } else if (payment.account_type === 'cash') {
+                const { data: cashAccount } = await supabase
+                  .from('cash_accounts')
+                  .select('name')
+                  .eq('id', payment.account_id)
+                  .single();
+                if (cashAccount) {
+                  accountName = cashAccount.name;
+                }
+              } else if (payment.account_type === 'credit_card') {
+                const { data: cardAccount } = await supabase
+                  .from('credit_cards')
+                  .select('card_name')
+                  .eq('id', payment.account_id)
+                  .single();
+                if (cardAccount) {
+                  accountName = cardAccount.card_name;
+                }
+              } else if (payment.account_type === 'partner') {
+                const { data: partnerAccount } = await supabase
+                  .from('partner_accounts')
+                  .select('partner_name')
+                  .eq('id', payment.account_id)
+                  .single();
+                if (partnerAccount) {
+                  accountName = partnerAccount.partner_name;
+                }
+              }
+            } catch (err) {
+              console.error('Error fetching account:', err);
+            }
+            
+            return {
+              ...payment,
+              account_name: accountName
+            };
+          }
+          return payment;
+        })
+      );
+      
+      return paymentsWithAccounts as Payment[];
     },
     staleTime: 5 * 60 * 1000, // 5 dakika
     gcTime: 10 * 60 * 1000, // 10 dakika
@@ -59,13 +114,9 @@ export const PaymentsList = ({ supplier }: PaymentsListProps) => {
     }
   };
 
-  const getAccountName = (payment: Payment) => {
-    if (payment.accounts) {
-      const account = payment.accounts;
-      if (account.account_type === 'bank' && account.bank_name) {
-        return `${account.name} - ${account.bank_name}`;
-      }
-      return account.name;
+  const getAccountName = (payment: Payment & { account_name?: string }) => {
+    if (payment.account_name) {
+      return payment.account_name;
     }
     return "Bilinmeyen Hesap";
   };

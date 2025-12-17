@@ -1,4 +1,5 @@
 import { memo, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Table, TableBody } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { showSuccess, showError } from "@/utils/toastUtils";
@@ -42,6 +43,7 @@ const ProductListTable = ({
   onSelectAll,
   selectedProducts = []
 }: ProductListTableProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
@@ -200,8 +202,8 @@ const ProductListTable = ({
         onOpenChange={setIsDeleteDialogOpen}
         title="Ürünü Sil"
         description={`"${productToDelete?.name || 'Bu ürün'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}

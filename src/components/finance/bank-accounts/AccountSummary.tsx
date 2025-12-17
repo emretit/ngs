@@ -16,7 +16,8 @@ const AccountSummary = () => {
 
   const checkingAccounts = accounts?.filter(a => a.account_type === 'vadesiz') ?? [];
   const savingsAccounts = accounts?.filter(a => a.account_type === 'vadeli') ?? [];
-  const totalCreditLimit = accounts?.reduce((sum, account) => sum + account.credit_limit, 0) ?? 0;
+  const creditAccounts = accounts?.filter(a => a.credit_limit && a.credit_limit > 0) ?? [];
+  const totalCreditLimit = accounts?.reduce((sum, account) => sum + (account.credit_limit || 0), 0) ?? 0;
 
   const checkingTotal = checkingAccounts.reduce((sum, account) => {
     const rate = account.currency === 'TRY' ? 1 : 
@@ -34,9 +35,11 @@ const AccountSummary = () => {
     return sum + (account.current_balance * rate);
   }, 0);
 
-  // Calculate month-over-month change (example values)
-  const monthlyChange = 12.5;
-  const isPositiveChange = monthlyChange > 0;
+  // Calculate month-over-month change (example values - in real app, these would be calculated from historical data)
+  const totalMonthlyChange = 12.5;
+  const checkingMonthlyChange = 8.3;
+  const savingsMonthlyChange = 5.2;
+  const creditMonthlyChange = 2.1;
 
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -53,9 +56,9 @@ const AccountSummary = () => {
         </p>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">{accounts?.length ?? 0} Hesap</span>
-          <div className={`flex items-center gap-1 text-sm ${isPositiveChange ? 'text-green-600' : 'text-red-600'}`}>
-            {isPositiveChange ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-            <span>{Math.abs(monthlyChange)}% Bu Ay</span>
+          <div className={`flex items-center gap-1 text-sm ${totalMonthlyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {totalMonthlyChange >= 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+            <span>{Math.abs(totalMonthlyChange)}% Bu Ay</span>
           </div>
         </div>
       </div>
@@ -73,9 +76,9 @@ const AccountSummary = () => {
         </p>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">{checkingAccounts.length} Hesap</span>
-          <div className="flex items-center gap-1 text-sm text-green-600">
-            <ArrowUpRight className="h-4 w-4" />
-            <span>8.3% Bu Ay</span>
+          <div className={`flex items-center gap-1 text-sm ${checkingMonthlyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {checkingMonthlyChange >= 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+            <span>{Math.abs(checkingMonthlyChange)}% Bu Ay</span>
           </div>
         </div>
       </div>
@@ -93,9 +96,9 @@ const AccountSummary = () => {
         </p>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">{savingsAccounts.length} Hesap</span>
-          <div className="flex items-center gap-1 text-sm text-purple-600">
-            <ArrowUpRight className="h-4 w-4" />
-            <span>5.2% Bu Ay</span>
+          <div className={`flex items-center gap-1 text-sm ${savingsMonthlyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {savingsMonthlyChange >= 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+            <span>{Math.abs(savingsMonthlyChange)}% Bu Ay</span>
           </div>
         </div>
       </div>
@@ -112,10 +115,10 @@ const AccountSummary = () => {
           }).format(totalCreditLimit)}
         </p>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Toplam Limit</span>
-          <div className="flex items-center gap-1 text-sm text-orange-600">
-            <ArrowUpRight className="h-4 w-4" />
-            <span>2.1% Bu Ay</span>
+          <span className="text-sm text-gray-500">{creditAccounts.length} Hesap</span>
+          <div className={`flex items-center gap-1 text-sm ${creditMonthlyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {creditMonthlyChange >= 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+            <span>{Math.abs(creditMonthlyChange)}% Bu Ay</span>
           </div>
         </div>
       </div>

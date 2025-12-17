@@ -49,14 +49,14 @@ export const EmployeeDeletionDialog = ({
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
+            <div className="p-2 rounded-full bg-red-100 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
-              <AlertDialogTitle className="text-left">
+              <AlertDialogTitle className="text-left text-red-900">
                 Çalışanı Sil
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-left">
+              <AlertDialogDescription className="text-left mt-2">
                 {employee.first_name} {employee.last_name}
               </AlertDialogDescription>
             </div>
@@ -133,6 +133,7 @@ export const EmployeeDeletionDialog = ({
             variant="outline" 
             onClick={handleClose}
             disabled={isLoading}
+            className="border-gray-300 hover:bg-gray-50"
           >
             İptal
           </Button>
@@ -140,8 +141,9 @@ export const EmployeeDeletionDialog = ({
             variant="destructive"
             onClick={hasLinkedUser ? handleConfirm : () => onConfirm(false)}
             disabled={isLoading || (hasLinkedUser && !deleteOption)}
+            className="bg-red-600 hover:bg-red-700"
           >
-            {isLoading ? "Siliniyor..." : "Sil"}
+            {isLoading ? "İşleniyor..." : "Sil"}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

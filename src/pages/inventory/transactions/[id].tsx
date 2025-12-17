@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface SystemStockInfo {
   product_id: string;
@@ -34,10 +36,14 @@ interface SystemStockInfo {
 }
 
 export default function InventoryTransactionDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { fetchTransactionById, approveTransaction, cancelTransaction } = useInventoryTransactions();
   const [systemStockMap, setSystemStockMap] = useState<Map<string, number>>(new Map());
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { data: transaction, isLoading, refetch } = useQuery<InventoryTransaction | null>({
     queryKey: ["inventory_transaction", id],
@@ -83,47 +89,54 @@ export default function InventoryTransactionDetail() {
     fetchSystemStock();
   }, [transaction]);
 
-  const handleApprove = async () => {
+  const handleApprove = () => {
     if (!id) return;
-    
-    // Sayım işlemi için özel uyarı
-    if (transaction?.transaction_type === 'sayim') {
-      const hasDifferences = transaction.items?.some(item => {
-        const systemStock = systemStockMap.get(item.product_id) || 0;
-        return Number(item.quantity) !== systemStock;
-      });
-      
-      if (hasDifferences) {
-        const confirmMessage = "Bu sayımı onayladığınızda, depodaki stok miktarları fiziksel sayım sonuçlarına göre güncellenecektir. Devam etmek istiyor musunuz?";
-        if (!confirm(confirmMessage)) {
-          return;
-        }
-      }
-    }
-    
+    setIsApproveDialogOpen(true);
+  };
+
+  const handleApproveConfirm = async () => {
+    if (!id) return;
+
+    setIsProcessing(true);
     try {
       await approveTransaction(id);
       await refetch();
+      setIsApproveDialogOpen(false);
       navigate("/inventory/transactions");
     } catch (error: any) {
       toast.error(error.message || "İşlem onaylanırken hata oluştu");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleCancel = async () => {
-    if (!id) return;
-    
-    if (!confirm("Bu işlemi iptal etmek istediğinizden emin misiniz?")) {
-      return;
-    }
+  const handleApproveCancel = () => {
+    setIsApproveDialogOpen(false);
+  };
 
+  const handleCancel = () => {
+    if (!id) return;
+    setIsCancelDialogOpen(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!id) return;
+
+    setIsProcessing(true);
     try {
       await cancelTransaction(id);
       await refetch();
+      setIsCancelDialogOpen(false);
       navigate("/inventory/transactions");
     } catch (error: any) {
       toast.error(error.message || "İşlem iptal edilirken hata oluştu");
+    } finally {
+      setIsProcessing(false);
     }
+  };
+
+  const handleCancelCancel = () => {
+    setIsCancelDialogOpen(false);
   };
 
   const getTypeIcon = (type: string) => {
@@ -458,6 +471,47 @@ export default function InventoryTransactionDetail() {
           )}
         </div>
       </div>
+
+      {/* Onay Dialog */}
+      <ConfirmationDialogComponent
+        open={isApproveDialogOpen}
+        onOpenChange={setIsApproveDialogOpen}
+        title="Stok Hareketini Onayla"
+        description={
+          transaction?.transaction_type === 'sayim' && transaction.items?.some(item => {
+            const systemStock = systemStockMap.get(item.product_id) || 0;
+            return Number(item.quantity) !== systemStock;
+          })
+            ? "Bu sayımı onayladığınızda, depodaki stok miktarları fiziksel sayım sonuçlarına göre güncellenecektir. Devam etmek istiyor musunuz?"
+            : transaction
+            ? `"${transaction.transaction_number}" numaralı işlemi onaylamak istediğinizden emin misiniz?`
+            : "Bu işlemi onaylamak istediğinizden emin misiniz?"
+        }
+        confirmText={t("common.confirm")}
+        cancelText={t("common.cancel")}
+        variant="default"
+        onConfirm={handleApproveConfirm}
+        onCancel={handleApproveCancel}
+        isLoading={isProcessing}
+      />
+
+      {/* İptal Dialog */}
+      <ConfirmationDialogComponent
+        open={isCancelDialogOpen}
+        onOpenChange={setIsCancelDialogOpen}
+        title="Stok Hareketini İptal Et"
+        description={
+          transaction
+            ? `"${transaction.transaction_number}" numaralı işlemi iptal etmek istediğinizden emin misiniz?`
+            : "Bu işlemi iptal etmek istediğinizden emin misiniz?"
+        }
+        confirmText={t("common.cancel")}
+        cancelText={t("common.close")}
+        variant="default"
+        onConfirm={handleCancelConfirm}
+        onCancel={handleCancelCancel}
+        isLoading={isProcessing}
+      />
     </div>
   );
 }

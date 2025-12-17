@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash } from "lucide-react";
@@ -32,6 +33,7 @@ const EmployeeTable = ({
   selectedEmployees = [],
   setSelectedEmployees
 }: EmployeeTableProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
@@ -390,8 +392,8 @@ const EmployeeTable = ({
         onOpenChange={setIsDeleteDialogOpen}
         title="Çalışanı Sil"
         description={`"${employeeToDelete?.first_name} ${employeeToDelete?.last_name}" çalışanını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}

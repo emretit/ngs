@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import ProductionHeader from "@/components/production/ProductionHeader";
 import ProductionFilterBar from "@/components/production/ProductionFilterBar";
 import WorkOrdersContent from "@/components/production/WorkOrdersContent";
@@ -8,6 +9,7 @@ import { useProduction } from "@/hooks/useProduction";
 import { WorkOrder, WorkOrderStatus } from "@/types/production";
 import { toast } from "sonner";
 import { WorkOrdersViewType } from "@/components/production/ProductionWorkOrdersViewToggle";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface ProductionProps {
   isCollapsed?: boolean;
@@ -15,6 +17,7 @@ interface ProductionProps {
 }
 
 const Production = ({ isCollapsed, setIsCollapsed }: ProductionProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { 
@@ -31,6 +34,9 @@ const Production = ({ isCollapsed, setIsCollapsed }: ProductionProps) => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [workOrdersView, setWorkOrdersView] = useState<WorkOrdersViewType>("table");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [workOrderToDelete, setWorkOrderToDelete] = useState<WorkOrder | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleWorkOrderClick = (workOrder: WorkOrder) => {
     // Detay sayfası yoksa şimdilik düzenleme sayfasına yönlendir
@@ -41,10 +47,34 @@ const Production = ({ isCollapsed, setIsCollapsed }: ProductionProps) => {
     navigate(`/production/work-orders/${workOrder.id}/edit`);
   };
 
-  const handleDeleteWorkOrder = async (workOrderId: string) => {
-    // TODO: Implement delete functionality
-    toast.success("İş emri silme işlemi henüz aktif değil");
-  };
+  const handleDeleteWorkOrder = useCallback((workOrderId: string) => {
+    const workOrder = workOrders.find(w => w.id === workOrderId);
+    if (workOrder) {
+      setWorkOrderToDelete(workOrder);
+      setIsDeleteDialogOpen(true);
+    }
+  }, [workOrders]);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!workOrderToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      // TODO: Implement delete functionality
+      toast.success("İş emri silme işlemi henüz aktif değil");
+      setIsDeleteDialogOpen(false);
+      setWorkOrderToDelete(null);
+    } catch (error) {
+      toast.error("İş emri silinirken hata oluştu");
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [workOrderToDelete]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setIsDeleteDialogOpen(false);
+    setWorkOrderToDelete(null);
+  }, []);
 
   const handleStatusChange = async (workOrderId: string, status: WorkOrderStatus) => {
     try {
@@ -123,6 +153,24 @@ const Production = ({ isCollapsed, setIsCollapsed }: ProductionProps) => {
           onStatusChange={handleStatusChange}
           searchQuery={searchQuery}
           statusFilter={statusFilter}
+        />
+
+        {/* Silme Onay Dialog */}
+        <ConfirmationDialogComponent
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="İş Emrini Sil"
+          description={
+            workOrderToDelete
+              ? `"${workOrderToDelete.title}" (${workOrderToDelete.order_number}) iş emrini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+              : "Bu iş emrini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+          }
+          confirmText={t("common.delete")}
+          cancelText={t("common.cancel")}
+          variant="destructive"
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isLoading={isDeleting}
         />
       </div>
     </>

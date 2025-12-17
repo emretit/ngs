@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Plus, Edit, Trash2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import CreditCardModal from "./modals/CreditCardModal";
-import { useCreditCards } from "@/hooks/useAccountsData";
+import { useCreditCards, useDeleteCreditCard } from "@/hooks/useAccountsData";
 import AccountsSkeleton from "./AccountsSkeleton";
+import { toast } from "sonner";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface CreditCardAccount {
   id: string;
@@ -29,8 +31,14 @@ interface CreditCardsProps {
 
 const CreditCards = ({ showBalances }: CreditCardsProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [cardToEdit, setCardToEdit] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const { data: creditCards = [], isLoading, refetch } = useCreditCards();
+  const { deleteCard } = useDeleteCreditCard();
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -69,6 +77,47 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
 
   const handleModalSuccess = () => {
     refetch();
+    setIsModalOpen(false);
+  };
+
+  const handleEdit = (e: React.MouseEvent, cardId: string) => {
+    e.stopPropagation();
+    setCardToEdit(cardId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    setCardToEdit(null);
+    refetch();
+  };
+
+  const handleDelete = (e: React.MouseEvent, cardId: string, cardName: string) => {
+    e.stopPropagation();
+    setCardToDelete({ id: cardId, name: cardName });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!cardToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteCard(cardToDelete.id);
+      toast.success("Kredi kartı başarıyla silindi");
+      refetch();
+      setIsDeleteDialogOpen(false);
+      setCardToDelete(null);
+    } catch (error: any) {
+      toast.error("Kart silinirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setCardToDelete(null);
   };
 
   const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.credit_limit, 0);
@@ -96,7 +145,7 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
               onClick={() => setIsModalOpen(true)}
             >
               <Plus className="h-3 w-3 mr-1" />
-              Ekle
+              Yeni
             </Button>
           </div>
         ) : (
@@ -137,10 +186,7 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-5 w-5 p-0 hover:bg-purple-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Edit functionality
-                    }}
+                    onClick={(e) => handleEdit(e, card.id)}
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
@@ -148,10 +194,7 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-5 w-5 p-0 hover:bg-red-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Delete functionality
-                    }}
+                    onClick={(e) => handleDelete(e, card.id, card.card_name)}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -167,6 +210,30 @@ const CreditCards = ({ showBalances }: CreditCardsProps) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleModalSuccess}
+      />
+
+      <CreditCardModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setCardToEdit(null);
+        }}
+        onSuccess={handleEditSuccess}
+        mode="edit"
+        cardId={cardToEdit || undefined}
+      />
+
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Kredi Kartını Sil"
+        description={`"${cardToDelete?.name || 'Bu kart'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
       />
     </div>
   );

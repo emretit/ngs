@@ -1,4 +1,5 @@
 import { useState, memo, useMemo, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -333,8 +334,8 @@ const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading:
         onOpenChange={setIsDeleteSubcategoryOpen}
         title="Alt Kategoriyi Sil"
         description={`"${subcategoryToDelete?.name || 'Bu alt kategori'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteSubcategoryConfirm}
         onCancel={() => {
@@ -358,6 +359,7 @@ interface CategoryManagementProps {
 }
 
 const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedType = 'all', selectedStatus, externalOpenCreateDialog, onExternalDialogOpened }: CategoryManagementProps) => {
+  const { t } = useTranslation();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   
   // External dialog açma kontrolü
@@ -829,8 +831,8 @@ const CategoryManagement = memo(({ searchQuery = "", selectedType: propSelectedT
         onOpenChange={setIsDeleteDialogOpen}
         title="Kategoriyi Sil"
         description={`"${categoryToDelete?.name || 'Bu kategori'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteConfirm}
         onCancel={() => {

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, memo, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import InventoryTransactionsHeader from "@/components/inventory/InventoryTransactionsHeader";
 import InventoryTransactionsFilterBar from "@/components/inventory/InventoryTransactionsFilterBar";
 import InventoryTransactionsContent from "@/components/inventory/InventoryTransactionsContent";
@@ -9,6 +10,7 @@ import StockTransferDialog from "@/components/inventory/StockTransferDialog";
 import { useInventoryTransactions } from "@/hooks/useInventoryTransactions";
 import { InventoryTransaction } from "@/types/inventory";
 import { toast } from "sonner";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface InventoryTransactionsProps {
   isCollapsed?: boolean;
@@ -16,6 +18,7 @@ interface InventoryTransactionsProps {
 }
 
 const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransactionsProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,6 +39,12 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
   const [isStockDialogOpen, setIsStockDialogOpen] = useState(false);
   const [stockDialogType, setStockDialogType] = useState<'giris' | 'cikis'>('giris');
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<InventoryTransaction | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [transactionToCancel, setTransactionToCancel] = useState<InventoryTransaction | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Debounce search query
   useEffect(() => {
@@ -54,6 +63,7 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
     refetch,
     approveTransaction,
     cancelTransaction,
+    deleteTransaction,
   } = useInventoryTransactions();
 
   // Filtreleri hook'a aktar
@@ -137,15 +147,37 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
     }
   }, [navigate]);
 
-  const handleDelete = useCallback(async (transaction: InventoryTransaction) => {
-    if (window.confirm(`${transaction.transaction_number} numaralı işlemi silmek istediğinize emin misiniz?`)) {
-      try {
-        // TODO: Delete functionality - şimdilik sadece toast göster
-        toast.error("Silme işlemi yakında eklenecek");
-      } catch (error) {
-        toast.error("İşlem silinirken hata oluştu");
-      }
+  const handleDelete = useCallback((transaction: InventoryTransaction) => {
+    // Sayım işlemleri silinemez
+    if (transaction.transaction_type === 'sayim') {
+      toast.error("Sayım işlemleri silinemez. Lütfen yeni bir sayım işlemi oluşturun.");
+      return;
     }
+
+    setTransactionToDelete(transaction);
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!transactionToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteTransaction(transactionToDelete.id);
+      toast.success("İşlem başarıyla silindi");
+      setIsDeleteDialogOpen(false);
+      setTransactionToDelete(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "İşlem silinirken hata oluştu");
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [transactionToDelete, deleteTransaction, refetch]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setIsDeleteDialogOpen(false);
+    setTransactionToDelete(null);
   }, []);
 
   const handleApprove = useCallback(async (transaction: InventoryTransaction) => {
@@ -158,17 +190,32 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
     }
   }, [approveTransaction, refetch]);
 
-  const handleCancel = useCallback(async (transaction: InventoryTransaction) => {
-    if (window.confirm(`${transaction.transaction_number} numaralı işlemi iptal etmek istediğinize emin misiniz?`)) {
-      try {
-        await cancelTransaction(transaction.id);
-        toast.success("İşlem iptal edildi");
-        refetch();
-      } catch (error: any) {
-        toast.error(error.message || "İşlem iptal edilirken hata oluştu");
-      }
+  const handleCancel = useCallback((transaction: InventoryTransaction) => {
+    setTransactionToCancel(transaction);
+    setIsCancelDialogOpen(true);
+  }, []);
+
+  const handleCancelConfirm = useCallback(async () => {
+    if (!transactionToCancel) return;
+
+    setIsCancelling(true);
+    try {
+      await cancelTransaction(transactionToCancel.id);
+      toast.success("İşlem iptal edildi");
+      setIsCancelDialogOpen(false);
+      setTransactionToCancel(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "İşlem iptal edilirken hata oluştu");
+    } finally {
+      setIsCancelling(false);
     }
-  }, [cancelTransaction, refetch]);
+  }, [transactionToCancel, cancelTransaction, refetch]);
+
+  const handleCancelCancel = useCallback(() => {
+    setIsCancelDialogOpen(false);
+    setTransactionToCancel(null);
+  }, []);
 
   const handlePrint = useCallback((transaction: InventoryTransaction) => {
     // TODO: Print functionality
@@ -265,6 +312,44 @@ const InventoryTransactions = ({ isCollapsed, setIsCollapsed }: InventoryTransac
         onSuccess={() => {
           refetch();
         }}
+      />
+
+      {/* Silme Onay Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Stok Hareketini Sil"
+        description={
+          transactionToDelete
+            ? transactionToDelete.status === 'completed'
+              ? `"${transactionToDelete.transaction_number}" numaralı onaylanmış işlemi silmek istediğinizden emin misiniz? Stoklar geri alınacaktır. Bu işlem geri alınamaz.`
+              : `"${transactionToDelete.transaction_number}" numaralı işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+            : "Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        }
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
+      />
+
+      {/* İptal Onay Dialog */}
+      <ConfirmationDialogComponent
+        open={isCancelDialogOpen}
+        onOpenChange={setIsCancelDialogOpen}
+        title="Stok Hareketini İptal Et"
+        description={
+          transactionToCancel
+            ? `"${transactionToCancel.transaction_number}" numaralı işlemi iptal etmek istediğinizden emin misiniz?`
+            : "Bu işlemi iptal etmek istediğinizden emin misiniz?"
+        }
+        confirmText={t("common.cancel")}
+        cancelText={t("common.close")}
+        variant="default"
+        onConfirm={handleCancelConfirm}
+        onCancel={handleCancelCancel}
+        isLoading={isCancelling}
       />
     </div>
   );

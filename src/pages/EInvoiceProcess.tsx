@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useTabs } from '@/components/tabs/TabContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,6 +93,9 @@ interface EInvoiceDetails {
   };
 }
 import { Product } from "@/types/product";
+import { IntegratorService } from "@/services/integratorService";
+import { VeribanService } from "@/services/veribanService";
+
 interface ProductMatchingItem {
   invoice_item: EInvoiceItem;
   matched_product_id?: string;
@@ -208,6 +212,8 @@ const MemoizedTableRow = React.memo(({
 export default function EInvoiceProcess() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { updateTabTitle } = useTabs();
   const queryClient = useQueryClient();
   const [invoice, setInvoice] = useState<EInvoiceDetails | null>(null);
   const [matchingItems, setMatchingItems] = useState<ProductMatchingItem[]>([]);
@@ -291,44 +297,120 @@ export default function EInvoiceProcess() {
   // Load invoice details - MUST be defined before the useEffect that uses it
   const loadInvoiceDetails = useCallback(async () => {
     try {
-      console.log('🔄 Loading invoice details from Nilvera API for:', invoiceId);
+      // Önce integrator'ü kontrol et
+      const integrator = await IntegratorService.getSelectedIntegrator();
+      console.log('🔄 Loading invoice details from', integrator, 'API for:', invoiceId);
 
-      // Direkt olarak fatura detaylarını al - liste aramaya gerek yok çünkü UUID'miz var
-      const { data: detailsData, error: detailsError } = await supabase.functions.invoke('nilvera-invoice-details', {
-        body: {
-          invoiceId: invoiceId,
-          envelopeUUID: invoiceId // UUID aynı zamanda envelopeUUID olabilir
+      let apiInvoiceDetails: any;
+
+      if (integrator === 'veriban') {
+        // Veriban API çağrısı
+        const result = await VeribanService.getInvoiceDetails({
+          invoiceUUID: invoiceId!
+        });
+
+        if (!result.success || !result.data) {
+          throw new Error(result.error || 'Veriban fatura detayları alınamadı');
         }
-      });
 
-      if (detailsError) throw detailsError;
-      if (!detailsData?.success) {
-        throw new Error(detailsData?.error || 'Fatura detayları alınamadı');
+        console.log('✅ Veriban API Response:', result.data);
+        apiInvoiceDetails = result.data;
+      } else {
+        // Nilvera API çağrısı (varsayılan)
+        const { data: detailsData, error: detailsError } = await supabase.functions.invoke('nilvera-invoice-details', {
+          body: {
+            invoiceId: invoiceId,
+            envelopeUUID: invoiceId
+          }
+        });
+
+        if (detailsError) throw detailsError;
+        if (!detailsData?.success) {
+          throw new Error(detailsData?.error || 'Nilvera fatura detayları alınamadı');
+        }
+
+        console.log('✅ Nilvera API Response detailsData:', detailsData);
+        apiInvoiceDetails = detailsData.invoiceDetails;
       }
 
-      console.log('✅ API Response detailsData:', detailsData);
-
-      // API'den gelen detay verisi
-      const apiInvoiceDetails = detailsData.invoiceDetails;
-
+      // ========================================
+      // 🔍 FULL API RESPONSE DEBUG
+      // ========================================
+      console.log('\n' + '='.repeat(80));
+      console.log('🔍 FULL API RESPONSE FROM VERIBAN');
+      console.log('='.repeat(80));
       console.log('🔍 Full invoice details:', apiInvoiceDetails);
-      console.log('🔍 Available keys in apiInvoiceDetails:', apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : 'null');
+      console.log('🔍 Available keys:', apiInvoiceDetails ? Object.keys(apiInvoiceDetails) : 'null');
+      console.log('='.repeat(80) + '\n');
+      
+      // ========================================
+      // 📄 RAW XML (İLK 2000 KARAKTER)
+      // ========================================
+      if (apiInvoiceDetails?.rawXml) {
+        console.log('\n' + '📄'.repeat(40));
+        console.log('📄 RAW XML CONTENT (First 2000 chars):');
+        console.log('📄'.repeat(40));
+        console.log(apiInvoiceDetails.rawXml.substring(0, 2000));
+        console.log('...');
+        console.log('📄'.repeat(40) + '\n');
+      }
+      
+      // ========================================
+      // 📦 ITEMS KONTROLÜ
+      // ========================================
+      console.log('\n' + '📦'.repeat(40));
+      console.log('📦 ITEMS FROM API:');
+      console.log('📦'.repeat(40));
+      console.log('📦 Raw items from API:', apiInvoiceDetails?.items);
+      console.log('📦 Items count:', apiInvoiceDetails?.items?.length || 0);
+      if (apiInvoiceDetails?.items && apiInvoiceDetails.items.length > 0) {
+        console.log('📦 First raw item:', apiInvoiceDetails.items[0]);
+        console.log('📦 All items:');
+        apiInvoiceDetails.items.forEach((item: any, idx: number) => {
+          console.log(`  📦 Item ${idx + 1}:`, item);
+        });
+      } else {
+        console.warn('⚠️ NO ITEMS FOUND IN API RESPONSE!');
+      }
+      console.log('📦'.repeat(40) + '\n');
 
-      const items: EInvoiceItem[] = apiInvoiceDetails?.items?.map((item: any, index: number) => ({
-        id: `item-${index}`,
-        line_number: index + 1,
-        product_name: item.description || 'Açıklama yok',
-        product_code: item.productCode,
-        quantity: item.quantity || 1,
-        unit: item.unit || 'adet', // nilvera-invoice-details'te zaten UBL-TR kodundan dropdown değerine çevriliyor
-        unit_price: item.unitPrice || 0,
-        tax_rate: item.vatRate || item.taxRate || 18,
-        discount_rate: item.discountRate || 0,
-        line_total: item.totalAmount || 0,
-        tax_amount: item.vatAmount || item.taxAmount || 0,
-        gtip_code: item.gtipCode,
-        description: item.description
-      })) || [];
+      // ========================================
+      // 🔄 MAPPING ITEMS
+      // ========================================
+      console.log('\n' + '🔄'.repeat(40));
+      console.log('🔄 MAPPING ITEMS TO FRONTEND FORMAT:');
+      console.log('🔄'.repeat(40));
+      
+      const items: EInvoiceItem[] = apiInvoiceDetails?.items?.map((item: any, index: number) => {
+        console.log(`\n🔄 Mapping item ${index + 1}/${apiInvoiceDetails.items.length}:`);
+        console.log('  📥 Raw item:', item);
+        
+        const mappedItem = {
+          id: item.id || `item-${index}`,
+          line_number: item.lineNumber || item.line_number || index + 1,
+          product_name: item.description || item.product_name || 'Açıklama yok',
+          product_code: item.productCode || item.product_code,
+          quantity: item.quantity || 1,
+          unit: item.unit || 'adet',
+          unit_price: item.unitPrice || item.unit_price || 0,
+          tax_rate: item.vatRate || item.taxRate || item.tax_rate || 18,
+          discount_rate: item.discountRate || item.discount_rate || 0,
+          line_total: item.totalAmount || item.line_total || 0,
+          tax_amount: item.vatAmount || item.taxAmount || item.tax_amount || 0,
+          gtip_code: item.gtipCode || item.gtip_code,
+          description: item.description
+        };
+        
+        console.log('  📤 Mapped item:', mappedItem);
+        console.log('  ✅ Mapping complete!\n');
+        
+        return mappedItem;
+      }) || [];
+      
+      console.log('🔄'.repeat(40));
+      console.log('✅ Final items array:', items);
+      console.log('✅ Final items count:', items.length);
+      console.log('🔄'.repeat(40) + '\n');
 
       // Detaylı tedarikçi bilgilerini çıkar - önce supplierInfo'dan, sonra fallback'ler
       const supplierInfo = apiInvoiceDetails?.supplierInfo || {};
@@ -341,8 +423,8 @@ export default function EInvoiceProcess() {
       // Tedarikçi adı için önce supplierInfo'dan, sonra fallback'ler
       const supplierName =
         supplierInfo?.companyName ||
+        apiInvoiceDetails?.supplierName || // Veriban
         apiInvoiceDetails?.SenderName ||
-        apiInvoiceDetails?.supplierName ||
         accountingSupplierParty?.Party?.PartyName?.Name ||
         accountingSupplierParty?.PartyName?.Name ||
         'Tedarikçi';
@@ -350,8 +432,8 @@ export default function EInvoiceProcess() {
       // Tedarikçi VKN için önce supplierInfo'dan, sonra fallback'ler
       const supplierTaxNumber =
         supplierInfo?.taxNumber ||
+        apiInvoiceDetails?.supplierTaxNumber || // Veriban
         apiInvoiceDetails?.SenderTaxNumber ||
-        apiInvoiceDetails?.supplierTaxNumber ||
         apiInvoiceDetails?.SenderIdentifier ||
         apiInvoiceDetails?.TaxNumber ||
         accountingSupplierParty?.Party?.PartyIdentification?.ID ||
@@ -363,9 +445,24 @@ export default function EInvoiceProcess() {
 
       // Fatura tutar bilgilerini doğru alanlardan çek
       // Edge function'da hesaplanmış değerler kullanılıyor
-      const subtotal = parseFloat(apiInvoiceDetails?.TaxExclusiveAmount || apiInvoiceDetails?.taxExclusiveAmount || '0');
-      const taxTotal = parseFloat(apiInvoiceDetails?.TaxTotalAmount || apiInvoiceDetails?.taxTotalAmount || '0');
-      const totalAmount = parseFloat(apiInvoiceDetails?.PayableAmount || apiInvoiceDetails?.payableAmount || apiInvoiceDetails?.TotalAmount || apiInvoiceDetails?.totalAmount || '0');
+      const subtotal = parseFloat(
+        apiInvoiceDetails?.lineExtensionTotal || // Veriban yeni field
+        apiInvoiceDetails?.TaxExclusiveAmount || 
+        apiInvoiceDetails?.taxExclusiveAmount || 
+        '0'
+      );
+      const taxTotal = parseFloat(
+        apiInvoiceDetails?.taxTotalAmount || // Veriban yeni field
+        apiInvoiceDetails?.TaxTotalAmount || 
+        '0'
+      );
+      const totalAmount = parseFloat(
+        apiInvoiceDetails?.payableAmount || // Veriban yeni field
+        apiInvoiceDetails?.PayableAmount || 
+        apiInvoiceDetails?.TotalAmount || 
+        apiInvoiceDetails?.totalAmount || 
+        '0'
+      );
       
       console.log('💰 Invoice amounts:', { subtotal, taxTotal, totalAmount });
 
@@ -437,6 +534,13 @@ export default function EInvoiceProcess() {
       });
     }
   }, [invoiceId, loadInvoiceDetails, navigate, toast]);
+  
+  // Update tab title when invoice is loaded
+  useEffect(() => {
+    if (invoice?.invoice_number) {
+      updateTabTitle(location.pathname, invoice.invoice_number);
+    }
+  }, [invoice?.invoice_number, location.pathname, updateTabTitle]);
 
   // Tedarikçi eşleştirmesi için ayrı fonksiyon - useCallback ile optimize et
   const matchSupplier = useCallback(async () => {
@@ -701,6 +805,7 @@ export default function EInvoiceProcess() {
       }
 
       // Save matching results to database
+      // Önce mevcut kayıtları kontrol et ve güncelle/ekle
       const matchingRecords = matchingItems.map(item => ({
         invoice_id: einvoiceId,
         invoice_line_id: item.invoice_item.id,
@@ -719,53 +824,64 @@ export default function EInvoiceProcess() {
         company_id: userProfile.company_id // RLS için company_id ekle
       }));
       
-      const { error: insertError } = await supabase
-        .from('e_fatura_stok_eslestirme')
-        .insert(matchingRecords);
-      if (insertError) throw insertError;
-      // Create new products if needed
-      const newProductItems = matchingItems.filter(item => !item.matched_product_id);
-      for (const item of newProductItems) {
-        const { data: newProduct, error: productError } = await supabase
-          .from('products')
-          .insert({
-            name: item.invoice_item.product_name,
-            sku: item.invoice_item.product_code,
-            price: item.invoice_item.unit_price,
-            unit: item.invoice_item.unit,
-            tax_rate: item.invoice_item.tax_rate,
-            currency: invoice.currency,
-            category_type: 'product',
-            product_type: 'physical',
-            status: 'active',
-            is_active: true,
-            stock_quantity: 0,
-            description: `E-faturadan oluşturulan ürün - Fatura No: ${invoice.invoice_number}`,
-            company_id: userProfile.company_id // RLS için company_id ekle
-          })
-          .select()
-          .single();
-        if (productError) {
-          console.error('❌ Error creating product:', productError);
-          continue;
-        }
-        // Update matching record with new product ID
-        await supabase
+      // Her bir kayıt için UPSERT yap (composite unique key için)
+      for (const record of matchingRecords) {
+        // Önce mevcut kaydı kontrol et
+        const { data: existing } = await supabase
           .from('e_fatura_stok_eslestirme')
-          .update({ matched_stock_id: newProduct.id })
-          .eq('invoice_id', invoice.id)
-          .eq('invoice_line_id', item.invoice_item.id);
+          .select('id')
+          .eq('invoice_id', record.invoice_id)
+          .eq('invoice_line_id', record.invoice_line_id)
+          .maybeSingle(); // .single() yerine .maybeSingle() kullan (kayıt olmayabilir)
         
-        // Update matchingItems array with new product ID
-        const itemIndex = matchingItems.findIndex(m => m.invoice_item.id === item.invoice_item.id);
-        if (itemIndex !== -1) {
-          matchingItems[itemIndex].matched_product_id = newProduct.id;
+        if (existing) {
+          // Kayıt varsa güncelle
+          const { error: updateError } = await supabase
+            .from('e_fatura_stok_eslestirme')
+            .update({
+              invoice_product_name: record.invoice_product_name,
+              invoice_product_code: record.invoice_product_code,
+              invoice_quantity: record.invoice_quantity,
+              invoice_unit: record.invoice_unit,
+              invoice_unit_price: record.invoice_unit_price,
+              invoice_total_amount: record.invoice_total_amount,
+              invoice_tax_rate: record.invoice_tax_rate,
+              matched_stock_id: record.matched_stock_id,
+              match_type: record.match_type,
+              match_confidence: record.match_confidence,
+              is_confirmed: record.is_confirmed,
+              notes: record.notes,
+            })
+            .eq('invoice_id', record.invoice_id)
+            .eq('invoice_line_id', record.invoice_line_id);
+          
+          if (updateError) throw updateError;
+        } else {
+          // Kayıt yoksa ekle
+          const { error: insertError } = await supabase
+            .from('e_fatura_stok_eslestirme')
+            .insert(record);
+          
+          if (insertError) throw insertError;
         }
       }
-      // Get only valid items for purchase invoice (includes newly created products)
+      
+      // Get only valid items for purchase invoice (must have matched_product_id)
+      // Kullanıcı satırda zaten ürün eşleştirmesi yapıyor, burada tekrar ürün oluşturmaya gerek yok
       const validItems = matchingItems.filter(item => 
         item.matched_product_id
       );
+      
+      // Eğer eşleşmemiş item'lar varsa uyarı ver
+      const unmatchedItems = matchingItems.filter(item => !item.matched_product_id);
+      if (unmatchedItems.length > 0) {
+        const unmatchedNames = unmatchedItems.map(item => item.invoice_item.product_name).join(', ');
+        toast.warning(`${unmatchedItems.length} kalem için ürün eşleştirmesi yapılmamış. Bu kalemler faturaya eklenmeyecek: ${unmatchedNames}`);
+      }
+      
+      if (validItems.length === 0) {
+        throw new Error('Faturaya eklenecek ürün bulunamadı. Lütfen en az bir kalem için ürün eşleştirmesi yapın.');
+      }
       const subtotal = validItems.reduce((sum, item) => 
         sum + (item.invoice_item.line_total - (item.invoice_item.line_total * item.invoice_item.tax_rate / 100)), 0
       );
@@ -773,6 +889,9 @@ export default function EInvoiceProcess() {
         sum + (item.invoice_item.line_total * item.invoice_item.tax_rate / 100), 0
       );
       const total = subtotal + taxTotal;
+      
+      // Category ID: Artık hem kategori hem alt kategori ID'sini direkt kabul ediyor
+      // Migration ile database constraint'i güncellendi
       // Create purchase invoice
       const { data: purchaseInvoice, error: invoiceError } = await supabase
         .from('purchase_invoices')
@@ -788,13 +907,40 @@ export default function EInvoiceProcess() {
           invoice_date: formData.invoice_date,
           due_date: formData.due_date || formData.invoice_date,
           notes: formData.notes,
-          category_id: formData.expense_category_id || null,
+          category_id: formData.expense_category_id || null, // Alt kategori ID'si direkt kullanılıyor
           einvoice_id: invoice.id,
           company_id: userProfile.company_id // RLS için company_id ekle
         })
         .select()
         .single();
       if (invoiceError) throw invoiceError;
+      
+      // Tedarikçi bakiyesini güncelle (alış faturası = tedarikçiye borçlanma = bakiye azalır/negatif yönde artar)
+      // Pozitif bakiye = alacak, Negatif bakiye = borç
+      const { data: supplierData, error: supplierFetchError } = await supabase
+        .from('suppliers')
+        .select('balance')
+        .eq('id', selectedSupplierId)
+        .single();
+      
+      if (supplierFetchError) {
+        console.error('❌ Error fetching supplier balance:', supplierFetchError);
+        // Hata olsa bile devam et, sadece logla
+      } else if (supplierData) {
+        const newSupplierBalance = (supplierData.balance || 0) - total;
+        const { error: supplierUpdateError } = await supabase
+          .from('suppliers')
+          .update({ balance: newSupplierBalance })
+          .eq('id', selectedSupplierId);
+        
+        if (supplierUpdateError) {
+          console.error('❌ Error updating supplier balance:', supplierUpdateError);
+          // Hata olsa bile devam et, sadece logla
+        } else {
+          console.log('✅ Supplier balance updated:', newSupplierBalance);
+        }
+      }
+      
       // Create purchase invoice items
       const purchaseInvoiceItems = validItems.map(item => ({
         purchase_invoice_id: purchaseInvoice.id,
@@ -961,8 +1107,12 @@ export default function EInvoiceProcess() {
       // Alış faturaları tablosunu refresh et
       await queryClient.invalidateQueries({ queryKey: ['purchaseInvoices'] });
       await queryClient.invalidateQueries({ queryKey: ['purchase-invoices-infinite'] });
+      // Tedarikçi cache'ini invalidate et (bakiye güncellendiği için)
+      await queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      await queryClient.invalidateQueries({ queryKey: ['supplier', selectedSupplierId] });
+      await queryClient.invalidateQueries({ queryKey: ['supplier_statistics'] });
       
-      toast.success(`Alış faturası başarıyla oluşturuldu. ${newProductItems.length} yeni ürün eklendi.${defaultWarehouseId ? ' Stok hareketi oluşturuldu.' : ''}`);
+      toast.success(`Alış faturası başarıyla oluşturuldu.${defaultWarehouseId ? ' Stok hareketi oluşturuldu.' : ''}`);
       navigate('/e-invoice');
     } catch (error: any) {
       console.error('❌ Error creating purchase invoice:', error);

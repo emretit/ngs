@@ -224,7 +224,12 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
   };
 
   const handleEdit = () => {
-    toast.info("Düzenleme özelliği yakında eklenecek");
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    window.location.reload();
   };
 
   const clearFilters = () => {
@@ -380,6 +385,13 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
               className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
             >
               <span className="font-medium">{showBalances ? "Gizle" : "Göster"}</span>
+            </Button>
+            <Button 
+              onClick={handleEdit}
+              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-600/90 hover:from-orange-600/90 hover:to-orange-600/80 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+            >
+              <Pencil className="h-4 w-4" />
+              <span>Düzenle</span>
             </Button>
           </div>
         </div>
@@ -575,8 +587,9 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
         <PartnerAccountModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onSuccess={() => {
-            setIsEditModalOpen(false);
+          onSuccess={handleEditSuccess}
+          mode="edit"
+          accountId={id}
           }}
           mode="edit"
           accountId={id}

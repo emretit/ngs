@@ -12,7 +12,10 @@ import { formatCurrency } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import BankAccountModal from "./modals/BankAccountModal";
 import { useBankAccounts } from "@/hooks/useAccountsData";
+import { useDeleteBankAccount } from "@/hooks/useBankAccounts";
 import AccountsSkeleton from "./AccountsSkeleton";
+import { toast } from "sonner";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface BankAccount {
   id: string;
@@ -31,8 +34,14 @@ interface BankAccountsProps {
 
 const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [accountToEdit, setAccountToEdit] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const { data: bankAccounts = [], isLoading, refetch } = useBankAccounts();
+  const { deleteData } = useDeleteBankAccount();
 
   const getAccountTypeLabel = (type: string) => {
     const types: Record<string, string> = {
@@ -60,6 +69,47 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
 
   const handleModalSuccess = () => {
     refetch();
+    setIsModalOpen(false);
+  };
+
+  const handleEdit = (e: React.MouseEvent, accountId: string) => {
+    e.stopPropagation();
+    setAccountToEdit(accountId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    setAccountToEdit(null);
+    refetch();
+  };
+
+  const handleDelete = (e: React.MouseEvent, accountId: string, accountName: string) => {
+    e.stopPropagation();
+    setAccountToDelete({ id: accountId, name: accountName });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!accountToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteData(accountToDelete.id);
+      toast.success("Banka hesabı başarıyla silindi");
+      refetch();
+      setIsDeleteDialogOpen(false);
+      setAccountToDelete(null);
+    } catch (error: any) {
+      toast.error("Hesap silinirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setAccountToDelete(null);
   };
 
   const totalBankBalance = bankAccounts.reduce((sum, account) => {
@@ -92,7 +142,7 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
               onClick={() => setIsModalOpen(true)}
             >
               <Plus className="h-3 w-3 mr-1" />
-              Ekle
+              Yeni
             </Button>
           </div>
         ) : (
@@ -127,10 +177,7 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-5 w-5 p-0 hover:bg-blue-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Edit functionality
-                    }}
+                    onClick={(e) => handleEdit(e, account.id)}
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
@@ -138,10 +185,7 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-5 w-5 p-0 hover:bg-red-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Delete functionality
-                    }}
+                    onClick={(e) => handleDelete(e, account.id, account.account_name)}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -157,6 +201,30 @@ const BankAccountsSimple = ({ showBalances }: BankAccountsProps) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleModalSuccess}
+      />
+
+      <BankAccountModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setAccountToEdit(null);
+        }}
+        onSuccess={handleEditSuccess}
+        mode="edit"
+        accountId={accountToEdit || undefined}
+      />
+
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Banka Hesabını Sil"
+        description={`"${accountToDelete?.name || 'Bu hesap'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
       />
     </div>
   );

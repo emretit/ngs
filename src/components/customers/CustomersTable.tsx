@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Table, TableBody, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,6 +41,7 @@ const CustomersTable = ({
   sortDirection: externalSortDirection,
   onSort: externalOnSort
 }: CustomersTableProps) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   
   // Fallback için internal state (eğer dışarıdan prop geçilmezse)
@@ -253,8 +255,8 @@ const CustomersTable = ({
         onOpenChange={setIsDeleteDialogOpen}
         title="Müşteriyi Sil"
         description={`"${customerToDelete?.company || customerToDelete?.name || 'Bu müşteri'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteCustomerConfirm}
         onCancel={handleDeleteCustomerCancel}

@@ -1,20 +1,12 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Pencil, Power, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useToggleCompanyStatus, useDeleteCompany } from "@/hooks/useCompanies";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface Company {
   id: string;
@@ -32,10 +24,12 @@ interface CompanyDetailHeaderProps {
 }
 
 export const CompanyDetailHeader = ({ company }: CompanyDetailHeaderProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const toggleActiveMutation = useToggleCompanyStatus();
   const deleteMutation = useDeleteCompany();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleToggleActive = async () => {
     try {
@@ -53,13 +47,18 @@ export const CompanyDetailHeader = ({ company }: CompanyDetailHeaderProps) => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
     try {
       await deleteMutation.mutateAsync(company.id);
       toast({
         title: "Başarılı",
         description: "Şirket silindi",
       });
+      setIsDeleteDialogOpen(false);
       navigate('/admin/companies');
     } catch (error) {
       toast({
@@ -68,6 +67,10 @@ export const CompanyDetailHeader = ({ company }: CompanyDetailHeaderProps) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -126,31 +129,26 @@ export const CompanyDetailHeader = ({ company }: CompanyDetailHeaderProps) => {
             <Power className={`h-4 w-4 ${company.is_active ? 'text-green-600' : 'text-red-600'}`} />
             {company.is_active ? 'Pasif Yap' : 'Aktif Yap'}
           </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="gap-2">
-                <Trash2 className="h-4 w-4" />
-                Sil
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Şirketi Silmek İstediğinize Emin Misiniz?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Bu işlem şirketi pasif hale getirecektir. Şirket verisi silinmez, sadece is_active = false olarak işaretlenir.
-                  Gerektiğinde şirketi tekrar aktif hale getirebilirsiniz.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>İptal</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                  Sil
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button variant="destructive" className="gap-2" onClick={handleDeleteClick}>
+            <Trash2 className="h-4 w-4" />
+            Sil
+          </Button>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Şirketi Sil"
+        description={`"${company.name}" şirketini silmek istediğinizden emin misiniz? Bu işlem şirketi pasif hale getirecektir. Şirket verisi silinmez, sadece is_active = false olarak işaretlenir. Gerektiğinde şirketi tekrar aktif hale getirebilirsiniz.`}
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 };

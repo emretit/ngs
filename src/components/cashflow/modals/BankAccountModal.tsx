@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ interface BankAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  mode?: 'create' | 'edit';
+  accountId?: string;
 }
 
 interface BankAccountFormData {
@@ -22,10 +24,11 @@ interface BankAccountFormData {
   swift_code: string;
   account_type: string;
   currency: string;
+  initial_balance: number;
   notes: string;
 }
 
-const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps) => {
+const BankAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', accountId }: BankAccountModalProps) => {
   const [formData, setFormData] = useState<BankAccountFormData>({
     account_name: "",
     bank_name: "",
@@ -35,9 +38,48 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
     swift_code: "",
     account_type: "vadesiz",
     currency: "TRY",
+    initial_balance: 0,
     notes: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isPrefilling, setIsPrefilling] = useState(false);
+
+  // Edit modunda formu Supabase'den doldur
+  useEffect(() => {
+    const prefill = async () => {
+      if (!isOpen || mode !== 'edit' || !accountId) return;
+      setIsPrefilling(true);
+      try {
+        const { data, error } = await supabase
+          .from('bank_accounts')
+          .select('account_name, bank_name, branch_name, account_number, iban, swift_code, account_type, currency, notes')
+          .eq('id', accountId)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setFormData({
+            account_name: data.account_name || "",
+            bank_name: data.bank_name || "",
+            branch_name: data.branch_name || "",
+            account_number: data.account_number || "",
+            iban: data.iban || "",
+            swift_code: data.swift_code || "",
+            account_type: data.account_type || 'vadesiz',
+            currency: data.currency || 'TRY',
+            initial_balance: 0,
+            notes: data.notes || ""
+          });
+        }
+      } catch (e) {
+        console.error('Error pre-filling bank account:', e);
+        toast.error("Hesap bilgileri yüklenirken hata oluştu");
+      } finally {
+        setIsPrefilling(false);
+      }
+    };
+    prefill();
+  }, [isOpen, mode, accountId]);
 
   const handleInputChange = (field: keyof BankAccountFormData, value: string) => {
     setFormData(prev => ({
@@ -71,24 +113,45 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
         throw new Error("Şirket bilgisi bulunamadı");
       }
 
-      const { error } = await supabase
-        .from('bank_accounts')
-        .insert({
-          account_name: formData.account_name.trim(),
-          bank_name: formData.bank_name.trim(),
-          branch_name: formData.branch_name.trim() || null,
-          account_number: formData.account_number.trim() || null,
-          iban: formData.iban.trim() || null,
-          swift_code: formData.swift_code.trim() || null,
-          account_type: formData.account_type,
-          currency: formData.currency,
-          notes: formData.notes.trim() || null,
-          company_id: profile.company_id
-        });
+      if (mode === 'edit' && accountId) {
+        const { error } = await supabase
+          .from('bank_accounts')
+          .update({
+            account_name: formData.account_name.trim(),
+            bank_name: formData.bank_name.trim(),
+            branch_name: formData.branch_name.trim() || null,
+            account_number: formData.account_number.trim() || null,
+            iban: formData.iban.trim() || null,
+            swift_code: formData.swift_code.trim() || null,
+            account_type: formData.account_type,
+            currency: formData.currency,
+            notes: formData.notes.trim() || null
+          })
+          .eq('id', accountId);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Banka hesabı güncellendi");
+      } else {
+        const { error } = await supabase
+          .from('bank_accounts')
+          .insert({
+            account_name: formData.account_name.trim(),
+            bank_name: formData.bank_name.trim(),
+            branch_name: formData.branch_name.trim() || null,
+            account_number: formData.account_number.trim() || null,
+            iban: formData.iban.trim() || null,
+            swift_code: formData.swift_code.trim() || null,
+            account_type: formData.account_type,
+            currency: formData.currency,
+            current_balance: formData.initial_balance,
+            available_balance: formData.initial_balance,
+            notes: formData.notes.trim() || null,
+            company_id: profile.company_id
+          });
 
-      toast.success("Banka hesabı oluşturuldu");
+        if (error) throw error;
+        toast.success("Banka hesabı oluşturuldu");
+      }
 
       onSuccess();
       onClose();
@@ -101,6 +164,7 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
         swift_code: "",
         account_type: "vadesiz",
         currency: "TRY",
+        initial_balance: 0,
         notes: ""
       });
     } catch (error) {
@@ -115,7 +179,7 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Yeni Banka Hesabı"
+      title={mode === 'edit' ? "Banka Hesabını Düzenle" : "Yeni Banka Hesabı"}
       maxWidth="lg"
       headerColor="blue"
     >
@@ -231,6 +295,21 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
           </div>
         </div>
 
+        {mode === 'create' && (
+          <div className="space-y-2">
+            <Label htmlFor="initial_balance" className="text-sm font-medium text-gray-700">Başlangıç Bakiyesi</Label>
+            <Input
+              id="initial_balance"
+              type="number"
+              step="0.01"
+              value={formData.initial_balance}
+              onChange={(e) => handleInputChange('initial_balance', parseFloat(e.target.value) || 0)}
+              placeholder="0.00"
+              className="h-9"
+            />
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="notes" className="text-sm font-medium text-gray-700">Notlar</Label>
           <Textarea
@@ -247,11 +326,11 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess }: BankAccountModalProps)
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
           <UnifiedDialogActionButton
             onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)}
-            disabled={isLoading}
-            loading={isLoading}
+            disabled={isLoading || isPrefilling}
+            loading={isLoading || isPrefilling}
             variant="primary"
           >
-            Oluştur
+            {mode === 'edit' ? 'Kaydet' : 'Oluştur'}
           </UnifiedDialogActionButton>
         </UnifiedDialogFooter>
       </form>

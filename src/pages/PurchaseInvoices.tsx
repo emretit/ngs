@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import PurchaseInvoicesHeader from "@/components/purchase/PurchaseInvoicesHeader";
 import PurchaseInvoiceFilterBar from "@/components/purchase/PurchaseInvoiceFilterBar";
 import PurchaseInvoicesContent from "@/components/purchase/PurchaseInvoicesContent";
@@ -57,6 +58,32 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
     setSelectedInvoices([]);
   }, []);
 
+  // Toplu silme işlemi
+  const handleBulkDelete = useCallback(async (invoiceIds: string[]) => {
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const id of invoiceIds) {
+      try {
+        await deleteInvoiceMutation.mutateAsync(id);
+        successCount++;
+      } catch (error) {
+        errorCount++;
+        console.error(`Fatura silme hatası (${id}):`, error);
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`${successCount} fatura başarıyla silindi`);
+    }
+    if (errorCount > 0) {
+      toast.error(`${errorCount} fatura silinemedi`);
+    }
+
+    // Seçimi temizle
+    setSelectedInvoices([]);
+  }, [deleteInvoiceMutation]);
+
   return (
     <div className="space-y-2">
         <PurchaseInvoicesHeader
@@ -79,6 +106,7 @@ const PurchaseInvoices = ({ isCollapsed, setIsCollapsed }: PurchaseInvoicesProps
         <PurchaseInvoicesBulkActions
           selectedInvoices={selectedInvoices}
           onClearSelection={handleClearSelection}
+          onBulkDelete={handleBulkDelete}
         />
         <PurchaseInvoicesContent
           invoices={invoices || []}

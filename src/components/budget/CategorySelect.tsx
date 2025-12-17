@@ -64,11 +64,21 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   const selectedItem = useMemo(() => {
     if (!value) return null;
     
-    // Önce kategorilerde ara
+    // Önce alt kategorilerde ara
+    const subcategory = allSubcategories.find((sub) => sub.id === value);
+    if (subcategory) {
+      const parentCategory = expenseCategories.find((cat) => cat.id === subcategory.category_id);
+      return {
+        type: "subcategory" as const,
+        id: subcategory.id,
+        name: subcategory.name,
+        parentName: parentCategory?.name || '',
+      };
+    }
+    
+    // Sonra kategorilerde ara
     const category = expenseCategories.find((cat) => cat.id === value);
     if (category) {
-      // Bu kategoriye ait seçili alt kategori var mı kontrol et
-      // (Şimdilik sadece kategori gösteriyoruz, alt kategori seçimi için ayrı bir alan gerekebilir)
       return {
         type: "category" as const,
         id: category.id,
@@ -77,7 +87,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     }
     
     return null;
-  }, [value, expenseCategories]);
+  }, [value, expenseCategories, allSubcategories]);
 
   // Filtreleme
   const filteredCategories = useMemo(() => {
@@ -94,14 +104,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   }, [categoriesWithSubcategories, searchQuery]);
 
   const handleSelect = (itemId: string, itemType: "category" | "subcategory") => {
-    // Alt kategori seçildiğinde, o alt kategorinin bağlı olduğu kategoriyi kaydet
+    // Alt kategori seçildiğinde, alt kategorinin id'sini kaydet
     if (itemType === "subcategory") {
-      const subcategory = allSubcategories.find((sub) => sub.id === itemId);
-      if (subcategory) {
-        onChange(subcategory.category_id);
-      }
+      onChange(itemId); // Alt kategorinin kendi id'sini kaydet
     } else {
-      onChange(itemId);
+      onChange(itemId); // Kategori seçildiğinde kategori id'sini kaydet
     }
     setOpen(false);
     setSearchQuery("");
@@ -116,7 +123,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           aria-expanded={open}
           className={cn("w-full justify-between", className)}
         >
-          {selectedItem ? selectedItem.name : placeholder}
+          {selectedItem 
+            ? selectedItem.type === "subcategory" 
+              ? `${selectedItem.parentName} > ${selectedItem.name}`
+              : selectedItem.name
+            : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -174,8 +185,8 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
                         <AccordionContent className="pb-0">
                           <div className="pl-6 space-y-1">
                             {category.subcategories.map((subcategory) => {
-                              // Alt kategori seçildiğinde, o alt kategorinin category_id'si kaydedilir
-                              const isSubcategorySelected = value === category.id;
+                              // Alt kategori seçildiğinde, alt kategorinin id'si kaydedilir
+                              const isSubcategorySelected = value === subcategory.id;
                               return (
                                 <CommandItem
                                   key={subcategory.id}

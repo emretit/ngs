@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface BankAccount {
@@ -257,5 +257,63 @@ export function useAllAccounts() {
     retry: 2,
     retryDelay: 1000,
   });
+}
+
+// Silme hook'ları
+export function useDeleteCashAccount() {
+  const queryClient = useQueryClient();
+  
+  const deleteAccount = async (id: string) => {
+    const { error } = await supabase
+      .from("cash_accounts")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+    
+    // Cache'i güncelle
+    queryClient.invalidateQueries({ queryKey: ['cash-accounts'] });
+    queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
+  };
+
+  return { deleteAccount };
+}
+
+export function useDeleteCreditCard() {
+  const queryClient = useQueryClient();
+  
+  const deleteCard = async (id: string) => {
+    const { error } = await supabase
+      .from("credit_cards")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+    
+    // Cache'i güncelle
+    queryClient.invalidateQueries({ queryKey: ['credit-cards'] });
+    queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
+  };
+
+  return { deleteCard };
+}
+
+export function useDeletePartnerAccount() {
+  const queryClient = useQueryClient();
+  
+  const deleteAccount = async (id: string) => {
+    const { error } = await supabase
+      .from("partner_accounts")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+    
+    // Cache'i güncelle
+    queryClient.invalidateQueries({ queryKey: ['partner-accounts'] });
+    queryClient.invalidateQueries({ queryKey: ['all-accounts'] });
+  };
+
+  return { deleteAccount };
 }
 

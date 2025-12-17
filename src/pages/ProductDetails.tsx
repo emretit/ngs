@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
@@ -7,10 +7,13 @@ import ProductDetailsHeader from "@/components/products/details/ProductDetailsHe
 import { ProductInfo } from "@/components/products/details/ProductInfo";
 import { ProductTabs } from "@/components/products/details/ProductTabs";
 import { showError } from "@/utils/toastUtils";
+import { useTabs } from "@/components/tabs/TabContext";
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { updateTabTitle } = useTabs();
   const [product, setProduct] = useState<Product | null>(null);
   
   const { data: fetchedProduct, isLoading, refetch } = useQuery({
@@ -112,6 +115,13 @@ const ProductDetails = () => {
   };
 
   const currentProduct = product || fetchedProduct;
+  
+  // Update tab title when product is loaded
+  useEffect(() => {
+    if (currentProduct?.name) {
+      updateTabTitle(location.pathname, currentProduct.name);
+    }
+  }, [currentProduct?.name, location.pathname, updateTabTitle]);
 
   if (isLoading) {
     return (

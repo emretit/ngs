@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -182,8 +183,8 @@ const ProductTable = ({ products, isLoading }: ProductTableProps) => {
       onOpenChange={setIsDeleteDialogOpen}
       title="Ürünü Sil"
       description={`"${productToDelete?.name || 'Bu ürün'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-      confirmText="Sil"
-      cancelText="İptal"
+      confirmText={t("common.delete")}
+      cancelText={t("common.cancel")}
       variant="destructive"
       onConfirm={handleDeleteConfirm}
       onCancel={handleDeleteCancel}

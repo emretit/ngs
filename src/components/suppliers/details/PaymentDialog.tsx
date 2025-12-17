@@ -100,6 +100,18 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
 
   async function onSubmit(data: PaymentFormData) {
     try {
+      // Şirket bilgisini al
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Kullanıcı bulunamadı");
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) throw new Error("Şirket bilgisi bulunamadı");
+
       const { data: supplierData, error: supplierFetchError } = await supabase
         .from("suppliers")
         .select("balance")
@@ -117,17 +129,13 @@ export function PaymentDialog({ open, onOpenChange, supplier, defaultPaymentType
         supplier_id: supplier.id,
         payment_direction: data.payment_direction,
         currency: "TRY",
+        company_id: profile.company_id, // RLS için gerekli
       };
 
       // Hesap bilgisini ekle
-      if (data.account_type === "bank") {
-        paymentData.bank_account_id = data.account_id;
-      } else if (data.account_type === "cash") {
-        paymentData.cash_account_id = data.account_id;
-      } else if (data.account_type === "credit_card") {
-        paymentData.credit_card_id = data.account_id;
-      } else if (data.account_type === "partner") {
-        paymentData.partner_account_id = data.account_id;
+      if (data.account_id && data.account_type) {
+        paymentData.account_id = data.account_id;
+        paymentData.account_type = data.account_type;
       }
 
       const { error: paymentError } = await supabase.from("payments").insert(paymentData);

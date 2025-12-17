@@ -64,7 +64,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   
   // Apply filters - işlenmiş faturaları hariç tut
@@ -79,7 +78,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.supplierTaxNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || typeFilter === 'TEMELFATURA';
+    const matchesType = typeFilter === 'all' || invoice.invoiceProfile === typeFilter;
     return matchesSearch && matchesType;
   });
   const handleRefresh = async () => {
@@ -104,10 +103,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       toast.error(error.message || "Faturalar güncellenirken hata oluştu", { id: 'fetching-invoices' });
     }
   };
-  const handleFilter = () => {
-    // React Query otomatik olarak date filters değişikliğini algılar
-    // Manuel refetch gerekmez
-  };
   // Calculate total amount for header
   const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0);
 
@@ -122,23 +117,18 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
         <EInvoiceFilterBar 
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
           typeFilter={typeFilter}
           setTypeFilter={setTypeFilter}
           startDate={startDate}
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
-          onFilter={handleFilter}
-          isFiltering={isLoading}
         />
         <EInvoiceContent
           invoices={filteredInvoices}
           isLoading={isLoading}
           onRefresh={handleRefresh}
           searchTerm={searchTerm}
-          dateFilter={dateFilter}
         />
       </div>
   );

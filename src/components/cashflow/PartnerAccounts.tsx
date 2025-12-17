@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Edit, Trash2, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PartnerAccountModal from "./modals/PartnerAccountModal";
-import { usePartnerAccounts } from "@/hooks/useAccountsData";
+import { usePartnerAccounts, useDeletePartnerAccount } from "@/hooks/useAccountsData";
 import AccountsSkeleton from "./AccountsSkeleton";
+import { toast } from "sonner";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface PartnerAccount {
   id: string;
@@ -28,8 +30,14 @@ interface PartnerAccountsProps {
 
 const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [partnerToEdit, setPartnerToEdit] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [partnerToDelete, setPartnerToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const { data: partnerAccounts = [], isLoading, refetch } = usePartnerAccounts();
+  const { deleteAccount } = useDeletePartnerAccount();
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -64,6 +72,47 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
 
   const handleModalSuccess = () => {
     refetch();
+    setIsModalOpen(false);
+  };
+
+  const handleEdit = (e: React.MouseEvent, partnerId: string) => {
+    e.stopPropagation();
+    setPartnerToEdit(partnerId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    setPartnerToEdit(null);
+    refetch();
+  };
+
+  const handleDelete = (e: React.MouseEvent, partnerId: string, partnerName: string) => {
+    e.stopPropagation();
+    setPartnerToDelete({ id: partnerId, name: partnerName });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!partnerToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteAccount(partnerToDelete.id);
+      toast.success("Ortak hesabı başarıyla silindi");
+      refetch();
+      setIsDeleteDialogOpen(false);
+      setPartnerToDelete(null);
+    } catch (error: any) {
+      toast.error("Hesap silinirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setPartnerToDelete(null);
   };
 
   const totalCapital = partnerAccounts.reduce((sum, partner) => sum + partner.initial_capital, 0);
@@ -92,7 +141,7 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
               onClick={() => setIsModalOpen(true)}
             >
               <Plus className="h-3 w-3 mr-1" />
-              Oluştur
+              Yeni
             </Button>
           </div>
         ) : (
@@ -127,10 +176,7 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-5 w-5 p-0 hover:bg-orange-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Edit functionality
-                    }}
+                    onClick={(e) => handleEdit(e, partner.id)}
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
@@ -138,10 +184,7 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-5 w-5 p-0 hover:bg-red-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Delete functionality
-                    }}
+                    onClick={(e) => handleDelete(e, partner.id, partner.partner_name)}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -157,6 +200,30 @@ const PartnerAccounts = ({ showBalances }: PartnerAccountsProps) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleModalSuccess}
+      />
+
+      <PartnerAccountModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setPartnerToEdit(null);
+        }}
+        onSuccess={handleEditSuccess}
+        mode="edit"
+        accountId={partnerToEdit || undefined}
+      />
+
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Ortak Hesabını Sil"
+        description={`"${partnerToDelete?.name || 'Bu hesap'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
       />
     </div>
   );

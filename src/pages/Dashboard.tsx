@@ -1,21 +1,19 @@
-import { memo, useState } from "react";
+import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import RecentActivitiesTimeline from "@/components/dashboard/RecentActivitiesTimeline";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import { Target, Users, Calendar, DollarSign, ChevronRight, Bot, Sparkles, ChevronDown } from "lucide-react";
+import { Target, Users, Calendar, DollarSign, ChevronRight } from "lucide-react";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useNavigate } from "react-router-dom";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { AIAgentPanel } from "@/components/dashboard/AIAgentPanel";
+import { UnifiedAIPanel } from "@/components/dashboard/UnifiedAIPanel";
 import { useTranslation } from "react-i18next";
 
 const Dashboard = () => {
   const { t } = useTranslation();
   const { financialData, crmStats, hrStats, isLoading } = useDashboardData();
   const navigate = useNavigate();
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -28,40 +26,14 @@ const Dashboard = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Dashboard Header */}
-      <DashboardHeader 
+      <DashboardHeader
         financialData={financialData}
         crmStats={crmStats}
         hrStats={hrStats}
       />
 
-      {/* Collapsible AI Agent Panel */}
-      <Collapsible open={aiPanelOpen} onOpenChange={setAiPanelOpen}>
-        <CollapsibleTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-between h-12 px-4 bg-gradient-to-r from-primary/5 to-transparent border-primary/20 hover:border-primary/40 hover:bg-primary/10 group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                <Bot className="h-4 w-4 text-primary" />
-              </div>
-              <div className="text-left">
-                <span className="font-medium text-sm">{t("dashboard.aiAgent.title")}</span>
-                <span className="text-xs text-muted-foreground ml-2 hidden sm:inline">
-                  {t("dashboard.aiAgent.description")}
-                </span>
-              </div>
-              <span className="px-2 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-600 rounded-full hidden sm:inline">
-                {t("dashboard.aiAgent.new")}
-              </span>
-            </div>
-            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${aiPanelOpen ? 'rotate-180' : ''}`} />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-2">
-          <AIAgentPanel />
-        </CollapsibleContent>
-      </Collapsible>
+      {/* Unified AI Panel - Chat & Insights */}
+      <UnifiedAIPanel />
 
       {/* KPI Metrics Grid */}
       <MetricsGrid

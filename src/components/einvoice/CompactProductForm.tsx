@@ -186,13 +186,15 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
     setIsSaving(true);
     try {
       // Stock artık warehouse_stock tablosunda tutulduğu için products tablosuna 0 olarak kaydediyoruz
+      // Alış faturasından oluşturulduğu için fiyat purchase_price'a kaydediliyor
       const { data: newProduct, error } = await supabase
         .from("products")
         .insert({
           name: data.name,
           sku: data.sku,
           unit: data.unit,
-          price: data.price,
+          purchase_price: data.price, // Alış fiyatı olarak kaydet
+          price: 0, // Satış fiyatı varsayılan olarak 0 (sonra güncellenebilir)
           tax_rate: data.tax_rate,
           description: data.description,
           currency: "TRY", // Constraint sadece USD, EUR veya TRY kabul ediyor
@@ -316,7 +318,7 @@ const CompactProductForm: React.FC<CompactProductFormProps> = ({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("forms.priceTRY")} *</FormLabel>
+                    <FormLabel>Alış Fiyatı (₺) *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

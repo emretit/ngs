@@ -88,6 +88,41 @@ export const usePurchaseInvoices = () => {
       throw error;
     }
 
+    // Tedarikçi bakiyesini güncelle (alış faturası = tedarikçiye borçlanma = bakiye azalır/negatif yönde artar)
+    // Pozitif bakiye = alacak, Negatif bakiye = borç
+    if (invoiceData.supplier_id && invoiceData.total_amount) {
+      const { data: supplierData, error: supplierFetchError } = await supabase
+        .from('suppliers')
+        .select('balance')
+        .eq('id', invoiceData.supplier_id)
+        .single();
+      
+      if (supplierFetchError) {
+        console.error('❌ Error fetching supplier balance:', supplierFetchError);
+        // Hata olsa bile devam et, sadece logla
+      } else if (supplierData) {
+        const newSupplierBalance = (supplierData.balance || 0) - invoiceData.total_amount;
+        const { error: supplierUpdateError } = await supabase
+          .from('suppliers')
+          .update({ balance: newSupplierBalance })
+          .eq('id', invoiceData.supplier_id);
+        
+        if (supplierUpdateError) {
+          console.error('❌ Error updating supplier balance:', supplierUpdateError);
+          // Hata olsa bile devam et, sadece logla
+        } else {
+          console.log('✅ Supplier balance updated:', newSupplierBalance);
+        }
+      }
+    }
+
+    // Tedarikçi cache'ini invalidate et (bakiye güncellendiği için)
+    if (invoiceData.supplier_id) {
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier', invoiceData.supplier_id] });
+      queryClient.invalidateQueries({ queryKey: ['supplier_statistics'] });
+    }
+
     toast.success("Fatura başarıyla oluşturuldu");
     return data;
   };
@@ -178,10 +213,16 @@ export const usePurchaseInvoices = () => {
     }
 
     // 1. Bu faturaya ait stok hareketlerini bul ve stokları geri al
-    const { data: stockTransactions } = await supabase
+    // NOT: Aynı fatura numarasıyla birden fazla stok hareketi olabilir (fatura silinip tekrar eklenmiş)
+    // Bu yüzden TÜM stok hareketlerini bulup silmeliyiz
+    console.log(`🔍 Fatura siliniyor. Invoice Number: "${invoice.invoice_number}", Invoice ID: ${id}`);
+    
+    const { data: stockTransactions, error: stockTransactionsError } = await supabase
       .from("inventory_transactions")
       .select(`
         id,
+        transaction_number,
+        reference_number,
         warehouse_id,
         items:inventory_transaction_items (
           product_id,
@@ -192,7 +233,16 @@ export const usePurchaseInvoices = () => {
       .eq("company_id", profile.company_id)
       .eq("transaction_type", "giris");
 
+    if (stockTransactionsError) {
+      console.error("❌ Stok hareketleri bulunurken hata:", stockTransactionsError);
+      // Hata olsa bile devam et, sadece logla
+    }
+
+    console.log(`📊 Bulunan stok hareketleri:`, stockTransactions?.length || 0);
     if (stockTransactions && stockTransactions.length > 0) {
+      console.log(`🗑️ ${stockTransactions.length} adet stok hareketi bulundu, siliniyor...`);
+      console.log(`📋 Transaction ID'leri:`, stockTransactions.map((t: any) => ({ id: t.id, transaction_number: t.transaction_number, reference_number: t.reference_number })));
+      
       // Her transaction için stokları geri al
       for (const transaction of stockTransactions) {
         if (transaction.items && Array.isArray(transaction.items)) {
@@ -234,21 +284,94 @@ export const usePurchaseInvoices = () => {
         }
       }
 
-      // Stok hareketlerini sil
+      // Stok hareketlerini sil (TÜMÜNÜ - aynı reference_number ile olan tüm hareketler)
       const transactionIds = stockTransactions.map((t: any) => t.id);
       if (transactionIds.length > 0) {
-        // Önce transaction items'ları sil
-        await supabase
+        console.log(`🗑️ ${transactionIds.length} adet transaction item siliniyor...`);
+        
+        // Önce transaction items'ları sil (CASCADE ile otomatik silinebilir ama manuel de silelim)
+        const { error: itemsDeleteError, data: deletedItems } = await supabase
           .from("inventory_transaction_items")
           .delete()
-          .in("transaction_id", transactionIds);
+          .in("transaction_id", transactionIds)
+          .select("id");
 
-        // Sonra transaction'ları sil
-        await supabase
+        if (itemsDeleteError) {
+          console.error("❌ Stok hareketi kalemleri silinirken hata:", itemsDeleteError);
+          // Hata olsa bile devam et, belki CASCADE ile silinecek
+        } else {
+          console.log(`✅ ${deletedItems?.length || 0} adet transaction item silindi`);
+        }
+
+        // Sonra transaction'ları sil - .select() OLMADAN
+        const { error: transactionsDeleteError, data: deletedTransactions } = await supabase
           .from("inventory_transactions")
           .delete()
-          .in("id", transactionIds);
+          .in("id", transactionIds)
+          .select("id");
+
+        if (transactionsDeleteError) {
+          console.error("❌ Stok hareketleri silinirken hata:", transactionsDeleteError);
+          console.error("❌ Hata detayları:", JSON.stringify(transactionsDeleteError, null, 2));
+          throw new Error(`Stok hareketleri silinirken hata oluştu: ${transactionsDeleteError.message}`);
+        }
+        
+        const deletedCount = deletedTransactions?.length || 0;
+        console.log(`✅ ${deletedCount} adet transaction silindi (beklenen: ${transactionIds.length})`);
+
+        // Silme işleminin başarılı olduğunu doğrula
+        if (deletedCount < transactionIds.length) {
+          console.warn(`⚠️ UYARI: Sadece ${deletedCount}/${transactionIds.length} transaction silindi!`);
+          
+          // Kalan transaction'ları bul
+          const { data: verifyTransactions, error: verifyError } = await supabase
+            .from("inventory_transactions")
+            .select("id, transaction_number, reference_number, status")
+            .in("id", transactionIds);
+
+          if (verifyError) {
+            console.error("❌ Doğrulama hatası:", verifyError);
+          } else if (verifyTransactions && verifyTransactions.length > 0) {
+            console.warn(`⚠️ ${verifyTransactions.length} adet transaction hala mevcut!`);
+            console.warn(`⚠️ Kalan transaction'lar:`, verifyTransactions);
+            
+            // RLS veya başka bir sorun olabilir, tek tek silmeyi dene
+            console.log(`🔄 Tek tek silme denemesi yapılıyor...`);
+            for (const transactionId of transactionIds) {
+              const { error: singleDeleteError, data: singleDeleted } = await supabase
+                .from("inventory_transactions")
+                .delete()
+                .eq("id", transactionId)
+                .select("id");
+              
+              if (singleDeleteError) {
+                console.error(`❌ Transaction ${transactionId} silinemedi:`, singleDeleteError);
+              } else if (singleDeleted && singleDeleted.length > 0) {
+                console.log(`✅ Transaction ${transactionId} silindi`);
+              }
+            }
+          } else {
+            console.log(`✅ Doğrulama başarılı: Tüm transaction'lar silindi`);
+          }
+        } else {
+          console.log(`✅ Doğrulama başarılı: Tüm transaction'lar silindi`);
+        }
       }
+    } else {
+      console.log(`ℹ️ Bu faturaya ait stok hareketi bulunamadı (reference_number: "${invoice.invoice_number}")`);
+      
+      // Alternatif olarak, tüm reference_number'ları kontrol et
+      const { data: allTransactions } = await supabase
+        .from("inventory_transactions")
+        .select("id, transaction_number, reference_number")
+        .eq("company_id", profile.company_id)
+        .eq("transaction_type", "giris")
+        .limit(10);
+      
+      console.log(`🔍 Son 10 stok hareketi (örnek):`, allTransactions?.map((t: any) => ({ 
+        transaction_number: t.transaction_number, 
+        reference_number: t.reference_number 
+      })));
     }
 
     // 2. E-fatura eşleştirme kayıtlarını sil

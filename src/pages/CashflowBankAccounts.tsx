@@ -220,14 +220,16 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h2 className="text-sm font-semibold text-gray-900">Nakit Kasa</h2>
-                      <Button 
-                        size="sm" 
-                        className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
-                        onClick={() => setIsCashModalOpen(true)}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Yeni
-                      </Button>
+                      {(allAccounts?.cashAccounts?.length || 0) > 0 && (
+                        <Button 
+                          size="sm" 
+                          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
+                          onClick={() => setIsCashModalOpen(true)}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Yeni
+                        </Button>
+                      )}
                     </div>
                     <div className="flex items-center gap-4 text-xs">
                       <div>
@@ -267,14 +269,16 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h2 className="text-sm font-semibold text-gray-900">Banka Hesapları</h2>
-                      <Button 
-                        size="sm" 
-                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
-                        onClick={() => setIsBankModalOpen(true)}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Yeni
-                      </Button>
+                      {(allAccounts?.bankAccounts?.length || 0) > 0 && (
+                        <Button 
+                          size="sm" 
+                          className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
+                          onClick={() => setIsBankModalOpen(true)}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Yeni
+                        </Button>
+                      )}
                     </div>
                     <div className="flex items-center gap-4 text-xs">
                       <div>
@@ -314,14 +318,16 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h2 className="text-sm font-semibold text-gray-900">Kredi Kartları</h2>
-                      <Button 
-                        size="sm" 
-                        className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
-                        onClick={() => setIsCreditModalOpen(true)}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Yeni
-                      </Button>
+                      {(allAccounts?.creditCards?.length || 0) > 0 && (
+                        <Button 
+                          size="sm" 
+                          className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
+                          onClick={() => setIsCreditModalOpen(true)}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Yeni
+                        </Button>
+                      )}
                     </div>
                     <div className="flex items-center gap-4 text-xs">
                       <div>
@@ -367,14 +373,16 @@ const CashflowBankAccounts = ({ isCollapsed, setIsCollapsed }: CashflowBankAccou
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <h2 className="text-sm font-semibold text-gray-900">Şirket Ortakları</h2>
-                      <Button 
-                        size="sm" 
-                        className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
-                        onClick={() => setIsPartnerModalOpen(true)}
-                      >
-                        <Plus className="h-3 w-3" />
-                        Yeni
-                      </Button>
+                      {(allAccounts?.partnerAccounts?.length || 0) > 0 && (
+                        <Button 
+                          size="sm" 
+                          className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs px-2 py-1 h-7 shadow-sm hover:shadow transition-all"
+                          onClick={() => setIsPartnerModalOpen(true)}
+                        >
+                          <Plus className="h-3 w-3" />
+                          Yeni
+                        </Button>
+                      )}
                     </div>
                     <div className="flex items-center gap-4 text-xs">
                       <div>

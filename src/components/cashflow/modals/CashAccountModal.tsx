@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UnifiedDialog, UnifiedDialogFooter, UnifiedDialogCancelButton, UnifiedDialogActionButton } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ interface CashAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  mode?: 'create' | 'edit';
+  accountId?: string;
 }
 
 interface CashAccountFormData {
@@ -20,7 +22,7 @@ interface CashAccountFormData {
   initial_balance: number;
 }
 
-const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps) => {
+const CashAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', accountId }: CashAccountModalProps) => {
   const [formData, setFormData] = useState<CashAccountFormData>({
     name: "",
     description: "",
@@ -28,6 +30,38 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps)
     initial_balance: 0
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isPrefilling, setIsPrefilling] = useState(false);
+
+  // Edit modunda formu Supabase'den doldur
+  useEffect(() => {
+    const prefill = async () => {
+      if (!isOpen || mode !== 'edit' || !accountId) return;
+      setIsPrefilling(true);
+      try {
+        const { data, error } = await supabase
+          .from('cash_accounts')
+          .select('name, description, currency, current_balance')
+          .eq('id', accountId)
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setFormData({
+            name: data.name || "",
+            description: data.description || "",
+            currency: data.currency || 'TRY',
+            initial_balance: data.current_balance || 0
+          });
+        }
+      } catch (e) {
+        console.error('Error pre-filling cash account:', e);
+        toast.error("Hesap bilgileri yüklenirken hata oluştu");
+      } finally {
+        setIsPrefilling(false);
+      }
+    };
+    prefill();
+  }, [isOpen, mode, accountId]);
 
   const handleInputChange = (field: keyof CashAccountFormData, value: string | number) => {
     setFormData(prev => ({
@@ -61,19 +95,32 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps)
         throw new Error("Şirket bilgisi bulunamadı");
       }
 
-      const { error } = await supabase
-        .from('cash_accounts')
-        .insert({
-          name: formData.name.trim(),
-          description: formData.description.trim() || null,
-          currency: formData.currency,
-          current_balance: formData.initial_balance,
-          company_id: profile.company_id
-        });
+      if (mode === 'edit' && accountId) {
+        const { error } = await supabase
+          .from('cash_accounts')
+          .update({
+            name: formData.name.trim(),
+            description: formData.description.trim() || null,
+            currency: formData.currency
+          })
+          .eq('id', accountId);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Nakit kasa hesabı güncellendi");
+      } else {
+        const { error } = await supabase
+          .from('cash_accounts')
+          .insert({
+            name: formData.name.trim(),
+            description: formData.description.trim() || null,
+            currency: formData.currency,
+            current_balance: formData.initial_balance,
+            company_id: profile.company_id
+          });
 
-      toast.success("Nakit kasa hesabı oluşturuldu");
+        if (error) throw error;
+        toast.success("Nakit kasa hesabı oluşturuldu");
+      }
 
       onSuccess();
       onClose();
@@ -95,7 +142,7 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps)
     <UnifiedDialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Yeni Nakit Kasa Hesabı"
+      title={mode === 'edit' ? "Nakit Kasa Hesabını Düzenle" : "Yeni Nakit Kasa Hesabı"}
       maxWidth="md"
       headerColor="green"
     >
@@ -142,29 +189,31 @@ const CashAccountModal = ({ isOpen, onClose, onSuccess }: CashAccountModalProps)
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="initial_balance" className="text-sm font-medium text-gray-700">Başlangıç Bakiyesi</Label>
-            <Input
-              id="initial_balance"
-              type="number"
-              step="0.01"
-              value={formData.initial_balance}
-              onChange={(e) => handleInputChange('initial_balance', parseFloat(e.target.value) || 0)}
-              placeholder="0.00"
-              className="h-9"
-            />
-          </div>
+          {mode === 'create' && (
+            <div className="space-y-2">
+              <Label htmlFor="initial_balance" className="text-sm font-medium text-gray-700">Başlangıç Bakiyesi</Label>
+              <Input
+                id="initial_balance"
+                type="number"
+                step="0.01"
+                value={formData.initial_balance}
+                onChange={(e) => handleInputChange('initial_balance', parseFloat(e.target.value) || 0)}
+                placeholder="0.00"
+                className="h-9"
+              />
+            </div>
+          )}
         </div>
 
         <UnifiedDialogFooter>
           <UnifiedDialogCancelButton onClick={onClose} disabled={isLoading} />
           <UnifiedDialogActionButton
             onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)}
-            disabled={isLoading}
-            loading={isLoading}
+            disabled={isLoading || isPrefilling}
+            loading={isLoading || isPrefilling}
             variant="primary"
           >
-            Oluştur
+            {mode === 'edit' ? 'Kaydet' : 'Oluştur'}
           </UnifiedDialogActionButton>
         </UnifiedDialogFooter>
       </form>

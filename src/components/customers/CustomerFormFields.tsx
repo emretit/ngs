@@ -1,4 +1,5 @@
 
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +45,7 @@ const INITIAL_PAYMENT_TERMS = [
 ];
 
 const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) => {
+  const { t } = useTranslation();
   // Payment terms state
   const [availablePaymentTerms, setAvailablePaymentTerms] = useState<Term[]>(INITIAL_PAYMENT_TERMS);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -547,8 +549,8 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
         onOpenChange={setIsDeleteDialogOpen}
         title="Ödeme Şartını Sil"
         description={`"${termToDelete?.term.label || 'Bu şart'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteCustomTermConfirm}
         onCancel={handleDeleteCustomTermCancel}

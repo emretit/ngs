@@ -1,14 +1,6 @@
 import React from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useTranslation } from "react-i18next";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 import { OpportunityColumn } from "../hooks/useOpportunityColumns";
 
 interface DeleteColumnDialogProps {
@@ -24,32 +16,31 @@ const DeleteColumnDialog: React.FC<DeleteColumnDialogProps> = ({
   onClose,
   onConfirmDelete,
 }) => {
+  const { t } = useTranslation();
   const column = columns.find(c => c.id === columnToDelete);
 
+  const handleConfirm = () => {
+    onConfirmDelete();
+    onClose();
+  };
+
+  const handleCancel = () => {
+    onClose();
+  };
+
   return (
-    <AlertDialog open={!!columnToDelete} onOpenChange={onClose}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Sütunu Sil</AlertDialogTitle>
-          <AlertDialogDescription>
-            "{column?.title}" sütununu silmek istediğinize emin misiniz?
-            <br />
-            <br />
-            Bu sütundaki tüm fırsatlar "Yeni" durumuna taşınacaktır.
-            Bu işlem geri alınamaz.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>İptal</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onConfirmDelete}
-            className="bg-red-600 hover:bg-red-700"
-          >
-            Sütunu Sil
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmationDialogComponent
+      open={!!columnToDelete}
+      onOpenChange={(open) => !open && onClose()}
+      title="Sütunu Sil"
+      description={`"${column?.title || 'Bu sütun'}" sütununu silmek istediğinize emin misiniz? Bu sütundaki tüm fırsatlar "Yeni" durumuna taşınacaktır. Bu işlem geri alınamaz.`}
+      confirmText={t("common.delete")}
+      cancelText={t("common.cancel")}
+      variant="destructive"
+      onConfirm={handleConfirm}
+      onCancel={handleCancel}
+      isLoading={false}
+    />
   );
 };
 

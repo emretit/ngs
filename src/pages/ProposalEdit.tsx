@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +53,7 @@ interface ProposalEditProps {
 }
 
 const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -1341,8 +1343,8 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
           onOpenChange={setIsDeleteDialogOpen}
           title="Teklifi Sil"
           description="Bu teklifi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-          confirmText="Sil"
-          cancelText="İptal"
+          confirmText={t("common.delete")}
+          cancelText={t("common.cancel")}
           variant="destructive"
           onConfirm={handleDeleteConfirm}
           onCancel={handleDeleteCancel}

@@ -8,6 +8,18 @@ export interface GeminiChatResponse {
   configured?: boolean;
 }
 
+export interface GeminiReportResponse {
+  sql?: string;
+  explanation?: string;
+  chartType?: 'table' | 'bar' | 'line' | 'pie' | 'area';
+  chartConfig?: {
+    xKey?: string;
+    yKey?: string;
+    title?: string;
+  };
+  error?: string;
+}
+
 export interface GeminiAnalyzeResponse {
   summary?: string;
   insights?: string[];
@@ -101,10 +113,10 @@ export const generateSQLFromQuery = async (
     const companyId = await getCurrentCompanyId();
     
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
-      body: { 
-        type: 'sql', 
+      body: {
+        type: 'sql',
         query: userQuery,
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash-exp',
         companyId // Add company_id to request
       }
     });
@@ -147,7 +159,7 @@ export const generateSQLFromQuery = async (
 export const generateSQLQuery = async (
   query: string,
   tableName?: string,
-  model: string = 'gemini-2.5-flash'
+  model: string = 'gemini-2.0-flash-exp'
 ): Promise<GeminiChatResponse> => {
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/540e240f-d0a0-4970-8617-130dc8f4fe56',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'geminiService.ts:128',message:'generateSQLQuery entry',data:{query,tableName,model},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
@@ -201,28 +213,65 @@ export const generateSQLQuery = async (
  */
 export const chatWithAI = async (
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-  model: string = 'gemini-2.5-flash'
+  model: string = 'gemini-2.0-flash-exp'
 ): Promise<GeminiChatResponse> => {
   try {
     const companyId = await getCurrentCompanyId();
-    
+
     const { data, error } = await supabase.functions.invoke('gemini-chat', {
-      body: { 
-        type: 'chat', 
+      body: {
+        type: 'chat',
         messages,
         model,
         companyId // Add company_id to request
       }
     });
-    
+
     if (error) {
       console.error('Chat error:', error);
       return { error: error.message };
     }
-    
+
     return data;
   } catch (err: any) {
     console.error('Chat exception:', err);
+    return { error: err.message };
+  }
+};
+
+/**
+ * Generate report with data analysis and visualization
+ */
+export const generateReport = async (
+  query: string,
+  context?: {
+    startDate?: string;
+    endDate?: string;
+    currency?: string;
+  },
+  model: string = 'gemini-2.0-flash-exp'
+): Promise<GeminiReportResponse> => {
+  try {
+    const companyId = await getCurrentCompanyId();
+
+    const { data, error } = await supabase.functions.invoke('gemini-chat', {
+      body: {
+        type: 'report',
+        query,
+        context,
+        model,
+        companyId
+      }
+    });
+
+    if (error) {
+      console.error('Report generation error:', error);
+      return { error: error.message };
+    }
+
+    return data;
+  } catch (err: any) {
+    console.error('Report generation exception:', err);
     return { error: err.message };
   }
 };
@@ -234,7 +283,7 @@ export const analyzeDataWithAI = async (
   tableName: string,
   data: any[],
   summary: Record<string, any>,
-  model: string = 'gemini-2.5-flash'
+  model: string = 'gemini-2.0-flash-exp'
 ): Promise<GeminiAnalyzeResponse> => {
   try {
     const companyId = await getCurrentCompanyId();
@@ -268,7 +317,7 @@ export const analyzeDataWithAI = async (
 export const mapColumnsWithAI = async (
   sourceColumns: string[],
   targetFields: Array<{ name: string; description: string }>,
-  model: string = 'gemini-2.5-flash-lite'
+  model: string = 'gemini-2.0-flash-exp'
 ): Promise<GeminiMappingResponse> => {
   try {
     const companyId = await getCurrentCompanyId();
@@ -445,9 +494,9 @@ export const testDatabaseTables = async (): Promise<string[]> => {
 
 // Export available models
 export const GEMINI_MODELS = [
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Hızlı ve dengeli - Günlük kullanım için ideal' },
-  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'En güçlü model - Karmaşık analiz için' },
-  { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', description: 'En hızlı - Basit görevler için' },
+  { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash', description: 'Hızlı ve dengeli - Günlük kullanım için ideal' },
+  { id: 'gemini-exp-1206', name: 'Gemini Exp 1206', description: 'En güçlü model - Karmaşık analiz için' },
+  { id: 'gemini-2.0-flash-thinking-exp', name: 'Gemini 2.0 Thinking', description: 'Düşünme modeli - Karmaşık problemler için' },
 ] as const;
 
 // Backward compatibility exports

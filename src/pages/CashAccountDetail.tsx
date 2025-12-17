@@ -33,6 +33,7 @@ import { useCashAccountDetail, useCashAccountTransactions, useAccountTransfers }
 import { Skeleton } from "@/components/ui/skeleton";
 import CashIncomeModal from "@/components/cashflow/modals/CashIncomeModal";
 import CashExpenseModal from "@/components/cashflow/modals/CashExpenseModal";
+import CashAccountModal from "@/components/cashflow/modals/CashAccountModal";
 import TransferModal from "@/components/cashflow/modals/TransferModal";
 import { AccountTransactionHistory } from "@/components/cashflow/AccountTransactionHistory";
 
@@ -49,6 +50,7 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
   const [activeTab, setActiveTab] = useState("overview");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -212,7 +214,12 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
   };
 
   const handleEdit = () => {
-    toast.info("Düzenleme özelliği yakında eklenecek");
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    window.location.reload();
   };
 
   const clearFilters = () => {
@@ -350,6 +357,13 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
               className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
             >
               <span className="font-medium">{showBalances ? "Gizle" : "Göster"}</span>
+            </Button>
+            <Button 
+              onClick={handleEdit}
+              className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-green-600 to-green-600/90 hover:from-green-600/90 hover:to-green-600/80 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
+            >
+              <Pencil className="h-4 w-4" />
+              <span>Düzenle</span>
             </Button>
           </div>
         </div>
@@ -538,6 +552,15 @@ const CashAccountDetail = memo(({ isCollapsed, setIsCollapsed }: CashAccountDeta
           accountId={id}
           accountName={account?.name || ""}
           currency={account?.currency || "TRY"}
+        />
+
+        {/* Edit Modal */}
+        <CashAccountModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={handleEditSuccess}
+          mode="edit"
+          accountId={id}
         />
 
         {/* Transfer Modal */}

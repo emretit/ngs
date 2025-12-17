@@ -26,14 +26,14 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 const AI_MODELS = [
-  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", icon: "⚡" },
-  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", icon: "🚀" },
-  { value: "gemini-2.5-flash-lite", label: "Gemini Flash Lite", icon: "💨" },
+  { value: "gemini-2.0-flash-exp", label: "Gemini 2.0 Flash", icon: "⚡" },
+  { value: "gemini-exp-1206", label: "Gemini Exp 1206", icon: "🚀" },
+  { value: "gemini-2.0-flash-thinking-exp", label: "Gemini 2.0 Thinking", icon: "💨" },
 ];
 
 export const AIAgentPanel = memo(() => {
   const [prompt, setPrompt] = useState("");
-  const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
+  const [selectedModel, setSelectedModel] = useState("gemini-2.0-flash-exp");
   const [isRunning, setIsRunning] = useState(false);
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const usageTracker = GeminiUsageTracker.getInstance();

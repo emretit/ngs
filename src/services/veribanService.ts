@@ -460,5 +460,82 @@ export class VeribanService {
       };
     }
   }
+
+  /**
+   * Fatura detaylarını çek (Fatura kalemleri ile birlikte - parse edilmiş)
+   */
+  static async getInvoiceDetails(params: {
+    invoiceUUID: string;
+  }): Promise<VeribanResponse> {
+    try {
+      console.log('🔍 [VeribanService] Getting invoice details for UUID:', params.invoiceUUID);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Oturum bulunamadı');
+      }
+
+      const { data, error } = await supabase.functions.invoke('veriban-invoice-details', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: {
+          invoiceUUID: params.invoiceUUID
+        }
+      });
+
+      console.log('📥 [VeribanService] Invoice details response:', { data, error });
+
+      if (error) throw error;
+
+      return {
+        success: data?.success || false,
+        data: data?.invoiceDetails,
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (err) {
+      console.error('❌ [VeribanService] Get invoice details error:', err);
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Fatura detayları alınamadı',
+      };
+    }
+  }
+
+  /**
+   * Transfer edildi işaretle
+   */
+  static async markAsTransferred(invoiceUUID: string): Promise<VeribanResponse> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Oturum bulunamadı');
+      }
+
+      const { data, error } = await supabase.functions.invoke('veriban-purchase-invoice-transfer', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: {
+          invoiceUUID
+        }
+      });
+
+      if (error) throw error;
+
+      return {
+        success: data?.success || false,
+        data: data,
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Transfer işareti yapılamadı',
+      };
+    }
+  }
 }
 

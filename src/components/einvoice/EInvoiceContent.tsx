@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
@@ -21,27 +21,48 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { useNilveraPdf } from "@/hooks/useNilveraPdf";
+import { useVeribanPdf } from "@/hooks/useVeribanPdf";
+import { IntegratorService, IntegratorType } from "@/services/integratorService";
 
 interface EInvoiceContentProps {
   invoices: any[];
   isLoading: boolean;
   onRefresh: () => void;
   searchTerm: string;
-  dateFilter: string;
 }
 
 const EInvoiceContent = ({
   invoices,
   isLoading,
   onRefresh,
-  searchTerm,
-  dateFilter
+  searchTerm
 }: EInvoiceContentProps) => {
   const navigate = useNavigate();
-  const { downloadAndOpenPdf } = useNilveraPdf();
+  const { downloadAndOpenPdf: downloadNilveraPdf } = useNilveraPdf();
+  const { downloadAndOpenPdf: downloadVeribanPdf } = useVeribanPdf();
   
   // Her satır için ayrı loading state
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
+  const [currentIntegrator, setCurrentIntegrator] = useState<IntegratorType | null>(null);
+
+  // Get current integrator
+  useEffect(() => {
+    const fetchIntegrator = async () => {
+      const integrator = await IntegratorService.getSelectedIntegrator();
+      setCurrentIntegrator(integrator);
+    };
+    fetchIntegrator();
+  }, []);
+
+  // PDF download handler - integrator'e göre doğru fonksiyonu çağır
+  const handleDownloadPdf = async (invoiceId: string) => {
+    if (currentIntegrator === 'veriban') {
+      return await downloadVeribanPdf(invoiceId, 'e-fatura');
+    } else {
+      // Default to Nilvera
+      return await downloadNilveraPdf(invoiceId, 'e-fatura');
+    }
+  };
 
   const getInvoiceTypeBadge = (invoiceType: string) => {
     switch (invoiceType) {
@@ -190,7 +211,7 @@ const EInvoiceContent = ({
                           e.stopPropagation();
                           setDownloadingInvoiceId(invoice.id);
                           try {
-                            await downloadAndOpenPdf(invoice.id, 'e-fatura');
+                            await handleDownloadPdf(invoice.id);
                           } catch (error) {
                             console.error('PDF önizleme hatası:', error);
                           } finally {

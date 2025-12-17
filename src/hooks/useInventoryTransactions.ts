@@ -626,6 +626,110 @@ export const useInventoryTransactions = () => {
     toast.success("İşlem iptal edildi");
   };
 
+  const deleteTransaction = async (id: string) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", user?.id)
+      .single();
+
+    if (!profile?.company_id) {
+      throw new Error("Şirket bilgisi bulunamadı");
+    }
+
+    // Transaction'ı getir
+    const transaction = await fetchTransactionById(id);
+    if (!transaction) {
+      throw new Error("İşlem bulunamadı");
+    }
+
+    // Eğer transaction onaylanmış (completed) ise, stokları geri al
+    if (transaction.status === 'completed' && transaction.items && transaction.items.length > 0) {
+      for (const item of transaction.items) {
+        const quantity = Number(item.quantity);
+        
+        switch (transaction.transaction_type) {
+          case 'giris':
+            // Stok girişi geri al - stok azalt
+            if (transaction.warehouse_id) {
+              await updateWarehouseStock(
+                profile.company_id,
+                item.product_id,
+                transaction.warehouse_id,
+                -quantity // approveTransaction'ın tersi
+              );
+            }
+            break;
+          
+          case 'cikis':
+            // Stok çıkışı geri al - stok artır
+            if (transaction.warehouse_id) {
+              await updateWarehouseStock(
+                profile.company_id,
+                item.product_id,
+                transaction.warehouse_id,
+                quantity // approveTransaction'ın tersi
+              );
+            }
+            break;
+          
+          case 'transfer':
+            // Transfer geri al - hedef depodan çıkar, kaynak depoya ekle
+            if (transaction.from_warehouse_id && transaction.to_warehouse_id) {
+              // Hedef depodan çıkar (geri al)
+              await updateWarehouseStock(
+                profile.company_id,
+                item.product_id,
+                transaction.to_warehouse_id,
+                -quantity
+              );
+              // Kaynak depoya geri ekle
+              await updateWarehouseStock(
+                profile.company_id,
+                item.product_id,
+                transaction.from_warehouse_id,
+                quantity
+              );
+            }
+            break;
+          
+          case 'sayim':
+            // Sayım işlemi geri alınamaz - kullanıcıya uyarı ver
+            throw new Error("Sayım işlemleri silinemez. Lütfen yeni bir sayım işlemi oluşturun.");
+        }
+      }
+    }
+
+    // Önce transaction items'ları sil
+    const { error: itemsDeleteError } = await supabase
+      .from("inventory_transaction_items")
+      .delete()
+      .eq("transaction_id", id);
+
+    if (itemsDeleteError) {
+      console.error("❌ Transaction items silinirken hata:", itemsDeleteError);
+      throw new Error("İşlem kalemleri silinirken hata oluştu");
+    }
+
+    // Sonra transaction'ı sil
+    const { error: deleteError } = await supabase
+      .from("inventory_transactions")
+      .delete()
+      .eq("id", id)
+      .eq("company_id", profile.company_id);
+
+    if (deleteError) {
+      console.error("❌ Transaction silinirken hata:", deleteError);
+      toast.error("İşlem silinirken hata oluştu");
+      throw deleteError;
+    }
+
+    toast.success("İşlem başarıyla silindi");
+  };
+
   const getStats = async (): Promise<InventoryTransactionStats> => {
     const transactions = await fetchTransactions();
     
@@ -701,6 +805,18 @@ export const useInventoryTransactions = () => {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: deleteTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory_transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory_transaction_stats"] });
+      queryClient.invalidateQueries({ queryKey: ["warehouse_stock"] });
+      queryClient.invalidateQueries({ queryKey: ["product_warehouse_stock"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["product-stock-movements"] });
+    },
+  });
+
   return {
     transactions,
     isLoading,
@@ -713,6 +829,7 @@ export const useInventoryTransactions = () => {
     updateTransaction: updateMutation.mutateAsync,
     approveTransaction: approveMutation.mutateAsync,
     cancelTransaction: cancelMutation.mutateAsync,
+    deleteTransaction: deleteMutation.mutateAsync,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
   };

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +79,7 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
   selectedOtherTerms = [],
   onSelectedTermsChange
 }) => {
+  const { t } = useTranslation();
   // State to hold all available terms (predefined + custom from DB)
   const [availableTerms, setAvailableTerms] = useState<{[key: string]: Term[]}>({
     payment: INITIAL_TERMS.payment,
@@ -507,8 +509,8 @@ const ProposalFormTerms: React.FC<ProposalTermsProps> = ({
         onOpenChange={setIsDeleteDialogOpen}
         title="Şartı Sil"
         description={`"${termToDelete?.term.label || 'Bu şart'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteCustomTermConfirm}
         onCancel={handleDeleteCustomTermCancel}

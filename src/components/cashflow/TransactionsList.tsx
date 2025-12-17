@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog
 import { DateDisplay } from "@/components/ui/date-display";
 
 const TransactionsList = () => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -338,8 +340,8 @@ const TransactionsList = () => {
         onOpenChange={setIsDeleteDialogOpen}
         title="İşlemi Sil"
         description="Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}

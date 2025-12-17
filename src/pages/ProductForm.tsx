@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText, ArrowLeft, Save } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,6 +8,7 @@ import { useProductForm } from "@/components/products/form/hooks/useProductForm"
 import { useProductFormActions } from "@/components/products/form/hooks/useProductFormActions";
 import ProductCompactForm from "@/components/products/form/ProductCompactForm";
 import { showError } from "@/utils/toastUtils";
+import { useTabs } from "@/components/tabs/TabContext";
 
 interface ProductFormProps {
   isCollapsed?: boolean;
@@ -17,6 +18,8 @@ interface ProductFormProps {
 const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { updateTabTitle } = useTabs();
   const title = id ? "Ürün Düzenle" : "Yeni Ürün Ekle";
   
   const { form, isEditing, isSubmitting, setIsSubmitting, productId } = useProductForm();
@@ -25,6 +28,19 @@ const ProductForm = ({ isCollapsed, setIsCollapsed }: ProductFormProps) => {
     productId, 
     setIsSubmitting
   );
+  
+  // Watch product name and update tab title
+  const productName = form.watch("name");
+  
+  useEffect(() => {
+    if (productName && productName.trim() !== "") {
+      updateTabTitle(location.pathname, productName);
+    } else if (id) {
+      updateTabTitle(location.pathname, "Ürün Düzenle");
+    } else {
+      updateTabTitle(location.pathname, "Yeni Ürün Ekle");
+    }
+  }, [productName, id, location.pathname, updateTabTitle]);
 
   // Watch for form errors and display them via toast
   useEffect(() => {

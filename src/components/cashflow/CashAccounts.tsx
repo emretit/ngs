@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Wallet, Plus, Edit, Trash2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import CashAccountModal from "./modals/CashAccountModal";
-import { useCashAccounts } from "@/hooks/useAccountsData";
+import { useCashAccounts, useDeleteCashAccount } from "@/hooks/useAccountsData";
 import AccountsSkeleton from "./AccountsSkeleton";
+import { toast } from "sonner";
+import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
 interface CashAccountsProps {
   showBalances: boolean;
@@ -13,8 +15,14 @@ interface CashAccountsProps {
 
 const CashAccounts = ({ showBalances }: CashAccountsProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [accountToEdit, setAccountToEdit] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const { data: cashAccounts = [], isLoading, refetch } = useCashAccounts();
+  const { deleteAccount } = useDeleteCashAccount();
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -31,6 +39,47 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
 
   const handleModalSuccess = () => {
     refetch();
+    setIsModalOpen(false);
+  };
+
+  const handleEdit = (e: React.MouseEvent, accountId: string) => {
+    e.stopPropagation();
+    setAccountToEdit(accountId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    setAccountToEdit(null);
+    refetch();
+  };
+
+  const handleDelete = (e: React.MouseEvent, accountId: string, accountName: string) => {
+    e.stopPropagation();
+    setAccountToDelete({ id: accountId, name: accountName });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!accountToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteAccount(accountToDelete.id);
+      toast.success("Kasa hesabı başarıyla silindi");
+      refetch();
+      setIsDeleteDialogOpen(false);
+      setAccountToDelete(null);
+    } catch (error: any) {
+      toast.error("Hesap silinirken bir hata oluştu: " + (error.message || "Bilinmeyen hata"));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false);
+    setAccountToDelete(null);
   };
 
   const totalBalance = cashAccounts.reduce((sum, account) => sum + account.current_balance, 0);
@@ -55,7 +104,7 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
               onClick={() => setIsModalOpen(true)}
             >
               <Plus className="h-3 w-3 mr-1" />
-              Oluştur
+              Yeni
             </Button>
           </div>
         ) : (
@@ -90,10 +139,7 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-5 w-5 p-0 hover:bg-green-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Edit functionality
-                    }}
+                    onClick={(e) => handleEdit(e, account.id)}
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
@@ -101,10 +147,7 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-5 w-5 p-0 hover:bg-red-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Delete functionality
-                    }}
+                    onClick={(e) => handleDelete(e, account.id, account.name)}
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -120,6 +163,30 @@ const CashAccounts = ({ showBalances }: CashAccountsProps) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleModalSuccess}
+      />
+
+      <CashAccountModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setAccountToEdit(null);
+        }}
+        onSuccess={handleEditSuccess}
+        mode="edit"
+        accountId={accountToEdit || undefined}
+      />
+
+      <ConfirmationDialogComponent
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Kasa Hesabını Sil"
+        description={`"${accountToDelete?.name || 'Bu hesap'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
+        confirmText="Sil"
+        cancelText="İptal"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
       />
     </div>
   );

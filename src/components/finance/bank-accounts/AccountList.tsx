@@ -24,27 +24,29 @@ const AccountList = () => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
         <h3 className="font-semibold">Banka Hesapları</h3>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
-            <Link className="h-4 w-4" />
-            <span>Hesap Bağla</span>
-          </Button>
-          
-          <Sheet open={isNewAccountSheetOpen} onOpenChange={setIsNewAccountSheetOpen}>
-            <SheetTrigger asChild>
-              <Button size="sm" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                <span>Yeni Hesap</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-xl">
-              <SheetHeader>
-                <SheetTitle>Yeni Banka Hesabı</SheetTitle>
-              </SheetHeader>
-              <NewBankAccountForm onSuccess={() => setIsNewAccountSheetOpen(false)} />
-            </SheetContent>
-          </Sheet>
-        </div>
+        {accounts && accounts.length > 0 && (
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Link className="h-4 w-4" />
+              <span>Hesap Bağla</span>
+            </Button>
+            
+            <Sheet open={isNewAccountSheetOpen} onOpenChange={setIsNewAccountSheetOpen}>
+              <SheetTrigger asChild>
+                <Button size="sm" className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  <span>Yeni Hesap</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-xl">
+                <SheetHeader>
+                  <SheetTitle>Yeni Banka Hesabı</SheetTitle>
+                </SheetHeader>
+                <NewBankAccountForm onSuccess={() => setIsNewAccountSheetOpen(false)} />
+              </SheetContent>
+            </Sheet>
+          </div>
+        )}
       </div>
       
       {isLoading ? (
@@ -93,8 +95,30 @@ const AccountList = () => {
             ))}
             {accounts?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-4 text-gray-500">
-                  Henüz banka hesabı bulunmamaktadır.
+                <TableCell colSpan={8} className="text-center py-8">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="text-gray-500">
+                      <p className="text-sm font-medium mb-1">Henüz banka hesabı bulunmamaktadır.</p>
+                      <p className="text-xs text-gray-400">İlk banka hesabınızı ekleyerek başlayın</p>
+                    </div>
+                    <Sheet open={isNewAccountSheetOpen} onOpenChange={setIsNewAccountSheetOpen}>
+                      <SheetTrigger asChild>
+                        <Button 
+                          size="sm" 
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Yeni Hesap</span>
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent className="w-full sm:max-w-xl">
+                        <SheetHeader>
+                          <SheetTitle>Yeni Banka Hesabı</SheetTitle>
+                        </SheetHeader>
+                        <NewBankAccountForm onSuccess={() => setIsNewAccountSheetOpen(false)} />
+                      </SheetContent>
+                    </Sheet>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

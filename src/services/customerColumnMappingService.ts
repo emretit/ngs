@@ -108,7 +108,7 @@ export const mapCustomerColumnsWithAI = async (
         type: 'map-columns',
         sourceColumns: excelColumns,
         targetFields,
-        model: 'gemini-2.5-flash-lite'
+        model: 'gemini-2.0-flash-exp'
       }
     });
 

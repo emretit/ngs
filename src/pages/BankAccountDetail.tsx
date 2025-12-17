@@ -38,6 +38,7 @@ import { useBankAccountDetail, useBankAccountTransactions } from "@/hooks/useAcc
 import { Skeleton } from "@/components/ui/skeleton";
 import BankIncomeModal from "@/components/cashflow/modals/BankIncomeModal";
 import BankExpenseModal from "@/components/cashflow/modals/BankExpenseModal";
+import BankAccountModal from "@/components/cashflow/modals/BankAccountModal";
 import TransferModal from "@/components/cashflow/modals/TransferModal";
 import { AccountTransactionHistory } from "@/components/cashflow/AccountTransactionHistory";
 
@@ -53,6 +54,7 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -97,7 +99,12 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
   };
 
   const handleEdit = () => {
-    toast.info("Düzenleme özelliği yakında eklenecek");
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    window.location.reload();
   };
 
   if (loading) {
@@ -377,6 +384,13 @@ const BankAccountDetail = memo(({ isCollapsed, setIsCollapsed }: BankAccountDeta
         </div>
 
         {/* Modals */}
+        <BankAccountModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={handleEditSuccess}
+          mode="edit"
+          accountId={id}
+        />
         <BankIncomeModal
           isOpen={isIncomeModalOpen}
           onClose={() => setIsIncomeModalOpen(false)}

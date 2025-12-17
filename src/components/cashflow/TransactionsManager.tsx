@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ interface TransactionFormData {
 }
 
 const TransactionsManager = () => {
+  const { t } = useTranslation();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
@@ -603,8 +605,8 @@ const TransactionsManager = () => {
         onOpenChange={setIsDeleteDialogOpen}
         title="İşlemi Sil"
         description="Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}

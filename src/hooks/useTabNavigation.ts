@@ -270,6 +270,20 @@ export function useTabNavigation() {
         return;
       }
       
+      // Product form/edit page
+      if (path.match(/^\/product-form\//)) {
+        fetchDetailPageTitle(
+          path,
+          'products',
+          id,
+          ['name'],
+          (data) => data.name || 'Ürün Düzenle',
+          'Ürün Düzenle',
+          addTab
+        );
+        return;
+      }
+      
       // Proposal detail page
       if (path.match(/^\/proposal\//)) {
         fetchDetailPageTitle(
@@ -335,6 +349,20 @@ export function useTabNavigation() {
           ['invoice_number'],
           (data) => data.invoice_number || 'Fatura',
           'Fatura Detayı',
+          addTab
+        );
+        return;
+      }
+      
+      // E-invoice process page
+      if (path.match(/^\/e-invoice\/process\//)) {
+        fetchDetailPageTitle(
+          path,
+          'einvoices',
+          id,
+          ['invoice_number', 'supplier_name'],
+          (data) => data.invoice_number || 'E-Fatura İşleme',
+          'E-Fatura İşleme',
           addTab
         );
         return;

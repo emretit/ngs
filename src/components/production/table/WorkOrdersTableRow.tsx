@@ -85,9 +85,7 @@ export const WorkOrdersTableRow: React.FC<WorkOrdersTableRowProps> = ({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('İş emrini silmek istediğinize emin misiniz?')) {
-      onDelete?.(workOrder.id);
-    }
+    onDelete?.(workOrder.id);
   };
 
   return (

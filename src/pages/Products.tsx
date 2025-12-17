@@ -664,8 +664,8 @@ const Products = () => {
         onOpenChange={setIsDeleteDialogOpen}
         title={t("pages.products.deleteTitle")}
         description={`Seçili ${selectedProducts.length} ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleBulkDeleteConfirm}
         onCancel={handleBulkDeleteCancel}

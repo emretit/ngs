@@ -34,8 +34,7 @@ const IncomeExpenseAnalysis = React.lazy(() => import("@/pages/budget/IncomeExpe
 // Define cashflow routes
 export const cashflowRoutes: RouteConfig[] = [
   { path: "/cashflow", component: Cashflow, protected: true },
-  // BudgetManagement route'u kaldırıldı, artık BudgetDashboard kullanılıyor
-  { path: "/cashflow/budget-management", component: BudgetDashboard, protected: true },
+  { path: "/cashflow/budget-management", component: BudgetList, protected: true },
   // Bütçe route'ları - spesifik route'lar önce gelmeli
   { path: "/budget/entry", component: BudgetEntry, protected: true },
   { path: "/budget/comparison", component: BudgetComparison, protected: true },

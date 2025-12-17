@@ -13,8 +13,8 @@ const routePrefetchMap: Record<string, () => Promise<any>> = {
   '/cashflow/notes': () => import('@/pages/CashflowNotes'),
   '/cashflow/loans': () => import('@/pages/CashflowLoans'),
   '/cashflow/bank-accounts': () => import('@/pages/CashflowBankAccounts'),
-  '/cashflow/budget-management': () => import('@/pages/budget/BudgetDashboard'),
-  '/budget': () => import('@/pages/budget/BudgetDashboard'),
+  '/cashflow/budget-management': () => import('@/pages/budget/BudgetList'),
+  '/budget': () => import('@/pages/budget/BudgetList'),
   '/budget/categories': () => import('@/pages/CashflowCategories'),
   
   // Finance routes

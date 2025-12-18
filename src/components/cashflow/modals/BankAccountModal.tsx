@@ -81,10 +81,10 @@ const BankAccountModal = ({ isOpen, onClose, onSuccess, mode = 'create', account
     prefill();
   }, [isOpen, mode, accountId]);
 
-  const handleInputChange = (field: keyof BankAccountFormData, value: string) => {
+  const handleInputChange = (field: keyof BankAccountFormData, value: string | number) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value as any
     }));
   };
 

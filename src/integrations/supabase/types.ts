@@ -5831,6 +5831,7 @@ export type Database = {
       payments: {
         Row: {
           account_id: string | null
+          account_type: string | null
           amount: number
           company_id: string | null
           created_at: string | null
@@ -5848,6 +5849,7 @@ export type Database = {
         }
         Insert: {
           account_id?: string | null
+          account_type?: string | null
           amount: number
           company_id?: string | null
           created_at?: string | null
@@ -5865,6 +5867,7 @@ export type Database = {
         }
         Update: {
           account_id?: string | null
+          account_type?: string | null
           amount?: number
           company_id?: string | null
           created_at?: string | null
@@ -5881,13 +5884,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "payments_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "payments_company_id_fkey"
             columns: ["company_id"]
@@ -6590,13 +6586,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "purchase_invoices_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "cashflow_categories"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "purchase_invoices_company_id_fkey"
             columns: ["company_id"]
@@ -10323,6 +10312,8 @@ export type Database = {
           is_active: boolean | null
           last_login: string | null
           password: string
+          session_code: string | null
+          session_expires_at: string | null
           test_mode: boolean | null
           updated_at: string | null
           user_id: string | null
@@ -10336,6 +10327,8 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           password: string
+          session_code?: string | null
+          session_expires_at?: string | null
           test_mode?: boolean | null
           updated_at?: string | null
           user_id?: string | null
@@ -10349,6 +10342,8 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           password?: string
+          session_code?: string | null
+          session_expires_at?: string | null
           test_mode?: boolean | null
           updated_at?: string | null
           user_id?: string | null
@@ -11667,6 +11662,10 @@ export type Database = {
           rec_type: string
         }
         Returns: string
+      }
+      check_category_or_subcategory_exists: {
+        Args: { cat_id: string }
+        Returns: boolean
       }
       check_po_approvals_completed: {
         Args: { p_order_id: string }

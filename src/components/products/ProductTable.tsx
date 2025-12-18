@@ -40,6 +40,7 @@ interface ProductTableProps {
 }
 
 const ProductTable = ({ products, isLoading }: ProductTableProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   

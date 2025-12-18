@@ -250,6 +250,10 @@ export const VeribanSettings = () => {
       console.log('📤 Request body:', requestBody);
 
       const { data, error } = await supabase.functions.invoke('veriban-auth', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: requestBody,
       });
 

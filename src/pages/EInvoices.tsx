@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate } from "react-router-dom";
 import EInvoiceHeader from "@/components/einvoice/EInvoiceHeader";
 import EInvoiceFilterBar from "@/components/einvoice/EInvoiceFilterBar";
 import EInvoiceContent from "@/components/einvoice/EInvoiceContent";
 import { useIncomingInvoices } from '@/hooks/useIncomingInvoices';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { IntegratorService } from '@/services/integratorService';
+
 interface EInvoicesProps {
   isCollapsed?: boolean;
   setIsCollapsed?: (collapsed: boolean) => void;
 }
+
 const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   
   // Date range filter states - Default to last 7 days (test için)
   const getDefaultDateRange = () => {
@@ -34,7 +33,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   const startDateString = startDate ? startDate.toISOString().split('T')[0] : undefined;
   const endDateString = endDate ? endDate.toISOString().split('T')[0] : undefined;
   
-  const { incomingInvoices, isLoading, refetch } = useIncomingInvoices({ 
+  const { incomingInvoices, isLoading, isSyncing, refetch, forceRefresh } = useIncomingInvoices({ 
     startDate: startDateString, 
     endDate: endDateString 
   });
@@ -83,7 +82,6 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
   });
   const handleRefresh = async () => {
     try {
-      // Get selected integrator for dynamic message
       const integrator = await IntegratorService.getSelectedIntegrator();
       const integratorNames: Record<string, string> = {
         'nilvera': 'Nilvera',
@@ -94,9 +92,9 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
       
       toast.loading(`${integratorName}'dan faturalar çekiliyor...`, { id: 'fetching-invoices' });
       
-      // Cache'i invalidate et - bu sayede fresh data çeker
-      await queryClient.invalidateQueries({ queryKey: ['incoming-invoices'] });
-      await refetchProcessedIds(); // İşlenmiş faturalar listesini de yenile
+      // Force refresh - API'den yeni faturaları çek ve DB'ye kaydet
+      await forceRefresh();
+      await refetchProcessedIds();
       
       toast.success("E-faturalar başarıyla güncellendi", { id: 'fetching-invoices' });
     } catch (error: any) {
@@ -112,7 +110,7 @@ const EInvoices = ({ isCollapsed, setIsCollapsed }: EInvoicesProps) => {
           totalCount={filteredInvoices.length}
           totalAmount={totalAmount}
           onRefresh={handleRefresh}
-          isRefreshing={isLoading}
+          isRefreshing={isLoading || isSyncing}
         />
         <EInvoiceFilterBar 
           searchTerm={searchTerm}

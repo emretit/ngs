@@ -4,8 +4,7 @@ import { VeribanSoapClient, getValidSessionCode } from '../_shared/veriban-soap-
 import { parseUBLTRXML, decodeZIPAndExtractXML } from '../_shared/ubl-parser.ts';
 
 // Kaynak limitini aşmamak için maksimum fatura sayısı
-// Liste görünümü için daha az fatura işle (detaylar sonra açılabilir)
-const MAX_INVOICES_PER_REQUEST = 20;
+const MAX_INVOICES_PER_REQUEST = 30;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,6 +69,97 @@ serve(async (req) => {
       });
     }
 
+    // Parse request body
+    const requestBody = await req.json();
+    const { startDate, endDate, forceRefresh = false } = requestBody;
+
+    // Validate dates
+    let formattedStartDate: string | undefined;
+    let formattedEndDate: string | undefined;
+
+    if (startDate) {
+      const parsedStart = new Date(startDate);
+      if (isNaN(parsedStart.getTime())) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Geçersiz startDate formatı'
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      formattedStartDate = parsedStart.toISOString().split('T')[0];
+    }
+
+    if (endDate) {
+      const parsedEnd = new Date(endDate);
+      if (isNaN(parsedEnd.getTime())) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Geçersiz endDate formatı'
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      formattedEndDate = parsedEnd.toISOString().split('T')[0];
+    }
+
+    console.log('📋 Veriban gelen faturalar sorgulanıyor...');
+    console.log('📅 Date Range:', formattedStartDate, '-', formattedEndDate);
+    console.log('🔄 Force Refresh:', forceRefresh);
+
+    // ============ CACHE CHECK ============
+    // If not force refresh, first check DB cache
+    if (!forceRefresh) {
+      let cacheQuery = supabase
+        .from('einvoices_received')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .order('invoice_date', { ascending: false });
+
+      if (formattedStartDate) {
+        cacheQuery = cacheQuery.gte('invoice_date', formattedStartDate);
+      }
+      if (formattedEndDate) {
+        cacheQuery = cacheQuery.lte('invoice_date', formattedEndDate);
+      }
+
+      const { data: cachedInvoices, error: cacheError } = await cacheQuery;
+
+      if (!cacheError && cachedInvoices && cachedInvoices.length > 0) {
+        console.log(`✅ Cache'den ${cachedInvoices.length} fatura döndürülüyor`);
+        
+        // Transform cached data to expected format
+        const formattedInvoices = cachedInvoices.map(inv => ({
+          id: inv.invoice_uuid,
+          einvoice_id: inv.invoice_uuid,
+          invoiceNumber: inv.invoice_id,
+          invoiceDate: inv.invoice_date,
+          dueDate: inv.due_date,
+          supplierName: inv.supplier_name,
+          supplierTaxNumber: inv.supplier_vkn,
+          supplierVkn: inv.supplier_vkn,
+          totalAmount: parseFloat(inv.total_amount) || 0,
+          taxAmount: parseFloat(inv.tax_amount) || 0,
+          currency: inv.currency || 'TRY',
+          invoiceType: inv.invoice_type || 'TEMEL',
+          invoiceProfile: inv.invoice_profile || 'TEMELFATURA',
+        }));
+
+        return new Response(JSON.stringify({
+          success: true,
+          invoices: formattedInvoices,
+          totalCount: formattedInvoices.length,
+          fromCache: true,
+          message: `${formattedInvoices.length} fatura cache'den yüklendi`
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // ============ FETCH FROM VERIBAN API ============
     // Get Veriban auth settings
     const { data: veribanAuth, error: authError } = await supabase
       .from('veriban_auth')
@@ -88,61 +178,7 @@ serve(async (req) => {
       });
     }
 
-    // Parse request body
-    const requestBody = await req.json();
-    const {
-      startDate,
-      endDate,
-    } = requestBody;
-
-    // Validate dates
-    let formattedStartDate: string | undefined;
-    let formattedEndDate: string | undefined;
-
-    if (startDate) {
-      const parsedStart = new Date(startDate);
-      if (isNaN(parsedStart.getTime())) {
-        return new Response(JSON.stringify({
-          success: false,
-          error: 'Geçersiz startDate formatı. Format: YYYY-MM-DD veya ISO 8601'
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      formattedStartDate = parsedStart.toISOString().split('T')[0];
-    }
-
-    if (endDate) {
-      const parsedEnd = new Date(endDate);
-      if (isNaN(parsedEnd.getTime())) {
-        return new Response(JSON.stringify({
-          success: false,
-          error: 'Geçersiz endDate formatı. Format: YYYY-MM-DD veya ISO 8601'
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      formattedEndDate = parsedEnd.toISOString().split('T')[0];
-    }
-
-    if (formattedStartDate && formattedEndDate && formattedStartDate > formattedEndDate) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'startDate cannot be after endDate'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log('📋 Veriban gelen faturalar sorgulanıyor...');
-    console.log('📅 Date Range:', formattedStartDate, '-', formattedEndDate);
-    console.log('🔑 Company ID:', profile.company_id);
-    console.log('👤 User ID:', user.id);
-
-    // Get valid session code (reuses existing session if not expired)
+    // Get valid session code
     console.log('🔑 Getting valid session code...');
     const sessionResult = await getValidSessionCode(supabase, veribanAuth);
 
@@ -161,14 +197,11 @@ serve(async (req) => {
     console.log('✅ Session code alındı');
 
     try {
-      // Step 1: Get Purchase Invoice UUID List
+      // Get Purchase Invoice UUID List
       console.log('📊 GetPurchaseInvoiceUUIDList çağrılıyor...');
       const uuidListResult = await VeribanSoapClient.getPurchaseInvoiceUUIDList(
         sessionCode,
-        {
-          startDate: formattedStartDate,
-          endDate: formattedEndDate,
-        },
+        { startDate: formattedStartDate, endDate: formattedEndDate },
         veribanAuth.webservice_url
       );
 
@@ -196,125 +229,147 @@ serve(async (req) => {
         });
       }
 
-      // Limit the number of invoices to process
-      const invoiceUUIDs = Array.isArray(uuidList) 
-        ? uuidList.slice(0, MAX_INVOICES_PER_REQUEST)
-        : [];
+      // Check which invoices are already in cache
+      const { data: existingInvoices } = await supabase
+        .from('einvoices_received')
+        .select('invoice_uuid')
+        .eq('company_id', profile.company_id)
+        .in('invoice_uuid', uuidList);
 
-      if (uuidList.length > MAX_INVOICES_PER_REQUEST) {
-        console.log(`⚠️ Toplam ${uuidList.length} fatura var, kaynak limiti nedeniyle ilk ${MAX_INVOICES_PER_REQUEST} tanesi işlenecek`);
-      }
+      const existingUUIDs = new Set((existingInvoices || []).map(inv => inv.invoice_uuid));
+      const newUUIDs = uuidList.filter((uuid: string) => !existingUUIDs.has(uuid));
 
-      // Step 2: Download and parse each invoice (sadece liste görünümü için)
-      console.log(`🔄 ${invoiceUUIDs.length} adet fatura detayı çekiliyor (liste görünümü için)...`);
+      console.log(`📦 ${existingUUIDs.size} fatura zaten cache'de, ${newUUIDs.length} yeni fatura çekilecek`);
+
+      // Limit new invoices to process
+      const invoiceUUIDsToFetch = newUUIDs.slice(0, MAX_INVOICES_PER_REQUEST);
       const invoices: any[] = [];
 
-      // Paralel işlem için batch size (CPU limit'i aşmamak için)
-      const BATCH_SIZE = 5; // Her seferde 5 fatura işle
+      // Fetch new invoices in batches
+      const BATCH_SIZE = 5;
       
-      for (let batchStart = 0; batchStart < invoiceUUIDs.length; batchStart += BATCH_SIZE) {
-        const batchEnd = Math.min(batchStart + BATCH_SIZE, invoiceUUIDs.length);
-        const batch = invoiceUUIDs.slice(batchStart, batchEnd);
-        
+      for (let batchStart = 0; batchStart < invoiceUUIDsToFetch.length; batchStart += BATCH_SIZE) {
+        const batch = invoiceUUIDsToFetch.slice(batchStart, batchStart + BATCH_SIZE);
         console.log(`📦 Batch ${Math.floor(batchStart / BATCH_SIZE) + 1}: ${batch.length} fatura işleniyor...`);
 
-        // Batch içindeki faturaları paralel işle
-        const batchPromises = batch.map(async (invoiceUUID, batchIndex) => {
+        const batchPromises = batch.map(async (invoiceUUID: string, batchIndex: number) => {
           const globalIndex = batchStart + batchIndex;
-          console.log(`📄 Fatura ${globalIndex + 1}/${invoiceUUIDs.length} çekiliyor (UUID: ${invoiceUUID?.substring(0, 8)}...)`);
+          console.log(`📄 Fatura ${globalIndex + 1}/${invoiceUUIDsToFetch.length} çekiliyor`);
 
           try {
-            // Download invoice
             const downloadResult = await VeribanSoapClient.downloadPurchaseInvoice(
               sessionCode,
-              {
-                invoiceUUID: invoiceUUID,
-                downloadDataType: 'XML_INZIP',
-              },
+              { invoiceUUID, downloadDataType: 'XML_INZIP' },
               veribanAuth.webservice_url
             );
 
             if (!downloadResult.success || !downloadResult.data?.binaryData) {
-              const errorMsg = downloadResult.error || downloadResult.data?.downloadDescription || 'Bilinmeyen hata';
-              console.error(`❌ Fatura indirilemedi: ${invoiceUUID}`, errorMsg);
-              return null; // Return null for failed invoices
-            }
-
-            // Decode ZIP and extract XML
-            let xmlContent: string | null = null;
-            try {
-              xmlContent = await decodeZIPAndExtractXML(downloadResult.data.binaryData);
-              if (!xmlContent) {
-                console.error(`❌ XML içeriği çıkarılamadı: ${invoiceUUID}`);
-                return null;
-              }
-            } catch (decodeError: any) {
-              console.error(`❌ ZIP decode hatası (${invoiceUUID}):`, decodeError.message);
+              console.error(`❌ Fatura indirilemedi: ${invoiceUUID}`);
               return null;
             }
 
-            // Parse UBL-TR XML
-            let parsedInvoice: any = null;
-            try {
-              parsedInvoice = parseUBLTRXML(xmlContent);
-              if (!parsedInvoice) {
-                console.error(`❌ XML parse edilemedi: ${invoiceUUID}`);
-                return null;
-              }
-            } catch (parseError: any) {
-              console.error(`❌ XML parse hatası (${invoiceUUID}):`, parseError.message);
-              return null;
-            }
+            const xmlContent = await decodeZIPAndExtractXML(downloadResult.data.binaryData);
+            if (!xmlContent) return null;
 
-            // Format invoice data - use parsed invoice structure from parseUBLTRXML
-            // Liste görünümü için sadece temel bilgileri al, XML'i saklama (performans için)
-            const formattedInvoice = {
-              einvoice_id: invoiceUUID,
-              invoiceNumber: parsedInvoice.invoiceNumber || '',
-              invoiceDate: parsedInvoice.invoiceDate || new Date().toISOString(),
-              dueDate: parsedInvoice.dueDate || undefined,
-              supplierName: parsedInvoice.supplierInfo?.name || '',
-              supplierTaxNumber: parsedInvoice.supplierInfo?.taxNumber || '',
-              supplierVkn: parsedInvoice.supplierInfo?.taxNumber || '',
-              totalAmount: parsedInvoice.payableAmount || parsedInvoice.taxExclusiveAmount + parsedInvoice.taxTotalAmount || 0,
-              taxAmount: parsedInvoice.taxTotalAmount || 0,
+            const parsedInvoice = parseUBLTRXML(xmlContent);
+            if (!parsedInvoice) return null;
+
+            // Save to cache
+            const invoiceData = {
+              invoice_uuid: invoiceUUID,
+              invoice_id: parsedInvoice.invoiceNumber || '',
+              supplier_vkn: parsedInvoice.supplierInfo?.taxNumber || '',
+              supplier_name: parsedInvoice.supplierInfo?.name || '',
+              invoice_date: parsedInvoice.invoiceDate?.split('T')[0] || new Date().toISOString().split('T')[0],
+              due_date: parsedInvoice.dueDate?.split('T')[0] || null,
+              subtotal: parsedInvoice.taxExclusiveAmount || 0,
+              tax_amount: parsedInvoice.taxTotalAmount || 0,
+              total_amount: parsedInvoice.payableAmount || 0,
               currency: parsedInvoice.currency || 'TRY',
-              invoiceType: parsedInvoice.invoiceType || 'TEMEL',
-              invoiceProfile: parsedInvoice.invoiceProfile || 'TEMELFATURA',
-              // XML'i saklama - liste görünümü için gerekli değil, detay sayfasında indirilebilir
-              // xmlContent: xmlContent,
-              // rawData: parsedInvoice,
+              invoice_type: parsedInvoice.invoiceType || 'TEMEL',
+              invoice_profile: parsedInvoice.invoiceProfile || 'TEMELFATURA',
+              company_id: profile.company_id,
+              fetched_at: new Date().toISOString(),
             };
 
-            console.log(`✅ Fatura ${globalIndex + 1} başarıyla işlendi: ${formattedInvoice.invoiceNumber}`);
-            return formattedInvoice;
+            // Upsert to DB
+            await supabase
+              .from('einvoices_received')
+              .upsert(invoiceData, { onConflict: 'invoice_uuid' });
+
+            console.log(`✅ Fatura ${globalIndex + 1} kaydedildi: ${invoiceData.invoice_id}`);
+            
+            return {
+              id: invoiceUUID,
+              einvoice_id: invoiceUUID,
+              invoiceNumber: invoiceData.invoice_id,
+              invoiceDate: invoiceData.invoice_date,
+              dueDate: invoiceData.due_date,
+              supplierName: invoiceData.supplier_name,
+              supplierTaxNumber: invoiceData.supplier_vkn,
+              supplierVkn: invoiceData.supplier_vkn,
+              totalAmount: invoiceData.total_amount,
+              taxAmount: invoiceData.tax_amount,
+              currency: invoiceData.currency,
+              invoiceType: invoiceData.invoice_type,
+              invoiceProfile: invoiceData.invoice_profile,
+            };
 
           } catch (invoiceError: any) {
-            console.error(`❌ Fatura işleme hatası (${globalIndex + 1}):`, invoiceError.message);
+            console.error(`❌ Fatura işleme hatası:`, invoiceError.message);
             return null;
           }
         });
 
-        // Batch'i bekle ve sonuçları topla
         const batchResults = await Promise.all(batchPromises);
-        const successfulInvoices = batchResults.filter(inv => inv !== null);
-        invoices.push(...successfulInvoices);
+        invoices.push(...batchResults.filter(inv => inv !== null));
         
-        console.log(`✅ Batch tamamlandı: ${successfulInvoices.length}/${batch.length} fatura başarılı`);
-        
-        // CPU limit'i aşmamak için kısa bir bekleme
-        if (batchEnd < invoiceUUIDs.length) {
-          await new Promise(resolve => setTimeout(resolve, 100)); // 100ms bekleme
+        if (batchStart + BATCH_SIZE < invoiceUUIDsToFetch.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
 
-      console.log(`✅ Toplam ${invoices.length} adet fatura başarıyla işlendi`);
+      // Also fetch cached invoices for the date range
+      let allInvoicesQuery = supabase
+        .from('einvoices_received')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .order('invoice_date', { ascending: false });
+
+      if (formattedStartDate) {
+        allInvoicesQuery = allInvoicesQuery.gte('invoice_date', formattedStartDate);
+      }
+      if (formattedEndDate) {
+        allInvoicesQuery = allInvoicesQuery.lte('invoice_date', formattedEndDate);
+      }
+
+      const { data: allCachedInvoices } = await allInvoicesQuery;
+      
+      const allInvoices = (allCachedInvoices || []).map(inv => ({
+        id: inv.invoice_uuid,
+        einvoice_id: inv.invoice_uuid,
+        invoiceNumber: inv.invoice_id,
+        invoiceDate: inv.invoice_date,
+        dueDate: inv.due_date,
+        supplierName: inv.supplier_name,
+        supplierTaxNumber: inv.supplier_vkn,
+        supplierVkn: inv.supplier_vkn,
+        totalAmount: parseFloat(inv.total_amount) || 0,
+        taxAmount: parseFloat(inv.tax_amount) || 0,
+        currency: inv.currency || 'TRY',
+        invoiceType: inv.invoice_type || 'TEMEL',
+        invoiceProfile: inv.invoice_profile || 'TEMELFATURA',
+      }));
+
+      console.log(`✅ Toplam ${allInvoices.length} fatura döndürülüyor (${invoices.length} yeni)`);
 
       return new Response(JSON.stringify({
         success: true,
-        invoices: invoices,
-        totalCount: invoices.length,
-        message: `${invoices.length} adet gelen fatura listelendi`
+        invoices: allInvoices,
+        totalCount: allInvoices.length,
+        newCount: invoices.length,
+        fromCache: false,
+        message: `${allInvoices.length} fatura listelendi (${invoices.length} yeni)`
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -329,11 +384,9 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    // Note: We DO NOT logout here - session is cached for 6 hours
 
   } catch (error: any) {
     console.error('❌ Veriban incoming invoices function hatası:', error);
-
     return new Response(JSON.stringify({
       success: false,
       error: error.message || 'Bilinmeyen hata oluştu'
@@ -343,4 +396,3 @@ serve(async (req) => {
     });
   }
 });
-

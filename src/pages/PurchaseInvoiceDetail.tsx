@@ -5,7 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Edit, Download, FileText, Calendar, User, Building2, Package, Warehouse, Receipt, DollarSign } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Edit, 
+  Download, 
+  FileText, 
+  Calendar, 
+  User, 
+  Building2, 
+  Package, 
+  Warehouse, 
+  Receipt, 
+  DollarSign,
+  Loader2,
+  AlertCircle
+} from "lucide-react";
 import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -185,12 +199,14 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
     }
   }, [invoice?.invoice_number]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('tr-TR', {
+  const formatCurrency = (amount: number, currency: string = 'TRY') => {
+    const currencyCode = currency === 'TL' ? 'TRY' : currency;
+    const formatted = new Intl.NumberFormat('tr-TR', {
       style: 'currency',
-      currency: 'TRY',
+      currency: currencyCode,
       minimumFractionDigits: 2
     }).format(amount);
+    return formatted;
   };
 
 
@@ -211,28 +227,35 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
 
   if (loading) {
     return (
-      <div className="space-y-4 p-4">
-        <Skeleton className="h-10 w-32" />
-        <Skeleton className="h-64 w-full" />
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+              <p className="text-gray-600">Fatura detayları yükleniyor...</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!invoice) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
-        <div className="p-4 rounded-full bg-gray-100 mb-4">
-          <FileText className="h-12 w-12 text-gray-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Fatura bulunamadı</h3>
-        <p className="text-sm text-gray-500 mb-6">Aradığınız fatura mevcut değil veya silinmiş olabilir.</p>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/purchase-invoices')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Faturalara Dön
-        </Button>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Fatura Bulunamadı</h3>
+              <p className="text-gray-600 mb-4">Aradığınız fatura mevcut değil veya silinmiş olabilir.</p>
+              <Button onClick={() => navigate('/purchase-invoices')} variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Faturalara Dön
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -251,45 +274,81 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
     const afterDiscount = itemSubtotal - discountAmount;
     return sum + (afterDiscount * (item.tax_rate / 100));
   }, 0);
+  const currency = invoice.currency || 'TRY';
 
   return (
-    <div className="space-y-4 p-4">
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <Button
-          variant="outline"
-          onClick={() => navigate('/purchase-invoices')}
-          className="shadow-sm"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Geri
-        </Button>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/purchase-invoices/edit/${id}`)}
-            className="shadow-sm"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Düzenle
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => window.print()}
-            className="shadow-sm"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            PDF İndir
-          </Button>
+    <div className="space-y-6">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
+          {/* Sol taraf - Başlık */}
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/purchase-invoices')}
+              className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-50/50 hover:text-blue-700 hover:border-blue-200 transition-all duration-200 hover:shadow-sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="font-medium">Alış Faturaları</span>
+            </Button>
+            
+            <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg text-white shadow-lg">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div className="space-y-0.5">
+              <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                Alış Faturası
+              </h1>
+              <p className="text-xs text-muted-foreground/70">
+                {invoice.invoice_number || 'Henüz atanmadı'} • {invoice.supplier?.company || invoice.supplier?.name || 'Tedarikçi'}
+              </p>
+            </div>
+          </div>
+          
+          {/* Sağ taraf - İstatistikler ve Butonlar */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <Badge variant="outline" className="px-3 py-1">
+              <Package className="h-3 w-3 mr-1" />
+              {invoiceItems.length} Kalem
+            </Badge>
+            <Badge variant="outline" className="px-3 py-1">
+              <DollarSign className="h-3 w-3 mr-1" />
+              {formatCurrency(totalAmount, currency)}
+            </Badge>
+            {getStatusBadge(invoice.status)}
+            
+            <div className="flex items-center gap-2 ml-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/purchase-invoices/edit/${id}`)}
+                className="shadow-sm"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Düzenle
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="shadow-sm"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                PDF
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Column - Invoice Info */}
-        <div className="lg:col-span-1">
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b p-3">
+        <div className="lg:col-span-1 space-y-4">
+          {/* Fatura & Tedarikçi Bilgileri */}
+          <Card className="border-2 border-gray-300 shadow-sm">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-b-2 border-gray-300 p-3">
               <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-blue-600" />
                 Fatura & Tedarikçi Bilgileri
@@ -300,7 +359,9 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Fatura No:</span>
-                  <span className="font-semibold text-xs">{invoice.invoice_number || 'Henüz atanmadı'}</span>
+                  <span className={`font-semibold text-xs ${invoice.invoice_number ? 'text-blue-600' : 'text-gray-400'}`}>
+                    {invoice.invoice_number || 'Henüz atanmadı'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Tarih:</span>
@@ -320,30 +381,30 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Para Birimi:</span>
-                  <span className="text-xs font-medium">{invoice.currency === 'TL' ? 'TRY' : (invoice.currency || 'TRY')}</span>
+                  <span className="text-xs font-medium">{currency === 'TL' ? 'TRY' : currency}</span>
                 </div>
                 <Separator className="my-2" />
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 text-xs">Ara Toplam:</span>
-                  <span className="font-medium text-xs">{formatCurrency(subtotal)}</span>
+                  <span className="font-medium text-xs">{formatCurrency(subtotal, currency)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 text-xs">KDV:</span>
-                  <span className="font-medium text-xs">{formatCurrency(taxTotal)}</span>
+                  <span className="font-medium text-xs">{formatCurrency(taxTotal, currency)}</span>
                 </div>
                 <div className="flex justify-between items-center pt-1 border-t">
                   <span className="text-gray-700 font-medium text-xs">Toplam:</span>
                   <span className="text-base font-bold text-primary">
-                    {formatCurrency(totalAmount)}
+                    {formatCurrency(totalAmount, currency)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500 text-xs">Ödenen:</span>
-                  <span className="font-medium text-xs text-blue-600">{formatCurrency(paidAmount)}</span>
+                  <span className="font-medium text-xs text-blue-600">{formatCurrency(paidAmount, currency)}</span>
                 </div>
                 <div className="flex justify-between items-center pt-1 border-t">
                   <span className="text-gray-700 font-medium text-xs">Kalan:</span>
-                  <span className="text-sm font-bold text-red-600">{formatCurrency(remainingAmount)}</span>
+                  <span className="text-sm font-bold text-red-600">{formatCurrency(remainingAmount, currency)}</span>
                 </div>
                 <Separator className="my-2" />
                 <div className="flex justify-between items-center">
@@ -355,8 +416,12 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
               <Separator />
 
               {/* Tedarikçi Bilgileri */}
-              <div className="p-2.5 rounded-lg text-xs bg-gray-50 border border-gray-200">
+              <div className="p-2.5 rounded-lg text-xs bg-green-50 border border-green-200">
                 <div className="mb-2">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Building2 className="h-3 w-3 text-green-600" />
+                    <span className="text-green-700 font-medium text-xs">Tedarikçi Bilgileri</span>
+                  </div>
                   <div className="font-semibold text-gray-900 text-sm mb-0.5">
                     {invoice.supplier?.name || 'Bilinmiyor'}
                   </div>
@@ -399,95 +464,103 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
         {/* Right Column - Invoice Items */}
         <div className="lg:col-span-3 space-y-4">
           {/* Fatura Kalemleri */}
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100/50 border-b p-3">
-              <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <FileText className="h-4 w-4 text-orange-600" />
-                Fatura Kalemleri
-                <Badge variant="outline" className="ml-2 text-xs">{invoiceItems.length}</Badge>
-              </CardTitle>
+          <Card className="border-2 border-gray-300 shadow-sm">
+            <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100/50 border-b-2 border-gray-300 p-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <Package className="h-4 w-4 text-orange-600" />
+                  Fatura Kalemleri
+                </CardTitle>
+                <Badge variant="outline" className="px-3 py-1">
+                  {invoiceItems.length} Kalem
+                </Badge>
+              </div>
             </CardHeader>
-            <CardContent className="p-4">
+            <CardContent className="p-0">
               {itemsLoading ? (
-                <div className="space-y-2">
+                <div className="p-4 space-y-2">
                   <Skeleton className="h-12 w-full" />
                   <Skeleton className="h-12 w-full" />
                   <Skeleton className="h-12 w-full" />
                 </div>
               ) : invoiceItems.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
-                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p className="font-medium">Fatura kalemleri bulunamadı</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-gray-200">
-                        <TableHead className="w-12 font-semibold text-xs">#</TableHead>
-                        <TableHead className="font-semibold text-xs">Ürün</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">Miktar</TableHead>
-                        <TableHead className="text-center font-semibold text-xs">Birim</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">Birim Fiyat</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">İndirim</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">KDV</TableHead>
-                        <TableHead className="text-right font-semibold text-xs">Toplam</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {invoiceItems.map((item, index) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
-                          <TableCell className="font-medium text-xs">
-                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600">
-                              {index + 1}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="max-w-48">
-                              <p className="font-medium text-gray-900 truncate text-sm mb-1">
-                                {item.product_name}
-                              </p>
-                              {item.sku && (
-                                <span className="text-xs text-gray-500">SKU: {item.sku}</span>
+                  <div className="max-h-[50vh] overflow-y-auto">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                        <TableRow className="border-gray-200">
+                          <TableHead className="w-12 font-semibold text-xs">#</TableHead>
+                          <TableHead className="min-w-48 font-semibold text-xs">Ürün</TableHead>
+                          <TableHead className="text-right font-semibold text-xs">Miktar</TableHead>
+                          <TableHead className="text-center font-semibold text-xs">Birim</TableHead>
+                          <TableHead className="text-right font-semibold text-xs">Birim Fiyat</TableHead>
+                          <TableHead className="text-right font-semibold text-xs">İndirim</TableHead>
+                          <TableHead className="text-right font-semibold text-xs">KDV</TableHead>
+                          <TableHead className="text-right font-semibold text-xs">Toplam</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {invoiceItems.map((item, index) => (
+                          <TableRow key={item.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
+                            <TableCell className="font-medium text-xs">
+                              <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600">
+                                {index + 1}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="max-w-48">
+                                <p className="font-medium text-gray-900 truncate text-sm mb-1">
+                                  {item.product_name}
+                                </p>
+                                <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                                  {item.sku && (
+                                    <span className="px-2 py-0.5 bg-gray-100 rounded">SKU: {item.sku}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="font-mono text-sm font-semibold text-gray-700">
+                                {item.quantity.toFixed(2)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="text-xs font-medium text-gray-600">
+                                {formatUnit(item.unit)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-medium">
+                              {formatCurrency(item.unit_price, currency)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {item.discount_rate > 0 ? (
+                                <span className="text-red-600 text-xs">{item.discount_rate}%</span>
+                              ) : (
+                                <span className="text-gray-400 text-xs">-</span>
                               )}
-                            </div>
+                            </TableCell>
+                            <TableCell className="text-right text-xs">{item.tax_rate}%</TableCell>
+                            <TableCell className="text-right font-semibold text-gray-900">
+                              {formatCurrency(item.line_total, currency)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="bg-gray-50 font-bold border-t-2 border-gray-300">
+                          <TableCell colSpan={7} className="text-right text-sm">
+                            Genel Toplam
                           </TableCell>
-                          <TableCell className="text-right">
-                            <div className="font-mono text-sm font-semibold text-gray-700">
-                              {item.quantity.toFixed(2)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="text-xs font-medium text-gray-600">
-                              {formatUnit(item.unit)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right text-sm font-medium">
-                            {formatCurrency(item.unit_price)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {item.discount_rate > 0 ? (
-                              <span className="text-red-600 text-xs">{item.discount_rate}%</span>
-                            ) : (
-                              <span className="text-gray-400 text-xs">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right text-xs">{item.tax_rate}%</TableCell>
-                          <TableCell className="text-right font-semibold text-gray-900">
-                            {formatCurrency(item.line_total)}
+                          <TableCell className="text-right text-base">
+                            {formatCurrency(invoiceItems.reduce((sum, item) => sum + (item.line_total || 0), 0), currency)}
                           </TableCell>
                         </TableRow>
-                      ))}
-                      <TableRow className="bg-gray-50 font-bold border-t-2 border-gray-300">
-                        <TableCell colSpan={7} className="text-right text-sm">
-                          Genel Toplam
-                        </TableCell>
-                        <TableCell className="text-right text-base">
-                          {formatCurrency(invoiceItems.reduce((sum, item) => sum + (item.line_total || 0), 0))}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -495,59 +568,65 @@ const PurchaseInvoiceDetail = ({ isCollapsed, setIsCollapsed }: PurchaseInvoiceD
 
           {/* Stok Hareketleri */}
           {stockMovements.length > 0 && (
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="bg-gradient-to-r from-indigo-50 to-indigo-100/50 border-b p-3">
-                <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                  <Package className="h-4 w-4 text-indigo-600" />
-                  Stok Hareketleri
-                  <Badge variant="outline" className="ml-2 text-xs">{stockMovements.length}</Badge>
-                </CardTitle>
+            <Card className="border-2 border-gray-300 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-indigo-50 to-indigo-100/50 border-b-2 border-gray-300 p-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <Warehouse className="h-4 w-4 text-indigo-600" />
+                    Stok Hareketleri
+                  </CardTitle>
+                  <Badge variant="outline" className="px-3 py-1">
+                    {stockMovements.length} Hareket
+                  </Badge>
+                </div>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent className="p-0">
                 {movementsLoading ? (
-                  <div className="space-y-2">
+                  <div className="p-4 space-y-2">
                     <Skeleton className="h-12 w-full" />
                     <Skeleton className="h-12 w-full" />
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-gray-200">
-                          <TableHead className="font-semibold text-xs">İşlem No</TableHead>
-                          <TableHead className="font-semibold text-xs">Tarih</TableHead>
-                          <TableHead className="font-semibold text-xs">Depo</TableHead>
-                          <TableHead className="text-right font-semibold text-xs">Miktar</TableHead>
-                          <TableHead className="font-semibold text-xs">Notlar</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {stockMovements.map((movement) => (
-                          <TableRow key={movement.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
-                            <TableCell className="font-medium text-xs">
-                              {movement.transaction_number}
-                            </TableCell>
-                            <TableCell className="text-xs">
-                              {format(new Date(movement.transaction_date), "dd.MM.yyyy", { locale: tr })}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Warehouse className="h-3 w-3 text-gray-400" />
-                                <span className="text-xs">{movement.warehouse_name || 'Belirtilmemiş'}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span className="font-semibold text-green-600 text-xs">
-                                +{movement.quantity.toFixed(2)} {formatUnit(movement.unit)}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-xs text-gray-500">
-                              {movement.notes || '-'}
-                            </TableCell>
+                    <div className="max-h-[50vh] overflow-y-auto">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-gray-50 z-10">
+                          <TableRow className="border-gray-200">
+                            <TableHead className="font-semibold text-xs">İşlem No</TableHead>
+                            <TableHead className="font-semibold text-xs">Tarih</TableHead>
+                            <TableHead className="font-semibold text-xs">Depo</TableHead>
+                            <TableHead className="text-right font-semibold text-xs">Miktar</TableHead>
+                            <TableHead className="font-semibold text-xs">Notlar</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {stockMovements.map((movement) => (
+                            <TableRow key={movement.id} className="hover:bg-gray-50/50 transition-colors border-gray-100">
+                              <TableCell className="font-medium text-xs">
+                                {movement.transaction_number}
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {format(new Date(movement.transaction_date), "dd.MM.yyyy", { locale: tr })}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Warehouse className="h-3 w-3 text-gray-400" />
+                                  <span className="text-xs">{movement.warehouse_name || 'Belirtilmemiş'}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className="font-semibold text-green-600 text-xs">
+                                  +{movement.quantity.toFixed(2)} {formatUnit(movement.unit)}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-xs text-gray-500">
+                                {movement.notes || '-'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 )}
               </CardContent>

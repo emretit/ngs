@@ -5,6 +5,7 @@ export type IntegratorType = 'nilvera' | 'elogo' | 'veriban';
 export interface InvoiceFilters {
   startDate?: string;
   endDate?: string;
+  forceRefresh?: boolean;
 }
 
 export interface IntegratorServiceResponse {
@@ -300,6 +301,7 @@ export class IntegratorService {
         body: {
           startDate,
           endDate,
+          forceRefresh: filters.forceRefresh || false,
         }
       });
 

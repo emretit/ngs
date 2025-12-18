@@ -2740,10 +2740,14 @@ export type Database = {
           company_id: string | null
           created_at: string | null
           currency: string | null
+          due_date: string | null
+          fetched_at: string | null
           id: string
           invoice_date: string
           invoice_id: string | null
+          invoice_profile: string | null
           invoice_state: number | null
+          invoice_type: string | null
           invoice_uuid: string
           notes: string | null
           response_sent: boolean | null
@@ -2761,10 +2765,14 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           currency?: string | null
+          due_date?: string | null
+          fetched_at?: string | null
           id?: string
           invoice_date: string
           invoice_id?: string | null
+          invoice_profile?: string | null
           invoice_state?: number | null
+          invoice_type?: string | null
           invoice_uuid: string
           notes?: string | null
           response_sent?: boolean | null
@@ -2782,10 +2790,14 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           currency?: string | null
+          due_date?: string | null
+          fetched_at?: string | null
           id?: string
           invoice_date?: string
           invoice_id?: string | null
+          invoice_profile?: string | null
           invoice_state?: number | null
+          invoice_type?: string | null
           invoice_uuid?: string
           notes?: string | null
           response_sent?: boolean | null

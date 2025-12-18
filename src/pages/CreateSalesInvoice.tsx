@@ -20,6 +20,8 @@ import TermsConditionsCard from "@/components/proposals/cards/TermsConditionsCar
 import { useCustomerSelect } from "@/hooks/useCustomerSelect";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useEInvoice } from "@/hooks/useEInvoice";
+import { useVeribanInvoice } from "@/hooks/useVeribanInvoice";
+import { IntegratorService } from "@/services/integratorService";
 
 // Constants
 const DEFAULT_VAT_PERCENTAGE = 18;
@@ -114,7 +116,61 @@ const CreateSalesInvoice = () => {
   // Hooks
   const { customers } = useCustomerSelect();
   const { userData } = useCurrentUser();
-  const { sendInvoice, isSending } = useEInvoice();
+  const { sendInvoice: sendNilveraInvoice, isSending: isSendingNilvera } = useEInvoice();
+  const { sendInvoice: sendVeribanInvoice, isSending: isSendingVeriban } = useVeribanInvoice();
+  
+  // Integrator status
+  const [integratorStatus, setIntegratorStatus] = useState<{
+    nilvera: boolean;
+    elogo: boolean;
+    veriban: boolean;
+    selected: 'nilvera' | 'elogo' | 'veriban';
+  } | null>(null);
+  
+  useEffect(() => {
+    const loadIntegratorStatus = async () => {
+      try {
+        const status = await IntegratorService.checkIntegratorStatus();
+        setIntegratorStatus(status);
+        console.log('📊 [CreateSalesInvoice] Integrator status:', status);
+      } catch (error) {
+        console.error('Error loading integrator status:', error);
+      }
+    };
+    loadIntegratorStatus();
+  }, []);
+  
+  // Determine which integrator to use and get sending state
+  const isSending = useMemo(() => {
+    if (!integratorStatus) return false;
+    if (integratorStatus.selected === 'veriban') return isSendingVeriban;
+    if (integratorStatus.selected === 'nilvera') return isSendingNilvera;
+    return false;
+  }, [integratorStatus, isSendingVeriban, isSendingNilvera]);
+  
+  // Send invoice based on selected integrator
+  const sendInvoiceToIntegrator = useCallback((invoiceId: string) => {
+    if (!integratorStatus) {
+      console.warn('⚠️ [CreateSalesInvoice] Integrator status not loaded yet');
+      return;
+    }
+    
+    console.log('📤 [CreateSalesInvoice] Sending invoice to integrator:', integratorStatus.selected);
+    
+    if (integratorStatus.selected === 'veriban' && integratorStatus.veriban) {
+      console.log('📤 [CreateSalesInvoice] Sending to Veriban...');
+      sendVeribanInvoice(invoiceId);
+    } else if (integratorStatus.selected === 'nilvera' && integratorStatus.nilvera) {
+      console.log('📤 [CreateSalesInvoice] Sending to Nilvera...');
+      sendNilveraInvoice(invoiceId);
+    } else if (integratorStatus.selected === 'elogo' && integratorStatus.elogo) {
+      console.log('⚠️ [CreateSalesInvoice] e-Logo entegrasyonu henüz desteklenmiyor');
+      toast.info('e-Logo entegrasyonu yakında eklenecek');
+    } else {
+      console.warn('⚠️ [CreateSalesInvoice] Selected integrator is not active');
+      toast.warning('Seçili entegratör aktif değil. Lütfen ayarlar sayfasından kontrol edin.');
+    }
+  }, [integratorStatus, sendVeribanInvoice, sendNilveraInvoice]);
 
   // State
   const [saving, setSaving] = useState(false);
@@ -775,7 +831,36 @@ const CreateSalesInvoice = () => {
       queryClient.invalidateQueries({ queryKey: ['sales-invoices'] });
 
       console.log("✅ [CreateSalesInvoice] Invoice saved successfully", { invoiceId: invoice.id, isDraft });
-      toast.success(isDraft ? "Fatura taslak olarak kaydedildi" : "Fatura başarıyla oluşturuldu");
+      
+      // If not draft and integrator is active, send to selected integrator
+      if (!isDraft && integratorStatus) {
+        const selectedIntegrator = integratorStatus.selected;
+        const isIntegratorActive = 
+          (selectedIntegrator === 'veriban' && integratorStatus.veriban) ||
+          (selectedIntegrator === 'nilvera' && integratorStatus.nilvera) ||
+          (selectedIntegrator === 'elogo' && integratorStatus.elogo);
+        
+        if (isIntegratorActive) {
+          console.log(`📤 [CreateSalesInvoice] Sending invoice to ${selectedIntegrator}...`);
+          try {
+            sendInvoiceToIntegrator(invoice.id);
+            const integratorNames: Record<string, string> = {
+              veriban: 'Veriban',
+              nilvera: 'Nilvera',
+              elogo: 'e-Logo'
+            };
+            toast.success(`Fatura kaydedildi ve ${integratorNames[selectedIntegrator]}'a gönderiliyor...`);
+          } catch (error) {
+            console.error(`❌ [CreateSalesInvoice] ${selectedIntegrator} send error:`, error);
+            toast.error(`Fatura kaydedildi ancak gönderilemedi. Fatura detay sayfasından tekrar deneyebilirsiniz.`);
+          }
+        } else {
+          toast.success("Fatura başarıyla oluşturuldu");
+        }
+      } else {
+        toast.success(isDraft ? "Fatura taslak olarak kaydedildi" : "Fatura başarıyla oluşturuldu");
+      }
+      
       navigate(`/sales-invoices/${invoice.id}`);
 
     } catch (error) {
@@ -842,7 +927,7 @@ const CreateSalesInvoice = () => {
               className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
             >
               <Save className="h-4 w-4" />
-              <span>{saving ? "Kaydediliyor..." : "Kaydet"}</span>
+              <span>{saving || isSending ? "İşleniyor..." : "Kaydet"}</span>
             </Button>
             
             <DropdownMenu>

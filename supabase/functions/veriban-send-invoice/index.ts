@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { VeribanSoapClient } from '../_shared/veriban-soap-helper.ts';
+import { generateUBLTRXML } from '../_shared/ubl-generator.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,16 +87,16 @@ serve(async (req) => {
     // Parse request body
     const {
       invoiceId,
-      xmlContent,
+      xmlContent, // Optional - if not provided, will be generated
       customerAlias,
       isDirectSend = true,
       integrationCode,
     } = await req.json();
 
-    if (!invoiceId || !xmlContent) {
+    if (!invoiceId) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'invoiceId ve xmlContent parametreleri zorunludur'
+        error: 'invoiceId parametresi zorunludur'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -105,10 +106,15 @@ serve(async (req) => {
     console.log('🚀 Veriban fatura gönderimi başlatılıyor...');
     console.log('📄 Invoice ID:', invoiceId);
 
-    // Get invoice from database
+    // Get invoice from database with related data
     const { data: invoice, error: invoiceError } = await supabase
       .from('sales_invoices')
-      .select('*')
+      .select(`
+        *,
+        companies(*),
+        customers(*),
+        sales_invoice_items(*)
+      `)
       .eq('id', invoiceId)
       .eq('company_id', profile.company_id)
       .single();
@@ -120,6 +126,91 @@ serve(async (req) => {
       }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Validate required data
+    if (!invoice.companies?.tax_number) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Şirket vergi numarası bulunamadı. Lütfen şirket bilgilerini tamamlayın.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!invoice.customers?.tax_number) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Müşteri vergi numarası bulunamadı. Lütfen müşteri bilgilerini tamamlayın.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Generate XML if not provided
+    let finalXmlContent = xmlContent;
+    let ettn: string;
+
+    if (!finalXmlContent) {
+      console.log('📝 UBL-TR XML oluşturuluyor...');
+      
+      // Extract ETTN from existing data if available
+      if (invoice.xml_data && invoice.xml_data.ettn) {
+        ettn = invoice.xml_data.ettn;
+      } else if (invoice.einvoice_xml_content) {
+        const ettnMatch = invoice.einvoice_xml_content.match(/<cbc:UUID[^>]*>(.*?)<\/cbc:UUID>/i);
+        if (ettnMatch) {
+          ettn = ettnMatch[1].trim();
+        } else {
+          ettn = generateETTN();
+        }
+      } else {
+        ettn = generateETTN();
+      }
+
+      // Generate UBL-TR XML
+      finalXmlContent = generateUBLTRXML(invoice, ettn);
+      
+      console.log('✅ UBL-TR XML oluşturuldu');
+      console.log('🆔 ETTN:', ettn);
+
+      // Save XML content and ETTN to database
+      await supabase
+        .from('sales_invoices')
+        .update({
+          einvoice_xml_content: finalXmlContent,
+          xml_data: { ...(invoice.xml_data || {}), ettn },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', invoiceId);
+    } else {
+      // Extract ETTN from provided XML
+      const ettnMatch = finalXmlContent.match(/<cbc:UUID[^>]*>(.*?)<\/cbc:UUID>/i);
+      if (ettnMatch) {
+        ettn = ettnMatch[1].trim();
+      } else {
+        ettn = invoice.id;
+      }
+    }
+
+    // Determine customer alias
+    let finalCustomerAlias = customerAlias || '';
+    if (!finalCustomerAlias && invoice.customers?.is_einvoice_mukellef) {
+      finalCustomerAlias = invoice.customers?.einvoice_alias_name || '';
+      if (finalCustomerAlias === 'undefined' || finalCustomerAlias === 'null') {
+        finalCustomerAlias = '';
+      }
+    }
+
+    // Helper function to generate ETTN
+    function generateETTN(): string {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
       });
     }
 
@@ -153,19 +244,8 @@ serve(async (req) => {
       const zip = new JSZip();
 
       // Add XML to zip
-      // Extract ETTN from XML if available, otherwise use invoice ID
-      let ettn = invoice.id;
-      if (invoice.xml_data && invoice.xml_data.ettn) {
-        ettn = invoice.xml_data.ettn;
-      } else if (invoice.einvoice_xml_content) {
-        // Try to extract ETTN from XML content
-        const ettnMatch = invoice.einvoice_xml_content.match(/<cbc:UUID[^>]*>(.*?)<\/cbc:UUID>/i);
-        if (ettnMatch) {
-          ettn = ettnMatch[1].trim();
-        }
-      }
       const xmlFileName = `${ettn}.xml`;
-      zip.file(xmlFileName, xmlContent);
+      zip.file(xmlFileName, finalXmlContent);
 
       // Generate ZIP
       const zipBlob = await zip.generateAsync({ type: 'uint8array' });
@@ -184,6 +264,9 @@ serve(async (req) => {
       // Transfer Sales Invoice File
       console.log('📨 TransferSalesInvoiceFile çağrılıyor...');
 
+      // Generate integration code if not provided (use invoice ID)
+      const finalIntegrationCode = integrationCode || invoice.id;
+
       const transferResult = await VeribanSoapClient.transferSalesInvoice(
         sessionCode,
         {
@@ -191,9 +274,9 @@ serve(async (req) => {
           fileDataType: 'XML_INZIP',
           binaryData: base64Zip,
           binaryDataHash: md5Hash,
-          customerAlias: customerAlias || '',
+          customerAlias: finalCustomerAlias,
           isDirectSend: isDirectSend,
-          integrationCode: integrationCode || '',
+          integrationCode: finalIntegrationCode,
         },
         veribanAuth.webservice_url
       );
@@ -234,6 +317,8 @@ serve(async (req) => {
           nilvera_transfer_id: transferFileUniqueId, // Using nilvera_transfer_id field for Veriban transfer ID
           einvoice_transfer_state: 2, // İşlenmeyi bekliyor
           einvoice_sent_at: new Date().toISOString(),
+          einvoice_xml_content: finalXmlContent, // Save generated XML
+          xml_data: { ...(invoice.xml_data || {}), ettn, integrationCode: finalIntegrationCode },
           updated_at: new Date().toISOString(),
         })
         .eq('id', invoiceId);
@@ -245,6 +330,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         transferFileUniqueId,
+        ettn,
+        integrationCode: finalIntegrationCode,
         message: 'Fatura başarıyla Veriban sistemine gönderildi'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -84,74 +84,15 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
 
       {/* E-fatura mükellefi detay bilgileri - Vergi numarası altında */}
       {mukellefInfo ? (
-        <div className="mt-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 bg-green-100 rounded-full">
-              <CheckCircle className="w-4 h-4 text-green-600" />
+        <div className="mt-2 p-1.5 bg-green-50 border border-green-200 rounded-md">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+              <span className="text-xs font-medium text-green-800">E-Fatura Mükellefi Bulundu</span>
             </div>
-            <div>
-              <h4 className="text-sm font-semibold text-green-800">E-Fatura Mükellefi Bulundu</h4>
-              <p className="text-xs text-green-600">Bilgiler otomatik doldurulabilir</p>
-            </div>
-          </div>
-          
-          {/* Kompakt bilgi kartı */}
-          <div className="bg-white rounded-lg p-3 border border-green-100 mb-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-              <div className="space-y-1">
-                <div className="font-medium text-gray-700">Şirket Bilgileri</div>
-                <div className="text-gray-600 truncate" title={mukellefInfo.companyName}>
-                  <strong>Şirket:</strong> {mukellefInfo.companyName}
-                </div>
-                <div className="text-gray-600">
-                  <strong>Vergi No:</strong> {formData.tax_number}
-                </div>
-                {mukellefInfo.taxOffice && (
-                  <div className="text-gray-600">
-                    <strong>Vergi Dairesi:</strong> {mukellefInfo.taxOffice}
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-1">
-                <div className="font-medium text-gray-700">Adres Bilgileri</div>
-                {mukellefInfo.address && (
-                  <div className="text-gray-600 truncate" title={mukellefInfo.address}>
-                    <strong>Adres:</strong> {mukellefInfo.address}
-                  </div>
-                )}
-                <div className="text-gray-600">
-                  <strong>Şehir:</strong> {mukellefInfo.city || '-'}
-                </div>
-                <div className="text-gray-600">
-                  <strong>İlçe:</strong> {mukellefInfo.district || '-'}
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <div className="font-medium text-gray-700">E-Fatura Bilgileri</div>
-                {mukellefInfo.aliasName && (
-                  <div className="text-gray-600 truncate" title={mukellefInfo.aliasName}>
-                    <strong>Alias:</strong> {mukellefInfo.aliasName}
-                  </div>
-                )}
-                <div className="text-green-600 font-medium">
-                  <strong>Durum:</strong> Aktif
-                </div>
-                {mukellefInfo.mersisNo && (
-                  <div className="text-gray-600">
-                    <strong>Mersis:</strong> {mukellefInfo.mersisNo}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* Otomatik doldurma butonu */}
-          <div className="flex items-center justify-center">
             <Button
               size="sm"
-              variant="default"
+              variant="ghost"
               onClick={() => {
                 if (mukellefInfo) {
                   setFormData({
@@ -165,11 +106,17 @@ const SupplierBasicInfoCompact = ({ formData, setFormData }: SupplierBasicInfoCo
                   });
                 }
               }}
-              className="h-8 px-4 text-xs bg-green-600 hover:bg-green-700 text-white shadow-sm"
+              className="h-6 px-2 text-xs text-green-700 hover:text-green-800 hover:bg-green-100"
             >
-              <CheckCircle className="w-4 h-4 mr-1" />
-              Bilgileri Otomatik Doldur
+              Otomatik Doldur
             </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px] text-green-700">
+            <div><span className="font-medium">Şirket:</span> {mukellefInfo.companyName}</div>
+            {mukellefInfo.taxOffice && <div><span className="font-medium">Vergi Dairesi:</span> {mukellefInfo.taxOffice}</div>}
+            {mukellefInfo.city && <div><span className="font-medium">Şehir:</span> {mukellefInfo.city}</div>}
+            {mukellefInfo.district && <div><span className="font-medium">İlçe:</span> {mukellefInfo.district}</div>}
+            {mukellefInfo.aliasName && <div className="col-span-2 truncate"><span className="font-medium">Alias:</span> {mukellefInfo.aliasName}</div>}
           </div>
         </div>
       ) : null}

@@ -243,11 +243,8 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   
   xml += `
   <cbc:InvoiceTypeCode>${escapeXml(invoiceType)}</cbc:InvoiceTypeCode>
-  <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>`;
-  
-  if (invoice.exchange_rate && invoice.exchange_rate !== 1) {
-    xml += `\n  <cbc:LineCountNumeric>${items.length}</cbc:LineCountNumeric>`;
-  }
+  <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>${items.length}</cbc:LineCountNumeric>`;
   
   // AccountingSupplierParty (Satıcı)
   xml += `

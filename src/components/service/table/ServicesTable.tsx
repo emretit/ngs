@@ -208,20 +208,6 @@ const ServicesTable = ({
     return <ServicesTableSkeleton hasSelection={!!onToggleServiceSelection} />;
   }
 
-  if (filteredServices.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Servis bulunamadı</h3>
-        <p className="text-muted-foreground">
-          {searchQuery || selectedStatus || selectedPriority || selectedTechnician
-            ? 'Arama kriterlerinize uygun sonuç bulunamadı.'
-            : 'Henüz servis talebi bulunmuyor.'}
-        </p>
-      </div>
-    );
-  }
-
   const isServiceSelected = (serviceId: string) => {
     return selectedServices.some(s => s.id === serviceId);
   };
@@ -255,7 +241,25 @@ const ServicesTable = ({
         allSelected={allSelected}
       />
       <TableBody>
-        {sortedServices.map((service) => {
+        {sortedServices.length === 0 ? (
+          <TableRow>
+            <TableCell 
+              colSpan={onToggleServiceSelection ? 11 : 10} 
+              className="py-12 text-center"
+            >
+              <div className="flex flex-col items-center justify-center">
+                <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Servis bulunamadı</h3>
+                <p className="text-muted-foreground">
+                  {searchQuery || selectedStatus || selectedPriority || selectedTechnician
+                    ? 'Arama kriterlerinize uygun sonuç bulunamadı.'
+                    : 'Henüz servis talebi bulunmuyor.'}
+                </p>
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : (
+          sortedServices.map((service) => {
           const customerData = service.customer_data as any;
           // Önce company name'i kontrol et, yoksa name'i göster
           const customerName = customerData?.company || customerData?.name || 
@@ -435,7 +439,8 @@ const ServicesTable = ({
               </TableCell>
             </TableRow>
           );
-        })}
+        })
+        )}
       </TableBody>
     </Table>
   );

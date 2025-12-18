@@ -55,6 +55,7 @@ const CustomerNew = () => {
     apartment_number: "",
     unit_number: "",
     is_einvoice_mukellef: false,
+    einvoice_document_type: "",
   });
   const mutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {
@@ -76,8 +77,8 @@ const CustomerNew = () => {
         bank_name: data.bank_name || null,
         iban: data.iban || null,
         account_number: data.account_number || null,
-        tax_number: data.type === 'kurumsal' ? data.tax_number || null : null,
-        tax_office: data.type === 'kurumsal' ? data.tax_office || null : null,
+        tax_number: data.tax_number || null,
+        tax_office: data.tax_office || null,
         city: data.city || null,
         district: data.district || null,
         apartment_number: data.apartment_number || null,

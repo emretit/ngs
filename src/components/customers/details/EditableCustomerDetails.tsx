@@ -61,6 +61,7 @@ export const EditableCustomerDetails = ({
     second_postal_code: customer.second_postal_code || "",
     payment_terms: customer.payment_terms || "",
     is_einvoice_mukellef: customer.is_einvoice_mukellef ?? false,
+    einvoice_document_type: "",
   });
 
   const { mutation } = useCustomerEdit(customer.id, onSuccess);

@@ -16,12 +16,18 @@ export const usePurchaseInvoices = () => {
   });
 
   const fetchInvoices = async (): Promise<PurchaseInvoice[]> => {
-    // Supplier bilgilerini JOIN ile tek sorguda çek
+    // Supplier ve Customer bilgilerini JOIN ile tek sorguda çek
     let query = supabase
       .from("purchase_invoices")
       .select(`
         *,
         supplier:suppliers (
+          id,
+          name,
+          company,
+          tax_number
+        ),
+        customer:customers (
           id,
           name,
           company,
@@ -538,6 +544,7 @@ export const usePurchaseInvoicesInfiniteScroll = (filters?: PurchaseInvoiceFilte
       .select(`
         *,
         supplier:suppliers(id, name, company, tax_number, email),
+        customer:customers(id, name, company, tax_number, email),
         purchase_order:purchase_orders(id, order_number)
       `, { count: 'exact' })
       .eq('company_id', userData.company_id);

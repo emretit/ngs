@@ -9,6 +9,7 @@ import {
   CustomTabsTrigger 
 } from "@/components/ui/custom-tabs";
 import { PaymentsTab } from "./PaymentsTab";
+import { ActivitiesList } from "./ActivitiesList";
 import { ProposalsTab } from "./ProposalsTab";
 import CustomerInvoicesTab from "./CustomerInvoicesTab";
 import { CustomerServicesTab } from "./CustomerServicesTab";
@@ -67,13 +68,13 @@ export const ContactTabs = ({ customer }: ContactTabsProps) => {
   }) => (
     <CustomTabsTrigger 
       value={value} 
-      className="flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200 relative"
+      className="flex items-center justify-center gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200 relative"
     >
-      <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="flex items-center gap-2">
         {icon}
-        <span className="text-xs sm:text-sm">{label}</span>
+        <span className="text-sm">{label}</span>
         {count !== undefined && count > 0 && (
-          <Badge variant="secondary" className="ml-0.5 sm:ml-1 h-4 sm:h-5 px-1 sm:px-1.5 text-[10px] sm:text-xs">
+          <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
             {count}
           </Badge>
         )}
@@ -143,11 +144,7 @@ export const ContactTabs = ({ customer }: ContactTabsProps) => {
       </CustomTabsContent>
 
       <CustomTabsContent value="activities">
-        <EmptyState
-          icon={<Activity className="w-8 h-8 text-gray-400" />}
-          title="Aktiviteler"
-          description="Müşteri aktiviteleri yakında eklenecek. Bu bölümde müşteri ile yapılan tüm etkileşimler görüntülenecek."
-        />
+        <ActivitiesList customer={customer} />
       </CustomTabsContent>
 
       <CustomTabsContent value="service-receipts">

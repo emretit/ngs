@@ -129,10 +129,10 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
   const handleSelectPartner = (id: string, type: "customer" | "supplier") => {
     if (type === "customer") {
       setValue("customer_id", id);
-      setValue("supplier_id", "");
+      setValue("supplier_id", null);
     } else {
       setValue("supplier_id", id);
-      setValue("customer_id", "");
+      setValue("customer_id", null);
     }
     setSearchQuery(""); // Arama sorgusunu temizle
     setIsOpen(false);

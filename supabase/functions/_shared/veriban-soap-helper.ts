@@ -613,6 +613,59 @@ export class VeribanSoapClient {
   }
 
   /**
+   * Get Sales Invoice UUID List
+   * Doküman: Bölüm 18 - Giden Fatura UUID Listesi
+   */
+  static async getSalesInvoiceUUIDList(
+    sessionCode: string,
+    params: {
+      startDate?: string;
+      endDate?: string;
+      customerRegisterNumber?: string;
+    },
+    url: string
+  ): Promise<VeribanSoapResponse> {
+    const {
+      startDate = '',
+      endDate = '',
+      customerRegisterNumber = '',
+    } = params;
+
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+                  xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:GetSalesInvoiceUUIDList>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+      ${startDate ? `<tem:startDate>${this.escapeXml(startDate)}</tem:startDate>` : '<tem:startDate xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
+      ${endDate ? `<tem:endDate>${this.escapeXml(endDate)}</tem:endDate>` : '<tem:endDate xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
+      ${customerRegisterNumber ? `<tem:customerRegisterNumber>${this.escapeXml(customerRegisterNumber)}</tem:customerRegisterNumber>` : '<tem:customerRegisterNumber xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'}
+    </tem:GetSalesInvoiceUUIDList>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+    try {
+      const response = await this.fetchWithTimeout(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'GetSalesInvoiceUUIDList',
+        },
+        body: soapRequest,
+      });
+
+      const xmlText = await response.text();
+      return this.parseUUIDListResponse(xmlText);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'GetSalesInvoiceUUIDList failed',
+      };
+    }
+  }
+
+  /**
    * Get Purchase Invoice UUID List
    * Doküman: Bölüm 19 - Gelen Fatura UUID Listesi
    */

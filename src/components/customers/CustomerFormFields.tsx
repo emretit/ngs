@@ -254,6 +254,34 @@ const CustomerFormFields = ({ formData, setFormData }: CustomerFormFieldsProps) 
                 </p>
               </div>
 
+              {/* E-Belge Tipi */}
+              <div className="space-y-1.5">
+                <Label htmlFor="einvoice_document_type" className="text-xs font-medium text-gray-700 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-purple-600" />
+                  <span>E-Belge Tipi</span>
+                </Label>
+                <Select
+                  value={formData.einvoice_document_type || ""}
+                  onValueChange={(value) => setFormData({ ...formData, einvoice_document_type: value })}
+                >
+                  <SelectTrigger className="w-full h-7 text-xs bg-background border-border hover:border-primary transition-colors">
+                    <SelectValue placeholder="E-Belge tipi seçin" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border border-border shadow-xl z-[100]">
+                    <SelectItem value="Invoice">E-Fatura</SelectItem>
+                    <SelectItem value="ArchiveInvoice">E-Arşiv Fatura</SelectItem>
+                    <SelectItem value="Waybill">E-İrsaliye</SelectItem>
+                    <SelectItem value="EINVOICE">E-Fatura (EINVOICE)</SelectItem>
+                    <SelectItem value="EARCHIVE">E-Arşiv (EARCHIVE)</SelectItem>
+                    <SelectItem value="EARCHIVETYPE2">E-Arşiv Type 2</SelectItem>
+                    <SelectItem value="DESPATCHADVICE">E-İrsaliye (DESPATCHADVICE)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-purple-600/70">
+                  Mükellef bilgisi çekildiğinde otomatik doldurulur
+                </p>
+              </div>
+
               {/* Ödeme Şartları */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-gray-700">Ödeme Şartları</Label>

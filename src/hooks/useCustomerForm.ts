@@ -61,11 +61,8 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
     queryKey: ['customer', id],
     queryFn: async () => {
       if (!id) {
-        console.log('No ID provided, skipping customer fetch');
         return null;
       }
-      
-      console.log('🔍 Fetching customer data for ID:', id);
       
       // Önce company_id'yi al
       const { data: { user } } = await supabase.auth.getUser();
@@ -98,7 +95,6 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         throw new Error('Müşteri bulunamadı');
       }
 
-      console.log('✅ Retrieved customer data:', data);
       return data;
     },
     enabled: !!id,
@@ -107,87 +103,69 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
 
   useEffect(() => {
     if (customer) {
-      console.log('📝 Setting form data with customer:', customer);
-      console.log('📋 Customer name:', customer.name);
-      console.log('📋 Customer company:', customer.company);
-      
-      // City ve district için string'den ID'ye çevirme fonksiyonu
-      const resolveCityId = async (cityName: string | null): Promise<string> => {
-        if (!cityName) return "";
+      // City ve district için ID'den isim çözme fonksiyonları
+      const resolveCityName = async (cityId: number | null): Promise<string> => {
+        if (!cityId) return "";
         try {
-          // Önce city_id varsa onu kullan
-          if ((customer as any).city_id) {
-            return (customer as any).city_id.toString();
-          }
-          // Yoksa city name'den ID bul (turkey_cities tablosunu kullan)
           const { data } = await supabase
             .from('turkey_cities')
-            .select('id')
-            .ilike('name', `%${cityName}%`)
+            .select('name')
+            .eq('id', cityId)
             .maybeSingle();
-          return data?.id?.toString() || "";
+          return data?.name || "";
         } catch (error) {
-          console.error('Error resolving city ID:', error);
+          console.error('Error resolving city name:', error);
           return "";
         }
       };
 
-      const resolveDistrictId = async (districtName: string | null, cityId: string): Promise<string> => {
-        if (!districtName || !cityId) return "";
+      const resolveDistrictName = async (districtId: number | null, cityId: number | null): Promise<string> => {
+        if (!districtId || !cityId) return "";
         try {
-          // Önce district_id varsa onu kullan
-          if ((customer as any).district_id) {
-            return (customer as any).district_id.toString();
-          }
-          // Yoksa district name ve city_id'den ID bul (turkey_districts tablosunu kullan)
           const { data } = await supabase
             .from('turkey_districts')
-            .select('id')
-            .ilike('name', `%${districtName}%`)
-            .eq('city_id', parseInt(cityId))
+            .select('name')
+            .eq('id', districtId)
+            .eq('city_id', cityId)
             .maybeSingle();
-          return data?.id?.toString() || "";
+          return data?.name || "";
         } catch (error) {
-          console.error('Error resolving district ID:', error);
+          console.error('Error resolving district name:', error);
           return "";
         }
       };
 
-      // Async olarak city ve district ID'lerini çöz
+      // Async olarak city ve district isimlerini çöz
       const loadFormData = async () => {
-        // Önce city_id varsa onu kullan, yoksa string'den ID bul
-        let cityId = "";
+        // İl için: ID varsa isim çöz, yoksa customer.city string'ini kullan
+        let cityName = "";
         if ((customer as any).city_id) {
-          cityId = (customer as any).city_id.toString();
-          console.log('✅ Using city_id from database:', cityId);
-        } else if (customer.city) {
-          cityId = await resolveCityId(customer.city);
-          console.log('✅ Resolved city ID from string:', customer.city, '→', cityId);
+          cityName = await resolveCityName((customer as any).city_id);
+        } else {
+          cityName = customer.city || customer.einvoice_city || "";
         }
         
-        // Önce district_id varsa onu kullan, yoksa string'den ID bul
-        let districtId = "";
+        // İlçe için: ID varsa isim çöz, yoksa customer.district string'ini kullan
+        let districtName = "";
         if ((customer as any).district_id) {
-          districtId = (customer as any).district_id.toString();
-          console.log('✅ Using district_id from database:', districtId);
-        } else if (customer.district && cityId) {
-          districtId = await resolveDistrictId(customer.district, cityId);
-          console.log('✅ Resolved district ID from string:', customer.district, '→', districtId);
+          districtName = await resolveDistrictName((customer as any).district_id, (customer as any).city_id);
+        } else {
+          districtName = customer.district || customer.einvoice_district || "";
         }
         
         // İkinci adres için aynı mantık
-        let secondCityId = "";
+        let secondCityName = "";
         if ((customer as any).second_city_id) {
-          secondCityId = (customer as any).second_city_id.toString();
-        } else if (customer.second_city) {
-          secondCityId = await resolveCityId(customer.second_city);
+          secondCityName = await resolveCityName((customer as any).second_city_id);
+        } else {
+          secondCityName = customer.second_city || "";
         }
         
-        let secondDistrictId = "";
+        let secondDistrictName = "";
         if ((customer as any).second_district_id) {
-          secondDistrictId = (customer as any).second_district_id.toString();
-        } else if (customer.second_district && secondCityId) {
-          secondDistrictId = await resolveDistrictId(customer.second_district, secondCityId);
+          secondDistrictName = await resolveDistrictName((customer as any).second_district_id, (customer as any).second_city_id);
+        } else {
+          secondDistrictName = customer.second_district || "";
         }
         
         // Tüm alanları null-safe şekilde map et
@@ -204,8 +182,8 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           address: customer.address ?? "",
           tax_number: customer.tax_number ?? "",
           tax_office: customer.tax_office ?? "",
-          city: cityId || customer.city || customer.einvoice_city || "",
-          district: districtId || customer.district || customer.einvoice_district || "",
+          city: cityName,
+          district: districtName,
           einvoice_alias_name: customer.einvoice_alias_name ?? "",
           website: customer.website ?? "",
           country: customer.country ?? "",
@@ -229,22 +207,19 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           second_contact_phone: customer.second_contact_phone ?? "",
           second_contact_position: customer.second_contact_position ?? "",
           second_address: customer.second_address ?? "",
-          second_city: secondCityId || customer.second_city || "",
-          second_district: secondDistrictId || customer.second_district || "",
+          second_city: secondCityName,
+          second_district: secondDistrictName,
           second_country: customer.second_country ?? "",
           second_postal_code: customer.second_postal_code ?? "",
           payment_terms: customer.payment_terms ?? "",
           is_einvoice_mukellef: customer.is_einvoice_mukellef ?? false,
+          einvoice_document_type: (customer as any).einvoice_document_type ?? "",
         };
         
-        console.log('📝 New form data created:', newFormData);
         setFormData(newFormData);
-        console.log('✅ Form data set successfully');
       };
 
       loadFormData();
-    } else {
-      console.log('⚠️ No customer data available to set');
     }
   }, [customer]);
 
@@ -257,28 +232,96 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
 
   const mutation = useMutation({
     mutationFn: async (data: CustomerFormData) => {
-      // City ve district ID'lerini integer'a çevir
-      const cityId = data.city ? parseInt(data.city) : null;
-      const districtId = data.district ? parseInt(data.district) : null;
-      const secondCityId = data.second_city ? parseInt(data.second_city) : null;
-      const secondDistrictId = data.second_district ? parseInt(data.second_district) : null;
-
-      // City ve district string isimlerini al (eğer ID değilse)
+      // City ve district isimlerinden ID'ye çevir
+      let cityId: number | null = null;
+      let districtId: number | null = null;
+      let secondCityId: number | null = null;
+      let secondDistrictId: number | null = null;
+      
       let cityName: string | null = null;
       let districtName: string | null = null;
       let secondCityName: string | null = null;
       let secondDistrictName: string | null = null;
 
-      if (data.city && !cityId) {
-        cityName = data.city;
+      // İl için: Eğer sayısal bir değer ise ID olarak kabul et, değilse isimden ID bul
+      if (data.city) {
+        const parsedCityId = parseInt(data.city);
+        if (!isNaN(parsedCityId) && data.city === parsedCityId.toString()) {
+          // Sayısal bir ID
+          cityId = parsedCityId;
+        } else {
+          // İsim olarak geldi, ID'ye çevir
+          cityName = data.city;
+          const { data: cityData } = await supabase
+            .from('turkey_cities')
+            .select('id')
+            .ilike('name', data.city)
+            .maybeSingle();
+          if (cityData) {
+            cityId = cityData.id;
+          }
+        }
       }
-      if (data.district && !districtId) {
+
+      // İlçe için: Eğer sayısal bir değer ise ID olarak kabul et, değilse isimden ID bul
+      if (data.district && cityId) {
+        const parsedDistrictId = parseInt(data.district);
+        if (!isNaN(parsedDistrictId) && data.district === parsedDistrictId.toString()) {
+          // Sayısal bir ID
+          districtId = parsedDistrictId;
+        } else {
+          // İsim olarak geldi, ID'ye çevir
+          districtName = data.district;
+          const { data: districtData } = await supabase
+            .from('turkey_districts')
+            .select('id')
+            .ilike('name', data.district)
+            .eq('city_id', cityId)
+            .maybeSingle();
+          if (districtData) {
+            districtId = districtData.id;
+          }
+        }
+      } else if (data.district) {
+        // İlçe var ama il yok, sadece isim olarak kaydet
         districtName = data.district;
       }
-      if (data.second_city && !secondCityId) {
-        secondCityName = data.second_city;
+
+      // İkinci adres için aynı mantık
+      if (data.second_city) {
+        const parsedSecondCityId = parseInt(data.second_city);
+        if (!isNaN(parsedSecondCityId) && data.second_city === parsedSecondCityId.toString()) {
+          secondCityId = parsedSecondCityId;
+        } else {
+          secondCityName = data.second_city;
+          const { data: secondCityData } = await supabase
+            .from('turkey_cities')
+            .select('id')
+            .ilike('name', data.second_city)
+            .maybeSingle();
+          if (secondCityData) {
+            secondCityId = secondCityData.id;
+          }
+        }
       }
-      if (data.second_district && !secondDistrictId) {
+
+      if (data.second_district && secondCityId) {
+        const parsedSecondDistrictId = parseInt(data.second_district);
+        if (!isNaN(parsedSecondDistrictId) && data.second_district === parsedSecondDistrictId.toString()) {
+          secondDistrictId = parsedSecondDistrictId;
+        } else {
+          secondDistrictName = data.second_district;
+          const { data: secondDistrictData } = await supabase
+            .from('turkey_districts')
+            .select('id')
+            .ilike('name', data.second_district)
+            .eq('city_id', secondCityId)
+            .maybeSingle();
+          if (secondDistrictData) {
+            secondDistrictId = secondDistrictData.id;
+          }
+        }
+      } else if (data.second_district) {
         secondDistrictName = data.second_district;
       }
 
@@ -293,8 +336,8 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         representative: data.representative || null,
         balance: data.balance || 0,
         address: data.address || null,
-        tax_number: data.type === 'kurumsal' ? data.tax_number || null : null,
-        tax_office: data.type === 'kurumsal' ? data.tax_office || null : null,
+        tax_number: data.tax_number || null,
+        tax_office: data.tax_office || null,
         city: cityName,
         city_id: cityId,
         district: districtName,
@@ -342,10 +385,12 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
         einvoice_mersis_no: einvoiceMukellefData?.data?.mersisNo || null,
         einvoice_sicil_no: einvoiceMukellefData?.data?.sicilNo || null,
         einvoice_checked_at: einvoiceMukellefData?.isEinvoiceMukellef ? new Date().toISOString() : null,
+        einvoice_document_type: data.einvoice_document_type || null,
       };
 
       // Get current user's company_id
       const { data: { user } } = await supabase.auth.getUser();
+      
       const { data: profileData } = await supabase
         .from('profiles')
         .select('company_id')
@@ -356,14 +401,34 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
 
       if (id) {
         // Update
-        console.log('Updating data:', sanitizedData);
-        const { error: updateError } = await supabase
+        // Önce mevcut kaydı kontrol et
+        const { data: existingCustomer, error: checkError } = await supabase
           .from('customers')
-          .update(sanitizedData)
-          .eq('id', id);
+          .select('id, company_id, name')
+          .eq('id', id)
+          .maybeSingle();
+        
+        if (checkError) {
+          console.error('Mevcut kayıt kontrol hatası:', checkError);
+        }
+        
+        // Company ID kontrolü
+        if (existingCustomer?.company_id !== company_id) {
+          throw new Error('Bu müşteriye erişim yetkiniz yok.');
+        }
+        
+        // Company ID'yi sanitizedData'dan çıkar (güncelleme sırasında değiştirilmemeli)
+        const { company_id: _, ...updateData } = sanitizedData;
+        
+        const { data: updateResult, error: updateError } = await supabase
+          .from('customers')
+          .update(updateData)
+          .eq('id', id)
+          .eq('company_id', company_id) // RLS için ek kontrol
+          .select();
         
         if (updateError) {
-          console.error('Update error:', updateError);
+          console.error('Update hatası:', updateError);
           throw updateError;
         }
 
@@ -383,7 +448,6 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           throw new Error('Updated customer not found');
         }
 
-        console.log('Updated data:', updatedData);
         return updatedData;
       } else {
         // Add new customer - add company_id to sanitized data
@@ -404,12 +468,10 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
           throw new Error('Customer could not be added');
         }
 
-        console.log('New data:', newData);
         return newData;
       }
     },
-    onSuccess: (data) => {
-      console.log('Operation successful, returned data:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       if (id) {
         queryClient.invalidateQueries({ queryKey: ['customer', id] });
@@ -427,7 +489,6 @@ export const useCustomerForm = (einvoiceMukellefData?: any) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting form:', formData);
     try {
       await mutation.mutateAsync(formData);
     } catch (error) {

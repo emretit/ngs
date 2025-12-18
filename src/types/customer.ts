@@ -99,4 +99,5 @@ export interface CustomerFormData {
   second_postal_code: string;
   payment_terms: string;
   is_einvoice_mukellef?: boolean; // E-fatura mükellefi durumu (formda gösterilmez, otomatik set edilir)
+  einvoice_document_type?: string; // E-Belge Tipi (Invoice, ArchiveInvoice, Waybill, etc.) - Mükellef bilgisinden otomatik doldurulur
 }

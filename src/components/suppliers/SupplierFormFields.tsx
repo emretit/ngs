@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +11,6 @@ import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog
 import { SupplierFormData } from "@/types/supplier";
 import SupplierBasicInfo from "./form/SupplierBasicInfo";
 import ContactInformation from "./form/ContactInformation";
-import SupplierCompanyInformation from "./form/SupplierCompanyInformation";
 import { User, Building2, Receipt, FileText, Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,6 +43,7 @@ const INITIAL_PAYMENT_TERMS = [
 ];
 
 const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) => {
+  const { t } = useTranslation();
   // Payment terms state
   const [availablePaymentTerms, setAvailablePaymentTerms] = useState<Term[]>(INITIAL_PAYMENT_TERMS);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -84,6 +85,8 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
   // Get current selected term ID
   const getCurrentPaymentTermId = () => {
     const currentTerms = formData.payment_terms || '';
+    if (!currentTerms) return '';
+    
     const matchingTerm = availablePaymentTerms.find(term => 
       currentTerms.trim() === term.text.trim()
     );
@@ -214,9 +217,6 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
         </Card>
       </div>
 
-      {/* Şirket Bilgileri - Alt Kısım */}
-      <SupplierCompanyInformation formData={formData} setFormData={setFormData} />
-
       {/* E-Fatura ve Diğer Bilgiler - Alt Kısım (Yan Yana) */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* E-Fatura ve Banka Bilgileri */}
@@ -246,6 +246,34 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
                 />
                 <p className="text-xs text-purple-600/70">
                   VKN ile tedarikçi bilgileri çekildiğinde otomatik doldurulur
+                </p>
+              </div>
+
+              {/* E-Belge Tipi */}
+              <div className="space-y-1.5">
+                <Label htmlFor="einvoice_document_type" className="text-xs font-medium text-gray-700 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-purple-600" />
+                  <span>E-Belge Tipi</span>
+                </Label>
+                <Select
+                  value={formData.einvoice_document_type || ""}
+                  onValueChange={(value) => setFormData({ ...formData, einvoice_document_type: value })}
+                >
+                  <SelectTrigger className="w-full h-7 text-xs bg-background border-border hover:border-primary transition-colors">
+                    <SelectValue placeholder="E-Belge tipi seçin" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border border-border shadow-xl z-[100]">
+                    <SelectItem value="Invoice">E-Fatura</SelectItem>
+                    <SelectItem value="ArchiveInvoice">E-Arşiv Fatura</SelectItem>
+                    <SelectItem value="Waybill">E-İrsaliye</SelectItem>
+                    <SelectItem value="EINVOICE">E-Fatura (EINVOICE)</SelectItem>
+                    <SelectItem value="EARCHIVE">E-Arşiv (EARCHIVE)</SelectItem>
+                    <SelectItem value="EARCHIVETYPE2">E-Arşiv Type 2</SelectItem>
+                    <SelectItem value="DESPATCHADVICE">E-İrsaliye (DESPATCHADVICE)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-purple-600/70">
+                  Mükellef bilgisi çekildiğinde otomatik doldurulur
                 </p>
               </div>
 
@@ -344,6 +372,38 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
                   />
                 </div>
               </div>
+
+              {/* Finansal Bilgiler */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+                <div className="space-y-1.5">
+                  <Label htmlFor="balance" className="text-xs font-medium text-gray-700">
+                    Başlangıç Bakiye
+                  </Label>
+                  <Input
+                    id="balance"
+                    type="number"
+                    value={formData.balance}
+                    onChange={(e) => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                    className="h-7 text-xs"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Pozitif değer alacak, negatif değer borç anlamına gelir
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="payee_financial_account_id" className="text-xs font-medium text-gray-700">
+                    Finansal Hesap ID
+                  </Label>
+                  <Input
+                    id="payee_financial_account_id"
+                    value={formData.payee_financial_account_id}
+                    onChange={(e) => setFormData({ ...formData, payee_financial_account_id: e.target.value })}
+                    placeholder="Finansal hesap ID"
+                    className="h-7 text-xs"
+                  />
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -360,69 +420,123 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
           </CardHeader>
           <CardContent className="space-y-1.5 pt-0 px-3 pb-3">
             <div className="grid grid-cols-1 gap-3">
-              {/* Finansal Bilgiler */}
+
+              {/* Ticaret Sicil Bilgileri */}
               <div className="pt-2 border-t border-gray-100">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="balance" className="text-xs font-medium text-gray-700">
-                      Başlangıç Bakiye
+                    <Label htmlFor="trade_registry_number" className="text-xs font-medium text-gray-700">
+                      Ticaret Sicil No
                     </Label>
                     <Input
-                      id="balance"
-                      type="number"
-                      value={formData.balance}
-                      onChange={(e) => setFormData({ ...formData, balance: parseFloat(e.target.value) || 0 })}
-                      placeholder="0.00"
+                      id="trade_registry_number"
+                      value={formData.trade_registry_number}
+                      onChange={(e) => setFormData({ ...formData, trade_registry_number: e.target.value })}
+                      placeholder="123456"
                       className="h-7 text-xs"
                     />
-                    <p className="text-xs text-gray-500">
-                      Pozitif değer alacak, negatif değer borç anlamına gelir
-                    </p>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="payee_financial_account_id" className="text-xs font-medium text-gray-700">
-                      Finansal Hesap ID
+                    <Label htmlFor="mersis_number" className="text-xs font-medium text-gray-700">
+                      MERSİS No
                     </Label>
                     <Input
-                      id="payee_financial_account_id"
-                      value={formData.payee_financial_account_id}
-                      onChange={(e) => setFormData({ ...formData, payee_financial_account_id: e.target.value })}
-                      placeholder="Finansal hesap ID"
+                      id="mersis_number"
+                      value={formData.mersis_number}
+                      onChange={(e) => setFormData({ ...formData, mersis_number: e.target.value })}
+                      placeholder="0123456789012345"
                       className="h-7 text-xs"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Ödeme Yöntemleri */}
+              {/* Tedarikçi Detay Bilgileri */}
               <div className="pt-2 border-t border-gray-100">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="payment_means_code" className="text-xs font-medium text-gray-700">
-                      Ödeme Yöntemi
-                    </Label>
-                    <Input
-                      id="payment_means_code"
-                      value={formData.payment_means_code}
-                      onChange={(e) => setFormData({ ...formData, payment_means_code: e.target.value })}
-                      placeholder="Ödeme yöntemi"
-                      className="h-7 text-xs"
-                    />
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="establishment_date" className="text-xs font-medium text-gray-700">
+                        Kuruluş Tarihi
+                      </Label>
+                      <DatePicker
+                        date={formData.establishment_date ? new Date(formData.establishment_date + 'T00:00:00') : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            setFormData({ 
+                              ...formData, 
+                              establishment_date: `${year}-${month}-${day}` 
+                            });
+                          } else {
+                            setFormData({ 
+                              ...formData, 
+                              establishment_date: "" 
+                            });
+                          }
+                        }}
+                        placeholder="Kuruluş tarihi seçiniz"
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="sector" className="text-xs font-medium text-gray-700">
+                        Sektör/Faaliyet Alanı
+                      </Label>
+                      <Input
+                        id="sector"
+                        value={formData.sector}
+                        onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
+                        placeholder="Teknoloji, İnşaat, Ticaret..."
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="supplier_segment" className="text-xs font-medium text-gray-700">
+                        Tedarikçi Segmenti
+                      </Label>
+                      <Input
+                        id="supplier_segment"
+                        value={formData.supplier_segment}
+                        onChange={(e) => setFormData({ ...formData, supplier_segment: e.target.value })}
+                        placeholder="Kurumsal, KOBİ, Bireysel..."
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="supplier_source" className="text-xs font-medium text-gray-700">
+                        Tedarikçi Kaynağı
+                      </Label>
+                      <Input
+                        id="supplier_source"
+                        value={formData.supplier_source}
+                        onChange={(e) => setFormData({ ...formData, supplier_source: e.target.value })}
+                        placeholder="Web sitesi, Referans, Reklam..."
+                        className="h-7 text-xs"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="payment_means_channel_code" className="text-xs font-medium text-gray-700">
-                      Ödeme Kanal Kodu
+                    <Label htmlFor="notes" className="text-xs font-medium text-gray-700">
+                      Notlar
                     </Label>
-                    <Input
-                      id="payment_means_channel_code"
-                      value={formData.payment_means_channel_code}
-                      onChange={(e) => setFormData({ ...formData, payment_means_channel_code: e.target.value })}
-                      placeholder="Ödeme kanal kodu"
-                      className="h-7 text-xs"
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Tedarikçi hakkında özel notlar..."
+                      className="h-7 text-xs resize-none min-h-[60px]"
                     />
                   </div>
                 </div>
               </div>
+
+
+
             </div>
           </CardContent>
         </Card>
@@ -490,8 +604,8 @@ const SupplierFormFields = ({ formData, setFormData }: SupplierFormFieldsProps) 
         onOpenChange={setIsDeleteDialogOpen}
         title="Ödeme Şartını Sil"
         description={`"${termToDelete?.term.label || 'Bu şart'}" kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`}
-        confirmText="Sil"
-        cancelText="İptal"
+        confirmText={t("common.delete")}
+        cancelText={t("common.cancel")}
         variant="destructive"
         onConfirm={handleDeleteCustomTermConfirm}
         onCancel={handleDeleteCustomTermCancel}

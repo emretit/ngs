@@ -26,30 +26,16 @@ const BackButton = ({
   const navigate = useNavigate();
 
   const handleClick = () => {
-    console.log("🔵 [BackButton] handleClick called", {
-      hasOnClick: !!onClick,
-      fallbackPath,
-      currentPath: window.location.pathname,
-      timestamp: new Date().toISOString()
-    });
-
     try {
       if (onClick) {
-        console.log("🔵 [BackButton] Calling onClick prop");
         onClick();
-        console.log("✅ [BackButton] onClick completed");
       } else if (fallbackPath) {
-        console.log("🔵 [BackButton] Navigating to fallbackPath:", fallbackPath);
         navigate(fallbackPath);
-        console.log("✅ [BackButton] navigate(fallbackPath) called");
       } else {
-        console.log("🔵 [BackButton] Navigating back in history");
         navigate(-1);
-        console.log("✅ [BackButton] navigate(-1) called");
       }
     } catch (error) {
-      console.error("❌ [BackButton] Error in handleClick:", error);
-      console.error("❌ [BackButton] Error stack:", error instanceof Error ? error.stack : 'No stack');
+      console.error("BackButton error:", error);
     }
   };
   const baseClasses = "group transition-all duration-200 font-medium";

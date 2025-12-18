@@ -127,4 +127,6 @@ export interface SupplierFormData {
   notes: string;
   // İlk yetkili kişi pozisyonu
   first_contact_position: string;
+  // E-Belge Tipi
+  einvoice_document_type?: string; // E-Belge Tipi (Invoice, ArchiveInvoice, Waybill, etc.) - Mükellef bilgisinden otomatik doldurulur
 }

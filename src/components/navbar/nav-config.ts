@@ -237,12 +237,6 @@ export const navItems = [
     hasDropdown: true,
     items: [
       {
-        path: "/contracts",
-        icon: LayoutDashboard,
-        label: "Genel Bakış",
-        translationKey: "nav.overview",
-      },
-      {
         path: "/contracts/service",
         icon: Wrench,
         label: "Servis Sözleşmeleri",

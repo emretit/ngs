@@ -64,6 +64,7 @@ export const useSupplierForm = () => {
     notes: "",
     // İlk yetkili kişi pozisyonu
     first_contact_position: "",
+    einvoice_document_type: "",
   });
 
   const { data: supplier, isLoading: isLoadingSupplier, error: supplierError } = useQuery({
@@ -120,83 +121,69 @@ export const useSupplierForm = () => {
       console.log('📋 Supplier name:', supplier.name);
       console.log('📋 Supplier company:', supplier.company);
       
-      // City ve district için string'den ID'ye çevirme fonksiyonu
-      const resolveCityId = async (cityName: string | null): Promise<string> => {
-        if (!cityName) return "";
+      // City ve district için ID'den isim çözme fonksiyonları
+      const resolveCityName = async (cityId: number | null): Promise<string> => {
+        if (!cityId) return "";
         try {
-          // Önce city_id varsa onu kullan
-          if ((supplier as any).city_id) {
-            return (supplier as any).city_id.toString();
-          }
-          // Yoksa city name'den ID bul (turkey_cities tablosunu kullan)
           const { data } = await supabase
             .from('turkey_cities')
-            .select('id')
-            .ilike('name', `%${cityName}%`)
+            .select('name')
+            .eq('id', cityId)
             .maybeSingle();
-          return data?.id?.toString() || "";
+          return data?.name || "";
         } catch (error) {
-          console.error('Error resolving city ID:', error);
+          console.error('Error resolving city name:', error);
           return "";
         }
       };
 
-      const resolveDistrictId = async (districtName: string | null, cityId: string): Promise<string> => {
-        if (!districtName || !cityId) return "";
+      const resolveDistrictName = async (districtId: number | null, cityId: number | null): Promise<string> => {
+        if (!districtId || !cityId) return "";
         try {
-          // Önce district_id varsa onu kullan
-          if ((supplier as any).district_id) {
-            return (supplier as any).district_id.toString();
-          }
-          // Yoksa district name ve city_id'den ID bul (turkey_districts tablosunu kullan)
           const { data } = await supabase
             .from('turkey_districts')
-            .select('id')
-            .ilike('name', `%${districtName}%`)
-            .eq('city_id', parseInt(cityId))
+            .select('name')
+            .eq('id', districtId)
+            .eq('city_id', cityId)
             .maybeSingle();
-          return data?.id?.toString() || "";
+          return data?.name || "";
         } catch (error) {
-          console.error('Error resolving district ID:', error);
+          console.error('Error resolving district name:', error);
           return "";
         }
       };
 
-      // Async olarak city ve district ID'lerini çöz
+      // Async olarak city ve district isimlerini çöz
       const loadFormData = async () => {
-        // Önce city_id varsa onu kullan, yoksa string'den ID bul
-        let cityId = "";
+        // İl için: ID varsa isim çöz, yoksa supplier.city string'ini kullan
+        let cityName = "";
         if ((supplier as any).city_id) {
-          cityId = (supplier as any).city_id.toString();
-          console.log('✅ Using city_id from database:', cityId);
-        } else if (supplier.city) {
-          cityId = await resolveCityId(supplier.city);
-          console.log('✅ Resolved city ID from string:', supplier.city, '→', cityId);
+          cityName = await resolveCityName((supplier as any).city_id);
+        } else {
+          cityName = supplier.city || "";
         }
         
-        // Önce district_id varsa onu kullan, yoksa string'den ID bul
-        let districtId = "";
+        // İlçe için: ID varsa isim çöz, yoksa supplier.district string'ini kullan
+        let districtName = "";
         if ((supplier as any).district_id) {
-          districtId = (supplier as any).district_id.toString();
-          console.log('✅ Using district_id from database:', districtId);
-        } else if (supplier.district && cityId) {
-          districtId = await resolveDistrictId(supplier.district, cityId);
-          console.log('✅ Resolved district ID from string:', supplier.district, '→', districtId);
+          districtName = await resolveDistrictName((supplier as any).district_id, (supplier as any).city_id);
+        } else {
+          districtName = supplier.district || "";
         }
         
         // İkinci adres için aynı mantık
-        let secondCityId = "";
+        let secondCityName = "";
         if ((supplier as any).second_city_id) {
-          secondCityId = (supplier as any).second_city_id.toString();
-        } else if (supplier.second_city) {
-          secondCityId = await resolveCityId(supplier.second_city);
+          secondCityName = await resolveCityName((supplier as any).second_city_id);
+        } else {
+          secondCityName = supplier.second_city || "";
         }
         
-        let secondDistrictId = "";
+        let secondDistrictName = "";
         if ((supplier as any).second_district_id) {
-          secondDistrictId = (supplier as any).second_district_id.toString();
-        } else if (supplier.second_district && secondCityId) {
-          secondDistrictId = await resolveDistrictId(supplier.second_district, secondCityId);
+          secondDistrictName = await resolveDistrictName((supplier as any).second_district_id, (supplier as any).second_city_id);
+        } else {
+          secondDistrictName = supplier.second_district || "";
         }
 
         const newFormData: SupplierFormData = {
@@ -212,8 +199,8 @@ export const useSupplierForm = () => {
           address: supplier.address ?? "",
           tax_number: supplier.tax_number ?? "",
           tax_office: supplier.tax_office ?? "",
-          city: cityId || supplier.city || "",
-          district: districtId || supplier.district || "",
+          city: cityName,
+          district: districtName,
           country: supplier.country ?? "",
           postal_code: supplier.postal_code ?? "",
           apartment_number: supplier.apartment_number ?? "",
@@ -233,8 +220,8 @@ export const useSupplierForm = () => {
           second_contact_position: supplier.second_contact_position ?? "",
           // İkinci adres bilgileri
           second_address: supplier.second_address ?? "",
-          second_city: secondCityId || supplier.second_city || "",
-          second_district: secondDistrictId || supplier.second_district || "",
+          second_city: secondCityName,
+          second_district: secondDistrictName,
           second_country: supplier.second_country ?? "",
           second_postal_code: supplier.second_postal_code ?? "",
           // Finansal bilgiler
@@ -253,6 +240,8 @@ export const useSupplierForm = () => {
           notes: supplier.notes ?? "",
           // İlk yetkili kişi pozisyonu
           first_contact_position: supplier.first_contact_position ?? "",
+          // E-Belge Tipi
+          einvoice_document_type: (supplier as any).einvoice_document_type ?? "",
         };
 
         console.log('📝 New form data created:', newFormData);
@@ -275,28 +264,96 @@ export const useSupplierForm = () => {
 
   const mutation = useMutation({
     mutationFn: async (data: SupplierFormData) => {
-      // City ve district ID'lerini integer'a çevir
-      const cityId = data.city ? parseInt(data.city) : null;
-      const districtId = data.district ? parseInt(data.district) : null;
-      const secondCityId = data.second_city ? parseInt(data.second_city) : null;
-      const secondDistrictId = data.second_district ? parseInt(data.second_district) : null;
-
-      // City ve district string isimlerini al (eğer ID değilse)
+      // City ve district isimlerinden ID'ye çevir
+      let cityId: number | null = null;
+      let districtId: number | null = null;
+      let secondCityId: number | null = null;
+      let secondDistrictId: number | null = null;
+      
       let cityName: string | null = null;
       let districtName: string | null = null;
       let secondCityName: string | null = null;
       let secondDistrictName: string | null = null;
 
-      if (data.city && !cityId) {
-        cityName = data.city;
+      // İl için: Eğer sayısal bir değer ise ID olarak kabul et, değilse isimden ID bul
+      if (data.city) {
+        const parsedCityId = parseInt(data.city);
+        if (!isNaN(parsedCityId) && data.city === parsedCityId.toString()) {
+          // Sayısal bir ID
+          cityId = parsedCityId;
+        } else {
+          // İsim olarak geldi, ID'ye çevir
+          cityName = data.city;
+          const { data: cityData } = await supabase
+            .from('turkey_cities')
+            .select('id')
+            .ilike('name', data.city)
+            .maybeSingle();
+          if (cityData) {
+            cityId = cityData.id;
+          }
+        }
       }
-      if (data.district && !districtId) {
+
+      // İlçe için: Eğer sayısal bir değer ise ID olarak kabul et, değilse isimden ID bul
+      if (data.district && cityId) {
+        const parsedDistrictId = parseInt(data.district);
+        if (!isNaN(parsedDistrictId) && data.district === parsedDistrictId.toString()) {
+          // Sayısal bir ID
+          districtId = parsedDistrictId;
+        } else {
+          // İsim olarak geldi, ID'ye çevir
+          districtName = data.district;
+          const { data: districtData } = await supabase
+            .from('turkey_districts')
+            .select('id')
+            .ilike('name', data.district)
+            .eq('city_id', cityId)
+            .maybeSingle();
+          if (districtData) {
+            districtId = districtData.id;
+          }
+        }
+      } else if (data.district) {
+        // İlçe var ama il yok, sadece isim olarak kaydet
         districtName = data.district;
       }
-      if (data.second_city && !secondCityId) {
-        secondCityName = data.second_city;
+
+      // İkinci adres için aynı mantık
+      if (data.second_city) {
+        const parsedSecondCityId = parseInt(data.second_city);
+        if (!isNaN(parsedSecondCityId) && data.second_city === parsedSecondCityId.toString()) {
+          secondCityId = parsedSecondCityId;
+        } else {
+          secondCityName = data.second_city;
+          const { data: secondCityData } = await supabase
+            .from('turkey_cities')
+            .select('id')
+            .ilike('name', data.second_city)
+            .maybeSingle();
+          if (secondCityData) {
+            secondCityId = secondCityData.id;
+          }
+        }
       }
-      if (data.second_district && !secondDistrictId) {
+
+      if (data.second_district && secondCityId) {
+        const parsedSecondDistrictId = parseInt(data.second_district);
+        if (!isNaN(parsedSecondDistrictId) && data.second_district === parsedSecondDistrictId.toString()) {
+          secondDistrictId = parsedSecondDistrictId;
+        } else {
+          secondDistrictName = data.second_district;
+          const { data: secondDistrictData } = await supabase
+            .from('turkey_districts')
+            .select('id')
+            .ilike('name', data.second_district)
+            .eq('city_id', secondCityId)
+            .maybeSingle();
+          if (secondDistrictData) {
+            secondDistrictId = secondDistrictData.id;
+          }
+        }
+      } else if (data.second_district) {
         secondDistrictName = data.second_district;
       }
 
@@ -311,8 +368,8 @@ export const useSupplierForm = () => {
         representative: data.representative || null,
         balance: data.balance || 0,
         address: data.address || null,
-        tax_number: data.type === 'kurumsal' ? data.tax_number || null : null,
-        tax_office: data.type === 'kurumsal' ? data.tax_office || null : null,
+        tax_number: data.tax_number || null,
+        tax_office: data.tax_office || null,
         city: cityName,
         city_id: cityId,
         district: districtName,
@@ -358,6 +415,8 @@ export const useSupplierForm = () => {
         notes: data.notes || null,
         // İlk yetkili kişi pozisyonu
         first_contact_position: data.first_contact_position || null,
+        // E-Belge Tipi
+        einvoice_document_type: data.einvoice_document_type || null,
       };
       // Get current user's company_id
       const { data: { user } } = await supabase.auth.getUser();

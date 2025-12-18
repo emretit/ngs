@@ -52,10 +52,14 @@ const CustomerFormHeader = ({ id, isPending, onSubmit, onCancel }: CustomerFormH
             <span className="font-medium">İptal</span>
           </Button>
           <Button
-            type="submit"
-            form="customer-form"
+            type="button"
+            onClick={() => {
+              const form = document.getElementById('customer-form') as HTMLFormElement;
+              if (form) {
+                form.requestSubmit();
+              }
+            }}
             disabled={isPending}
-            onClick={onSubmit}
             className="gap-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
           >
             <Save className="h-4 w-4" />

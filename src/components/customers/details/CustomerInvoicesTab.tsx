@@ -1,24 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Receipt, 
   Calendar, 
-  DollarSign, 
   FileText, 
   Eye, 
-  Download,
-  Loader2,
+  Filter,
+  Plus,
   AlertCircle
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { tr } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface CustomerInvoicesTabProps {
   customerId: string;
@@ -53,9 +51,25 @@ interface PurchaseInvoice {
   };
 }
 
+// Birleşik fatura tipi
+interface UnifiedInvoice {
+  id: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  amount: number;
+  status: string;
+  currency: string;
+  type: 'sales' | 'purchase';
+  original?: SalesInvoice | PurchaseInvoice;
+}
+
 const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabProps) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'sales' | 'purchase'>('sales');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const { userData } = useCurrentUser();
 
   // Satış faturalarını çek (müşteriye kesilen faturalar)
   const { data: salesInvoices = [], isLoading: isLoadingSales } = useQuery({
@@ -80,28 +94,182 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
     enabled: !!customerId,
   });
 
-  // Alış faturalarını çek (müşteri aynı zamanda tedarikçi olabilir)
+  // Alış faturalarını çek (müşteriden alınan faturalar customer_id ile, müşteri aynı zamanda tedarikçi ise supplier_id ile)
   const { data: purchaseInvoices = [], isLoading: isLoadingPurchase } = useQuery({
-    queryKey: ['customer-purchase-invoices', customerId],
+    queryKey: ['customer-purchase-invoices', customerId, userData?.company_id],
     queryFn: async (): Promise<PurchaseInvoice[]> => {
-      const { data, error } = await supabase
-        .from('purchase_invoices')
-        .select(`
-          *,
-          supplier:suppliers(name, company)
-        `)
-        .eq('supplier_id', customerId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching purchase invoices:', error);
-        throw error;
+      if (!userData?.company_id || !customerId) {
+        console.warn('No company_id or customerId available');
+        return [];
       }
 
-      return data || [];
+      // İki ayrı sorgu yapıp birleştir (daha güvenli)
+      const [customerInvoicesResult, supplierInvoicesResult] = await Promise.all([
+        // Müşteriden alınan faturalar (customer_id ile)
+        supabase
+          .from('purchase_invoices')
+          .select(`
+            *,
+            supplier:suppliers(name, company),
+            customer:customers(name, company)
+          `)
+          .eq('company_id', userData.company_id)
+          .eq('customer_id', customerId)
+          .order('created_at', { ascending: false }),
+        // Müşteri aynı zamanda tedarikçi ise (supplier_id ile)
+        supabase
+          .from('purchase_invoices')
+          .select(`
+            *,
+            supplier:suppliers(name, company),
+            customer:customers(name, company)
+          `)
+          .eq('company_id', userData.company_id)
+          .eq('supplier_id', customerId)
+          .order('created_at', { ascending: false })
+      ]);
+
+      if (customerInvoicesResult.error) {
+        console.error('Error fetching customer purchase invoices:', customerInvoicesResult.error);
+        throw customerInvoicesResult.error;
+      }
+
+      if (supplierInvoicesResult.error) {
+        console.error('Error fetching supplier purchase invoices:', supplierInvoicesResult.error);
+        throw supplierInvoicesResult.error;
+      }
+
+      // İki sonucu birleştir ve duplicate'leri kaldır
+      const allInvoices = [
+        ...(customerInvoicesResult.data || []),
+        ...(supplierInvoicesResult.data || [])
+      ];
+
+      // Duplicate'leri kaldır (id'ye göre)
+      const uniqueInvoices = Array.from(
+        new Map(allInvoices.map(inv => [inv.id, inv])).values()
+      );
+
+      // Tarihe göre sırala
+      uniqueInvoices.sort((a, b) => {
+        const dateA = new Date(a.created_at || a.invoice_date).getTime();
+        const dateB = new Date(b.created_at || b.invoice_date).getTime();
+        return dateB - dateA;
+      });
+
+      console.log('✅ Purchase invoices fetched:', uniqueInvoices.length, uniqueInvoices);
+      return uniqueInvoices;
     },
-    enabled: !!customerId,
+    enabled: !!customerId && !!userData?.company_id,
   });
+
+  // Birleşik faturalar listesi
+  const unifiedInvoices = useMemo((): UnifiedInvoice[] => {
+    const sales = salesInvoices.map(inv => ({
+      id: inv.id,
+      invoiceNumber: inv.fatura_no,
+      invoiceDate: inv.fatura_tarihi,
+      amount: inv.toplam_tutar,
+      status: inv.durum,
+      currency: inv.para_birimi,
+      type: 'sales' as const,
+      original: inv
+    }));
+    
+    const purchases = purchaseInvoices.map(inv => ({
+      id: inv.id,
+      invoiceNumber: inv.invoice_number,
+      invoiceDate: inv.invoice_date,
+      amount: inv.total_amount,
+      status: inv.status,
+      currency: inv.currency,
+      type: 'purchase' as const,
+      original: inv
+    }));
+    
+    return [...sales, ...purchases].sort((a, b) => {
+      const dateA = new Date(a.invoiceDate).getTime();
+      const dateB = new Date(b.invoiceDate).getTime();
+      return dateB - dateA;
+    });
+  }, [salesInvoices, purchaseInvoices]);
+
+  // Filtrelenmiş birleşik faturalar
+  const filteredInvoices = useMemo(() => {
+    return unifiedInvoices.filter(invoice => {
+      // Tip filtresi
+      const matchesType = typeFilter === 'all' || invoice.type === typeFilter;
+      
+      // Durum filtresi
+      let matchesStatus = true;
+      if (statusFilter !== 'all') {
+        if (invoice.type === 'sales') {
+          matchesStatus = invoice.status === statusFilter;
+        } else {
+          // Alış faturaları için durum eşleştirmesi
+          const statusMap: { [key: string]: string } = {
+            'odendi': 'paid',
+            'odenmedi': 'pending',
+            'gecikti': 'overdue',
+            'taslak': 'draft',
+            'iptal': 'cancelled'
+          };
+          const mappedStatus = statusMap[statusFilter] || statusFilter;
+          matchesStatus = invoice.status === mappedStatus;
+        }
+      }
+      
+      // Tarih filtresi
+      let matchesDate = true;
+      if (startDate || endDate) {
+        const invoiceDate = invoice.invoiceDate;
+        if (invoiceDate) {
+          const date = new Date(invoiceDate);
+          if (startDate && date < startDate) matchesDate = false;
+          if (endDate) {
+            const endDateTime = new Date(endDate);
+            endDateTime.setHours(23, 59, 59, 999);
+            if (date > endDateTime) matchesDate = false;
+          }
+        } else {
+          matchesDate = false;
+        }
+      }
+      
+      return matchesType && matchesStatus && matchesDate;
+    });
+  }, [unifiedInvoices, typeFilter, statusFilter, startDate, endDate]);
+
+  // Birleşik istatistikler
+  const invoiceStats = useMemo(() => {
+    const all = unifiedInvoices || [];
+    return {
+      total: all.length,
+      sales: all.filter(inv => inv.type === 'sales').length,
+      purchase: all.filter(inv => inv.type === 'purchase').length,
+      paid: all.filter(inv => {
+        if (inv.type === 'sales') {
+          return inv.status === 'odendi' || inv.status === 'paid';
+        } else {
+          return inv.status === 'paid';
+        }
+      }).length,
+      pending: all.filter(inv => {
+        if (inv.type === 'sales') {
+          return inv.status === 'odenmedi' || inv.status === 'pending' || inv.status === 'beklemede';
+        } else {
+          return inv.status === 'pending';
+        }
+      }).length,
+      overdue: all.filter(inv => {
+        if (inv.type === 'sales') {
+          return inv.status === 'gecikti' || inv.status === 'overdue' || inv.status === 'gecikmis';
+        } else {
+          return inv.status === 'overdue';
+        }
+      }).length,
+    };
+  }, [unifiedInvoices]);
 
   const getStatusBadge = (status: string) => {
     const statusMap: { [key: string]: { variant: 'default' | 'secondary' | 'destructive' | 'outline', label: string } } = {
@@ -123,230 +291,270 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const handleInvoiceClick = (invoiceId: string, type: 'sales' | 'purchase') => {
-    if (type === 'sales') {
-      navigate(`/sales-invoices/${invoiceId}`);
+  const handleInvoiceClick = (invoice: UnifiedInvoice) => {
+    if (invoice.type === 'sales') {
+      navigate(`/sales-invoices/${invoice.id}`);
     } else {
-      navigate(`/purchase-invoices/${invoiceId}`);
+      navigate(`/purchase-invoices/${invoice.id}`);
     }
   };
 
-  const EmptyState = ({ type }: { type: 'sales' | 'purchase' }) => (
-    <Card className="p-8">
-      <div className="text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-          <Receipt className="w-8 h-8 text-gray-400" />
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          {type === 'sales' ? 'Satış Faturası' : 'Alış Faturası'} Bulunamadı
-        </h3>
-        <p className="text-gray-600">
-          {type === 'sales' 
-            ? 'Bu müşteriye kesilen fatura bulunmuyor.'
-            : 'Bu müşteriden alınan fatura bulunmuyor.'
-          }
-        </p>
-      </div>
-    </Card>
-  );
+  const isLoading = isLoadingSales || isLoadingPurchase;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Faturalar</h3>
-          <p className="text-sm text-gray-600">{customerName} ile olan fatura işlemleri</p>
+    <div className="space-y-4">
+
+      {/* Action Bar */}
+      <div className="flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Faturalar</h3>
+          </div>
+          <div className="h-8 w-px bg-gray-300" />
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">Satış</span>
+              <span className="text-sm font-semibold text-blue-600">
+                {invoiceStats.sales}
+              </span>
+            </div>
+            <div className="h-8 w-px bg-gray-300" />
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">Alış</span>
+              <span className="text-sm font-semibold text-purple-600">
+                {invoiceStats.purchase}
+              </span>
+            </div>
+            <div className="h-8 w-px bg-gray-300" />
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">Ödendi</span>
+              <span className="text-sm font-semibold text-green-600">
+                {invoiceStats.paid}
+              </span>
+            </div>
+            <div className="h-8 w-px bg-gray-300" />
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">Bekleyen</span>
+              <span className="text-sm font-semibold text-yellow-600">
+                {invoiceStats.pending}
+              </span>
+            </div>
+            <div className="h-8 w-px bg-gray-300" />
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">Toplam</span>
+              <span className="text-sm font-semibold text-gray-900">
+                {invoiceStats.total}
+              </span>
+            </div>
+            {invoiceStats.overdue > 0 && (
+              <>
+                <div className="h-8 w-px bg-gray-300" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-500">Gecikmiş</span>
+                  <span className="text-sm font-semibold text-red-600">
+                    {invoiceStats.overdue}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/sales-invoices')}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[140px] h-9">
+              <Filter className="h-3.5 w-3.5 mr-2" />
+              <SelectValue placeholder="Tip" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tüm Tipler</SelectItem>
+              <SelectItem value="sales">Satış</SelectItem>
+              <SelectItem value="purchase">Alış</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[160px] h-9">
+              <Filter className="h-3.5 w-3.5 mr-2" />
+              <SelectValue placeholder="Durum" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tüm Durumlar</SelectItem>
+              <SelectItem value="odendi">Ödendi</SelectItem>
+              <SelectItem value="odenmedi">Ödenmedi</SelectItem>
+              <SelectItem value="gecikti">Gecikmiş</SelectItem>
+              <SelectItem value="taslak">Taslak</SelectItem>
+              <SelectItem value="iptal">İptal</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <DatePicker
+              date={startDate}
+              onSelect={setStartDate}
+              placeholder="Başlangıç"
+            />
+            <span className="text-muted-foreground text-sm">-</span>
+            <DatePicker
+              date={endDate}
+              onSelect={setEndDate}
+              placeholder="Bitiş"
+            />
+          </div>
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="h-9"
+            onClick={() => navigate('/sales-invoices/new')}
           >
-            <Receipt className="h-4 w-4 mr-2" />
-            Tüm Satış Faturaları
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/purchase-invoices')}
-          >
-            <Receipt className="h-4 w-4 mr-2" />
-            Tüm Alış Faturaları
+            <Plus className="h-4 w-4 mr-2" />
+            Fatura Ekle
           </Button>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'sales' | 'purchase')}>
-        <TabsList className="inline-flex h-auto items-center justify-start rounded-lg bg-white/80 p-1 shadow-sm backdrop-blur-sm border border-gray-100 gap-1">
-          <TabsTrigger value="sales" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200 min-h-[36px] text-gray-600 hover:text-gray-900 hover:bg-gray-50">
-            <Receipt className="h-4 w-4" />
-            Satış Faturaları ({salesInvoices.length})
-          </TabsTrigger>
-          <TabsTrigger value="purchase" className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200 min-h-[36px] text-gray-600 hover:text-gray-900 hover:bg-gray-50">
-            <Receipt className="h-4 w-4" />
-            Alış Faturaları ({purchaseInvoices.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="sales" className="space-y-4">
-          {isLoadingSales ? (
-            <Card className="p-8">
-              <div className="flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                <span className="ml-2 text-gray-600">Satış faturaları yükleniyor...</span>
-              </div>
-            </Card>
-          ) : salesInvoices.length === 0 ? (
-            <EmptyState type="sales" />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Receipt className="h-5 w-5" />
-                  Satış Faturaları ({salesInvoices.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fatura No</TableHead>
-                      <TableHead>Tarih</TableHead>
-                      <TableHead>Tutar</TableHead>
-                      <TableHead>Durum</TableHead>
-                      <TableHead>Para Birimi</TableHead>
-                      <TableHead className="text-center">İşlemler</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {salesInvoices.map((invoice) => (
-                      <TableRow key={invoice.id} className="cursor-pointer hover:bg-gray-50">
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-green-500" />
-                            {invoice.fatura_no}
+      {/* Invoices Table */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="pb-6">
+          <div className="-mx-4">
+            <div className="px-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-[400px]">
+                  <div className="text-center space-y-4">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p className="text-muted-foreground">Yükleniyor...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-100 border-b border-slate-200">
+                        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-left">
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg mr-2">📋</span>
+                            <span>Tip</span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            {format(new Date(invoice.fatura_tarihi), 'dd MMM yyyy', { locale: tr })}
+                        </TableHead>
+                        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-left">
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg mr-2">📄</span>
+                            <span>Fatura No</span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-green-500" />
-                            {invoice.toplam_tutar.toLocaleString('tr-TR', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
+                        </TableHead>
+                        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="text-lg mr-2">📅</span>
+                            <span>Tarih</span>
                           </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(invoice.durum)}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{invoice.para_birimi}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleInvoiceClick(invoice.id, 'sales')}
-                              className="h-8 w-8"
-                              title="Detayları Görüntüle"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                        </TableHead>
+                        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <span className="text-lg mr-2">💰</span>
+                            <span>Tutar</span>
                           </div>
-                        </TableCell>
+                        </TableHead>
+                        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-left">
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg mr-2">📊</span>
+                            <span>Durum</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-left">
+                          <div className="flex items-center gap-1">
+                            <span className="text-lg mr-2">💱</span>
+                            <span>Para Birimi</span>
+                          </div>
+                        </TableHead>
+                        <TableHead className="py-1.5 px-2.5 font-bold text-foreground/80 text-xs tracking-wide text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="text-sm mr-1">⚙️</span>
+                            <span>İşlemler</span>
+                          </div>
+                        </TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="purchase" className="space-y-4">
-          {isLoadingPurchase ? (
-            <Card className="p-8">
-              <div className="flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                <span className="ml-2 text-gray-600">Alış faturaları yükleniyor...</span>
-              </div>
-            </Card>
-          ) : purchaseInvoices.length === 0 ? (
-            <EmptyState type="purchase" />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Receipt className="h-5 w-5" />
-                  Alış Faturaları ({purchaseInvoices.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fatura No</TableHead>
-                      <TableHead>Tarih</TableHead>
-                      <TableHead>Tutar</TableHead>
-                      <TableHead>Durum</TableHead>
-                      <TableHead>Para Birimi</TableHead>
-                      <TableHead className="text-center">İşlemler</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {purchaseInvoices.map((invoice) => (
-                      <TableRow key={invoice.id} className="cursor-pointer hover:bg-gray-50">
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-blue-500" />
-                            {invoice.invoice_number}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            {format(new Date(invoice.invoice_date), 'dd MMM yyyy', { locale: tr })}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-green-500" />
-                            {invoice.total_amount.toLocaleString('tr-TR', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{invoice.currency}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleInvoiceClick(invoice.id, 'purchase')}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredInvoices.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="py-12 text-center">
+                            <div className="flex flex-col items-center justify-center">
+                              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                              <h3 className="text-lg font-semibold mb-2">Fatura bulunamadı</h3>
+                              <p className="text-muted-foreground mb-4">
+                                Bu müşteri için fatura bulunmuyor.
+                              </p>
+                              <Button onClick={() => navigate('/sales-invoices/new')} variant="outline">
+                                <Plus className="h-4 w-4 mr-2" />
+                                İlk Faturayı Oluştur
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredInvoices.map((invoice) => (
+                          <TableRow key={`${invoice.type}-${invoice.id}`} className="hover:bg-muted/50 cursor-pointer" onClick={() => handleInvoiceClick(invoice)}>
+                            <TableCell className="py-2 px-3 text-xs">
+                              <Badge variant={invoice.type === 'sales' ? 'default' : 'secondary'}>
+                                {invoice.type === 'sales' ? 'Satış' : 'Alış'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-2 px-3 text-xs">
+                              <div className="flex items-center gap-2">
+                                <FileText className={`h-4 w-4 ${invoice.type === 'sales' ? 'text-green-500' : 'text-blue-500'}`} />
+                                <span className="font-medium">{invoice.invoiceNumber || '-'}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-2 px-3 text-xs text-center">
+                              {invoice.invoiceDate ? (() => {
+                                const dateValue = invoice.invoiceDate;
+                                if (!dateValue) return <span className="text-muted-foreground">-</span>;
+                                const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+                                if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+                                return dateObj.toLocaleDateString('tr-TR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric'
+                                });
+                              })() : <span className="text-muted-foreground">-</span>}
+                            </TableCell>
+                            <TableCell className="py-2 px-3 text-xs text-right">
+                              <span className="font-medium">
+                                {invoice.amount.toLocaleString('tr-TR', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2
+                                })}
+                              </span>
+                            </TableCell>
+                            <TableCell className="py-2 px-3 text-xs">
+                              {getStatusBadge(invoice.status)}
+                            </TableCell>
+                            <TableCell className="py-2 px-3 text-xs">
+                              <Badge variant="outline">{invoice.currency || 'TRY'}</Badge>
+                            </TableCell>
+                            <TableCell className="py-2 px-3 text-xs text-center">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleInvoiceClick(invoice);
+                                }}
+                                className="h-8 w-8"
+                                title="Detayları Görüntüle"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

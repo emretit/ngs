@@ -4,11 +4,10 @@ import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Button } from "@/components/ui/button";
 import { CustomerFormData } from "@/types/customer";
-import { User, Mail, Phone, Building, FileText, MapPin, Users, CheckCircle, XCircle, Loader2, UserPlus } from "lucide-react";
+import { User, Mail, Phone, Building, FileText, MapPin, Users, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { getDigitsOnly, formatPhoneNumber } from "@/utils/phoneFormatter";
 // import { useEinvoiceMukellefCheck } from "@/hooks/useEinvoiceMukellefCheck";
 import { useNilveraCompanyInfo } from "@/hooks/useNilveraCompanyInfo";
-import { useVknToCustomer } from "@/hooks/useVknToCustomer";
 import { useEffect } from "react";
 
 interface BasicInformationProps {
@@ -19,7 +18,6 @@ interface BasicInformationProps {
 const BasicInformation = ({ formData, setFormData }: BasicInformationProps) => {
   // const { checkEinvoiceMukellef, isChecking, result, clearResult } = useEinvoiceMukellefCheck();
   const { searchMukellef, isLoading: isNilveraLoading, mukellefInfo, error: nilveraError } = useNilveraCompanyInfo();
-  const { createCustomerFromVkn, isCreating } = useVknToCustomer();
 
   // Vergi numarası değiştiğinde otomatik kontrol yap
   useEffect(() => {
@@ -42,28 +40,11 @@ const BasicInformation = ({ formData, setFormData }: BasicInformationProps) => {
         company: formData.company || mukellefInfo.companyName || formData.company,
         tax_office: formData.tax_office || mukellefInfo.taxOffice || formData.tax_office,
         address: formData.address || mukellefInfo.address || formData.address,
+        // DocumentType bilgisini ekle
+        einvoice_document_type: mukellefInfo.documentType || formData.einvoice_document_type,
       });
     }
   }, [mukellefInfo]);
-
-  // VKN bilgilerini müşteri olarak kaydet
-  const handleSaveAsCustomer = async () => {
-    const vknData = {
-      taxNumber: formData.tax_number,
-      companyName: mukellefInfo?.companyName || formData.company || '',
-      aliasName: mukellefInfo?.aliasName,
-      taxOffice: mukellefInfo?.taxOffice || formData.tax_office,
-      address: mukellefInfo?.address || formData.address,
-      city: mukellefInfo?.city,
-      district: mukellefInfo?.district,
-      mersisNo: mukellefInfo?.mersisNo,
-      sicilNo: mukellefInfo?.sicilNo,
-      email: formData.email,
-      phone: formData.mobile_phone || formData.office_phone,
-    };
-
-    await createCustomerFromVkn(vknData);
-  };
 
   return (
     <div className="space-y-6">
@@ -122,71 +103,53 @@ const BasicInformation = ({ formData, setFormData }: BasicInformationProps) => {
 
         {/* E-fatura mükellefi detay bilgileri ve otomatik doldurma önerisi */}
         {mukellefInfo ? (
-          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">E-Fatura Mükellefi Bulundu</span>
+          <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+                <span className="text-xs font-medium text-green-800">E-Fatura Mükellefi Bulundu</span>
               </div>
               <Button
+                type="button"
                 size="sm"
-                variant="outline"
-                onClick={handleSaveAsCustomer}
-                disabled={isCreating}
-                className="h-7 px-2 text-xs bg-white hover:bg-green-50 border-green-300 text-green-700 hover:text-green-800"
+                variant="ghost"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (mukellefInfo) {
+                    setFormData({
+                      ...formData,
+                      company: mukellefInfo.companyName || formData.company,
+                      tax_office: mukellefInfo.taxOffice || formData.tax_office,
+                      address: mukellefInfo.address || formData.address,
+                      city: mukellefInfo.city || formData.city,
+                      district: mukellefInfo.district || formData.district,
+                      einvoice_alias_name: mukellefInfo.aliasName || formData.einvoice_alias_name,
+                      einvoice_document_type: mukellefInfo.documentType || formData.einvoice_document_type,
+                    });
+                  }
+                }}
+                className="h-6 px-2 text-xs text-green-700 hover:text-green-800 hover:bg-green-100"
               >
-                {isCreating ? (
-                  <>
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                    Kaydediliyor...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-3 h-3 mr-1" />
-                    Müşteri Olarak Kaydet
-                  </>
-                )}
+                Otomatik Doldur
               </Button>
             </div>
-            <div className="space-y-1 text-xs text-green-700 mb-3">
-              <div><strong>Şirket:</strong> {mukellefInfo.companyName}</div>
-              {mukellefInfo.aliasName && <div><strong>E-Fatura Alias:</strong> {mukellefInfo.aliasName}</div>}
-              {mukellefInfo.taxOffice && <div><strong>Vergi Dairesi:</strong> {mukellefInfo.taxOffice}</div>}
-              {mukellefInfo.address && <div><strong>Adres:</strong> {mukellefInfo.address}</div>}
-              {mukellefInfo.city && <div><strong>Şehir:</strong> {mukellefInfo.city}</div>}
-              {mukellefInfo.district && <div><strong>İlçe:</strong> {mukellefInfo.district}</div>}
-              {mukellefInfo.mersisNo && <div><strong>Mersis No:</strong> {mukellefInfo.mersisNo}</div>}
-              {mukellefInfo.sicilNo && <div><strong>Sicil No:</strong> {mukellefInfo.sicilNo}</div>}
-            </div>
-            
-            {/* Otomatik doldurma önerisi */}
-            <div className="p-2 bg-blue-50 border border-blue-200 rounded">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-3 h-3 text-blue-600" />
-                  <span className="text-xs text-blue-800 font-medium">Bu bilgileri diğer alanlara otomatik doldurmak ister misiniz?</span>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px] text-green-700">
+              <div><span className="font-medium">Şirket:</span> {mukellefInfo.companyName}</div>
+              {mukellefInfo.documentType && (
+                <div>
+                  <span className="font-medium">E-Belge:</span> {
+                    mukellefInfo.documentType === 'Invoice' || mukellefInfo.documentType === 'EINVOICE' ? 'E-Fatura' : 
+                    mukellefInfo.documentType === 'ArchiveInvoice' || mukellefInfo.documentType === 'EARCHIVE' || mukellefInfo.documentType === 'EARCHIVETYPE2' ? 'E-Arşiv' : 
+                    mukellefInfo.documentType === 'Waybill' || mukellefInfo.documentType === 'DESPATCHADVICE' ? 'E-İrsaliye' : 
+                    mukellefInfo.documentType
+                  }
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    if (mukellefInfo) {
-                      setFormData({
-                        ...formData,
-                        company: mukellefInfo.companyName || formData.company,
-                        tax_office: mukellefInfo.taxOffice || formData.tax_office,
-                        address: mukellefInfo.address || formData.address,
-                        city: mukellefInfo.city || formData.city,
-                        district: mukellefInfo.district || formData.district,
-                        einvoice_alias_name: mukellefInfo.aliasName || formData.einvoice_alias_name,
-                      });
-                    }
-                  }}
-                  className="h-6 px-2 text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-100"
-                >
-                  Evet, Doldur
-                </Button>
-              </div>
+              )}
+              {mukellefInfo.taxOffice && <div><span className="font-medium">Vergi Dairesi:</span> {mukellefInfo.taxOffice}</div>}
+              {mukellefInfo.city && <div><span className="font-medium">Şehir:</span> {mukellefInfo.city}</div>}
+              {mukellefInfo.district && <div><span className="font-medium">İlçe:</span> {mukellefInfo.district}</div>}
+              {mukellefInfo.aliasName && <div className="col-span-2 truncate"><span className="font-medium">Alias:</span> {mukellefInfo.aliasName}</div>}
             </div>
           </div>
         ) : null}

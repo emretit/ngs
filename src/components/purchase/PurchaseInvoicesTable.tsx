@@ -13,7 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Edit2, Trash2, Download, FileText, MoreHorizontal, Eye, Loader2 } from "lucide-react";
 import PurchaseInvoicesTableHeader from "./table/PurchaseInvoicesTableHeader";
-import { DateDisplay } from "@/components/ui/date-display";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ConfirmationDialogComponent } from "@/components/ui/confirmation-dialog";
 
@@ -162,6 +161,10 @@ const PurchaseInvoicesTable = ({
         invoice.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         invoice.supplierName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         invoice.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.supplier?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.supplier?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.customer?.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         'Tedarikçi'.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Belge tipi filtresi
@@ -188,7 +191,7 @@ const PurchaseInvoicesTable = ({
         invoiceDate: invoice.invoice_date,
         sortDate: new Date(invoice.invoice_date).getTime(),
         displayNumber: invoice.invoice_number,
-        displaySupplier: invoice.supplier?.name || invoice.supplier?.company || 'Bilinmeyen Tedarikçi',
+        displaySupplier: invoice.supplier?.name || invoice.supplier?.company || invoice.customer?.name || invoice.customer?.company || 'Bilinmeyen',
         displayAmount: invoice.total_amount,
         displayStatus: invoice.status
       };
@@ -337,7 +340,17 @@ const PurchaseInvoicesTable = ({
                 </div>
               </TableCell>
               <TableCell className="text-center py-2 px-3 text-xs" onClick={() => onSelectInvoice(invoice)}>
-                <DateDisplay date={invoice.invoiceDate} />
+                {(() => {
+                  const dateValue = invoice.invoiceDate;
+                  if (!dateValue) return <span className="text-muted-foreground">-</span>;
+                  const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+                  if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+                  return dateObj.toLocaleDateString('tr-TR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  });
+                })()}
               </TableCell>
               <TableCell className="text-center py-2 px-3 text-xs font-medium" onClick={() => onSelectInvoice(invoice)}>
                 {formatCurrency(invoice.displayAmount)}

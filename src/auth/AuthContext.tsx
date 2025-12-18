@@ -95,13 +95,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Sonra auth state değişikliklerini dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
-      
-      console.log('Auth state changed:', event, session?.user?.email)
 
       // SIGNED_OUT event'inde cache'i temizle
       if (event === 'SIGNED_OUT') {
         queryClient.clear()
-        console.log('Query cache cleared on SIGNED_OUT event')
         clearActivity()
       }
 

@@ -22,6 +22,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useEInvoice } from "@/hooks/useEInvoice";
 import { useVeribanInvoice } from "@/hooks/useVeribanInvoice";
 import { IntegratorService } from "@/services/integratorService";
+import { useNilveraCompanyInfo } from "@/hooks/useNilveraCompanyInfo";
 
 // Constants
 const DEFAULT_VAT_PERCENTAGE = 18;
@@ -118,6 +119,7 @@ const CreateSalesInvoice = () => {
   const { userData } = useCurrentUser();
   const { sendInvoice: sendNilveraInvoice, isSending: isSendingNilvera } = useEInvoice();
   const { sendInvoice: sendVeribanInvoice, isSending: isSendingVeriban } = useVeribanInvoice();
+  const { searchMukellef, mukellefInfo } = useNilveraCompanyInfo();
   
   // Integrator status
   const [integratorStatus, setIntegratorStatus] = useState<{
@@ -320,6 +322,39 @@ const CreateSalesInvoice = () => {
           customer_id: watchCustomerId,
           contact_name: selected.name || ""
         }));
+
+        // Müşteri seçildiğinde mükellef bilgisini kontrol et ve documentType'a göre invoice_profile'ı otomatik doldur
+        if (selected.tax_number && selected.tax_number.length >= 10) {
+          console.log("🔍 [CreateSalesInvoice] Mükellef bilgisi sorgulanıyor...", selected.tax_number);
+          searchMukellef(selected.tax_number).then((result) => {
+            if (result.success && result.data?.documentType) {
+              const documentType = result.data.documentType;
+              console.log("✅ [CreateSalesInvoice] DocumentType bulundu:", documentType);
+              
+              // DocumentType'a göre invoice_profile'ı otomatik doldur
+              let invoiceProfile = "TEMELFATURA"; // Varsayılan
+              
+              if (documentType === "Invoice" || documentType === "EINVOICE") {
+                // E-Fatura mükellefi
+                invoiceProfile = "TEMELFATURA";
+              } else if (documentType === "ArchiveInvoice" || documentType === "EARCHIVE" || documentType === "EARCHIVETYPE2") {
+                // E-Arşiv mükellefi
+                invoiceProfile = "EARSIVFATURA";
+              } else if (documentType === "Waybill" || documentType === "DESPATCHADVICE") {
+                // E-İrsaliye
+                invoiceProfile = "EARSIVIRSLIYE";
+              }
+              
+              console.log("📋 [CreateSalesInvoice] Invoice profile otomatik dolduruldu:", invoiceProfile);
+              setInvoiceData(prev => ({
+                ...prev,
+                invoice_profile: invoiceProfile
+              }));
+            }
+          }).catch((error) => {
+            console.error("❌ [CreateSalesInvoice] Mükellef sorgulama hatası:", error);
+          });
+        }
       }
     };
     

@@ -125,30 +125,26 @@ export const ContactInfo = ({ customer, onUpdate }: ContactInfoProps) => {
               </div>
             </div>
 
-            {/* Vergi Bilgileri - Sadece Kurumsal */}
-            {customer.type === 'kurumsal' && (
-              <>
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <FileText className="w-2.5 h-2.5 text-amber-500" />
-                    <span>Vergi No</span>
-                  </div>
-                  <div className="text-xs font-medium text-gray-900 truncate">
-                    {customer.tax_number || <span className="text-gray-400 italic">Belirtilmemiş</span>}
-                  </div>
-                </div>
-                
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <Building className="w-2.5 h-2.5 text-amber-600" />
-                    <span>Vergi Dairesi</span>
-                  </div>
-                  <div className="text-xs font-medium text-gray-900 truncate">
-                    {customer.tax_office || <span className="text-gray-400 italic">Belirtilmemiş</span>}
-                  </div>
-                </div>
-              </>
-            )}
+            {/* Vergi Bilgileri */}
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <FileText className="w-2.5 h-2.5 text-amber-500" />
+                <span>Vergi No</span>
+              </div>
+              <div className="text-xs font-medium text-gray-900 truncate">
+                {customer.tax_number || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+              </div>
+            </div>
+            
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                <Building className="w-2.5 h-2.5 text-amber-600" />
+                <span>Vergi Dairesi</span>
+              </div>
+              <div className="text-xs font-medium text-gray-900 truncate">
+                {customer.tax_office || <span className="text-gray-400 italic">Belirtilmemiş</span>}
+              </div>
+            </div>
 
             {/* Adres Bilgileri */}
             <div className="space-y-0.5">

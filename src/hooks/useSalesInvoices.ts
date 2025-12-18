@@ -39,6 +39,11 @@ export interface SalesInvoice {
     tax_number?: string;
     company?: string;
   };
+  supplier?: {
+    name: string;
+    tax_number?: string;
+    company?: string;
+  };
   created_at: string;
   updated_at: string;
 }
@@ -79,6 +84,7 @@ export const useSalesInvoices = () => {
       .select(`
         *,
         customer:customers(name, tax_number, company),
+        supplier:suppliers(name, tax_number, company),
         einvoice_status,
         nilvera_invoice_id,
         einvoice_sent_at,
@@ -91,7 +97,7 @@ export const useSalesInvoices = () => {
     }
 
     if (filters.search) {
-      query = query.or(`fatura_no.ilike.%${filters.search}%,customer.name.ilike.%${filters.search}%`);
+      query = query.or(`fatura_no.ilike.%${filters.search}%,customer.name.ilike.%${filters.search}%,supplier.name.ilike.%${filters.search}%`);
     }
 
     if (filters.dateRange.from) {
@@ -117,7 +123,8 @@ export const useSalesInvoices = () => {
       .from("sales_invoices")
       .select(`
         *,
-        customer:customers(name, tax_number, company)
+        customer:customers(name, tax_number, company),
+        supplier:suppliers(name, tax_number, company)
       `)
       .eq("id", id)
       .single();

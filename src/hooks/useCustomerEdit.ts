@@ -25,8 +25,8 @@ export const useCustomerEdit = (customerId: string | undefined, onSuccess?: () =
         representative: data.representative || null,
         balance: data.balance || 0,
         address: data.address || null,
-        tax_number: data.type === 'kurumsal' ? data.tax_number || null : null,
-        tax_office: data.type === 'kurumsal' ? data.tax_office || null : null,
+        tax_number: data.tax_number || null,
+        tax_office: data.tax_office || null,
       };
 
       console.log('Updating data:', sanitizedData);

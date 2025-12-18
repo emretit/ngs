@@ -139,7 +139,7 @@ export const TasksTable = ({
             )}
             onClick={() => toggleGroup(status)}
           >
-            <TableCell colSpan={8} className="py-2 px-3">
+            <TableCell colSpan={9} className="py-2 px-3">
               <div className="flex items-center gap-2">
                 <button className="p-0.5 hover:bg-black/5 rounded transition-colors">
                   {isCollapsed ? (

@@ -20,11 +20,11 @@ const ProductDetailsTabs = ({ product, onUpdate }: ProductDetailsTabsProps) => {
   return (
     <div className="container">
       <CustomTabs defaultValue="general" className="w-full">
-        <CustomTabsList className="grid grid-cols-4 w-full bg-white rounded-xl border p-1">
-          <CustomTabsTrigger value="general" className="h-8 text-xs rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">Genel</CustomTabsTrigger>
-          <CustomTabsTrigger value="pricing" className="h-8 text-xs rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">Fiyatlandırma</CustomTabsTrigger>
-          <CustomTabsTrigger value="stock" className="h-8 text-xs rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">Stok</CustomTabsTrigger>
-          <CustomTabsTrigger value="related" className="h-8 text-xs rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">Benzer Ürünler</CustomTabsTrigger>
+        <CustomTabsList className="grid grid-cols-4 w-full bg-white rounded-xl border p-1 h-12">
+          <CustomTabsTrigger value="general" className="h-10 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">Genel</CustomTabsTrigger>
+          <CustomTabsTrigger value="pricing" className="h-10 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">Fiyatlandırma</CustomTabsTrigger>
+          <CustomTabsTrigger value="stock" className="h-10 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">Stok</CustomTabsTrigger>
+          <CustomTabsTrigger value="related" className="h-10 text-sm rounded-md data-[state=active]:bg-primary data-[state=active]:text-white">Benzer Ürünler</CustomTabsTrigger>
         </CustomTabsList>
         
         <CustomTabsContent value="general" className="mt-6">

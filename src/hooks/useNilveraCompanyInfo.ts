@@ -46,6 +46,7 @@ interface MukellefData {
   sicilNo: string;
   accountType: string;
   type: string;
+  documentType?: string; // E-Belge Tipi (Invoice, ArchiveInvoice, Waybill, etc.)
   aliases: Array<{
     Alias: string;
     AliasType: number;

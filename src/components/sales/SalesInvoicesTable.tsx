@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -103,6 +101,9 @@ const SalesInvoicesTable = ({
       const matchesSearch = !searchQuery ||
         invoice.fatura_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (invoice.customer?.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (invoice.customer?.company?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (invoice.supplier?.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (invoice.supplier?.company?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
         (invoice.aciklama?.toLowerCase() || "").includes(searchQuery.toLowerCase());
 
       const matchesDocumentType = documentTypeFilter === "all" || invoice.document_type === documentTypeFilter;
@@ -119,8 +120,8 @@ const SalesInvoicesTable = ({
           bValue = b.fatura_no || '';
           break;
         case 'musteri':
-          aValue = a.customer?.company || a.customer?.name || '';
-          bValue = b.customer?.company || b.customer?.name || '';
+          aValue = a.customer?.company || a.customer?.name || a.supplier?.company || a.supplier?.name || '';
+          bValue = b.customer?.company || b.customer?.name || b.supplier?.company || b.supplier?.name || '';
           break;
         case 'tarih':
           aValue = a.fatura_tarihi ? new Date(a.fatura_tarihi).getTime() : 0;
@@ -277,16 +278,34 @@ const SalesInvoicesTable = ({
                       </span>
                     )}
                   </div>
+                ) : invoice.supplier ? (
+                  <div className="flex flex-col space-y-0.5">
+                    {invoice.supplier.company ? (
+                      <span className="text-xs font-medium" title={invoice.supplier.company}>
+                        {getShortenedCompanyInfo(invoice.supplier.company)}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium" title={invoice.supplier.name}>
+                        {getShortenedCustomerName(invoice.supplier.name)}
+                      </span>
+                    )}
+                  </div>
                 ) : (
                   <span className="text-gray-500 text-xs">-</span>
                 )}
               </TableCell>
               <TableCell className="text-center py-2 px-3 text-xs" onClick={() => onSelectInvoice(invoice)}>
-                {invoice.fatura_tarihi ? (
-                  format(new Date(invoice.fatura_tarihi), "dd MMM yyyy", { locale: tr })
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
+                {(() => {
+                  const dateValue = invoice.fatura_tarihi;
+                  if (!dateValue) return <span className="text-muted-foreground">-</span>;
+                  const dateObj = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+                  if (isNaN(dateObj.getTime())) return <span className="text-muted-foreground">-</span>;
+                  return dateObj.toLocaleDateString('tr-TR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  });
+                })()}
               </TableCell>
               <TableCell className="text-center py-2 px-3 text-xs font-medium" onClick={() => onSelectInvoice(invoice)}>
                 {invoice.toplam_tutar ? formatCurrency(invoice.toplam_tutar) : '-'}

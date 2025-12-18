@@ -100,7 +100,6 @@ const MODULE_DEFINITIONS = [
     label: 'Sözleşme Yönetimi', 
     category: 'Sözleşme Yönetimi', 
     subModules: [
-      { key: 'contracts-dashboard', label: 'Genel Bakış' },
       { key: 'contracts-service', label: 'Servis Sözleşmeleri' },
       { key: 'contracts-vehicle', label: 'Araç Sözleşmeleri' },
       { key: 'contracts-customer', label: 'Müşteri Sözleşmeleri' },

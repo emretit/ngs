@@ -184,6 +184,7 @@ serve(async (req) => {
           address: '',
           city: '',
           district: '',
+          documentType: customerData.documentType || '', // E-Belge Tipi (Invoice, ArchiveInvoice, etc.)
         };
         console.log('📋 Formatlanmış müşteri verisi:', formattedData);
       }

@@ -81,11 +81,11 @@ export const useIncomingInvoices = (dateFilters?: { startDate?: string; endDate?
     enabled, // Hook'u koşullu olarak etkinleştir
     retry: 2,
     retryDelay: 2000,
-    staleTime: 0, // Cache kullanma - her zaman fresh data çek
-    gcTime: 5 * 60 * 1000, // 5 dakika cache'de tut (memory'den temizleme için)
+    staleTime: 5 * 60 * 1000, // 5 dakika cache kullan - aynı tarih aralığı için tekrar çekme
+    gcTime: 10 * 60 * 1000, // 10 dakika memory'de tut
     refetchOnWindowFocus: false, // Pencere odaklandığında refetch etme
-    refetchOnMount: true, // Mount'ta refetch et (sayfa yüklenince çek)
-    refetchOnReconnect: true, // Bağlantı yenilendiğinde refetch et
+    refetchOnMount: false, // Mount'ta refetch etme - cache varsa kullan
+    refetchOnReconnect: false, // Bağlantı yenilendiğinde refetch etme
     placeholderData: (previousData) => previousData, // Önceki veriyi tut (smooth transition)
   });
 

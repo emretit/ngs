@@ -336,7 +336,7 @@ export default function EInvoiceProcessModal({
     
     // Tedarikçi bakiyesini güncelle (alış faturası = tedarikçiye borçlanma = bakiye azalır/negatif yönde artar)
     // Pozitif bakiye = alacak, Negatif bakiye = borç
-    const { data: supplierData, error: supplierFetchError } = await supabase
+    const { data: supplierBalanceData, error: supplierFetchError } = await supabase
       .from('suppliers')
       .select('balance')
       .eq('id', supplierId)
@@ -345,8 +345,8 @@ export default function EInvoiceProcessModal({
     if (supplierFetchError) {
       console.error('❌ Error fetching supplier balance:', supplierFetchError);
       // Hata olsa bile devam et, sadece logla
-    } else if (supplierData) {
-      const newSupplierBalance = (supplierData.balance || 0) - invoice.totalAmount;
+    } else if (supplierBalanceData) {
+      const newSupplierBalance = (supplierBalanceData.balance || 0) - invoice.totalAmount;
       const { error: supplierUpdateError } = await supabase
         .from('suppliers')
         .update({ balance: newSupplierBalance })

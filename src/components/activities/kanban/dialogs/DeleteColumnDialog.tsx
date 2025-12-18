@@ -29,7 +29,9 @@ const DeleteColumnDialog: React.FC<DeleteColumnDialogProps> = ({
       open={!!columnToDelete}
       onOpenChange={(open) => !open && onClose()}
       title="Sütunu Sil"
-      description="Bu sütunda görevler var. Silmek istediğinizden emin misiniz? Tüm görevler \"Yapılacaklar\" sütununa taşınacak. Bu işlem geri alınamaz."
+      description={
+        "Bu sütunda görevler var. Silmek istediğinizden emin misiniz? Tüm görevler \"Yapılacaklar\" sütununa taşınacak. Bu işlem geri alınamaz."
+      }
       confirmText={t("common.delete")}
       cancelText={t("common.cancel")}
       variant="destructive"

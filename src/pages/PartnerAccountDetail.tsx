@@ -590,9 +590,6 @@ const PartnerAccountDetail = memo(({ isCollapsed, setIsCollapsed }: PartnerAccou
           onSuccess={handleEditSuccess}
           mode="edit"
           accountId={id}
-          }}
-          mode="edit"
-          accountId={id}
         />
 
         {/* Transfer Modal */}

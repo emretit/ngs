@@ -466,6 +466,7 @@ export class VeribanService {
    */
   static async getInvoiceDetails(params: {
     invoiceUUID: string;
+    invoiceType?: 'sales' | 'purchase';
   }): Promise<VeribanResponse> {
     try {
       console.log('🔍 [VeribanService] Getting invoice details for UUID:', params.invoiceUUID);

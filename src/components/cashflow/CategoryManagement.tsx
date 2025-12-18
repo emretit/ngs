@@ -34,6 +34,7 @@ interface CategoryItemProps {
 }
 
 const CategoryItem = memo(({ category, onEdit, onDelete, subcategories, loading: subcategoriesLoading, createSubcategory, updateSubcategory, deleteSubcategory, refetchSubcategories }: CategoryItemProps) => {
+  const { t } = useTranslation();
   const [isAddSubcategoryOpen, setIsAddSubcategoryOpen] = useState(false);
   const [isEditSubcategoryOpen, setIsEditSubcategoryOpen] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<any>(null);

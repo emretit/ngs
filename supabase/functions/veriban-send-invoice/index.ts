@@ -526,13 +526,13 @@ serve(async (req) => {
       const finalIntegrationCode = integrationCode || invoice.id;
 
       // Dokümantasyona göre FileDataType değerleri:
-      // XML_INZIP = 0, TXT_INZIP = 1, CSV_INZIP = 2, XLS_INZIP = 3
-      // Veriban SOAP enum bekliyor, sayısal değer olarak gönderiyoruz
+      // XML_INZIP, TXT_INZIP, CSV_INZIP, XLS_INZIP
+      // Veriban SOAP enum bekliyor, enum adı olarak gönderiyoruz (sayısal değil!)
       const transferResult = await VeribanSoapClient.transferSalesInvoice(
         sessionCode,
         {
           fileName: zipFileName,
-          fileDataType: '0', // XML_INZIP = 0 (sayısal değer olarak string)
+          fileDataType: 'XML_INZIP', // Enum adı olarak gönderilmeli (0 değil!)
           binaryData: base64Zip,
           binaryDataHash: md5Hash,
           customerAlias: finalCustomerAlias,

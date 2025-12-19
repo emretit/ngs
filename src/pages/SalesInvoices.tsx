@@ -98,7 +98,7 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
     const pendingInvoices = invoices.filter(
       invoice =>
         invoice.einvoice_status === 'sent' &&
-        !invoice.nilvera_transfer_id && // Henüz Veriban'a/Nilvera'ya gönderilmemiş
+        !invoice.nilvera_invoice_id && // Henüz Veriban'a/Nilvera'ya gönderilmemiş
         !sentInvoicesRef.current.has(invoice.id)
     );
 
@@ -130,7 +130,7 @@ const SalesInvoices = ({ isCollapsed, setIsCollapsed }: SalesInvoicesProps) => {
       const sentInvoices = invoices.filter(
         invoice =>
           invoice.einvoice_status === 'sent' &&
-          invoice.nilvera_transfer_id // Sadece Veriban'a gönderilmiş faturaları kontrol et
+          invoice.nilvera_invoice_id // Sadece Veriban'a gönderilmiş faturaları kontrol et
       );
 
       if (sentInvoices.length === 0) return;

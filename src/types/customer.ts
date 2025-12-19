@@ -33,6 +33,7 @@ export interface Customer {
   tax_number: string | null;
   tax_office: string | null;
   is_einvoice_mukellef: boolean;
+  einvoice_document_type: string | null;
   einvoice_alias_name: string | null;
   company_id: string | null;
   establishment_date: string | null;

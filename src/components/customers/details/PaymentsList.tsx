@@ -17,7 +17,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 
 interface PaymentsListProps {
   customer: Customer;
-  onAddPayment?: () => void;
+  onAddPayment?: (method: { type: "hesap" | "cek" | "senet" }) => void;
 }
 
 type TransactionType = 'payment' | 'sales_invoice' | 'purchase_invoice';

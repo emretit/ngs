@@ -1760,6 +1760,7 @@ export type Database = {
           einvoice_city: string | null
           einvoice_company_name: string | null
           einvoice_district: string | null
+          einvoice_document_type: string | null
           einvoice_mersis_no: string | null
           einvoice_sicil_no: string | null
           einvoice_tax_office: string | null
@@ -1824,6 +1825,7 @@ export type Database = {
           einvoice_city?: string | null
           einvoice_company_name?: string | null
           einvoice_district?: string | null
+          einvoice_document_type?: string | null
           einvoice_mersis_no?: string | null
           einvoice_sicil_no?: string | null
           einvoice_tax_office?: string | null
@@ -1888,6 +1890,7 @@ export type Database = {
           einvoice_city?: string | null
           einvoice_company_name?: string | null
           einvoice_district?: string | null
+          einvoice_document_type?: string | null
           einvoice_mersis_no?: string | null
           einvoice_sicil_no?: string | null
           einvoice_tax_office?: string | null
@@ -6542,6 +6545,7 @@ export type Database = {
           company_id: string | null
           created_at: string | null
           currency: string
+          customer_id: string | null
           due_date: string
           einvoice_id: string | null
           id: string
@@ -6562,6 +6566,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           currency?: string
+          customer_id?: string | null
           due_date: string
           einvoice_id?: string | null
           id?: string
@@ -6582,6 +6587,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           currency?: string
+          customer_id?: string | null
           due_date?: string
           einvoice_id?: string | null
           id?: string
@@ -6603,6 +6609,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
           {
@@ -7765,7 +7778,7 @@ export type Database = {
           banka_bilgileri: string | null
           company_id: string | null
           created_at: string
-          customer_id: string
+          customer_id: string | null
           delivery_terms: string | null
           document_type: string | null
           durum: string
@@ -7809,6 +7822,7 @@ export type Database = {
           return_invoice_info: Json | null
           sales_platform: string | null
           send_type: string | null
+          supplier_id: string | null
           toplam_tutar: number
           updated_at: string
           vade_tarihi: string | null
@@ -7821,7 +7835,7 @@ export type Database = {
           banka_bilgileri?: string | null
           company_id?: string | null
           created_at?: string
-          customer_id: string
+          customer_id?: string | null
           delivery_terms?: string | null
           document_type?: string | null
           durum?: string
@@ -7865,6 +7879,7 @@ export type Database = {
           return_invoice_info?: Json | null
           sales_platform?: string | null
           send_type?: string | null
+          supplier_id?: string | null
           toplam_tutar?: number
           updated_at?: string
           vade_tarihi?: string | null
@@ -7877,7 +7892,7 @@ export type Database = {
           banka_bilgileri?: string | null
           company_id?: string | null
           created_at?: string
-          customer_id?: string
+          customer_id?: string | null
           delivery_terms?: string | null
           document_type?: string | null
           durum?: string
@@ -7921,6 +7936,7 @@ export type Database = {
           return_invoice_info?: Json | null
           sales_platform?: string | null
           send_type?: string | null
+          supplier_id?: string | null
           toplam_tutar?: number
           updated_at?: string
           vade_tarihi?: string | null
@@ -7961,6 +7977,13 @@ export type Database = {
             columns: ["proposal_id"]
             isOneToOne: false
             referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -9237,6 +9260,7 @@ export type Database = {
           einvoice_city: string | null
           einvoice_company_name: string | null
           einvoice_district: string | null
+          einvoice_document_type: string | null
           einvoice_mersis_no: string | null
           einvoice_sicil_no: string | null
           einvoice_tax_office: string | null
@@ -9307,6 +9331,7 @@ export type Database = {
           einvoice_city?: string | null
           einvoice_company_name?: string | null
           einvoice_district?: string | null
+          einvoice_document_type?: string | null
           einvoice_mersis_no?: string | null
           einvoice_sicil_no?: string | null
           einvoice_tax_office?: string | null
@@ -9377,6 +9402,7 @@ export type Database = {
           einvoice_city?: string | null
           einvoice_company_name?: string | null
           einvoice_district?: string | null
+          einvoice_document_type?: string | null
           einvoice_mersis_no?: string | null
           einvoice_sicil_no?: string | null
           einvoice_tax_office?: string | null

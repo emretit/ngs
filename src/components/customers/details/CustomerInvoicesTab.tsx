@@ -67,8 +67,13 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Son 30 gün için varsayılan tarih filtresi
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date;
+  });
+  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
   const { userData } = useCurrentUser();
 
   // Satış faturalarını çek (müşteriye kesilen faturalar)
@@ -479,13 +484,9 @@ const CustomerInvoicesTab = ({ customerId, customerName }: CustomerInvoicesTabPr
                             <div className="flex flex-col items-center justify-center">
                               <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
                               <h3 className="text-lg font-semibold mb-2">Fatura bulunamadı</h3>
-                              <p className="text-muted-foreground mb-4">
+                              <p className="text-muted-foreground">
                                 Bu müşteri için fatura bulunmuyor.
                               </p>
-                              <Button onClick={() => navigate('/sales-invoices/new')} variant="outline">
-                                <Plus className="h-4 w-4 mr-2" />
-                                İlk Faturayı Oluştur
-                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>

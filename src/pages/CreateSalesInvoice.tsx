@@ -76,20 +76,6 @@ interface EInvoiceData {
 }
 
 const CreateSalesInvoice = () => {
-  // Component mount/unmount tracking
-  useEffect(() => {
-    console.log("🟢 [CreateSalesInvoice] Component MOUNTED", {
-      timestamp: new Date().toISOString(),
-      pathname: window.location.pathname,
-      search: window.location.search
-    });
-
-    return () => {
-      console.log("🔴 [CreateSalesInvoice] Component UNMOUNTED", {
-        timestamp: new Date().toISOString()
-      });
-    };
-  }, []);
 
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -323,13 +309,52 @@ const CreateSalesInvoice = () => {
           contact_name: selected.name || ""
         }));
 
-        // Müşteri seçildiğinde mükellef bilgisini kontrol et ve documentType'a göre invoice_profile'ı otomatik doldur
-        if (selected.tax_number && selected.tax_number.length >= 10) {
-          console.log("🔍 [CreateSalesInvoice] Mükellef bilgisi sorgulanıyor...", selected.tax_number);
+        // Debug: Müşteri verilerini logla
+        console.log("🔍 [CreateSalesInvoice] Seçilen müşteri verileri:", {
+          id: selected.id,
+          name: selected.name,
+          einvoice_document_type: selected.einvoice_document_type,
+          tax_number: selected.tax_number,
+          is_einvoice_mukellef: selected.is_einvoice_mukellef
+        });
+
+        // Müşteri seçildiğinde documentType'a göre invoice_profile'ı otomatik doldur
+        // Önce veritabanındaki einvoice_document_type alanını kontrol et
+        if (selected.einvoice_document_type) {
+          const documentType = selected.einvoice_document_type;
+          console.log("✅ [CreateSalesInvoice] DocumentType veritabanından bulundu:", documentType);
+          
+          // DocumentType'a göre invoice_profile'ı otomatik doldur
+          let invoiceProfile = "TEMELFATURA"; // Varsayılan
+          
+          if (documentType === "Invoice" || documentType === "EINVOICE") {
+            // E-Fatura mükellefi
+            invoiceProfile = "TEMELFATURA";
+            console.log("📋 [CreateSalesInvoice] E-Fatura mükellefi tespit edildi, invoice_profile: TEMELFATURA");
+          } else if (documentType === "ArchiveInvoice" || documentType === "EARCHIVE" || documentType === "EARCHIVETYPE2") {
+            // E-Arşiv mükellefi
+            invoiceProfile = "EARSIVFATURA";
+            console.log("📋 [CreateSalesInvoice] E-Arşiv mükellefi tespit edildi, invoice_profile: EARSIVFATURA");
+          } else if (documentType === "Waybill" || documentType === "DESPATCHADVICE") {
+            // E-İrsaliye
+            invoiceProfile = "EARSIVIRSLIYE";
+            console.log("📋 [CreateSalesInvoice] E-İrsaliye mükellefi tespit edildi, invoice_profile: EARSIVIRSLIYE");
+          } else {
+            console.warn("⚠️ [CreateSalesInvoice] Bilinmeyen documentType:", documentType, "- Varsayılan TEMELFATURA kullanılıyor");
+          }
+          
+          console.log("📋 [CreateSalesInvoice] Invoice profile otomatik dolduruldu (veritabanından):", invoiceProfile);
+          setInvoiceData(prev => ({
+            ...prev,
+            invoice_profile: invoiceProfile
+          }));
+        } else if (selected.tax_number && selected.tax_number.length >= 10) {
+          // Eğer veritabanında documentType yoksa, API'den sorgula
+          console.log("🔍 [CreateSalesInvoice] DocumentType veritabanında yok, mükellef bilgisi sorgulanıyor...", selected.tax_number);
           searchMukellef(selected.tax_number).then((result) => {
             if (result.success && result.data?.documentType) {
               const documentType = result.data.documentType;
-              console.log("✅ [CreateSalesInvoice] DocumentType bulundu:", documentType);
+              console.log("✅ [CreateSalesInvoice] DocumentType API'den bulundu:", documentType);
               
               // DocumentType'a göre invoice_profile'ı otomatik doldur
               let invoiceProfile = "TEMELFATURA"; // Varsayılan
@@ -345,7 +370,7 @@ const CreateSalesInvoice = () => {
                 invoiceProfile = "EARSIVIRSLIYE";
               }
               
-              console.log("📋 [CreateSalesInvoice] Invoice profile otomatik dolduruldu:", invoiceProfile);
+              console.log("📋 [CreateSalesInvoice] Invoice profile otomatik dolduruldu (API'den):", invoiceProfile);
               setInvoiceData(prev => ({
                 ...prev,
                 invoice_profile: invoiceProfile
@@ -797,11 +822,15 @@ const CreateSalesInvoice = () => {
       const cleanedInternetInfo = Object.keys(eInvoiceData.internet_info || {}).length > 0 ? eInvoiceData.internet_info : null;
       const cleanedReturnInvoiceInfo = Object.keys(eInvoiceData.return_invoice_info || {}).length > 0 ? eInvoiceData.return_invoice_info : null;
 
+      // Fatura numarası kullanıcı tarafından manuel olarak girilecek veya Veriban'a gönderim sırasında atanacak
+      // Otomatik fatura numarası üretilmiyor, "henüz atanmadı" olarak kalacak
+      let finalInvoiceNumber = invoiceData.invoice_number || null;
+
       // Prepare invoice data
       const invoicePayload = {
         customer_id: customerId,
         company_id: userData?.company_id,
-        fatura_no: invoiceData.invoice_number || null,
+        fatura_no: finalInvoiceNumber || null,
         fatura_tarihi: format(invoiceData.invoice_date, 'yyyy-MM-dd'),
         issue_time: invoiceData.issue_time,
         vade_tarihi: invoiceData.due_date ? format(invoiceData.due_date, 'yyyy-MM-dd') : null,
@@ -867,34 +896,8 @@ const CreateSalesInvoice = () => {
 
       console.log("✅ [CreateSalesInvoice] Invoice saved successfully", { invoiceId: invoice.id, isDraft });
       
-      // If not draft and integrator is active, send to selected integrator
-      if (!isDraft && integratorStatus) {
-        const selectedIntegrator = integratorStatus.selected;
-        const isIntegratorActive = 
-          (selectedIntegrator === 'veriban' && integratorStatus.veriban) ||
-          (selectedIntegrator === 'nilvera' && integratorStatus.nilvera) ||
-          (selectedIntegrator === 'elogo' && integratorStatus.elogo);
-        
-        if (isIntegratorActive) {
-          console.log(`📤 [CreateSalesInvoice] Sending invoice to ${selectedIntegrator}...`);
-          try {
-            sendInvoiceToIntegrator(invoice.id);
-            const integratorNames: Record<string, string> = {
-              veriban: 'Veriban',
-              nilvera: 'Nilvera',
-              elogo: 'e-Logo'
-            };
-            toast.success(`Fatura kaydedildi ve ${integratorNames[selectedIntegrator]}'a gönderiliyor...`);
-          } catch (error) {
-            console.error(`❌ [CreateSalesInvoice] ${selectedIntegrator} send error:`, error);
-            toast.error(`Fatura kaydedildi ancak gönderilemedi. Fatura detay sayfasından tekrar deneyebilirsiniz.`);
-          }
-        } else {
-          toast.success("Fatura başarıyla oluşturuldu");
-        }
-      } else {
-        toast.success(isDraft ? "Fatura taslak olarak kaydedildi" : "Fatura başarıyla oluşturuldu");
-      }
+      // Show success message
+      toast.success(isDraft ? "Fatura taslak olarak kaydedildi" : "Fatura başarıyla oluşturuldu");
       
       navigate(`/sales-invoices/${invoice.id}`);
 

@@ -7,6 +7,7 @@ const FORMAT_VARIABLES = [
   { key: '{YY}', description: '2 haneli yıl (25)', example: '25' },
   { key: '{MM}', description: 'Ay numarası (01-12)', example: '01' },
   { key: '{DD}', description: 'Gün numarası (01-31)', example: '15' },
+  { key: '{000000001}', description: '9 haneli sıralı numara (GİB formatı)', example: '000000001' },
   { key: '{0001}', description: '4 haneli sıralı numara', example: '0001' },
   { key: '{001}', description: '3 haneli sıralı numara', example: '001' },
   { key: '{01}', description: '2 haneli sıralı numara', example: '01' },

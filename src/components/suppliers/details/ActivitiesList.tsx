@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from "react";
-import { Customer } from "@/types/customer";
+import { Supplier } from "@/types/supplier";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,10 +14,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ActivitiesListProps {
-  customer: Customer;
+  supplier: Supplier;
 }
 
-export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
+export const ActivitiesList = ({ supplier }: ActivitiesListProps) => {
   const [typeFilter, setTypeFilter] = useState<string | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   // Son 30 gün için varsayılan tarih filtresi
@@ -37,15 +37,15 @@ export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
   const client = getClient();
   const queryClient = useQueryClient();
 
-  // Müşteriye özel aktiviteleri doğrudan çek
+  // Tedarikçiye özel aktiviteleri doğrudan çek
   const {
-    data: customerActivities = [],
+    data: supplierActivities = [],
     isLoading,
     error,
   } = useQuery({
     queryKey: [
-      "customer-activities",
-      customer.id,
+      "supplier-activities",
+      supplier.id,
       userData?.company_id,
       searchQuery,
       typeFilter,
@@ -80,8 +80,8 @@ export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
         `
         )
         .eq("company_id", userData.company_id)
-        .eq("related_item_type", "customer")
-        .eq("related_item_id", customer.id);
+        .eq("related_item_type", "supplier")
+        .eq("related_item_id", supplier.id);
 
       // Tarih filtresi
       if (startDate) {
@@ -116,7 +116,7 @@ export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
       const { data, error: queryError } = await query;
 
       if (queryError) {
-        console.error("Error fetching customer activities:", queryError);
+        console.error("Error fetching supplier activities:", queryError);
         throw queryError;
       }
 
@@ -134,7 +134,7 @@ export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
 
       return transformedData;
     },
-    enabled: !!customer.id && !!userData?.company_id && !userLoading,
+    enabled: !!supplier.id && !!userData?.company_id && !userLoading,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -160,17 +160,17 @@ export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
     setIsNewActivityDialogOpen(false);
     // Query'yi yenile
     queryClient.invalidateQueries({
-      queryKey: ["customer-activities", customer.id]
+      queryKey: ["supplier-activities", supplier.id]
     });
   };
 
   // İstatistik bilgilerini hesapla
   const activityStats = useMemo(() => {
-    const total = customerActivities.length;
-    const todo = customerActivities.filter(a => a.status === 'todo').length;
-    const inProgress = customerActivities.filter(a => a.status === 'in_progress').length;
-    const completed = customerActivities.filter(a => a.status === 'completed').length;
-    const postponed = customerActivities.filter(a => a.status === 'postponed').length;
+    const total = supplierActivities.length;
+    const todo = supplierActivities.filter(a => a.status === 'todo').length;
+    const inProgress = supplierActivities.filter(a => a.status === 'in_progress').length;
+    const completed = supplierActivities.filter(a => a.status === 'completed').length;
+    const postponed = supplierActivities.filter(a => a.status === 'postponed').length;
 
     return {
       total,
@@ -179,7 +179,7 @@ export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
       completed,
       postponed,
     };
-  }, [customerActivities]);
+  }, [supplierActivities]);
 
   return (
     <div className="space-y-4">
@@ -297,7 +297,7 @@ export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
                 </div>
               ) : (
                 <TasksTable
-                  tasks={customerActivities}
+                  tasks={supplierActivities}
                   isLoading={isLoading}
                   onSelectTask={handleSelectTask}
                   searchQuery={searchQuery}
@@ -317,9 +317,9 @@ export const ActivitiesList = ({ customer }: ActivitiesListProps) => {
         isOpen={isNewActivityDialogOpen}
         onClose={() => setIsNewActivityDialogOpen(false)}
         onSuccess={handleActivitySuccess}
-        relatedItemId={customer.id}
-        relatedItemTitle={customer.name || customer.company || 'Müşteri'}
-        relatedItemType="customer"
+        relatedItemId={supplier.id}
+        relatedItemTitle={supplier.name || supplier.company || 'Tedarikçi'}
+        relatedItemType="supplier"
       />
     </div>
   );

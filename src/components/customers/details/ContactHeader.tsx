@@ -83,15 +83,27 @@ export const ContactHeader = ({ customer, id, onEdit, onUpdate }: ContactHeaderP
   };
 
   const getDisplayName = () => {
+    // Kurumsal müşteri ise şirket adını göster
     if (customer.type === 'kurumsal' && customer.company) {
       return customer.company;
     }
-    return customer.name;
+    // Bireysel müşteri ise kişi adını göster
+    return customer.name || customer.company || 'Müşteri';
   };
 
   const getSubtitle = () => {
-    if (customer.type === 'kurumsal' && customer.company && customer.name) {
-      return `Yetkili: ${customer.name}`;
+    // Kurumsal müşteri ise hem şirket hem yetkili kişi göster
+    if (customer.type === 'kurumsal') {
+      if (customer.company && customer.name) {
+        return `Yetkili: ${customer.name}`;
+      }
+      if (customer.name) {
+        return `Yetkili: ${customer.name}`;
+      }
+    }
+    // Bireysel müşteri için varsa şirket bilgisi göster
+    if (customer.type === 'bireysel' && customer.company) {
+      return customer.company;
     }
     return null;
   };

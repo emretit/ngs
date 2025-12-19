@@ -148,36 +148,112 @@ serve(async (req) => {
     console.log('✅ Session code alındı');
 
     try {
+      // Extract integrationCode from invoice xml_data if not provided
+      const finalIntegrationCode = integrationCode || (invoice?.xml_data as any)?.integrationCode;
+      
+      // Extract invoice number from invoice (check parameter, xml_data, or fatura_no field)
+      const finalInvoiceNumber = invoiceNumber || (invoice?.xml_data as any)?.veribanInvoiceNumber || invoice?.fatura_no;
+      
+      // Extract ETTN from invoice (check both direct field and xml_data)
+      const invoiceEttn = invoice?.ettn || (invoice?.xml_data as any)?.ettn;
+      
+      // Use UUID (from parameter or invoice) - will be used if integrationCode and invoiceNumber are not available
+      const queryInvoiceUUID = invoiceUUID || invoiceEttn;
+
+      // Önce transfer durumunu kontrol et (eğer integrationCode varsa)
+      // Transfer durumu: Dosyanın Veriban'a gönderilip işlenip işlenmediği
+      let transferStatusResult = null;
+      if (finalIntegrationCode) {
+        console.log('📊 [veriban-invoice-status] Önce transfer durumu kontrol ediliyor...');
+        console.log('🔑 Integration Code:', finalIntegrationCode);
+        
+        transferStatusResult = await VeribanSoapClient.getTransferStatusWithIntegrationCode(
+          sessionCode,
+          finalIntegrationCode,
+          veribanAuth.webservice_url
+        );
+
+        if (transferStatusResult.success) {
+          const transferStateCode = transferStatusResult.data?.stateCode;
+          console.log('📊 [veriban-invoice-status] Transfer durum kodu:', transferStateCode);
+          
+          // StateCode: 1=Bilinmiyor, 2=İşlenmeyi bekliyor, 3=İşleniyor, 4=Hatalı, 5=Başarıyla işlendi
+          if (transferStateCode === 4) {
+            // Transfer hatası
+            return new Response(JSON.stringify({
+              success: false,
+              error: `Transfer hatası: ${transferStatusResult.data?.stateDescription || 'Bilinmeyen hata'}`,
+              transferStatus: {
+                stateCode: transferStateCode,
+                stateName: transferStatusResult.data?.stateName,
+                stateDescription: transferStatusResult.data?.stateDescription,
+              }
+            }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          } else if (transferStateCode !== 5) {
+            // Transfer henüz tamamlanmamış (1, 2, 3)
+            const statusMessages: Record<number, string> = {
+              1: 'Transfer durumu bilinmiyor',
+              2: 'Transfer işlenmeyi bekliyor',
+              3: 'Transfer işleniyor',
+            };
+            
+            return new Response(JSON.stringify({
+              success: false,
+              error: statusMessages[transferStateCode] || 'Transfer henüz tamamlanmadı',
+              transferStatus: {
+                stateCode: transferStateCode,
+                stateName: transferStatusResult.data?.stateName,
+                stateDescription: transferStatusResult.data?.stateDescription,
+                userFriendlyStatus: transferStateCode === 3 ? 'İşleniyor' : transferStateCode === 2 ? 'İşlenmeyi bekliyor' : 'Bilinmiyor',
+              },
+              message: 'Fatura henüz Veriban sisteminde işleniyor. Lütfen birkaç dakika sonra tekrar kontrol edin.'
+            }), {
+              status: 202, // Accepted - işlem devam ediyor
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+          // Transfer tamamlandı (stateCode === 5), invoice durumunu kontrol etmeye devam et
+          console.log('✅ [veriban-invoice-status] Transfer başarıyla tamamlandı, invoice durumu kontrol ediliyor...');
+        } else {
+          console.warn('⚠️ [veriban-invoice-status] Transfer durumu kontrol edilemedi, invoice durumu kontrol edilmeye devam ediliyor...');
+        }
+      }
+
       // Query invoice status based on provided identifier
       let statusResult;
       
-      if (integrationCode) {
-        console.log('📊 GetSalesInvoiceStatusWithIntegrationCode çağrılıyor...');
-        statusResult = await VeribanSoapClient.getSalesInvoiceStatusWithIntegrationCode(
-          sessionCode,
-          integrationCode,
-          veribanAuth.webservice_url
-        );
-      } else if (invoiceNumber) {
+      // Öncelik sırası: 1) InvoiceNumber (en güvenilir), 2) IntegrationCode, 3) InvoiceUUID (ETTN)
+      if (finalInvoiceNumber) {
         console.log('📊 GetSalesInvoiceStatusWithInvoiceNumber çağrılıyor...');
+        console.log('📄 Fatura Numarası:', finalInvoiceNumber);
         statusResult = await VeribanSoapClient.getSalesInvoiceStatusWithInvoiceNumber(
           sessionCode,
-          invoiceNumber,
+          finalInvoiceNumber,
+          veribanAuth.webservice_url
+        );
+      } else if (finalIntegrationCode) {
+        console.log('📊 GetSalesInvoiceStatusWithIntegrationCode çağrılıyor...');
+        console.log('🔑 Integration Code:', finalIntegrationCode);
+        statusResult = await VeribanSoapClient.getSalesInvoiceStatusWithIntegrationCode(
+          sessionCode,
+          finalIntegrationCode,
           veribanAuth.webservice_url
         );
       } else {
-        // Use UUID (from parameter or invoice)
-        const queryInvoiceUUID = invoiceUUID || invoice?.ettn;
         if (!queryInvoiceUUID) {
           return new Response(JSON.stringify({
             success: false,
-            error: 'Invoice UUID (ETTN) bilgisi bulunamadı. Fatura henüz gönderilmemiş olabilir.'
+            error: 'Invoice UUID (ETTN), Invoice Number veya Integration Code bilgisi bulunamadı. Fatura henüz gönderilmemiş olabilir.'
           }), {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
         console.log('📊 GetSalesInvoiceStatusWithInvoiceUUID çağrılıyor...');
+        console.log('🆔 Invoice UUID (ETTN):', queryInvoiceUUID);
         statusResult = await VeribanSoapClient.getSalesInvoiceStatus(
           sessionCode,
           queryInvoiceUUID,
@@ -187,6 +263,7 @@ serve(async (req) => {
 
       if (!statusResult.success) {
         console.error('❌ GetSalesInvoiceStatus başarısız:', statusResult.error);
+        console.error('❌ StatusResult tam objesi:', JSON.stringify(statusResult, null, 2));
         return new Response(JSON.stringify({
           success: false,
           error: statusResult.error || 'Durum sorgulanamadı'
@@ -196,30 +273,96 @@ serve(async (req) => {
         });
       }
 
-      const statusData = statusResult.data;
+      let statusData = statusResult.data;
       console.log('✅ Durum bilgisi alındı');
-      console.log('📊 StateCode:', statusData.stateCode);
-      console.log('📋 StateName:', statusData.stateName);
-      console.log('📝 StateDescription:', statusData.stateDescription);
-      console.log('📋 AnswerStateCode:', statusData.answerStateCode);
-      console.log('📋 AnswerTypeCode:', statusData.answerTypeCode);
+      console.log('📊 StatusResult tam objesi:', JSON.stringify(statusResult, null, 2));
+      console.log('📊 StatusData tam objesi:', JSON.stringify(statusData, null, 2));
+      console.log('📊 StateCode:', statusData?.stateCode);
+      console.log('📋 StateName:', statusData?.stateName);
+      console.log('📝 StateDescription:', statusData?.stateDescription);
+      console.log('📋 AnswerStateCode:', statusData?.answerStateCode);
+      console.log('📋 AnswerTypeCode:', statusData?.answerTypeCode);
+      console.log('❌ ErrorMessage:', statusData?.errorMessage);
+      console.log('📄 Message:', statusData?.message);
+      
+      // Combine error details for better error reporting
+      let detailedErrorDescription = statusData?.stateDescription || '';
+      if (statusData?.errorMessage) {
+        detailedErrorDescription = statusData.errorMessage + (detailedErrorDescription ? ` - ${detailedErrorDescription}` : '');
+      } else if (statusData?.message) {
+        detailedErrorDescription = statusData.message + (detailedErrorDescription ? ` - ${detailedErrorDescription}` : '');
+      }
+      
+      // Eğer statusData yoksa veya stateCode 0 ise, Veriban'dan veri gelmemiş olabilir
+      if (!statusData || (statusData.stateCode === 0 && !statusData.stateName)) {
+        console.warn('⚠️ Veriban\'dan durum bilgisi alınamadı. Fatura henüz işlenmemiş olabilir.');
+        // Varsayılan değerler atayalım
+        if (!statusData) {
+          statusData = {
+            stateCode: 0,
+            stateName: '',
+            stateDescription: 'Fatura henüz Veriban sisteminde işlenmemiş. Lütfen birkaç dakika sonra tekrar kontrol edin.',
+            answerStateCode: 0,
+            answerTypeCode: 0,
+          };
+        }
+      }
 
       // Update invoice status in database if invoiceId provided
       if (invoiceId) {
+        // Combine error details for better error reporting
+        const errorMessageForDB = statusData.stateCode === 4 
+          ? (detailedErrorDescription || statusData.stateName || 'Hata oluştu')
+          : null;
+        
         const updateData: any = {
           einvoice_invoice_state: statusData.stateCode,
           einvoice_transfer_state: statusData.answerStateCode || statusData.stateCode,
-          einvoice_error_message: statusData.stateCode === 4 ? (statusData.stateDescription || statusData.stateName) : null,
+          einvoice_error_message: errorMessageForDB,
           updated_at: new Date().toISOString(),
         };
 
+        // Update xml_data
+        const xmlDataUpdate: any = { ...(invoice.xml_data as any || {}) };
+
         // Update ETTN if not already set (check if invoice has ettn field or use xml_data)
-        if (queryInvoiceUUID && !invoice.ettn) {
-          // Try to update ettn if field exists, otherwise store in xml_data
-          if (invoice.xml_data) {
-            updateData.xml_data = { ...invoice.xml_data, ettn: queryInvoiceUUID };
-          }
+        if (queryInvoiceUUID && !invoice.ettn && !xmlDataUpdate.ettn) {
+          xmlDataUpdate.ettn = queryInvoiceUUID;
         }
+
+        // Eğer durum sorgulamasında fatura numarası kullanıldıysa ve fatura_no alanı boşsa, kaydet
+        // Veya Veriban'dan dönen response'da fatura numarası varsa, onu kaydet
+        // Öncelik: statusData.invoiceNumber > finalInvoiceNumber > mevcut fatura_no
+        console.log('📋 [Veriban Status] Fatura numarası bilgileri:', {
+          mevcutFaturaNo: invoice.fatura_no || '(yok)',
+          statusDataInvoiceNumber: statusData.invoiceNumber || '(yok)',
+          finalInvoiceNumber: finalInvoiceNumber || '(yok)',
+          invoiceId: invoice.id
+        });
+        
+        if (statusData.invoiceNumber) {
+          // Veriban'dan dönen InvoiceNumber varsa, mutlaka kaydet (mevcut fatura_no'dan farklıysa veya boşsa)
+          if (!invoice.fatura_no || invoice.fatura_no !== statusData.invoiceNumber) {
+            updateData.fatura_no = statusData.invoiceNumber;
+            xmlDataUpdate.veribanInvoiceNumber = statusData.invoiceNumber;
+            console.log('✅ [Veriban Status] Fatura numarası durum sorgulaması response\'undan alındı ve kaydedildi:', statusData.invoiceNumber);
+          } else {
+            console.log('ℹ️ [Veriban Status] Fatura numarası zaten kayıtlı:', statusData.invoiceNumber);
+            xmlDataUpdate.veribanInvoiceNumber = statusData.invoiceNumber;
+          }
+        } else if (finalInvoiceNumber && !invoice.fatura_no) {
+          updateData.fatura_no = finalInvoiceNumber;
+          xmlDataUpdate.veribanInvoiceNumber = finalInvoiceNumber;
+          console.log('✅ [Veriban Status] Fatura numarası durum sorgulaması parametresinden alındı ve kaydedildi:', finalInvoiceNumber);
+        } else if (invoice.fatura_no) {
+          // Mevcut fatura numarası varsa, onu koru
+          console.log('ℹ️ [Veriban Status] Mevcut fatura numarası korunuyor:', invoice.fatura_no);
+          xmlDataUpdate.veribanInvoiceNumber = invoice.fatura_no;
+        } else {
+          console.warn('⚠️ [Veriban Status] Fatura numarası bulunamadı. statusData.invoiceNumber:', statusData.invoiceNumber, 'finalInvoiceNumber:', finalInvoiceNumber);
+        }
+
+        updateData.xml_data = xmlDataUpdate;
 
         // Update status based on Veriban state code
         // StateCode values: 1=TASLAK, 2=Gönderilmeyi bekliyor/İmza bekliyor, 3=Gönderim listesinde, 4=HATALI, 5=Başarıyla alıcıya iletildi
@@ -288,11 +431,14 @@ serve(async (req) => {
         status: {
           stateCode: statusData.stateCode,
           stateName: statusData.stateName,
-          stateDescription: statusData.stateDescription,
+          stateDescription: detailedErrorDescription || statusData.stateDescription, // Use combined error description
           answerStateCode: statusData.answerStateCode,
           answerTypeCode: statusData.answerTypeCode,
           userFriendlyStatus: userStatus,
           answerStatus: answerStatus,
+          invoiceNumber: statusData.invoiceNumber || finalInvoiceNumber || null, // Include InvoiceNumber in response
+          errorMessage: statusData.errorMessage || null, // Include ErrorMessage if available
+          message: statusData.message || null, // Include Message if available
         },
         message: 'Durum bilgisi başarıyla alındı'
       }), {

@@ -17,8 +17,13 @@ interface ProposalsTabProps {
 export const ProposalsTab = ({ customer }: ProposalsTabProps) => {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<ProposalStatus | 'all'>('all');
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Son 30 gün için varsayılan tarih filtresi
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date;
+  });
+  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
 
   // Fetch proposals list
   const { data: proposals, isLoading: isLoadingProposals } = useQuery({

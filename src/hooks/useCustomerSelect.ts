@@ -37,7 +37,7 @@ export const useCustomerSelect = () => {
     queryFn: async () => {
       const { data, error, count } = await supabase
         .from("customers")
-        .select("id, name, company, email, mobile_phone, office_phone, address, representative", { count: 'exact' })
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative, einvoice_document_type, tax_number, is_einvoice_mukellef", { count: 'exact' })
         .order("name")
         .limit(10000); // Yüksek limit - tüm müşterileri çekmek için
 
@@ -64,7 +64,7 @@ export const useCustomerSelect = () => {
     queryFn: async () => {
       const { data, error, count } = await supabase
         .from("suppliers")
-        .select("id, name, company, email, mobile_phone, office_phone, address, representative", { count: 'exact' })
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative, einvoice_document_type, tax_number, is_einvoice_mukellef", { count: 'exact' })
         .order("name")
         .limit(10000); // Yüksek limit - tüm tedarikçileri çekmek için
 

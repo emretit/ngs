@@ -332,8 +332,8 @@ export function useTabNavigation() {
           path,
           'sales_invoices',
           id,
-          ['invoice_number'],
-          (data) => data.invoice_number || 'Fatura',
+          ['fatura_no'],  // invoice_number yerine fatura_no
+          (data) => data.fatura_no || 'Fatura',  // invoice_number yerine fatura_no
           'Fatura Detayı',
           addTab
         );

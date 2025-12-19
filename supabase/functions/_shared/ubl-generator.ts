@@ -165,6 +165,13 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   const issueTime = formatTime(invoice.issue_time);
   const dueDate = invoice.vade_tarihi ? formatDate(invoice.vade_tarihi) : null;
   
+  // Log issue time for debugging
+  console.log('🕐 [UBL Generator] Issue time:', {
+    original: invoice.issue_time,
+    formatted: issueTime,
+    issueDate: issueDate
+  });
+  
   // Invoice type and profile
   const invoiceType = invoice.invoice_type || 'SATIS';
   const invoiceProfile = invoice.invoice_profile || 'TEMELFATURA';
@@ -178,7 +185,8 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   const companyTaxNumber = escapeXml(company.tax_number || '');
   const companyTaxOffice = escapeXml(company.tax_office || '');
   const companyAddress = escapeXml(company.address || '');
-  const companyCity = escapeXml(company.city || '');
+  // CityName is mandatory for Veriban - use default if empty
+  const companyCity = escapeXml(company.city || 'İstanbul');
   const companyDistrict = escapeXml(company.district || '');
   const companyPostalCode = escapeXml(company.postal_code || '');
   const companyCountry = escapeXml(company.country || 'Türkiye');
@@ -192,7 +200,8 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   const customerTaxNumber = escapeXml(customer.tax_number || '');
   const customerTaxOffice = escapeXml(customer.tax_office || '');
   const customerAddress = escapeXml(customer.address || '');
-  const customerCity = escapeXml(customer.city || '');
+  // CityName is mandatory for Veriban - use default if empty
+  const customerCity = escapeXml(customer.city || 'İstanbul');
   const customerDistrict = escapeXml(customer.district || '');
   const customerPostalCode = escapeXml(customer.postal_code || '');
   const customerCountry = escapeXml(customer.country || 'Türkiye');
@@ -217,14 +226,75 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
     const lineTotal = item.satir_toplami || 0;
     const vatAmount = item.kdv_tutari || (lineTotal * vatRate / (100 + vatRate));
     const baseAmount = lineTotal - vatAmount;
-    
+
     if (!vatGroups[vatRate]) {
       vatGroups[vatRate] = { base: 0, amount: 0 };
     }
     vatGroups[vatRate].base += baseAmount;
     vatGroups[vatRate].amount += vatAmount;
   });
-  
+
+  // Validate and clean invoice number
+  // Filter out invalid values like DOKUMAN, TASLAK, MESSAGE, etc.
+  const invalidInvoiceNumbers = ['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER', 'NULL', 'UNDEFINED'];
+  let invoiceNumber = invoice.fatura_no || '';
+
+  // Check if invoice number is invalid or empty
+  if (!invoiceNumber || invalidInvoiceNumbers.includes(invoiceNumber.toUpperCase()) || invoiceNumber.trim() === '') {
+    // Log warning for missing invoice number
+    console.warn('⚠️ [UBL Generator] Fatura numarası bulunamadı veya geçersiz:', {
+      invoiceId: invoice.id,
+      fatura_no: invoice.fatura_no,
+      fatura_tarihi: invoice.fatura_tarihi
+    });
+    
+    // Generate a temporary invoice number based on date and invoice ID
+    // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
+    // NOT: Bu geçici bir çözümdür. Fatura oluşturulurken otomatik numara üretilmeli.
+    const date = new Date(invoice.fatura_tarihi);
+    const year = date.getFullYear().toString();
+    const serie = 'FAT'; // Varsayılan seri
+    // UUID'den 9 karakterlik sıra numarası oluştur (ilk 9 karakter, tire yok)
+    const sequence = invoice.id.substring(0, 9).replace(/-/g, '').padEnd(9, '0');
+    invoiceNumber = `${serie}${year}${sequence}`;
+    
+    // GİB formatı kontrolü: 16 karakter olmalı
+    if (invoiceNumber.length !== 16) {
+      console.warn('⚠️ [UBL Generator] Geçici fatura numarası 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
+      // 16 karaktere tamamla veya kısalt
+      if (invoiceNumber.length > 16) {
+        invoiceNumber = invoiceNumber.substring(0, 16);
+      } else {
+        invoiceNumber = invoiceNumber.padEnd(16, '0');
+      }
+    }
+    
+    console.warn('⚠️ [UBL Generator] Geçici fatura numarası oluşturuldu (GİB formatı):', invoiceNumber);
+  } else {
+    // GİB formatı kontrolü: 16 karakter olmalı
+    if (invoiceNumber.length !== 16) {
+      console.warn('⚠️ [UBL Generator] Fatura numarası GİB formatına uygun değil (16 karakter değil):', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
+    } else {
+      // Format kontrolü: SERI(3) + YIL(4) + SIRA(9)
+      const serie = invoiceNumber.substring(0, 3);
+      const year = invoiceNumber.substring(3, 7);
+      const sequence = invoiceNumber.substring(7);
+      
+      // Yıl kontrolü
+      const currentYear = new Date(invoice.fatura_tarihi).getFullYear().toString();
+      if (year !== currentYear) {
+        console.warn('⚠️ [UBL Generator] Fatura numarasındaki yıl fatura tarihi ile uyuşmuyor:', year, 'vs', currentYear);
+      }
+      
+      // Sıra numarası kontrolü (sayı olmalı)
+      if (!/^\d{9}$/.test(sequence)) {
+        console.warn('⚠️ [UBL Generator] Fatura numarasındaki sıra numarası 9 haneli sayı değil:', sequence);
+      }
+      
+      console.log('✅ [UBL Generator] Fatura numarası kullanılıyor (GİB formatı):', invoiceNumber, `[${serie}][${year}][${sequence}]`);
+    }
+  }
+
   // Build XML
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
@@ -232,7 +302,7 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
          xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
   <cbc:CustomizationID>TR1.2</cbc:CustomizationID>
   <cbc:ProfileID>${escapeXml(invoiceProfile)}</cbc:ProfileID>
-  <cbc:ID>${escapeXml(invoice.fatura_no || invoice.id)}</cbc:ID>
+  <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
   <cbc:UUID>${invoiceETTN}</cbc:UUID>
   <cbc:IssueDate>${issueDate}</cbc:IssueDate>
   <cbc:IssueTime>${issueTime}</cbc:IssueTime>`;
@@ -260,6 +330,7 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
       <cac:PostalAddress>
         <cbc:StreetName>${companyAddress}</cbc:StreetName>
         <cbc:CityName>${companyCity}</cbc:CityName>
+        <cbc:CitySubdivisionName>${companyDistrict || companyCity}</cbc:CitySubdivisionName>
         <cbc:PostalZone>${companyPostalCode}</cbc:PostalZone>
         <cac:Country>
           <cbc:Name>${companyCountry}</cbc:Name>
@@ -280,31 +351,34 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
   // AccountingCustomerParty (Alıcı)
   xml += `
   <cac:AccountingCustomerParty>
-    <cac:Party>
-      <cac:PartyIdentification>`;
-  
-  if (customerTaxNumber) {
-    if (customerTaxNumber.length === 11) {
-      xml += `\n        <cbc:ID schemeID="TCKN">${customerTaxNumber}</cbc:ID>`;
-    } else {
-      xml += `\n        <cbc:ID schemeID="VKN">${customerTaxNumber}</cbc:ID>`;
-    }
+    <cac:Party>`;
+
+  // PartyIdentification: VKN or TCKN
+  // Note: For individuals (TCKN), we need to add cac:Person element as well
+  const isTCKN = customerTaxNumber && customerTaxNumber.length === 11;
+  const isVKN = customerTaxNumber && customerTaxNumber.length === 10;
+
+  if (isTCKN || isVKN) {
+    xml += `
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="${isTCKN ? 'TCKN' : 'VKN'}">${customerTaxNumber}</cbc:ID>
+      </cac:PartyIdentification>`;
   }
-  
+
   xml += `
-      </cac:PartyIdentification>
       <cac:PartyName>
         <cbc:Name>${customerName}</cbc:Name>
       </cac:PartyName>
       <cac:PostalAddress>
         <cbc:StreetName>${customerAddress}</cbc:StreetName>
         <cbc:CityName>${customerCity}</cbc:CityName>
+        <cbc:CitySubdivisionName>${customerDistrict || customerCity}</cbc:CitySubdivisionName>
         <cbc:PostalZone>${customerPostalCode}</cbc:PostalZone>
         <cac:Country>
           <cbc:Name>${customerCountry}</cbc:Name>
         </cac:Country>
       </cac:PostalAddress>`;
-  
+
   if (customerTaxOffice) {
     xml += `
       <cac:PartyTaxScheme>
@@ -313,7 +387,21 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
         </cac:TaxScheme>
       </cac:PartyTaxScheme>`;
   }
-  
+
+  // For TCKN (individuals), add Person element as required by Veriban
+  if (isTCKN) {
+    // Split customer name into first and last name
+    const nameParts = customerName.split(' ');
+    const firstName = nameParts.slice(0, -1).join(' ') || customerName;
+    const familyName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+
+    xml += `
+      <cac:Person>
+        <cbc:FirstName>${firstName}</cbc:FirstName>
+        <cbc:FamilyName>${familyName}</cbc:FamilyName>
+      </cac:Person>`;
+  }
+
   if (customerPhone || customerEmail) {
     xml += `
       <cac:Contact>
@@ -321,7 +409,7 @@ export function generateUBLTRXML(invoice: SalesInvoiceData, ettn?: string): stri
         <cbc:ElectronicMail>${customerEmail}</cbc:ElectronicMail>
       </cac:Contact>`;
   }
-  
+
   xml += `
     </cac:Party>
   </cac:AccountingCustomerParty>`;

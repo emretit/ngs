@@ -39,8 +39,13 @@ interface UnifiedTransaction {
 
 export const PaymentsList = ({ customer, onAddPayment }: PaymentsListProps) => {
   const [typeFilter, setTypeFilter] = useState<TransactionType | 'all'>('all');
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Son 30 gün için varsayılan tarih filtresi
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date;
+  });
+  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
   const { exchangeRates, convertCurrency } = useExchangeRates();
   const { userData, loading: userLoading } = useCurrentUser();
   

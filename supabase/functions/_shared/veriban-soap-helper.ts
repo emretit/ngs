@@ -174,38 +174,99 @@ export class VeribanSoapClient {
       integrationCode = '',
     } = params;
 
-    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
-                  xmlns:tem="http://tempuri.org/"
-                  xmlns:ver="http://schemas.datacontract.org/2004/07/Veriban.Service.Model">
+    // Note: If integrationCode is provided, we should use TransferSalesInvoiceFileWithIntegrationCode instead
+    const useIntegrationCodeMethod = !!integrationCode;
+
+    // Format boolean value for SOAP (true/false as lowercase string)
+    const isDirectSendStr = isDirectSend ? 'true' : 'false';
+    
+    // FileDataType should be numeric value (0, 1, 2, 3) - already string format
+    // Ensure it's a valid numeric string
+    const fileDataTypeNum = fileDataType.toString();
+    
+    // Veriban dokümanına göre EInvoiceTransferFile element sırası:
+    // 1. FileNameWithExtension
+    // 2. FileDataType
+    // 3. BinaryData
+    // 4. BinaryDataHash
+    // 5. CustomerAlias
+    // 6. IsDirectSend
+    // .NET SOAP servisleri element sırasına dikkat eder
+    const soapRequest = useIntegrationCodeMethod ?
+    `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <tem:TransferSalesInvoiceFileWithIntegrationCode>
+      <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
+      <tem:transferFile>
+        <tem:FileNameWithExtension>${this.escapeXml(fileName)}</tem:FileNameWithExtension>
+        <tem:FileDataType>${fileDataTypeNum}</tem:FileDataType>
+        <tem:BinaryData>${binaryData}</tem:BinaryData>
+        <tem:BinaryDataHash>${this.escapeXml(binaryDataHash)}</tem:BinaryDataHash>
+        <tem:CustomerAlias>${this.escapeXml(customerAlias || '')}</tem:CustomerAlias>
+        <tem:IsDirectSend>${isDirectSendStr}</tem:IsDirectSend>
+      </tem:transferFile>
+      <tem:uniqueIntegrationCode>${this.escapeXml(integrationCode)}</tem:uniqueIntegrationCode>
+    </tem:TransferSalesInvoiceFileWithIntegrationCode>
+  </soapenv:Body>
+</soapenv:Envelope>` :
+    `<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
   <soapenv:Header/>
   <soapenv:Body>
     <tem:TransferSalesInvoiceFile>
       <tem:sessionCode>${this.escapeXml(sessionCode)}</tem:sessionCode>
-      <tem:EInvoiceTransferFile>
-        <ver:FileNameWithExtension>${this.escapeXml(fileName)}</ver:FileNameWithExtension>
-        <ver:FileDataType>${this.escapeXml(fileDataType)}</ver:FileDataType>
-        <ver:BinaryData>${binaryData}</ver:BinaryData>
-        <ver:BinaryDataHash>${this.escapeXml(binaryDataHash)}</ver:BinaryDataHash>
-        <ver:CustomerAlias>${this.escapeXml(customerAlias)}</ver:CustomerAlias>
-        <ver:IsDirectSend>${isDirectSend}</ver:IsDirectSend>
-        ${integrationCode ? `<ver:IntegrationCode>${this.escapeXml(integrationCode)}</ver:IntegrationCode>` : ''}
-      </tem:EInvoiceTransferFile>
+      <tem:transferFile>
+        <tem:FileNameWithExtension>${this.escapeXml(fileName)}</tem:FileNameWithExtension>
+        <tem:FileDataType>${fileDataTypeNum}</tem:FileDataType>
+        <tem:BinaryData>${binaryData}</tem:BinaryData>
+        <tem:BinaryDataHash>${this.escapeXml(binaryDataHash)}</tem:BinaryDataHash>
+        <tem:CustomerAlias>${this.escapeXml(customerAlias || '')}</tem:CustomerAlias>
+        <tem:IsDirectSend>${isDirectSendStr}</tem:IsDirectSend>
+      </tem:transferFile>
     </tem:TransferSalesInvoiceFile>
   </soapenv:Body>
 </soapenv:Envelope>`;
 
     try {
+      // SOAPAction: .NET SOAP servisleri genellikle namespace ile birlikte bekler
+      // Format: "http://tempuri.org/IService/MethodName" veya sadece "MethodName"
+      // Veriban için sadece method adı yeterli görünüyor (diğer methodlarda da öyle)
+      const soapAction = useIntegrationCodeMethod ? 'TransferSalesInvoiceFileWithIntegrationCode' : 'TransferSalesInvoiceFile';
+      
+      // Alternatif: Namespace ile (eğer yukarıdaki çalışmazsa)
+      // const soapAction = useIntegrationCodeMethod 
+      //   ? 'http://tempuri.org/IIntegrationService/TransferSalesInvoiceFileWithIntegrationCode'
+      //   : 'http://tempuri.org/IIntegrationService/TransferSalesInvoiceFile';
+
+      console.log('📤 TransferSalesInvoiceFile SOAP Request:');
+      console.log('📄 SOAPAction:', soapAction);
+      console.log('📄 Request URL:', url);
+      console.log('📄 Request Body (FULL):');
+      console.log(soapRequest);
+      console.log('📄 Request Body Length:', soapRequest.length);
+      console.log('📄 BinaryData Length:', binaryData.length);
+      console.log('📄 BinaryData (first 100 chars):', binaryData.substring(0, 100));
+      console.log('📄 FileDataType:', fileDataType);
+      console.log('📄 IsDirectSend:', isDirectSendStr);
+      console.log('📄 FileName:', fileName);
+      console.log('📄 CustomerAlias:', customerAlias || '(boş)');
+      console.log('📄 IntegrationCode:', integrationCode || '(yok)');
+
       const response = await this.fetchWithTimeout(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/xml; charset=utf-8',
-          'SOAPAction': 'TransferSalesInvoiceFile',
+          'SOAPAction': soapAction, // Diğer methodlarda tırnak yok, aynı formatı kullanıyoruz
         },
         body: soapRequest,
       });
 
+      console.log('📥 Response Status:', response.status);
       const xmlText = await response.text();
+      console.log('📥 Response Body (first 2000 chars):', xmlText.substring(0, 2000));
+
       return this.parseTransferResponse(xmlText);
     } catch (error) {
       return {
@@ -1333,23 +1394,173 @@ export class VeribanSoapClient {
    */
   private static parseTransferResponse(xmlText: string): VeribanSoapResponse {
     try {
+      console.log('🔍 Parsing transfer response...');
+      console.log('📄 Response XML (first 2000 chars):', xmlText.substring(0, 2000));
+      console.log('📄 Response XML (full length):', xmlText.length, 'chars');
+
+      // Check for SOAP fault first
+      const faultCodeMatch = xmlText.match(/<FaultCode[^>]*>(.*?)<\/FaultCode>/i);
+      const faultDescMatch = xmlText.match(/<FaultDescription[^>]*>(.*?)<\/FaultDescription>/i);
+      const faultStringMatch = xmlText.match(/<faultstring[^>]*>(.*?)<\/faultstring>/i);
+      const soapFaultMatch = xmlText.match(/<soap:Fault[^>]*>[\s\S]*?<soap:faultstring[^>]*>(.*?)<\/soap:faultstring>/i);
+      const soapFaultCodeMatch = xmlText.match(/<soap:Fault[^>]*>[\s\S]*?<soap:faultcode[^>]*>(.*?)<\/soap:faultcode>/i);
+
+      if (faultCodeMatch || faultDescMatch || faultStringMatch || soapFaultMatch || soapFaultCodeMatch) {
+        const errorMsg = faultDescMatch?.[1] || faultStringMatch?.[1] || soapFaultMatch?.[1] || faultCodeMatch?.[1] || soapFaultCodeMatch?.[1] || 'Bilinmeyen SOAP hatası';
+        console.error('❌ SOAP Fault detected in transfer:', errorMsg);
+        return {
+          success: false,
+          error: errorMsg.trim(),
+          data: {
+            operationCompleted: false,
+            transferFileUniqueId: '',
+            errorMessage: errorMsg.trim(),
+          },
+        };
+      }
+
       const operationCompletedMatch = xmlText.match(/<OperationCompleted[^>]*>(.*?)<\/OperationCompleted>/);
       const operationCompleted = operationCompletedMatch ? operationCompletedMatch[1].trim().toLowerCase() === 'true' : false;
 
       const transferFileUniqueIdMatch = xmlText.match(/<TransferFileUniqueId[^>]*>(.*?)<\/TransferFileUniqueId>/);
       const transferFileUniqueId = transferFileUniqueIdMatch ? transferFileUniqueIdMatch[1].trim() : '';
 
+      // Look for invoice number in the response (Veriban may return it after successful transfer)
+      // NOTE: Transfer response'unda genellikle InvoiceNumber olmaz, bu yüzden sadece açıkça InvoiceNumber tag'i varsa parse ediyoruz
+      // Description veya Message'dan parse etmeyi kaldırdık çünkü yanlış değerler bulabiliyor (örn: "DOKUMAN")
+      let invoiceNumber = '';
+      
+      // Pattern 1: Standard <InvoiceNumber>...</InvoiceNumber>
+      const invoiceNumberMatch1 = xmlText.match(/<InvoiceNumber[^>]*>(.*?)<\/InvoiceNumber>/i);
+      if (invoiceNumberMatch1) {
+        const parsedValue = invoiceNumberMatch1[1].trim();
+        // Geçersiz değerleri filtrele (DOKUMAN, TASLAK, vb. gibi)
+        if (parsedValue && 
+            parsedValue.length > 0 && 
+            parsedValue.length <= 50 && // Maksimum uzunluk kontrolü
+            !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR'].includes(parsedValue.toUpperCase())) {
+          invoiceNumber = parsedValue;
+        }
+      }
+      
+      // Pattern 2: With namespace <tem:InvoiceNumber>...</tem:InvoiceNumber>
+      if (!invoiceNumber) {
+        const invoiceNumberMatch2 = xmlText.match(/<tem:InvoiceNumber[^>]*>(.*?)<\/tem:InvoiceNumber>/i);
+        if (invoiceNumberMatch2) {
+          const parsedValue = invoiceNumberMatch2[1].trim();
+          if (parsedValue && 
+              parsedValue.length > 0 && 
+              parsedValue.length <= 50 &&
+              !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR'].includes(parsedValue.toUpperCase())) {
+            invoiceNumber = parsedValue;
+          }
+        }
+      }
+      
+      // Pattern 3: <ns:InvoiceNumber>...</ns:InvoiceNumber> (any namespace)
+      if (!invoiceNumber) {
+        const invoiceNumberMatch3 = xmlText.match(/<[^:>]*:InvoiceNumber[^>]*>(.*?)<\/[^:>]*:InvoiceNumber>/i);
+        if (invoiceNumberMatch3) {
+          const parsedValue = invoiceNumberMatch3[1].trim();
+          if (parsedValue && 
+              parsedValue.length > 0 && 
+              parsedValue.length <= 50 &&
+              !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR'].includes(parsedValue.toUpperCase())) {
+            invoiceNumber = parsedValue;
+          }
+        }
+      }
+      
+      // Pattern 4: <InvoiceNumber /> (self-closing) - attribute'dan al
+      if (!invoiceNumber) {
+        const invoiceNumberMatch4 = xmlText.match(/<InvoiceNumber[^>]*\/>/i);
+        if (invoiceNumberMatch4) {
+          // Try to extract from attribute
+          const attrMatch = xmlText.match(/<InvoiceNumber[^>]*value=["'](.*?)["']/i);
+          if (attrMatch) {
+            const parsedValue = attrMatch[1].trim();
+            if (parsedValue && 
+                parsedValue.length > 0 && 
+                parsedValue.length <= 50 &&
+                !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR'].includes(parsedValue.toUpperCase())) {
+              invoiceNumber = parsedValue;
+            }
+          }
+        }
+      }
+      
+      // NOT: Description veya Message'dan parse etmeyi kaldırdık çünkü yanlış değerler bulabiliyor
+
+      // Look for error messages in the response
+      const errorMessageMatch = xmlText.match(/<ErrorMessage[^>]*>(.*?)<\/ErrorMessage>/i);
+      const errorMessage = errorMessageMatch ? errorMessageMatch[1].trim() : '';
+
+      const messageMatch = xmlText.match(/<Message[^>]*>(.*?)<\/Message>/i);
+      const message = messageMatch ? messageMatch[1].trim() : '';
+
+      const descriptionMatch = xmlText.match(/<Description[^>]*>(.*?)<\/Description>/i);
+      const description = descriptionMatch ? descriptionMatch[1].trim() : '';
+
+      console.log('📋 OperationCompleted:', operationCompleted);
+      console.log('📋 TransferFileUniqueId:', transferFileUniqueId);
+      console.log('📋 InvoiceNumber (parsed):', invoiceNumber);
+      console.log('📋 ErrorMessage:', errorMessage);
+      console.log('📋 Message:', message);
+      console.log('📋 Description:', description);
+      
+      // Debug: Log all possible InvoiceNumber patterns found in XML
+      if (!invoiceNumber) {
+        console.log('⚠️ InvoiceNumber bulunamadı. XML içinde arama yapılıyor...');
+        const allInvoiceNumberMatches = xmlText.matchAll(/InvoiceNumber[^>]*>([^<]*)<\/InvoiceNumber>/gi);
+        const matches = Array.from(allInvoiceNumberMatches);
+        if (matches.length > 0) {
+          console.log('📋 Tüm InvoiceNumber eşleşmeleri:', matches.map(m => m[1]));
+        } else {
+          console.log('📋 XML içinde InvoiceNumber bulunamadı');
+          // Log a sample of the XML around TransferFileUniqueId to see structure
+          const transferIdIndex = xmlText.indexOf('TransferFileUniqueId');
+          if (transferIdIndex > 0) {
+            const sample = xmlText.substring(Math.max(0, transferIdIndex - 200), Math.min(xmlText.length, transferIdIndex + 500));
+            console.log('📋 TransferFileUniqueId çevresindeki XML örneği:', sample);
+          }
+        }
+      }
+
+      // If operation didn't complete, include error details
+      if (!operationCompleted) {
+        const detailedError = errorMessage || message || description || 'Transfer tamamlanamadı - Veriban yanıtında OperationCompleted=false';
+        console.error('❌ Transfer failed:', detailedError);
+
+        return {
+          success: false,
+          error: detailedError,
+          data: {
+            operationCompleted: false,
+            transferFileUniqueId: transferFileUniqueId,
+            invoiceNumber: invoiceNumber,
+            errorMessage: detailedError,
+            message: message,
+            description: description,
+          },
+        };
+      }
+
       return {
         success: operationCompleted,
         data: {
           operationCompleted,
           transferFileUniqueId,
+          invoiceNumber: invoiceNumber,
+          errorMessage: errorMessage,
+          message: message,
+          description: description,
         },
       };
     } catch (error) {
+      console.error('❌ parseTransferResponse exception:', error);
       return {
         success: false,
-        error: 'XML parse error',
+        error: error instanceof Error ? error.message : 'XML parse error',
       };
     }
   }
@@ -1404,6 +1615,123 @@ export class VeribanSoapClient {
       const answerTypeCodeMatch = xmlText.match(/<AnswerTypeCode[^>]*>(.*?)<\/AnswerTypeCode>/);
       const answerTypeCode = answerTypeCodeMatch ? parseInt(answerTypeCodeMatch[1].trim()) : 0;
 
+      // Look for InvoiceNumber in the response (Veriban may return it in status response)
+      // NOTE: Sadece açıkça InvoiceNumber tag'i varsa parse ediyoruz
+      // Description veya Message'dan parse etmeyi kaldırdık çünkü yanlış değerler bulabiliyor (örn: "DOKUMAN")
+      let invoiceNumber = '';
+      
+      // Pattern 1: Standard <InvoiceNumber>...</InvoiceNumber>
+      const invoiceNumberMatch1 = xmlText.match(/<InvoiceNumber[^>]*>(.*?)<\/InvoiceNumber>/i);
+      if (invoiceNumberMatch1) {
+        const parsedValue = invoiceNumberMatch1[1].trim();
+        // Geçersiz değerleri filtrele (DOKUMAN, TASLAK, vb. gibi)
+        if (parsedValue && 
+            parsedValue.length > 0 && 
+            parsedValue.length <= 50 && // Maksimum uzunluk kontrolü
+            !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER'].includes(parsedValue.toUpperCase())) {
+          invoiceNumber = parsedValue;
+        }
+      }
+      
+      // Pattern 2: With namespace <tem:InvoiceNumber>...</tem:InvoiceNumber>
+      if (!invoiceNumber) {
+        const invoiceNumberMatch2 = xmlText.match(/<tem:InvoiceNumber[^>]*>(.*?)<\/tem:InvoiceNumber>/i);
+        if (invoiceNumberMatch2) {
+          const parsedValue = invoiceNumberMatch2[1].trim();
+          if (parsedValue && 
+              parsedValue.length > 0 && 
+              parsedValue.length <= 50 &&
+              !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER'].includes(parsedValue.toUpperCase())) {
+            invoiceNumber = parsedValue;
+          }
+        }
+      }
+      
+      // Pattern 3: <ns:InvoiceNumber>...</ns:InvoiceNumber> (any namespace)
+      if (!invoiceNumber) {
+        const invoiceNumberMatch3 = xmlText.match(/<[^:>]*:InvoiceNumber[^>]*>(.*?)<\/[^:>]*:InvoiceNumber>/i);
+        if (invoiceNumberMatch3) {
+          const parsedValue = invoiceNumberMatch3[1].trim();
+          if (parsedValue && 
+              parsedValue.length > 0 && 
+              parsedValue.length <= 50 &&
+              !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER'].includes(parsedValue.toUpperCase())) {
+            invoiceNumber = parsedValue;
+          }
+        }
+      }
+      
+      // NOT: StateDescription veya Message'dan parse etmeyi kaldırdık çünkü yanlış değerler bulabiliyor
+      
+      // Look for error messages in the response (for detailed error information)
+      const errorMessageMatch = xmlText.match(/<ErrorMessage[^>]*>(.*?)<\/ErrorMessage>/i);
+      const errorMessage = errorMessageMatch ? errorMessageMatch[1].trim() : '';
+      
+      const messageMatch = xmlText.match(/<Message[^>]*>(.*?)<\/Message>/i);
+      const message = messageMatch ? messageMatch[1].trim() : '';
+
+      console.log('📋 [parseInvoiceStatusResponse] InvoiceNumber (parsed):', invoiceNumber);
+      console.log('📋 [parseInvoiceStatusResponse] ErrorMessage:', errorMessage);
+      console.log('📋 [parseInvoiceStatusResponse] Message:', message);
+      console.log('📋 [parseInvoiceStatusResponse] StateDescription:', stateDescription);
+      
+      // Hata durumunda (stateCode === 4) detaylı log
+      if (stateCode === 4) {
+        console.log('\n' + '='.repeat(80));
+        console.log('❌ [parseInvoiceStatusResponse] HATA DURUMU TESPİT EDİLDİ (StateCode: 4)');
+        console.log('='.repeat(80));
+        console.log('📋 StateName:', stateName);
+        console.log('📝 StateDescription:', stateDescription);
+        console.log('❌ ErrorMessage:', errorMessage || '(yok)');
+        console.log('📄 Message:', message || '(yok)');
+        console.log('📊 AnswerStateCode:', answerStateCode);
+        console.log('📊 AnswerTypeCode:', answerTypeCode);
+        console.log('📋 InvoiceNumber:', invoiceNumber || '(bulunamadı)');
+        console.log('\n📄 [parseInvoiceStatusResponse] Full XML Response:');
+        console.log(xmlText);
+        console.log('='.repeat(80) + '\n');
+      }
+      
+      // Debug: Log all possible InvoiceNumber patterns found in XML
+      if (!invoiceNumber) {
+        console.log('⚠️ [parseInvoiceStatusResponse] InvoiceNumber bulunamadı. XML içinde arama yapılıyor...');
+        console.log('📄 [parseInvoiceStatusResponse] Response XML (first 2000 chars):', xmlText.substring(0, 2000));
+        
+        // Try more flexible patterns
+        const allInvoiceNumberMatches = xmlText.matchAll(/InvoiceNumber[^>]*>([^<]*)<\/InvoiceNumber>/gi);
+        const matches = Array.from(allInvoiceNumberMatches);
+        if (matches.length > 0) {
+          console.log('📋 [parseInvoiceStatusResponse] Tüm InvoiceNumber eşleşmeleri:', matches.map(m => m[1]));
+          
+          // Try to find a valid invoice number from matches
+          for (const match of matches) {
+            const value = match[1].trim();
+            // Check if it looks like a valid invoice number (contains numbers and is reasonable length)
+            if (value && 
+                value.length >= 3 && 
+                value.length <= 50 &&
+                /\d/.test(value) && // Contains at least one digit
+                !['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER', 'NULL', 'UNDEFINED'].includes(value.toUpperCase())) {
+              invoiceNumber = value;
+              console.log('✅ [parseInvoiceStatusResponse] InvoiceNumber esnek pattern ile bulundu:', invoiceNumber);
+              break;
+            }
+          }
+        }
+        
+        // If still not found, try case-insensitive search with any tag name containing "Invoice" and "Number"
+        if (!invoiceNumber) {
+          const flexibleMatch = xmlText.match(/<[^>]*[Ii]nvoice[^>]*[Nn]umber[^>]*>([^<]+)<\/[^>]*>/i);
+          if (flexibleMatch) {
+            const value = flexibleMatch[1].trim();
+            if (value && value.length >= 3 && value.length <= 50 && /\d/.test(value)) {
+              invoiceNumber = value;
+              console.log('✅ [parseInvoiceStatusResponse] InvoiceNumber esnek arama ile bulundu:', invoiceNumber);
+            }
+          }
+        }
+      }
+
       return {
         success: true,
         data: {
@@ -1412,6 +1740,9 @@ export class VeribanSoapClient {
           stateDescription,
           answerStateCode,
           answerTypeCode,
+          invoiceNumber, // Add InvoiceNumber to response
+          errorMessage, // Add ErrorMessage for detailed error info
+          message, // Add Message for additional info
         },
       };
     } catch (error) {

@@ -47,7 +47,7 @@ const TermsConditionsCard: React.FC<TermsConditionsCardProps> = ({
 }) => {
   return (
     <Card className="lg:col-span-2 shadow-xl border border-border/50 bg-gradient-to-br from-background/95 to-background/80 backdrop-blur-sm rounded-2xl">
-      <CardHeader className="pb-2 pt-2.5">
+      <CardHeader className="pb-1 pt-1.5">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-50 to-orange-50/50 border border-orange-200/50">
             <Check className="h-4 w-4 text-orange-600" />
@@ -55,17 +55,17 @@ const TermsConditionsCard: React.FC<TermsConditionsCardProps> = ({
           Şartlar ve Koşullar
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-4 pb-4 pt-0">
+      <CardContent className="px-3 pb-2.5 pt-0">
         {invoiceMode ? (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {/* Açıklama */}
             <div>
-              <Label className="text-sm font-medium text-gray-700">Açıklama</Label>
+              <Label className="text-xs font-medium text-gray-700">Açıklama</Label>
               <Textarea
                 value={aciklama || ""}
                 onChange={(e) => onFieldChange?.("aciklama", e.target.value)}
                 placeholder="Fatura açıklaması..."
-                className="mt-1.5 resize-none h-20 text-sm"
+                className="mt-0.5 resize-none h-14 text-sm py-2"
               />
             </div>
 
@@ -87,23 +87,23 @@ const TermsConditionsCard: React.FC<TermsConditionsCardProps> = ({
             />
 
             {/* Notlar ve Banka Bilgileri */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1 border-t border-border">
               <div>
-                <Label className="text-sm font-medium text-gray-700">Notlar</Label>
+                <Label className="text-xs font-medium text-gray-700">Notlar</Label>
                 <Textarea
                   value={notlar || ""}
                   onChange={(e) => onFieldChange?.("notlar", e.target.value)}
                   placeholder="Ek notlar..."
-                  className="mt-1.5 resize-none h-20 text-sm"
+                  className="mt-0.5 resize-none h-14 text-sm py-2"
                 />
               </div>
               <div>
-                <Label className="text-sm font-medium text-gray-700">Banka Bilgileri</Label>
+                <Label className="text-xs font-medium text-gray-700">Banka Bilgileri</Label>
                 <Textarea
                   value={banka_bilgileri || ""}
                   onChange={(e) => onFieldChange?.("banka_bilgileri", e.target.value)}
                   placeholder="Banka adı, IBAN..."
-                  className="mt-1.5 resize-none h-20 text-sm"
+                  className="mt-0.5 resize-none h-14 text-sm py-2"
                 />
               </div>
             </div>

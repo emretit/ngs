@@ -20,6 +20,7 @@ import { tr } from "date-fns/locale";
 interface DashboardHeaderProps {
   financialData?: {
     cashFlow: number;
+    monthlyTurnover: number;
     receivables: number;
     payables: number;
     netWorth: number;

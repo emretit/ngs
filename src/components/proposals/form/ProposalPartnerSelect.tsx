@@ -50,7 +50,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
       
       const { data, error } = await supabase
         .from("customers")
-        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative, einvoice_document_type, tax_number, is_einvoice_mukellef")
         .or(`name.ilike.%${normalizedQuery}%,company.ilike.%${normalizedQuery}%,email.ilike.%${normalizedQuery}%`)
         .limit(50);
       
@@ -70,7 +70,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
       
       const { data, error } = await supabase
         .from("suppliers")
-        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative, einvoice_document_type, tax_number, is_einvoice_mukellef")
         .or(`name.ilike.%${normalizedQuery}%,company.ilike.%${normalizedQuery}%,email.ilike.%${normalizedQuery}%`)
         .limit(50);
       
@@ -87,7 +87,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
       if (!customerId) return null;
       const { data, error } = await supabase
         .from("customers")
-        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative, einvoice_document_type, tax_number, is_einvoice_mukellef")
         .eq("id", customerId)
         .single();
       if (error) throw error;
@@ -102,7 +102,7 @@ const ProposalPartnerSelect = ({ partnerType, label, placeholder, hideLabel, req
       if (!supplierId) return null;
       const { data, error } = await supabase
         .from("suppliers")
-        .select("id, name, company, email, mobile_phone, office_phone, address, representative")
+        .select("id, name, company, email, mobile_phone, office_phone, address, representative, einvoice_document_type, tax_number, is_einvoice_mukellef")
         .eq("id", supplierId)
         .single();
       if (error) throw error;

@@ -19,10 +19,11 @@ const NUMBER_FORMAT_TYPES = [
     description: 'Yeni teklifler için kullanılacak numara formatı'
   },
   {
-    key: 'invoice_number_format',
-    label: 'Fatura Numarası Formatı',
-    defaultValue: 'FAT-{YYYY}-{0001}',
-    description: 'Genel satış faturaları için kullanılacak numara formatı'
+    key: 'veriban_invoice_number_format',
+    label: 'Veriban Fatura Numarası Formatı',
+    defaultValue: 'FAT{YYYY}{000000001}',
+    description: 'Veriban için GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter. Örnek: FAT2025000000001 (tire yok)',
+    isVeribanFormat: true
   },
   {
     key: 'einvoice_number_format',
@@ -288,10 +289,33 @@ export const NumberFormatSettings: React.FC = () => {
     }
   };
 
-  const generatePreview = (format: string, isNilveraSeries?: boolean) => {
+  const generatePreview = (format: string, isNilveraSeries?: boolean, formatKey?: string) => {
     // E-fatura seri kodu için sadece seriyi göster
     if (isNilveraSeries) {
       return format || 'FAT';
+    }
+    
+    // GİB formatı için özel işlem: invoice_number_format ve veriban_invoice_number_format
+    if (formatKey === 'invoice_number_format' || formatKey === 'veriban_invoice_number_format') {
+      // Format'tan seri kısmını çıkar
+      let serie = format
+        .replace(/\{YYYY\}/g, '')
+        .replace(/\{YY\}/g, '')
+        .replace(/\{MM\}/g, '')
+        .replace(/\{DD\}/g, '')
+        .replace(/\{0+\}/g, '')
+        .replace(/[-_]/g, '')
+        .trim();
+      
+      if (!serie || serie.length !== 3) {
+        serie = 'FAT'; // Varsayılan seri
+      }
+
+      // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
+      const year = '2025';
+      const sequence = '000000001';
+      
+      return `${serie}${year}${sequence}`;
     }
     
     return format
@@ -299,6 +323,7 @@ export const NumberFormatSettings: React.FC = () => {
       .replace('{YY}', '25')
       .replace('{MM}', '01')
       .replace('{DD}', '15')
+      .replace('{0000000000001}', '0000000000001')
       .replace('{0001}', '0001')
       .replace('{001}', '001')
       .replace('{01}', '01');
@@ -386,11 +411,16 @@ export const NumberFormatSettings: React.FC = () => {
                 <TableCell>
                   <div className="p-2 bg-muted rounded-md border">
                     <div className="font-mono text-sm">
-                      {generatePreview(format.currentValue, format.isNilveraSeries)}
+                      {generatePreview(format.currentValue, format.isNilveraSeries, format.key)}
                     </div>
                     {format.isNilveraSeries && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Nilvera otomatik numara üretecek
+                      </p>
+                    )}
+                    {format.isVeribanFormat && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Veriban GİB formatı: 16 karakter (SERI+YIL+SIRA)
                       </p>
                     )}
                   </div>
@@ -447,6 +477,7 @@ export const NumberFormatSettings: React.FC = () => {
               <li>• Format değişiklikleri sadece yeni kayıtlar için geçerlidir.</li>
               <li>• Mevcut kayıtların numaraları değişmez.</li>
               <li>• Sıralı numaralar otomatik olarak artar.</li>
+              <li>• <strong>Veriban Fatura Numarası Formatı:</strong> Veriban entegrasyonu için GİB formatı zorunludur. Format: SERI(3) + YIL(4) + SIRA(9) = 16 karakter. Tire kullanılmaz. Örnek: FAT2025000000001</li>
               <li>• <strong>E-Fatura Seri Kodu:</strong> Nilvera ile entegre olduğu için sadece 3 karakter seri belirlenir. Numara Nilvera tarafından otomatik üretilir.</li>
               <li>• <strong>E-Arşiv Seri Kodu:</strong> Nilvera ile entegre olduğu için sadece 3 karakter seri belirlenir. Numara Nilvera tarafından otomatik üretilir.</li>
             </ul>

@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import SupplierInvoicesTab from './SupplierInvoicesTab';
 import { PaymentsTab } from './PaymentsTab';
 import SupplierPortalActivityLog from "@/components/supplier-portal/SupplierPortalActivityLog";
+import { ActivitiesList } from './ActivitiesList';
+import { PurchaseOrdersTab } from './PurchaseOrdersTab';
 
 interface ContactTabsProps {
   supplier: Supplier;
@@ -24,7 +26,7 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
   const { data: tabCounts } = useQuery({
     queryKey: ['supplier-tab-counts', supplier.id],
     queryFn: async () => {
-      const [paymentsRes, purchaseOrdersRes, purchaseInvoicesRes, salesInvoicesRes] = await Promise.all([
+      const [paymentsRes, purchaseOrdersRes, purchaseInvoicesRes, salesInvoicesRes, activitiesRes] = await Promise.all([
         supabase
           .from('payments')
           .select('id', { count: 'exact' })
@@ -41,13 +43,17 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
           .from('sales_invoices')
           .select('id', { count: 'exact' })
           .eq('customer_id', supplier.id), // Tedarikçi aynı zamanda müşteri olabilir
+        supabase
+          .from('activities')
+          .select('id', { count: 'exact' })
+          .eq('related_item_type', 'supplier')
+          .eq('related_item_id', supplier.id),
       ]);
 
       return {
         payments: paymentsRes.count || 0,
-        proposals: 0, // TODO: Implement proposals count
         purchaseOrders: purchaseOrdersRes.count || 0,
-        activities: 0, // TODO: Implement activities count
+        activities: activitiesRes.count || 0,
         invoices: (purchaseInvoicesRes.count || 0) + (salesInvoicesRes.count || 0),
         contracts: 0, // TODO: Implement contracts count
       };
@@ -139,19 +145,11 @@ export const ContactTabs = ({ supplier }: ContactTabsProps) => {
       </CustomTabsContent>
 
       <CustomTabsContent value="activities">
-        <EmptyState
-          icon={<Activity className="w-8 h-8 text-gray-400" />}
-          title="Aktiviteler"
-          description="Tedarikçi aktiviteleri yakında eklenecek. Bu bölümde tedarikçi ile yapılan tüm etkileşimler görüntülenecek."
-        />
+        <ActivitiesList supplier={supplier} />
       </CustomTabsContent>
 
       <CustomTabsContent value="orders">
-        <EmptyState
-          icon={<Package className="w-8 h-8 text-gray-400" />}
-          title="Satın Alma Siparişleri"
-          description="Bu tedarikçiye verilen siparişler burada görüntülenecek."
-        />
+        <PurchaseOrdersTab supplier={supplier} />
       </CustomTabsContent>
 
       <CustomTabsContent value="invoices">

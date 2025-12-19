@@ -35,7 +35,10 @@ export const getNumberFormat = async (formatKey: string, companyId?: string): Pr
 const getDefaultFormat = (formatKey: string): string => {
   const defaults: Record<string, string> = {
     'proposal_number_format': 'TKF-{YYYY}-{0001}',
-    'invoice_number_format': 'FAT-{YYYY}-{0001}',
+    // GİB formatı: SERI(3) + YIL(4) + SIRA(13) = 20 karakter, tire yok
+    // Format string'de seri, yıl ve sıra placeholder'ları var ama formatNumber fonksiyonu GİB formatına çevirecek
+    'invoice_number_format': 'FAT{YYYY}{000000001}', // GİB formatı: FAT + YIL + 9 haneli sıra
+    'veriban_invoice_number_format': 'FAT{YYYY}{000000001}', // Veriban için GİB formatı: FAT + YIL + 9 haneli sıra
     'einvoice_number_format': 'FAT', // E-fatura için sadece 3 karakter seri (Nilvera gereksinimi)
     'earchive_invoice_number_format': 'EAR', // E-arşiv için sadece 3 karakter seri (Nilvera gereksinimi)
     'service_number_format': 'SRV-{YYYY}-{0001}',
@@ -49,19 +52,57 @@ const getDefaultFormat = (formatKey: string): string => {
 
 /**
  * Format string'ini gerçek değerlerle doldurur
+ * GİB formatı için özel kontrol: invoice_number_format ise GİB formatına uygun olmalı
+ * GİB Format: SERI(3) + YIL(4) + SIRA(13) = 20 karakter, tire yok
  */
 export const formatNumber = (
   format: string,
   sequentialNumber: number,
-  date?: Date
+  date?: Date,
+  formatKey?: string
 ): string => {
   const now = date || new Date();
 
+  // GİB formatı kontrolü: invoice_number_format ve veriban_invoice_number_format için özel işlem
+  if (formatKey === 'invoice_number_format' || formatKey === 'veriban_invoice_number_format') {
+    // Format'tan seri kısmını çıkar (tire ve placeholder'ları kaldır)
+    // Örn: FAT-{YYYY}-{0001} -> FAT, FAT{YYYY}{0001} -> FAT
+    let serie = format
+      .replace(/\{YYYY\}/g, '')
+      .replace(/\{YY\}/g, '')
+      .replace(/\{MM\}/g, '')
+      .replace(/\{DD\}/g, '')
+      .replace(/\{0+\}/g, '')
+      .replace(/[-_]/g, '')
+      .trim();
+    
+    // Eğer seri yoksa veya 3 karakterden farklıysa, varsayılan kullan
+    if (!serie || serie.length !== 3) {
+      serie = 'FAT'; // Varsayılan seri
+      console.warn('⚠️ Seri kodu 3 karakter değil, varsayılan FAT kullanılıyor:', format);
+    }
+
+    // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
+    const year = now.getFullYear().toString();
+    const sequence = sequentialNumber.toString().padStart(9, '0');
+    
+    const gibFormat = `${serie}${year}${sequence}`;
+    
+    // Toplam 16 karakter kontrolü
+    if (gibFormat.length !== 16) {
+      console.warn('⚠️ GİB formatı 16 karakter değil:', gibFormat, 'Uzunluk:', gibFormat.length);
+    }
+    
+    return gibFormat;
+  }
+
+  // Diğer formatlar için normal işlem
   return format
     .replace('{YYYY}', now.getFullYear().toString())
     .replace('{YY}', (now.getFullYear() % 100).toString().padStart(2, '0'))
     .replace('{MM}', (now.getMonth() + 1).toString().padStart(2, '0'))
     .replace('{DD}', now.getDate().toString().padStart(2, '0'))
+    .replace('{000000001}', sequentialNumber.toString().padStart(9, '0'))
     .replace('{0001}', sequentialNumber.toString().padStart(4, '0'))
     .replace('{001}', sequentialNumber.toString().padStart(3, '0'))
     .replace('{01}', sequentialNumber.toString().padStart(2, '0'));
@@ -194,6 +235,7 @@ const getTableInfo = (formatKey: string): { table: string; column: string } | nu
   const tableMap: Record<string, { table: string; column: string }> = {
     'proposal_number_format': { table: 'proposals', column: 'number' },
     'invoice_number_format': { table: 'sales_invoices', column: 'fatura_no' },
+    'veriban_invoice_number_format': { table: 'sales_invoices', column: 'fatura_no' },
     'service_number_format': { table: 'service_requests', column: 'service_number' },
     'order_number_format': { table: 'orders', column: 'order_number' },
     'customer_number_format': { table: 'customers', column: 'number' }, // customers tablosunda number kolonu yoksa null dönecek
@@ -267,6 +309,57 @@ const getMaxNumberFromDatabase = async (
     const month = (now.getMonth() + 1).toString().padStart(2, '0');
     const day = now.getDate().toString().padStart(2, '0');
     
+    // GİB formatı için özel işlem: invoice_number_format ve veriban_invoice_number_format ise
+    if (formatKey === 'invoice_number_format' || formatKey === 'veriban_invoice_number_format') {
+      // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
+      // Format'tan seri kısmını çıkar
+      let serie = format
+        .replace(/\{YYYY\}/g, '')
+        .replace(/\{YY\}/g, '')
+        .replace(/\{MM\}/g, '')
+        .replace(/\{DD\}/g, '')
+        .replace(/\{0+\}/g, '')
+        .replace(/[-_]/g, '')
+        .trim();
+      
+      if (!serie || serie.length !== 3) {
+        serie = 'FAT'; // Varsayılan seri
+      }
+      
+      // Prefix: SERI + YIL
+      const prefix = `${serie}${year}`;
+      
+      // Veritabanından bu prefix ile başlayan tüm numaraları al
+      const { data, error } = await supabase
+        .from(tableInfo.table)
+        .select(tableInfo.column)
+        .eq('company_id', companyId)
+        .like(tableInfo.column, `${prefix}%`)
+        .order(tableInfo.column, { ascending: false })
+        .limit(100);
+
+      if (error || !data || data.length === 0) {
+        return 0;
+      }
+
+      // En yüksek numarayı bul (sıra numarası kısmını çıkar)
+      let maxNumber = 0;
+      for (const record of data) {
+        const number = record[tableInfo.column];
+        if (!number || !number.startsWith(prefix)) continue;
+
+        // Sıra numarası kısmını çıkar (prefix'ten sonraki 9 karakter)
+        const sequencePart = number.substring(prefix.length);
+        const num = parseInt(sequencePart);
+        if (!isNaN(num) && num > maxNumber) {
+          maxNumber = num;
+        }
+      }
+
+      return maxNumber;
+    }
+    
+    // Diğer formatlar için normal işlem
     // Format'tan prefix'i oluştur (numara kısmı hariç)
     // Önce tarih placeholder'larını değiştir, sonra sıralı numara placeholder'ını kaldır
     let prefix = format
@@ -320,17 +413,48 @@ const getMaxNumberFromDatabase = async (
 /**
  * Tam numara üretme fonksiyonu
  * Veritabanında kayıtlı numaralara bakarak, kullanılmayan bir numara üretir
+ * Veriban entegrasyonu varsa, Veriban'dan son numarayı da kontrol eder
  */
 export const generateNumber = async (
   formatKey: string,
   companyId?: string,
-  customDate?: Date
+  customDate?: Date,
+  checkVeriban: boolean = false
 ): Promise<string> => {
   try {
     const format = await getNumberFormat(formatKey, companyId);
     
     // Önce veritabanındaki en yüksek numarayı bul
-    const maxNumber = await getMaxNumberFromDatabase(formatKey, companyId, customDate);
+    let maxNumber = await getMaxNumberFromDatabase(formatKey, companyId, customDate);
+    
+    // Veriban entegrasyonu aktifse ve invoice_number_format veya veriban_invoice_number_format ise, Veriban'dan da kontrol et
+    if (checkVeriban && (formatKey === 'invoice_number_format' || formatKey === 'veriban_invoice_number_format') && companyId) {
+      try {
+        const { 
+          getLastVeribanInvoiceNumber, 
+          extractSequenceFromInvoiceNumber,
+          validateVeribanInvoiceNumberFormat 
+        } = await import('./veribanInvoiceNumber');
+        const lastVeribanNumber = await getLastVeribanInvoiceNumber(companyId, format);
+        
+        if (lastVeribanNumber) {
+          // Format kontrolü yap
+          const isValidFormat = validateVeribanInvoiceNumberFormat(lastVeribanNumber, format);
+          if (!isValidFormat) {
+            console.warn('⚠️ Veriban\'dan gelen fatura numarası formatı uygun değil:', lastVeribanNumber);
+          } else {
+            const veribanSequence = extractSequenceFromInvoiceNumber(lastVeribanNumber, format);
+            if (veribanSequence && veribanSequence > maxNumber) {
+              console.log('✅ Veriban\'dan daha yüksek numara bulundu:', lastVeribanNumber, '-> Sequence:', veribanSequence);
+              maxNumber = veribanSequence;
+            }
+          }
+        }
+      } catch (veribanError) {
+        console.warn('⚠️ Veriban kontrolü sırasında hata (devam ediliyor):', veribanError);
+        // Veriban kontrolü başarısız olsa bile devam et
+      }
+    }
     
     // Bir sonraki numarayı dene
     let nextNumber = maxNumber + 1;
@@ -338,7 +462,7 @@ export const generateNumber = async (
     const maxAttempts = 100; // Sonsuz döngüyü önlemek için
 
     while (attempts < maxAttempts) {
-      const generatedNumber = formatNumber(format, nextNumber, customDate);
+      const generatedNumber = formatNumber(format, nextNumber, customDate, formatKey);
       
       // Bu numara veritabanında var mı kontrol et
       const exists = await checkNumberExists(generatedNumber, formatKey, companyId);
@@ -393,7 +517,7 @@ export const validateFormat = (format: string): { isValid: boolean; errors: stri
 
   // Değişken syntax kontrolü
   const variables = format.match(/\{[^}]+\}/g) || [];
-  const validVariables = ['{YYYY}', '{YY}', '{MM}', '{DD}', '{0001}', '{001}', '{01}'];
+  const validVariables = ['{YYYY}', '{YY}', '{MM}', '{DD}', '{0000000000001}', '{0001}', '{001}', '{01}'];
 
   for (const variable of variables) {
     if (!validVariables.includes(variable)) {
@@ -402,9 +526,9 @@ export const validateFormat = (format: string): { isValid: boolean; errors: stri
   }
 
   // En az bir sıralı numara değişkeni olmalı
-  const hasSequential = variables.some(v => ['{0001}', '{001}', '{01}'].includes(v));
+  const hasSequential = variables.some(v => ['{000000001}', '{0001}', '{001}', '{01}'].includes(v));
   if (!hasSequential) {
-    errors.push('Format en az bir sıralı numara değişkeni içermelidir ({0001}, {001} veya {01})');
+    errors.push('Format en az bir sıralı numara değişkeni içermelidir ({000000001}, {0001}, {001} veya {01})');
   }
 
   return {

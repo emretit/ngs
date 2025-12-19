@@ -66,25 +66,7 @@ serve(async (req) => {
       });
     }
 
-    // Get Veriban auth settings
-    const { data: veribanAuth, error: authError } = await supabase
-      .from('veriban_auth')
-      .select('*')
-      .eq('company_id', profile.company_id)
-      .eq('is_active', true)
-      .single();
-
-    if (authError || !veribanAuth) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Veriban kimlik doğrulama bilgileri bulunamadı. Lütfen ayarlar sayfasından Veriban bilgilerinizi girin.'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Parse request body
+    // Parse request body first to get invoiceId
     const {
       invoiceId,
       xmlContent, // Optional - if not provided, will be generated
@@ -97,6 +79,34 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: false,
         error: 'invoiceId parametresi zorunludur'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get Veriban auth settings
+    const { data: veribanAuth, error: authError } = await supabase
+      .from('veriban_auth')
+      .select('*')
+      .eq('company_id', profile.company_id)
+      .eq('is_active', true)
+      .single();
+
+    if (authError || !veribanAuth) {
+      // Update invoice status to error
+      await supabase
+        .from('sales_invoices')
+        .update({
+          einvoice_status: 'error',
+          einvoice_error_message: 'Veriban kimlik doğrulama bilgileri bulunamadı. Lütfen ayarlar sayfasından Veriban bilgilerinizi girin.',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', invoiceId);
+      
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Veriban kimlik doğrulama bilgileri bulunamadı. Lütfen ayarlar sayfasından Veriban bilgilerinizi girin.'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -129,8 +139,207 @@ serve(async (req) => {
       });
     }
 
+    // Fatura numarası yoksa Veriban formatına göre üret
+    let invoiceNumber = invoice.fatura_no;
+    if (!invoiceNumber) {
+      console.log('📝 Fatura numarası bulunamadı, Veriban formatına göre üretiliyor...');
+      
+      try {
+        // Veriban formatı için generateNumber fonksiyonunu kullan
+        // Edge function'da generateNumber'ı kullanmak için manuel olarak implement ediyoruz
+        const formatKey = 'veriban_invoice_number_format';
+        
+        // System parameters'dan format'ı al
+        const { data: formatParam } = await supabase
+          .from('system_parameters')
+          .select('parameter_value')
+          .eq('parameter_key', formatKey)
+          .eq('company_id', profile.company_id)
+          .maybeSingle();
+        
+        const format = formatParam?.parameter_value || 'FAT{YYYY}{000000001}';
+        console.log('📋 Format:', format);
+        
+        // Format'tan seri kısmını çıkar
+        let serie = format
+          .replace(/\{YYYY\}/g, '')
+          .replace(/\{YY\}/g, '')
+          .replace(/\{MM\}/g, '')
+          .replace(/\{DD\}/g, '')
+          .replace(/\{0+\}/g, '')
+          .replace(/[-_]/g, '')
+          .trim();
+        
+        if (!serie || serie.length !== 3) {
+          serie = 'FAT'; // Varsayılan seri
+        }
+        
+        // Yıl
+        const invoiceDate = invoice.fatura_tarihi ? new Date(invoice.fatura_tarihi) : new Date();
+        const year = invoiceDate.getFullYear().toString();
+        const prefix = `${serie}${year}`;
+        
+        // Veritabanından bu prefix ile başlayan en yüksek numarayı bul
+        const { data: existingInvoices } = await supabase
+          .from('sales_invoices')
+          .select('fatura_no')
+          .eq('company_id', profile.company_id)
+          .like('fatura_no', `${prefix}%`)
+          .not('fatura_no', 'is', null)
+          .order('fatura_no', { ascending: false })
+          .limit(100);
+        
+        let maxSequence = 0;
+        if (existingInvoices && existingInvoices.length > 0) {
+          for (const inv of existingInvoices) {
+            if (!inv.fatura_no || !inv.fatura_no.startsWith(prefix)) continue;
+            const sequencePart = inv.fatura_no.substring(prefix.length);
+            const num = parseInt(sequencePart);
+            if (!isNaN(num) && num > maxSequence) {
+              maxSequence = num;
+            }
+          }
+        }
+        
+        // Veriban entegrasyonu aktifse, Veriban API'sinden son fatura numarasını al
+        if (veribanAuth?.is_active) {
+          try {
+            console.log('🔍 Veriban API\'sinden son fatura numarası kontrol ediliyor...');
+            
+            // Veriban'a login ol
+            const loginResult = await VeribanSoapClient.login(
+              veribanAuth.username,
+              veribanAuth.password,
+              veribanAuth.webservice_url
+            );
+            
+            if (!loginResult.success || !loginResult.data?.sessionCode) {
+              console.warn('⚠️ Veriban login başarısız, sadece veritabanı kontrolü yapılacak');
+            } else {
+              const sessionCode = loginResult.data.sessionCode;
+              console.log('✅ Veriban session code alındı');
+              
+              // Son 30 günün faturalarını al (Veriban'dan)
+              const endDate = new Date();
+              const startDate = new Date();
+              startDate.setDate(startDate.getDate() - 30);
+              
+              const formattedStartDate = startDate.toISOString().split('T')[0];
+              const formattedEndDate = endDate.toISOString().split('T')[0];
+              
+              // Veriban'dan son faturaların UUID listesini al
+              const listResult = await VeribanSoapClient.getSalesInvoiceList(
+                sessionCode,
+                {
+                  startDate: formattedStartDate,
+                  endDate: formattedEndDate,
+                  pageIndex: 1,
+                  pageSize: 20, // Son 20 faturayı kontrol et (performans için)
+                },
+                veribanAuth.webservice_url
+              );
+              
+              if (listResult.success && listResult.data?.invoices) {
+                console.log(`📊 Veriban'dan ${listResult.data.invoices.length} fatura UUID'si alındı`);
+                
+                // Her fatura için durum sorgusu yaparak fatura numarasını al
+                // Sadece ilk 10 faturayı kontrol et (performans için)
+                const invoicesToCheck = listResult.data.invoices.slice(0, 10);
+                
+                for (const veribanInv of invoicesToCheck) {
+                  try {
+                    // Fatura durumunu sorgula (bu fatura numarasını da döndürür)
+                    const statusResult = await VeribanSoapClient.getSalesInvoiceStatus(
+                      sessionCode,
+                      veribanInv.invoiceUUID,
+                      veribanAuth.webservice_url
+                    );
+                    
+                    if (statusResult.success && statusResult.data?.invoiceNumber) {
+                      const veribanInvoiceNumber = statusResult.data.invoiceNumber;
+                      
+                      // GİB formatı kontrolü: 16 karakter ve prefix ile başlamalı
+                      if (veribanInvoiceNumber && veribanInvoiceNumber.startsWith(prefix) && veribanInvoiceNumber.length === 16) {
+                        const sequencePart = veribanInvoiceNumber.substring(prefix.length);
+                        const num = parseInt(sequencePart);
+                        if (!isNaN(num) && num > maxSequence) {
+                          maxSequence = num;
+                          console.log('✅ Veriban API\'sinden daha yüksek numara bulundu:', veribanInvoiceNumber, '-> Sequence:', num);
+                        }
+                      }
+                    }
+                  } catch (statusError) {
+                    // Bir fatura için hata olsa bile devam et
+                    console.warn('⚠️ Fatura durum sorgusu hatası (devam ediliyor):', statusError);
+                  }
+                }
+              } else {
+                console.warn('⚠️ Veriban API\'sinden fatura listesi alınamadı:', listResult.error);
+              }
+              
+              // Logout
+              try {
+                await VeribanSoapClient.logout(sessionCode, veribanAuth.webservice_url);
+              } catch (logoutError) {
+                // Logout hatası önemli değil
+                console.warn('⚠️ Veriban logout hatası (önemsiz):', logoutError);
+              }
+            }
+          } catch (veribanError) {
+            console.warn('⚠️ Veriban API kontrolü sırasında hata (devam ediliyor):', veribanError);
+            // Hata olsa bile devam et, veritabanı kontrolü yeterli
+          }
+        }
+        
+        // Bir sonraki numarayı üret
+        const nextSequence = maxSequence + 1;
+        const sequence = nextSequence.toString().padStart(9, '0');
+        invoiceNumber = `${serie}${year}${sequence}`;
+        
+        console.log('✅ Fatura numarası üretildi:', invoiceNumber);
+        
+        // Fatura numarasını veritabanına kaydet
+        await supabase
+          .from('sales_invoices')
+          .update({
+            fatura_no: invoiceNumber,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', invoiceId);
+        
+        // Invoice objesini güncelle
+        invoice.fatura_no = invoiceNumber;
+      } catch (error) {
+        console.error('❌ Fatura numarası üretilirken hata:', error);
+        // Hata olsa bile devam et, UBL generator geçici numara üretebilir
+      }
+    } else {
+      console.log('✅ Mevcut fatura numarası kullanılıyor:', invoiceNumber);
+    }
+
+    // Update status to "sending" at the start
+    await supabase
+      .from('sales_invoices')
+      .update({
+        einvoice_status: 'sending',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', invoiceId);
+    
+    console.log('📤 Fatura durumu "gönderiliyor" olarak güncellendi');
+
     // Validate required data
     if (!invoice.companies?.tax_number) {
+      // Update invoice status to error
+      await supabase
+        .from('sales_invoices')
+        .update({
+          einvoice_status: 'error',
+          einvoice_error_message: 'Şirket vergi numarası bulunamadı. Lütfen şirket bilgilerini tamamlayın.',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', invoiceId);
+      
       return new Response(JSON.stringify({
         success: false,
         error: 'Şirket vergi numarası bulunamadı. Lütfen şirket bilgilerini tamamlayın.'
@@ -141,6 +350,16 @@ serve(async (req) => {
     }
 
     if (!invoice.customers?.tax_number) {
+      // Update invoice status to error
+      await supabase
+        .from('sales_invoices')
+        .update({
+          einvoice_status: 'error',
+          einvoice_error_message: 'Müşteri vergi numarası bulunamadı. Lütfen müşteri bilgilerini tamamlayın.',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', invoiceId);
+      
       return new Response(JSON.stringify({
         success: false,
         error: 'Müşteri vergi numarası bulunamadı. Lütfen müşteri bilgilerini tamamlayın.'
@@ -226,6 +445,17 @@ serve(async (req) => {
 
     if (!loginResult.success || !loginResult.sessionCode) {
       console.error('❌ Veriban login başarısız:', loginResult.error);
+      
+      // Update invoice status to error
+      await supabase
+        .from('sales_invoices')
+        .update({
+          einvoice_status: 'error',
+          einvoice_error_message: loginResult.error || 'Veriban giriş başarısız',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', invoiceId);
+      
       return new Response(JSON.stringify({
         success: false,
         error: loginResult.error || 'Veriban giriş başarısız'
@@ -240,15 +470,37 @@ serve(async (req) => {
 
     try {
       // Create ZIP file from XML content
+      // Veriban dokümanına göre: UBL-TR formatında XML dosyası ZIP formatına çevrilmeli
       const JSZip = (await import('https://esm.sh/jszip@3.10.1')).default;
       const zip = new JSZip();
 
       // Add XML to zip
+      // ZIP içindeki XML dosya adı: ETTN.xml formatında
+      // Örnek: 976b9ccc-c5c0-4b2b-9a06-a467fb499877.xml
       const xmlFileName = `${ettn}.xml`;
-      zip.file(xmlFileName, finalXmlContent);
+      
+      // XML içeriğini UTF-8 encoding ile ekle (BOM olmadan)
+      // Veriban UTF-8 encoding bekliyor
+      zip.file(xmlFileName, finalXmlContent, {
+        createFolders: false, // Klasör oluşturma
+        date: new Date(), // Mevcut tarih
+        unixPermissions: null, // Unix permissions yok
+        dosPermissions: null, // DOS permissions yok
+        comment: null, // Yorum yok
+      });
 
       // Generate ZIP
-      const zipBlob = await zip.generateAsync({ type: 'uint8array' });
+      // Veriban standart ZIP formatı bekliyor (DEFLATE compression)
+      const zipBlob = await zip.generateAsync({ 
+        type: 'uint8array',
+        compression: 'DEFLATE', // Standart ZIP compression
+        compressionOptions: { 
+          level: 6 // Orta seviye compression (1-9 arası, 6 optimal)
+        },
+        streamFiles: false, // Tüm dosyalar bellekte
+        platform: 'DOS', // DOS platform (Windows uyumlu)
+        comment: null, // ZIP yorumu yok
+      });
 
       // Convert to Base64
       const base64Zip = VeribanSoapClient.encodeBase64(zipBlob);
@@ -257,8 +509,14 @@ serve(async (req) => {
       const md5Hash = await VeribanSoapClient.calculateMD5Async(zipBlob);
 
       console.log('📦 ZIP dosyası oluşturuldu');
+      console.log('📄 XML dosya adı:', xmlFileName);
+      console.log('📦 ZIP boyutu:', zipBlob.length, 'bytes');
       console.log('🔐 MD5 Hash:', md5Hash);
 
+      // ZIP dosya adı: Veriban dokümanına göre FileNameWithExtension
+      // Format: ETTN.xml.zip (ZIP içindeki XML dosya adı + .zip uzantısı)
+      // Alternatif olarak sadece ETTN.zip de kullanılabilir ama dokümanlarda açık değil
+      // Mevcut format: ETTN.xml.zip (örn: 976b9ccc-c5c0-4b2b-9a06-a467fb499877.xml.zip)
       const zipFileName = `${xmlFileName}.zip`;
 
       // Transfer Sales Invoice File
@@ -267,11 +525,14 @@ serve(async (req) => {
       // Generate integration code if not provided (use invoice ID)
       const finalIntegrationCode = integrationCode || invoice.id;
 
+      // Dokümantasyona göre FileDataType değerleri:
+      // XML_INZIP = 0, TXT_INZIP = 1, CSV_INZIP = 2, XLS_INZIP = 3
+      // Veriban SOAP enum bekliyor, sayısal değer olarak gönderiyoruz
       const transferResult = await VeribanSoapClient.transferSalesInvoice(
         sessionCode,
         {
           fileName: zipFileName,
-          fileDataType: 'XML_INZIP',
+          fileDataType: '0', // XML_INZIP = 0 (sayısal değer olarak string)
           binaryData: base64Zip,
           binaryDataHash: md5Hash,
           customerAlias: finalCustomerAlias,
@@ -281,8 +542,34 @@ serve(async (req) => {
         veribanAuth.webservice_url
       );
 
+      console.log('📋 TransferResult tam detay:', JSON.stringify(transferResult, null, 2));
+      console.log('📋 TransferResult.success:', transferResult.success);
+      console.log('📋 TransferResult.data:', JSON.stringify(transferResult.data, null, 2));
+      console.log('📋 TransferResult.error:', transferResult.error);
+
       if (!transferResult.success || !transferResult.data?.operationCompleted) {
-        console.error('❌ TransferSalesInvoiceFile başarısız:', transferResult.error);
+        console.error('❌ TransferSalesInvoiceFile başarısız');
+        console.error('❌ TransferResult tam objesi:', JSON.stringify(transferResult, null, 2));
+        
+        // Extract detailed error message
+        let errorMessage = 'Belge gönderilemedi';
+        if (transferResult.error) {
+          errorMessage = transferResult.error;
+        } else if (transferResult.data?.errorMessage) {
+          errorMessage = transferResult.data.errorMessage;
+        } else if (transferResult.data?.message) {
+          errorMessage = transferResult.data.message;
+        } else if (transferResult.data && typeof transferResult.data === 'string') {
+          errorMessage = transferResult.data;
+        } else if (transferResult.data) {
+          // Try to find any error field in the data object
+          const dataStr = JSON.stringify(transferResult.data);
+          if (dataStr.includes('error') || dataStr.includes('Error') || dataStr.includes('hata')) {
+            errorMessage = `Veriban hatası: ${dataStr}`;
+          }
+        }
+
+        console.error('❌ Detaylı hata mesajı:', errorMessage);
 
         // Update invoice status to failed
         await supabase
@@ -290,14 +577,14 @@ serve(async (req) => {
           .update({
             durum: 'iptal',
             einvoice_status: 'error',
-            einvoice_error_message: transferResult.error || 'Belge gönderilemedi',
+            einvoice_error_message: errorMessage,
             updated_at: new Date().toISOString(),
           })
           .eq('id', invoiceId);
 
         return new Response(JSON.stringify({
           success: false,
-          error: transferResult.error || 'Belge gönderilemedi'
+          error: errorMessage
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -305,22 +592,69 @@ serve(async (req) => {
       }
 
       const transferFileUniqueId = transferResult.data?.transferFileUniqueId;
-      console.log('✅ Belge başarıyla gönderildi');
-      console.log('🆔 Transfer File Unique ID:', transferFileUniqueId);
+      let veribanInvoiceNumber = transferResult.data?.invoiceNumber || '';
+      
+      // Mevcut fatura numarasını logla
+      console.log('📋 [Veriban Send] Fatura numarası bilgileri:', {
+        mevcutFaturaNo: invoice.fatura_no || '(yok)',
+        veribanDondurdu: veribanInvoiceNumber || '(henüz atanmadı)',
+        invoiceId: invoice.id
+      });
+      
+      // Geçersiz değerleri filtrele (DOKUMAN, TASLAK, vb. gibi)
+      const invalidValues = ['DOKUMAN', 'TASLAK', 'MESSAGE', 'DESCRIPTION', 'ERROR', 'STATE', 'ANSWER'];
+      if (veribanInvoiceNumber && invalidValues.includes(veribanInvoiceNumber.toUpperCase())) {
+        console.warn('⚠️ [Veriban Send] Geçersiz fatura numarası filtrelendi:', veribanInvoiceNumber);
+        veribanInvoiceNumber = '';
+      }
+      
+      console.log('✅ [Veriban Send] Belge başarıyla gönderildi');
+      console.log('🆔 [Veriban Send] Transfer File Unique ID:', transferFileUniqueId);
+      console.log('📄 [Veriban Send] Veriban Fatura Numarası:', veribanInvoiceNumber || '(henüz atanmadı)');
 
       // Update invoice in database
+      const xmlDataUpdate: any = { 
+        ...(invoice.xml_data || {}), 
+        ettn, 
+        integrationCode: finalIntegrationCode 
+      };
+
+      const updateData: any = {
+        durum: 'gonderildi',
+        einvoice_status: 'sent',
+        nilvera_transfer_id: transferFileUniqueId, // Using nilvera_transfer_id field for Veriban transfer ID
+        einvoice_transfer_state: 2, // İşlenmeyi bekliyor
+        einvoice_sent_at: new Date().toISOString(),
+        einvoice_xml_content: finalXmlContent, // Save generated XML
+        xml_data: xmlDataUpdate,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Eğer Veriban'dan fatura numarası döndüyse, fatura_no alanına kaydet
+      // Öncelik: Veriban'dan dönen numara > Mevcut fatura numarası
+      if (veribanInvoiceNumber) {
+        // Veriban'dan dönen numara mevcut numaradan farklıysa güncelle
+        if (!invoice.fatura_no || invoice.fatura_no !== veribanInvoiceNumber) {
+          updateData.fatura_no = veribanInvoiceNumber;
+          xmlDataUpdate.veribanInvoiceNumber = veribanInvoiceNumber;
+          console.log('✅ [Veriban Send] Veriban fatura numarası fatura_no alanına kaydedildi:', veribanInvoiceNumber);
+        } else {
+          console.log('ℹ️ [Veriban Send] Fatura numarası zaten kayıtlı:', veribanInvoiceNumber);
+          xmlDataUpdate.veribanInvoiceNumber = veribanInvoiceNumber;
+        }
+      } else {
+        // Veriban'dan numara dönmediyse, mevcut numarayı koru
+        if (invoice.fatura_no) {
+          console.log('ℹ️ [Veriban Send] Veriban\'dan fatura numarası dönmedi, mevcut numara korunuyor:', invoice.fatura_no);
+          xmlDataUpdate.veribanInvoiceNumber = invoice.fatura_no;
+        } else {
+          console.warn('⚠️ [Veriban Send] Veriban\'dan fatura numarası dönmedi ve mevcut fatura numarası da yok. Fatura henüz işlenmemiş olabilir.');
+        }
+      }
+
       const { error: updateError } = await supabase
         .from('sales_invoices')
-        .update({
-          durum: 'gonderildi',
-          einvoice_status: 'sent',
-          nilvera_transfer_id: transferFileUniqueId, // Using nilvera_transfer_id field for Veriban transfer ID
-          einvoice_transfer_state: 2, // İşlenmeyi bekliyor
-          einvoice_sent_at: new Date().toISOString(),
-          einvoice_xml_content: finalXmlContent, // Save generated XML
-          xml_data: { ...(invoice.xml_data || {}), ettn, integrationCode: finalIntegrationCode },
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', invoiceId);
 
       if (updateError) {
@@ -332,7 +666,10 @@ serve(async (req) => {
         transferFileUniqueId,
         ettn,
         integrationCode: finalIntegrationCode,
-        message: 'Fatura başarıyla Veriban sistemine gönderildi'
+        invoiceNumber: veribanInvoiceNumber,
+        message: veribanInvoiceNumber 
+          ? `Fatura başarıyla Veriban sistemine gönderildi ve fatura numarası atandı: ${veribanInvoiceNumber}`
+          : 'Fatura başarıyla Veriban sistemine gönderildi. Fatura numarası henüz atanmadı, birkaç dakika sonra tekrar kontrol edin.'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

@@ -24,8 +24,13 @@ export const CustomerServicesTab = ({ customer }: CustomerServicesTabProps) => {
   // Filtreleme state'leri
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Son 30 gün için varsayılan tarih filtresi
+  const [startDate, setStartDate] = useState<Date | undefined>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date;
+  });
+  const [endDate, setEndDate] = useState<Date | undefined>(() => new Date());
 
   // Müşteriye özel servis taleplerini getir (customer_data ile)
   const { data: serviceRequests, isLoading, error } = useQuery({

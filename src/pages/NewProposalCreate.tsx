@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ProductDetailsModal from "@/components/proposals/form/ProductDetailsModal";
 import ProposalPartnerSelect from "@/components/proposals/form/ProposalPartnerSelect";
 import ProposalPreviewModal from "@/components/proposals/form/ProposalPreviewModal";
+import CompactProductForm from "@/components/einvoice/CompactProductForm";
 import CustomerInfoCard from "@/components/proposals/cards/CustomerInfoCard";
 import ProposalDetailsCard from "@/components/proposals/cards/ProposalDetailsCard";
 import ProductServiceCard from "@/components/proposals/cards/ProductServiceCard";
@@ -102,6 +103,8 @@ const NewProposalCreate = () => {
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
   const [editingItemData, setEditingItemData] = useState<any>(null);
+  const [isNewProductFormOpen, setIsNewProductFormOpen] = useState(false);
+  const [newProductSearchTerm, setNewProductSearchTerm] = useState<string>("");
   
   // Preview modal state
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -471,6 +474,23 @@ const NewProposalCreate = () => {
       setEditingItemData(null);
     }
     setProductModalOpen(true);
+  };
+
+  const handleNewProduct = (searchTerm?: string) => {
+    setNewProductSearchTerm(searchTerm || "");
+    setIsNewProductFormOpen(true);
+  };
+
+  const handleProductCreated = async (newProduct: any) => {
+    // Invalidate products query so dropdown refreshes
+    await queryClient.invalidateQueries({ queryKey: ["products-infinite"] });
+    
+    // Yeni oluşturulan ürünü seçili hale getir ve modal'ı aç
+    handleProductModalSelect(newProduct);
+    
+    setIsNewProductFormOpen(false);
+    setNewProductSearchTerm("");
+    toast.success("Ürün başarıyla oluşturuldu");
   };
 
   const handleAddProductToProposal = (productData: any, itemIndex?: number) => {
@@ -963,6 +983,7 @@ const NewProposalCreate = () => {
               handleProductModalSelect(product, itemIndex);
             }
           }}
+          onNewProduct={handleNewProduct}
           showMoveButtons={true}
           inputHeight="h-8"
         />
@@ -1018,6 +1039,27 @@ const NewProposalCreate = () => {
           onAddToProposal={(productData) => handleAddProductToProposal(productData, editingItemIndex)}
           currency={formData.currency}
           existingData={editingItemData}
+        />
+
+        {/* Compact Product Form - Yeni Ürün Oluştur */}
+        <CompactProductForm
+          isOpen={isNewProductFormOpen}
+          onClose={() => {
+            setIsNewProductFormOpen(false);
+            setNewProductSearchTerm("");
+          }}
+          onProductCreated={handleProductCreated}
+          isForSale={true}
+          initialData={
+            newProductSearchTerm
+              ? {
+                  name: newProductSearchTerm,
+                  unit: "adet",
+                  price: 0,
+                  tax_rate: 20,
+                }
+              : undefined
+          }
         />
 
         {/* Proposal Preview Modal */}

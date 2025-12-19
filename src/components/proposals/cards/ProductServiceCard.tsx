@@ -31,6 +31,7 @@ interface ProductServiceCardProps {
   onMoveItemDown?: (index: number) => void;
   onItemChange: (index: number, field: keyof LineItem, value: any) => void;
   onProductModalSelect: (product: any, itemIndex?: number) => void;
+  onNewProduct?: (searchTerm?: string) => void;
   showMoveButtons?: boolean;
   inputHeight?: "h-10" | "h-8";
 }
@@ -55,6 +56,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
   onMoveItemDown,
   onItemChange,
   onProductModalSelect,
+  onNewProduct,
   showMoveButtons = false,
   inputHeight = "h-8"
 }) => {
@@ -165,6 +167,7 @@ const ProductServiceCard: React.FC<ProductServiceCardProps> = ({
                         // existingData göndermiyoruz, böylece ProductDetailsModal yeni ekleme modunda açılır
                         onProductModalSelect({ ...product, image_url: product?.image_url || item.image_url }, index);
                       }}
+                      onNewProduct={onNewProduct}
                       placeholder="Ürün seçin..."
                       className="flex-1 min-w-0 max-w-full group-hover:font-bold"
                     />

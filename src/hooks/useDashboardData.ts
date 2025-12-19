@@ -11,20 +11,36 @@ export const useDashboardData = () => {
     queryFn: async () => {
       if (!userData?.company_id) return null;
 
-      const [bankAccounts, cashAccounts, customers, invoices] = await Promise.all([
+      // Get current month start and end dates
+      const now = new Date();
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      const [bankAccounts, cashAccounts, customers, invoices, monthlyRevenue] = await Promise.all([
         supabase.from('bank_accounts').select('current_balance').eq('company_id', userData.company_id),
         supabase.from('cash_accounts').select('current_balance').eq('company_id', userData.company_id),
         supabase.from('customers').select('balance').eq('company_id', userData.company_id),
-        supabase.from('einvoices').select('remaining_amount').eq('company_id', userData.company_id)
+        supabase.from('einvoices').select('remaining_amount').eq('company_id', userData.company_id),
+        // Aylık ciro: Bu ayki onaylanmış satış faturalarının toplamı
+        supabase
+          .from('sales_invoices')
+          .select('toplam_tutar')
+          .eq('company_id', userData.company_id)
+          .eq('durum', 'onaylandi')
+          .gte('fatura_tarihi', currentMonthStart)
+          .lte('fatura_tarihi', currentMonthEnd)
       ]);
 
       const totalBankBalance = bankAccounts.data?.reduce((sum, acc) => sum + (Number(acc.current_balance) || 0), 0) || 0;
       const totalCashBalance = cashAccounts.data?.reduce((sum, acc) => sum + (Number(acc.current_balance) || 0), 0) || 0;
       const totalReceivables = customers.data?.reduce((sum, c) => sum + (Number(c.balance) || 0), 0) || 0;
       const totalPayables = invoices.data?.reduce((sum, inv) => sum + (Number(inv.remaining_amount) || 0), 0) || 0;
+      // Aylık ciro hesaplama
+      const monthlyTurnover = monthlyRevenue.data?.reduce((sum, inv) => sum + (Number(inv.toplam_tutar) || 0), 0) || 0;
 
       return {
         cashFlow: totalBankBalance + totalCashBalance,
+        monthlyTurnover: monthlyTurnover, // Aylık ciro
         receivables: totalReceivables,
         payables: totalPayables,
         netWorth: totalBankBalance + totalCashBalance + totalReceivables - totalPayables

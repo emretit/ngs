@@ -14,7 +14,7 @@ interface ProductSelectorProps {
   value: string;
   onChange: (productName: string, product?: Product) => void;
   onProductSelect?: (product: Product) => void;
-  onNewProduct?: () => void;
+  onNewProduct?: (searchTerm?: string) => void;
   placeholder?: string;
   className?: string;
 }
@@ -320,12 +320,12 @@ const ProductSelector = ({ value, onChange, onProductSelect, onNewProduct, place
             </>
           )}
           
-          {/* Yeni Ürün Oluştur Butonu */}
+          {/* Yeni Ürün Oluştur Butonu - Her zaman göster */}
           {onNewProduct && (
             <div className="border-t border-border mt-1">
               <div
                 onClick={() => {
-                  onNewProduct();
+                  onNewProduct(debouncedSearch.trim() || undefined);
                   setOpen(false);
                 }}
                 className="flex items-center gap-2 py-2 px-3 cursor-pointer hover:bg-muted/50 rounded-sm transition-colors"

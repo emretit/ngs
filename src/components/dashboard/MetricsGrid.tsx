@@ -17,6 +17,7 @@ interface MetricsGridProps {
   };
   financialData?: {
     cashFlow: number;
+    monthlyTurnover: number;
     receivables: number;
     payables: number;
     netWorth: number;
@@ -30,7 +31,7 @@ const MetricsGrid = ({ crmStats, financialData }: MetricsGridProps) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
       <KpiWidget
         title="Aylık Ciro"
-        value={`₺${(financialData?.cashFlow || 0).toLocaleString("tr-TR")}`}
+        value={`₺${(financialData?.monthlyTurnover || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         icon={DollarSign}
         trend="up"
         change={12.5}

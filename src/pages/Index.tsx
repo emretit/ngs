@@ -20,7 +20,15 @@ const Index = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Timeout ile session kontrolü - 3 saniye içinde tamamlanmazsa devam et
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timeout')), 3000)
+        );
+        
+        const sessionPromise = supabase.auth.getSession();
+        
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        
         // Eğer invite-setup sayfasına yönlendirme varsa (URL'de access_token), bekle
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const hasInviteToken = hashParams.get("access_token") && hashParams.get("type");

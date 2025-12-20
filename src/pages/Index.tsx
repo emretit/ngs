@@ -9,84 +9,79 @@ import FooterSection from "@/components/landing/FooterSection";
 import LoginButton from "@/components/navbar/LoginButton";
 import MobileMenu from "@/components/landing/MobileMenu";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import LandingButton from "@/components/landing/LandingButton";
 import { useTranslation } from 'react-i18next';
 
 const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [hasSession, setHasSession] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
   // Kullanıcı giriş durumunu kontrol et
   useEffect(() => {
+    let isMounted = true;
+    
     const checkSession = async () => {
       try {
-        // Timeout ile session kontrolü - 2 saniye içinde tamamlanmazsa devam et
-        const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) => 
-          setTimeout(() => resolve({ data: { session: null } }), 2000)
-        );
-        
-        const sessionPromise = supabase.auth.getSession();
-        
-        const result = await Promise.race([sessionPromise, timeoutPromise]);
-        const { data: { session } } = result;
-        
         // Eğer invite-setup sayfasına yönlendirme varsa (URL'de access_token), bekle
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const hasInviteToken = hashParams.get("access_token") && hashParams.get("type");
         const isInviteSetupPath = window.location.pathname === '/invite-setup';
+        
         if (hasInviteToken || isInviteSetupPath) {
           console.log('Invite token detected or on invite-setup page, not redirecting to dashboard');
-          setLoading(false);
+          if (isMounted) setLoading(false);
           return;
         }
-        if (session) {
-          // Kullanıcı giriş yapmışsa session state'ini set et ve dashboard'a yönlendir
-          setHasSession(true);
+
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session && isMounted) {
           navigate("/dashboard");
           return;
         }
-        // Session yoksa loading'i false yap
-        setLoading(false);
       } catch (error) {
         console.error("Session kontrol hatası:", error);
-        // Hata durumunda da loading'i false yap
-        setLoading(false);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
+    
     checkSession();
+    
     // Auth state değişikliklerini dinle
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Invite setup sürecindeyse otomatik yönlendirmeyi engelle
+        if (!isMounted) return;
+        
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const hasInviteToken = hashParams.get("access_token");
         const isInviteSetupPath = window.location.pathname === '/invite-setup';
+        
         if (event === 'SIGNED_IN' && session && !hasInviteToken && !isInviteSetupPath) {
-          // Giriş yapıldığında session state'ini set et ve dashboard'a yönlendir
-          setHasSession(true);
           navigate("/dashboard");
-        } else if (event === 'SIGNED_OUT') {
-          // Çıkış yapıldığında landing page'de kal
-          setHasSession(false);
-          setLoading(false);
         }
       }
     );
-    return () => subscription.unsubscribe();
+    
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
-  // Loading veya session varsa boş sayfa göster (yönlendirme yapılacak)
-  if (loading || hasSession) {
+  
+  // Loading sırasında boş sayfa göster
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Yükleniyor...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-white/60">Yükleniyor...</p>
         </div>
       </div>
     );
   }
+  
   return (
     <div className="min-h-screen relative overflow-hidden bg-slate-950">
       {/* Modern Glassmorphism Header */}
@@ -131,13 +126,16 @@ const Index = () => {
               <div className="flex items-center gap-3">
                 <div className="hidden md:flex items-center gap-3">
                   <LoginButton />
-                  <LandingButton 
+                  <Link 
                     to="/signup" 
-                    variant="primary"
-                    showArrow
+                    className="group relative flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-semibold overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]"
                   >
-                    {t('landing.header.freeStart')}
-                  </LandingButton>
+                    <span className="relative z-10">{t('landing.header.freeStart')}</span>
+                    <svg className="relative z-10 w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </Link>
                   <LanguageSwitcher />
                 </div>
                 
@@ -155,6 +153,7 @@ const Index = () => {
           </div>
         </div>
       </header>
+      
       <main className="relative z-10 pt-16">
         <HeroSection />
         <ModuleShowcaseSection />
@@ -162,6 +161,7 @@ const Index = () => {
         <FaqSection />
         <FooterSection />
       </main>
+      
       {/* Mobile Menu */}
       <MobileMenu 
         isOpen={mobileMenuOpen} 
@@ -170,4 +170,5 @@ const Index = () => {
     </div>
   );
 };
+
 export default Index;

@@ -72,86 +72,72 @@ const Index = () => {
     );
   }
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-gray-900 to-red-900/40">
-      {/* Dynamic dark background elements - optimized with will-change and reduced motion support */}
-      <div className="fixed inset-0 pointer-events-none">
-        {/* Animated grid pattern */}
-        <div className="absolute top-0 left-0 w-full h-full bg-grid-pattern opacity-[0.05]"></div>
-        {/* Large dynamic gradient orbs - reduced from 3 to 2 */}
-        <div className="absolute top-1/4 -left-1/3 w-[800px] h-[800px] bg-gradient-to-br from-red-500/30 to-rose-600/20 rounded-full blur-3xl animate-pulse opacity-70 will-change-transform motion-reduce:animate-none"></div>
-        <div className="absolute top-3/4 -right-1/3 w-[700px] h-[700px] bg-gradient-to-bl from-red-400/25 to-gray-600/20 rounded-full blur-3xl animate-pulse opacity-70 will-change-transform motion-reduce:animate-none" style={{ animationDelay: '1s' }}></div>
-        {/* Dynamic lines */}
-        <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent"></div>
-        <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-400/20 to-transparent"></div>
-        <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-400/25 to-transparent"></div>
-        {/* Floating dynamic particles - reduced from 8 to 4 */}
-        <div className="absolute top-20 left-20 w-4 h-4 bg-red-500/30 rounded-full animate-pulse will-change-transform motion-reduce:animate-none" style={{ animationDelay: '0.5s' }}></div>
-        <div className="absolute top-40 right-32 w-3 h-3 bg-red-400/35 rounded-full animate-pulse will-change-transform motion-reduce:animate-none" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-32 left-40 w-4 h-4 bg-gray-500/25 rounded-full animate-pulse will-change-transform motion-reduce:animate-none" style={{ animationDelay: '1.5s' }}></div>
-        <div className="absolute bottom-20 right-20 w-3 h-3 bg-red-300/30 rounded-full animate-pulse will-change-transform motion-reduce:animate-none" style={{ animationDelay: '2s' }}></div>
-        {/* Animated geometric shapes - reduced from 3 to 2 */}
-        <div className="absolute top-1/3 right-1/4 w-16 h-16 border border-red-500/20 rotate-45 animate-spin will-change-transform motion-reduce:animate-none" style={{ animationDelay: '7s' }}></div>
-        <div className="absolute bottom-1/3 left-1/4 w-12 h-12 border border-gray-400/20 rotate-12 animate-pulse will-change-transform motion-reduce:animate-none" style={{ animationDelay: '8s' }}></div>
-      </div>
-      <header className="fixed top-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl shadow-2xl z-50 border-b border-red-500/20">
-        <div className="container mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
-            {/* Logo with Beta Badge */}
-            <div className="flex items-center gap-3 group">
-              <div className="relative">
-                <img 
-                  src="/logo.svg" 
-                  alt="PAFTA Logo" 
-                  className="h-9 w-auto transition-transform group-hover:scale-105"
-                />
-                <div className="absolute -inset-1 bg-red-100/50 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
-              {/* Beta Badge - Desktop Only */}
-              <div className="hidden lg:flex items-center px-2 py-1 rounded-md bg-red-500/10 border border-red-500/20 backdrop-blur-sm">
-                <span className="text-xs font-semibold text-red-400">Beta</span>
-              </div>
-            </div>
-            {/* Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              <a href="#modules" className="relative px-4 py-2.5 text-gray-300 hover:text-red-400 transition-all duration-200 font-medium rounded-lg hover:bg-red-500/10 group">
-                <span className="relative z-10">{t('landing.header.modules')}</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-              </a>
-              <a href="#pricing" className="relative px-4 py-2.5 text-gray-300 hover:text-red-400 transition-all duration-200 font-medium rounded-lg hover:bg-red-500/10 group">
-                <span className="relative z-10">{t('landing.header.pricing')}</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-              </a>
-              <a href="#faq" className="relative px-4 py-2.5 text-gray-300 hover:text-red-400 transition-all duration-200 font-medium rounded-lg hover:bg-red-500/10 group">
-                <span className="relative z-10">{t('landing.header.faq')}</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-              </a>
-              <a href="#contact" className="relative px-4 py-2.5 text-gray-300 hover:text-red-400 transition-all duration-200 font-medium rounded-lg hover:bg-red-500/10 group">
-                <span className="relative z-10">{t('landing.header.contact')}</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-red-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-              </a>
-            </nav>
-            {/* CTA Section */}
-            <div className="flex items-center space-x-4">
-              {/* Desktop CTA */}
-              <div className="hidden md:flex items-center space-x-3">
-                <Link to="/signup" className="flex items-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-2.5 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
-                  <span>{t('landing.header.freeStart')}</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+    <div className="min-h-screen relative overflow-hidden bg-slate-950">
+      {/* Modern Glassmorphism Header */}
+      <header className="fixed top-0 left-0 right-0 z-50">
+        <div className="mx-4 mt-4">
+          <div className="max-w-7xl mx-auto px-6 py-3 rounded-2xl bg-white/[0.03] backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+            <div className="flex items-center justify-between">
+              {/* Logo */}
+              <Link to="/" className="flex items-center gap-3 group">
+                <div className="relative">
+                  <img 
+                    src="/logo.svg" 
+                    alt="PAFTA Logo" 
+                    className="h-8 w-auto transition-all duration-300 group-hover:scale-110"
+                  />
+                  <div className="absolute -inset-2 bg-red-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                </div>
+                <div className="hidden sm:flex items-center px-2.5 py-1 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/30">
+                  <span className="text-[10px] font-bold bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent uppercase tracking-wider">Beta</span>
+                </div>
+              </Link>
+
+              {/* Navigation - Pill Style */}
+              <nav className="hidden lg:flex items-center bg-white/[0.02] rounded-full p-1 border border-white/5">
+                {[
+                  { href: "#modules", label: t('landing.header.modules') },
+                  { href: "#pricing", label: t('landing.header.pricing') },
+                  { href: "#faq", label: t('landing.header.faq') },
+                  { href: "#contact", label: t('landing.header.contact') },
+                ].map((item) => (
+                  <a 
+                    key={item.href}
+                    href={item.href} 
+                    className="relative px-5 py-2 text-sm text-white/60 hover:text-white transition-colors duration-200 rounded-full hover:bg-white/5"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+
+              {/* CTA Section */}
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-3">
+                  <LoginButton />
+                  <Link 
+                    to="/signup" 
+                    className="group relative flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-semibold overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]"
+                  >
+                    <span className="relative z-10">{t('landing.header.freeStart')}</span>
+                    <svg className="relative z-10 w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </Link>
+                  <LanguageSwitcher />
+                </div>
+                
+                {/* Mobile Menu Button */}
+                <button 
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="lg:hidden p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
-                </Link>
-                <LoginButton />
-                <LanguageSwitcher />
+                </button>
               </div>
-              {/* Mobile Menu Button */}
-              <button 
-                onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2 text-gray-300 hover:text-red-400 hover:bg-white/10 rounded-lg transition-all duration-200 group"
-              >
-                <svg className="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
             </div>
           </div>
         </div>

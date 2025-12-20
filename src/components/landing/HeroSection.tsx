@@ -84,12 +84,7 @@ const HeroSection = () => {
         <div className="max-w-5xl mx-auto text-center">
           
           {/* Announcement badge */}
-          <motion.div 
-            className="inline-flex items-center mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <div className="inline-flex items-center mb-8 animate-fade-in">
             <div className="group relative">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-orange-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-500" />
               <div className="relative flex items-center gap-3 px-4 py-2 rounded-full bg-slate-900/80 border border-white/10 backdrop-blur-xl">
@@ -102,63 +97,44 @@ const HeroSection = () => {
                 <div className="w-px h-4 bg-white/20" />
                 <span className="flex items-center gap-1.5 text-sm text-white/70">
                   <Zap className="w-3.5 h-3.5 text-red-400" />
-                  {t('landing.hero.badge')}
+                  {t('landing.hero.badge') || 'Yapay Zeka Destekli'}
                 </span>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Main headline with animated gradient */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
+          <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.1] mb-6">
-              <span className="block text-white/95 mb-2">{t('landing.hero.title1')}</span>
+              <span className="block text-white/95 mb-2">{t('landing.hero.title1') || 'İşletmenizi Yönetin'}</span>
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-red-400 via-red-500 to-orange-500 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
-                  {t('landing.hero.title2')}
+                  {t('landing.hero.title2') || 'Tek Platformda'}
                 </span>
                 {/* Underline decoration */}
-                <motion.div 
-                  className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-full"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.8, delay: 1 }}
-                />
+                <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-full animate-scale-in" style={{ animationDelay: '1s' }} />
               </span>
-              {t('landing.hero.title3') && (
+              {(t('landing.hero.title3') || '') && (
                 <span className="block text-white/95 mt-2">{t('landing.hero.title3')}</span>
               )}
             </h1>
-          </motion.div>
+          </div>
 
           {/* Subtitle */}
-          <motion.p 
-            className="text-lg sm:text-xl text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
+          <p className="text-lg sm:text-xl text-white/60 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in" style={{ animationDelay: '0.4s' }}>
             Yapay zeka destekli ERP sistemi ile işletmenizi geleceğe taşıyın. 
             Tüm iş süreçlerinizi tek platformda yönetin.
-          </motion.p>
+          </p>
 
           {/* CTA Buttons */}
-          <motion.div 
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 animate-fade-in" style={{ animationDelay: '0.6s' }}>
             <LandingButton 
               to="/signup" 
               variant="primary"
               showArrow
               className="px-8 py-6 text-lg shadow-[0_0_40px_rgba(239,68,68,0.3)] hover:shadow-[0_0_60px_rgba(239,68,68,0.4)]"
             >
-              {t('landing.hero.freeStart')}
+              {t('landing.hero.freeStart') || 'Ücretsiz Başla'}
             </LandingButton>
             <LandingButton 
               href="#modules" 
@@ -167,25 +143,20 @@ const HeroSection = () => {
             >
               Modülleri Keşfet
             </LandingButton>
-          </motion.div>
+          </div>
 
           {/* Stats/Trust indicators */}
-          <motion.div 
-            className="grid grid-cols-3 gap-8 max-w-3xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
+          <div 
+            className="grid grid-cols-3 gap-8 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.8s' }}
           >
             {[
-              { value: "10+", label: t('landing.hero.powerfulModules'), icon: "📦" },
-              { value: "AI", label: t('landing.hero.aiPowered'), icon: "🧠" },
-              { value: "∞", label: t('landing.hero.freeUsers'), icon: "👥" },
+              { value: "10+", label: t('landing.hero.powerfulModules') || 'Güçlü Modül', icon: "📦" },
+              { value: "AI", label: t('landing.hero.aiPowered') || 'Yapay Zeka', icon: "🧠" },
+              { value: "∞", label: t('landing.hero.freeUsers') || 'Sınırsız Kullanıcı', icon: "👥" },
             ].map((stat, index) => (
-              <motion.div 
+              <div 
                 key={index}
-                className="group relative"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 400 }}
+                className="group relative hover:scale-105 transition-transform duration-300"
               >
                 <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="relative p-6 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-sm hover:border-red-500/30 transition-all duration-300">
@@ -195,9 +166,9 @@ const HeroSection = () => {
                   </div>
                   <div className="text-sm text-white/50">{stat.label}</div>
                 </div>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

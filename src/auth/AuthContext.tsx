@@ -69,13 +69,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(false)
 
       if (session?.user) {
-        // Inactivity check on app load
+        // Update activity first to ensure we have a valid timestamp
+        updateActivity()
+        
+        // Then check for inactivity - but only if we had a previous activity timestamp
         if (isSessionExpired()) {
           console.log('Session expired due to inactivity (init)')
           signOut()
           return
         }
-        updateActivity()
 
         // Update last_login in profiles table (deferred)
         setTimeout(() => {

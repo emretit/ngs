@@ -15,6 +15,7 @@ const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Kullanıcı giriş durumunu kontrol et
   useEffect(() => {
@@ -39,13 +40,16 @@ const Index = () => {
           return;
         }
         if (session) {
-          // Kullanıcı giriş yapmışsa dashboard'a yönlendir
+          // Kullanıcı giriş yapmışsa session state'ini set et ve dashboard'a yönlendir
+          setHasSession(true);
           navigate("/dashboard");
           return;
         }
+        // Session yoksa loading'i false yap
+        setLoading(false);
       } catch (error) {
         console.error("Session kontrol hatası:", error);
-      } finally {
+        // Hata durumunda da loading'i false yap
         setLoading(false);
       }
     };
@@ -58,18 +62,20 @@ const Index = () => {
         const hasInviteToken = hashParams.get("access_token");
         const isInviteSetupPath = window.location.pathname === '/invite-setup';
         if (event === 'SIGNED_IN' && session && !hasInviteToken && !isInviteSetupPath) {
-          // Giriş yapıldığında dashboard'a yönlendir (invite setup değilse)
+          // Giriş yapıldığında session state'ini set et ve dashboard'a yönlendir
+          setHasSession(true);
           navigate("/dashboard");
         } else if (event === 'SIGNED_OUT') {
           // Çıkış yapıldığında landing page'de kal
+          setHasSession(false);
           setLoading(false);
         }
       }
     );
     return () => subscription.unsubscribe();
   }, [navigate]);
-  // Loading sırasında boş sayfa göster
-  if (loading) {
+  // Loading veya session varsa boş sayfa göster (yönlendirme yapılacak)
+  if (loading || hasSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">

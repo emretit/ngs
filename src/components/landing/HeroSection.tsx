@@ -89,7 +89,6 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
           >
             <div className="group relative">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-orange-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-500" />
@@ -114,7 +113,6 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            viewport={{ once: true }}
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight leading-[1.1] mb-6">
               <span className="block text-white/95 mb-2">{t('landing.hero.title1')}</span>
@@ -142,7 +140,6 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            viewport={{ once: true }}
           >
             Yapay zeka destekli ERP sistemi ile işletmenizi geleceğe taşıyın. 
             Tüm iş süreçlerinizi tek platformda yönetin.
@@ -154,7 +151,6 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            viewport={{ once: true }}
           >
             <LandingButton 
               to="/signup" 
@@ -179,7 +175,6 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8 }}
-            viewport={{ once: true }}
           >
             {[
               { value: "10+", label: t('landing.hero.powerfulModules'), icon: "📦" },

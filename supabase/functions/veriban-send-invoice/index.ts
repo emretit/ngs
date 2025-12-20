@@ -208,15 +208,17 @@ serve(async (req) => {
             
             // Veriban'a login ol
             const loginResult = await VeribanSoapClient.login(
-              veribanAuth.username,
-              veribanAuth.password,
+              {
+                username: veribanAuth.username,
+                password: veribanAuth.password,
+              },
               veribanAuth.webservice_url
             );
             
-            if (!loginResult.success || !loginResult.data?.sessionCode) {
+            if (!loginResult.success || !loginResult.sessionCode) {
               console.warn('⚠️ Veriban login başarısız, sadece veritabanı kontrolü yapılacak');
             } else {
-              const sessionCode = loginResult.data.sessionCode;
+              const sessionCode = loginResult.sessionCode;
               console.log('✅ Veriban session code alındı');
               
               // Son 30 günün faturalarını al (Veriban'dan)
@@ -484,9 +486,6 @@ serve(async (req) => {
       zip.file(xmlFileName, finalXmlContent, {
         createFolders: false, // Klasör oluşturma
         date: new Date(), // Mevcut tarih
-        unixPermissions: null, // Unix permissions yok
-        dosPermissions: null, // DOS permissions yok
-        comment: null, // Yorum yok
       });
 
       // Generate ZIP
@@ -499,7 +498,6 @@ serve(async (req) => {
         },
         streamFiles: false, // Tüm dosyalar bellekte
         platform: 'DOS', // DOS platform (Windows uyumlu)
-        comment: null, // ZIP yorumu yok
       });
 
       // Convert to Base64

@@ -140,10 +140,10 @@ serve(async (req) => {
     console.log('📦 [Veriban PDF] ZIP size:', zipData.length, 'bytes');
 
     // Extract PDF from ZIP
-    const { unzip } = await import('https://deno.land/x/zipjs@v2.7.32/index.js');
-    const zipBlob = new Blob([zipData]);
-    const zipReader = new (await import('https://deno.land/x/zipjs@v2.7.32/index.js')).ZipReader(
-      new (await import('https://deno.land/x/zipjs@v2.7.32/index.js')).BlobReader(zipBlob)
+    const zipjs = await import('https://deno.land/x/zipjs@v2.7.32/index.js');
+    const zipBlob = new Blob([zipData as BlobPart]);
+    const zipReader = new zipjs.ZipReader(
+      new zipjs.BlobReader(zipBlob)
     );
 
     const entries = await zipReader.getEntries();
@@ -179,8 +179,8 @@ serve(async (req) => {
     console.log('📄 [Veriban PDF] PDF file found:', pdfEntry.filename);
 
     // Extract PDF content
-    const pdfBlobWriter = new (await import('https://deno.land/x/zipjs@v2.7.32/index.js')).BlobWriter();
-    const pdfBlob = await pdfEntry.getData(pdfBlobWriter);
+    const pdfBlobWriter = new zipjs.BlobWriter();
+    const pdfBlob = await pdfEntry.getData!(pdfBlobWriter);
     await zipReader.close();
 
     console.log('✅ [Veriban PDF] PDF extracted, size:', pdfBlob.size, 'bytes');

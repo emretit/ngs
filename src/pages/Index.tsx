@@ -9,6 +9,7 @@ import FooterSection from "@/components/landing/FooterSection";
 import LoginButton from "@/components/navbar/LoginButton";
 import MobileMenu from "@/components/landing/MobileMenu";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import LandingButton from "@/components/landing/LandingButton";
 import { useTranslation } from 'react-i18next';
 
 const Index = () => {
@@ -129,16 +130,13 @@ const Index = () => {
               <div className="flex items-center gap-3">
                 <div className="hidden md:flex items-center gap-3">
                   <LoginButton />
-                  <Link 
+                  <LandingButton 
                     to="/signup" 
-                    className="group relative flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-semibold overflow-hidden transition-all duration-300 hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]"
+                    variant="primary"
+                    showArrow
                   >
-                    <span className="relative z-10">{t('landing.header.freeStart')}</span>
-                    <svg className="relative z-10 w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </Link>
+                    {t('landing.header.freeStart')}
+                  </LandingButton>
                   <LanguageSwitcher />
                 </div>
                 

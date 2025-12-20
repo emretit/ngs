@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Zap, Shield, BarChart3, Users, Globe } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import { motion } from "framer-motion";
+import LandingButton from "@/components/landing/LandingButton";
 
 const HeroSection = () => {
   const { t } = useTranslation();
@@ -155,26 +156,21 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.6 }}
             viewport={{ once: true }}
           >
-            <Link to="/signup">
-              <Button
-                size="lg"
-                className="group relative px-8 py-6 text-lg font-semibold bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-orange-500 border-0 shadow-[0_0_40px_rgba(239,68,68,0.3)] hover:shadow-[0_0_60px_rgba(239,68,68,0.4)] transition-all duration-500"
-              >
-                <span className="flex items-center gap-2">
-                  {t('landing.hero.freeStart')}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </span>
-              </Button>
-            </Link>
-            <a href="#modules">
-              <Button
-                variant="outline"
-                size="lg"
-                className="px-8 py-6 text-lg font-medium bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 backdrop-blur-sm transition-all duration-300"
-              >
-                Modülleri Keşfet
-              </Button>
-            </a>
+            <LandingButton 
+              to="/signup" 
+              variant="primary"
+              showArrow
+              className="px-8 py-6 text-lg shadow-[0_0_40px_rgba(239,68,68,0.3)] hover:shadow-[0_0_60px_rgba(239,68,68,0.4)]"
+            >
+              {t('landing.hero.freeStart')}
+            </LandingButton>
+            <LandingButton 
+              href="#modules" 
+              variant="outline"
+              className="px-8 py-6 text-lg"
+            >
+              Modülleri Keşfet
+            </LandingButton>
           </motion.div>
 
           {/* Stats/Trust indicators */}

@@ -1,5 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   ShoppingCart,
   ShoppingBag,
@@ -11,7 +9,7 @@ import {
   Car,
   Brain,
   Users,
-  Zap
+  Sparkles
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -20,146 +18,173 @@ const ModuleShowcaseSection = () => {
   
   const modules = [
     {
-      title: t("landing.modules.einvoice.title"),
-      description: t("landing.modules.einvoice.description"),
+      title: t("landing.modules.einvoice.title") || "E-Fatura",
+      description: t("landing.modules.einvoice.description") || "Entegre e-fatura ve e-arşiv yönetimi",
       icon: Receipt,
-      color: "bg-green-500/10 text-green-600",
+      gradient: "from-green-500 to-emerald-600",
+      iconBg: "bg-green-500/20",
       important: true,
-      badge: t("landing.modules.einvoice.badge")
+      badge: t("landing.modules.einvoice.badge") || "Entegre"
     },
     {
-      title: t("landing.modules.ai.title"),
-      description: t("landing.modules.ai.description"),
+      title: t("landing.modules.ai.title") || "Yapay Zeka",
+      description: t("landing.modules.ai.description") || "AI destekli iş süreçleri optimizasyonu",
       icon: Brain,
-      color: "bg-purple-500/10 text-purple-600",
+      gradient: "from-purple-500 to-violet-600",
+      iconBg: "bg-purple-500/20",
       important: true,
-      badge: t("landing.modules.ai.badge")
+      badge: t("landing.modules.ai.badge") || "Yeni"
     },
     {
-      title: t("landing.modules.sales.title"),
-      description: t("landing.modules.sales.description"),
+      title: t("landing.modules.sales.title") || "Satış",
+      description: t("landing.modules.sales.description") || "Satış süreçlerini kolayca yönetin",
       icon: ShoppingCart,
-      color: "bg-blue-500/10 text-blue-600"
+      gradient: "from-blue-500 to-cyan-600",
+      iconBg: "bg-blue-500/20"
     },
     {
-      title: t("landing.modules.customers.title"),
-      description: t("landing.modules.customers.description"),
+      title: t("landing.modules.customers.title") || "Müşteriler",
+      description: t("landing.modules.customers.description") || "CRM ve müşteri ilişkileri yönetimi",
       icon: Users,
-      color: "bg-pink-500/10 text-pink-600"
+      gradient: "from-pink-500 to-rose-600",
+      iconBg: "bg-pink-500/20"
     },
     {
-      title: t("landing.modules.stock.title"),
-      description: t("landing.modules.stock.description"),
+      title: t("landing.modules.stock.title") || "Stok",
+      description: t("landing.modules.stock.description") || "Envanter ve depo yönetimi",
       icon: Package,
-      color: "bg-cyan-500/10 text-cyan-600"
+      gradient: "from-cyan-500 to-teal-600",
+      iconBg: "bg-cyan-500/20"
     },
     {
-      title: t("landing.modules.purchasing.title"),
-      description: t("landing.modules.purchasing.description"),
+      title: t("landing.modules.purchasing.title") || "Satın Alma",
+      description: t("landing.modules.purchasing.description") || "Tedarik zinciri optimizasyonu",
       icon: ShoppingBag,
-      color: "bg-green-500/10 text-green-600"
+      gradient: "from-green-500 to-lime-600",
+      iconBg: "bg-green-500/20"
     },
     {
-      title: t("landing.modules.hr.title"),
-      description: t("landing.modules.hr.description"),
+      title: t("landing.modules.hr.title") || "İnsan Kaynakları",
+      description: t("landing.modules.hr.description") || "Personel ve bordro yönetimi",
       icon: UserCheck,
-      color: "bg-indigo-500/10 text-indigo-600"
+      gradient: "from-indigo-500 to-blue-600",
+      iconBg: "bg-indigo-500/20"
     },
     {
-      title: t("landing.modules.finance.title"),
-      description: t("landing.modules.finance.description"),
+      title: t("landing.modules.finance.title") || "Finans",
+      description: t("landing.modules.finance.description") || "Muhasebe ve finansal raporlama",
       icon: DollarSign,
-      color: "bg-emerald-500/10 text-emerald-600"
+      gradient: "from-emerald-500 to-green-600",
+      iconBg: "bg-emerald-500/20"
     },
     {
-      title: t("landing.modules.fieldService.title"),
-      description: t("landing.modules.fieldService.description"),
+      title: t("landing.modules.fieldService.title") || "Saha Servisi",
+      description: t("landing.modules.fieldService.description") || "Teknik servis ve bakım yönetimi",
       icon: Wrench,
-      color: "bg-red-500/10 text-red-600"
+      gradient: "from-red-500 to-orange-600",
+      iconBg: "bg-red-500/20"
     },
     {
-      title: t("landing.modules.fleet.title"),
-      description: t("landing.modules.fleet.description"),
+      title: t("landing.modules.fleet.title") || "Araç Filosu",
+      description: t("landing.modules.fleet.description") || "Filo ve araç takip sistemi",
       icon: Car,
-      color: "bg-amber-500/10 text-amber-600"
+      gradient: "from-amber-500 to-yellow-600",
+      iconBg: "bg-amber-500/20"
     }
   ];
   
   return (
-    <section id="modules" className="scroll-mt-20 py-16 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-gray-50 via-white to-gray-50">
-      {/* Light Background with subtle effects */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-gray-50"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(220,38,38,0.05),transparent_60%)]"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(220,38,38,0.03),transparent_60%)]"></div>
+    <section id="modules" className="relative py-24 overflow-hidden bg-slate-950">
+      {/* Background effects - matching hero section */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950" />
+        
+        {/* Animated gradient orbs */}
+        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-red-600/10 to-orange-500/5 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-gradient-to-l from-purple-500/10 to-red-600/5 blur-[100px]" />
+        
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      </div>
       
-      <div className="relative mx-auto max-w-7xl z-10">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center p-1.5 bg-red-600/10 rounded-full mb-4">
-            <div className="flex items-center space-x-2 px-3 py-1.5 bg-red-600/20 rounded-full text-red-600 font-medium text-xs backdrop-blur-sm">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
-              <span>{t("landing.modules.badge")}</span>
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
+        <div className="text-center mb-16 animate-fade-in">
+          {/* Badge */}
+          <div className="inline-flex items-center mb-6">
+            <div className="group relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-orange-600 rounded-full blur opacity-30" />
+              <div className="relative flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/80 border border-white/10 backdrop-blur-xl">
+                <Sparkles className="w-4 h-4 text-red-400" />
+                <span className="text-sm font-medium text-white/90">
+                  {t("landing.modules.badge") || "Güçlü Modüller"}
+                </span>
+              </div>
             </div>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-relaxed font-sans">
-            <span className="text-gray-900">{t("landing.modules.title1")}</span> {t("landing.modules.title2")}
-            <span className="block bg-gradient-to-r from-red-500 via-red-600 to-red-700 bg-clip-text text-transparent mt-1 leading-loose">
-              {/* Empty - handled in title2 */}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+            <span className="text-white/95">{t("landing.modules.title1") || "İşletmeniz İçin"}</span>{" "}
+            <span className="bg-gradient-to-r from-red-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
+              {t("landing.modules.title2") || "Tüm Modüller"}
             </span>
           </h2>
-
+          
+          <p className="text-lg text-white/50 max-w-2xl mx-auto">
+            Tüm iş süreçlerinizi tek bir platformda yönetin. 
+            Her modül birbiriyle entegre çalışır.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Modules grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {modules.map((module, index) => {
             const Icon = module.icon;
             return (
               <div
                 key={index}
-                className={`group relative p-4 rounded-2xl bg-gray-900/95 backdrop-blur-xl border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-default ${
-                  module.important
-                    ? 'border-red-300/60 hover:border-red-400/80 ring-2 ring-red-200/40 shadow-xl'
-                    : 'border-gray-700/60 hover:border-red-200/60 shadow-lg'
-                }`}
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="group relative animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-red-50/20 via-transparent to-gray-50/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-                {/* Glow effect */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-red-100/30 to-gray-100/30 opacity-0 group-hover:opacity-60 blur-xl transition-all duration-500"></div>
-
-                <div className="relative z-10 text-center">
-                  <div className={`w-12 h-12 rounded-xl ${module.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl`}>
-                    <Icon className="h-6 w-6 group-hover:scale-110 transition-transform duration-300" />
-                  </div>
-
-                  <div className="flex items-center justify-center mb-2">
-                    <h3 className="font-bold text-white text-xs group-hover:text-red-400 transition-colors duration-300">
-                      {module.title}
-                    </h3>
-                    {module.badge && (
-                      <span className="ml-1.5 px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full animate-pulse shadow-lg">
+                {/* Glow effect on hover */}
+                <div className={`absolute -inset-0.5 bg-gradient-to-r ${module.gradient} rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-500`} />
+                
+                <div className={`relative p-5 rounded-2xl bg-white/[0.03] backdrop-blur-sm border transition-all duration-300 hover:-translate-y-1 ${
+                  module.important
+                    ? 'border-red-500/30 hover:border-red-500/50'
+                    : 'border-white/10 hover:border-white/20'
+                }`}>
+                  {/* Badge for important modules */}
+                  {module.badge && (
+                    <div className="absolute -top-2 -right-2">
+                      <span className="px-2 py-0.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold rounded-full shadow-lg">
                         {module.badge}
                       </span>
-                    )}
+                    </div>
+                  )}
+                  
+                  {/* Icon */}
+                  <div className={`w-12 h-12 rounded-xl ${module.iconBg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className={`w-6 h-6 bg-gradient-to-r ${module.gradient} bg-clip-text`} style={{ color: 'currentColor' }} />
                   </div>
 
-                  <p className="text-[11px] text-gray-300 leading-relaxed group-hover:text-gray-200 transition-colors duration-300">
+                  {/* Title */}
+                  <h3 className="font-semibold text-white text-sm mb-2 group-hover:text-red-400 transition-colors duration-300">
+                    {module.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-xs text-white/40 leading-relaxed group-hover:text-white/60 transition-colors duration-300">
                     {module.description}
                   </p>
+                  
+                  {/* Bottom accent line */}
+                  <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r ${module.gradient} group-hover:w-2/3 transition-all duration-500 rounded-full`} />
                 </div>
-
-                {/* Bottom accent */}
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-red-500 to-red-600 group-hover:w-3/4 transition-all duration-500 rounded-full"></div>
-
-                {/* Corner decoration */}
-                <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-red-500/30 rounded-full group-hover:bg-red-500/60 transition-colors duration-300"></div>
               </div>
             );
           })}
         </div>
-
       </div>
     </section>
   );

@@ -190,12 +190,12 @@ Deno.serve(async (req) => {
 
     // Extract XML from ZIP
     console.log('📂 [Veriban] Extracting XML from ZIP...');
-    const { unzip } = await import('https://deno.land/x/zipjs@v2.7.32/index.js');
+    const zipjs = await import('https://deno.land/x/zipjs@v2.7.32/index.js');
     
     // Create blob from Uint8Array
-    const zipBlob = new Blob([zipData]);
-    const zipReader = new (await import('https://deno.land/x/zipjs@v2.7.32/index.js')).ZipReader(
-      new (await import('https://deno.land/x/zipjs@v2.7.32/index.js')).BlobReader(zipBlob)
+    const zipBlob = new Blob([zipData as BlobPart]);
+    const zipReader = new zipjs.ZipReader(
+      new zipjs.BlobReader(zipBlob)
     );
     
     const entries = await zipReader.getEntries();
@@ -234,8 +234,8 @@ Deno.serve(async (req) => {
     console.log('📄 [Veriban] XML file found:', xmlEntry.filename);
 
     // Extract XML content
-    const xmlTextWriter = new (await import('https://deno.land/x/zipjs@v2.7.32/index.js')).TextWriter();
-    const xmlContent = await xmlEntry.getData(xmlTextWriter);
+    const xmlTextWriter = new zipjs.TextWriter();
+    const xmlContent = await xmlEntry.getData!(xmlTextWriter);
     await zipReader.close();
 
     console.log('✅ [Veriban] XML extracted, length:', xmlContent.length);

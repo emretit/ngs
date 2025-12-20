@@ -123,7 +123,7 @@ serve(async (req) => {
 
     try {
       // Call appropriate method based on action
-      let uuidListResult;
+      let uuidListResult: { success: boolean; data?: string[]; error?: string } | undefined;
       
       if (action === 'getUnTransferred') {
         console.log('📊 GetUnTransferredPurchaseInvoiceUUIDList çağrılıyor...');
@@ -139,11 +139,11 @@ serve(async (req) => {
         );
       }
 
-      if (!uuidListResult.success) {
-        console.error('❌ UUID listesi alınamadı:', uuidListResult.error);
+      if (!uuidListResult || !uuidListResult.success) {
+        console.error('❌ UUID listesi alınamadı:', uuidListResult?.error);
         return new Response(JSON.stringify({
           success: false,
-          error: uuidListResult.error || 'UUID listesi alınamadı'
+          error: uuidListResult?.error || 'UUID listesi alınamadı'
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -19,6 +19,8 @@ const createCustomSupabaseClient = () => {
       detectSessionInUrl: true,
       flowType: 'pkce', // PKCE flow for better security and CORS handling
       redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      storageKey: 'sb-vwhwufnckpqirxptwncw-auth-token',
     },
     global: {
       headers: {

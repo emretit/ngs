@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/back-button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -25,7 +27,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  Eye
+  Eye,
+  MoreHorizontal
 } from "lucide-react";
 import { useSalesInvoices } from "@/hooks/useSalesInvoices";
 import { useInvoiceTags } from "@/hooks/useInvoiceTags";
@@ -254,92 +257,107 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
 
   return (
     <>
-      <div className="space-y-6">
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-20 bg-white rounded-lg border border-gray-200 shadow-sm mb-2">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4">
-            {/* Sol taraf - Başlık */}
+      <div className="space-y-2">
+        {/* Enhanced Sticky Header with Progress */}
+        <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
+          <div className="flex items-center justify-between p-3 pl-12">
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/sales-invoices')}
-                className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-50/50 hover:text-blue-700 hover:border-blue-200 transition-all duration-200 hover:shadow-sm"
+              {/* Simple Back Button */}
+              <BackButton 
+                onClick={() => navigate("/sales-invoices")}
+                variant="ghost"
+                size="sm"
               >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="font-medium">Satış Faturaları</span>
-              </Button>
+                Satış Faturaları
+              </BackButton>
               
-              <div className="p-2 bg-gradient-to-r from-green-500 to-green-600 rounded-lg text-white shadow-lg">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div className="space-y-0.5">
-                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                  Satış Faturası
-                </h1>
-                <p className="text-xs text-muted-foreground/70">
-                  {invoice.fatura_no || 'Henüz atanmadı'} • {invoice.customer?.company || invoice.customer?.name || 'Müşteri'}
-                </p>
+              {/* Simple Title Section with Icon */}
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <div className="space-y-0.5">
+                  <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                    Satış Faturası
+                  </h1>
+                  <p className="text-xs text-muted-foreground/70">
+                    {invoice.fatura_no || 'Henüz atanmadı'} • {invoice.customer?.company || invoice.customer?.name || 'Müşteri'}
+                  </p>
+                </div>
               </div>
             </div>
             
-            {/* Sağ taraf - İstatistikler ve Butonlar */}
-            <div className="flex flex-wrap gap-2 items-center">
-              <Badge variant="outline" className="px-3 py-1">
-                <Package className="h-3 w-3 mr-1" />
-                {invoiceItems.length} Kalem
-              </Badge>
-              <Badge variant="outline" className="px-3 py-1">
-                <DollarSign className="h-3 w-3 mr-1" />
-                {formatCurrency(invoice.toplam_tutar || 0, invoice.para_birimi)}
-              </Badge>
-              {getDocumentTypeBadge(invoice.document_type)}
-              
-              <div className="flex items-center gap-2 ml-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/sales-invoices/edit/${id}`)}
-                  className="shadow-sm"
-                  disabled={invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted'}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Düzenle
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadPdf}
-                  disabled={isDownloading}
-                  className="shadow-sm"
-                >
-                  {isDownloading ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-1" />
-                  )}
-                  PDF
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/sales-invoices/new?copyFrom=${id}`)}
-                  className="shadow-sm"
-                >
-                  <Copy className="h-4 w-4 mr-1" />
-                  Kopyala
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDelete}
-                  className="shadow-sm text-red-600 hover:text-red-700 hover:bg-red-50"
-                  disabled={invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted'}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Sil
-                </Button>
+            <div className="flex items-center gap-4">
+              <div className="flex flex-wrap gap-2 items-center">
+                <Badge variant="outline" className="px-3 py-1">
+                  <Package className="h-3 w-3 mr-1" />
+                  {invoiceItems.length} Kalem
+                </Badge>
+                <Badge variant="outline" className="px-3 py-1">
+                  <DollarSign className="h-3 w-3 mr-1" />
+                  {formatCurrency(invoice.toplam_tutar || 0, invoice.para_birimi)}
+                </Badge>
+                {getDocumentTypeBadge(invoice.document_type)}
               </div>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 px-4 py-2 rounded-xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-50/50 hover:text-gray-700 hover:border-gray-200 transition-all duration-200 hover:shadow-sm"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="font-medium">İşlemler</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Düzenleme</DropdownMenuLabel>
+                  <DropdownMenuItem 
+                    onClick={() => navigate(`/sales-invoices/edit/${id}`)}
+                    className="gap-2 cursor-pointer"
+                    disabled={invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted'}
+                  >
+                    <Edit className="h-4 w-4 text-slate-500" />
+                    <span>Düzenle</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuLabel>Yazdırma & İndirme</DropdownMenuLabel>
+                  <DropdownMenuItem 
+                    onClick={handleDownloadPdf}
+                    className="gap-2 cursor-pointer"
+                    disabled={isDownloading}
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4 text-blue-500" />
+                    )}
+                    <span>PDF İndir</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuLabel>Kopyalama</DropdownMenuLabel>
+                  <DropdownMenuItem 
+                    onClick={() => navigate(`/sales-invoices/new?copyFrom=${id}`)}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <Copy className="h-4 w-4 text-green-500" />
+                    <span>Kopyala</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem 
+                    onClick={handleDelete}
+                    className="gap-2 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
+                    disabled={invoice.einvoice_status === 'sent' || invoice.einvoice_status === 'delivered' || invoice.einvoice_status === 'accepted'}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Sil</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>

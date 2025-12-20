@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: '/',
   server: {
     // In Lovable/hosted previews, hardcoding `localhost` causes the browser to try
     // to reach the user's own machine (and fails with CORS/blocked address space).
@@ -40,8 +41,12 @@ export default defineConfig(({ mode }) => ({
     include: ['@react-pdf/renderer', 'buffer'],
   },
   build: {
+    assetsDir: 'assets',
     rollupOptions: {
       output: {
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
         manualChunks: {
           // Core React
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],

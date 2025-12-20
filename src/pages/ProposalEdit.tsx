@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/back-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -931,45 +932,46 @@ const ProposalEdit = ({ isCollapsed, setIsCollapsed }: ProposalEditProps) => {
   };
 
   return (
-    <div>
-      {/* Header Actions */}
-      <div className="mb-6 p-6 bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200/60 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleBack}
-              className="gap-2 hover:bg-white/60 transition-colors"
+    <div className="space-y-2">
+      {/* Enhanced Sticky Header with Progress */}
+      <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
+        <div className="flex items-center justify-between p-3 pl-12">
+          <div className="flex items-center gap-3">
+            {/* Simple Back Button */}
+            <BackButton 
+              onClick={() => navigate("/proposals")}
+              variant="ghost"
+              size="sm"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Geri
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/60 rounded-xl shadow-sm">
-                <FileText className="h-5 w-5 text-slate-600" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-800">
+              Teklifler
+            </BackButton>
+            
+            {/* Simple Title Section with Icon */}
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <div className="space-y-0.5">
+                <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
                   Teklif Düzenle
                 </h1>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground/70">
+                    {proposal.number || 'Teklif #' + id}
+                  </p>
                   <Badge className={`${proposalStatusColors[proposal.status]} text-xs`}>
                     {proposalStatusLabels[proposal.status]}
                   </Badge>
-                  <span className="text-xs text-slate-500">
-                    {proposal.number || 'Teklif #' + id}
-                  </span>
-                  <Badge 
-                    variant="outline" 
-                    className={`text-[10px] px-1.5 py-0 ${
-                      (proposal as any).revision_number 
-                        ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700'
-                        : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700'
-                    }`}
-                  >
-                    R{(proposal as any).revision_number || 0}
-                  </Badge>
+                  {(proposal as any).revision_number && (
+                    <Badge 
+                      variant="outline" 
+                      className={`text-[10px] px-1.5 py-0 ${
+                        (proposal as any).revision_number 
+                          ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700'
+                          : 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-700'
+                      }`}
+                    >
+                      R{(proposal as any).revision_number || 0}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>

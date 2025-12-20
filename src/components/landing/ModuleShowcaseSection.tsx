@@ -94,18 +94,10 @@ const ModuleShowcaseSection = () => {
   ];
   
   return (
-    <section id="modules" className="relative py-24 overflow-hidden bg-slate-950">
-      {/* Background effects - matching hero section */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950" />
-        
-        {/* Animated gradient orbs */}
-        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full bg-gradient-to-r from-red-600/10 to-orange-500/5 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-gradient-to-l from-purple-500/10 to-red-600/5 blur-[100px]" />
-        
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
-      </div>
+    <section id="modules" className="relative py-24 overflow-hidden bg-background">
+      {/* Grid Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-40" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
       
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -113,10 +105,9 @@ const ModuleShowcaseSection = () => {
           {/* Badge */}
           <div className="inline-flex items-center mb-6">
             <div className="group relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-orange-600 rounded-full blur opacity-30" />
-              <div className="relative flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/80 border border-white/10 backdrop-blur-xl">
-                <Sparkles className="w-4 h-4 text-red-400" />
-                <span className="text-sm font-medium text-white/90">
+              <div className="relative flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-primary">
                   {t("landing.modules.badge") || "Güçlü Modüller"}
                 </span>
               </div>
@@ -124,13 +115,13 @@ const ModuleShowcaseSection = () => {
           </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            <span className="text-white/95">{t("landing.modules.title1") || "İşletmeniz İçin"}</span>{" "}
-            <span className="bg-gradient-to-r from-red-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
+            <span className="text-foreground">{t("landing.modules.title1") || "İşletmeniz İçin"}</span>{" "}
+            <span className="bg-gradient-to-r from-primary via-red-500 to-orange-500 bg-clip-text text-transparent">
               {t("landing.modules.title2") || "Tüm Modüller"}
             </span>
           </h2>
           
-          <p className="text-lg text-white/50 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Tüm iş süreçlerinizi tek bir platformda yönetin. 
             Her modül birbiriyle entegre çalışır.
           </p>
@@ -149,15 +140,15 @@ const ModuleShowcaseSection = () => {
                 {/* Glow effect on hover */}
                 <div className={`absolute -inset-0.5 bg-gradient-to-r ${module.gradient} rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity duration-500`} />
                 
-                <div className={`relative p-5 rounded-2xl bg-white/[0.03] backdrop-blur-sm border transition-all duration-300 hover:-translate-y-1 ${
+                <div className={`relative p-5 rounded-2xl bg-card border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
                   module.important
-                    ? 'border-red-500/30 hover:border-red-500/50'
-                    : 'border-white/10 hover:border-white/20'
+                    ? 'border-primary/30 hover:border-primary/50'
+                    : 'border-border hover:border-primary/30'
                 }`}>
                   {/* Badge for important modules */}
                   {module.badge && (
                     <div className="absolute -top-2 -right-2">
-                      <span className="px-2 py-0.5 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold rounded-full shadow-lg">
+                      <span className="px-2 py-0.5 bg-gradient-to-r from-primary to-orange-500 text-white text-[10px] font-bold rounded-full shadow-lg">
                         {module.badge}
                       </span>
                     </div>
@@ -169,12 +160,12 @@ const ModuleShowcaseSection = () => {
                   </div>
 
                   {/* Title */}
-                  <h3 className="font-semibold text-white text-sm mb-2 group-hover:text-red-400 transition-colors duration-300">
+                  <h3 className="font-semibold text-foreground text-sm mb-2 group-hover:text-primary transition-colors duration-300">
                     {module.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-xs text-white/40 leading-relaxed group-hover:text-white/60 transition-colors duration-300">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     {module.description}
                   </p>
                   

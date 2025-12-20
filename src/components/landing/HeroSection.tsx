@@ -203,28 +203,6 @@ const HeroSection = () => {
               </motion.div>
             ))}
           </motion.div>
-
-          {/* Scroll indicator */}
-          <motion.div 
-            className="absolute bottom-8 left-1/2 -translate-x-1/2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, y: [0, 10, 0] }}
-            transition={{ 
-              opacity: { delay: 1.5, duration: 0.5 },
-              y: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-            }}
-          >
-            <a href="#modules" className="flex flex-col items-center gap-2 text-white/40 hover:text-white/60 transition-colors">
-              <span className="text-xs uppercase tracking-widest">Keşfet</span>
-              <div className="w-6 h-10 rounded-full border-2 border-current flex items-start justify-center p-2">
-                <motion.div 
-                  className="w-1 h-2 bg-current rounded-full"
-                  animate={{ y: [0, 12, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-              </div>
-            </a>
-          </motion.div>
         </div>
       </div>
     </section>

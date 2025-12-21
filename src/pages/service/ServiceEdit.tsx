@@ -13,7 +13,8 @@ import {
   FileDown,
   Send,
   CheckCircle2,
-  ArrowLeft
+  ArrowLeft,
+  FileText
 } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import BackButton from '@/components/ui/back-button';
@@ -26,6 +27,8 @@ import ServiceDateInfoCard from '@/components/service/cards/ServiceDateInfoCard'
 import ProductServiceCard from '@/components/proposals/cards/ProductServiceCard';
 import ServiceAttachmentsNotesCard from '@/components/service/cards/ServiceAttachmentsNotesCard';
 import ProductDetailsModal from '@/components/proposals/form/ProductDetailsModal';
+import { ServiceSlipTemplateSelector } from '@/components/service/ServiceSlipTemplateSelector';
+import { PdfExportService } from '@/services/pdf/pdfExportService';
 
 interface ServiceRequestFormData {
   service_title: string;
@@ -211,6 +214,10 @@ const ServiceEdit = () => {
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | undefined>(undefined);
   const [editingItemData, setEditingItemData] = useState<any>(null);
+
+  // Service slip PDF state
+  const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // ID değiştiğinde initialize flag'ini sıfırla (ProposalEdit'te yok ama biz ekliyoruz)
   useEffect(() => {
@@ -914,6 +921,38 @@ const ServiceEdit = () => {
     updateServiceMutation.mutate(formData);
   };
 
+  // Servis fişi PDF oluşturma
+  const handleGenerateServiceSlipPdf = async (templateId: string) => {
+    if (!serviceRequest || !id) {
+      toast.error('Servis verisi bulunamadı');
+      return;
+    }
+
+    setIsGeneratingPdf(true);
+    try {
+      // Servis verisini PDF formatına dönüştür
+      const serviceData = await PdfExportService.transformServiceForPdf(serviceRequest);
+      
+      // PDF'i oluştur ve aç
+      await PdfExportService.openServicePdfInNewTab(serviceData, {
+        templateId,
+        filename: `servis-fisi-${serviceData.serviceNumber}.pdf`
+      });
+
+      toast.success('Servis fişi PDF\'i oluşturuldu');
+      setTemplateSelectorOpen(false);
+    } catch (error) {
+      console.error('PDF oluşturma hatası:', error);
+      toast.error('PDF oluşturulurken hata oluştu: ' + (error as Error).message);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleTemplateSelect = (templateId: string) => {
+    handleGenerateServiceSlipPdf(templateId);
+  };
+
   useEffect(() => {
     console.log('[ServiceEdit] Render kontrolü:', {
       loading,
@@ -996,6 +1035,14 @@ const ServiceEdit = () => {
                 <DropdownMenuItem onClick={() => navigate(`/service/detail/${id}`)} className="gap-2 cursor-pointer">
                   <Eye className="h-4 w-4" />
                   <span>Detayları Görüntüle</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setTemplateSelectorOpen(true)} 
+                  className="gap-2 cursor-pointer"
+                  disabled={isGeneratingPdf}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Servis Fişi Oluştur</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => toast.info("PDF export özelliği yakında eklenecek")} className="gap-2 cursor-pointer">
                   <FileDown className="h-4 w-4" />
@@ -1086,6 +1133,13 @@ const ServiceEdit = () => {
         onAddToProposal={(productData) => handleAddProductToItems(productData, editingItemIndex)}
         currency="TRY"
         existingData={editingItemData}
+      />
+
+      {/* Service Slip Template Selector */}
+      <ServiceSlipTemplateSelector
+        isOpen={templateSelectorOpen}
+        onClose={() => setTemplateSelectorOpen(false)}
+        onSelect={handleTemplateSelect}
       />
     </div>
   );

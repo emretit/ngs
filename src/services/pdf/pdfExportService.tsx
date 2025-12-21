@@ -1152,11 +1152,40 @@ export class PdfExportService {
         tax_number: companySettings.company_tax_number || undefined,
       };
 
-      // Get parts from service_details if available
-      const serviceDetails = service.service_details as any;
-      const parts = serviceDetails?.parts_list || serviceDetails?.parts || [];
+      // Get parts from service_items table first, then fallback to service_details
+      let parts: any[] = [];
+      try {
+        const { data: serviceItems } = await supabase
+          .from('service_items')
+          .select('*')
+          .eq('service_request_id', service.id)
+          .order('row_number', { ascending: true });
+
+        if (serviceItems && serviceItems.length > 0) {
+          parts = serviceItems.map((item: any) => ({
+            id: item.id,
+            name: item.name || '',
+            quantity: Number(item.quantity) || 1,
+            unit: item.unit || 'adet',
+            unit_price: Number(item.unit_price) || 0,
+            total: Number(item.total_price) || (Number(item.quantity || 1) * Number(item.unit_price || 0)),
+            tax_rate: item.tax_rate || 20,
+            discount_rate: item.discount_rate || 0,
+            description: item.description || undefined,
+          }));
+        }
+      } catch (error) {
+        console.warn('Service items fetch error, using fallback:', error);
+      }
+
+      // Fallback to service_details if service_items is empty
+      if (parts.length === 0) {
+        const serviceDetails = service.service_details as any;
+        parts = serviceDetails?.parts_list || serviceDetails?.parts || [];
+      }
 
       // Get instructions from service_details if available
+      const serviceDetails = service.service_details as any;
       const instructions = serviceDetails?.instructions || [];
 
       return {
@@ -1180,8 +1209,8 @@ export class PdfExportService {
           name: part.name || part.part_name || '',
           quantity: Number(part.quantity) || 1,
           unit: part.unit || 'adet',
-          unitPrice: Number(part.unit_price) || 0,
-          total: Number(part.total) || (Number(part.quantity || 1) * Number(part.unit_price || 0)),
+          unitPrice: Number(part.unit_price || part.unitPrice) || 0,
+          total: Number(part.total || part.total_price) || (Number(part.quantity || 1) * Number(part.unit_price || part.unitPrice || 0)),
         })),
         instructions: Array.isArray(instructions) ? instructions : [],
         notes: serviceDetails?.notes || service.notes || undefined,
@@ -1196,17 +1225,16 @@ export class PdfExportService {
   }
 
   /**
-   * Get service PDF templates
-   * Note: service_templates table doesn't have schema_json, so we use default schema
+   * Get service PDF templates from pdf_templates table (type='service_slip')
    */
   static async getServiceTemplates(): Promise<ServicePdfTemplate[]> {
     const companyId = await this.getCurrentCompanyId();
     
-    // Check if there's a service_pdf_templates table first
+    // Get templates from pdf_templates table with type='service_slip'
     let query = supabase
-      .from('service_pdf_templates')
+      .from('pdf_templates')
       .select('*')
-      .eq('is_active', true);
+      .eq('type', 'service_slip');
 
     if (companyId) {
       query = query.eq('company_id', companyId);
@@ -1214,49 +1242,13 @@ export class PdfExportService {
       query = query.is('company_id', null);
     }
 
-    let { data, error } = await query.order('name');
+    let { data, error } = await query.order('is_default', { ascending: false }).order('created_at', { ascending: false });
 
-    // If service_pdf_templates doesn't exist, try service_templates and use default schema
-    if (error && error.code === '42P01') {
-      // Table doesn't exist, use service_templates with default schema
-      let fallbackQuery = supabase
-        .from('service_templates')
-        .select('*')
-        .eq('is_active', true);
-
-      if (companyId) {
-        fallbackQuery = fallbackQuery.eq('company_id', companyId);
-      } else {
-        fallbackQuery = fallbackQuery.is('company_id', null);
-      }
-
-      const { data: fallbackData, error: fallbackError } = await fallbackQuery.order('name');
-
-      if (fallbackError) {
-        console.error('Error fetching service templates:', fallbackError);
-        throw new Error('Servis şablonları yüklenirken hata oluştu: ' + fallbackError.message);
-      }
-
-      // Import default schema
-      const { defaultServiceTemplateSchema } = await import('@/types/service-template');
-      
-      // Transform to ServicePdfTemplate format with default schema
-      return (fallbackData || []).map((template: any) => ({
-        id: template.id,
-        name: template.name,
-        description: template.description,
-        schema_json: defaultServiceTemplateSchema, // Use default schema
-        is_active: template.is_active || true,
-        company_id: template.company_id || '',
-        created_by: template.created_by,
-        created_at: template.created_at || new Date().toISOString(),
-        updated_at: template.updated_at || new Date().toISOString(),
-      })) as ServicePdfTemplate[];
-    }
-
+    // If pdf_templates doesn't exist or error, return empty array
     if (error) {
-      console.error('Error fetching service templates:', error);
-      throw new Error('Servis şablonları yüklenirken hata oluştu: ' + error.message);
+      console.error('Error fetching service PDF templates:', error);
+      // Return empty array instead of throwing error - user can create templates later
+      return [];
     }
 
     // Transform to ServicePdfTemplate format
@@ -1265,7 +1257,7 @@ export class PdfExportService {
       name: template.name,
       description: template.description,
       schema_json: template.schema_json || {},
-      is_active: template.is_active,
+      is_active: template.is_active !== false,
       company_id: template.company_id,
       created_by: template.created_by,
       created_at: template.created_at,
@@ -1286,10 +1278,12 @@ export class PdfExportService {
       if (options?.template) {
         activeTemplate = options.template;
       } else if (options?.templateId) {
+        // Get template from pdf_templates table (type='service_slip')
         const { data, error } = await supabase
-          .from('service_templates')
+          .from('pdf_templates')
           .select('*')
           .eq('id', options.templateId)
+          .eq('type', 'service_slip')
           .single();
 
         if (error) {
@@ -1301,7 +1295,7 @@ export class PdfExportService {
           name: data.name,
           description: data.description,
           schema_json: data.schema_json || {},
-          is_active: data.is_active,
+          is_active: data.is_active !== false,
           company_id: data.company_id,
           created_by: data.created_by,
           created_at: data.created_at,

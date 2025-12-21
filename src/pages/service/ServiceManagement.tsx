@@ -10,6 +10,7 @@ import ServiceCalendarView from "@/components/service/ServiceCalendarView";
 import ServiceGanttView from "@/components/service/ServiceGanttView";
 import { ServiceDispatchBoard } from "@/components/service/dispatch/ServiceDispatchBoard";
 import { MaintenanceCalendarView } from "@/components/service/MaintenanceCalendarView";
+import ServiceDetailSheet from "@/components/service/ServiceDetailSheet";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,7 @@ export default function ServiceManagement() {
   
   const [activeView, setActiveView] = useState<ViewType>("table");
   const [selectedServices, setSelectedServices] = useState<ServiceRequest[]>([]);
+  const [selectedService, setSelectedService] = useState<ServiceRequest | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [selectedPriority, setSelectedPriority] = useState<string | null>(null);
@@ -169,7 +171,11 @@ export default function ServiceManagement() {
   };
 
   const handleSelectService = (service: ServiceRequest) => {
-    navigate(`/service/edit/${service.id}`);
+    setSelectedService(service);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedService(null);
   };
 
   const handleUpdateStatus = async (serviceId: string, newStatus: string) => {
@@ -246,6 +252,7 @@ export default function ServiceManagement() {
                 selectedServices={selectedServices}
                 onToggleServiceSelection={handleToggleServiceSelection}
                 onSelectAll={handleSelectAll}
+                onSelectService={handleSelectService}
                 technicians={technicians}
                 onDeleteService={async (service) => {
                   const { error } = await supabase
@@ -430,6 +437,20 @@ export default function ServiceManagement() {
           </>
         )}
       </div>
+
+      {/* Detail Sheet */}
+      {selectedService && (
+        <ServiceDetailSheet
+          service={selectedService}
+          open={!!selectedService}
+          onOpenChange={(open) => !open && handleCloseDetail()}
+          technicians={technicians.map(t => ({
+            id: t.id,
+            first_name: t.first_name || '',
+            last_name: t.last_name || ''
+          }))}
+        />
+      )}
     </>
   );
 }

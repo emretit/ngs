@@ -767,7 +767,7 @@ const NewServiceRequest = () => {
             inputHeight="h-10"
           />
 
-        {/* Row 4 - Ek Bilgiler, Dosya/Notlar */}
+        {/* Row 4 - Servis Açıklaması, Garanti, Dosyalar ve Notlar */}
         <ServiceAttachmentsNotesCard
           formData={formData}
           handleInputChange={handleInputChange}

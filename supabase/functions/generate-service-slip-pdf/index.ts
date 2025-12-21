@@ -46,7 +46,7 @@ serve(async (req) => {
       throw new Error('serviceRequestId is required');
     }
 
-    // Get service request data
+    // Get service request data with service_items
     const { data: serviceRequest, error: serviceError } = await supabase
       .from('service_requests')
       .select(`
@@ -60,6 +60,13 @@ serve(async (req) => {
     if (serviceError || !serviceRequest) {
       throw new Error('Service request not found');
     }
+
+    // Get service_items
+    const { data: serviceItems } = await supabase
+      .from('service_items')
+      .select('*')
+      .eq('service_request_id', serviceRequestId)
+      .order('row_number', { ascending: true });
 
     // Get company settings
     const { data: profile } = await supabase
@@ -78,13 +85,14 @@ serve(async (req) => {
       company = companyData;
     }
 
-    // Get template if provided
+    // Get PDF template if provided (from pdf_templates table, type='service_slip')
     let template = null;
     if (templateId) {
       const { data: templateData } = await supabase
-        .from('service_templates')
+        .from('pdf_templates')
         .select('*')
         .eq('id', templateId)
+        .eq('type', 'service_slip')
         .single();
       template = templateData;
     }
@@ -131,14 +139,23 @@ serve(async (req) => {
         logo_url: company.logo_url || undefined,
         tax_number: company.tax_number || undefined,
       } : undefined,
-      parts: (serviceRequest.service_details?.used_products || serviceRequest.service_details?.parts || []).map((part: any, index: number) => ({
-        id: part.id || `part-${index}`,
-        name: part.name || part.product_name || '',
-        quantity: Number(part.quantity) || 1,
-        unit: part.unit || 'adet',
-        unitPrice: Number(part.unit_price || part.price) || 0,
-        total: Number(part.total) || (Number(part.quantity || 1) * Number(part.unit_price || part.price || 0)),
-      })),
+      parts: (serviceItems && serviceItems.length > 0 
+        ? serviceItems.map((item: any) => ({
+            id: item.id,
+            name: item.name || '',
+            quantity: Number(item.quantity) || 1,
+            unit: item.unit || 'adet',
+            unitPrice: Number(item.unit_price) || 0,
+            total: Number(item.total_price) || (Number(item.quantity || 1) * Number(item.unit_price || 0)),
+          }))
+        : (serviceRequest.service_details?.used_products || serviceRequest.service_details?.parts || []).map((part: any, index: number) => ({
+            id: part.id || `part-${index}`,
+            name: part.name || part.product_name || '',
+            quantity: Number(part.quantity) || 1,
+            unit: part.unit || 'adet',
+            unitPrice: Number(part.unit_price || part.price) || 0,
+            total: Number(part.total) || (Number(part.quantity || 1) * Number(part.unit_price || part.price || 0)),
+          }))),
       instructions: serviceRequest.service_details?.instructions || [],
       notes: serviceRequest.service_details?.notes || serviceRequest.notes || undefined,
       technicianSignature: serviceRequest.technician_signature || undefined,

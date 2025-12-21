@@ -1,0 +1,18 @@
+project_id = "vwhwufnckpqirxptwncw"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+
+[functions.register-user]
+verify_jwt = false
+
+[functions.invite-user]
+verify_jwt = false
+
+[functions.seed]
+verify_jwt = false

@@ -1,0 +1,72 @@
+# Fastfile - iOS Build ve Deploy Otomasyonu
+# Kullanım: fastlane ios beta veya fastlane ios release
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Build ve TestFlight'a yükle (Beta)"
+  lane :beta do
+    # Version ve build number'ı artır
+    increment_build_number(
+      xcodeproj: "ios/Runner.xcodeproj"
+    )
+    
+    # Flutter build
+    sh("flutter clean")
+    sh("flutter pub get")
+    sh("cd ios && pod install && cd ..")
+    sh("flutter build ipa --release")
+    
+    # Upload to TestFlight
+    upload_to_testflight(
+      skip_waiting_for_build_processing: false,
+      skip_submission: true,
+      distribute_external: false
+    )
+  end
+
+  desc "Build ve App Store'a yükle (Release)"
+  lane :release do
+    # Version artır
+    increment_version_number(
+      version_number: ENV["VERSION_NUMBER"] # Manuel olarak: VERSION_NUMBER=1.0.1 fastlane ios release
+    )
+    
+    # Build number artır
+    increment_build_number(
+      xcodeproj: "ios/Runner.xcodeproj"
+    )
+    
+    # Flutter build
+    sh("flutter clean")
+    sh("flutter pub get")
+    sh("cd ios && pod install && cd ..")
+    sh("flutter build ipa --release")
+    
+    # Upload to App Store
+    upload_to_app_store(
+      skip_metadata: false,
+      skip_screenshots: false,
+      submit_for_review: false,
+      force: false,
+      automatic_release: false
+    )
+  end
+
+  desc "Sadece build oluştur (yükleme yok)"
+  lane :build do
+    sh("flutter clean")
+    sh("flutter pub get")
+    sh("cd ios && pod install && cd ..")
+    sh("flutter build ipa --release")
+  end
+
+  desc "Metadata yükle"
+  lane :metadata do
+    upload_to_app_store(
+      skip_binary_upload: true,
+      skip_screenshots: false,
+      skip_metadata: false
+    )
+  end
+end

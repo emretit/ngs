@@ -1,0 +1,66 @@
+-- Enable RLS on all tables that have policies but RLS disabled
+-- This is critical for security in multi-tenant setup
+
+-- Core business tables
+ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE card_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cash_flow_forecasts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cashflow_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cashflow_main ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cashflow_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE checks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE credit_cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customer_aliases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE e_fatura_stok_eslestirme ENABLE ROW LEVEL SECURITY;
+ALTER TABLE einvoice_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE einvoice_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE einvoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE einvoices_received ENABLE ROW LEVEL SECURITY;
+ALTER TABLE einvoices_sent ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_auth ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_leaves ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_performance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_salaries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE example_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exchange_rate_updates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exchange_rates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE financial_instruments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hr_budget ENABLE ROW LEVEL SECURITY;
+ALTER TABLE invoice_analysis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE loans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE monthly_financials ENABLE ROW LEVEL SECURITY;
+
+-- Fix the current_company_id() function to use profiles table
+CREATE OR REPLACE FUNCTION public.current_company_id()
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+DECLARE
+  user_company_id UUID;
+  app_user_id UUID;
+BEGIN
+  app_user_id := auth.uid();
+  IF app_user_id IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  -- Use profiles table instead of users table
+  SELECT company_id INTO user_company_id
+  FROM public.profiles 
+  WHERE id = app_user_id;
+
+  RETURN user_company_id;
+EXCEPTION WHEN OTHERS THEN
+  RETURN NULL;
+END;
+$function$;

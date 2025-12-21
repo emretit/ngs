@@ -1,0 +1,9 @@
+# Appfile - Fastlane yapılandırması
+# Bu dosyayı kendi bilgilerinizle güncelleyin
+
+app_identifier("com.pafta.mobile") # Bundle Identifier
+apple_id("your-email@example.com") # Apple ID (App Store Connect e-posta)
+team_id("T9QCW8Q2C3") # Development Team ID
+
+# İsteğe bağlı
+# itc_team_name("Your Team Name")

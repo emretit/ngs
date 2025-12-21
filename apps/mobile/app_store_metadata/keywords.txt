@@ -1,0 +1,6 @@
+# App Store Keywords (100 karakter limiti)
+
+teknik servis,servis yönetimi,CRM,müşteri yönetimi,teknisyen,servis takibi,fatura,PDF,harita,konum
+
+# İngilizce alternatif:
+# technical service,service management,CRM,customer management,technician,service tracking,invoice,PDF,map,location

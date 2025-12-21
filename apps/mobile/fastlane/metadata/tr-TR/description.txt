@@ -1,0 +1,25 @@
+Pafta.App, teknik servis işletmeleri için tasarlanmış kapsamlı bir mobil yönetim uygulamasıdır. Servis taleplerinden müşteri ilişkilerine, satış yönetiminden finansal takibe kadar tüm iş süreçlerinizi tek bir platformda yönetin.
+
+Teknik Servis Yönetimi
+- Hızlı ve kolay servis talebi oluşturma
+- Servis geçmişi takibi
+- Müşteri bilgileri yönetimi
+- Dijital imza alma
+- PDF servis fişi oluşturma
+
+CRM ve Satış Yönetimi
+- Müşteri veritabanı yönetimi
+- Satış fırsatları takibi
+- Teklif hazırlama
+
+Finansal Yönetim
+- Gelir ve gider takibi
+- Fatura yönetimi
+- Finansal raporlar
+
+Harita ve Konum
+- Google Maps entegrasyonu
+- Servis adreslerini haritada görüntüleme
+- Rota planlama
+
+Pafta.App ile teknik servis işletmenizi dijitalleştirin, verimliliğinizi artırın.

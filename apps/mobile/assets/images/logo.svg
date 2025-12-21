@@ -1,0 +1,14 @@
+<svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Küçük daire (üstte) -->
+  <circle cx="105" cy="8" r="4" fill="#8B0000"/>
+  
+  <!-- PAFTA yazısı -->
+  <text x="60" y="28" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="700" text-anchor="middle" fill="#8B0000">
+    PAFTA
+  </text>
+  
+  <!-- Drop shadow efekti -->
+  <text x="61" y="29" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="700" text-anchor="middle" fill="#4A0000" opacity="0.3">
+    PAFTA
+  </text>
+</svg>

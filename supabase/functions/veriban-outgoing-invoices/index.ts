@@ -293,7 +293,7 @@ serve(async (req) => {
               invoice_profile: parsedInvoice.invoiceProfile || 'TEMELFATURA',
               company_id: profile.company_id,
               status: 'sent',
-              sent_at: parsedInvoice.issueDate || new Date().toISOString(),
+              sent_at: parsedInvoice.invoiceDate || new Date().toISOString(),
             };
 
             // Upsert to DB

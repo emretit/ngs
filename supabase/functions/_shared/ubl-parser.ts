@@ -39,6 +39,22 @@ export interface ParsedSupplierInfo {
   };
 }
 
+export interface ParsedCustomerInfo {
+  name: string;
+  taxNumber: string;
+  taxOffice?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  contact?: {
+    email?: string;
+    phone?: string;
+  };
+}
+
 export interface ParsedInvoice {
   invoiceNumber: string;
   invoiceDate: string;
@@ -50,6 +66,7 @@ export interface ParsedInvoice {
   invoiceType?: string;
   invoiceProfile?: string;
   supplierInfo: ParsedSupplierInfo;
+  customerInfo?: ParsedCustomerInfo;
   items: ParsedInvoiceItem[];
   ettn?: string;
   uuid?: string;
@@ -245,6 +262,71 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
       },
     };
 
+    // Extract customer information (AccountingCustomerParty)
+    const accountingCustomerParty = invoice?.['cac:AccountingCustomerParty'] || 
+                                   invoice?.['AccountingCustomerParty'] || 
+                                   {};
+    
+    const customerParty = accountingCustomerParty?.['cac:Party'] || 
+                         accountingCustomerParty?.['Party'] || 
+                         accountingCustomerParty || 
+                         {};
+    
+    const customerPartyName = customerParty?.['cac:PartyName'] || 
+                             customerParty?.['PartyName'] || 
+                             {};
+    
+    const customerName = customerPartyName?.['cbc:Name']?.['#text'] || 
+                        customerPartyName?.['cbc:Name'] || 
+                        customerPartyName?.['Name'] || 
+                        '';
+    
+    const customerTaxScheme = customerParty?.['cac:PartyTaxScheme'] || 
+                             customerParty?.['PartyTaxScheme'] || 
+                             {};
+    
+    // PartyTaxScheme can be array or single object
+    const customerTaxSchemeArray = Array.isArray(customerTaxScheme) ? customerTaxScheme : [customerTaxScheme];
+    let customerTaxNumber = '';
+    
+    for (const taxSchemeItem of customerTaxSchemeArray) {
+      const companyId = taxSchemeItem?.['cac:CompanyID']?.['#text'] || 
+                       taxSchemeItem?.['cac:CompanyID'] || 
+                       taxSchemeItem?.['CompanyID'] || 
+                       taxSchemeItem?.['cbc:CompanyID']?.['#text'] || 
+                       taxSchemeItem?.['cbc:CompanyID'] || 
+                       '';
+      
+      if (companyId) {
+        customerTaxNumber = companyId;
+        break;
+      }
+    }
+    
+    const customerPostalAddress = customerParty?.['cac:PostalAddress'] || 
+                                 customerParty?.['PostalAddress'] || 
+                                 {};
+    
+    const customerContact = customerParty?.['cac:Contact'] || 
+                           customerParty?.['Contact'] || 
+                           {};
+    
+    const customerInfo: ParsedCustomerInfo = {
+      name: customerName,
+      taxNumber: customerTaxNumber,
+      taxOffice: customerTaxScheme?.['TaxScheme']?.['Name'] || '',
+      address: {
+        street: customerPostalAddress?.['cbc:StreetName']?.['#text'] || customerPostalAddress?.['cbc:StreetName'] || '',
+        city: customerPostalAddress?.['cbc:CityName']?.['#text'] || customerPostalAddress?.['cbc:CityName'] || '',
+        postalCode: customerPostalAddress?.['cbc:PostalZone']?.['#text'] || customerPostalAddress?.['cbc:PostalZone'] || '',
+        country: customerPostalAddress?.['cac:Country']?.['cbc:Name']?.['#text'] || customerPostalAddress?.['cac:Country']?.['cbc:Name'] || '',
+      },
+      contact: {
+        email: customerContact?.['cbc:ElectronicMail']?.['#text'] || customerContact?.['cbc:ElectronicMail'] || '',
+        phone: customerContact?.['cbc:Telephone']?.['#text'] || customerContact?.['cbc:Telephone'] || '',
+      },
+    };
+
     // Extract invoice lines
     const invoiceLines = invoice?.['cac:InvoiceLine'] || [];
     const linesArray = Array.isArray(invoiceLines) ? invoiceLines : [invoiceLines];
@@ -353,6 +435,7 @@ export function parseUBLTRXML(xmlContent: string): ParsedInvoice | null {
       invoiceType,
       invoiceProfile,
       supplierInfo,
+      customerInfo,
       items,
       ettn,
       uuid: ettn,

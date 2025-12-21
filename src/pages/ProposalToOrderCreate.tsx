@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { ShoppingCart, Save, Eye, FileDown, Send, MoreHorizontal, Package, FileText, Loader2, AlertCircle } from "lucide-react";
+import { ShoppingCart, Save, Eye, FileDown, Send, MoreHorizontal, Package, FileText, Loader2, AlertCircle, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
 import { OrderStatus, CreateOrderData, CreateOrderItemData } from "@/types/orders";
@@ -799,6 +799,20 @@ const ProposalToOrderCreate = () => {
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
+
+                {/* Müşteri Sayfasına Git */}
+                {formData.customer_id && (
+                  <>
+                    <DropdownMenuItem 
+                      onClick={() => navigate(`/customers/${formData.customer_id}`)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <Building2 className="h-4 w-4 text-blue-500" />
+                      <span>Müşteri Sayfasına Git</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
 
                 <DropdownMenuLabel>Kaydetme Seçenekleri</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => handleSave('pending')} className="gap-2 cursor-pointer">

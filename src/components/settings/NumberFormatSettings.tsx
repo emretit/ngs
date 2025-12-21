@@ -10,6 +10,7 @@ import { Save, RefreshCw, Info, AlertTriangle, CheckCircle, RotateCcw } from 'lu
 import { toast } from 'sonner';
 import { validateFormat, sanitizeFormat, resetSequence } from '@/utils/numberFormat';
 import { useCurrentCompany } from '@/hooks/useCurrentCompany';
+import { IntegratorService, IntegratorType } from '@/services/integratorService';
 
 const NUMBER_FORMAT_TYPES = [
   {
@@ -19,18 +20,12 @@ const NUMBER_FORMAT_TYPES = [
     description: 'Yeni teklifler için kullanılacak numara formatı'
   },
   {
-    key: 'veriban_invoice_number_format',
-    label: 'Veriban Fatura Numarası Formatı',
-    defaultValue: 'FAT{YYYY}{000000001}',
-    description: 'Veriban için GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter. Örnek: FAT2025000000001 (tire yok)',
-    isVeribanFormat: true
-  },
-  {
     key: 'einvoice_number_format',
     label: 'E-Fatura Seri Kodu',
     defaultValue: 'FAT',
-    description: 'E-fatura için Nilvera seri kodu (3 karakter, sadece harf/rakam)',
-    isNilveraSeries: true
+    description: 'E-fatura için seri kodu (3 karakter, sadece harf/rakam). Seçili entegratöre göre kullanılır. Veritabanından bir önceki numara çekilir.',
+    isNilveraSeries: true,
+    isDynamicIntegrator: true // Bu alan entegratör seçimine göre dinamik olarak değişir
   },
   {
     key: 'earchive_invoice_number_format',
@@ -75,16 +70,40 @@ export const NumberFormatSettings: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
   const [lastSaved, setLastSaved] = useState<Record<string, string>>({});
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [selectedIntegrator, setSelectedIntegrator] = useState<IntegratorType>('nilvera');
+  
+  // Entegratör seçimini yükle
+  React.useEffect(() => {
+    const loadIntegrator = async () => {
+      const integrator = await IntegratorService.getSelectedIntegrator();
+      setSelectedIntegrator(integrator);
+    };
+    loadIntegrator();
+  }, []);
 
   // Parametreler yüklendikten sonra format state'ini güncelle
   React.useEffect(() => {
     if (paramsLoading) return;
     
-    const newFormats = NUMBER_FORMAT_TYPES.map(type => ({
-      ...type,
-      currentValue: getParameterValue(type.key, type.defaultValue) as string,
-      originalValue: getParameterValue(type.key, type.defaultValue) as string,
-    }));
+    // Dinamik entegratör formatı için doğru key'i belirle
+    const einvoiceFormatKey = selectedIntegrator === 'veriban' 
+      ? 'veriban_invoice_number_format' 
+      : 'einvoice_number_format';
+    
+    const newFormats = NUMBER_FORMAT_TYPES.map(type => {
+      // Eğer dinamik entegratör formatıysa, seçili entegratöre göre key'i değiştir
+      let actualKey = type.key;
+      if (type.isDynamicIntegrator) {
+        actualKey = einvoiceFormatKey;
+      }
+      
+      return {
+        ...type,
+        key: actualKey, // Gerçek key'i kullan
+        currentValue: getParameterValue(actualKey, type.defaultValue) as string,
+        originalValue: getParameterValue(actualKey, type.defaultValue) as string,
+      };
+    });
     
     // Sadece değişiklik varsa güncelle (sonsuz döngüyü önlemek için)
     setFormats(prevFormats => {
@@ -98,12 +117,13 @@ export const NumberFormatSettings: React.FC = () => {
         const next = newFormats[index];
         return !next || 
           prev.currentValue !== next.currentValue || 
-          prev.originalValue !== next.originalValue;
+          prev.originalValue !== next.originalValue ||
+          prev.key !== next.key; // Key değişikliğini de kontrol et
       });
       
       return hasChanges ? newFormats : prevFormats;
     });
-  }, [parameters, paramsLoading, getParameterValue]);
+  }, [parameters, paramsLoading, getParameterValue, selectedIntegrator]);
 
   // Loading state kontrolü
   if (paramsLoading) {
@@ -290,13 +310,17 @@ export const NumberFormatSettings: React.FC = () => {
   };
 
   const generatePreview = (format: string, isNilveraSeries?: boolean, formatKey?: string) => {
-    // E-fatura seri kodu için sadece seriyi göster
+    // E-fatura seri kodu için GİB formatı önizlemesi göster
     if (isNilveraSeries) {
-      return format || 'FAT';
+      // Seri kodu (örn: 'FAT') -> GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
+      const serie = format || 'FAT';
+      const year = '2025';
+      const sequence = '000000001';
+      return `${serie}${year}${sequence}`;
     }
     
-    // GİB formatı için özel işlem: invoice_number_format ve veriban_invoice_number_format
-    if (formatKey === 'invoice_number_format' || formatKey === 'veriban_invoice_number_format') {
+    // GİB formatı için özel işlem: invoice_number_format, einvoice_number_format ve veriban_invoice_number_format
+    if (formatKey === 'invoice_number_format' || formatKey === 'einvoice_number_format' || formatKey === 'veriban_invoice_number_format') {
       // Format'tan seri kısmını çıkar
       let serie = format
         .replace(/\{YYYY\}/g, '')
@@ -323,7 +347,7 @@ export const NumberFormatSettings: React.FC = () => {
       .replace('{YY}', '25')
       .replace('{MM}', '01')
       .replace('{DD}', '15')
-      .replace('{0000000000001}', '0000000000001')
+      .replace('{000000001}', '000000001')
       .replace('{0001}', '0001')
       .replace('{001}', '001')
       .replace('{01}', '01');
@@ -363,7 +387,7 @@ export const NumberFormatSettings: React.FC = () => {
                     <div className="flex items-center gap-1 flex-wrap">
                       {format.isNilveraSeries && (
                         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs px-2 py-0">
-                          Nilvera Entegrasyonu
+                          {selectedIntegrator === 'veriban' ? 'Veriban Entegrasyonu' : selectedIntegrator === 'nilvera' ? 'Nilvera Entegrasyonu' : 'Entegrasyon'}
                         </Badge>
                       )}
                       {hasChanges(format) && (
@@ -413,16 +437,6 @@ export const NumberFormatSettings: React.FC = () => {
                     <div className="font-mono text-sm">
                       {generatePreview(format.currentValue, format.isNilveraSeries, format.key)}
                     </div>
-                    {format.isNilveraSeries && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Nilvera otomatik numara üretecek
-                      </p>
-                    )}
-                    {format.isVeribanFormat && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Veriban GİB formatı: 16 karakter (SERI+YIL+SIRA)
-                      </p>
-                    )}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -477,8 +491,7 @@ export const NumberFormatSettings: React.FC = () => {
               <li>• Format değişiklikleri sadece yeni kayıtlar için geçerlidir.</li>
               <li>• Mevcut kayıtların numaraları değişmez.</li>
               <li>• Sıralı numaralar otomatik olarak artar.</li>
-              <li>• <strong>Veriban Fatura Numarası Formatı:</strong> Veriban entegrasyonu için GİB formatı zorunludur. Format: SERI(3) + YIL(4) + SIRA(9) = 16 karakter. Tire kullanılmaz. Örnek: FAT2025000000001</li>
-              <li>• <strong>E-Fatura Seri Kodu:</strong> Nilvera ile entegre olduğu için sadece 3 karakter seri belirlenir. Numara Nilvera tarafından otomatik üretilir.</li>
+              <li>• <strong>E-Fatura Seri Kodu:</strong> Seçili entegratöre göre kullanılır (Nilvera veya Veriban). Sadece 3 karakter seri belirlenir (harfleri değiştirebilirsiniz). Veritabanından bir önceki numara çekilir ve GİB formatına uygun olarak üretilir (SERI(3) + YIL(4) + SIRA(9) = 16 karakter).</li>
               <li>• <strong>E-Arşiv Seri Kodu:</strong> Nilvera ile entegre olduğu için sadece 3 karakter seri belirlenir. Numara Nilvera tarafından otomatik üretilir.</li>
             </ul>
           </div>

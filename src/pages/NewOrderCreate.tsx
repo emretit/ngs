@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { ShoppingCart, Save, Eye, FileDown, Send, MoreHorizontal, FileText, Package } from "lucide-react";
+import { ShoppingCart, Save, Eye, FileDown, Send, MoreHorizontal, FileText, Package, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/utils/formatters";
 import { OrderStatus, CreateOrderData, CreateOrderItemData } from "@/types/orders";
@@ -635,6 +635,20 @@ const NewOrderCreate = () => {
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
+
+                {/* Müşteri Sayfasına Git */}
+                {formData.customer_id && (
+                  <>
+                    <DropdownMenuItem 
+                      onClick={() => navigate(`/customers/${formData.customer_id}`)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <Building2 className="h-4 w-4 text-blue-500" />
+                      <span>Müşteri Sayfasına Git</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
 
                 <DropdownMenuItem onClick={() => handleSave('confirmed')} className="gap-2 cursor-pointer text-green-600 hover:text-green-700 hover:bg-green-50">
                   <Package className="h-4 w-4" />

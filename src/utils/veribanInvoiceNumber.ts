@@ -39,15 +39,19 @@ export const getLastVeribanInvoiceNumber = async (
 
       // Format pattern varsa, o formata uygun numaraları filtrele
       if (formatPattern) {
-        // GİB formatı kontrolü: invoice_number_format için özel işlem
-        if (formatPattern.includes('{000000001}') || formatPattern.includes('invoice_number_format') || formatPattern.includes('veriban_invoice_number_format')) {
+        // Eğer format pattern sadece seri kodu ise (3 karakter, örn: 'FAT')
+        let serie: string;
+        if (formatPattern.length === 3 && /^[A-Z0-9]{3}$/.test(formatPattern)) {
+          // Seri kodu olarak kullan
+          serie = formatPattern;
+        } else if (formatPattern.includes('{000000001}') || formatPattern.includes('invoice_number_format') || formatPattern.includes('einvoice_number_format') || formatPattern.includes('veriban_invoice_number_format')) {
           // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
           if (invoiceNumber.length !== 16) {
             continue; // GİB formatı değilse atla
           }
 
           // Format'tan seri kısmını çıkar
-          let serie = formatPattern
+          serie = formatPattern
             .replace(/\{YYYY\}/g, '')
             .replace(/\{YY\}/g, '')
             .replace(/\{MM\}/g, '')
@@ -59,15 +63,6 @@ export const getLastVeribanInvoiceNumber = async (
           if (!serie || serie.length !== 3) {
             serie = 'FAT'; // Varsayılan seri
           }
-
-          const year = new Date().getFullYear().toString();
-          const prefix = `${serie}${year}`; // SERI + YIL = 7 karakter
-
-          // Numara bu prefix ile başlamıyorsa atla
-          if (!invoiceNumber.startsWith(prefix)) {
-            continue;
-          }
-        } else {
           // Eski format için (tire ile): FAT-2025-0001
           const year = new Date().getFullYear().toString();
           const yearShort = (new Date().getFullYear() % 100).toString().padStart(2, '0');
@@ -82,6 +77,23 @@ export const getLastVeribanInvoiceNumber = async (
             .replace(/\{0+\}/g, ''); // Sıralı numara placeholder'ını kaldır
           
           prefix = prefix.replace(/[-_]+$/, ''); // Sonundaki - veya _ karakterlerini kaldır
+
+          // Numara bu prefix ile başlamıyorsa atla
+          if (!invoiceNumber.startsWith(prefix)) {
+            continue;
+          }
+          continue; // Eski format için devam et
+        }
+        
+        // Seri kodu varsa, GİB formatı kontrolü yap
+        if (serie) {
+          // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
+          if (invoiceNumber.length !== 16) {
+            continue; // GİB formatı değilse atla
+          }
+
+          const year = new Date().getFullYear().toString();
+          const prefix = `${serie}${year}`; // SERI + YIL = 7 karakter
 
           // Numara bu prefix ile başlamıyorsa atla
           if (!invoiceNumber.startsWith(prefix)) {
@@ -135,16 +147,14 @@ export const extractSequenceFromInvoiceNumber = (
   formatPattern: string
 ): number | null => {
   try {
-    // GİB formatı kontrolü: invoice_number_format için özel işlem
-    if (formatPattern.includes('{000000001}') || formatPattern.includes('invoice_number_format') || formatPattern.includes('veriban_invoice_number_format')) {
-      // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
-      if (invoiceNumber.length !== 16) {
-        console.warn('⚠️ GİB formatı 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
-        return null;
-      }
-
+    // Eğer format pattern sadece seri kodu ise (3 karakter, örn: 'FAT')
+    let serie: string | null = null;
+    if (formatPattern.length === 3 && /^[A-Z0-9]{3}$/.test(formatPattern)) {
+      // Seri kodu olarak kullan
+      serie = formatPattern;
+    } else if (formatPattern.includes('{000000001}') || formatPattern.includes('invoice_number_format') || formatPattern.includes('einvoice_number_format')) {
       // Format'tan seri kısmını çıkar
-      let serie = formatPattern
+      serie = formatPattern
         .replace(/\{YYYY\}/g, '')
         .replace(/\{YY\}/g, '')
         .replace(/\{MM\}/g, '')
@@ -155,6 +165,15 @@ export const extractSequenceFromInvoiceNumber = (
       
       if (!serie || serie.length !== 3) {
         serie = 'FAT'; // Varsayılan seri
+      }
+    }
+    
+    // Seri kodu varsa, GİB formatı kontrolü yap
+    if (serie) {
+      // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
+      if (invoiceNumber.length !== 16) {
+        console.warn('⚠️ GİB formatı 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
+        return null;
       }
 
       const year = new Date().getFullYear().toString();
@@ -236,16 +255,14 @@ export const validateVeribanInvoiceNumberFormat = (
   formatPattern: string
 ): boolean => {
   try {
-    // GİB formatı kontrolü: invoice_number_format için özel işlem
-    if (formatPattern.includes('{000000001}') || formatPattern.includes('invoice_number_format') || formatPattern.includes('veriban_invoice_number_format')) {
-      // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
-      if (invoiceNumber.length !== 16) {
-        console.warn('⚠️ GİB formatı 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
-        return false;
-      }
-
+    // Eğer format pattern sadece seri kodu ise (3 karakter, örn: 'FAT')
+    let serie: string | null = null;
+    if (formatPattern.length === 3 && /^[A-Z0-9]{3}$/.test(formatPattern)) {
+      // Seri kodu olarak kullan
+      serie = formatPattern;
+    } else if (formatPattern.includes('{000000001}') || formatPattern.includes('invoice_number_format') || formatPattern.includes('einvoice_number_format')) {
       // Format'tan seri kısmını çıkar
-      let serie = formatPattern
+      serie = formatPattern
         .replace(/\{YYYY\}/g, '')
         .replace(/\{YY\}/g, '')
         .replace(/\{MM\}/g, '')
@@ -256,6 +273,15 @@ export const validateVeribanInvoiceNumberFormat = (
       
       if (!serie || serie.length !== 3) {
         serie = 'FAT'; // Varsayılan seri
+      }
+    }
+    
+    // Seri kodu varsa, GİB formatı kontrolü yap
+    if (serie) {
+      // GİB formatı: SERI(3) + YIL(4) + SIRA(9) = 16 karakter
+      if (invoiceNumber.length !== 16) {
+        console.warn('⚠️ GİB formatı 16 karakter değil:', invoiceNumber, 'Uzunluk:', invoiceNumber.length);
+        return false;
       }
 
       const year = new Date().getFullYear().toString();

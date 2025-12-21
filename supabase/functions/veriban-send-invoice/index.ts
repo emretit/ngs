@@ -145,11 +145,11 @@ serve(async (req) => {
       console.log('📝 Fatura numarası bulunamadı, Veriban formatına göre üretiliyor...');
       
       try {
-        // Veriban formatı için generateNumber fonksiyonunu kullan
+        // Veriban seri kodu kullan (veriban_invoice_number_format)
         // Edge function'da generateNumber'ı kullanmak için manuel olarak implement ediyoruz
         const formatKey = 'veriban_invoice_number_format';
         
-        // System parameters'dan format'ı al
+        // System parameters'dan seri kodunu al
         const { data: formatParam } = await supabase
           .from('system_parameters')
           .select('parameter_value')
@@ -157,22 +157,15 @@ serve(async (req) => {
           .eq('company_id', profile.company_id)
           .maybeSingle();
         
-        const format = formatParam?.parameter_value || 'FAT{YYYY}{000000001}';
-        console.log('📋 Format:', format);
-        
-        // Format'tan seri kısmını çıkar
-        let serie = format
-          .replace(/\{YYYY\}/g, '')
-          .replace(/\{YY\}/g, '')
-          .replace(/\{MM\}/g, '')
-          .replace(/\{DD\}/g, '')
-          .replace(/\{0+\}/g, '')
-          .replace(/[-_]/g, '')
-          .trim();
+        // Seri kodu (3 karakter, örn: FAT)
+        let serie = formatParam?.parameter_value || 'FAT';
+        serie = serie.trim().toUpperCase().substring(0, 3);
         
         if (!serie || serie.length !== 3) {
           serie = 'FAT'; // Varsayılan seri
         }
+        
+        console.log('📋 Seri Kodu:', serie);
         
         // Yıl
         const invoiceDate = invoice.fatura_tarihi ? new Date(invoice.fatura_tarihi) : new Date();

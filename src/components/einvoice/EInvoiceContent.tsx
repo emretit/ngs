@@ -29,13 +29,15 @@ interface EInvoiceContentProps {
   isLoading: boolean;
   onRefresh: () => void;
   searchTerm: string;
+  invoiceType?: 'incoming' | 'outgoing';
 }
 
 const EInvoiceContent = ({
   invoices,
   isLoading,
   onRefresh,
-  searchTerm
+  searchTerm,
+  invoiceType = 'incoming'
 }: EInvoiceContentProps) => {
   const navigate = useNavigate();
   const { downloadAndOpenPdf: downloadNilveraPdf } = useNilveraPdf();
@@ -143,12 +145,23 @@ const EInvoiceContent = ({
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">📄 Fatura No</TableHead>
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🏷️ Fatura Tipi</TableHead>
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">📋 Fatura Senaryosu</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🏢 Tedarikçi</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🔢 Vergi No</TableHead>
+                {invoiceType === 'incoming' ? (
+                  <>
+                    <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🏢 Tedarikçi</TableHead>
+                    <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🔢 Vergi No</TableHead>
+                  </>
+                ) : (
+                  <>
+                    <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">👤 Müşteri</TableHead>
+                    <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-left">🔢 Vergi No</TableHead>
+                  </>
+                )}
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">📅 Fatura Tarihi</TableHead>
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-right">💰 Tutar</TableHead>
                 <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">💱 Para Birimi</TableHead>
-                <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">⚙️ İşlemler</TableHead>
+                {invoiceType === 'incoming' && (
+                  <TableHead className="py-2 px-3 font-bold text-foreground/80 text-xs tracking-wide text-center">⚙️ İşlemler</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -157,79 +170,97 @@ const EInvoiceContent = ({
                   key={invoice.id} 
                   className="hover:bg-blue-50 h-8 cursor-pointer"
                 >
-                  <TableCell className="font-medium py-2 px-3 text-xs" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                  <TableCell className="font-medium py-2 px-3 text-xs" onClick={() => invoiceType === 'incoming' ? navigate(`/e-invoice/process/${invoice.id}`) : undefined}>
                     <span className="text-blue-600">{invoice.invoiceNumber}</span>
                   </TableCell>
-                  <TableCell className="py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                  <TableCell className="py-2 px-3" onClick={() => invoiceType === 'incoming' ? navigate(`/e-invoice/process/${invoice.id}`) : undefined}>
                     {getInvoiceTypeBadge(invoice.invoiceType)}
                   </TableCell>
-                  <TableCell className="py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                  <TableCell className="py-2 px-3" onClick={() => invoiceType === 'incoming' ? navigate(`/e-invoice/process/${invoice.id}`) : undefined}>
                     {getInvoiceProfileBadge(invoice.invoiceProfile)}
                   </TableCell>
-                  <TableCell className="py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
-                    <div className="flex items-center">
-                      <Building className="h-3 w-3 text-muted-foreground mr-2" />
-                      <span className="text-xs">{invoice.supplierName}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
-                    {invoice.supplierTaxNumber}
-                  </TableCell>
-                  <TableCell className="text-center py-2 px-3 text-xs" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                  {invoiceType === 'incoming' ? (
+                    <>
+                      <TableCell className="py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                        <div className="flex items-center">
+                          <Building className="h-3 w-3 text-muted-foreground mr-2" />
+                          <span className="text-xs">{invoice.supplierName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                        {invoice.supplierTaxNumber}
+                      </TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell className="py-2 px-3" onClick={() => undefined}>
+                        <div className="flex items-center">
+                          <Building className="h-3 w-3 text-muted-foreground mr-2" />
+                          <span className="text-xs">{invoice.customerName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs py-2 px-3" onClick={() => undefined}>
+                        {invoice.customerTaxNumber}
+                      </TableCell>
+                    </>
+                  )}
+                  <TableCell className="text-center py-2 px-3 text-xs" onClick={() => invoiceType === 'incoming' ? navigate(`/e-invoice/process/${invoice.id}`) : undefined}>
                     <div className="flex items-center justify-center">
                       <Calendar className="h-3 w-3 text-muted-foreground mr-1" />
                       {format(new Date(invoice.invoiceDate), 'dd MMM yyyy', { locale: tr })}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-semibold py-2 px-3 text-xs" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                  <TableCell className="text-right font-semibold py-2 px-3 text-xs" onClick={() => invoiceType === 'incoming' ? navigate(`/e-invoice/process/${invoice.id}`) : undefined}>
                     {invoice.totalAmount.toLocaleString('tr-TR', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
                     })}
                   </TableCell>
-                  <TableCell className="text-center py-2 px-3" onClick={() => navigate(`/e-invoice/process/${invoice.id}`)}>
+                  <TableCell className="text-center py-2 px-3" onClick={() => invoiceType === 'incoming' ? navigate(`/e-invoice/process/${invoice.id}`) : undefined}>
                     <Badge variant="outline" className="text-xs">{invoice.currency}</Badge>
                   </TableCell>
-                  <TableCell className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/e-invoice/process/${invoice.id}`);
-                        }}
-                        className="h-8 w-8"
-                        title="İşle"
-                      >
-                        <Package className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          setDownloadingInvoiceId(invoice.id);
-                          try {
-                            await handleDownloadPdf(invoice.id);
-                          } catch (error) {
-                            console.error('PDF önizleme hatası:', error);
-                          } finally {
-                            setDownloadingInvoiceId(null);
-                          }
-                        }}
-                        disabled={downloadingInvoiceId === invoice.id}
-                        className="h-8 w-8"
-                        title="PDF Önizleme"
-                      >
-                        {downloadingInvoiceId === invoice.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {invoiceType === 'incoming' && (
+                    <TableCell className="py-2 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/e-invoice/process/${invoice.id}`);
+                          }}
+                          className="h-8 w-8"
+                          title="İşle"
+                        >
+                          <Package className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setDownloadingInvoiceId(invoice.id);
+                            try {
+                              await handleDownloadPdf(invoice.id);
+                            } catch (error) {
+                              console.error('PDF önizleme hatası:', error);
+                            } finally {
+                              setDownloadingInvoiceId(null);
+                            }
+                          }}
+                          disabled={downloadingInvoiceId === invoice.id}
+                          className="h-8 w-8"
+                          title="PDF Önizleme"
+                        >
+                          {downloadingInvoiceId === invoice.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

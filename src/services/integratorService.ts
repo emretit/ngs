@@ -111,6 +111,34 @@ export class IntegratorService {
   }
 
   /**
+   * Giden faturaları al (seçili entegratöre göre)
+   */
+  static async getOutgoingInvoices(
+    filters: InvoiceFilters
+  ): Promise<IntegratorServiceResponse> {
+    try {
+      const integrator = await this.getSelectedIntegrator();
+
+      console.log('📊 Giden faturalar alınıyor, entegratör:', integrator);
+
+      if (integrator === 'veriban') {
+        return this.getVeribanOutgoingInvoices(filters);
+      } else {
+        // Diğer entegratörler için henüz desteklenmiyor
+        return {
+          success: false,
+          error: 'Giden faturalar için sadece Veriban destekleniyor',
+        };
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Giden faturalar alınamadı',
+      };
+    }
+  }
+
+  /**
    * Nilvera'dan fatura al
    */
   private static async getNilveraInvoices(
@@ -351,6 +379,79 @@ export class IntegratorService {
       return {
         success: false,
         error: error.message || 'Veriban faturalar alınamadı',
+      };
+    }
+  }
+
+  /**
+   * Veriban'dan giden faturaları al
+   */
+  private static async getVeribanOutgoingInvoices(
+    filters: InvoiceFilters
+  ): Promise<IntegratorServiceResponse> {
+    try {
+      // Extract date strings from ISO format
+      const startDate = filters.startDate ? filters.startDate.split('T')[0] : undefined;
+      const endDate = filters.endDate ? filters.endDate.split('T')[0] : undefined;
+
+      const { data, error } = await supabase.functions.invoke('veriban-outgoing-invoices', {
+        body: {
+          startDate,
+          endDate,
+          forceRefresh: filters.forceRefresh || false,
+        }
+      });
+
+      if (error) {
+        console.error('Veriban outgoing invoices error:', error);
+
+        // Try to extract error message from response body
+        if (error.context instanceof Response) {
+          try {
+            const responseText = await error.context.text();
+            const responseJson = JSON.parse(responseText);
+            if (responseJson.error) {
+              throw new Error(responseJson.error);
+            }
+          } catch (e) {
+            console.error('Could not parse error response:', e);
+          }
+        }
+
+        throw error;
+      }
+
+      // Transform Veriban outgoing invoice format to standard format
+      const transformedInvoices = (data?.invoices || []).map((inv: any) => ({
+        id: inv.id || inv.invoiceUUID || '',
+        invoiceNumber: inv.invoiceNumber || '',
+        customerName: inv.customerName || '',
+        customerTaxNumber: inv.customerTaxNumber || '',
+        invoiceDate: inv.invoiceDate || new Date().toISOString(),
+        dueDate: inv.dueDate || undefined,
+        totalAmount: inv.totalAmount || 0,
+        currency: inv.currency || 'TRY',
+        taxAmount: inv.taxAmount || 0,
+        taxExclusiveAmount: inv.taxExclusiveAmount || 0,
+        status: inv.status || 'sent',
+        sentAt: inv.sentAt || null,
+        deliveredAt: inv.deliveredAt || null,
+        invoiceType: inv.invoiceType || 'TEMEL',
+        invoiceProfile: inv.invoiceProfile || 'TEMELFATURA',
+        invoiceUUID: inv.invoiceUUID || inv.id,
+      }));
+
+      return {
+        success: data?.success || false,
+        invoices: transformedInvoices,
+        error: data?.error,
+        message: data?.message,
+      };
+    } catch (error: any) {
+      console.error('❌ getVeribanOutgoingInvoices error:', error);
+      return {
+        success: false,
+        error: error.message || 'Veriban giden faturalar alınamadı',
       };
     }
   }

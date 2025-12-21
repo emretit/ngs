@@ -348,6 +348,20 @@ const SalesInvoiceDetail = ({ isCollapsed, setIsCollapsed }: SalesInvoiceDetailP
                   
                   <DropdownMenuSeparator />
                   
+                  {/* Müşteri Sayfasına Git */}
+                  {invoice.customer_id && (
+                    <>
+                      <DropdownMenuItem 
+                        onClick={() => navigate(`/customers/${invoice.customer_id}`)}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <Building2 className="h-4 w-4 text-blue-500" />
+                        <span>Müşteri Sayfasına Git</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  
                   <DropdownMenuItem 
                     onClick={handleDelete}
                     className="gap-2 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"

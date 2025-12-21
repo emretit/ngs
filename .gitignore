@@ -7,10 +7,32 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+apps/mobile/.dart_tool
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/.packages
+apps/mobile/.pub-cache
+apps/mobile/.pub
+apps/mobile/pubspec.lock
+
+# Build outputs
 dist
 dist-ssr
+apps/mobile/build
+apps/mobile/.dart_tool
+apps/mobile/ios/Pods
+apps/mobile/ios/.symlinks
+apps/mobile/android/.gradle
+apps/mobile/android/app/build
+apps/mobile/android/build
+apps/mobile/android/local.properties
+
+# Local files
 *.local
+.env
+.env.netlify
 
 # Editor directories and files
 .vscode/*
@@ -22,5 +44,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
-.env.netlify

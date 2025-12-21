@@ -515,3 +515,11 @@ export const navItems = [
   },
 ];
 
+// Ayarlar için ayrı export
+export const settingsItem = {
+  path: "/settings",
+  icon: Settings,
+  label: "Ayarlar",
+  translationKey: "nav.settings",
+};
+

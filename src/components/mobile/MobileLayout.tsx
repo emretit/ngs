@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Capacitor } from "@capacitor/core";
 import BottomNavigation from "./BottomNavigation";
 import MobileDrawer from "./MobileDrawer";
 import TopBar from "@/components/TopBar";
@@ -13,7 +12,6 @@ interface MobileLayoutProps {
 
 const MobileLayout = ({ children, title, subtitle }: MobileLayoutProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const isMobile = Capacitor.isNativePlatform();
 
   const handleMenuClick = () => {
     setIsDrawerOpen(true);

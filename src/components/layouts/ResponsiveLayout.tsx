@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Capacitor } from "@capacitor/core";
 import MobileLayout from "@/components/mobile/MobileLayout";
 import DesktopLayout from "./DesktopLayout";
 
@@ -13,20 +12,17 @@ const ResponsiveLayout = ({ children, title, subtitle }: ResponsiveLayoutProps) 
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Capacitor platform kontrolü
+    // Ekran genişliğine göre mobil kontrolü
     const checkPlatform = () => {
-      const isNative = Capacitor.isNativePlatform();
       const isSmallScreen = window.innerWidth < 768;
-      setIsMobile(isNative || isSmallScreen);
+      setIsMobile(isSmallScreen);
     };
 
     checkPlatform();
     
     // Resize listener ekle
     const handleResize = () => {
-      if (!Capacitor.isNativePlatform()) {
-        setIsMobile(window.innerWidth < 768);
-      }
+      setIsMobile(window.innerWidth < 768);
     };
 
     window.addEventListener('resize', handleResize);

@@ -388,41 +388,23 @@ Deno.serve(async (req) => {
 
 // OAuth 2.0 Access Token al
 async function getAccessToken() {
-  // Firebase service account bilgilerini environment variable'dan al
+  // Firebase service account bilgileri
+  // Private key Supabase secrets'tan, diğerleri public bilgi olduğu için kodda
   const privateKey = Deno.env.get('FIREBASE_PRIVATE_KEY');
-  const projectId = Deno.env.get('FIREBASE_PROJECT_ID');
-  const privateKeyId = Deno.env.get('FIREBASE_PRIVATE_KEY_ID');
-  const clientEmail = Deno.env.get('FIREBASE_CLIENT_EMAIL');
   
-  // Environment variables kontrolü
   if (!privateKey) {
     console.error('❌ FIREBASE_PRIVATE_KEY environment variable bulunamadı');
     throw new Error('FIREBASE_PRIVATE_KEY environment variable bulunamadı. Lütfen Supabase Edge Functions Secrets\'a ekleyin.');
   }
   
-  if (!projectId) {
-    console.error('❌ FIREBASE_PROJECT_ID environment variable bulunamadı');
-    throw new Error('FIREBASE_PROJECT_ID environment variable bulunamadı. Lütfen Supabase Edge Functions Secrets\'a ekleyin.');
-  }
-  
-  if (!clientEmail) {
-    console.error('❌ FIREBASE_CLIENT_EMAIL environment variable bulunamadı');
-    throw new Error('FIREBASE_CLIENT_EMAIL environment variable bulunamadı. Lütfen Supabase Edge Functions Secrets\'a ekleyin.');
-  }
-  
-  console.log('🔧 Firebase config:', {
-    projectId,
-    clientEmail: clientEmail.substring(0, 20) + '...',
-    hasPrivateKey: !!privateKey,
-    privateKeyLength: privateKey.length
-  });
+  console.log('🔧 Firebase config: Private key bulundu, length:', privateKey.length);
   
   const serviceAccount = {
     type: 'service_account',
-    project_id: projectId,
-    private_key_id: privateKeyId || '',
-    private_key: privateKey.replace(/\\n/g, '\n'), // Environment variable'dan gelirse \n karakterlerini düzelt
-    client_email: clientEmail,
+    project_id: 'pafta-b84ce',
+    private_key_id: '',
+    private_key: privateKey.replace(/\\n/g, '\n'),
+    client_email: 'firebase-adminsdk-fbsvc@pafta-b84ce.iam.gserviceaccount.com',
     auth_uri: 'https://accounts.google.com/o/oauth2/auth',
     token_uri: 'https://oauth2.googleapis.com/token'
   };

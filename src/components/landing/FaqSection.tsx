@@ -1,113 +1,175 @@
-// Removed faqs import - now using translations directly
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+import { HelpCircle, Sparkles, Mail, Phone } from "lucide-react";
 
 const FaqSection = () => {
   const { t } = useTranslation();
   
+  const faqs = [
+    {
+      question: t("landing.faq.questions.einvoice.q"),
+      answer: t("landing.faq.questions.einvoice.a")
+    },
+    {
+      question: t("landing.faq.questions.free.q"),
+      answer: t("landing.faq.questions.free.a")
+    },
+    {
+      question: t("landing.faq.questions.setup.q"),
+      answer: t("landing.faq.questions.setup.a")
+    },
+    {
+      question: t("landing.faq.questions.migration.q"),
+      answer: t("landing.faq.questions.migration.a")
+    },
+    {
+      question: t("landing.faq.questions.providers.q"),
+      answer: t("landing.faq.questions.providers.a")
+    },
+    {
+      question: t("landing.faq.questions.support.q"),
+      answer: t("landing.faq.questions.support.a")
+    }
+  ];
+
   return (
-    <section id="faq" className="scroll-mt-20 py-16 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-gray-50 via-white to-gray-50">
-      {/* Light Background with subtle effects */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-gray-50"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(220,38,38,0.05),transparent_60%)]"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(220,38,38,0.03),transparent_60%)]"></div>
+    <section id="faq" className="scroll-mt-20 py-20 md:py-28 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-[#0a0a0f]">
+      {/* Dark gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f] via-[#12121a] to-[#0a0a0f]" />
       
-      <div className="relative mx-auto max-w-5xl z-10">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center p-1.5 bg-red-600/10 rounded-full mb-4">
-            <div className="flex items-center space-x-2 px-3 py-1.5 bg-red-600/20 rounded-full text-red-600 font-medium text-xs backdrop-blur-sm">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
-              <span>{t("landing.faq.badge")}</span>
+      {/* Animated orbs */}
+      <motion.div 
+        className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-red-600/10 blur-[120px]"
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.5, 0.3],
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div 
+        className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-orange-500/8 blur-[100px]"
+        animate={{ 
+          scale: [1.2, 1, 1.2],
+          opacity: [0.2, 0.4, 0.2],
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Grid pattern overlay */}
+      <div 
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px'
+        }}
+      />
+
+      {/* Radial vignette */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
+
+      <div className="relative mx-auto max-w-6xl z-10">
+        {/* Header */}
+        <motion.div 
+          className="text-center mb-14"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Badge - HeroSection style */}
+          <motion.div 
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="relative">
+              <HelpCircle className="w-4 h-4 text-red-400" />
+              <div className="absolute inset-0 bg-red-400/50 blur-md animate-pulse" />
             </div>
-          </div>
+            <span className="text-sm font-medium text-gray-300">{t("landing.faq.badge")}</span>
+            <div className="w-px h-4 bg-white/20" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          </motion.div>
           
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-5 leading-tight">
             {t("landing.faq.title1")}
-            <span className="block bg-gradient-to-r from-red-500 via-red-600 to-red-700 bg-clip-text text-transparent">
+            <span className="block mt-2 bg-gradient-to-r from-red-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
               {t("landing.faq.title2")}
             </span>
           </h2>
           
-          <p className="text-base text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
             {t("landing.faq.subtitle")}
           </p>
-        </div>
+        </motion.div>
 
+        {/* FAQ Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {[
-            {
-              question: t("landing.faq.questions.einvoice.q"),
-              answer: t("landing.faq.questions.einvoice.a")
-            },
-            {
-              question: t("landing.faq.questions.free.q"),
-              answer: t("landing.faq.questions.free.a")
-            },
-            {
-              question: t("landing.faq.questions.setup.q"),
-              answer: t("landing.faq.questions.setup.a")
-            },
-            {
-              question: t("landing.faq.questions.migration.q"),
-              answer: t("landing.faq.questions.migration.a")
-            },
-            {
-              question: t("landing.faq.questions.providers.q"),
-              answer: t("landing.faq.questions.providers.a")
-            },
-            {
-              question: t("landing.faq.questions.support.q"),
-              answer: t("landing.faq.questions.support.a")
-            }
-          ].map((faq, index) => (
-            <div
+          {faqs.map((faq, index) => (
+            <motion.div
               key={index}
-              className="group relative p-5 rounded-2xl bg-gray-900/95 backdrop-blur-xl border border-gray-700/60 hover:border-red-200/60 shadow-lg transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer overflow-hidden"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="group relative p-6 rounded-2xl bg-white/[0.02] backdrop-blur-sm border border-white/[0.05] hover:border-red-500/30 transition-all duration-500 overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ y: -4 }}
             >
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-red-50/20 via-transparent to-gray-50/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-              {/* Glow effect */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-red-100/30 to-gray-100/30 opacity-0 group-hover:opacity-60 blur-xl transition-all duration-500"></div>
+              {/* Hover glow effect */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-500/10 via-transparent to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              {/* Top glow line */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-gradient-to-r from-transparent via-red-500 to-transparent group-hover:w-full transition-all duration-500" />
               
               <div className="relative z-10">
-                <h3 className="text-base font-bold text-white group-hover:text-red-400 transition-colors duration-300 leading-relaxed mb-3">
-                  {faq.question}
-                </h3>
-                
-                <p className="text-sm text-gray-300 leading-relaxed group-hover:text-gray-200 transition-colors duration-300">
-                  {faq.answer}
-                </p>
+                {/* Question number */}
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                    <span className="text-sm font-bold text-red-400">{index + 1}</span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-white group-hover:text-red-300 transition-colors duration-300 leading-relaxed mb-3">
+                      {faq.question}
+                    </h3>
+                    <p className="text-sm text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                      {faq.answer}
+                    </p>
+                  </div>
+                </div>
               </div>
-              
-              {/* Bottom accent */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-red-500 to-red-600 group-hover:w-3/4 transition-all duration-500 rounded-full"></div>
 
-              {/* Corner decoration */}
-              <div className="absolute top-3 right-3 w-1.5 h-1.5 bg-red-500/30 rounded-full group-hover:bg-red-500/60 transition-colors duration-300"></div>
-            </div>
+              {/* Bottom accent line */}
+              <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-red-500 to-orange-500 group-hover:w-full transition-all duration-500" />
+            </motion.div>
           ))}
         </div>
 
-        {/* Bottom section */}
-        <div className="text-center mt-10">
-          <div className="inline-block p-5 bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-gray-700/60 shadow-lg">
-            <p className="text-gray-300 text-sm mb-3">
+        {/* Contact CTA */}
+        <motion.div 
+          className="text-center mt-14"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <div className="inline-flex flex-col items-center p-6 rounded-2xl bg-white/[0.02] backdrop-blur-sm border border-white/[0.05]">
+            <p className="text-gray-300 text-base mb-4">
               {t("landing.faq.moreQuestions")}
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4 text-xs">
-              <div className="flex items-center space-x-2 text-gray-300">
-                <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                <span>{t("landing.faq.email")}</span>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                <Mail className="w-4 h-4 text-red-400" />
+                <span className="text-sm text-gray-300">{t("landing.faq.email")}</span>
               </div>
-              <div className="flex items-center space-x-2 text-gray-300">
-                <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                <span>{t("landing.faq.phone")}</span>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+                <Phone className="w-4 h-4 text-red-400" />
+                <span className="text-sm text-gray-300">{t("landing.faq.phone")}</span>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

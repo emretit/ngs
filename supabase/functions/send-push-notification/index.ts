@@ -389,15 +389,40 @@ Deno.serve(async (req) => {
 // OAuth 2.0 Access Token al
 async function getAccessToken() {
   // Firebase service account bilgilerini environment variable'dan al
-  // Eğer yoksa, hardcoded değerleri kullan (güvenlik için environment variable kullanılmalı)
-  const privateKey = Deno.env.get('FIREBASE_PRIVATE_KEY') || '-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDxUckkbOHi/2Nw\nq1rTlpOQhkTPTNEka9iZFCnYfRpZWLjNDegp52VxWzUlR1W+jeHe/J9fC9SSQcyI\nMiVcWiMEzMCSrh+zMqkQNfdx4LOxHlcMpbzyyEBOaore33D2zCnOalk7rhwiLB2n\ndicwUbK2lwMHu2T8nVVmBDb+wxlhsNaj0RgIrrytaGdtp4F2w5aOw3RwAG5J3D5V\nQ/dsOXAZs9IxIqjc6kKjltSqwmh8VWhYF7yDSmTTVCrW5dekovIA+vT0gPyDBjTB\n7xfqs6DZador2FThD47J7lZ1NWacvk4mSDshPAiU9ZYG/hTLj7pm+P6g6xKXyt7P\ne8WfL+zDAgMBAAECggEAAlXKbqX3vkS+t2w5D0YW5yBIJyy082IbG57EfuSgWM/7\nzc7Tecr+7My3TsU0xl4aGu3H3wQUH6wvqKZk59K0IbZCK3Pa46wwUvNVZyPc/pru\nuF/G3HSP8Wek214/JMGPVVYrHIw6l8wPJ2aEdOUS0nh984Oz3kvpc84Y+CMhf5P7\n1+vTXv/TaPYAmSSieAQrypjzCI2onUi7ZYFlWfbZdfnA1wvILq5OlmKzTIM3LBxc\njV4tHXWnIyzv6y0seYOssFWzg8NIDPxuuWTW4T1wD8XZbpilEHUkhM1JeQ6MdjVq\nfMus0tsDNvq6ovuY2BIreFKJtlsFBATBM3M8nekMVQKBgQD+wWGqhr3u3s6kMz3I\nM9Ct2/2GqraSDaGw84u/v8CqO2Em3Qcvv4Ykqg9b3OyTvL9OMBNugtJFELIC0Q/o\nEb+ZxeBjuT6hHAUhXbqXAIemHD1ZlsJmC3NaoSEn4Fh6bhITx0jbl3fwDhjE21je\nG4dslT/pyuy9mnn3ruOYy1+wBwKBgQDyf5mg+uXOf6ZAtrgxsunWJ740v/aRPcVY\nVin6cCzYGsnUP5rgVlBuKXNqUfeZJCf3aiDFXmsZkpDClgvmjLSSBUHI9CjMdYsd\n0pXy7A/eh+ySKhRjUmXrHaTnqgwlRC81xyYC0GiiUbvwCKH8n+EypCvYzEdh9Yl2\nwSY+QsI2ZQKBgHHjHbhQOES7UoHRboM7tsSinjo/wxKUCX7Dwevc21K+7PWkxfuw\nkVV+uRMGNrTtIlDf6S/0R/AcQJhFweirVo52CZRLUhZQInMCJdIvqHS4Fy0f2pQn\n9k/DzMC46JUC9A3nf0i79CBbDPOkY5wXjnkaV9I6p48zqebyRkkeUg6tAoGBAOwV\nE8DoYnBuT7Hy8VHZJ9QJLyD1vhtactT0VbvuF4pwUgujvKko/vawvh9FG3LpA0vY\n83yS1lu4F9yI7Z8PXwBFw+za3xlmWgC3sqoj7bMsy0DlXKHxZy3F13R+VYK2ZevK\nLRRSR3u3bOtbzDBAiqKdt95BykDxJVoK4qt8nM0NAoGBAOMYoCiz5Pfqf1u9Q2wY\nI+o958FZwZXuroRZFSJw3bYd6tOCCo2PzNEcQVQSKjLZIpRol70/sgZMaRfZCE0q\nKl9cJtmzc6lpbBQskHcXeL/xPT+jnS33Qm7ugOtQkZhQyXus/D0omKu/LvLU/Ljn\n68ryUU18XUhowpP0q4f0LFW3\n-----END PRIVATE KEY-----\n';
+  const privateKey = Deno.env.get('FIREBASE_PRIVATE_KEY');
+  const projectId = Deno.env.get('FIREBASE_PROJECT_ID');
+  const privateKeyId = Deno.env.get('FIREBASE_PRIVATE_KEY_ID');
+  const clientEmail = Deno.env.get('FIREBASE_CLIENT_EMAIL');
+  
+  // Environment variables kontrolü
+  if (!privateKey) {
+    console.error('❌ FIREBASE_PRIVATE_KEY environment variable bulunamadı');
+    throw new Error('FIREBASE_PRIVATE_KEY environment variable bulunamadı. Lütfen Supabase Edge Functions Secrets\'a ekleyin.');
+  }
+  
+  if (!projectId) {
+    console.error('❌ FIREBASE_PROJECT_ID environment variable bulunamadı');
+    throw new Error('FIREBASE_PROJECT_ID environment variable bulunamadı. Lütfen Supabase Edge Functions Secrets\'a ekleyin.');
+  }
+  
+  if (!clientEmail) {
+    console.error('❌ FIREBASE_CLIENT_EMAIL environment variable bulunamadı');
+    throw new Error('FIREBASE_CLIENT_EMAIL environment variable bulunamadı. Lütfen Supabase Edge Functions Secrets\'a ekleyin.');
+  }
+  
+  console.log('🔧 Firebase config:', {
+    projectId,
+    clientEmail: clientEmail.substring(0, 20) + '...',
+    hasPrivateKey: !!privateKey,
+    privateKeyLength: privateKey.length
+  });
   
   const serviceAccount = {
     type: 'service_account',
-    project_id: 'pafta-b84ce',
-    private_key_id: '9643917946d259ca364fbfbf144279588dd45b99',
+    project_id: projectId,
+    private_key_id: privateKeyId || '',
     private_key: privateKey.replace(/\\n/g, '\n'), // Environment variable'dan gelirse \n karakterlerini düzelt
-    client_email: 'firebase-adminsdk-fbsvc@pafta-b84ce.iam.gserviceaccount.com',
+    client_email: clientEmail,
     auth_uri: 'https://accounts.google.com/o/oauth2/auth',
     token_uri: 'https://oauth2.googleapis.com/token'
   };

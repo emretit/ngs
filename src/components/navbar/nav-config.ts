@@ -50,7 +50,8 @@ import {
   Cog,
   BarChart,
   CheckCircle,
-  PieChart
+  PieChart,
+  Clock
 } from "lucide-react";
 
 export const navItems = [
@@ -376,12 +377,39 @@ export const navItems = [
       },
     ],
   },
-  // 10. Çalışanlar
+  // 10. Çalışan Yönetimi
   {
     path: "/employees",
     icon: Users,
-    label: "Çalışanlar",
+    label: "Çalışan Yönetimi",
     translationKey: "nav.employees",
+    hasDropdown: true,
+    items: [
+      {
+        path: "/employees",
+        icon: Users,
+        label: "Çalışanlar",
+        translationKey: "nav.employeesList",
+      },
+      {
+        path: "/employees/payroll",
+        icon: Calculator,
+        label: "Puantaj ve Bordro",
+        translationKey: "nav.payroll",
+      },
+      {
+        path: "/employees/leaves",
+        icon: Calendar,
+        label: "İzinler ve Haklar",
+        translationKey: "nav.leaves",
+      },
+      {
+        path: "/employees/documents",
+        icon: FileText,
+        label: "Dökümanlar",
+        translationKey: "nav.documents",
+      },
+    ],
   },
   // 11. Araç Yönetimi
   {

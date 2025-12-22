@@ -38,6 +38,11 @@ export const reportRoutes: RouteConfig[] = [
     protected: true,
   },
   {
+    path: "/reports/purchasing",
+    component: PurchasingReports,
+    protected: true,
+  },
+  {
     path: "/reports/hr",
     component: HRReports,
     protected: true,
@@ -47,10 +52,4 @@ export const reportRoutes: RouteConfig[] = [
     component: VehicleReports,
     protected: true,
   },
-  {
-    path: "/reports/purchasing",
-    component: PurchasingReports,
-    protected: true,
-  },
 ];
-

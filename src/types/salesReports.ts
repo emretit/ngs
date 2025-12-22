@@ -96,6 +96,8 @@ export interface SalesFunnelData {
   stages: FunnelStage[];
   totalPipelineValue: number;
   totalDeals: number;
+  lostDealsCount: number; // Kaybedilen fırsatlar (huni dışında analiz için)
+  lostDealsValue: number; // Kaybedilen fırsatların toplam değeri
   funnelOverTime?: Array<{
     date: string;
     stages: {

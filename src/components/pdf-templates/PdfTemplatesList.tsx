@@ -181,11 +181,6 @@ const PdfTemplatesList = memo(({
                       Sürüm: v{template.version}
                     </div>
                   )}
-                  {template.templateType === 'service' && (template as any).service_title && (
-                    <div className="text-xs text-muted-foreground line-clamp-1">
-                      {(template as any).service_title}
-                    </div>
-                  )}
                 </div>
               </div>
             </CardContent>
@@ -249,12 +244,6 @@ const PdfTemplatesList = memo(({
                       <span className="flex items-center gap-1.5">
                         <span className="w-1 h-1 rounded-full bg-gray-300" />
                         <span className="font-medium">Sürüm v{template.version}</span>
-                      </span>
-                    )}
-                    {template.templateType === 'service' && (template as any).service_title && (
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-1 h-1 rounded-full bg-gray-300" />
-                        <span className="font-medium line-clamp-1">{(template as any).service_title}</span>
                       </span>
                     )}
                   </div>

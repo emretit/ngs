@@ -73,9 +73,8 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
       filtered = filtered.filter(template => {
         const name = template.name?.toLowerCase() || '';
         const description = (template as any).description?.toLowerCase() || '';
-        const serviceTitle = (template as any).service_title?.toLowerCase() || '';
         const query = searchQuery.toLowerCase();
-        return name.includes(query) || description.includes(query) || serviceTitle.includes(query);
+        return name.includes(query) || description.includes(query);
       });
     }
 
@@ -130,7 +129,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
 
   const handleTemplateTypeSelect = (type: 'quote' | 'service') => {
     if (type === 'quote') {
-      navigate('/pdf-templates/new');
+      navigate('/pdf-templates/quote/new');
     } else if (type === 'service') {
       navigate('/pdf-templates/service/new');
     }
@@ -139,7 +138,8 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
     if (templateType === 'service') {
       navigate(`/pdf-templates/service/edit/${templateId}`);
     } else {
-      navigate(`/pdf-templates/edit/${templateId}`);
+      // Quote/Proposal template
+      navigate(`/pdf-templates/quote/edit/${templateId}`);
     }
   };
   const handleDuplicateTemplate = async (template: UnifiedTemplate) => {
@@ -153,16 +153,7 @@ const PdfTemplates: React.FC<PdfTemplatesProps> = ({ showHeader = true }) => {
         const newTemplate = {
           name: `${serviceTemplate.name} - Kopya`,
           description: serviceTemplate.description,
-          service_title: serviceTemplate.service_title,
-          service_request_description: serviceTemplate.service_request_description,
-          service_type: serviceTemplate.service_type,
-          service_priority: serviceTemplate.service_priority,
-          estimated_duration: serviceTemplate.estimated_duration,
-          default_location: serviceTemplate.default_location,
-          default_technician_id: serviceTemplate.default_technician_id,
           service_details: serviceTemplate.service_details,
-          parts_list: serviceTemplate.parts_list,
-          instructions: serviceTemplate.instructions,
         };
         await ServiceTemplateService.createTemplate(
           userData.company_id,

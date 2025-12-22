@@ -33,13 +33,6 @@ import { PdfExportService } from '@/services/pdf/pdfExportService';
 const serviceTemplateFormSchema = z.object({
   name: z.string().min(1, 'Şablon adı gereklidir'),
   description: z.string().optional(),
-  service_title: z.string().min(1, 'Servis başlığı gereklidir'),
-  service_request_description: z.string().optional(),
-  service_type: z.string().optional(),
-  service_priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
-  estimated_duration: z.number().optional(),
-  default_location: z.string().optional(),
-  default_technician_id: z.string().optional(),
 });
 
 type ServiceTemplateFormData = z.infer<typeof serviceTemplateFormSchema>;
@@ -62,13 +55,6 @@ export default function ServiceTemplateEditor() {
     defaultValues: {
       name: '',
       description: '',
-      service_title: '',
-      service_request_description: '',
-      service_type: '',
-      service_priority: 'medium',
-      estimated_duration: undefined,
-      default_location: '',
-      default_technician_id: '',
     },
   });
 
@@ -82,22 +68,6 @@ export default function ServiceTemplateEditor() {
     enabled: !isNew,
   });
 
-  // Load technicians
-  const { data: technicians } = useQuery({
-    queryKey: ['technicians', userData?.company_id],
-    queryFn: async () => {
-      if (!userData?.company_id) return [];
-      const { data, error } = await supabase
-        .from('employees')
-        .select('id, first_name, last_name')
-        .eq('company_id', userData.company_id)
-        .eq('status', 'aktif')
-        .order('first_name');
-      if (error) return [];
-      return data || [];
-    },
-    enabled: !!userData?.company_id,
-  });
 
   // Load company info on mount
   const loadCompanyInfo = async (showToast = false) => {
@@ -152,57 +122,88 @@ export default function ServiceTemplateEditor() {
       form.reset({
         name: existingTemplate.name || '',
         description: existingTemplate.description || '',
-        service_title: existingTemplate.service_title || '',
-        service_request_description: existingTemplate.service_request_description || '',
-        service_type: existingTemplate.service_type || '',
-        service_priority: existingTemplate.service_priority || 'medium',
-        estimated_duration: existingTemplate.estimated_duration || undefined,
-        default_location: existingTemplate.default_location || '',
-        default_technician_id: existingTemplate.default_technician_id || '',
       });
-
-      setPreviewData(prev => ({
-        ...prev,
-        serviceTitle: existingTemplate.service_title || prev.serviceTitle,
-        serviceDescription: existingTemplate.service_request_description || prev.serviceDescription,
-        serviceType: existingTemplate.service_type || prev.serviceType,
-        priority: existingTemplate.service_priority || prev.priority,
-        estimatedDuration: existingTemplate.estimated_duration || prev.estimatedDuration,
-        location: existingTemplate.default_location || prev.location,
-      }));
+      
+      // Load PDF schema from service_details.pdf_schema
+      if (existingTemplate.service_details?.pdf_schema) {
+        // Merge with defaults to ensure all properties exist
+        setPdfSchema({
+          ...defaultServiceTemplateSchema,
+          ...existingTemplate.service_details.pdf_schema,
+          page: {
+            ...defaultServiceTemplateSchema.page,
+            ...(existingTemplate.service_details.pdf_schema.page || {}),
+            padding: {
+              ...defaultServiceTemplateSchema.page.padding,
+              ...(existingTemplate.service_details.pdf_schema.page?.padding || {}),
+            },
+          },
+          header: {
+            ...defaultServiceTemplateSchema.header,
+            ...(existingTemplate.service_details.pdf_schema.header || {}),
+          },
+          serviceInfo: {
+            ...defaultServiceTemplateSchema.serviceInfo,
+            ...(existingTemplate.service_details.pdf_schema.serviceInfo || {}),
+          },
+          partsTable: {
+            ...defaultServiceTemplateSchema.partsTable,
+            ...(existingTemplate.service_details.pdf_schema.partsTable || {}),
+          },
+          signatures: {
+            ...defaultServiceTemplateSchema.signatures,
+            ...(existingTemplate.service_details.pdf_schema.signatures || {}),
+          },
+          notes: {
+            ...defaultServiceTemplateSchema.notes,
+            ...(existingTemplate.service_details.pdf_schema.notes || {}),
+          },
+        });
+      } else if (existingTemplate.service_details) {
+        // Fallback: if pdf_schema doesn't exist, use service_details directly with defaults
+        setPdfSchema({
+          ...defaultServiceTemplateSchema,
+          ...(existingTemplate.service_details as ServiceTemplateSchema),
+          page: {
+            ...defaultServiceTemplateSchema.page,
+            ...((existingTemplate.service_details as any)?.page || {}),
+            padding: {
+              ...defaultServiceTemplateSchema.page.padding,
+              ...((existingTemplate.service_details as any)?.page?.padding || {}),
+            },
+          },
+        });
+      }
     }
   }, [id, existingTemplate, form, location.pathname]);
 
-  // Watch form changes and update preview
-  const watchedValues = form.watch();
-  useEffect(() => {
-    setPreviewData(prev => ({
-      ...prev,
-      serviceTitle: watchedValues.service_title || prev.serviceTitle,
-      serviceDescription: watchedValues.service_request_description || prev.serviceDescription,
-      serviceType: watchedValues.service_type || prev.serviceType,
-      priority: watchedValues.service_priority || prev.priority,
-      estimatedDuration: watchedValues.estimated_duration || prev.estimatedDuration,
-      location: watchedValues.default_location || prev.location,
-    }));
-  }, [watchedValues.service_title, watchedValues.service_request_description, watchedValues.service_type, watchedValues.service_priority, watchedValues.estimated_duration, watchedValues.default_location]);
 
   const createMutation = useMutation({
     mutationFn: async (data: ServiceTemplateFormData) => {
       if (!userData?.company_id || !userData?.id) {
         throw new Error('Kullanıcı bilgileri bulunamadı');
       }
+      
+      // pdfSchema'yı kontrol et
+      if (!pdfSchema) {
+        throw new Error('PDF şeması yüklenemedi');
+      }
+      
       const templateData: CreateServiceTemplateData = {
         name: data.name,
         description: data.description,
-        service_title: data.service_title,
-        service_request_description: data.service_request_description,
-        service_type: data.service_type,
-        service_priority: data.service_priority,
-        estimated_duration: data.estimated_duration,
-        default_location: data.default_location,
-        default_technician_id: data.default_technician_id || undefined,
+        service_details: {
+          pdf_schema: pdfSchema,
+        },
       };
+      
+      console.log('Creating template with data:', {
+        name: templateData.name,
+        description: templateData.description,
+        service_details: templateData.service_details,
+        pdf_schema_keys: Object.keys(templateData.service_details.pdf_schema || {}),
+      });
+      
       return ServiceTemplateService.createTemplate(userData.company_id, userData.id, templateData);
     },
     onSuccess: (data) => {
@@ -218,17 +219,31 @@ export default function ServiceTemplateEditor() {
   const updateMutation = useMutation({
     mutationFn: async (data: ServiceTemplateFormData) => {
       if (!id || id === 'new') throw new Error('Template ID bulunamadı');
+      
+      // pdfSchema'yı kontrol et
+      if (!pdfSchema) {
+        throw new Error('PDF şeması yüklenemedi');
+      }
+      
+      // Mevcut service_details'i koru, sadece pdf_schema'yı güncelle
+      const currentServiceDetails = existingTemplate?.service_details || {};
       const templateData: Partial<CreateServiceTemplateData> = {
         name: data.name,
         description: data.description,
-        service_title: data.service_title,
-        service_request_description: data.service_request_description,
-        service_type: data.service_type,
-        service_priority: data.service_priority,
-        estimated_duration: data.estimated_duration,
-        default_location: data.default_location,
-        default_technician_id: data.default_technician_id || undefined,
+        service_details: {
+          ...currentServiceDetails,
+          pdf_schema: pdfSchema,
+        },
       };
+      
+      console.log('Updating template with data:', {
+        id,
+        name: templateData.name,
+        description: templateData.description,
+        service_details: templateData.service_details,
+        pdf_schema_keys: Object.keys(templateData.service_details?.pdf_schema || {}),
+      });
+      
       return ServiceTemplateService.updateTemplate(id, templateData);
     },
     onSuccess: () => {
@@ -242,6 +257,12 @@ export default function ServiceTemplateEditor() {
   });
 
   const onSubmit = (data: ServiceTemplateFormData) => {
+    // pdfSchema'nın güncel olduğundan emin ol
+    if (!pdfSchema) {
+      toast.error('PDF şeması yüklenemedi. Lütfen sayfayı yenileyin.');
+      return;
+    }
+    
     if (isNew) {
       createMutation.mutate(data);
     } else {
@@ -258,6 +279,9 @@ export default function ServiceTemplateEditor() {
       const keys = path.split('.');
       let current: any = newSchema;
       for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) {
+          current[keys[i]] = {};
+        }
         current[keys[i]] = { ...current[keys[i]] };
         current = current[keys[i]];
       }
@@ -290,7 +314,7 @@ export default function ServiceTemplateEditor() {
     <div className="space-y-2">
       {/* Enhanced Sticky Header */}
       <div className="sticky top-0 z-20 bg-white rounded-md border border-gray-200 shadow-sm mb-2">
-        <div className="flex items-center justify-between p-3 pl-12">
+        <div className="flex items-center justify-between p-3 pl-12 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <BackButton 
               onClick={() => navigate("/pdf-templates")}
@@ -349,11 +373,13 @@ export default function ServiceTemplateEditor() {
             </DropdownMenu>
           </div>
         </div>
+
       </div>
 
       {/* Top Panel - Genel Ayarlar */}
       <div className="bg-background px-4 py-2 rounded-md border border-gray-200">
         <div className="flex items-center gap-6">
+          {/* Genel Ayarlar - Accordion */}
           <div className="flex-1">
             <Accordion type="single" collapsible defaultValue="general" className="w-full">
               <AccordionItem value="general" className="border-0">
@@ -389,7 +415,7 @@ export default function ServiceTemplateEditor() {
                     <div className="flex items-center gap-2">
                       <Label className="text-xs text-gray-600 whitespace-nowrap">Font:</Label>
                       <Select
-                        value={pdfSchema.page.fontFamily || 'Roboto'}
+                        value={pdfSchema?.page?.fontFamily || 'Roboto'}
                         onValueChange={(value) => updatePdfSchema('page.fontFamily', value)}
                       >
                         <SelectTrigger className="h-7 w-40 text-xs">
@@ -414,7 +440,7 @@ export default function ServiceTemplateEditor() {
                       <Label className="text-xs text-gray-600 whitespace-nowrap">Font Boyutu:</Label>
                       <Input
                         type="number"
-                        value={pdfSchema.page.fontSize || 12}
+                        value={pdfSchema?.page?.fontSize || 12}
                         onChange={(e) => updatePdfSchema('page.fontSize', Number(e.target.value))}
                         min="8"
                         max="20"
@@ -427,7 +453,7 @@ export default function ServiceTemplateEditor() {
                     <div className="flex items-center gap-2">
                       <Label className="text-xs text-gray-600 whitespace-nowrap">Kalınlık:</Label>
                       <Select
-                        value={pdfSchema.page.fontWeight || 'normal'}
+                        value={pdfSchema?.page?.fontWeight || 'normal'}
                         onValueChange={(value) => updatePdfSchema('page.fontWeight', value)}
                       >
                         <SelectTrigger className="h-7 w-24 text-xs">
@@ -457,7 +483,7 @@ export default function ServiceTemplateEditor() {
                             type="button"
                             onClick={() => updatePdfSchema('page.fontColor', color.value)}
                             className={`h-6 w-6 rounded-full border hover:ring-2 hover:ring-blue-400 transition-all ${
-                              pdfSchema.page.fontColor === color.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'
+                              pdfSchema?.page?.fontColor === color.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'
                             }`}
                             style={{ backgroundColor: color.value }}
                             title={color.name}
@@ -466,7 +492,7 @@ export default function ServiceTemplateEditor() {
                       </div>
                       <Input
                         type="color"
-                        value={pdfSchema.page.fontColor || '#000000'}
+                        value={pdfSchema?.page?.fontColor || '#000000'}
                         onChange={(e) => updatePdfSchema('page.fontColor', e.target.value)}
                         className="h-7 w-12"
                         title="Özel Renk"
@@ -489,7 +515,7 @@ export default function ServiceTemplateEditor() {
                             type="button"
                             onClick={() => updatePdfSchema('page.backgroundColor', bg.value)}
                             className={`${bg.preview} border rounded p-1 h-6 w-6 hover:ring-2 hover:ring-blue-400 transition-all ${
-                              pdfSchema.page.backgroundColor === bg.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'
+                              pdfSchema?.page?.backgroundColor === bg.value ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'
                             }`}
                             title={bg.name}
                           />
@@ -497,7 +523,7 @@ export default function ServiceTemplateEditor() {
                       </div>
                       <Input
                         type="color"
-                        value={pdfSchema.page.backgroundColor || '#FFFFFF'}
+                        value={pdfSchema?.page?.backgroundColor || '#FFFFFF'}
                         onChange={(e) => updatePdfSchema('page.backgroundColor', e.target.value)}
                         className="h-7 w-12"
                         title="Özel Renk"
@@ -511,6 +537,7 @@ export default function ServiceTemplateEditor() {
         </div>
       </div>
 
+
       {/* Main Content */}
       <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-16rem)] rounded-md border border-gray-200 overflow-hidden">
         {/* Settings Panel */}
@@ -519,103 +546,6 @@ export default function ServiceTemplateEditor() {
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-2 min-h-0 space-y-2">
               
-              {/* Servis Detayları */}
-              <Accordion type="single" collapsible defaultValue="serviceDetails">
-                <AccordionItem value="serviceDetails" className="border border-gray-200 rounded-lg">
-                  <AccordionTrigger className="bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs">🔧</span>
-                      <span>Servis Detayları</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-2 pt-1.5 px-2 pb-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="service_title" className="text-xs text-gray-600">Servis Başlığı *</Label>
-                      <Input
-                        id="service_title"
-                        {...form.register('service_title')}
-                        placeholder="Örn: Yıllık Bakım"
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="service_request_description" className="text-xs text-gray-600">Servis Açıklaması</Label>
-                      <Textarea
-                        id="service_request_description"
-                        {...form.register('service_request_description')}
-                        placeholder="Servis talebi detayları"
-                        rows={2}
-                        className="text-xs"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-600">Servis Tipi</Label>
-                        <Input
-                          {...form.register('service_type')}
-                          placeholder="Örn: Bakım"
-                          className="h-7 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-600">Öncelik</Label>
-                        <Select
-                          value={form.watch('service_priority')}
-                          onValueChange={(value) => form.setValue('service_priority', value as any)}
-                        >
-                          <SelectTrigger className="h-7 text-xs">
-                            <SelectValue placeholder="Seçin" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Düşük</SelectItem>
-                            <SelectItem value="medium">Orta</SelectItem>
-                            <SelectItem value="high">Yüksek</SelectItem>
-                            <SelectItem value="urgent">Acil</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-600">Tahmini Süre (dk)</Label>
-                        <Input
-                          type="number"
-                          {...form.register('estimated_duration', { valueAsNumber: true })}
-                          placeholder="60"
-                          className="h-7 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-gray-600">Varsayılan Konum</Label>
-                        <Input
-                          {...form.register('default_location')}
-                          placeholder="Konum"
-                          className="h-7 text-xs"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-gray-600">Varsayılan Teknisyen</Label>
-                      <Select
-                        value={form.watch('default_technician_id') || undefined}
-                        onValueChange={(value) => form.setValue('default_technician_id', value || undefined)}
-                      >
-                        <SelectTrigger className="h-7 text-xs">
-                          <SelectValue placeholder="Teknisyen seçin (opsiyonel)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {technicians?.map((tech) => (
-                            <SelectItem key={tech.id} value={tech.id}>
-                              {tech.first_name} {tech.last_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
               {/* Header Settings */}
               <Accordion type="single" collapsible defaultValue="header">
                 <AccordionItem value="header" className="border border-gray-200 rounded-lg">
@@ -802,32 +732,38 @@ export default function ServiceTemplateEditor() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-2 pb-2 pt-1.5">
+                    <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded-md mb-2">
+                      <div className="font-medium text-blue-800 mb-1">Servis Bilgileri</div>
+                      <div className="space-y-0.5 text-blue-700 text-xs">
+                        <div>• Servis bilgileri otomatik gösterilir</div>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-2 gap-1.5">
                       <div className="border rounded-md p-1.5 bg-blue-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs">1</span>
-                            <Label className="text-xs font-medium text-gray-700">Tahmini Süre</Label>
+                            <Label className="text-xs font-medium text-gray-700">Servis No</Label>
                           </div>
                           <Switch
-                            id="show-estimated-duration"
-                            checked={pdfSchema.serviceInfo.showEstimatedDuration}
-                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showEstimatedDuration', checked)}
+                            id="show-service-number"
+                            checked={pdfSchema.serviceInfo.showServiceNumber ?? true}
+                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showServiceNumber', checked)}
                             className="scale-[0.65]"
                           />
                         </div>
                       </div>
 
-                      <div className="border rounded-md p-1.5 bg-orange-50">
+                      <div className="border rounded-md p-1.5 bg-purple-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs">3</span>
-                            <Label className="text-xs font-medium text-gray-700">Konum</Label>
+                            <span className="text-xs">2</span>
+                            <Label className="text-xs font-medium text-gray-700">Servis Durumu</Label>
                           </div>
                           <Switch
-                            id="show-location"
-                            checked={pdfSchema.serviceInfo.showLocation}
-                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showLocation', checked)}
+                            id="show-service-status"
+                            checked={pdfSchema.serviceInfo.showServiceStatus ?? true}
+                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showServiceStatus', checked)}
                             className="scale-[0.65]"
                           />
                         </div>
@@ -836,13 +772,28 @@ export default function ServiceTemplateEditor() {
                       <div className="border rounded-md p-1.5 bg-yellow-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs">4</span>
+                            <span className="text-xs">3</span>
                             <Label className="text-xs font-medium text-gray-700">Servis Tipi</Label>
                           </div>
                           <Switch
                             id="show-service-type"
                             checked={pdfSchema.serviceInfo.showServiceType}
                             onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showServiceType', checked)}
+                            className="scale-[0.65]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border rounded-md p-1.5 bg-green-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs">4</span>
+                            <Label className="text-xs font-medium text-gray-700">Teknisyen</Label>
+                          </div>
+                          <Switch
+                            id="show-technician"
+                            checked={pdfSchema.serviceInfo.showTechnician}
+                            onCheckedChange={(checked) => updatePdfSchema('serviceInfo.showTechnician', checked)}
                             className="scale-[0.65]"
                           />
                         </div>
@@ -863,6 +814,65 @@ export default function ServiceTemplateEditor() {
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Font Ayarları - Servis ve Müşteri Bilgileri için Ortak */}
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="text-xs text-muted-foreground bg-purple-50 p-2 rounded-md mb-2">
+                        <div className="font-medium text-purple-800 mb-1">Font Ayarları</div>
+                        <div className="space-y-0.5 text-purple-700 text-xs">
+                          <div>• Servis ve Müşteri bilgileri için ortak font ayarları</div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50/80 border border-gray-200 rounded-md p-2 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs text-gray-600 whitespace-nowrap">Başlık Font:</Label>
+                          <Input
+                            type="number"
+                            value={pdfSchema.serviceInfo?.titleFontSize || 14}
+                            onChange={(e) => updatePdfSchema('serviceInfo.titleFontSize', Number(e.target.value))}
+                            min="8"
+                            max="25"
+                            placeholder="14"
+                            className="h-7 w-16 text-center text-xs"
+                          />
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs text-gray-600 whitespace-nowrap">Bilgi Font:</Label>
+                          <Input
+                            type="number"
+                            value={pdfSchema.serviceInfo?.infoFontSize || 10}
+                            onChange={(e) => updatePdfSchema('serviceInfo.infoFontSize', Number(e.target.value))}
+                            min="8"
+                            max="15"
+                            placeholder="10"
+                            className="h-7 w-16 text-center text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Customer Info Settings */}
+              <Accordion type="single" collapsible defaultValue="customer">
+                <AccordionItem value="customer" className="border border-gray-200 rounded-lg">
+                  <AccordionTrigger className="bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">👥</span>
+                      <span>Müşteri Bilgileri</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-3 pb-3 pt-2 space-y-2">
+                    <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded-md">
+                      <div className="font-medium text-blue-800 mb-1">Müşteri Bilgileri</div>
+                      <div className="space-y-0.5 text-blue-700 text-xs">
+                        <div>• Müşteri bilgileri otomatik gösterilir</div>
+                        <div>• Font ayarları "Servis Bilgileri Görünümü" bölümünden yönetilir</div>
+                      </div>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -877,64 +887,143 @@ export default function ServiceTemplateEditor() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-2 pb-2 pt-1.5">
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <div className="border rounded-md p-1.5 bg-orange-50">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs">1</span>
-                            <Label className="text-xs font-medium text-gray-700">Parça Tablosu</Label>
-                          </div>
-                          <Switch
-                            id="show-parts-table"
-                            checked={pdfSchema.partsTable.show}
-                            onCheckedChange={(checked) => updatePdfSchema('partsTable.show', checked)}
-                            className="scale-[0.65]"
-                          />
-                        </div>
+                    <div className="text-xs text-muted-foreground bg-orange-50 p-2 rounded-md mb-2">
+                      <div className="font-medium text-orange-800 mb-1">Parça Tablosu</div>
+                      <div className="space-y-0.5 text-orange-700 text-xs">
+                        <div>• Parça tablosu kolonları otomatik gösterilir</div>
                       </div>
-
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {/* Sıra Numarası */}
                       <div className="border rounded-md p-1.5 bg-amber-50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-xs">2</span>
+                            <span className="text-xs">1</span>
                             <Label className="text-xs font-medium text-gray-700">Sıra Numarası</Label>
                           </div>
                           <Switch
                             id="show-row-number"
-                            checked={pdfSchema.partsTable.showRowNumber}
+                            checked={pdfSchema.partsTable?.showRowNumber ?? true}
                             onCheckedChange={(checked) => updatePdfSchema('partsTable.showRowNumber', checked)}
                             className="scale-[0.65]"
                           />
                         </div>
                       </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
 
-              {/* Instructions Settings */}
-              <Accordion type="single" collapsible defaultValue="instructions">
-                <AccordionItem value="instructions" className="border border-gray-200 rounded-lg">
-                  <AccordionTrigger className="bg-gradient-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 px-2 py-1.5 rounded-t-lg border-b border-gray-200 font-semibold text-xs text-gray-800">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs">📋</span>
-                      <span>Yapılacak İşlemler</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-2 pb-2 pt-1.5">
-                    <div className="border rounded-md p-1.5 bg-teal-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs">1</span>
-                          <Label className="text-xs font-medium text-gray-700">İşlemler Göster</Label>
+                      {/* Parça Adı */}
+                      {pdfSchema.partsTable?.columns?.find(col => col.key === 'name') && (
+                        <div className="border rounded-md p-1.5 bg-orange-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">2</span>
+                              <Label className="text-xs font-medium text-gray-700">Parça Adı</Label>
+                            </div>
+                            <Switch
+                              id="show-column-name"
+                              checked={pdfSchema.partsTable.columns.find(col => col.key === 'name')?.show ?? true}
+                              onCheckedChange={(checked) => {
+                                const updatedColumns = pdfSchema.partsTable.columns.map((col) =>
+                                  col.key === 'name' ? { ...col, show: checked } : col
+                                );
+                                updatePdfSchema('partsTable.columns', updatedColumns);
+                              }}
+                              className="scale-[0.65]"
+                            />
+                          </div>
                         </div>
-                        <Switch
-                          id="show-instructions"
-                          checked={pdfSchema.instructions.show}
-                          onCheckedChange={(checked) => updatePdfSchema('instructions.show', checked)}
-                          className="scale-[0.65]"
-                        />
-                      </div>
+                      )}
+
+                      {/* Miktar */}
+                      {pdfSchema.partsTable?.columns?.find(col => col.key === 'quantity') && (
+                        <div className="border rounded-md p-1.5 bg-yellow-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">3</span>
+                              <Label className="text-xs font-medium text-gray-700">Miktar</Label>
+                            </div>
+                            <Switch
+                              id="show-column-quantity"
+                              checked={pdfSchema.partsTable.columns.find(col => col.key === 'quantity')?.show ?? true}
+                              onCheckedChange={(checked) => {
+                                const updatedColumns = pdfSchema.partsTable.columns.map((col) =>
+                                  col.key === 'quantity' ? { ...col, show: checked } : col
+                                );
+                                updatePdfSchema('partsTable.columns', updatedColumns);
+                              }}
+                              className="scale-[0.65]"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Birim */}
+                      {pdfSchema.partsTable?.columns?.find(col => col.key === 'unit') && (
+                        <div className="border rounded-md p-1.5 bg-green-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">4</span>
+                              <Label className="text-xs font-medium text-gray-700">Birim</Label>
+                            </div>
+                            <Switch
+                              id="show-column-unit"
+                              checked={pdfSchema.partsTable.columns.find(col => col.key === 'unit')?.show ?? true}
+                              onCheckedChange={(checked) => {
+                                const updatedColumns = pdfSchema.partsTable.columns.map((col) =>
+                                  col.key === 'unit' ? { ...col, show: checked } : col
+                                );
+                                updatePdfSchema('partsTable.columns', updatedColumns);
+                              }}
+                              className="scale-[0.65]"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Birim Fiyat */}
+                      {pdfSchema.partsTable?.columns?.find(col => col.key === 'unitPrice') && (
+                        <div className="border rounded-md p-1.5 bg-blue-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">5</span>
+                              <Label className="text-xs font-medium text-gray-700">Birim Fiyat</Label>
+                            </div>
+                            <Switch
+                              id="show-column-unitPrice"
+                              checked={pdfSchema.partsTable.columns.find(col => col.key === 'unitPrice')?.show ?? true}
+                              onCheckedChange={(checked) => {
+                                const updatedColumns = pdfSchema.partsTable.columns.map((col) =>
+                                  col.key === 'unitPrice' ? { ...col, show: checked } : col
+                                );
+                                updatePdfSchema('partsTable.columns', updatedColumns);
+                              }}
+                              className="scale-[0.65]"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Toplam */}
+                      {pdfSchema.partsTable?.columns?.find(col => col.key === 'total') && (
+                        <div className="border rounded-md p-1.5 bg-purple-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">6</span>
+                              <Label className="text-xs font-medium text-gray-700">Toplam</Label>
+                            </div>
+                            <Switch
+                              id="show-column-total"
+                              checked={pdfSchema.partsTable.columns.find(col => col.key === 'total')?.show ?? true}
+                              onCheckedChange={(checked) => {
+                                const updatedColumns = pdfSchema.partsTable.columns.map((col) =>
+                                  col.key === 'total' ? { ...col, show: checked } : col
+                                );
+                                updatePdfSchema('partsTable.columns', updatedColumns);
+                              }}
+                              className="scale-[0.65]"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </AccordionContent>
                 </AccordionItem>

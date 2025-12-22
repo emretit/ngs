@@ -270,7 +270,7 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
   useEffect(() => {
     console.log('useEffect triggered, templateId:', templateId, 'pathname:', location.pathname); // Debug
     // Check if we're on the new template page
-    const isNewTemplatePage = location.pathname === '/pdf-templates/new' || templateId === 'new';
+    const isNewTemplatePage = location.pathname === '/pdf-templates/quote/new' || location.pathname === '/pdf-templates/new' || templateId === 'new';
     
     if (isNewTemplatePage) {
       console.log('New template page detected, initializing...'); // Debug
@@ -643,10 +643,10 @@ const PdfTemplateEditor: React.FC<PdfTemplateEditorProps> = ({
               <FileText className="h-5 w-5 text-muted-foreground" />
               <div className="space-y-0.5">
                 <h1 className="text-xl font-semibold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-                  {isNewTemplate ? 'Yeni PDF Şablonu' : 'PDF Şablon Editörü'}
+                  {isNewTemplate ? 'Yeni Teklif Şablonu' : 'Teklif Şablonu Editörü'}
                 </h1>
                 <p className="text-xs text-muted-foreground/70">
-                  {isNewTemplate ? 'Yeni bir PDF şablonu oluşturun' : `${selectedTemplate?.name || 'Şablon'} düzenleniyor`}
+                  {isNewTemplate ? 'Yeni bir teklif şablonu oluşturun' : `${selectedTemplate?.name || 'Şablon'} düzenleniyor`}
                 </p>
               </div>
             </div>

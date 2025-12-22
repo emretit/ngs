@@ -3,13 +3,16 @@ import { PageSettings, HeaderSettings, NotesSettings } from './pdf-template';
 export interface ServiceTemplateSchema {
   page: PageSettings;
   header: HeaderSettings;
+  customer?: {
+    customerTitleFontSize?: number;
+    customerInfoFontSize?: number;
+  };
   serviceInfo: {
     titleFontSize: number;
     infoFontSize: number;
-    showPriority: boolean;
-    showEstimatedDuration: boolean;
+    showServiceNumber: boolean;
+    showServiceStatus: boolean;
     showTechnician: boolean;
-    showLocation: boolean;
     showServiceType: boolean;
     showDates: boolean;
   };
@@ -22,11 +25,6 @@ export interface ServiceTemplateSchema {
       align: 'left' | 'center' | 'right';
     }>;
     showRowNumber: boolean;
-  };
-  instructions: {
-    show: boolean;
-    titleFontSize: number;
-    fontSize: number;
   };
   signatures: {
     show: boolean;
@@ -44,6 +42,7 @@ export interface ServicePdfData {
   serviceNumber: string;
   serviceTitle: string;
   serviceDescription?: string;
+  serviceResult?: string;
   serviceType?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   status: string;
@@ -131,13 +130,16 @@ export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
     companyTaxNumber: '',
     companyInfoFontSize: 10,
   },
+  customer: {
+    customerTitleFontSize: 12,
+    customerInfoFontSize: 10,
+  },
   serviceInfo: {
     titleFontSize: 14,
     infoFontSize: 10,
-    showPriority: false,
-    showEstimatedDuration: true,
-    showTechnician: false,
-    showLocation: true,
+    showServiceNumber: true,
+    showServiceStatus: true,
+    showTechnician: true,
     showServiceType: true,
     showDates: true,
   },
@@ -151,11 +153,6 @@ export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
       { key: 'total', label: 'Toplam', show: true, align: 'right' },
     ],
     showRowNumber: true,
-  },
-  instructions: {
-    show: true,
-    titleFontSize: 12,
-    fontSize: 10,
   },
   signatures: {
     show: true,
@@ -178,6 +175,7 @@ export const sampleServicePdfData: ServicePdfData = {
   serviceNumber: 'SRV-2024-001',
   serviceTitle: 'Yıllık Bakım Hizmeti',
   serviceDescription: 'Klimaların yıllık periyodik bakımı ve filtre değişimi işlemleri.',
+  serviceResult: 'Servis başarıyla tamamlandı. Tüm filtreler değiştirildi ve sistem test edildi. Müşteri memnuniyeti sağlandı.',
   serviceType: 'Bakım',
   priority: 'medium',
   status: 'in_progress',

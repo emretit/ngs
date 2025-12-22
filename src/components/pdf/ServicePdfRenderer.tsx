@@ -20,8 +20,10 @@ Font.register({
 });
 
 const safeText = (text: string | undefined | null): string => {
-  if (!text) return '';
-  return text.toString().normalize('NFC');
+  if (!text) return ' '; // Boş string yerine boşluk karakteri - Text component dışında kullanılırsa hata vermez
+  const normalized = text.toString().normalize('NFC');
+  // Boş string yerine boşluk karakteri döndür
+  return normalized.trim() === '' ? ' ' : normalized;
 };
 
 interface ServicePdfRendererProps {
@@ -56,10 +58,6 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
       ...defaultServiceTemplateSchema.partsTable,
       ...(schema?.partsTable || {}),
     },
-    instructions: {
-      ...defaultServiceTemplateSchema.instructions,
-      ...(schema?.instructions || {}),
-    },
     signatures: {
       ...defaultServiceTemplateSchema.signatures,
       ...(schema?.signatures || {}),
@@ -84,11 +82,8 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
       fontWeight: safeSchema.page.fontWeight === 'bold' ? 'bold' : 'normal',
     },
     header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 15,
-      paddingBottom: 10,
+      marginBottom: 10,
+      paddingBottom: 6,
       borderBottomWidth: 2,
       borderBottomColor: '#E5E7EB',
     },
@@ -105,20 +100,19 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
     companyInfo: {
       fontSize: safeSchema.header.companyInfoFontSize || 10,
       color: safeSchema.page.fontColor || '#6B7280',
-      textAlign: 'right',
     },
     section: {
-      marginBottom: 12,
-      marginTop: 8,
+      marginBottom: 8,
+      marginTop: 4,
     },
     sectionTitle: {
       fontSize: safeSchema.serviceInfo.titleFontSize || 14,
       fontWeight: 'bold',
-      marginBottom: 8,
+      marginBottom: 4,
       color: safeSchema.page.fontColor || '#374151',
       borderBottomWidth: 1,
       borderBottomColor: '#E5E7EB',
-      paddingBottom: 4,
+      paddingBottom: 2,
     },
     infoRow: {
       flexDirection: 'row',
@@ -155,7 +149,7 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
       flex: 1,
     },
     table: {
-      marginBottom: 12,
+      marginBottom: 8,
     },
     tableHeader: {
       flexDirection: 'row',
@@ -179,21 +173,6 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
       fontWeight: 'bold',
       color: safeSchema.page.fontColor || '#374151',
       paddingHorizontal: 2,
-    },
-    instructionItem: {
-      flexDirection: 'row',
-      marginBottom: 4,
-    },
-    instructionNumber: {
-      fontSize: safeSchema.instructions.fontSize || 10,
-      fontWeight: 'bold',
-      width: 20,
-      color: safeSchema.page.fontColor || '#6B7280',
-    },
-    instructionText: {
-      fontSize: safeSchema.instructions.fontSize || 10,
-      flex: 1,
-      color: safeSchema.page.fontColor || '#374151',
     },
     priorityBadge: {
       paddingHorizontal: 8,
@@ -276,6 +255,18 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
     return labels[priority] || priority;
   };
 
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      new: 'Yeni',
+      assigned: 'Atanmış',
+      in_progress: 'Devam Ediyor',
+      on_hold: 'Beklemede',
+      completed: 'Tamamlandı',
+      cancelled: 'İptal Edildi',
+    };
+    return labels[status] || status;
+  };
+
   const getPriorityColor = (priority: string) => {
     const colors: Record<string, string> = {
       low: '#10B981',
@@ -303,71 +294,372 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
     <Document>
       <Page size={safeSchema.page.size} style={styles.page}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }}>
-            {safeSchema.header.showLogo && safeSchema.header.logoUrl && (
-              <Image src={safeSchema.header.logoUrl} style={styles.logo} />
-            )}
-            {safeSchema.header.showTitle && (
-              <Text style={styles.title}>{safeText(safeSchema.header.title)}</Text>
-            )}
-          </View>
-          {safeSchema.header.showCompanyInfo && (
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={[styles.companyInfo, { fontWeight: 'bold', fontSize: 12 }]}>
-                {safeText(safeSchema.header.companyName)}
-              </Text>
-              <Text style={styles.companyInfo}>{safeText(safeSchema.header.companyAddress)}</Text>
-              <Text style={styles.companyInfo}>{safeText(safeSchema.header.companyPhone)}</Text>
-              <Text style={styles.companyInfo}>{safeText(safeSchema.header.companyEmail)}</Text>
-            </View>
+        <View style={[
+          styles.header,
+          {
+            flexDirection: safeSchema.header.logoPosition === 'center' ? 'column' : 'row',
+            justifyContent: 
+              safeSchema.header.logoPosition === 'center' ? 'center' :
+              safeSchema.header.logoPosition === 'right' ? 'flex-end' : 
+              'space-between',
+            alignItems: safeSchema.header.logoPosition === 'center' ? 'center' : 'flex-start',
+          }
+        ]}>
+          {/* Left Position Layout */}
+          {(safeSchema.header.logoPosition === 'left' || !safeSchema.header.logoPosition) && (
+            <>
+              {/* Left Section - Logo and Company Info */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                {/* Logo */}
+                {safeSchema.header.showLogo && safeSchema.header.logoUrl && (
+                  <View style={{ 
+                    marginRight: 8, 
+                    padding: 0, 
+                    alignSelf: 'flex-start',
+                    flexShrink: 0
+                  }}>
+                    <Image src={safeSchema.header.logoUrl} style={styles.logo} />
+                  </View>
+                )}
+                
+                {/* Company Info */}
+                {safeSchema.header.showCompanyInfo && (
+                  <View style={{ flex: 1, marginLeft: 0, paddingLeft: 0 }}>
+                    {safeSchema.header.companyName && safeSchema.header.companyName.trim() && (
+                      <Text style={{
+                        fontSize: safeSchema.header.companyInfoFontSize || 12,
+                        fontWeight: 'bold',
+                        color: safeSchema.page.fontColor || '#1F2937',
+                        marginBottom: 3,
+                        marginLeft: 0,
+                        paddingLeft: 0
+                      }}>
+                        {safeText(safeSchema.header.companyName)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyAddress && safeSchema.header.companyAddress.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563',
+                        marginBottom: 2,
+                        marginLeft: 0,
+                        paddingLeft: 0
+                      }}>
+                        {safeText(safeSchema.header.companyAddress)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyPhone && safeSchema.header.companyPhone.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563',
+                        marginBottom: 2,
+                        marginLeft: 0,
+                        paddingLeft: 0
+                      }}>
+                        Tel: {safeText(safeSchema.header.companyPhone)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyEmail && safeSchema.header.companyEmail.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563',
+                        marginBottom: 2,
+                        marginLeft: 0,
+                        paddingLeft: 0
+                      }}>
+                        E-posta: {safeText(safeSchema.header.companyEmail)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyWebsite && safeSchema.header.companyWebsite.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563',
+                        marginBottom: 2,
+                        marginLeft: 0,
+                        paddingLeft: 0
+                      }}>
+                        Web: {safeText(safeSchema.header.companyWebsite)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyTaxNumber && safeSchema.header.companyTaxNumber.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563'
+                      }}>
+                        {safeText(safeSchema.header.companyTaxNumber)}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </View>
+              
+              {/* Right Section - Title */}
+              {(safeSchema.header.showTitle ?? true) && (
+                <View style={{ textAlign: 'right', alignItems: 'flex-end' }}>
+                  <Text style={styles.title}>{safeText(safeSchema.header.title)}</Text>
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Center Position Layout */}
+          {safeSchema.header.logoPosition === 'center' && (
+            <>
+              {/* Logo */}
+              {safeSchema.header.showLogo && safeSchema.header.logoUrl && (
+                <View style={{ 
+                  marginBottom: 15, 
+                  alignItems: 'center', 
+                  padding: 0, 
+                  alignSelf: 'center',
+                  flexShrink: 0
+                }}>
+                  <Image src={safeSchema.header.logoUrl} style={styles.logo} />
+                </View>
+              )}
+              
+              {/* Company Info */}
+              {safeSchema.header.showCompanyInfo && (
+                <View style={{ alignItems: 'center', marginBottom: 15 }}>
+                  {safeSchema.header.companyName && safeSchema.header.companyName.trim() && (
+                    <Text style={{
+                      fontSize: safeSchema.header.companyInfoFontSize || 12,
+                      fontWeight: 'bold',
+                      color: safeSchema.page.fontColor || '#1F2937',
+                      marginBottom: 3,
+                      textAlign: 'center'
+                    }}>
+                      {safeText(safeSchema.header.companyName)}
+                    </Text>
+                  )}
+                  {safeSchema.header.companyAddress && safeSchema.header.companyAddress.trim() && (
+                    <Text style={{
+                      fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                      color: safeSchema.page.fontColor || '#4B5563',
+                      marginBottom: 2,
+                      textAlign: 'center'
+                    }}>
+                      {safeText(safeSchema.header.companyAddress)}
+                    </Text>
+                  )}
+                  {safeSchema.header.companyPhone && safeSchema.header.companyPhone.trim() && (
+                    <Text style={{
+                      fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                      color: safeSchema.page.fontColor || '#4B5563',
+                      marginBottom: 2,
+                      textAlign: 'center'
+                    }}>
+                      Tel: {safeText(safeSchema.header.companyPhone)}
+                    </Text>
+                  )}
+                  {safeSchema.header.companyEmail && safeSchema.header.companyEmail.trim() && (
+                    <Text style={{
+                      fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                      color: safeSchema.page.fontColor || '#4B5563',
+                      marginBottom: 2,
+                      textAlign: 'center'
+                    }}>
+                      E-posta: {safeText(safeSchema.header.companyEmail)}
+                    </Text>
+                  )}
+                  {safeSchema.header.companyWebsite && safeSchema.header.companyWebsite.trim() && (
+                    <Text style={{
+                      fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                      color: safeSchema.page.fontColor || '#4B5563',
+                      marginBottom: 2,
+                      textAlign: 'center'
+                    }}>
+                      Web: {safeText(safeSchema.header.companyWebsite)}
+                    </Text>
+                  )}
+                  {safeSchema.header.companyTaxNumber && safeSchema.header.companyTaxNumber.trim() && (
+                    <Text style={{
+                      fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                      color: safeSchema.page.fontColor || '#4B5563',
+                      textAlign: 'center'
+                    }}>
+                      {safeText(safeSchema.header.companyTaxNumber)}
+                    </Text>
+                  )}
+                </View>
+              )}
+              
+              {/* Title */}
+              {(safeSchema.header.showTitle ?? true) && (
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={styles.title}>{safeText(safeSchema.header.title)}</Text>
+                </View>
+              )}
+            </>
+          )}
+
+          {/* Right Position Layout */}
+          {safeSchema.header.logoPosition === 'right' && (
+            <>
+              {/* Left Section - Title */}
+              {(safeSchema.header.showTitle ?? true) && (
+                <View style={{ textAlign: 'left', alignItems: 'flex-start' }}>
+                  <Text style={styles.title}>{safeText(safeSchema.header.title)}</Text>
+                </View>
+              )}
+              
+              {/* Right Section - Company Info and Logo */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
+                {/* Company Info */}
+                {safeSchema.header.showCompanyInfo && (
+                  <View style={{ flex: 1, alignItems: 'flex-end', marginRight: 3 }}>
+                    {safeSchema.header.companyName && safeSchema.header.companyName.trim() && (
+                      <Text style={{
+                        fontSize: safeSchema.header.companyInfoFontSize || 12,
+                        fontWeight: 'bold',
+                        color: safeSchema.page.fontColor || '#1F2937',
+                        marginBottom: 3,
+                        textAlign: 'right'
+                      }}>
+                        {safeText(safeSchema.header.companyName)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyAddress && safeSchema.header.companyAddress.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563',
+                        marginBottom: 2,
+                        marginLeft: 0,
+                        paddingLeft: 0,
+                        textAlign: 'right'
+                      }}>
+                        {safeText(safeSchema.header.companyAddress)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyPhone && safeSchema.header.companyPhone.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563',
+                        marginBottom: 2,
+                        marginLeft: 0,
+                        paddingLeft: 0,
+                        textAlign: 'right'
+                      }}>
+                        Tel: {safeText(safeSchema.header.companyPhone)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyEmail && safeSchema.header.companyEmail.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563',
+                        marginBottom: 2,
+                        marginLeft: 0,
+                        paddingLeft: 0,
+                        textAlign: 'right'
+                      }}>
+                        E-posta: {safeText(safeSchema.header.companyEmail)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyWebsite && safeSchema.header.companyWebsite.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563',
+                        marginBottom: 2,
+                        marginLeft: 0,
+                        paddingLeft: 0,
+                        textAlign: 'right'
+                      }}>
+                        Web: {safeText(safeSchema.header.companyWebsite)}
+                      </Text>
+                    )}
+                    {safeSchema.header.companyTaxNumber && safeSchema.header.companyTaxNumber.trim() && (
+                      <Text style={{
+                        fontSize: (safeSchema.header.companyInfoFontSize || 12) - 1,
+                        color: safeSchema.page.fontColor || '#4B5563',
+                        textAlign: 'right'
+                      }}>
+                        {safeText(safeSchema.header.companyTaxNumber)}
+                      </Text>
+                    )}
+                  </View>
+                )}
+                
+                {/* Logo */}
+                {safeSchema.header.showLogo && safeSchema.header.logoUrl && (
+                  <View style={{ 
+                    padding: 0, 
+                    alignSelf: 'flex-start',
+                    flexShrink: 0
+                  }}>
+                    <Image src={safeSchema.header.logoUrl} style={styles.logo} />
+                  </View>
+                )}
+              </View>
+            </>
           )}
         </View>
 
         {/* Service Info and Customer Info - Two Column Layout */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, marginTop: 12 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, marginTop: 6 }}>
           {/* Servis Bilgileri - Left Column */}
-          <View style={{ flex: 1, marginRight: 20, marginBottom: 0 }}>
+          <View style={{ flex: 1, marginRight: 12, marginBottom: 0 }}>
             <Text style={styles.sectionTitle}>Servis Bilgileri</Text>
             
-            <View style={{ marginTop: 8 }}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Servis No:</Text>
-                <Text style={styles.infoValue}>{safeText(data.serviceNumber)}</Text>
+            <View style={{ marginTop: 4 }}>
+              {safeSchema.serviceInfo.showServiceNumber && (
+                <View style={{ marginBottom: 2 }}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Servis No:</Text>
+                    <Text style={styles.infoValue}>{safeText(data.serviceNumber)}</Text>
+                  </View>
+                </View>
+              )}
+              <View style={{ marginBottom: 2 }}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Servis Başlığı:</Text>
+                  <Text style={styles.infoValue}>{safeText(data.serviceTitle)}</Text>
+                </View>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Servis Başlığı:</Text>
-                <Text style={styles.infoValue}>{safeText(data.serviceTitle)}</Text>
-              </View>
+              {safeSchema.serviceInfo.showServiceStatus && data.status && (
+                <View style={{ marginBottom: 2 }}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Servis Durumu:</Text>
+                    <Text style={styles.infoValue}>{safeText(getStatusLabel(data.status))}</Text>
+                  </View>
+                </View>
+              )}
               {safeSchema.serviceInfo.showServiceType && data.serviceType && (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Servis Tipi:</Text>
-                  <Text style={styles.infoValue}>{safeText(data.serviceType)}</Text>
+                <View style={{ marginBottom: 2 }}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Servis Tipi:</Text>
+                    <Text style={styles.infoValue}>{safeText(data.serviceType)}</Text>
+                  </View>
                 </View>
               )}
-              {safeSchema.serviceInfo.showDates && (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Bildirim Tarihi:</Text>
-                  <Text style={styles.infoValue}>{formatDate(data.reportedDate)}</Text>
+              {safeSchema.serviceInfo.showDates && data.reportedDate && (
+                <View style={{ marginBottom: 2 }}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Bildirim Tarihi:</Text>
+                    <Text style={styles.infoValue}>{safeText(formatDate(data.reportedDate))}</Text>
+                  </View>
                 </View>
               )}
-              {safeSchema.serviceInfo.showEstimatedDuration && data.estimatedDuration && (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Tahmini Süre:</Text>
-                  <Text style={styles.infoValue}>{data.estimatedDuration} dakika</Text>
-                </View>
-              )}
-              {safeSchema.serviceInfo.showLocation && data.location && (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Konum:</Text>
-                  <Text style={styles.infoValue}>{safeText(data.location)}</Text>
+              {safeSchema.serviceInfo.showTechnician && data.technician?.name && (
+                <View style={{ marginBottom: 2 }}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Teknisyen:</Text>
+                    <Text style={styles.infoValue}>{safeText(data.technician.name)}</Text>
+                  </View>
                 </View>
               )}
               {data.serviceDescription && (
-                <View style={{ marginTop: 8 }}>
-                  <Text style={styles.infoLabel}>Açıklama:</Text>
-                  <Text style={[styles.infoValue, { marginTop: 4 }]}>
+                <View style={{ marginTop: 4, marginBottom: 6 }}>
+                  <Text style={styles.infoLabel}>Servis Açıklaması:</Text>
+                  <Text style={[styles.infoValue, { marginTop: 2 }]}>
                     {safeText(data.serviceDescription)}
+                  </Text>
+                </View>
+              )}
+              {data.serviceResult && (
+                <View style={{ marginTop: 12, marginBottom: 14 }}>
+                  <Text style={styles.infoLabel}>Servis Sonucu:</Text>
+                  <Text style={[styles.infoValue, { marginTop: 2 }]}>
+                    {safeText(data.serviceResult)}
                   </Text>
                 </View>
               )}
@@ -376,36 +668,49 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
 
           {/* Müşteri Bilgileri - Right Column */}
           {data.customer && (
-            <View style={{ flex: 1, marginLeft: 20, marginBottom: 0 }}>
-              <Text style={styles.sectionTitle}>Müşteri Bilgileri</Text>
-              <View style={{ marginTop: 8 }}>
+            <View style={{ flex: 1, marginLeft: 12, marginBottom: 0 }}>
+              <Text style={[styles.sectionTitle, { fontSize: safeSchema.serviceInfo?.titleFontSize || 14 }]}>
+                Müşteri Bilgileri
+              </Text>
+              <View style={{ marginTop: 4 }}>
                 {data.customer.company && (
-                  <View style={{ marginBottom: 6 }}>
-                    <Text style={[styles.infoValue, { fontWeight: 'bold', fontSize: (safeSchema.serviceInfo.infoFontSize || 10) + 1 }]}>
-                      {safeText(data.customer.company)}
-                    </Text>
+                  <View style={{ marginBottom: 2 }}>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Şirket:</Text>
+                      <Text style={styles.infoValue}>{safeText(data.customer.company)}</Text>
+                    </View>
                   </View>
                 )}
                 {data.customer.name && (
-                  <View style={{ marginBottom: 4 }}>
-                    <Text style={styles.infoValue}>{safeText(data.customer.name)}</Text>
+                  <View style={{ marginBottom: 2 }}>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Ad:</Text>
+                      <Text style={styles.infoValue}>{safeText(data.customer.name)}</Text>
+                    </View>
                   </View>
                 )}
                 {data.customer.phone && (
-                  <View style={{ marginBottom: 4 }}>
-                    <Text style={styles.infoValue}>{safeText(data.customer.phone)}</Text>
+                  <View style={{ marginBottom: 2 }}>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Telefon:</Text>
+                      <Text style={styles.infoValue}>{safeText(data.customer.phone)}</Text>
+                    </View>
                   </View>
                 )}
                 {data.customer.email && (
-                  <View style={{ marginBottom: 4 }}>
-                    <Text style={styles.infoValue}>{safeText(data.customer.email)}</Text>
+                  <View style={{ marginBottom: 2 }}>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>E-posta:</Text>
+                      <Text style={styles.infoValue}>{safeText(data.customer.email)}</Text>
+                    </View>
                   </View>
                 )}
                 {data.customer.address && (
-                  <View style={{ marginBottom: 4 }}>
-                    <Text style={styles.infoValue}>
-                      {safeText(data.customer.address)}
-                    </Text>
+                  <View style={{ marginBottom: 2 }}>
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Adres:</Text>
+                      <Text style={styles.infoValue}>{safeText(data.customer.address)}</Text>
+                    </View>
                   </View>
                 )}
               </View>
@@ -416,7 +721,7 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
         {/* Parts Table */}
         {safeSchema.partsTable.show && data.parts && data.parts.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Kullanılan Parçalar</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 10 }]}>Kullanılan Parçalar</Text>
             <View style={styles.table}>
               {/* Table Header */}
               <View style={styles.tableHeader}>
@@ -448,10 +753,10 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
                     let value = '';
                     switch (col.key) {
                       case 'name':
-                        value = part.name;
+                        value = part.name || ' ';
                         break;
                       case 'quantity':
-                        value = String(part.quantity);
+                        value = String(part.quantity || ' ');
                         break;
                       case 'unit':
                         value = part.unit || '-';
@@ -462,6 +767,10 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
                       case 'total':
                         value = formatCurrency(part.total);
                         break;
+                    }
+                    // Ensure value is never empty string
+                    if (!value || value.trim() === '') {
+                      value = ' ';
                     }
                     return (
                       <Text
@@ -478,29 +787,6 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
                 </View>
               ))}
             </View>
-          </View>
-        )}
-
-        {/* Instructions */}
-        {safeSchema.instructions.show && data.instructions && data.instructions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: safeSchema.instructions.titleFontSize }]}>
-              Yapılacak İşlemler
-            </Text>
-            {data.instructions.map((instruction, index) => (
-              <View key={index} style={styles.instructionItem}>
-                <Text style={styles.instructionNumber}>{index + 1}.</Text>
-                <Text style={styles.instructionText}>{safeText(instruction)}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Notes */}
-        {data.notes && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Notlar</Text>
-            <Text style={styles.infoValue}>{safeText(data.notes)}</Text>
           </View>
         )}
 
@@ -546,9 +832,11 @@ const ServicePdfRenderer: React.FC<ServicePdfRendererProps> = ({ data, schema })
         )}
 
         {/* Footer */}
-        <View style={styles.footer}>
-          <Text>{safeText(safeSchema.notes.footer)}</Text>
-        </View>
+        {safeSchema.notes?.footer && safeSchema.notes.footer.trim() && (
+          <View style={styles.footer}>
+            <Text>{safeText(safeSchema.notes.footer)}</Text>
+          </View>
+        )}
       </Page>
     </Document>
   );

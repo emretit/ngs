@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,12 +12,12 @@ import '../models/service_request.dart';
 
 class ServiceSlipSignatureFlowPage extends ConsumerStatefulWidget {
   final String serviceRequestId;
-  final String templateId;
+  final String? templateId;
 
   const ServiceSlipSignatureFlowPage({
     super.key,
     required this.serviceRequestId,
-    required this.templateId,
+    this.templateId,
   });
 
   @override
@@ -27,6 +28,52 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
   String? _technicianSignature;
   String? _customerSignature;
   bool _isGeneratingPdf = false;
+  bool _needsTechnicianSignature = false;
+  bool _needsCustomerSignature = false;
+
+  Future<void> _checkExistingSignatures() async {
+    try {
+      final serviceRequest = await ref.read(serviceRequestByIdProvider(widget.serviceRequestId).future);
+      if (serviceRequest == null) {
+        throw Exception('Servis bulunamadı');
+      }
+
+      final hasTechnicianSignature = serviceRequest.technicianSignature != null && 
+                                     serviceRequest.technicianSignature!.isNotEmpty;
+      final hasCustomerSignature = serviceRequest.customerSignature != null && 
+                                   serviceRequest.customerSignature!.isNotEmpty;
+
+      setState(() {
+        _needsTechnicianSignature = !hasTechnicianSignature;
+        _needsCustomerSignature = !hasCustomerSignature;
+        _technicianSignature = serviceRequest.technicianSignature;
+        _customerSignature = serviceRequest.customerSignature;
+      });
+
+      // Eğer her iki imza da varsa, direkt PDF oluştur
+      if (!_needsTechnicianSignature && !_needsCustomerSignature) {
+        await _generatePdf();
+        return;
+      }
+
+      // Eksik imzaları al
+      if (_needsTechnicianSignature) {
+        await _collectTechnicianSignature();
+      } else if (_needsCustomerSignature) {
+        await _collectCustomerSignature();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+        context.pop();
+      }
+    }
+  }
 
   Future<void> _collectTechnicianSignature() async {
     final signature = await Navigator.push<String>(
@@ -41,11 +88,19 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
     if (signature != null && mounted) {
       setState(() {
         _technicianSignature = signature;
+        _needsTechnicianSignature = false;
       });
       // İmzayı kaydet
       await _saveTechnicianSignature(signature);
-      // Müşteri imzasına geç
-      _collectCustomerSignature();
+      // Müşteri imzasına geç veya PDF oluştur
+      if (_needsCustomerSignature) {
+        _collectCustomerSignature();
+      } else {
+        await _generatePdf();
+      }
+    } else if (mounted) {
+      // İmza alınmadıysa geri dön
+      context.pop();
     }
   }
 
@@ -62,11 +117,15 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
     if (signature != null && mounted) {
       setState(() {
         _customerSignature = signature;
+        _needsCustomerSignature = false;
       });
       // İmzayı kaydet
       await _saveCustomerSignature(signature);
       // PDF oluştur
       await _generatePdf();
+    } else if (mounted) {
+      // İmza alınmadıysa geri dön
+      context.pop();
     }
   }
 
@@ -121,10 +180,17 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
 
       // PDF oluştur
       final pdfService = ServiceSlipPdfService();
-      final pdfBytes = await pdfService.generateServiceSlipPdfFromWeb(
-        serviceRequest,
-        templateId: widget.templateId,
-      );
+      Uint8List pdfBytes;
+      
+      try {
+        pdfBytes = await pdfService.generateServiceSlipPdfFromWeb(
+          serviceRequest,
+          templateId: widget.templateId,
+        );
+      } catch (webError) {
+        print('Web PDF renderer failed, using local: $webError');
+        pdfBytes = await pdfService.generateServiceSlipPdf(serviceRequest);
+      }
 
       // PDF'i paylaş
       await pdfService.previewAndShare(
@@ -140,8 +206,9 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
           ),
         );
         // Geri dön
-        context.pop();
-        context.pop(); // Template selection sayfasından da çık
+        if (mounted) {
+          context.pop();
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -164,9 +231,9 @@ class _ServiceSlipSignatureFlowPageState extends ConsumerState<ServiceSlipSignat
   @override
   void initState() {
     super.initState();
-    // Sayfa açıldığında direkt teknisyen imzası al
+    // Sayfa açıldığında mevcut imzaları kontrol et ve eksik olanları al
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _collectTechnicianSignature();
+      _checkExistingSignatures();
     });
   }
 

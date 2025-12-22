@@ -1193,6 +1193,7 @@ export class PdfExportService {
         serviceNumber: service.service_number || `SR-${service.id.slice(-6).toUpperCase()}`,
         serviceTitle: service.service_title || '',
         serviceDescription: service.service_request_description || undefined,
+        serviceResult: service.service_result || undefined,
         serviceType: service.service_type || undefined,
         priority: (service.service_priority as 'low' | 'medium' | 'high' | 'urgent') || 'medium',
         status: service.service_status || '',
@@ -1230,21 +1231,22 @@ export class PdfExportService {
   static async getServiceTemplates(): Promise<ServicePdfTemplate[]> {
     const companyId = await this.getCurrentCompanyId();
     
-    // Get templates from pdf_templates table with type='service_slip'
-    let query = supabase
-      .from('pdf_templates')
-      .select('*')
-      .eq('type', 'service_slip');
-
-    if (companyId) {
-      query = query.eq('company_id', companyId);
-    } else {
-      query = query.is('company_id', null);
+    if (!companyId) {
+      return [];
     }
 
-    let { data, error } = await query.order('is_default', { ascending: false }).order('created_at', { ascending: false });
+    // Get templates from service_templates table
+    let query = supabase
+      .from('service_templates')
+      .select('*')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .order('usage_count', { ascending: false })
+      .order('created_at', { ascending: false });
 
-    // If pdf_templates doesn't exist or error, return empty array
+    let { data, error } = await query;
+
+    // If service_templates doesn't exist or error, return empty array
     if (error) {
       console.error('Error fetching service PDF templates:', error);
       // Return empty array instead of throwing error - user can create templates later
@@ -1252,17 +1254,29 @@ export class PdfExportService {
     }
 
     // Transform to ServicePdfTemplate format
-    return (data || []).map((template: any) => ({
-      id: template.id,
-      name: template.name,
-      description: template.description,
-      schema_json: template.schema_json || {},
-      is_active: template.is_active !== false,
-      company_id: template.company_id,
-      created_by: template.created_by,
-      created_at: template.created_at,
-      updated_at: template.updated_at,
-    })) as ServicePdfTemplate[];
+    // PDF schema is stored in service_details.pdf_schema
+    return (data || []).map((template: any) => {
+      // Try to get pdf_schema from service_details.pdf_schema, fallback to service_details or empty object
+      let pdfSchema = {};
+      if (template.service_details?.pdf_schema) {
+        pdfSchema = template.service_details.pdf_schema;
+      } else if (template.service_details && typeof template.service_details === 'object') {
+        // If service_details exists but doesn't have pdf_schema, use it directly
+        pdfSchema = template.service_details;
+      }
+      
+      return {
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        schema_json: pdfSchema,
+        is_active: template.is_active !== false,
+        company_id: template.company_id,
+        created_by: template.created_by,
+        created_at: template.created_at,
+        updated_at: template.updated_at,
+      };
+    }) as ServicePdfTemplate[];
   }
 
   /**
@@ -1278,23 +1292,31 @@ export class PdfExportService {
       if (options?.template) {
         activeTemplate = options.template;
       } else if (options?.templateId) {
-        // Get template from pdf_templates table (type='service_slip')
+        // Get template from service_templates table
         const { data, error } = await supabase
-          .from('pdf_templates')
+          .from('service_templates')
           .select('*')
           .eq('id', options.templateId)
-          .eq('type', 'service_slip')
           .single();
 
         if (error) {
           throw new Error('Şablon bulunamadı: ' + error.message);
         }
 
+        // PDF schema is stored in service_details.pdf_schema
+        let pdfSchema = {};
+        if (data.service_details?.pdf_schema) {
+          pdfSchema = data.service_details.pdf_schema;
+        } else if (data.service_details && typeof data.service_details === 'object') {
+          // If service_details exists but doesn't have pdf_schema, use it directly
+          pdfSchema = data.service_details;
+        }
+
         activeTemplate = {
           id: data.id,
           name: data.name,
           description: data.description,
-          schema_json: data.schema_json || {},
+          schema_json: pdfSchema,
           is_active: data.is_active !== false,
           company_id: data.company_id,
           created_by: data.created_by,

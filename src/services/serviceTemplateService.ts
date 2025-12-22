@@ -4,16 +4,7 @@ export interface ServiceTemplate {
   id: string;
   name: string;
   description?: string;
-  service_title: string;
-  service_request_description?: string;
-  service_type?: string;
-  service_priority: 'low' | 'medium' | 'high' | 'urgent';
-  estimated_duration?: number;
-  default_location?: string;
-  default_technician_id?: string;
   service_details?: any;
-  parts_list?: any[];
-  instructions?: any[];
   company_id: string;
   usage_count: number;
   is_active: boolean;
@@ -25,16 +16,7 @@ export interface ServiceTemplate {
 export interface CreateServiceTemplateData {
   name: string;
   description?: string;
-  service_title: string;
-  service_request_description?: string;
-  service_type?: string;
-  service_priority?: 'low' | 'medium' | 'high' | 'urgent';
-  estimated_duration?: number;
-  default_location?: string;
-  default_technician_id?: string;
   service_details?: any;
-  parts_list?: any[];
-  instructions?: any[];
 }
 
 /**
@@ -98,7 +80,6 @@ export class ServiceTemplateService {
         ...templateData,
         company_id: companyId,
         created_by: userId,
-        service_priority: templateData.service_priority || 'medium',
       })
       .select()
       .single();
@@ -168,13 +149,8 @@ export class ServiceTemplateService {
       .eq('id', templateId);
 
     // Create service from template
+    // Service details are stored in service_details, actual service data comes from overrides
     const serviceData = {
-      service_title: template.service_title,
-      service_request_description: template.service_request_description,
-      service_location: overrides?.service_location || template.default_location,
-      service_priority: overrides?.service_priority || template.service_priority,
-      service_type: overrides?.service_type || template.service_type,
-      assigned_technician: overrides?.assigned_technician || template.default_technician_id,
       service_status: 'new',
       company_id: companyId,
       service_details: template.service_details,
@@ -216,14 +192,8 @@ export class ServiceTemplateService {
 
     const templateData: CreateServiceTemplateData = {
       name: templateName,
-      description: `Şablon: ${service.service_title}`,
-      service_title: service.service_title,
-      service_request_description: service.service_request_description,
-      service_type: service.service_type,
-      service_priority: service.service_priority || 'medium',
-      default_location: service.service_location,
-      default_technician_id: service.assigned_technician,
-      service_details: service.service_details,
+      description: `Şablon: Servis`,
+      service_details: service.service_details || {},
     };
 
     return this.createTemplate(companyId, userId, templateData);

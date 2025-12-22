@@ -59,9 +59,7 @@ export const ServiceTemplateLibrary: React.FC = () => {
     const query = searchQuery.toLowerCase();
     return (
       template.name.toLowerCase().includes(query) ||
-      template.service_title.toLowerCase().includes(query) ||
-      template.description?.toLowerCase().includes(query) ||
-      template.service_type?.toLowerCase().includes(query)
+      template.description?.toLowerCase().includes(query)
     );
   });
 
@@ -144,7 +142,7 @@ export const ServiceTemplateLibrary: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="text-sm font-medium mb-1">{template.service_title}</p>
+                  <p className="text-sm font-medium mb-1">{template.name}</p>
                   {template.service_request_description && (
                     <p className="text-xs text-muted-foreground line-clamp-2">
                       {template.service_request_description}

@@ -277,6 +277,8 @@ export async function fetchSalesFunnelData(
       stages: [],
       totalPipelineValue: 0,
       totalDeals: 0,
+      lostDealsCount: 0,
+      lostDealsValue: 0,
     };
   }
 
@@ -325,7 +327,8 @@ export async function fetchSalesFunnelData(
     lost: 'Kaybedildi',
   };
 
-  const stageOrder = ['open', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+  // Huni sadece aktif satış aşamalarını içermeli - 'lost' ayrı analiz edilir
+  const stageOrder = ['open', 'qualified', 'proposal', 'negotiation', 'won'];
   
   // Calculate average days in each stage
   const stageDurations = new Map<string, number[]>();
@@ -363,9 +366,16 @@ export async function fetchSalesFunnelData(
       const data = stageMap.get(stage) || { count: 0, value: 0 };
       const prevStage = index > 0 ? stageOrder[index - 1] : null;
       const prevData = prevStage ? stageMap.get(prevStage) : null;
-      const conversionRate = prevData && prevData.count > 0
-        ? (data.count / prevData.count) * 100
-        : undefined;
+
+      // Dönüşüm oranı: Bir önceki aşamadan bu aşamaya geçiş
+      // Not: Mantıklı bir hunide bu oran %100'ü geçmemeli (fırsatlar kaybolur, çoğalmaz)
+      // Ama veri tutarsızlığı durumunda %100 ile sınırlıyoruz
+      let conversionRate = undefined;
+      if (prevData && prevData.count > 0) {
+        const rawRate = (data.count / prevData.count) * 100;
+        // Eğer %100'ü aşıyorsa, veri tutarsızlığı var demektir
+        conversionRate = Math.min(rawRate, 100);
+      }
       
       const avgDays = avgDaysByStage.get(stage);
       const isBottleneck = (conversionRate !== undefined && conversionRate < conversionThreshold) ||
@@ -389,6 +399,23 @@ export async function fetchSalesFunnelData(
 
   const totalPipelineValue = opportunities.reduce((sum, opp) => sum + (opp.value || 0), 0);
   const totalDeals = opportunities.length;
+
+  // Kaybedilen fırsatları ayrı sorgula (huni dışında analiz için)
+  let lostQuery = supabase
+    .from('opportunities')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('status', 'lost');
+
+  lostQuery = applyDateFilters(lostQuery, filters);
+  lostQuery = applyEmployeeFilter(lostQuery, filters.salesRepId);
+  lostQuery = applyCustomerFilter(lostQuery, filters.customerId);
+  lostQuery = applyCurrencyFilter(lostQuery, filters.currency);
+
+  const { data: lostData } = await lostQuery;
+  const lostOpportunities = lostData || [];
+  const lostDealsCount = lostOpportunities.length;
+  const lostDealsValue = lostOpportunities.reduce((sum, opp) => sum + (opp.value || 0), 0);
 
   // Calculate funnel over time (last 30 days or filtered period)
   const startDate = filters.startDate ? new Date(filters.startDate) : subDays(new Date(), 30);
@@ -432,6 +459,8 @@ export async function fetchSalesFunnelData(
     stages,
     totalPipelineValue,
     totalDeals,
+    lostDealsCount,
+    lostDealsValue,
     funnelOverTime,
   };
 }

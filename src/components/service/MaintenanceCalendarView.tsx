@@ -70,7 +70,7 @@ export const MaintenanceCalendarView: React.FC = () => {
         if (nextDate <= endDate) {
           events.push({
             id: `template-${template.id}`,
-            title: `${template.service_title} (Şablon)`,
+            title: `${template.name} (Şablon)`,
             start: nextDate,
             end: nextDate,
             resource: {
@@ -98,7 +98,7 @@ export const MaintenanceCalendarView: React.FC = () => {
 
         events.push({
           id: `instance-${template.id}-${instanceCount}`,
-          title: template.service_title,
+          title: template.name,
           start: new Date(currentDate),
           end: new Date(currentDate),
           resource: {
@@ -259,7 +259,7 @@ export const MaintenanceCalendarView: React.FC = () => {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium">{template.service_title}</span>
+                      <span className="font-medium">{template.name}</span>
                       <Badge variant="outline" className="text-xs">
                         {getRecurrenceDescription({
                           type: template.recurrence_type,

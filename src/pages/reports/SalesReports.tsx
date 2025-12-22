@@ -28,12 +28,15 @@ function SalesFunnelHeaderWithStats({ filters }: { filters: GlobalFilters }) {
     queryFn: () => fetchSalesFunnelData(filters),
   });
 
-  const overallConversionRate = data && data.stages.length > 0
+  // Dönüşüm oranı: Kazanılan / (Kazanılan + Kaybedilen)
+  const overallConversionRate = data
     ? (() => {
-        const openStage = data.stages.find(s => s.stage === 'open');
         const wonStage = data.stages.find(s => s.stage === 'won');
-        if (!openStage || !wonStage || openStage.count === 0) return 0;
-        return (wonStage.count / openStage.count) * 100;
+        const wonCount = wonStage?.count || 0;
+        const lostCount = data.lostDealsCount || 0;
+        const totalClosed = wonCount + lostCount;
+        if (totalClosed === 0) return 0;
+        return (wonCount / totalClosed) * 100;
       })()
     : 0;
 

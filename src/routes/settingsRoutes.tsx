@@ -17,6 +17,7 @@ const ServiceTemplateEditor = React.lazy(() => import("@/pages/templates/Service
 const NotificationSettings = React.lazy(() => import("@/pages/NotificationSettings"));
 const Subscription = React.lazy(() => import("@/pages/settings/Subscription"));
 const AuditLogs = React.lazy(() => import("@/pages/admin/AuditLogs"));
+import Redirect from "@/components/routes/Redirect";
 
 // Define settings routes
 export const settingsRoutes: RouteConfig[] = [
@@ -33,8 +34,9 @@ export const settingsRoutes: RouteConfig[] = [
   // Service template routes MUST come before general pdf-templates routes (more specific first)
   { path: "/settings/pdf-templates/service/new", component: ServiceTemplateEditor, protected: true },
   { path: "/settings/pdf-templates/service/edit/:id", component: ServiceTemplateEditor, protected: true },
-  { path: "/settings/pdf-templates/new", component: PdfTemplateEditor, protected: true },
-  { path: "/settings/pdf-templates/edit/:templateId", component: PdfTemplateEditor, protected: true },
+  // Quote/Proposal template routes
+  { path: "/settings/pdf-templates/quote/new", component: PdfTemplateEditor, protected: true },
+  { path: "/settings/pdf-templates/quote/edit/:templateId", component: PdfTemplateEditor, protected: true },
   { path: "/settings/audit-logs", component: AuditLogs, protected: true },
   { path: "/settings/notifications", component: NotificationSettings, protected: true },
   // Backward compatibility routes (without /settings prefix)
@@ -49,8 +51,15 @@ export const settingsRoutes: RouteConfig[] = [
   { path: "/pdf-templates", component: PdfTemplates, protected: true },
   { path: "/pdf-templates/service/new", component: ServiceTemplateEditor, protected: true },
   { path: "/pdf-templates/service/edit/:id", component: ServiceTemplateEditor, protected: true },
-  { path: "/pdf-templates/new", component: PdfTemplateEditor, protected: true },
-  { path: "/pdf-templates/edit/:templateId", component: PdfTemplateEditor, protected: true },
+  // Quote/Proposal template routes
+  { path: "/pdf-templates/quote/new", component: PdfTemplateEditor, protected: true },
+  { path: "/pdf-templates/quote/edit/:templateId", component: PdfTemplateEditor, protected: true },
+  // Legacy route redirect - redirect old /pdf-templates/new to /pdf-templates/quote/new
+  { 
+    path: "/pdf-templates/new", 
+    component: () => <Redirect to="/pdf-templates/quote/new" />, 
+    protected: true 
+  },
   { path: "/audit-logs", component: AuditLogs, protected: true },
   { path: "/notifications", component: NotificationSettings, protected: true },
 ];

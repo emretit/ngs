@@ -23,7 +23,7 @@ import { tr } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Info } from "lucide-react";
+import { ArrowRight, Info, AlertTriangle } from "lucide-react";
 import { fetchSalesFunnelData } from "@/services/salesReportsService";
 import type { GlobalFilters } from "@/types/salesReports";
 import {
@@ -47,71 +47,70 @@ const STAGE_COLORS: Record<string, string> = {
   lost: '#ef4444',
 };
 
-// Custom Funnel Component
-const FunnelVisualization = ({ 
-  stages, 
-  onStageClick 
-}: { 
-  stages: any[]; 
+// Custom Funnel Component - Düzeltilmiş huni görselleştirmesi
+const FunnelVisualization = ({
+  stages,
+  onStageClick
+}: {
+  stages: any[];
   onStageClick?: (stage: any) => void;
 }) => {
-  const maxCount = Math.max(...stages.map(s => s.count), 0);
-  const minWidthPercent = 25; // Minimum genişlik yüzdesi
-  const maxWidthPercent = 95; // Maksimum genişlik yüzdesi
-  
-  // Her aşama için genişlikleri hesapla - huni şekli için (adet bazlı)
-  const stageWidths = stages.map((stage, index) => {
-    // Adet sayısına göre genişlik hesapla
-    const countRatio = maxCount > 0 ? stage.count / maxCount : 0;
-    const topWidth = minWidthPercent + (maxWidthPercent - minWidthPercent) * countRatio;
-    
-    // Bir sonraki aşamanın genişliğini hesapla (huni daralması için)
-    const nextStage = index < stages.length - 1 ? stages[index + 1] : null;
-    const nextCountRatio = nextStage && maxCount > 0 ? nextStage.count / maxCount : 0;
-    const bottomWidth = nextStage 
-      ? minWidthPercent + (maxWidthPercent - minWidthPercent) * nextCountRatio
-      : minWidthPercent;
-    
-    return { topWidth, bottomWidth };
+  // İlk aşamayı (en büyük count) referans al - bu %100 genişlikte olacak
+  const firstStageCount = stages[0]?.count || 1;
+
+  // Her aşama için genişlikleri hesapla - İLK AŞAMAYA GÖRE orantılı daralma
+  const stageWidths = stages.map((stage) => {
+    // İlk aşamaya göre oran (her zaman <= 1.0)
+    const countRatio = firstStageCount > 0 ? stage.count / firstStageCount : 0;
+    // En az %40, en fazla %100 genişlik (ilk aşama %100, sonrakiler orantılı)
+    const width = Math.max(40, 100 * countRatio);
+
+    return width;
   });
-  
+
   return (
-    <div className="flex flex-col items-center gap-0 py-2">
+    <div className="flex flex-col items-center gap-0 py-2 px-4">
       {stages.map((stage, index) => {
-        const { topWidth, bottomWidth } = stageWidths[index];
-        
+        const currentWidth = stageWidths[index];
+        const nextWidth = index < stages.length - 1 ? stageWidths[index + 1] : currentWidth * 0.8;
+
         return (
-          <div key={stage.stage} className="w-full relative group">
+          <div key={stage.stage} className="w-full relative">
+            {/* Conversion arrow */}
+            {index > 0 && (
+              <div className="flex items-center justify-center py-1">
+                <ArrowRight className="h-3 w-3 text-muted-foreground/50 rotate-90" />
+              </div>
+            )}
+
             <button
               onClick={() => onStageClick?.(stage)}
               className="w-full transition-all hover:opacity-90 cursor-pointer"
             >
-              <div className="relative mx-auto transition-all hover:shadow-lg" style={{ width: `${topWidth}%` }}>
-                {/* Funnel segment - huni şekli */}
-                <div
-                  className="relative h-12 flex items-center justify-between px-3"
-                  style={{
-                    backgroundColor: STAGE_COLORS[stage.stage] || '#94a3b8',
-                    clipPath: `polygon(${(100 - topWidth) / 2}% 0%, ${(100 + topWidth) / 2}% 0%, ${(100 + bottomWidth) / 2}% 100%, ${(100 - bottomWidth) / 2}% 100%)`,
-                  }}
-                >
-                  <div className="flex-1 text-white min-w-0">
-                    <div className="font-semibold text-xs truncate">{stage.label}</div>
-                    <div className="text-[10px] opacity-90 truncate">
-                      {stage.count} fırsat • ₺{(stage.value || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0 })}
-                    </div>
+              {/* Yamuk şeklinde huni segmenti */}
+              <div
+                className="relative mx-auto h-14 flex items-center justify-between px-4 transition-all hover:shadow-lg"
+                style={{
+                  width: '100%',
+                  maxWidth: '600px',
+                  backgroundColor: STAGE_COLORS[stage.stage] || '#94a3b8',
+                  clipPath: `polygon(
+                    ${(100 - currentWidth) / 2}% 0%,
+                    ${(100 + currentWidth) / 2}% 0%,
+                    ${(100 + nextWidth) / 2}% 100%,
+                    ${(100 - nextWidth) / 2}% 100%
+                  )`,
+                }}
+              >
+                <div className="flex-1 text-white min-w-0 z-10">
+                  <div className="font-semibold text-sm truncate">{stage.label}</div>
+                  <div className="text-xs opacity-90 truncate">
+                    {stage.count} fırsat • ₺{(stage.value || 0).toLocaleString('tr-TR', { minimumFractionDigits: 0 })}
                   </div>
-                  {stage.conversionRate !== undefined && index > 0 && (
-                    <div className="text-white text-[10px] font-medium bg-white/20 px-1.5 py-0.5 rounded ml-2 flex-shrink-0">
-                      {stage.conversionRate.toFixed(1)}%
-                    </div>
-                  )}
                 </div>
-                
-                {/* Conversion arrow - daha kompakt */}
-                {index > 0 && (
-                  <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-                    <ArrowRight className="h-3 w-3 text-muted-foreground rotate-90" />
+                {stage.conversionRate !== undefined && index > 0 && (
+                  <div className="text-white text-xs font-medium bg-white/20 px-2 py-1 rounded ml-2 flex-shrink-0 z-10">
+                    {stage.conversionRate === 100 ? '≤100' : stage.conversionRate.toFixed(1)}%
                   </div>
                 )}
               </div>
@@ -298,6 +297,62 @@ export default function SalesFunnelReport({
         </Card>
       )}
 
+      {/* Lost Opportunities Section */}
+      {data.lostDealsCount > 0 && (
+        <Card className="p-4 border-red-200 bg-red-50/50 dark:bg-red-950/20">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-red-900 dark:text-red-100 mb-1">
+                Kaybedilen Fırsatlar
+              </h4>
+              <p className="text-xs text-red-700 dark:text-red-300 mb-3">
+                Huniden çıkan ve kaybedilen fırsatların analizi
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-red-600 dark:text-red-400 mb-1">Kayıp Sayısı</div>
+                  <div className="text-2xl font-bold text-red-900 dark:text-red-100">
+                    {data.lostDealsCount}
+                  </div>
+                  <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                    fırsat kaybedildi
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-red-600 dark:text-red-400 mb-1">Kayıp Değer</div>
+                  <div className="text-2xl font-bold text-red-900 dark:text-red-100">
+                    ₺{data.lostDealsValue.toLocaleString('tr-TR', { minimumFractionDigits: 0 })}
+                  </div>
+                  <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                    Ort: ₺{(data.lostDealsValue / data.lostDealsCount).toLocaleString('tr-TR', { minimumFractionDigits: 0 })}
+                  </div>
+                </div>
+              </div>
+              {(() => {
+                const wonStage = data.stages.find(s => s.stage === 'won');
+                const wonCount = wonStage?.count || 0;
+                const totalClosed = wonCount + data.lostDealsCount;
+                const lossRate = totalClosed > 0 ? (data.lostDealsCount / totalClosed) * 100 : 0;
+
+                return (
+                  <div className="mt-3 pt-3 border-t border-red-200 dark:border-red-800">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-red-700 dark:text-red-300">Kayıp Oranı:</span>
+                      <span className="font-bold text-red-900 dark:text-red-100">
+                        {lossRate.toFixed(1)}% ({data.lostDealsCount}/{totalClosed} kapanış)
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Stage Details with Conversion Rates */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {data.stages.map((stage: any, index: number) => {
@@ -340,7 +395,7 @@ export default function SalesFunnelReport({
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">Dönüşüm Oranı:</span>
                     <span className={`font-medium ${stage.conversionRate < 50 ? 'text-red-600' : 'text-green-600'}`}>
-                      {stage.conversionRate.toFixed(1)}%
+                      {stage.conversionRate === 100 ? '≤100' : stage.conversionRate.toFixed(1)}%
                     </span>
                   </div>
                 )}

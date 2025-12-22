@@ -393,6 +393,22 @@ const ServiceDetailSheet: React.FC<ServiceDetailSheetProps> = ({
             </>
           )}
 
+          {/* Servis Sonucu */}
+          {service.service_result && (
+            <>
+              <Separator className="my-2" />
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 text-sm font-medium">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  <span>Servis Sonucu</span>
+                </div>
+                <p className="text-xs text-foreground p-2 bg-primary/5 rounded-lg border border-primary/20 whitespace-pre-wrap">
+                  {service.service_result}
+                </p>
+              </div>
+            </>
+          )}
+
           {/* Konum */}
           {service.service_location && (
             <>

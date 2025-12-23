@@ -225,14 +225,42 @@ export default function ServiceTemplateEditor() {
         throw new Error('PDF şeması yüklenemedi');
       }
       
-      // Mevcut service_details'i koru, sadece pdf_schema'yı güncelle
+      // Mevcut service_details'i al ve migrate et
       const currentServiceDetails = existingTemplate?.service_details || {};
+      
+      // Eski yapıdan yeni yapıya migrate et
+      // Eğer parts_list root seviyede varsa, service_details'e taşı
+      const migratedPartsList = currentServiceDetails.parts_list || 
+                                (existingTemplate as any)?.parts_list || 
+                                [];
+      
+      // Eğer defaults root seviyede varsa, service_details'e taşı
+      const migratedDefaults = {
+        estimated_duration: currentServiceDetails.estimated_duration ?? 
+                           (existingTemplate as any)?.estimated_duration ?? 
+                           undefined,
+        default_location: currentServiceDetails.default_location ?? 
+                         (existingTemplate as any)?.default_location ?? 
+                         undefined,
+        default_technician_id: currentServiceDetails.default_technician_id ?? 
+                             (existingTemplate as any)?.default_technician_id ?? 
+                             undefined,
+        service_type: currentServiceDetails.service_type ?? 
+                     (existingTemplate as any)?.service_type ?? 
+                     undefined,
+        service_priority: currentServiceDetails.service_priority ?? 
+                         (existingTemplate as any)?.service_priority ?? 
+                         'medium',
+      };
+      
       const templateData: Partial<CreateServiceTemplateData> = {
         name: data.name,
         description: data.description,
         service_details: {
           ...currentServiceDetails,
           pdf_schema: pdfSchema,
+          parts_list: migratedPartsList,
+          ...migratedDefaults,
         },
       };
       
@@ -242,6 +270,7 @@ export default function ServiceTemplateEditor() {
         description: templateData.description,
         service_details: templateData.service_details,
         pdf_schema_keys: Object.keys(templateData.service_details?.pdf_schema || {}),
+        parts_list_count: migratedPartsList.length,
       });
       
       return ServiceTemplateService.updateTemplate(id, templateData);

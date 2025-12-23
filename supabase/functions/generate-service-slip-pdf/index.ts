@@ -85,16 +85,24 @@ serve(async (req) => {
       company = companyData;
     }
 
-    // Get PDF template if provided (from pdf_templates table, type='service_slip')
+    // Get PDF template if provided (from service_templates table)
     let template = null;
+    let pdfSchema = null;
     if (templateId) {
       const { data: templateData } = await supabase
-        .from('pdf_templates')
+        .from('service_templates')
         .select('*')
         .eq('id', templateId)
-        .eq('type', 'service_slip')
         .single();
       template = templateData;
+      
+      // Extract pdf_schema from service_details
+      if (template?.service_details?.pdf_schema) {
+        pdfSchema = template.service_details.pdf_schema;
+        console.log('📋 Template PDF schema loaded:', JSON.stringify(pdfSchema).substring(0, 200));
+      } else {
+        console.log('⚠️ Template found but no pdf_schema in service_details');
+      }
     }
 
     // Transform service request to PDF data format

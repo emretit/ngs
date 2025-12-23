@@ -13,41 +13,252 @@ Bu doküman, Web'de oluşturulan servis şablonlarının Flutter uygulamasında 
 └─────────────────┘     └──────────────────┘     └─────────────────┘
 ```
 
-## API Endpoint
+## API Kullanımı
 
-### GET /functions/v1/get-service-template
+Flutter uygulaması şablonları direkt Supabase client ile çeker. RLS (Row Level Security) sayesinde sadece kendi şirketinin şablonlarına erişebilir.
 
-Flutter uygulaması bu endpoint'i kullanarak şablonları çekebilir.
+### Tüm Şablonları Getir
 
-#### Tüm Şablonları Getir
 ```dart
-final response = await supabase.functions.invoke(
-  'get-service-template',
-  method: HttpMethod.get,
-);
+final templates = await supabase
+  .from('service_templates')
+  .select('*')
+  .eq('is_active', true)
+  .order('usage_count', ascending: false)
+  .order('created_at', ascending: false);
 
-// Response:
-// {
-//   "success": true,
-//   "templates": [...],
-//   "count": 5
-// }
+if (templates.error != null) {
+  throw Exception('Failed to fetch templates: ${templates.error?.message}');
+}
+
+// Şirket bilgilerini al (opsiyonel - header'da kullanmak için)
+final user = supabase.auth.currentUser;
+String? companyId;
+if (user != null) {
+  final profile = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('id', user.id)
+    .single();
+  companyId = profile.data?['company_id'];
+}
+
+final company = companyId != null ? await supabase
+  .from('companies')
+  .select('name, address, phone, email, website, logo_url, tax_number')
+  .eq('id', companyId)
+  .single() : null;
+
+// Her template'i Flutter formatına dönüştür
+final flutterTemplates = (templates.data ?? []).map((template) {
+  final serviceDetails = template['service_details'] ?? {};
+  final pdfSchema = serviceDetails['pdf_schema'] ?? {};
+  
+  return {
+    'id': template['id'],
+    'name': template['name'],
+    'description': template['description'],
+    'is_active': template['is_active'] ?? true,
+    'usage_count': template['usage_count'] ?? 0,
+    'created_at': template['created_at'],
+    'updated_at': template['updated_at'],
+    'pdf_schema': {
+      'page': {
+        'size': pdfSchema['page']?['size'] ?? 'A4',
+        'padding': pdfSchema['page']?['padding'] ?? {'top': 40, 'right': 40, 'bottom': 40, 'left': 40},
+        'fontSize': pdfSchema['page']?['fontSize'] ?? 12,
+        'fontFamily': pdfSchema['page']?['fontFamily'] ?? 'Roboto',
+        'fontColor': pdfSchema['page']?['fontColor'] ?? '#000000',
+        'backgroundColor': pdfSchema['page']?['backgroundColor'] ?? '#FFFFFF',
+      },
+      'header': {
+        'showLogo': pdfSchema['header']?['showLogo'] ?? true,
+        'logoUrl': pdfSchema['header']?['logoUrl'] ?? company?.data?['logo_url'],
+        'logoPosition': pdfSchema['header']?['logoPosition'] ?? 'left',
+        'logoSize': pdfSchema['header']?['logoSize'] ?? 80,
+        'showTitle': pdfSchema['header']?['showTitle'] ?? true,
+        'title': pdfSchema['header']?['title'] ?? 'SERVİS FORMU',
+        'titleFontSize': pdfSchema['header']?['titleFontSize'] ?? 18,
+        'showCompanyInfo': pdfSchema['header']?['showCompanyInfo'] ?? true,
+        'companyName': pdfSchema['header']?['companyName'] ?? company?.data?['name'] ?? '',
+        'companyAddress': pdfSchema['header']?['companyAddress'] ?? company?.data?['address'] ?? '',
+        'companyPhone': pdfSchema['header']?['companyPhone'] ?? company?.data?['phone'] ?? '',
+        'companyEmail': pdfSchema['header']?['companyEmail'] ?? company?.data?['email'] ?? '',
+        'companyWebsite': pdfSchema['header']?['companyWebsite'] ?? company?.data?['website'] ?? '',
+        'companyTaxNumber': pdfSchema['header']?['companyTaxNumber'] ?? company?.data?['tax_number'] ?? '',
+        'companyInfoFontSize': pdfSchema['header']?['companyInfoFontSize'] ?? 10,
+      },
+      'serviceInfo': {
+        'titleFontSize': pdfSchema['serviceInfo']?['titleFontSize'] ?? 14,
+        'infoFontSize': pdfSchema['serviceInfo']?['infoFontSize'] ?? 10,
+        'showServiceNumber': pdfSchema['serviceInfo']?['showServiceNumber'] ?? true,
+        'showServiceStatus': pdfSchema['serviceInfo']?['showServiceStatus'] ?? true,
+        'showTechnician': pdfSchema['serviceInfo']?['showTechnician'] ?? true,
+        'showServiceType': pdfSchema['serviceInfo']?['showServiceType'] ?? true,
+        'showDates': pdfSchema['serviceInfo']?['showDates'] ?? true,
+      },
+      'partsTable': {
+        'show': pdfSchema['partsTable']?['show'] ?? true,
+        'columns': pdfSchema['partsTable']?['columns'] ?? [
+          {'key': 'name', 'label': 'Ürün Adı', 'show': true, 'align': 'left'},
+          {'key': 'quantity', 'label': 'Miktar', 'show': true, 'align': 'center'},
+          {'key': 'unit', 'label': 'Birim', 'show': true, 'align': 'center'},
+          {'key': 'unitPrice', 'label': 'Birim Fiyat', 'show': true, 'align': 'right'},
+          {'key': 'total', 'label': 'Toplam', 'show': true, 'align': 'right'},
+        ],
+        'showRowNumber': pdfSchema['partsTable']?['showRowNumber'] ?? true,
+      },
+      'signatures': {
+        'show': pdfSchema['signatures']?['show'] ?? true,
+        'showTechnician': pdfSchema['signatures']?['showTechnician'] ?? true,
+        'showCustomer': pdfSchema['signatures']?['showCustomer'] ?? true,
+        'technicianLabel': pdfSchema['signatures']?['technicianLabel'] ?? 'Teknisyen',
+        'customerLabel': pdfSchema['signatures']?['customerLabel'] ?? 'Müşteri',
+        'fontSize': pdfSchema['signatures']?['fontSize'] ?? 10,
+      },
+      'notes': {
+        'footer': pdfSchema['notes']?['footer'] ?? 'Servis hizmeti için teşekkür ederiz.',
+        'footerFontSize': pdfSchema['notes']?['footerFontSize'] ?? 10,
+        'showFooterLogo': pdfSchema['notes']?['showFooterLogo'] ?? false,
+      },
+    },
+    'defaults': {
+      'estimated_duration': serviceDetails['estimated_duration'],
+      'default_location': serviceDetails['default_location'],
+      'default_technician_id': serviceDetails['default_technician_id'],
+      'service_type': serviceDetails['service_type'],
+      'service_priority': serviceDetails['service_priority'] ?? 'medium',
+    },
+    'parts_list': serviceDetails['parts_list'] ?? [],
+    'company': company?.data,
+  };
+}).toList();
+
+return flutterTemplates.map((e) => ServiceTemplateModel.fromJson(e)).toList();
 ```
 
-#### Tek Şablon Getir
-```dart
-final response = await supabase.functions.invoke(
-  'get-service-template',
-  method: HttpMethod.get,
-  queryParameters: {'template_id': 'uuid-here'},
-);
+### Tek Şablon Getir
 
-// Response:
-// {
-//   "success": true,
-//   "template": {...}
-// }
+```dart
+final template = await supabase
+  .from('service_templates')
+  .select('*')
+  .eq('id', templateId)
+  .single();
+
+if (template.error != null) {
+  throw Exception('Failed to fetch template: ${template.error?.message}');
+}
+
+// Şirket bilgilerini al
+final user = supabase.auth.currentUser;
+String? companyId;
+if (user != null) {
+  final profile = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('id', user.id)
+    .single();
+  companyId = profile.data?['company_id'];
+}
+
+final company = companyId != null ? await supabase
+  .from('companies')
+  .select('name, address, phone, email, website, logo_url, tax_number')
+  .eq('id', companyId)
+  .single() : null;
+
+// Template'i Flutter formatına dönüştür
+final serviceDetails = template.data?['service_details'] ?? {};
+final pdfSchema = serviceDetails['pdf_schema'] ?? {};
+
+final flutterTemplate = {
+  'id': template.data?['id'],
+  'name': template.data?['name'],
+  'description': template.data?['description'],
+  'is_active': template.data?['is_active'] ?? true,
+  'usage_count': template.data?['usage_count'] ?? 0,
+  'created_at': template.data?['created_at'],
+  'updated_at': template.data?['updated_at'],
+  'pdf_schema': {
+    'page': {
+      'size': pdfSchema['page']?['size'] ?? 'A4',
+      'padding': pdfSchema['page']?['padding'] ?? {'top': 40, 'right': 40, 'bottom': 40, 'left': 40},
+      'fontSize': pdfSchema['page']?['fontSize'] ?? 12,
+      'fontFamily': pdfSchema['page']?['fontFamily'] ?? 'Roboto',
+      'fontColor': pdfSchema['page']?['fontColor'] ?? '#000000',
+      'backgroundColor': pdfSchema['page']?['backgroundColor'] ?? '#FFFFFF',
+    },
+    'header': {
+      'showLogo': pdfSchema['header']?['showLogo'] ?? true,
+      'logoUrl': pdfSchema['header']?['logoUrl'] ?? company?.data?['logo_url'],
+      'logoPosition': pdfSchema['header']?['logoPosition'] ?? 'left',
+      'logoSize': pdfSchema['header']?['logoSize'] ?? 80,
+      'showTitle': pdfSchema['header']?['showTitle'] ?? true,
+      'title': pdfSchema['header']?['title'] ?? 'SERVİS FORMU',
+      'titleFontSize': pdfSchema['header']?['titleFontSize'] ?? 18,
+      'showCompanyInfo': pdfSchema['header']?['showCompanyInfo'] ?? true,
+      'companyName': pdfSchema['header']?['companyName'] ?? company?.data?['name'] ?? '',
+      'companyAddress': pdfSchema['header']?['companyAddress'] ?? company?.data?['address'] ?? '',
+      'companyPhone': pdfSchema['header']?['companyPhone'] ?? company?.data?['phone'] ?? '',
+      'companyEmail': pdfSchema['header']?['companyEmail'] ?? company?.data?['email'] ?? '',
+      'companyWebsite': pdfSchema['header']?['companyWebsite'] ?? company?.data?['website'] ?? '',
+      'companyTaxNumber': pdfSchema['header']?['companyTaxNumber'] ?? company?.data?['tax_number'] ?? '',
+      'companyInfoFontSize': pdfSchema['header']?['companyInfoFontSize'] ?? 10,
+    },
+    'serviceInfo': {
+      'titleFontSize': pdfSchema['serviceInfo']?['titleFontSize'] ?? 14,
+      'infoFontSize': pdfSchema['serviceInfo']?['infoFontSize'] ?? 10,
+      'showServiceNumber': pdfSchema['serviceInfo']?['showServiceNumber'] ?? true,
+      'showServiceStatus': pdfSchema['serviceInfo']?['showServiceStatus'] ?? true,
+      'showTechnician': pdfSchema['serviceInfo']?['showTechnician'] ?? true,
+      'showServiceType': pdfSchema['serviceInfo']?['showServiceType'] ?? true,
+      'showDates': pdfSchema['serviceInfo']?['showDates'] ?? true,
+    },
+    'partsTable': {
+      'show': pdfSchema['partsTable']?['show'] ?? true,
+      'columns': pdfSchema['partsTable']?['columns'] ?? [
+        {'key': 'name', 'label': 'Ürün Adı', 'show': true, 'align': 'left'},
+        {'key': 'quantity', 'label': 'Miktar', 'show': true, 'align': 'center'},
+        {'key': 'unit', 'label': 'Birim', 'show': true, 'align': 'center'},
+        {'key': 'unitPrice', 'label': 'Birim Fiyat', 'show': true, 'align': 'right'},
+        {'key': 'total', 'label': 'Toplam', 'show': true, 'align': 'right'},
+      ],
+      'showRowNumber': pdfSchema['partsTable']?['showRowNumber'] ?? true,
+    },
+    'signatures': {
+      'show': pdfSchema['signatures']?['show'] ?? true,
+      'showTechnician': pdfSchema['signatures']?['showTechnician'] ?? true,
+      'showCustomer': pdfSchema['signatures']?['showCustomer'] ?? true,
+      'technicianLabel': pdfSchema['signatures']?['technicianLabel'] ?? 'Teknisyen',
+      'customerLabel': pdfSchema['signatures']?['customerLabel'] ?? 'Müşteri',
+      'fontSize': pdfSchema['signatures']?['fontSize'] ?? 10,
+    },
+    'notes': {
+      'footer': pdfSchema['notes']?['footer'] ?? 'Servis hizmeti için teşekkür ederiz.',
+      'footerFontSize': pdfSchema['notes']?['footerFontSize'] ?? 10,
+      'showFooterLogo': pdfSchema['notes']?['showFooterLogo'] ?? false,
+    },
+  },
+  'defaults': {
+    'estimated_duration': serviceDetails['estimated_duration'],
+    'default_location': serviceDetails['default_location'],
+    'default_technician_id': serviceDetails['default_technician_id'],
+    'service_type': serviceDetails['service_type'],
+    'service_priority': serviceDetails['service_priority'] ?? 'medium',
+  },
+  'parts_list': serviceDetails['parts_list'] ?? [],
+  'company': company?.data,
+};
+
+return ServiceTemplateModel.fromJson(flutterTemplate);
 ```
+
+**Not:** 
+- RLS (Row Level Security) sayesinde kullanıcı sadece kendi şirketinin şablonlarına erişebilir
+- `service_details.pdf_schema` içinde tam PDF şema yapısı saklanır
+- `service_details.parts_list` içinde parça listesi şablonu saklanır
+- `service_details` içinde varsayılan değerler (estimated_duration, default_location, vb.) saklanır
 
 ## Dart Model Sınıfları
 

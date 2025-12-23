@@ -145,7 +145,10 @@ class _ServiceSlipPdfPreviewPageState extends ConsumerState<ServiceSlipPdfPrevie
 
       // Flutter'ın kendi PDF servisi ile imzalı önizleme oluştur
       final pdfService = ServiceSlipPdfService();
-      final pdfBytes = await pdfService.generateServiceSlipPdf(serviceRequestWithSignatures);
+      final pdfBytes = await pdfService.generateServiceSlipPdf(
+        serviceRequestWithSignatures,
+        templateId: widget.templateId,
+      );
 
       if (mounted) {
         setState(() {
@@ -365,7 +368,10 @@ class _ServiceSlipPdfPreviewPageState extends ConsumerState<ServiceSlipPdfPrevie
       );
 
       final pdfService = ServiceSlipPdfService();
-      final pdfBytes = await pdfService.generateServiceSlipPdf(serviceRequestWithSignatures);
+      final pdfBytes = await pdfService.generateServiceSlipPdf(
+        serviceRequestWithSignatures,
+        templateId: widget.templateId,
+      );
 
       // PDF'i paylaş
       await pdfService.previewAndShare(

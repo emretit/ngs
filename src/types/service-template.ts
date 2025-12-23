@@ -1,11 +1,39 @@
 import { PageSettings, HeaderSettings, NotesSettings } from './pdf-template';
 
+/**
+ * Service Template PDF Schema - Flutter ile uyumlu yapı
+ * Dokümantasyon: docs/flutter-template-integration.md
+ */
 export interface ServiceTemplateSchema {
-  page: PageSettings;
-  header: HeaderSettings;
-  customer?: {
-    customerTitleFontSize?: number;
-    customerInfoFontSize?: number;
+  page: {
+    size: 'A4' | 'A3' | 'Letter';
+    padding: {
+      top: number;
+      right: number;
+      bottom: number;
+      left: number;
+    };
+    fontSize: number;
+    fontFamily?: string;
+    fontColor?: string;
+    backgroundColor?: string;
+  };
+  header: {
+    showLogo: boolean;
+    logoUrl?: string;
+    logoPosition: 'left' | 'center' | 'right';
+    logoSize: number;
+    showTitle: boolean;
+    title: string;
+    titleFontSize: number;
+    showCompanyInfo: boolean;
+    companyName: string;
+    companyAddress: string;
+    companyPhone: string;
+    companyEmail: string;
+    companyWebsite: string;
+    companyTaxNumber: string;
+    companyInfoFontSize: number;
   };
   serviceInfo: {
     titleFontSize: number;
@@ -30,11 +58,15 @@ export interface ServiceTemplateSchema {
     show: boolean;
     showTechnician: boolean;
     showCustomer: boolean;
-    technicianLabel?: string;
-    customerLabel?: string;
+    technicianLabel: string;
+    customerLabel: string;
     fontSize: number;
   };
-  notes: NotesSettings;
+  notes: {
+    footer: string;
+    footerFontSize: number;
+    showFooterLogo?: boolean;
+  };
 }
 
 export interface ServicePdfData {
@@ -99,18 +131,18 @@ export interface ServicePdfTemplate {
   updated_at: string;
 }
 
+/**
+ * Default Service Template Schema - Flutter ile uyumlu
+ * Dokümantasyon: docs/flutter-template-integration.md
+ */
 export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
   page: {
     size: 'A4',
     padding: { top: 40, right: 40, bottom: 40, left: 40 },
     fontSize: 12,
     fontFamily: 'Roboto',
-    fontWeight: 'normal',
     fontColor: '#000000',
     backgroundColor: '#FFFFFF',
-    backgroundStyle: 'none',
-    backgroundStyleColor: '#4F46E5',
-    backgroundOpacity: 5,
   },
   header: {
     showLogo: true,
@@ -120,7 +152,6 @@ export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
     showTitle: true,
     title: 'SERVİS FORMU',
     titleFontSize: 18,
-    showValidity: false,
     showCompanyInfo: true,
     companyName: '',
     companyAddress: '',
@@ -129,10 +160,6 @@ export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
     companyWebsite: '',
     companyTaxNumber: '',
     companyInfoFontSize: 10,
-  },
-  customer: {
-    customerTitleFontSize: 12,
-    customerInfoFontSize: 10,
   },
   serviceInfo: {
     titleFontSize: 14,
@@ -166,7 +193,6 @@ export const defaultServiceTemplateSchema: ServiceTemplateSchema = {
     footer: 'Servis hizmeti için teşekkür ederiz.',
     footerFontSize: 10,
     showFooterLogo: false,
-    footerLogoSize: 40,
   },
 };
 

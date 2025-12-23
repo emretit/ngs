@@ -219,6 +219,97 @@ export class ServiceTemplateService {
 
     return this.createTemplate(companyId, userId, templateData);
   }
+
+  /**
+   * Migrate existing template to new structure (service_details.pdf_schema, parts_list, defaults)
+   * This function migrates old templates that have data in root level to the new nested structure
+   */
+  static async migrateTemplateToNewStructure(templateId: string): Promise<ServiceTemplate> {
+    const template = await this.getTemplate(templateId);
+    if (!template) {
+      throw new Error('Template not found');
+    }
+
+    const currentServiceDetails = template.service_details || {};
+    
+    // Check if already migrated (has pdf_schema in service_details)
+    if (currentServiceDetails.pdf_schema && 
+        currentServiceDetails.parts_list !== undefined &&
+        (currentServiceDetails.estimated_duration !== undefined || 
+         currentServiceDetails.default_location !== undefined ||
+         currentServiceDetails.default_technician_id !== undefined)) {
+      // Already migrated
+      return template;
+    }
+
+    // Migrate: Move root level fields to service_details
+    const migratedServiceDetails: any = {
+      ...currentServiceDetails,
+    };
+
+    // Migrate pdf_schema if exists at root level
+    if ((template as any).pdf_schema && !migratedServiceDetails.pdf_schema) {
+      migratedServiceDetails.pdf_schema = (template as any).pdf_schema;
+    }
+
+    // Migrate parts_list if exists at root level
+    if (template.parts_list && !migratedServiceDetails.parts_list) {
+      migratedServiceDetails.parts_list = template.parts_list;
+    }
+
+    // Migrate defaults from root level
+    if (template.estimated_duration !== undefined && migratedServiceDetails.estimated_duration === undefined) {
+      migratedServiceDetails.estimated_duration = template.estimated_duration;
+    }
+    if (template.default_location && !migratedServiceDetails.default_location) {
+      migratedServiceDetails.default_location = template.default_location;
+    }
+    if (template.default_technician_id && !migratedServiceDetails.default_technician_id) {
+      migratedServiceDetails.default_technician_id = template.default_technician_id;
+    }
+    if (template.service_type && !migratedServiceDetails.service_type) {
+      migratedServiceDetails.service_type = template.service_type;
+    }
+    if (template.service_priority && !migratedServiceDetails.service_priority) {
+      migratedServiceDetails.service_priority = template.service_priority;
+    }
+
+    // Update template with migrated structure
+    return this.updateTemplate(templateId, {
+      service_details: migratedServiceDetails,
+    });
+  }
+
+  /**
+   * Migrate all templates for a company to new structure
+   */
+  static async migrateAllTemplates(companyId: string): Promise<{ migrated: number; skipped: number; errors: number }> {
+    const templates = await this.getTemplates(companyId, false);
+    let migrated = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    for (const template of templates) {
+      try {
+        const currentServiceDetails = template.service_details || {};
+        
+        // Check if already migrated
+        if (currentServiceDetails.pdf_schema && 
+            currentServiceDetails.parts_list !== undefined) {
+          skipped++;
+          continue;
+        }
+
+        await this.migrateTemplateToNewStructure(template.id);
+        migrated++;
+      } catch (error) {
+        console.error(`Error migrating template ${template.id}:`, error);
+        errors++;
+      }
+    }
+
+    return { migrated, skipped, errors };
+  }
 }
 
 

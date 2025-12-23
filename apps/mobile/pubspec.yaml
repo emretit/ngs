@@ -45,6 +45,7 @@ dependencies:
   # PDF Generation
   printing: ^5.13.0
   pdf: ^3.11.1
+  google_fonts: ^6.3.0
   
   # Signature
   signature: ^5.4.0

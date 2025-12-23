@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuoteData, PdfTemplate, PdfExportOptions, TemplateSchema } from '@/types/pdf-template';
 import PdfRenderer from '@/components/pdf/PdfRenderer';
 import { validatePdfData } from '@/utils/pdfHelpers';
-import { ServicePdfData, ServicePdfTemplate, ServiceTemplateSchema } from '@/types/service-template';
+import { ServicePdfData, ServicePdfTemplate, ServiceTemplateSchema, defaultServiceTemplateSchema } from '@/types/service-template';
 import ServicePdfRenderer from '@/components/pdf/ServicePdfRenderer';
 import type { ServiceRequest } from '@/hooks/service/types';
 
@@ -1313,12 +1313,12 @@ export class PdfExportService {
         }
 
         // PDF schema is stored in service_details.pdf_schema
-        let pdfSchema = {};
+        let pdfSchema: ServiceTemplateSchema = defaultServiceTemplateSchema;
         if (data.service_details?.pdf_schema) {
-          pdfSchema = data.service_details.pdf_schema;
+          pdfSchema = { ...defaultServiceTemplateSchema, ...data.service_details.pdf_schema };
         } else if (data.service_details && typeof data.service_details === 'object') {
-          // If service_details exists but doesn't have pdf_schema, use it directly
-          pdfSchema = data.service_details;
+          // If service_details exists but doesn't have pdf_schema, merge with defaults
+          pdfSchema = { ...defaultServiceTemplateSchema, ...data.service_details };
         }
 
         activeTemplate = {

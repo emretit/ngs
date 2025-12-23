@@ -237,13 +237,15 @@ Deno.serve(async (req) => {
     if (!accessToken || accessToken.length < 10) {
       throw new Error('Access token geçersiz veya çok kısa');
     }
-  } catch (tokenError) {
+  } catch (tokenError: unknown) {
+    const errorMessage = tokenError instanceof Error ? tokenError.message : 'Bilinmeyen hata';
+    const errorStack = tokenError instanceof Error ? tokenError.stack : undefined;
     console.error('❌ Access token alma hatası:', tokenError);
     console.error('❌ Token error details:', {
-      message: tokenError?.message,
-      stack: tokenError?.stack
+      message: errorMessage,
+      stack: errorStack
     });
-    throw new Error(`Access token alınamadı: ${tokenError?.message || 'Bilinmeyen hata'}`);
+    throw new Error(`Access token alınamadı: ${errorMessage}`);
   }
     
     // FCM v1 API ile bildirim gönder

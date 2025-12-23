@@ -24,6 +24,9 @@ import { LogoUploadField } from '@/components/templates/LogoUploadField';
 const serviceTemplateSchema = z.object({
   name: z.string().min(1, 'Şablon adı gereklidir'),
   description: z.string().optional(),
+  estimated_duration: z.number().optional(),
+  default_location: z.string().optional(),
+  default_technician_id: z.string().optional(),
 });
 
 type ServiceTemplateFormData = z.infer<typeof serviceTemplateSchema>;
@@ -31,8 +34,8 @@ type ServiceTemplateFormData = z.infer<typeof serviceTemplateSchema>;
 interface TemplateProductItem {
   id: string;
   row_number: number;
-  product_id: string | null;
-  name: string;
+  product_id?: string | null;
+  name?: string;
   description?: string;
   quantity: number;
   unit?: string;
@@ -41,6 +44,7 @@ interface TemplateProductItem {
   discount_rate?: number;
   total_price: number;
   currency?: string;
+  image_url?: string;
 }
 
 
@@ -63,6 +67,9 @@ export default function ServiceTemplateEdit() {
     defaultValues: {
       name: '',
       description: '',
+      estimated_duration: undefined,
+      default_location: '',
+      default_technician_id: '',
     },
   });
 

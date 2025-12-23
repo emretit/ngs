@@ -11,6 +11,27 @@ export interface ServiceTemplate {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  // Additional fields used in UI components
+  service_request_description?: string;
+  service_type?: string;
+  service_priority?: 'low' | 'medium' | 'high' | 'urgent';
+  estimated_duration?: number;
+  parts_list?: Array<{
+    id?: string;
+    product_id?: string | null;
+    name: string;
+    description?: string;
+    quantity: number;
+    unit: string;
+    unit_price: number;
+    tax_rate?: number;
+    discount_rate?: number;
+    total_price?: number;
+    currency?: string;
+  }>;
+  default_location?: string;
+  default_technician_id?: string;
+  pdf_schema?: any;
 }
 
 export interface CreateServiceTemplateData {

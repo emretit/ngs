@@ -8044,6 +8044,56 @@ export type Database = {
           },
         ]
       }
+      saved_report_views: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          filters: Json | null
+          id: string
+          is_default: boolean | null
+          layout_config: Json | null
+          report_order: Json | null
+          report_type: string
+          updated_at: string
+          user_id: string
+          view_name: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          is_default?: boolean | null
+          layout_config?: Json | null
+          report_order?: Json | null
+          report_type: string
+          updated_at?: string
+          user_id: string
+          view_name: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          is_default?: boolean | null
+          layout_config?: Json | null
+          report_order?: Json | null
+          report_type?: string
+          updated_at?: string
+          user_id?: string
+          view_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_report_views_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_activities: {
         Row: {
           activity_type: string
@@ -8515,6 +8565,50 @@ export type Database = {
           },
         ]
       }
+      service_signatures: {
+        Row: {
+          coordinates: Json | null
+          created_at: string | null
+          id: string
+          page_number: number | null
+          service_request_id: string
+          signature_data: string
+          signature_type: string
+          signed_at: string
+          user_name: string
+        }
+        Insert: {
+          coordinates?: Json | null
+          created_at?: string | null
+          id?: string
+          page_number?: number | null
+          service_request_id: string
+          signature_data: string
+          signature_type: string
+          signed_at?: string
+          user_name: string
+        }
+        Update: {
+          coordinates?: Json | null
+          created_at?: string | null
+          id?: string
+          page_number?: number | null
+          service_request_id?: string
+          signature_data?: string
+          signature_type?: string
+          signed_at?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_signatures_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_templates: {
         Row: {
           company_id: string | null
@@ -8532,7 +8626,6 @@ export type Database = {
           service_details: Json | null
           service_priority: string | null
           service_request_description: string | null
-          service_title: string
           service_type: string | null
           updated_at: string | null
           usage_count: number | null
@@ -8553,7 +8646,6 @@ export type Database = {
           service_details?: Json | null
           service_priority?: string | null
           service_request_description?: string | null
-          service_title: string
           service_type?: string | null
           updated_at?: string | null
           usage_count?: number | null
@@ -8574,7 +8666,6 @@ export type Database = {
           service_details?: Json | null
           service_priority?: string | null
           service_request_description?: string | null
-          service_title?: string
           service_type?: string | null
           updated_at?: string | null
           usage_count?: number | null
